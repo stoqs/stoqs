@@ -155,11 +155,8 @@ class Clusterer(BiPlot):
         stepnumber = 0
 
         while edt <= end:
-            pvDict = {}
             try:
-                x_ids, y_ids, x, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
-                                                        self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
-
+                x, y, x_ids, y_ids = self.loadData(sdt, edt)
             except NoPPDataException as e:
                 print('Just so you know: '+str(e))
                 sdt = sdt + interval
@@ -273,32 +270,33 @@ class Clusterer(BiPlot):
             except:
                 stepnumber = stepnumber + 1
 
-    def loadData(self): # pragma: no cover
+    def loadData(self, sdt, edt): # pragma: no cover
         '''
-        Retrieve data from the database and return the x, and y values and IDs (in list form) that the scikit-learn package uses
+        Retrieve data from the database and return the x, and y values and IDs (in list form) that the scikit-learn package uses.
+        May raise NoPPDataException.
         '''
-        sdt = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
-        edt = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
-
         pvDict = {}
-        try:
-            x_ids, y_ids, x, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
-                                                    self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
-
-
-        except NoPPDataException as e:
-            print(str(e))
+        x_ids, y_ids, x, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
+                                                self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
 
         return x, y, x_ids, y_ids
 
-    def createClusters(self):  # pragma: no cover
+    def createClusters(self, sdt=None, edt=None):  # pragma: no cover
         '''
         Query the database for data , convert to the standard X and y arrays for
         sci-kit learn, and identify clusters in the data.
         '''
+        if not sdt and not edt:
+            sdt = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
+            edt = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
+
         clf = self.algorithms[self.args.algorithm]
 
-        x, y, x_ids, y_ids = self.loadData()
+        try:
+            x, y, x_ids, y_ids = self.loadData(sdt, edt)
+        except NoPPDataException as e:
+            print(str(e))
+
         x = np.array(x)
         y = np.array(y)
         X = np.column_stack((x,y))
@@ -332,11 +330,8 @@ class Clusterer(BiPlot):
         edt = start + interval
 
         while edt <= end:
-            pvDict = {}
             try:
-                x_ids, y_ids, x, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
-                                                        self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
-
+                x, y, x_ids, y_ids = self.loadData(sdt, edt)
             except NoPPDataException as e:
                 print('Just so you know: '+str(e))
                 sdt = sdt + interval
@@ -378,7 +373,12 @@ class Clusterer(BiPlot):
                                    " --platform Slocum_260 --start 20130923T124038 --end 20130923T150613"
                                    " --inputs optical_backscatter700nm fluorescence "
                                    "--labeledGroupName DBSCANclusters -v\n\n")
-        examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
+        examples += '''Typical workflow:
+0. Test creating a cluster with --createClusters; does not update database with cluster names (Attributes)
+0. Test stepping through database with --clusterSeq; does not update database with cluster names (Attributes)
+1. Use --saveClusters to update database with clusters for single specified time period
+2. Use --saveClustersSeq to step through time updating the database with cluster names (Attributes)
+'''
 
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                          description='Script to execute steps in the classification of measurements',
