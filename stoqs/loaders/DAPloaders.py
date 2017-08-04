@@ -273,6 +273,7 @@ class Base_Loader(STOQS_Loader):
         '''
         Return the missing_value attribute for netCDF variable var
         '''
+        mv = None
         try:
             mv = self.ds[var].attributes['missing_value']
         except KeyError:
@@ -289,6 +290,7 @@ class Base_Loader(STOQS_Loader):
         '''
         Return the _FillValue attribute for netCDF variable var
         '''
+        fv = None
         try:
             fv = self.ds[var].attributes['_FillValue']
         except KeyError:
