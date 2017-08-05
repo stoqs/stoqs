@@ -177,7 +177,8 @@ class Clusterer(BiPlot):
                 clf.fit(X)
             except ValueError as e:
                 # Likely no clusters returned: Expected n_neighbors > 0. Got 0
-                print(str(e))
+                if self.args.verbose > 0:
+                    print(str(e))
                 sdt = sdt + interval
                 edt = edt + interval
                 continue
@@ -254,26 +255,6 @@ class Clusterer(BiPlot):
     def removeLabels(self, labeledGroupName):  # pragma: no cover
         '''
         Delete labeled MeasuredParameterResources that have ResourceType.name=labeledGroupName (such as 'Cluster label').
-        Note: Some metadatda ResourceTypes will not be removed even though the Resources that use them will be removed.
-        '''
-        mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
-            resource__resourcetype__name=labeledGroupName
-            ).select_related('resource')
-
-        if self.args.verbose > 1:
-            print("  Removing MeasuredParameterResources with labelGroupName = %s" % (labeledGroupName))
-
-        rs = []
-        for mpr in mprs:
-            rs.append(mpr.resource)
-            mpr.delete(using=self.args.database)
-
-        for r in set(rs):
-            r.delete(using=self.args.database)
-
-    def removeLabelsSeq(self, labeledGroupName):  # pragma: no cover
-        '''
-        Delete sequentially labeled MeasuredParameterResources created by the saveClustersSeq method that have ResourceType.name=labeledGroupName.
         Note: Some metadatda ResourceTypes will not be removed even though the Resources that use them will be removed.
         '''
         mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
@@ -418,7 +399,6 @@ class Clusterer(BiPlot):
         parser.add_argument('--saveClustersSeq', action='store_true', help='Flip through data at specified interval, identify data clusters,'
                                                                           'and save labels to database with --labeledGroupName option')
         parser.add_argument('--removeLabels', action='store_true', help='Remove Labels created by --saveClusters with --labeledGroupName option')
-        parser.add_argument('--removeLabelsSeq', action='store_true', help='Remove Labels created by --saveClustersSeq with --labeledGroupName option')
         parser.add_argument('--inputs', action='store',
                             help='List of STOQS Parameter names to use as features, separated by spaces', nargs='*')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format',
@@ -462,9 +442,6 @@ if __name__ == '__main__':
 
     elif c.args.removeLabels:
         c.removeLabels(' '.join((LABELED, c.args.labeledGroupName)))
-
-    elif c.args.removeLabelsSeq:
-        c.removeLabelsSeq(' '.join((LABELED, c.args.labeledGroupName)))
 
     else:
         print("fix your inputs")
