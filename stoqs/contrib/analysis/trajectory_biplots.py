@@ -201,7 +201,12 @@ class PlatformsBiPlot(BiPlot):
         else:
             timeWindow = allActivityEndTime - allActivityStartTime
             timeStep = timeWindow
-        startTime = allActivityStartTime
+
+        if self.args.start:
+            startTime = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
+        else:
+            startTime = allActivityStartTime
+
         endTime = startTime + timeWindow
 
         # Get overall temporal data for placement in the temporal subplot
@@ -212,8 +217,13 @@ class PlatformsBiPlot(BiPlot):
             swrTS = None
             print("WARNING:", e)
 
+        if self.args.end:
+            set_end_time = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
+        else:
+            set_end_time = allActivityEndTime
+
         # Loop through sections of the data with temporal query constraints based on the window and step command line parameters
-        while endTime <= allActivityEndTime:
+        while endTime <= set_end_time:
 
             # Start a new figure - size is in inches
             fig = plt.figure(figsize=(9, 6))
@@ -313,6 +323,8 @@ class PlatformsBiPlot(BiPlot):
         parser.add_argument('--extend', action='store', help='Extend the data extent for the map boundaries by this value in degrees', type=float)
         parser.add_argument('--extent', action='store', help='Space separated specific map boundary in degrees: ll_lon ll_lat ur_lon ur_lat', 
                 nargs=4, default=[])
+        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format, otherwise allActivityStartTime is used')
+        parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format, otherwise allActivityEndTime is used')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1, default=0)
     
         self.args = parser.parse_args()
