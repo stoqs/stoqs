@@ -197,10 +197,10 @@ class Clusterer(BiPlot):
 
                 try:
                     # Label
-                    rt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=labeledGroupName,
-                                                                                    description='unsupervised classification')
+                    rt, _ = ResourceType.objects.using(self.args.database).get_or_create(
+                                name=labeledGroupName, description='unsupervised classification')
                     r, _ = Resource.objects.using(self.args.database).get_or_create(name=LABEL, value=label, resourcetype=rt)
-
+                    # Associate with commandlineResource
                     ResourceResource.objects.using(self.args.database).get_or_create(fromresource=r, toresource=clResource)
 
                 except IntegrityError as e:
@@ -223,6 +223,33 @@ class Clusterer(BiPlot):
             sdt = sdt + interval
             edt = edt + interval
             stepnumber = stepnumber + 1
+
+    def describeClusterLabels(self, labeledGroupName):
+        '''
+        To be called after clusters are saved.  Adds description text to appear in UI next to the Attributes button.
+        '''
+        mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
+            resource__resourcetype__name=labeledGroupName
+            ).select_related('resource')
+
+        labels = mprs.values_list('resource__value', flat=True).distinct()
+
+        for label in labels:
+            rt, _ = ResourceType.objects.using(self.args.database).get_or_create(
+                        name=labeledGroupName, description='unsupervised classification')
+            r, _ = Resource.objects.using(self.args.database).get_or_create(name=LABEL, 
+                        value=label, resourcetype=rt)
+            description = 'Automated {} classification of {} datavalues from {} features'.format(
+                                self.args.algorithm,
+                                mprs.filter(resource__value=label).count(),
+                                len(self.args.inputs))
+            if self.args.verbose:
+                print(f'Describing label {label}: {description}')
+
+            rdt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
+            rd, _ = Resource.objects.using(self.args.database).get_or_create(name=DESCRIPTION, value=description, resourcetype=rdt)
+            rr = ResourceResource(fromresource=r, toresource=rd)
+            rr.save(using=self.args.database)
 
     def removeLabels(self, labeledGroupName):  # pragma: no cover
         '''
@@ -427,9 +454,11 @@ if __name__ == '__main__':
 
     elif c.args.saveClusters:
         c.saveClusters(' '.join((LABELED, c.args.labeledGroupName)))
+        c.describeClusterLabels(' '.join((LABELED, c.args.labeledGroupName)))
 
     elif c.args.saveClustersSeq:
         c.saveClustersSeq(' '.join((LABELED, c.args.labeledGroupName)))
+        c.describeClusterLabels(' '.join((LABELED, c.args.labeledGroupName)))
 
     elif c.args.removeLabels:
         c.removeLabels(' '.join((LABELED, c.args.labeledGroupName)))
@@ -439,3 +468,4 @@ if __name__ == '__main__':
 
     else:
         print("fix your inputs")
+
