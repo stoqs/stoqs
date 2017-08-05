@@ -27,6 +27,7 @@ except AttributeError:
 import matplotlib as mpl
 
 mpl.use('Agg')  # Force matplotlib to not use any Xwindows backend
+import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
@@ -55,6 +56,9 @@ LABELED = 'Labeled'
 TRAIN = 'Train'
 TEST = 'Test'
 
+
+class DefaultsRawTextHelpFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
+    pass
 
 class Clusterer(BiPlot):
     '''
@@ -134,9 +138,17 @@ class Clusterer(BiPlot):
                 MeasuredParameterResource.objects.using(self.args.database).get_or_create(
                     activity=a, measuredparameter=mp_y, resource=r)
 
+    def _parseTimeDelta(self, arg):
+        # Help documentation implies that multiple comma-separated time intervals may be in 'arg'
+        # but only one is parsed.
+        kwargs = {}
+        kwargs[arg.split('=')[0]] = int(arg.split('=')[1])
+
+        return timedelta(**kwargs)
+
     def saveClustersSeq(self, labeledGroupName):
         '''
-        Save the set of labels in MeasuredParameterResource for each step as the method flips through the data in a specified
+        Save the set of labels in MeasuredParameterResource for each step as the method steps through the data in a specified
         time interval. Accepts 2 input vectors. (TODO: generalize to N input vectors). The labeledGroupName may be used to refer to the grouping,
         and is given a number (appended to the labeledGroupName for each time interval step. Within each grouping, each cluster is labeled with a
         letter from A-Z.
@@ -144,15 +156,14 @@ class Clusterer(BiPlot):
         clResource = c.saveCommand()
         clf = self.algorithms[self.args.algorithm]
 
-        kwargs = {}
-        kwargs[self.args.interval.split('=')[0]] = int(self.args.interval.split('=')[1])
-        interval = timedelta(**kwargs)
         start = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
         end = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
 
+        interval = self._parseTimeDelta(self.args.interval)
+        step = self._parseTimeDelta(self.args.step)
+
         sdt = start
         edt = start + interval
-        stepnumber = 0
 
         while edt <= end:
             if self.args.verbose > 0:
@@ -161,8 +172,8 @@ class Clusterer(BiPlot):
                 x, y, x_ids, y_ids = self.loadData(sdt, edt)
             except NoPPDataException as e:
                 print('Just so you know: '+str(e))
-                sdt = sdt + interval
-                edt = edt + interval
+                sdt = sdt + step
+                edt = edt + step
                 continue
 
             x = np.array(x)
@@ -179,8 +190,8 @@ class Clusterer(BiPlot):
                 # Likely no clusters returned: Expected n_neighbors > 0. Got 0
                 if self.args.verbose > 0:
                     print(str(e))
-                sdt = sdt + interval
-                edt = edt + interval
+                sdt = sdt + step
+                edt = edt + step
                 continue
 
             y_clusters = clf.labels_
@@ -221,9 +232,8 @@ class Clusterer(BiPlot):
                     MeasuredParameterResource.objects.using(self.args.database).get_or_create(
                         activity=a, measuredparameter=mp_y, resource=r)
 
-            sdt = sdt + interval
-            edt = edt + interval
-            stepnumber = stepnumber + 1
+            sdt = sdt + step
+            edt = edt + step
 
     def describeClusterLabels(self, labeledGroupName):
         '''
@@ -322,7 +332,7 @@ class Clusterer(BiPlot):
 
     def clusterSeq(self):
         '''
-        Flip through the data at a specified time interval and identify clusters.
+        Step through the data at a specified time interval and identify clusters.
         '''
         clf = self.algorithms[self.args.algorithm]
 
@@ -362,13 +372,7 @@ class Clusterer(BiPlot):
         return X, y_clusters, X_ids
 
     def process_command_line(self):
-        '''
-        The argparse library is included in Python 2.7 and is an added package for STOQS.
-        '''
-        import argparse
-        from argparse import RawTextHelpFormatter
-
-        examples = 'Example machine learning workflow:' + '\n\n'
+        examples = 'Examples:' + '\n\n'
         examples += "Identify clusters in data and save to the database:\n"
         examples += sys.argv[0] + (" --saveClusters --database stoqs_september2013"
                                    " --platform Slocum_260 --start 20130923T124038 --end 20130923T150613"
@@ -386,7 +390,7 @@ class Clusterer(BiPlot):
 2. Use --saveClustersSeq to step through time updating the database with cluster names (Attributes)
 '''
 
-        parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
+        parser = argparse.ArgumentParser(formatter_class=DefaultsRawTextHelpFormatter,
                                          description='Script to execute steps in the classification of measurements',
                                          epilog=examples)
 
@@ -394,9 +398,9 @@ class Clusterer(BiPlot):
         parser.add_argument('-d', '--database', action='store', help='Database alias', default='stoqs_september2013_o',
                             required=True)
         parser.add_argument('--createClusters', action='store_true', help='Identify clusters in data')
-        parser.add_argument('--clusterSeq', action='store_true', help='Flip through data at specified interval and identify data clusters')
+        parser.add_argument('--clusterSeq', action='store_true', help='Step through data at specified interval and identify data clusters')
         parser.add_argument('--saveClusters', action='store_true', help='Identify clusters in data and save labels to database with --labeledGroupName option')
-        parser.add_argument('--saveClustersSeq', action='store_true', help='Flip through data at specified interval, identify data clusters,'
+        parser.add_argument('--saveClustersSeq', action='store_true', help='Step through data at specified interval, identify data clusters,'
                                                                           'and save labels to database with --labeledGroupName option')
         parser.add_argument('--removeLabels', action='store_true', help='Remove Labels created by --saveClusters with --labeledGroupName option')
         parser.add_argument('--inputs', action='store',
@@ -405,10 +409,12 @@ class Clusterer(BiPlot):
                             default='19000101T000000')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format',
                             default='22000101T000000')
-        parser.add_argument('--interval', action='store', help='Time interval for which clusterSeq() flips through the'
+        parser.add_argument('--interval', action='store', help='Time interval for which clusterSeq() steps through the'
                                                                'data, in format "days=x, seconds=x, minutes=x, hours=x,'
-                                                               ' weeks=x" ', default='days=0, seconds=0, minutes=10, '
-                                                               'hours=0, weeks=0') # default 10 minutes
+                                                               ' weeks=x" ', default='hours=1')
+        parser.add_argument('--step', action='store', help='Time step for clusterSeq() to use when stepping through the'
+                                                               'data, in format "days=x, seconds=x, minutes=x, hours=x,'
+                                                               ' weeks=x" ', default='minutes=10')
         parser.add_argument('--algorithm', choices=list(self.algorithms.keys()),
                             help='Specify clustering algorithm to use with --createClusters, --clusterSeq, --saveClusters, '
                                                                 'or --saveClusterSeq option')
