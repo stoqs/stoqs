@@ -138,7 +138,7 @@ class BiPlot(object):
         return x, y, points
 
 
-    def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm, pvDict, returnIDs=False, sampleFlag=True):
+    def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm, pvDict={}, returnIDs=False, sampleFlag=True):
         '''
         Get Parameter-Parameter data regardless if Parameters are 'Sampled' or 'Measured in situ'
         '''
