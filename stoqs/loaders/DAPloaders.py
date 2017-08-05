@@ -275,16 +275,13 @@ class Base_Loader(STOQS_Loader):
         '''
         mv = None
         try:
-            mv = self.ds[var].attributes['missing_value']
+            mv = float(self.ds[var].attributes['missing_value'])
         except KeyError:
             logger.debug('Cannot get attribute missing_value for variable %s from url %s', var, self.url)
         except AttributeError as e:
             logger.debug(str(e))
         
-        if mv is float or mv is int:
-            return mv
-        else:
-            return None
+        return mv
 
     def get_FillValue(self, var):
         '''
@@ -292,25 +289,24 @@ class Base_Loader(STOQS_Loader):
         '''
         fv = None
         try:
-            fv = self.ds[var].attributes['_FillValue']
+            fv = float(self.ds[var].attributes['_FillValue'])
         except KeyError:
             logger.debug('Cannot get attribute _FillValue for variable %s from url %s', var, self.url)
             try:
                 # Fred's L_662 and other glider data files have the 'FillValue' attribute, not '_FillValue'
-                fv = self.ds[var].attributes['FillValue']
+                fv = float(self.ds[var].attributes['FillValue'])
             except KeyError:
-                # http://odss.mbari.org/thredds/dodsC/CANON/2013_Sep/Platforms/AUVs/Daphne/NetCDF/Daphne_CANON_Fall2013.nc.html has 'fill_value'
                 try:
-                    fv = self.ds[var].attributes['fill_value']
-                except Exception:
-                    logger.debug('Cannot get attribute FillValue for variable %s from url %s', var, self.url)
+                    # http://odss.mbari.org/thredds/dodsC/CANON/2013_Sep/Platforms/AUVs/Daphne/NetCDF/Daphne_CANON_Fall2013.nc.html has 'fill_value'
+                    fv = float(self.ds[var].attributes['fill_value'])
+                except Exception as e:
+                    logger.debug('Cannot get FillValue for variable %s from url %s: %s', var, self.url, str(e))
+        except ValueError as e:
+            logger.warn('%s for variable %s from url %s', str(e), var, self.url)
         except AttributeError as e:
             logger.debug(str(e))
 
-        if fv is float or fv is int:
-            return fv
-        else:
-            return None
+        return fv
 
     def get_shape_length(self, pname):
         '''Works for both pydap 3.1.1 and 3.2.0
@@ -1150,14 +1146,16 @@ class Base_Loader(STOQS_Loader):
                     logger.debug("value = %s ", value)
                    
                     parameter = self.getParameterByName(key)
+                    mv = self.getmissing_value(key)
+                    fv = self.get_FillValue(key)
 
                     try:
                         value = float(value)
-                        if self.getmissing_value(key):
-                            if np.isclose(value, self.getmissing_value(key)):
+                        if mv:
+                            if np.isclose(value, mv):
                                 continue
-                        if self.get_FillValue(key):
-                            if np.isclose(value, self.get_FillValue(key)):
+                        if fv:
+                            if np.isclose(value, fv):
                                 continue
                         if value == 'null' or np.isnan(value):
                             continue
@@ -1165,7 +1163,7 @@ class Base_Loader(STOQS_Loader):
                             if math.isnan(value): # not a number for a math type
                                 continue
                         except Exception as e: 
-                            logger.debug('%s', e)
+                            logger.debug('%s', str(e))
 
                         # Single-valued datavalue
                         mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, datavalue=value)
