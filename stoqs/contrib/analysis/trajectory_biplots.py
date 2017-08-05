@@ -229,10 +229,10 @@ class PlatformsBiPlot(BiPlot):
             platformLineStringHash = {}
             for i, (pl, xP, yP) in enumerate(zip(self.args.platform, self.args.xParm, self.args.yParm)):
                 try: 
-                    if self.args.verbose: print('Calling self._getMeasuredPPData...')
-                    x, y, points = self._getMeasuredPPData(startTime, endTime, pl, xP, yP)
+                    if self.args.verbose: print('Calling self._getPPData...')
+                    x, y, points = self._getPPData(startTime, endTime, pl, xP, yP)
                     platformLineStringHash[pl] = LineString(points).simplify(tolerance=.001)
-                except NoPPDataException as e:
+                except (NoPPDataException, ValueError) as e:
                     if self.args.verbose: print(e)
                     x, y = ([], [])
 
