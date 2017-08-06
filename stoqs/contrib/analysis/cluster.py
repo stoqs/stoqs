@@ -52,7 +52,7 @@ from sklearn.cluster import MeanShift
 from sklearn.mixture import GaussianMixture
 import pickle
 
-LABELED = 'Labeled'
+CLUSTERED = 'Clustered'
 TRAIN = 'Train'
 TEST = 'Test'
 
@@ -439,15 +439,15 @@ if __name__ == '__main__':
         c.clusterSeq()
 
     elif c.args.saveClusters:
-        c.saveClusters(' '.join((LABELED, c.args.labeledGroupName)))
-        c.describeClusterLabels(' '.join((LABELED, c.args.labeledGroupName)))
+        c.saveClusters(' '.join((CLUSTERED, c.args.labeledGroupName)))
+        c.describeClusterLabels(' '.join((CLUSTERED, c.args.labeledGroupName)))
 
     elif c.args.saveClustersSeq:
-        c.saveClustersSeq(' '.join((LABELED, c.args.labeledGroupName)))
-        c.describeClusterLabels(' '.join((LABELED, c.args.labeledGroupName)))
+        c.saveClustersSeq(' '.join((CLUSTERED, c.args.labeledGroupName)))
+        c.describeClusterLabels(' '.join((CLUSTERED, c.args.labeledGroupName)))
 
     elif c.args.removeLabels:
-        c.removeLabels(' '.join((LABELED, c.args.labeledGroupName)))
+        c.removeLabels(' '.join((CLUSTERED, c.args.labeledGroupName)))
 
     else:
         print("fix your inputs")
