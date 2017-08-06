@@ -14,15 +14,22 @@ MBARI Dec 6, 2013
 import os
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
+import django
+django.setup()
 
 import re
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import numpy as np
 from matplotlib.dates import DAILY
+from matplotlib.colors import rgb2hex
+from collections import defaultdict
 from datetime import datetime, timedelta
 from django.contrib.gis.geos import LineString
 from utils.utils import round_to_n
+from stoqs.models import MeasuredParameterResource, Resource
 from textwrap import wrap
 from mpl_toolkits.basemap import Basemap
 import matplotlib.gridspec as gridspec
@@ -34,7 +41,7 @@ class PlatformsBiPlot(BiPlot):
     '''
     Make customized BiPlots (Parameter Parameter plots) for platforms from STOQS.
     '''
-    def ppSubPlot(self, x, y, platform, color, xParm, yParm, ax):
+    def ppSubPlot(self, x, y, platform, color, xParm, yParm, ax, point_color='k'):
         '''
         Given names of platform, x & y paramters add a subplot to figure fig.
         '''
@@ -59,10 +66,77 @@ class PlatformsBiPlot(BiPlot):
         else:
             ax.set_ylabel('%s (%s)' % (yParm, yUnits))
 
-        ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=True)
+        ax.scatter(x, y, marker='.', s=10, c=point_color, lw = 0, clip_on=True)
         ax.text(0.0, 1.0, platform, transform=ax.transAxes, color=color, horizontalalignment='left', verticalalignment='top')
 
         return ax
+
+    def ppSubPlotColor(self, x_ids, y_ids, platform, color, xParm, yParm, ax):
+        '''
+        Given names of platform, x & y paramter ids return a categorically colored subplot
+        See: https://gist.github.com/jakevdp/8a992f606899ac24b711
+        and https://stackoverflow.com/questions/28033046/matplotlib-scatter-color-by-categorical-factors?answertab=active#tab-top
+        '''
+        all_labels = (Resource.objects.using(self.args.database)
+                        .filter(resourcetype__name__contains=self.args.labeledGroupName)
+                        .order_by('value')
+                        .distinct()
+                        .values_list('value', flat=True))
+        total_num_colors = len(all_labels)
+
+        colors = {}
+        if total_num_colors < 11:
+            ck = plt.cm.Vega10
+        elif total_num_colors < 21:
+            ck = plt.cm.Vega20
+        else:
+            cl = plt.cm.viridis
+
+        for b, c in zip(all_labels, ck(np.arange(0, ck.N, ck.N/total_num_colors, dtype=int))):
+            colors[b] = c
+
+        mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
+                        resource__resourcetype__name__contains=self.args.labeledGroupName,
+                        measuredparameter__id__in=(x_ids + y_ids))
+
+        if self.args.verbose:
+            print(f'{mprs.count()} mprs for {self.args.labeledGroupName}')
+
+        for label in all_labels:
+            xy_data = defaultdict(list)
+            for mpr in mprs.filter(resource__value=label):
+                xy_data[mpr.measuredparameter.parameter.name].append(mpr.measuredparameter.datavalue)
+            if xy_data: 
+                if self.args.verbose:
+                    print(f'{len(xy_data[xParm])} points for {label}, color = {colors[label]}')
+                ax.scatter(xy_data[xParm], xy_data[yParm], marker='.', s=15, label=label, 
+                           color=colors[label], clip_on=True)
+
+        ax.legend(loc='upper left', fontsize=7)
+        ax.text(1.0, 1.0, platform, transform=ax.transAxes, color=color, horizontalalignment='right', verticalalignment='top')
+
+        xmin, xmax, xUnits = self._getAxisInfo(platform, xParm)
+        ymin, ymax, yUnits = self._getAxisInfo(platform, yParm)
+
+        ax.set_xlim(round_to_n(xmin, 1), round_to_n(xmax, 1))
+        ax.set_ylim(round_to_n(ymin, 1), round_to_n(ymax, 1))
+
+        if self.args.xLabel == '':
+            ax.set_xticks([])
+        elif self.args.xLabel:
+            ax.set_xlabel(self.args.xLabel)
+        else:
+            ax.set_xlabel('%s (%s)' % (xParm, xUnits))
+
+        if self.args.yLabel == '':
+            ax.set_yticks([])
+        elif self.args.yLabel:
+            ax.set_ylabel(self.args.yLabel)
+        else:
+            ax.set_ylabel('%s (%s)' % (yParm, yUnits))
+
+        return ax
+
 
     def timeSubPlot(self, platformDTHash, ax1, startTime, endTime, swrTS):
         '''
@@ -96,10 +170,11 @@ class PlatformsBiPlot(BiPlot):
             ax2.set_ylabel('SWR (W/m^2)')
             plt.locator_params(axis='y', nbins=3)
         
-        ax1.set_xlabel('Time (GMT)')
         ax1.set_ylabel('Depth (m)')
-        loc = ax1.xaxis.get_major_locator()
-        loc.maxticks[DAILY] = 4
+
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
+        plt.gca().xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO))
+        plt.gca().xaxis.set_minor_locator(mdates.DayLocator())
 
         return ax1
 
@@ -239,8 +314,7 @@ class PlatformsBiPlot(BiPlot):
             platformLineStringHash = {}
             for i, (pl, xP, yP) in enumerate(zip(self.args.platform, self.args.xParm, self.args.yParm)):
                 try: 
-                    if self.args.verbose: print('Calling self._getPPData...')
-                    x, y, points = self._getPPData(startTime, endTime, pl, xP, yP)
+                    x_ids, y_ids, x, y, points = self._getPPData(startTime, endTime, pl, xP, yP, returnIDs=True)
                     platformLineStringHash[pl] = LineString(points).simplify(tolerance=.001)
                 except (NoPPDataException, ValueError) as e:
                     if self.args.verbose: print(e)
@@ -254,12 +328,14 @@ class PlatformsBiPlot(BiPlot):
                     raise Exception('Cannot handle more than 4 platform Parameter-Parameter plots')
 
                 fig.add_subplot(ax)
-                self.ppSubPlot(x, y, pl, self._getColor(pl), xP, yP, ax)
+                if self.args.labeledGroupName:
+                    self.ppSubPlotColor(x_ids, y_ids, pl, self._getColor(pl), xP, yP, ax)
+                else:
+                    self.ppSubPlot(x, y, pl, self._getColor(pl), xP, yP, ax)
 
             # Plot spatial
             ax = plt.Subplot(fig, map_gs[:])
             fig.add_subplot(ax, aspect='equal')
-            if self.args.verbose: print('Calling self.spatialSubPlot()...')
             self.spatialSubPlot(platformLineStringHash, ax, allExtent)
            
             startTime = startTime + timeStep
@@ -325,6 +401,7 @@ class PlatformsBiPlot(BiPlot):
                 nargs=4, default=[])
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format, otherwise allActivityStartTime is used')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format, otherwise allActivityEndTime is used')
+        parser.add_argument('--labeledGroupName', action='store', help='Color points in scatter plots according to labels in group')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1, default=0)
     
         self.args = parser.parse_args()
