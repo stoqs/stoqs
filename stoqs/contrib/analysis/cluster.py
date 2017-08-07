@@ -35,6 +35,7 @@ from datetime import datetime
 from datetime import timedelta
 from django.db.models import Q
 from django.db.utils import IntegrityError
+from django.db import transaction
 from textwrap import wrap
 from stoqs.models import Activity, ResourceType, Resource, Measurement, MeasuredParameter, MeasuredParameterResource, \
     ResourceResource
@@ -53,8 +54,6 @@ from sklearn.mixture import GaussianMixture
 import pickle
 
 CLUSTERED = 'Clustered'
-TRAIN = 'Train'
-TEST = 'Test'
 
 
 class DefaultsRawTextHelpFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
@@ -93,11 +92,11 @@ class Clusterer(BiPlot):
 
         return r
 
-    def saveClusters(self, labeledGroupName):
+    def saveClusters(self, clusteredGroupName):
         '''
         Save the set of labels in MeasuredParameterResource. Accepts 2 input vectors. (TODO: generalize to N input vectors);
-        description is used to describe the criteria for assigning this label. The labeledGroupName may be used to
-        refer to the grouping, and the clusters are each labeled with a letter from A-Z.
+        description is used to describe the criteria for assigning this label. The clusteredGroupName may be used to
+        refer to the grouping, and the clusters are each clustered with a letter from A-Z.
         '''
         X, y_clusters, X_ids = c.createClusters()
         clResource = c.saveCommand()
@@ -115,7 +114,7 @@ class Clusterer(BiPlot):
 
             try:
                 # Label
-                rt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=labeledGroupName,
+                rt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=clusteredGroupName,
                                                                                 description='unsupervised classification')
                 r, _ = Resource.objects.using(self.args.database).get_or_create(name=LABEL, value=label, resourcetype=rt)
 
@@ -129,14 +128,16 @@ class Clusterer(BiPlot):
             if self.args.verbose:
                 print("  Saving %d values in cluster '%s'" % (len(cluster), label))
             for x_id, y_id in cluster_ids:
+                act = self.getActivity(x_id, y_id)
+                if self.args.verbose > 1:
+                    print(f'  Activity: {act}')
 
-                a = self.getActivity(x_id, y_id)
                 mp_x = MeasuredParameter.objects.using(self.args.database).get(id=x_id)
                 mp_y = MeasuredParameter.objects.using(self.args.database).get(id=y_id)
                 MeasuredParameterResource.objects.using(self.args.database).get_or_create(
-                    activity=a, measuredparameter=mp_x, resource=r)
+                    activity=act, measuredparameter=mp_x, resource=r)
                 MeasuredParameterResource.objects.using(self.args.database).get_or_create(
-                    activity=a, measuredparameter=mp_y, resource=r)
+                    activity=act, measuredparameter=mp_y, resource=r)
 
     def _parseTimeDelta(self, arg):
         # Help documentation implies that multiple comma-separated time intervals may be in 'arg'
@@ -146,11 +147,36 @@ class Clusterer(BiPlot):
 
         return timedelta(**kwargs)
 
-    def saveClustersSeq(self, labeledGroupName):
+    def _saveMPRassociations(self, cluster_ids, label, r_cluster):
+
+        if self.args.verbose:
+            print("  Saving %d values in cluster '%s'" % (len(cluster_ids), label))
+
+        try:
+            # See https://docs.djangoproject.com/en/dev/topics/db/transactions/#django.db.transaction.atomic
+            with transaction.atomic():
+                for x_id, y_id in cluster_ids:
+                    act = self.getActivity(x_id, y_id)
+
+                    mp_x = MeasuredParameter.objects.using(self.args.database).get(id=x_id)
+                    mp_y = MeasuredParameter.objects.using(self.args.database).get(id=y_id)
+
+                    mprx = MeasuredParameterResource(activity=act, measuredparameter=mp_x, resource=r_cluster)
+                    mpry = MeasuredParameterResource(activity=act, measuredparameter=mp_y, resource=r_cluster)
+
+                    mprx.save(self.args.database)
+                    mpry.save(self.args.database)
+
+        except IntegrityError as e:
+            # Likely duplicate key value violates unique constraint...
+            if self.args.verbose > 2:
+                print(str(e))
+
+    def saveClustersSeq(self, clusteredGroupName):
         '''
         Save the set of labels in MeasuredParameterResource for each step as the method steps through the data in a specified
-        time interval. Accepts 2 input vectors. (TODO: generalize to N input vectors). The labeledGroupName may be used to refer to the grouping,
-        and is given a number (appended to the labeledGroupName for each time interval step. Within each grouping, each cluster is labeled with a
+        time interval. Accepts 2 input vectors. (TODO: generalize to N input vectors). The clusteredGroupName may be used to refer to the grouping,
+        and is given a number (appended to the clusteredGroupName for each time interval step. Within each grouping, each cluster is named with a
         letter from A-Z.
         '''
         clResource = c.saveCommand()
@@ -181,7 +207,7 @@ class Clusterer(BiPlot):
             X = np.column_stack((x,y))
 
             x_ids = np.array(x_ids)
-            y_ids=np.array(y_ids)
+            y_ids = np.array(y_ids)
             X_ids = np.column_stack((x_ids,y_ids))
 
             try:
@@ -210,44 +236,34 @@ class Clusterer(BiPlot):
                 try:
                     # Label
                     rt, _ = ResourceType.objects.using(self.args.database).get_or_create(
-                                name=labeledGroupName, description='unsupervised classification')
-                    r, _ = Resource.objects.using(self.args.database).get_or_create(name=LABEL, value=label, resourcetype=rt)
+                                name=clusteredGroupName, description='unsupervised classification')
+                    r_cluster, _ = Resource.objects.using(self.args.database).get_or_create(name=LABEL, value=label, resourcetype=rt)
                     # Associate with commandlineResource
-                    ResourceResource.objects.using(self.args.database).get_or_create(fromresource=r, toresource=clResource)
+                    ResourceResource.objects.using(self.args.database).get_or_create(fromresource=r_cluster, toresource=clResource)
 
                 except IntegrityError as e:
                     print(str(e))
                     print("Ignoring")
 
                 # Associate MeasuredParameters with Resource
-                if self.args.verbose:
-                    print("  Saving %d values in cluster '%s'" % (len(cluster), label))
-                for x_id, y_id in cluster_ids:
-
-                    a = self.getActivity(x_id, y_id)
-                    mp_x = MeasuredParameter.objects.using(self.args.database).get(id=x_id)
-                    mp_y = MeasuredParameter.objects.using(self.args.database).get(id=y_id)
-                    MeasuredParameterResource.objects.using(self.args.database).get_or_create(
-                        activity=a, measuredparameter=mp_x, resource=r)
-                    MeasuredParameterResource.objects.using(self.args.database).get_or_create(
-                        activity=a, measuredparameter=mp_y, resource=r)
+                self._saveMPRassociations(cluster_ids, label, r_cluster)
 
             sdt = sdt + step
             edt = edt + step
 
-    def describeClusterLabels(self, labeledGroupName):
+    def describeClusterLabels(self, clusteredGroupName):
         '''
         To be called after clusters are saved.  Adds description text to appear in UI next to the Attributes button.
         '''
         mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
-            resource__resourcetype__name=labeledGroupName
+            resource__resourcetype__name=clusteredGroupName
             ).select_related('resource')
 
         labels = mprs.values_list('resource__value', flat=True).distinct()
 
         for label in labels:
             rt, _ = ResourceType.objects.using(self.args.database).get_or_create(
-                        name=labeledGroupName, description='unsupervised classification')
+                        name=clusteredGroupName, description='unsupervised classification')
             r, _ = Resource.objects.using(self.args.database).get_or_create(name=LABEL, 
                         value=label, resourcetype=rt)
             description = 'Automated {} classification of {} datavalues from {} features'.format(
@@ -262,19 +278,19 @@ class Clusterer(BiPlot):
             rr = ResourceResource(fromresource=r, toresource=rd)
             rr.save(using=self.args.database)
 
-    def removeLabels(self, labeledGroupName):  # pragma: no cover
+    def removeLabels(self, clusteredGroupName):  # pragma: no cover
         '''
-        Delete labeled MeasuredParameterResources that have ResourceType.name=labeledGroupName (such as 'Cluster label').
+        Delete named MeasuredParameterResources that have ResourceType.name=clusteredGroupName (such as 'Cluster label').
         Note: Some metadatda ResourceTypes will not be removed even though the Resources that use them will be removed.
         '''
         mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
-            resource__resourcetype__name=labeledGroupName
+            resource__resourcetype__name=clusteredGroupName
             ).select_related('resource')
 
-        rt = ResourceType.objects.using(self.args.database).get(name=labeledGroupName)
+        rt = ResourceType.objects.using(self.args.database).get(name=clusteredGroupName)
 
         if self.args.verbose > 1:
-            print("Removing MeasuredParameterResources with labelGroupName = %s" % (labeledGroupName,))
+            print("Removing MeasuredParameterResources with labelGroupName = %s" % (clusteredGroupName,))
 
         rs = []
         for mpr in mprs:
@@ -286,14 +302,29 @@ class Clusterer(BiPlot):
 
         rt.delete(using=self.args.database)
 
-    def loadData(self, sdt, edt): # pragma: no cover
+    def loadData(self, sdt=None, edt=None): # pragma: no cover
         '''
         Retrieve data from the database and return the x, and y values and IDs (in list form) that the scikit-learn package uses.
         May raise NoPPDataException.
+        Normalize the x and y data based on the statistics of the parameter from the platform stored in STOQS.
         '''
+        if not sdt and not edt:
+            sdt = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
+            edt = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
+            
         pvDict = {}
-        x_ids, y_ids, x, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
-                                                self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
+        x_ids, y_ids, xs, ys, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
+                                                  self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
+
+        if self.args.do_not_normalize:
+            x = xs
+            y = ys
+        else:
+            # See http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MinMaxScaler.html
+            xmin, xmax, xUnits = self._getAxisInfo(self.args.platform, self.args.inputs[0])
+            ymin, ymax, yUnits = self._getAxisInfo(self.args.platform, self.args.inputs[1])
+            x = [((x1 - xmin) / (xmax - xmin)) for x1 in xs]
+            y = [((y1 - ymin) / (ymax - ymin)) for y1 in ys]
 
         return x, y, x_ids, y_ids
 
@@ -377,12 +408,12 @@ class Clusterer(BiPlot):
         examples += sys.argv[0] + (" --saveClusters --database stoqs_september2013"
                                    " --platform Slocum_260 --start 20130923T124038 --end 20130923T150613"
                                    " --inputs optical_backscatter700nm fluorescence --algorithm DBSCAN "
-                                   "--labeledGroupName DBSCANclusters -v\n\n")
+                                   "--clusteredGroupName DBSCANclusters -v\n\n")
         examples += "Remove labels from the database\n"
         examples += sys.argv[0] + (" --removeLabels --database stoqs_september2013"
                                    " --platform Slocum_260 --start 20130923T124038 --end 20130923T150613"
                                    " --inputs optical_backscatter700nm fluorescence "
-                                   "--labeledGroupName DBSCANclusters -v\n\n")
+                                   "--clusteredGroupName DBSCANclusters -v\n\n")
         examples += '''Typical workflow:
 0. Test creating a cluster with --createClusters; does not update database with cluster names (Attributes)
 0. Test stepping through database with --clusterSeq; does not update database with cluster names (Attributes)
@@ -399,10 +430,10 @@ class Clusterer(BiPlot):
                             required=True)
         parser.add_argument('--createClusters', action='store_true', help='Identify clusters in data')
         parser.add_argument('--clusterSeq', action='store_true', help='Step through data at specified interval and identify data clusters')
-        parser.add_argument('--saveClusters', action='store_true', help='Identify clusters in data and save labels to database with --labeledGroupName option')
+        parser.add_argument('--saveClusters', action='store_true', help='Identify clusters in data and save labels to database with --clusteredGroupName option')
         parser.add_argument('--saveClustersSeq', action='store_true', help='Step through data at specified interval, identify data clusters,'
-                                                                          'and save labels to database with --labeledGroupName option')
-        parser.add_argument('--removeLabels', action='store_true', help='Remove Labels created by --saveClusters with --labeledGroupName option')
+                                                                          'and save labels to database with --clusteredGroupName option')
+        parser.add_argument('--removeLabels', action='store_true', help='Remove Labels created by --saveClusters with --clusteredGroupName option')
         parser.add_argument('--inputs', action='store',
                             help='List of STOQS Parameter names to use as features, separated by spaces', nargs='*')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format',
@@ -418,8 +449,9 @@ class Clusterer(BiPlot):
         parser.add_argument('--algorithm', choices=list(self.algorithms.keys()),
                             help='Specify clustering algorithm to use with --createClusters, --clusterSeq, --saveClusters, '
                                                                 'or --saveClusterSeq option')
-        parser.add_argument('--labeledGroupName', action='store', help='Name used to refer to the grouping, such as '
+        parser.add_argument('--clusteredGroupName', action='store', help='Name used to refer to the grouping, such as '
                                                                 '"Cluster label" or "DBSCAN labels"')
+        parser.add_argument('--do_not_normalize', action='store_true', help='Pass non-normalized data to the fitting algorithm')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1, 2, 3], type=int,
                             help='Turn on verbose output. Higher number = more output.', const=1, default=0)
 
@@ -439,15 +471,15 @@ if __name__ == '__main__':
         c.clusterSeq()
 
     elif c.args.saveClusters:
-        c.saveClusters(' '.join((CLUSTERED, c.args.labeledGroupName)))
-        c.describeClusterLabels(' '.join((CLUSTERED, c.args.labeledGroupName)))
+        c.saveClusters(' '.join((CLUSTERED, c.args.clusteredGroupName)))
+        c.describeClusterLabels(' '.join((CLUSTERED, c.args.clusteredGroupName)))
 
     elif c.args.saveClustersSeq:
-        c.saveClustersSeq(' '.join((CLUSTERED, c.args.labeledGroupName)))
-        c.describeClusterLabels(' '.join((CLUSTERED, c.args.labeledGroupName)))
+        c.saveClustersSeq(' '.join((CLUSTERED, c.args.clusteredGroupName)))
+        c.describeClusterLabels(' '.join((CLUSTERED, c.args.clusteredGroupName)))
 
     elif c.args.removeLabels:
-        c.removeLabels(' '.join((CLUSTERED, c.args.labeledGroupName)))
+        c.removeLabels(' '.join((CLUSTERED, c.args.clusteredGroupName)))
 
     else:
         print("fix your inputs")
