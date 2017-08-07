@@ -78,10 +78,12 @@ class PlatformsBiPlot(BiPlot):
         and https://stackoverflow.com/questions/28033046/matplotlib-scatter-color-by-categorical-factors?answertab=active#tab-top
         '''
         all_labels = (Resource.objects.using(self.args.database)
-                        .filter(resourcetype__name__contains=self.args.labeledGroupName)
+                        .filter(resourcetype__name__contains=self.args.groupName)
                         .order_by('value')
                         .distinct()
                         .values_list('value', flat=True))
+        if not all_labels:
+            raise ValueError(f'Found no resources containing --groupName {self.args.groupName}')
         total_num_colors = len(all_labels)
 
         colors = {}
@@ -96,11 +98,11 @@ class PlatformsBiPlot(BiPlot):
             colors[b] = c
 
         mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
-                        resource__resourcetype__name__contains=self.args.labeledGroupName,
+                        resource__resourcetype__name__contains=self.args.groupName,
                         measuredparameter__id__in=(x_ids + y_ids))
 
         if self.args.verbose:
-            print(f'{mprs.count()} mprs for {self.args.labeledGroupName}')
+            print(f'{mprs.count()} mprs for {self.args.groupName}')
 
         for label in all_labels:
             xy_data = defaultdict(list)
@@ -328,7 +330,7 @@ class PlatformsBiPlot(BiPlot):
                     raise Exception('Cannot handle more than 4 platform Parameter-Parameter plots')
 
                 fig.add_subplot(ax)
-                if self.args.labeledGroupName:
+                if self.args.groupName:
                     self.ppSubPlotColor(x_ids, y_ids, pl, self._getColor(pl), xP, yP, ax)
                 else:
                     self.ppSubPlot(x, y, pl, self._getColor(pl), xP, yP, ax)
@@ -401,7 +403,7 @@ class PlatformsBiPlot(BiPlot):
                 nargs=4, default=[])
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format, otherwise allActivityStartTime is used')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format, otherwise allActivityEndTime is used')
-        parser.add_argument('--labeledGroupName', action='store', help='Color points in scatter plots according to labels in group')
+        parser.add_argument('--groupName', action='store', help='Color points in scatter plots according to labels or clusters in groupName')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1, default=0)
     
         self.args = parser.parse_args()
