@@ -2020,7 +2020,7 @@
         }
 
         params['mplabels']=[]
-        $('tr', '.stoqs-attributes').each(function (index, element) {
+        $('.stoqs-attributes').each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 params['mplabels'].push(element.id);
             }
@@ -4455,11 +4455,11 @@ function enable_cardboard(){
                                 '</div>' + 
                                 '<div id="collapse-' + labelTypeID + '" class="accordion-body collapse in">' + 
                                     '<div class="accordion-inner" style="padding:0;">';
-                                labelTypeHtml += '<table class="table table-condensed stoqs-attributes"><tbody>';
+                                labelTypeHtml += '<table class="table table-condensed"><tbody>';
                                 labelTypeHtml += '<tr><td>Source</td><td style="font-family:monospace;font-size:xx-small;">' + 
                                                         data[key]['measurement']['commandlines'][labelType] + '</td></tr>';
                                 $.each(labels, function (index, label) {
-                                    labelTypeHtml += '<tr id="' + label[0] +'">' +
+                                    labelTypeHtml += '<tr id="' + label[0] +'" class="stoqs-attributes">' +
                                                      '<td><button class="btn btn-mini stoqs-toggle attributes">'+ label[1] +'</button></td>' +
                                                      '<td>'+ label[2] +'</td>' +
                                                      '</tr>';
@@ -4945,7 +4945,7 @@ function enable_cardboard(){
                             ids.push(label[0]);
                         });
                     });
-                    $('.stoqs-attributes > tbody > tr').each(function (index, elem) {     
+                    $('.stoqs-attributes').each(function (index, elem) {     
                         if ($.inArray(parseInt(elem.id), ids) == -1) {       
                             disableButton($('button', $(elem)));            // disable the button in the table row      
                         }       
