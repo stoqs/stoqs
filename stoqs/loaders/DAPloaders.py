@@ -728,9 +728,21 @@ class Base_Loader(STOQS_Loader):
 
                 # CF (nee COARDS) has tzyx coordinate ordering, time is at index [1] and depth is at [2]
                 times[pname] = self.ds[self.ds[pname].keys()[1]][tIndx[0]:tIndx[-1]:self.stride]
+
+                # Try and get the depths array, first by CF/COARDS coordinate rules, then by EPIC conventions
                 try:
                     depths[pname] = self.ds[self.ds[pname].keys()[2]][:]                # TODO lookup more precise depth from conversion from pressure
                 except IndexError:
+                    logger.warn('Variable %s has less than 2 coordinates: %s', pname, self.ds[pname].keys())
+                    depths[pname] = []
+
+                if len(depths[pname]) == 1:
+                    try:
+                        logger.info('Attempting to set nominal depth from EPIC Convention sensor_depth variable attribute')
+                        depths[pname] = [self.ds[pname].attributes['sensor_depth']]
+                    except KeyError:
+                        logger.info('Variable %s does not have a sensor_depth attribute', pname)
+                if not list(depths[pname]):
                     logger.warn('Depth coordinate not found at index [2]. Looking for nominal position from EPIC Convention global attributes.')
                     try:
                         depths[pname] = [self.ds.attributes['NC_GLOBAL']['nominal_instrument_depth']]

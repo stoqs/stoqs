@@ -2617,7 +2617,7 @@
         if ( $('#clear-attributes-button').hasClass('btn-primary')) {
             $("#clear-attributes-button").removeClass('btn-primary');
             $("#clear-attributes-button").addClass('disabled');
-            $('tr',$('.stoqs-attributes')).each(function (index, element) {
+            $('.stoqs-attributes').each(function (index, element) {
                 if ($('.btn-primary', $(element)).length) {
                     $('#' + element.id + ' > td > button').removeClass('btn-primary');
                 }
