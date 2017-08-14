@@ -270,7 +270,8 @@ cl.rcpctd_files = [
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201507/'
 cl.m1_files = [
-                'OS_M1_20150729hourly_CMSTV.nc',
+#                'OS_M1_20150729hourly_CMSTV.nc', ## no such file exists
+                'OS_M1_20150730hourly_CMSTV.nc',
                 'm1_hs2_20150730.nc',
               ]
 cl.m1_parms = [
@@ -389,10 +390,10 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
 
-    '''cl.loadL_662()
-    cl.load_wg_Tiny()
+    cl.loadL_662()
+    cl.load_wg_Tiny() 
     ##cl.load_wg_tex()  ## no waveglider Tex in this campaign
-    cl.load_wg_oa() 
+    cl.load_wg_oa()
     cl.loadM1()
     cl.load_oa1()   
     cl.load_oa2()  
@@ -403,8 +404,7 @@ else:
     cl.loadRCuctd()
     cl.loadRCpctd() 
     cl.loadWFuctd()   
-    cl.loadWFpctd()'''
-    cl.loadTethys()
+    cl.loadWFpctd()
 
     ##cl.loadSubSamples()
 
@@ -412,4 +412,3 @@ else:
 cl.addTerrainResources()
 
 print("All Done.")
-

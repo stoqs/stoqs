@@ -283,7 +283,8 @@ cl.rcpctd_files = [
 # http://dods.mbari.org/opendap/hyrax/data/ssdsdata/deployments/m1/201507/OS_M1_20150729hourly_CMSTV.nc
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201507/'
 cl.m1_files = [
-                'OS_M1_20150729hourly_CMSTV.nc'
+#                'OS_M1_20150729hourly_CMSTV.nc'
+                 'OS_M1_20150730hourly_CMSTV.nc'
               ]
 cl.m1_parms = [
                 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
@@ -411,8 +412,8 @@ else:
     cl.load_oa1()
     cl.load_oa2()
     ##cl.loadDorado()
-    #cl.loadDaphne()
-    #cl.loadTethys()
+    cl.loadDaphne()
+    cl.loadTethys()
     cl.loadMakai()
     cl.loadRCuctd()
     cl.loadRCpctd()
@@ -426,4 +427,3 @@ cl.addTerrainResources()
 
 print("All Done.")
 
- 
