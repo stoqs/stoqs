@@ -1270,7 +1270,118 @@ class Base_Loader(STOQS_Loader):
                         " 'timeSeries', or 'timeSeriesProfile' - see:"
                         " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
 
-            for row in data_generator:
+            # Organize loops in order to do batch saves, speeding up the loads
+            if featureType == 'trajectory':
+                batch_size = 5000
+                param_by_key = {}
+                mv_by_key = {}
+                fv_by_key = {}
+
+                ip_list = []
+                meas_list = []
+                mp_list = []
+                last_key = ''
+
+                for key in (set(self.include_names) & set(self.ds.keys())):
+                    param_by_key[key] = self.getParameterByName(key)
+                    mv_by_key[key] = self.getmissing_value(key)
+                    fv_by_key[key] = self.get_FillValue(key)
+                    parameterCount[param_by_key[key]] = 0
+
+                for row in data_generator:
+                    row = self.preProcessParams(row)
+                    (longitude, latitude, mtime, depth) = (
+                                    row.pop('longitude'),
+                                    row.pop('latitude'),
+                                    from_udunits(row.pop('time'), row.pop('timeUnits')),
+                                    row.pop('depth'))
+
+                    if self.is_coordinate_out_of_range(mtime, depth, latitude, longitude):
+                        continue
+
+                    ip = m.InstantPoint(activity=self.activity, timevalue=mtime)
+
+                    if 'measurement' in row:
+                        # For data like LOPC which assigns a 'measurement' item
+                        meas = row['measurement']
+                    else:
+                        point = f'POINT({repr(longitude)} {repr(latitude)})'
+                        meas = m.Measurement(instantpoint=ip, depth=repr(depth), geom=point)
+
+                    ip_list.append(ip)
+                    meas_list.append(meas)
+
+                    # Perhaps multiple Parameters in row for each ip/meas?  Maybe not. 
+                    # Must maintain ip/meas/mp relationships, raise error if more than one.
+                    if len(row) != 1:
+                        raise ValueError(f'More than one item in row: {row}')
+
+                    key, value = list(row.items()).pop()
+                    if key != last_key:
+                        logger.info(f'Loading values for Parameter {key}')
+                    last_key = key
+
+                    value = float(value)
+                    if mv_by_key[key]:
+                        if np.isclose(value, mv_by_key[key]):
+                            continue
+                    if fv_by_key[key]:
+                        if np.isclose(value, fv_by_key[key]):
+                            continue
+                    if value == 'null' or np.isnan(value):
+                        continue
+
+                    if isinstance(value, (list, tuple)):
+                        mp = m.MeasuredParameter(measurement=meas, 
+                                                 parameter=param_by_key[key], dataarray=list(value))
+                    else:
+                        # Single-valued datavalue
+                        mp = m.MeasuredParameter(measurement=meas, 
+                                                 parameter=param_by_key[key], datavalue=value)
+
+                    mp_list.append(mp)
+
+                    parameterCount[param_by_key[key]] += 1
+                    self.loaded += 1
+
+                    try:
+                        # Exceptions must be handled outside of context manager to achieve batch commit speedup
+                        with transaction.atomic():
+                            if (self.loaded % batch_size) == 0:
+                                logger.debug(f'Calling bulk_create() for {len(ip_list)} InstantPoints')
+                                ips = m.InstantPoint.objects.using(self.dbAlias).bulk_create(ip_list)
+                                meas_list2 = []
+                                for meas, ip in zip(meas_list, ips):
+                                    meas.instantpoint = ip
+                                    meas_list2.append(meas)
+
+                                logger.debug(f'Calling bulk_create() for {len(meas_list2)} Measurements')
+                                meass = m.Measurement.objects.using(self.dbAlias).bulk_create(meas_list2)
+                                mp_list2 = []
+                                for mp, meas in zip(mp_list, meass):
+                                    mp.measurement = meas
+                                    mp_list2.append(mp)
+
+                                logger.debug(f'Calling bulk_create() for {len(mp_list2)} MeasuredParameters')
+                                m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(mp_list2)
+
+                                ip_list = []
+                                meas_list = []
+                                mp_list = []
+                                logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
+
+                    except HasMeasurement:
+                        logger.warn("HasMeasurement: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
+                    except SkipRecord as e:
+                        logger.warn("SkipRecord: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
+                    except IntegrityError as e:
+                        logger.warn(f'IntegrityError: {str(e)}')
+                    except DatabaseError as e:
+                        logger.warn(f'DatabaseError: {str(e)}')
+                        
+ 
+            ##for row in data_generator:
+            for row in ():
                 try:
                     row = self.preProcessParams(row)
                 except HasMeasurement:
@@ -1289,7 +1400,7 @@ class Base_Loader(STOQS_Loader):
                                                             row.pop('depth'), row.pop('nomLon'), row.pop('nomLat'),row.pop('nomDepth'))
                         measurement = self.createMeasurement(mtime=mtime, depth=depth, lat=latitude, lon=longitude,
                                                             nomDepth=nomDepth, nomLat=nomLat, nomLong=nomLon)
-                    elif featureType == 'trajectory':
+                    elif featureType == 'not_trajectory':
                         if 'measurement' in row:
                             # For data like LOPC which assigns a 'measurement' item
                             measurement = row['measurement']
@@ -1433,56 +1544,6 @@ class Dorado_Loader(Trajectory_Loader):
     MBARI Dorado data as read from the production archive.  This class includes overriden methods
     to load quick-look plot and other Resources into the STOQS database.
     '''
-    chl = pydap.model.BaseType('nameless')
-    chl.attributes = {
-            'standard_name': 'mass_concentration_of_chlorophyll_in_sea_water',
-            'long_name': 'Chlorophyll',
-            'units': 'ug/l',
-            'name': 'mass_concentration_of_chlorophyll_in_sea_water',
-    }
-    dens = pydap.model.BaseType('nameless')
-    dens.attributes = {
-            'standard_name': 'sea_water_sigma_t',
-            'long_name': 'Sigma-T',
-            'units': 'kg m-3',
-            'name': 'sea_water_sigma_t',
-    }
-    parmDict = {
-            'mass_concentration_of_chlorophyll_in_sea_water': chl,
-            'sea_water_sigma_t': dens
-    }
-    include_names = [
-            'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
-            'fl700_uncorr', 'salinity', 'biolume',
-            'mass_concentration_of_chlorophyll_in_sea_water',
-            'sea_water_sigma_t'
-    ]
-
-    def initDB(self):
-        '''
-        Make sure our added Parameters of mass_concentration_of_chlorophyll_in_sea_water and sea_water_sigma_t are included
-        '''
-        self.addParameters(self.parmDict)
-        logger.debug('Appending to self.varsLoaded = %s', self.varsLoaded)
-        for k in list(self.parmDict.keys()):
-            self.varsLoaded.append(k)       # Make sure to add the derived parameters to the list that gets put in the comment
-
-        return super(Dorado_Loader, self).initDB()
-
-    def preProcessParams(self, row):
-        '''
-        Compute on-the-fly any additional Dorado parameters for loading into the database
-        '''
-        # Magic formula for October 2010 CANON "experiment"
-        if 'fl700_uncorr' in row:
-            row['mass_concentration_of_chlorophyll_in_sea_water'] = 3.4431e+03 * row['fl700_uncorr']
-
-        # Compute sigma-t
-        if 'salinity' in row and 'temperature' in row and 'depth' in row and 'latitude' in row:
-            row['sea_water_sigma_t'] = sw.pden(row['salinity'], row['temperature'], sw.pres(row['depth'], row['latitude'])) - 1000.0
-
-        return super(Dorado_Loader, self).preProcessParams(row)
-
     def addResources(self):
         '''
         In addition to the NC_GLOBAL attributes that are added in the base class also add the quick-look plots that are on the dods server.
