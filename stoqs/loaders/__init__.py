@@ -525,7 +525,7 @@ class STOQS_Loader(object):
         Use provided activity information to add the activity to the database.
         '''
         
-        self.logger.info("Creating Activity with startDate = %s and endDate = %s", 
+        self.logger.debug("Creating Activity with startDate = %s and endDate = %s", 
                 self.startDatetime, self.endDatetime)
         comment = 'Loaded on %s with these include_names: %s' % (datetime.now(), 
                 ' '.join(self.include_names))
@@ -546,8 +546,10 @@ class STOQS_Loader(object):
                                         startdate = self.startDatetime)
 
         if created:
+            self.activity.name = self.activityName
+            self.activity.save(using=self.dbAlias)
             self.logger.info("Created activity %s in database %s with startDate=%s, endDate = %s",
-                    self.activityName, self.dbAlias, self.startDatetime, self.endDatetime)
+                    self.activity.name, self.dbAlias, self.activity.startdate, self.activity.enddate)
         else:
             self.logger.info("Retrieved activity %s from database %s", self.activityName, self.dbAlias)
 
@@ -746,7 +748,23 @@ class STOQS_Loader(object):
             raise SkipRecord
 
         return measurement
-    
+   
+    def is_coordinate_out_of_range(self, mtime, depth, lat, lon, min_depth=-1000, max_depth=5000,
+                                         min_lat=-90, max_lat=90, min_lon=-720, max_lon=720):
+        '''Return True if coordinate falls outside of reasonable bounds
+        '''
+        # Brute force QC check on depth to remove egregous outliers
+        if depth < min_depth or depth > max_depth:
+            return True
+
+        # Brute force QC check on latitude and longitude to remove egregous outliers
+        if lat < min_lat or lat > max_lat:
+            return True
+        if lon < min_lon or lon > max_lon:
+            return True
+
+        return False
+ 
     def preProcessParams(self, row):
         '''
         This method is designed to perform any final pre-processing, such as adding new
@@ -1186,6 +1204,7 @@ class STOQS_Loader(object):
             elif ms.filter(measuredparameter__parameter__standard_name='sea_water_salinity'):
                 salinity_standard_name = 'sea_water_salinity'
 
+            import pdb; pdb.set_trace()
             ms = ms.filter(measuredparameter__parameter__standard_name=salinity_standard_name)
 
             if not ms:
@@ -1330,7 +1349,7 @@ class STOQS_Loader(object):
                 time.sleep(300)
 
             # Create our new Parameter
-            self.logger.info('Getting or creating new altitude Parameter')
+            self.logger.debug('Getting or creating new altitude Parameter')
             try:
                 p_alt, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
                         standard_name='height_above_sea_floor',
@@ -1353,18 +1372,19 @@ class STOQS_Loader(object):
             # Read values from the grid sampling (bottom depths) and add datavalues to the altitude parameter using the save Measurements
             count = 0
             with open(bdepthFileName) as altFH:
-                for line in altFH:
-                    bdepth = line.split()[2]
-                    alt = -float(bdepth)-depthList.pop(0)
-                    try:
-                        meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
-                        mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
-                        mp_alt.save(using=self.dbAlias)
-                    except IntegrityError as e:
-                        self.logger.warn(e)
-                    except DatabaseError as e:
-                        self.logger.warn(e)
-                    count += 1
+                try:
+                    with transaction.atomic():
+                        for line in altFH:
+                            bdepth = line.split()[2]
+                            alt = -float(bdepth)-depthList.pop(0)
+                            meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
+                            mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
+                            mp_alt.save(using=self.dbAlias)
+                            count += 1
+                except IntegrityError as e:
+                    self.logger.warn(e)
+                except DatabaseError as e:
+                    self.logger.warn(e)
 
             # Cleanup and sanity check
             os.remove(xyFileName)
