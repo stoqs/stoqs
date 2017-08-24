@@ -884,6 +884,7 @@ cl.wg_Tiny_files = [
                      'wgTiny/20170605/QC/20170605_QC.nc', ## replace realTime with QC. Load only once.
                      'wgTiny/20170630/QC/20170630_QC.nc', ## replace realTime with QC. Load only once.
                      'wgTiny/20170823/realTime/20170823.nc',
+
                    ]
 
 
