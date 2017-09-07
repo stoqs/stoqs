@@ -1358,6 +1358,17 @@
         if ( ! $('body').data()['init']) {
             $('input[name=terrain_view][value="' + $('body').data()['terrain_view'] + '"]').prop('checked', true).trigger("click");
         }
+        if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
+            // Set color of animated 3D model
+            $.each($('body').data()['platformAnimation'], function(index, plat) {
+                // Axes & all Material IDs starting with 'MAT' in inlined model X3D + ENU axes
+                x3d_color = hexToX3D($('body').data()['platformColors'][plat]);
+                $('#' + plat + '_AAROT_model__Grey > Material').attr('diffuseColor', x3d_color);
+                $("[id*='" + plat + "_AAROT_model__MAT']").attr('diffuseColor', x3d_color);
+                $('#' + plat + '_axesENU__Grey > Material').attr('diffuseColor', x3d_color);
+                $('#' + plat + '_axesENU__Black > Material').attr('diffuseColor', x3d_color);
+            });
+        }
     }
 
     // Called with an element that was selectable, should make that element non-selectable.
@@ -5402,6 +5413,13 @@ function enable_cardboard(){
                 });
             }
         }
+    }
+
+    function hexToX3D(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? 
+         (parseInt(result[1], 16) / 256).toString() + ' ' + (parseInt(result[2], 16) / 256).toString() + ' ' + (parseInt(result[3], 16) / 256).toString()
+         : null;
     }
 
 

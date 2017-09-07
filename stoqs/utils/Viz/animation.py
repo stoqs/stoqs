@@ -45,7 +45,7 @@ class PlatformAnimation(object):
             <Transform id="{pName}_SCALE" DEF="{pName}_SCALE" scale="{scale} {scale} {scale}">
                 <!-- Cylinder height = 0.410 in axes_enu.x3d, scale to make length = 10 m -->
                 <Transform scale="24.390244 24.390244 24.390244">
-                    <Inline url="http://stoqs.mbari.org/x3d/beds/axes_enu.x3d" nameSpaceName="{pName}_axesENU"></Inline>
+                    <Inline url="http://stoqs.mbari.org/x3d/beds/axes_enu.x3d" nameSpaceName="{pName}_axesENU" mapDEFToID="true"></Inline>
                 </Transform>
                 <Transform scale="3 3 3" translation="0 1 0">
                     <Billboard axisOfRotation="0,0,0">
@@ -60,7 +60,7 @@ class PlatformAnimation(object):
                 </Transform>
                 <Transform id="{pName}_AAROT" DEF="{pName}_AAROT">
                     <Transform scale="{plat_scale} {plat_scale} {plat_scale}">
-                        <Inline url="{pURL}"></Inline>
+                        <Inline nameSpaceName="{pName}_AAROT_model" mapDEFToID="true" url="{pURL}"></Inline>
                     </Transform>
                 </Transform>
                 <Transform>
