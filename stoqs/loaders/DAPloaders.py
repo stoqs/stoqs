@@ -1215,6 +1215,29 @@ class Base_Loader(STOQS_Loader):
 
         return _innerInsertRow(self, parmCount, parameterCount, measurement, row)
 
+    def _bulk_load_measurements(self, ip_list, meas_list, mp_list):
+
+        logger.debug(f'Calling bulk_create() for {len(ip_list)} InstantPoints')
+        ips = m.InstantPoint.objects.using(self.dbAlias).bulk_create(ip_list)
+        meas_list2 = []
+        for meas, ip in zip(meas_list, ips):
+            meas.instantpoint = ip
+            meas_list2.append(meas)
+
+        logger.debug(f'Calling bulk_create() for {len(meas_list2)} Measurements')
+        meass = m.Measurement.objects.using(self.dbAlias).bulk_create(meas_list2)
+        mp_list2 = []
+        for mp, meas in zip(mp_list, meass):
+            mp.measurement = meas
+            mp_list2.append(mp)
+
+        logger.debug(f'Calling bulk_create() for {len(mp_list2)} MeasuredParameters')
+        m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(mp_list2)
+
+        ip_list = []
+        meas_list = []
+        mp_list = []
+
     def process_data(self, generator=None, featureType=''): 
         '''Wrapper so as to apply self.dbAlias in the decorator
         '''
@@ -1348,27 +1371,8 @@ class Base_Loader(STOQS_Loader):
                         # Exceptions must be handled outside of context manager to achieve batch commit speedup
                         with transaction.atomic():
                             if (self.loaded % batch_size) == 0:
-                                logger.debug(f'Calling bulk_create() for {len(ip_list)} InstantPoints')
-                                ips = m.InstantPoint.objects.using(self.dbAlias).bulk_create(ip_list)
-                                meas_list2 = []
-                                for meas, ip in zip(meas_list, ips):
-                                    meas.instantpoint = ip
-                                    meas_list2.append(meas)
-
-                                logger.debug(f'Calling bulk_create() for {len(meas_list2)} Measurements')
-                                meass = m.Measurement.objects.using(self.dbAlias).bulk_create(meas_list2)
-                                mp_list2 = []
-                                for mp, meas in zip(mp_list, meass):
-                                    mp.measurement = meas
-                                    mp_list2.append(mp)
-
-                                logger.debug(f'Calling bulk_create() for {len(mp_list2)} MeasuredParameters')
-                                m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(mp_list2)
-
-                                ip_list = []
-                                meas_list = []
-                                mp_list = []
                                 logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
+                                self._bulk_load_measurements(ip_list, meas_list, mp_list)
 
                     except HasMeasurement:
                         logger.warn("HasMeasurement: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
@@ -1379,6 +1383,8 @@ class Base_Loader(STOQS_Loader):
                     except DatabaseError as e:
                         logger.warn(f'DatabaseError: {str(e)}')
                         
+                # Save remaining items in the saved-up lists
+                self._bulk_load_measurements(ip_list, meas_list, mp_list)
  
             ##for row in data_generator:
             for row in ():
