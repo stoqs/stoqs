@@ -773,11 +773,6 @@ class STOQS_Loader(object):
         columns such as chlorophyl count, etc.
         @param row: A dictionary representing a single "row" of parameter data to be added to the database. 
         '''
-        self.logger.debug(row)
-        if 'measurement' in row:
-            # Special for things like LOPC data 
-            raise HasMeasurement()
-               
         # First seen in April 2017 Nemesis data
         if row['depth'] == self.get_FillValue('depth'):
             raise SkipRecord('depth == _FillValue (%s)' % row['depth'])
