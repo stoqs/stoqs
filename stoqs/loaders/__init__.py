@@ -778,20 +778,6 @@ class STOQS_Loader(object):
             # Special for things like LOPC data 
             raise HasMeasurement()
                
-        try:
-            if (row['longitude'] == missing_value or row['latitude'] == missing_value or
-                    #float(row['longitude']) == 0.0 or float(row['latitude']) == 0.0 or
-                    math.isnan(row['longitude'] ) or math.isnan(row['latitude'])):
-                raise SkipRecord('Invalid latitude or longitude coordinate')
-        except KeyError as e:
-            raise SkipRecord('KeyError: ' + str(e))
-
-        # Additional sanity check on latitude and longitude
-        if row['latitude'] > 90 or row['latitude'] < -90:
-            raise SkipRecord('Invalid latitude = %s' % row['latitude'])
-        if row['longitude'] > 720 or row['longitude'] < -720:
-            raise SkipRecord('Invalid longitude = %s' % row['longitude'])
-
         # First seen in April 2017 Nemesis data
         if row['depth'] == self.get_FillValue('depth'):
             raise SkipRecord('depth == _FillValue (%s)' % row['depth'])
@@ -1204,7 +1190,6 @@ class STOQS_Loader(object):
             elif ms.filter(measuredparameter__parameter__standard_name='sea_water_salinity'):
                 salinity_standard_name = 'sea_water_salinity'
 
-            import pdb; pdb.set_trace()
             ms = ms.filter(measuredparameter__parameter__standard_name=salinity_standard_name)
 
             if not ms:
