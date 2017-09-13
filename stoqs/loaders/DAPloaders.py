@@ -1215,12 +1215,11 @@ class Base_Loader(STOQS_Loader):
 
         return _innerInsertRow(self, parmCount, parameterCount, measurement, row)
 
-    def _bulk_load_measurements(self, ip_list, meas_list, mp_list, nl_list):
+    def _bulk_load_measurements(self, ip_list, meas_list, mp_list, nl_set):
 
-        if nl_list:
-            logger.debug(f'Calling bulk_create() for {len(nl_list)} NominalLocations')
-            nls = m.NominalLocation.objects.using(self.dbAlias).bulk_create(nl_list)
-            for i, nl in enumerate(nls):
+        if nl_set:
+            logger.debug(f'Assiging {len(nl_set)} NominalLocations')
+            for i, nl in enumerate(nl_set):
                 meas_list[i].nominallocation = nl
 
         logger.debug(f'Calling bulk_create() for {len(ip_list)} InstantPoints')
@@ -1238,7 +1237,7 @@ class Base_Loader(STOQS_Loader):
         ip_list = []
         meas_list = []
         mp_list = []
-        nl_list = []
+        nl_set = set()
 
     def process_data(self, generator=None, featureType=''): 
         '''Wrapper so as to apply self.dbAlias in the decorator
@@ -1306,7 +1305,7 @@ class Base_Loader(STOQS_Loader):
                 ip_list = []
                 meas_list = []
                 mp_list = []
-                nl_list = []
+                nl_set = set()
         
                 nomDepth = None
                 nom_point = None
@@ -1376,9 +1375,12 @@ class Base_Loader(STOQS_Loader):
                     ip_list.append(ip)
                     meas_list.append(meas)
                     mp_list.append(mp)
+
+                    # Go ahead and create the unique NominalLocations here rather than in _bulk_load_measurements()
                     if nomDepth and nom_point:
-                        nl_list.append(m.NominalLocation(depth=repr(nomDepth), geom=nom_point,
-                                                         activity=self.activity))
+                        nl, _ = m.NominalLocation.objects.using(self.dbAlias).get_or_create(
+                                    depth=repr(nomDepth), geom=nom_point, activity=self.activity)
+                        nl_set.add(nl)
 
                     parameterCount[param_by_key[key]] += 1
                     self.loaded += 1
@@ -1388,7 +1390,7 @@ class Base_Loader(STOQS_Loader):
                         with transaction.atomic():
                             if (self.loaded % batch_size) == 0:
                                 logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
-                                self._bulk_load_measurements(ip_list, meas_list, mp_list, nl_list)
+                                self._bulk_load_measurements(ip_list, meas_list, mp_list, nl_set)
 
                     except HasMeasurement:
                         logger.warn("HasMeasurement: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
@@ -1400,7 +1402,7 @@ class Base_Loader(STOQS_Loader):
                         logger.warn(f'DatabaseError: {str(e)}')
                         
                 # Save remaining items in the saved-up lists
-                self._bulk_load_measurements(ip_list, meas_list, mp_list, nl_list)
+                self._bulk_load_measurements(ip_list, meas_list, mp_list, nl_set)
  
             ##for row in data_generator:
             for row in ():
