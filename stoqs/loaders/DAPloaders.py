@@ -1304,8 +1304,8 @@ class Base_Loader(STOQS_Loader):
             if True:
                 batch_size = 5000
                 param_by_key = {}
-                mv_by_key = {}
-                fv_by_key = {}
+                self.mv_by_key = {}
+                self.fv_by_key = {}
 
                 ip_list = []
                 meas_list = []
@@ -1319,9 +1319,11 @@ class Base_Loader(STOQS_Loader):
 
                 for key in (set(self.include_names) & set(self.ds.keys())):
                     param_by_key[key] = self.getParameterByName(key)
-                    mv_by_key[key] = self.getmissing_value(key)
-                    fv_by_key[key] = self.get_FillValue(key)
                     parameterCount[param_by_key[key]] = 0
+
+                for key in self.ds.keys():
+                    self.mv_by_key[key] = self.getmissing_value(key)
+                    self.fv_by_key[key] = self.get_FillValue(key)
 
                 for row in data_generator:
                     row = self.preProcessParams(row)
@@ -1330,10 +1332,6 @@ class Base_Loader(STOQS_Loader):
                                     row.pop('latitude'),
                                     from_udunits(row.pop('time'), row.pop('timeUnits')),
                                     row.pop('depth'))
-
-                    if self.is_coordinate_out_of_range(mtime, depth, latitude, longitude):
-                        continue
-
 
                     # timeSeries and timeSeriesProfile will have nominal location
                     if 'nomLon' in row and 'nomLat' in row and 'nomDepth' in row:
@@ -1351,15 +1349,11 @@ class Base_Loader(STOQS_Loader):
                         logger.info(f'Loading values for Parameter {key}')
                     last_key = key
 
-                    # Continue to next row if datavalue is invalid
+                    if self.is_coordinate_bad(key, mtime, depth, latitude, longitude):
+                        continue
+
                     value = float(value)
-                    if mv_by_key[key]:
-                        if np.isclose(value, mv_by_key[key]):
-                            continue
-                    if fv_by_key[key]:
-                        if np.isclose(value, fv_by_key[key]):
-                            continue
-                    if value == 'null' or np.isnan(value):
+                    if self.is_value_bad(key, value):
                         continue
 
                     # Collect model instances for bulk_create()s or get_or_create() for non-trajectory data

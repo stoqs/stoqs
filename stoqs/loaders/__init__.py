@@ -749,10 +749,37 @@ class STOQS_Loader(object):
 
         return measurement
    
-    def is_coordinate_out_of_range(self, mtime, depth, lat, lon, min_depth=-1000, max_depth=5000,
+    def is_coordinate_bad(self, key, mtime, depth, lat, lon, min_depth=-1000, max_depth=5000,
                                          min_lat=-90, max_lat=90, min_lon=-720, max_lon=720):
-        '''Return True if coordinate falls outside of reasonable bounds
+        '''Return True if coordinate if missing or fill_value, or falls outside of reasonable bounds
         '''
+        # Missing value rejections
+        ac = self.getAuxCoordinates(key)
+        if self.mv_by_key[ac['depth']]:
+            if np.isclose(depth, self.mv_by_key[ac['depth']]):
+                return True
+
+        if self.mv_by_key[ac['latitude']]:
+            if np.isclose(lat, self.mv_by_key[ac['latitude']]):
+                return True
+
+        if self.mv_by_key[ac['longitude']]:
+            if np.isclose(lon, self.mv_by_key[ac['longitude']]):
+                return True
+
+        # fill_value rejections
+        if self.fv_by_key[ac['depth']]:
+            if np.isclose(depth, self.fv_by_key[ac['depth']]):
+                return True
+
+        if self.fv_by_key[ac['latitude']]:
+            if np.isclose(lat, self.fv_by_key[ac['latitude']]):
+                return True
+
+        if self.fv_by_key[ac['longitude']]:
+            if np.isclose(lon, self.fv_by_key[ac['longitude']]):
+                return True
+
         # Brute force QC check on depth to remove egregous outliers
         if depth < min_depth or depth > max_depth:
             return True
@@ -761,6 +788,20 @@ class STOQS_Loader(object):
         if lat < min_lat or lat > max_lat:
             return True
         if lon < min_lon or lon > max_lon:
+            return True
+
+        return False
+
+    def is_value_bad(self, key, value):
+        if self.mv_by_key[key]:
+            if np.isclose(value, self.mv_by_key[key]):
+                return True
+
+        if self.fv_by_key[key]:
+            if np.isclose(value, self.fv_by_key[key]):
+                return True
+
+        if value == 'null' or np.isnan(value):
             return True
 
         return False
