@@ -67,6 +67,12 @@ logger = logging.getLogger(__name__)
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.utils import CursorWrapper
 
+TRAJECTORY = 'trajectory'
+TIMESERIES = 'timeseries'
+TIMESERIESPROFILE = 'timeseriesprofile'
+TRAJECTORYPROFILE = 'trajectoryprofile'
+
+
 if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
 
@@ -204,7 +210,7 @@ class Base_Loader(STOQS_Loader):
                 logger.warn(str(e))
                 continue
 
-            if self.getFeatureType() == 'trajectory' or self.getFeatureType() == 'trajectoryprofile': 
+            if self.getFeatureType() == TRAJECTORY or self.getFeatureType() == TRAJECTORYPROFILE: 
                 logger.debug('Getting trajectory min and max times for v = %s', v)
                 logger.debug("self.ds[ac['time']][0] = %s", self.ds[ac['time']][0])
                 try:
@@ -217,7 +223,7 @@ class Base_Loader(STOQS_Loader):
                         minDT[v] = from_udunits(self.ds[ac['time']][0][0], 'seconds since 1970-01-01 00:00:00')
                         maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], 'seconds since 1970-01-01 00:00:00')
                     
-            elif self.getFeatureType() == 'timeseries' or self.getFeatureType() == 'timeseriesprofile': # pragma: no cover
+            elif self.getFeatureType() == TIMESERIES or self.getFeatureType() == TIMESERIESPROFILE: # pragma: no cover
                 logger.debug('Getting timeseries start time for v = %s', v)
                 minDT[v] = from_udunits(self.ds[v][ac['time']][0][0], self.ds[ac['time']].attributes['units'])
                 maxDT[v] = from_udunits(self.ds[v][ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
@@ -340,14 +346,14 @@ class Base_Loader(STOQS_Loader):
         '''
         Return string of featureType from table at http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html.
         Accomodate previous concepts of this attribute and convert to the new discrete sampling geometry conventions in CF-1.6.
-        Possible return values: 'trajectory', 'timeseries', 'timeseriesprofile', lowercase versions.
+        Possible return values: TRAJECTORY, TIMESERIES, TIMESERIESPROFILE, lowercase versions.
         '''
         conventions = ''
         try:
             nc_global_keys = self.ds.attributes['NC_GLOBAL']
         except KeyError:
             logger.warn('Dataset does not have an NC_GLOBAL attribute! Setting featureType to "trajectory" assuming that this is an old Tethys file')
-            return 'trajectory'
+            return TRAJECTORY
 
         if 'Conventions' in nc_global_keys:
             conventions = self.ds.attributes['NC_GLOBAL']['Conventions'].lower()
@@ -378,11 +384,11 @@ class Base_Loader(STOQS_Loader):
                 featureType = ''
 
         if featureType.lower() == 'station':
-            # Used in elvis' TDS mooring data aggregation, it's really 'timeSeriesProfile'
-            featureType = 'timeSeriesProfile'
+            # Used in elvis' TDS mooring data aggregation, it's really 'timeseriesprofile'
+            featureType = TIMESERIESPROFILE
 
-        if featureType.lower() == 'Trajectory':
-            featureType = 'trajectory'
+        if featureType.lower() == 'trajectory':
+            featureType = TRAJECTORY
 
         # Put the CF-1.6 proper featureType into NC_GLOBAL so that addResources will put it into the database
         self.ds.attributes['NC_GLOBAL']['featureType'] = featureType
@@ -483,22 +489,22 @@ class Base_Loader(STOQS_Loader):
                 continue
      
             # depth may be single-valued or an array 
-            if self.getFeatureType() == 'timeseries': 
+            if self.getFeatureType() == TIMESERIES: 
                 logger.debug('Initializing depths list for timeseries, ac = %s', ac)
                 try:
                     depths[v] = self.ds[v][ac['depth']][:][0]
                 except KeyError:
                     logger.warn('No depth coordinate found for %s.  Assuming EPIC scalar and assigning depth from first element', v)
                     depths[v] = self.ds[ac['depth']][0]
-            elif self.getFeatureType() == 'timeseriesprofile':
+            elif self.getFeatureType() == TIMESERIESPROFILE:
                 logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac) 
                 try:
                     depths[v] = self.ds[v][ac['depth']][:]
                 except KeyError:
-                    # Likely a 'timeseries' variable in a 'timeseriesprofile' file (e.g. heading in ADCP file)
+                    # Likely a TIMESERIES variable in a TIMESERIESPROFILE file (e.g. heading in ADCP file)
                     # look elsewhere for a nominal depth
                     depths[v] = [float(self.ds.attributes['NC_GLOBAL']['nominal_sensor_depth'])]
-            elif self.getFeatureType() == 'trajectoryprofile':
+            elif self.getFeatureType() == TRAJECTORYPROFILE:
                 logger.debug('Initializing depths list for trajectoryprofile, ac = %s', ac)
                 depths[v] = self.ds[v][ac['depth']][:]
 
@@ -642,7 +648,7 @@ class Base_Loader(STOQS_Loader):
                 logger.warn("%s: Skipping", e)
                 continue
             try:
-                if self.getFeatureType() == 'trajectory':
+                if self.getFeatureType() == TRAJECTORY:
                     try:
                         trajSingleParameterCount = np.prod(self.ds[name].shape[1:] + (np.diff(tIndx)[0],))
                     except AttributeError:
@@ -654,7 +660,7 @@ class Base_Loader(STOQS_Loader):
                     # Likely using pydap 3.2+
                     count += (np.prod(self.ds[name].array.shape[1:] + (np.diff(tIndx)[0],)) / self.stride)
             except KeyError as e:
-                if self.getFeatureType() == 'trajectory':
+                if self.getFeatureType() == TRAJECTORY:
                     # Assume that it's a derived variable and add same count as 
                     logger.debug("%s: Assuming it's a derived parameter", e)
                     numDerived += 1
@@ -1276,31 +1282,31 @@ class Base_Loader(STOQS_Loader):
             if generator:
                 logger.info('Using data generator passed into process_data')
                 data_generator = generator()
-                featureType = 'trajectory'
+                featureType = TRAJECTORY
             else:
                 logger.info('self.getFeatureType() = %s', self.getFeatureType())
-                if self.getFeatureType() == 'timeseriesprofile':
+                if self.getFeatureType() == TIMESERIESPROFILE:
                     data_generator = self._genTimeSeriesGridType()
-                    featureType = 'timeseriesprofile'
-                elif self.getFeatureType() == 'trajectoryprofile':
+                    featureType = TIMESERIESPROFILE
+                elif self.getFeatureType() == TRAJECTORYPROFILE:
                     data_generator = self._genTrajectoryProfileGridType()
-                    featureType = 'trajectoryprofile'
-                elif self.getFeatureType() == 'timeseries':
+                    featureType = TRAJECTORYPROFILE
+                elif self.getFeatureType() == TIMESERIES:
                     data_generator = self._genTimeSeriesGridType()
-                    featureType = 'timeseries'
-                elif self.getFeatureType() == 'trajectory':
+                    featureType = TIMESERIES
+                elif self.getFeatureType() == TRAJECTORY:
                     data_generator = self._genTrajectory()
-                    featureType = 'trajectory'
+                    featureType = TRAJECTORY
 
             self.totalRecords = self.getTotalRecords()
 
             if not featureType:
-                raise Exception("Global attribute 'featureType' is not one of 'trajectory',"
-                        " 'timeSeries', or 'timeSeriesProfile' - see:"
+                raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
+                        " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
                         " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
 
             # Organize loops in order to do batch saves, speeding up the loads
-            ##if featureType == 'trajectory':
+            ##if featureType == TRAJECTORY:
             if True:
                 batch_size = 5000
                 param_by_key = {}
@@ -1357,9 +1363,9 @@ class Base_Loader(STOQS_Loader):
                         continue
 
                     # Collect model instances for bulk_create()s or get_or_create() for non-trajectory data
-                    if featureType == 'trajectory' or featureType == 'timeseries':
+                    if featureType == TRAJECTORY or featureType == TIMESERIES:
                         ip = m.InstantPoint(activity=self.activity, timevalue=mtime)
-                    elif featureType == 'timeseriesprofile' or featureType == 'trajectoryprofile':
+                    elif featureType == TIMESERIESPROFILE or featureType == TRAJECTORYPROFILE:
                         ip, _ = m.InstantPoint.objects.using(self.dbAlias).get_or_create( activity=self.activity, timevalue=mtime)
 
                     nl = None
@@ -1372,9 +1378,9 @@ class Base_Loader(STOQS_Loader):
                         meas = row['measurement']
                     else:
                         point = f'POINT({repr(longitude)} {repr(latitude)})'
-                        if featureType == 'trajectory':
+                        if featureType == TRAJECTORY:
                             meas = m.Measurement(instantpoint=ip, depth=repr(depth), geom=point)
-                        elif featureType == 'timeseriesprofile' or featureType == 'timeseries':
+                        elif featureType == TIMESERIESPROFILE or featureType == TIMESERIES:
                             meas, _ = m.Measurement.objects.using(self.dbAlias).get_or_create(
                                             instantpoint=ip, depth=repr(depth), geom=point, nominallocation=nl)
 
@@ -1426,7 +1432,7 @@ class Base_Loader(STOQS_Loader):
                     sys.exit(-1)
                 
                 try:
-                    if featureType == 'timeseriesprofile' or featureType == 'timeseries' or featureType == 'trajectoryprofile':
+                    if featureType == TIMESERIESPROFILE or featureType == TIMESERIES or featureType == TRAJECTORYPROFILE:
                         longitude, latitude, mtime, depth, nomLon, nomLat, nomDepth = (row.pop('longitude'), row.pop('latitude'),
                                                             from_udunits(row.pop('time'), row.pop('timeUnits')),
                                                             row.pop('depth'), row.pop('nomLon'), row.pop('nomLat'),row.pop('nomDepth'))
@@ -1533,13 +1539,13 @@ class Base_Loader(STOQS_Loader):
             self.updateActivityParameterStats(parameterCount)
             self.updateCampaignStartEnd()
             self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
-            if featureType.lower() == 'trajectory':
+            if featureType.lower() == TRAJECTORY:
                 self.insertSimpleDepthTimeSeries()
                 self.saveBottomDepth()
                 self.insertSimpleBottomDepthTimeSeries()
-            elif self.getFeatureType().lower() == 'timeseries' or self.getFeatureType().lower() == 'timeseriesprofile':
+            elif self.getFeatureType().lower() == TIMESERIES or self.getFeatureType().lower() == TIMESERIESPROFILE:
                 self.insertSimpleDepthTimeSeriesByNominalDepth()
-            elif self.getFeatureType().lower() == 'trajectoryprofile':
+            elif self.getFeatureType().lower() == TRAJECTORYPROFILE:
                 self.insertSimpleDepthTimeSeriesByNominalDepth(trajectoryProfileDepths=self.timeDepthProfiles)
             logger.info("Data load complete, %d records loaded.", self.loaded)
 
@@ -1938,11 +1944,11 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         for v in lopc_loader.include_names:
             lopc_loader.auxCoords[v] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
-        Dorado_Loader.getFeatureType = lambda self: 'trajectory'
+        Dorado_Loader.getFeatureType = lambda self: TRAJECTORY
         try:
             # Specify generator and featureType so that non-CF LOPC data can me loaded
             lopc_loader.process_data(generator=lopc_loader._genTrajectory, 
-                    featureType='trajectory')
+                    featureType=TRAJECTORY)
         except VariableMissingCoordinatesAttribute as e:
             logger.exception(str(e))
         except NoValidData as e:
