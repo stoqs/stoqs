@@ -408,7 +408,7 @@ class Measurement(models.Model):
         verbose_name_plural = 'Measurements'
         app_label = 'stoqs'
     def __str__(self):
-        return "Measurement at %s" % (self.geom,)
+        return "Measurement at %s, %s" % (self.geom, self.depth)
 
 
 @python_2_unicode_compatible
