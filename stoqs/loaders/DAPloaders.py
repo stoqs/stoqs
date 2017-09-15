@@ -438,7 +438,7 @@ class Base_Loader(STOQS_Loader):
                 except KeyError as e:
                     raise AuxCoordMissingStandardName(e)
         else:
-            logger.warn('Variable %s is missing coordinates attribute, checking if loader has specified it in auxCoords', variable)
+            logger.debug('Variable %s is missing coordinates attribute, checking if loader has specified it in auxCoords', variable)
             if variable in self.auxCoords:
                 # Try getting it from overridden values provided
                 for coordSN, coord in list(self.auxCoords[variable].items()):
@@ -1247,10 +1247,6 @@ class Base_Loader(STOQS_Loader):
         logger.info(f'Calling bulk_create() for {len(mp_list)} MeasuredParameters')
         MeasuredParameter.objects.using(self.dbAlias).bulk_create(mp_list)
 
-        ip_list = []
-        meas_list = []
-        mp_list = []
-
     def process_data(self, generator=None, featureType=''): 
         '''Wrapper so as to apply self.dbAlias in the decorator
         '''
@@ -1352,6 +1348,7 @@ class Base_Loader(STOQS_Loader):
                         raise ValueError(f'More than one item in row: {row}')
 
                     key, value = list(row.items()).pop()
+                    value = float(value)
                     if key != last_key:
                         logger.info(f'Loading values for Parameter {key}')
                     last_key = key
@@ -1359,15 +1356,17 @@ class Base_Loader(STOQS_Loader):
                     if self.is_coordinate_bad(key, mtime, depth, latitude, longitude):
                         continue
 
-                    value = float(value)
                     if self.is_value_bad(key, value):
                         continue
 
                     # Collect model instances for bulk_create()s or get_or_create() for non-trajectory data
-                    if featureType == TRAJECTORY or featureType == TIMESERIES:
-                        ip = InstantPoint(activity=self.activity, timevalue=mtime)
-                    elif featureType == TIMESERIESPROFILE or featureType == TRAJECTORYPROFILE:
-                        ip, _ = InstantPoint.objects.using(self.dbAlias).get_or_create( activity=self.activity, timevalue=mtime)
+                    ##if featureType == TRAJECTORY or featureType == TIMESERIES:
+                    ##    ip = InstantPoint(activity=self.activity, timevalue=mtime)
+                    ##elif featureType == TIMESERIESPROFILE or featureType == TRAJECTORYPROFILE:
+                    ##    ip, _ = InstantPoint.objects.using(self.dbAlias).get_or_create(
+                    ##                        activity=self.activity, timevalue=mtime)
+                    ip, _ = InstantPoint.objects.using(self.dbAlias).get_or_create(
+                                        activity=self.activity, timevalue=mtime)
 
                     nl = None
                     if nomDepth and nom_point:
@@ -1379,11 +1378,13 @@ class Base_Loader(STOQS_Loader):
                         meas = row['measurement']
                     else:
                         point = f'POINT({repr(longitude)} {repr(latitude)})'
-                        if featureType == TRAJECTORY:
-                            meas = Measurement(instantpoint=ip, depth=repr(depth), geom=point)
-                        elif featureType == TIMESERIESPROFILE or featureType == TIMESERIES:
-                            meas, _ = Measurement.objects.using(self.dbAlias).get_or_create(
-                                            instantpoint=ip, depth=repr(depth), geom=point, nominallocation=nl)
+                        ##if featureType == TRAJECTORY:
+                        ##    meas = Measurement(instantpoint=ip, depth=repr(depth), geom=point)
+                        ##elif featureType == TIMESERIESPROFILE or featureType == TIMESERIES:
+                        ##    meas, _ = Measurement.objects.using(self.dbAlias).get_or_create(
+                        ##                    instantpoint=ip, depth=repr(depth), geom=point, nominallocation=nl)
+                        meas, _ = Measurement.objects.using(self.dbAlias).get_or_create(
+                                        instantpoint=ip, depth=repr(depth), geom=point, nominallocation=nl)
 
                     if isinstance(value, (list, tuple)):
                         mp = MeasuredParameter(measurement=meas, 
@@ -1403,9 +1404,14 @@ class Base_Loader(STOQS_Loader):
                     try:
                         # Exceptions must be handled outside of context manager to achieve batch commit speedup
                         with transaction.atomic():
-                            if (self.loaded % batch_size) == 0:
+                            if (self.loaded % 500) == 0:
                                 logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
+                            if (self.loaded % batch_size) == 0:
+                                ##logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
                                 self._bulk_load_measurements(ip_list, meas_list, mp_list)
+                                ip_list = []
+                                meas_list = []
+                                mp_list = []
 
                     except HasMeasurement:
                         logger.warn("HasMeasurement: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
