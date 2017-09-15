@@ -1215,29 +1215,34 @@ class Base_Loader(STOQS_Loader):
 
         return _innerInsertRow(self, parmCount, parameterCount, measurement, row)
 
-    def _bulk_load_measurements(self, ip_list, meas_list, mp_list, nl_set):
+    def _bulk_load_measurements(self, ip_list, meas_list, mp_list):
 
-        if nl_set:
-            logger.debug(f'Assiging {len(nl_set)} NominalLocations')
-            for i, nl in enumerate(nl_set):
-                meas_list[i].nominallocation = nl
+        # If any of the ip_list items has an id then it exists in the database already via a get_or_create()
+        if ip_list[0].id:
+            ips = ip_list
+        else:
+            logger.info(f'Calling bulk_create() for {len(ip_list)} InstantPoints')
+            ips = m.InstantPoint.objects.using(self.dbAlias).bulk_create(ip_list)
 
-        logger.debug(f'Calling bulk_create() for {len(ip_list)} InstantPoints')
-        ips = m.InstantPoint.objects.using(self.dbAlias).bulk_create(ip_list)
         for i, ip in enumerate(ips):
             meas_list[i].instantpoint = ip
 
-        logger.debug(f'Calling bulk_create() for {len(meas_list)} Measurements')
-        for i, meas in enumerate(m.Measurement.objects.using(self.dbAlias).bulk_create(meas_list)):
+        # If any of the meas_list items has an id then it exists in the database already via a get_or_create()
+        if meas_list[0].id:
+            meass = meas_list
+        else:
+            logger.info(f'Calling bulk_create() for {len(meas_list)} Measurements')
+            meass = m.Measurement.objects.using(self.dbAlias).bulk_create(meas_list)
+
+        for i, meas in enumerate(meass):
             mp_list[i].measurement = meas
 
-        logger.debug(f'Calling bulk_create() for {len(mp_list)} MeasuredParameters')
+        logger.info(f'Calling bulk_create() for {len(mp_list)} MeasuredParameters')
         m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(mp_list)
 
         ip_list = []
         meas_list = []
         mp_list = []
-        nl_set = set()
 
     def process_data(self, generator=None, featureType=''): 
         '''Wrapper so as to apply self.dbAlias in the decorator
@@ -1329,14 +1334,6 @@ class Base_Loader(STOQS_Loader):
                     if self.is_coordinate_out_of_range(mtime, depth, latitude, longitude):
                         continue
 
-                    ip = m.InstantPoint(activity=self.activity, timevalue=mtime)
-
-                    if 'measurement' in row:
-                        # For data like LOPC which assigns a 'measurement' item
-                        meas = row['measurement']
-                    else:
-                        point = f'POINT({repr(longitude)} {repr(latitude)})'
-                        meas = m.Measurement(instantpoint=ip, depth=repr(depth), geom=point)
 
                     # timeSeries and timeSeriesProfile will have nominal location
                     if 'nomLon' in row and 'nomLat' in row and 'nomDepth' in row:
@@ -1354,6 +1351,7 @@ class Base_Loader(STOQS_Loader):
                         logger.info(f'Loading values for Parameter {key}')
                     last_key = key
 
+                    # Continue to next row if datavalue is invalid
                     value = float(value)
                     if mv_by_key[key]:
                         if np.isclose(value, mv_by_key[key]):
@@ -1363,6 +1361,28 @@ class Base_Loader(STOQS_Loader):
                             continue
                     if value == 'null' or np.isnan(value):
                         continue
+
+                    # Collect model instances for bulk_create()s or get_or_create() for non-trajectory data
+                    if featureType == 'trajectory' or featureType == 'timeseries':
+                        ip = m.InstantPoint(activity=self.activity, timevalue=mtime)
+                    elif featureType == 'timeseriesprofile' or featureType == 'trajectoryprofile':
+                        ip, _ = m.InstantPoint.objects.using(self.dbAlias).get_or_create( activity=self.activity, timevalue=mtime)
+
+                    nl = None
+                    if nomDepth and nom_point:
+                        nl, _ = m.NominalLocation.objects.using(self.dbAlias).get_or_create(
+                                    depth=repr(nomDepth), geom=nom_point, activity=self.activity)
+
+                    if 'measurement' in row:
+                        # For data like LOPC which assigns a 'measurement' item
+                        meas = row['measurement']
+                    else:
+                        point = f'POINT({repr(longitude)} {repr(latitude)})'
+                        if featureType == 'trajectory':
+                            meas = m.Measurement(instantpoint=ip, depth=repr(depth), geom=point)
+                        elif featureType == 'timeseriesprofile' or featureType == 'timeseries':
+                            meas, _ = m.Measurement.objects.using(self.dbAlias).get_or_create(
+                                            instantpoint=ip, depth=repr(depth), geom=point, nominallocation=nl)
 
                     if isinstance(value, (list, tuple)):
                         mp = m.MeasuredParameter(measurement=meas, 
@@ -1376,12 +1396,6 @@ class Base_Loader(STOQS_Loader):
                     meas_list.append(meas)
                     mp_list.append(mp)
 
-                    # Go ahead and create the unique NominalLocations here rather than in _bulk_load_measurements()
-                    if nomDepth and nom_point:
-                        nl, _ = m.NominalLocation.objects.using(self.dbAlias).get_or_create(
-                                    depth=repr(nomDepth), geom=nom_point, activity=self.activity)
-                        nl_set.add(nl)
-
                     parameterCount[param_by_key[key]] += 1
                     self.loaded += 1
 
@@ -1390,7 +1404,7 @@ class Base_Loader(STOQS_Loader):
                         with transaction.atomic():
                             if (self.loaded % batch_size) == 0:
                                 logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
-                                self._bulk_load_measurements(ip_list, meas_list, mp_list, nl_set)
+                                self._bulk_load_measurements(ip_list, meas_list, mp_list)
 
                     except HasMeasurement:
                         logger.warn("HasMeasurement: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
@@ -1402,7 +1416,7 @@ class Base_Loader(STOQS_Loader):
                         logger.warn(f'DatabaseError: {str(e)}')
                         
                 # Save remaining items in the saved-up lists
-                self._bulk_load_measurements(ip_list, meas_list, mp_list, nl_set)
+                self._bulk_load_measurements(ip_list, meas_list, mp_list)
  
             ##for row in data_generator:
             for row in ():
