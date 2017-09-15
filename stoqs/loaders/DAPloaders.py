@@ -39,7 +39,8 @@ from django.db.models import Max
 from django.db.utils import IntegrityError, DatabaseError
 from django.db import transaction
 from jdcal import gcal2jd, jd2gcal
-from stoqs import models as m
+from stoqs.models import (Activity, InstantPoint, Measurement, MeasuredParameter,
+                          NominalLocation, Resource, ResourceType, ActivityResource,)
 from datetime import datetime, timedelta
 import pytz
 from pydap.client import open_url
@@ -999,7 +1000,7 @@ class Base_Loader(STOQS_Loader):
                         logger.error('Could not find corresponding measurment for LOPC data measured at %s', tv)
                         continue
                     else:
-                        measurements[pname].append(m.Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
+                        measurements[pname].append(Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
 
             else:
                 logger.warn('Variable %s is not of type pydap.model.GridType with a '
@@ -1184,13 +1185,13 @@ class Base_Loader(STOQS_Loader):
                             logger.debug('%s', str(e))
 
                         # Single-valued datavalue
-                        mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, datavalue=value)
+                        mp = MeasuredParameter(measurement=measurement, parameter=parameter, datavalue=value)
 
                     except TypeError:
                         # Likely a numpy Array from LOPC, cast to list and save in dataarray field, but if not catch
                         # the error and continue
                         try:
-                            mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, dataarray=list(value))
+                            mp = MeasuredParameter(measurement=measurement, parameter=parameter, dataarray=list(value))
                         except TypeError:
                             logger.warn('Tried to interpret value as a list, but failed')
                             continue
@@ -1228,7 +1229,7 @@ class Base_Loader(STOQS_Loader):
             ips = ip_list
         else:
             logger.info(f'Calling bulk_create() for {len(ip_list)} InstantPoints')
-            ips = m.InstantPoint.objects.using(self.dbAlias).bulk_create(ip_list)
+            ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ip_list)
 
         for i, ip in enumerate(ips):
             meas_list[i].instantpoint = ip
@@ -1238,13 +1239,13 @@ class Base_Loader(STOQS_Loader):
             meass = meas_list
         else:
             logger.info(f'Calling bulk_create() for {len(meas_list)} Measurements')
-            meass = m.Measurement.objects.using(self.dbAlias).bulk_create(meas_list)
+            meass = Measurement.objects.using(self.dbAlias).bulk_create(meas_list)
 
         for i, meas in enumerate(meass):
             mp_list[i].measurement = meas
 
         logger.info(f'Calling bulk_create() for {len(mp_list)} MeasuredParameters')
-        m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(mp_list)
+        MeasuredParameter.objects.using(self.dbAlias).bulk_create(mp_list)
 
         ip_list = []
         meas_list = []
@@ -1273,7 +1274,7 @@ class Base_Loader(STOQS_Loader):
                 parmCount[key] = 0
 
             if self.appendFlag: # pragma: no cover
-                self.dataStartDatetime = (m.InstantPoint.objects.using(self.dbAlias)
+                self.dataStartDatetime = (InstantPoint.objects.using(self.dbAlias)
                                             .filter(activity__name=self.getActivityName())
                                             .aggregate(Max('timevalue'))['timevalue__max'])
                 if hasattr(self, 'backfill_timedelta') and self.dataStartDatetime:
@@ -1364,13 +1365,13 @@ class Base_Loader(STOQS_Loader):
 
                     # Collect model instances for bulk_create()s or get_or_create() for non-trajectory data
                     if featureType == TRAJECTORY or featureType == TIMESERIES:
-                        ip = m.InstantPoint(activity=self.activity, timevalue=mtime)
+                        ip = InstantPoint(activity=self.activity, timevalue=mtime)
                     elif featureType == TIMESERIESPROFILE or featureType == TRAJECTORYPROFILE:
-                        ip, _ = m.InstantPoint.objects.using(self.dbAlias).get_or_create( activity=self.activity, timevalue=mtime)
+                        ip, _ = InstantPoint.objects.using(self.dbAlias).get_or_create( activity=self.activity, timevalue=mtime)
 
                     nl = None
                     if nomDepth and nom_point:
-                        nl, _ = m.NominalLocation.objects.using(self.dbAlias).get_or_create(
+                        nl, _ = NominalLocation.objects.using(self.dbAlias).get_or_create(
                                     depth=repr(nomDepth), geom=nom_point, activity=self.activity)
 
                     if 'measurement' in row:
@@ -1379,17 +1380,17 @@ class Base_Loader(STOQS_Loader):
                     else:
                         point = f'POINT({repr(longitude)} {repr(latitude)})'
                         if featureType == TRAJECTORY:
-                            meas = m.Measurement(instantpoint=ip, depth=repr(depth), geom=point)
+                            meas = Measurement(instantpoint=ip, depth=repr(depth), geom=point)
                         elif featureType == TIMESERIESPROFILE or featureType == TIMESERIES:
-                            meas, _ = m.Measurement.objects.using(self.dbAlias).get_or_create(
+                            meas, _ = Measurement.objects.using(self.dbAlias).get_or_create(
                                             instantpoint=ip, depth=repr(depth), geom=point, nominallocation=nl)
 
                     if isinstance(value, (list, tuple)):
-                        mp = m.MeasuredParameter(measurement=meas, 
+                        mp = MeasuredParameter(measurement=meas, 
                                                  parameter=param_by_key[key], dataarray=list(value))
                     else:
                         # Single-valued datavalue
-                        mp = m.MeasuredParameter(measurement=meas, 
+                        mp = MeasuredParameter(measurement=meas, 
                                                  parameter=param_by_key[key], datavalue=value)
 
                     ip_list.append(ip)
@@ -1469,7 +1470,7 @@ class Base_Loader(STOQS_Loader):
             #
             path = None
             stationPoint = None
-            linestringPoints = m.Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=self.activity
+            linestringPoints = Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=self.activity
                                                            ).order_by('instantpoint__timevalue').values_list('geom')
             try:
                 path = LineString([p[0] for p in linestringPoints]).simplify(tolerance=.001)
@@ -1515,7 +1516,7 @@ class Base_Loader(STOQS_Loader):
 
             logger.debug("Updating its comment with newComment = %s", newComment)
 
-            num_updated = m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
+            num_updated = Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
                             name=self.getActivityName(),
                             comment=newComment,
                             maptrack=path,
@@ -1594,23 +1595,23 @@ class Dorado_Loader(Trajectory_Loader):
         yyyy = int(survey.split('_')[1])
         # Quick-look plots
         logger.debug("Getting or Creating ResourceType quick_look...")
-        resourceType, _ = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
+        resourceType, _ = ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                         name='quick_look', description='Quick Look plot of data from this AUV survey')
         for ql in ['2column', 'biolume', 'hist_stats', 'lopc', 'nav_adjust', 'prof_stats']:
             url = '%s/%4d/images/%s_%s.png' % (baseUrl, yyyy, survey, ql)
             logger.debug("Getting or Creating Resource with name = %s, url = %s", ql, url )
-            resource, _ = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+            resource, _ = Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name=ql, uristring=url, resourcetype=resourceType)
-            m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+            ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                         activity=self.activity,
                         resource=resource)
 
         # kml, odv, mat
-        kmlResourceType, _ = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
+        kmlResourceType, _ = ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                         name = 'kml', description='Keyhole Markup Language file of data from this AUV survey')
-        odvResourceType, _ = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
+        odvResourceType, _ = ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                         name = 'odv', description='Ocean Data View spreadsheet text file')
-        matResourceType, _ = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
+        matResourceType, _ = ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                         name = 'mat', description='Matlab data file')
         for res in ['kml', 'odv', 'odvGulper', 'mat', 'mat_gridded']:
             if res == 'kml':
@@ -1632,9 +1633,9 @@ class Dorado_Loader(Trajectory_Loader):
                 logger.warn('No handler for res = %s', res)
 
             logger.debug("Getting or Creating Resource with name = %s, url = %s", res, url )
-            resource, _ = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+            resource, _ = Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name=res, uristring=url, resourcetype=rt)
-            m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+            ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                         activity=self.activity, resource=resource)
 
         return super(Dorado_Loader, self).addResources()
@@ -1668,13 +1669,13 @@ class Lrauv_Loader(Trajectory_Loader):
 
             # Contour plots
             logger.debug("Getting or Creating ResourceType quick_look...")
-            resourceType, _ = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
+            resourceType, _ = ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                             name = 'quick_look', description='Quick Look plot of data from this AUV survey')
 
             logger.debug("Getting or Creating Resource with name = log, url = %s", outurl)
-            resource, _ = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+            resource, _ = Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name='log', uristring=outurl, resourcetype=resourceType)
-            m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+            ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                         activity=self.activity,
                         resource=resource)
 
@@ -1691,9 +1692,9 @@ class Lrauv_Loader(Trajectory_Loader):
             outurl = self.contourUrl + self.platformName  + '_log_' + startDateTimeUTC.strftime(
                     '%Y%m%dT%H%M%S') + '_' + endDateTimeUTC.strftime('%Y%m%dT%H%M%S') + '.png'
             logger.debug("Getting or Creating Resource with name = 24hr, url = %s", outurl)
-            resource, _ = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+            resource, _ = Resource.objects.db_manager(self.dbAlias).get_or_create(
                     name='24hr', uristring=outurl, resourcetype=resourceType)
-            m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+            ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                     activity=self.activity,
                     resource=resource)
 
@@ -1768,13 +1769,13 @@ class BED_Trajectory_Loader(Trajectory_Loader):
         In addition to the NC_GLOBAL attributes that are added in the base class also add the frame grab URL
         '''
         logger.debug("Getting or Creating ResourceType framegrab...")
-        resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(
+        resourceType, _ = ResourceType.objects.using(self.dbAlias).get_or_create(
                         name='quick_look', description='Video framegrab of BED located on sea floor')
 
         logger.debug("Getting or Creating Resource with framegrab = self.framegrab")
-        resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+        resource, _ = Resource.objects.using(self.dbAlias).get_or_create(
                     name='framegrab', uristring=self.framegrab, resourcetype=resourceType)
-        m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+        ActivityResource.objects.using(self.dbAlias).get_or_create(
                     activity=self.activity, resource=resource)
 
         return super(BED_Trajectory_Loader, self).addResources()
