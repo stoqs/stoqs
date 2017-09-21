@@ -216,6 +216,7 @@ class InstantPoint(models.Model):
     objects = models.GeoManager()
     class Meta(object):
         app_label = 'stoqs'
+        unique_together = ('activity', 'timevalue')
     def __str__(self):
         return "%s" % (self.timevalue,)
 
@@ -406,6 +407,7 @@ class Measurement(models.Model):
     class Meta(object):
         verbose_name = 'Measurement'
         verbose_name_plural = 'Measurements'
+        unique_together = ('instantpoint', 'depth', 'geom')
         app_label = 'stoqs'
     def __str__(self):
         return "Measurement at %s, %s" % (self.geom, self.depth)
