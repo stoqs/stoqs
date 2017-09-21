@@ -54,6 +54,7 @@ from utils.utils import mode, simplify_points
 from loaders import STOQS_Loader, SkipRecord, HasMeasurement, MEASUREDINSITU, FileNotFound
 from loaders.SampleLoaders import get_closest_instantpoint, ClosestTimeNotFoundException
 import numpy as np
+import psycopg2
 from collections import defaultdict
 
 
@@ -72,6 +73,11 @@ TRAJECTORY = 'trajectory'
 TIMESERIES = 'timeseries'
 TIMESERIESPROFILE = 'timeseriesprofile'
 TRAJECTORYPROFILE = 'trajectoryprofile'
+
+TIME = 'time'
+DEPTH = 'depth'
+LATITUDE = 'latitude'
+LONGITUDE = 'longitude'
 
 
 if settings.DEBUG:
@@ -332,14 +338,15 @@ class Base_Loader(STOQS_Loader):
         '''
         # Modify Activity name if temporal subset extracted from NetCDF file
         newName = self.activityName
-        if self.requested_startDatetime and self.requested_endDatetime:
-            if '(stride' in self.activityName:
-                first_part = self.activityName[:self.activityName.find('(stride')]
-                last_part = self.activityName[self.activityName.find('(stride'):]
-            else:
-                first_part = self.activityName
-                last_part = ''
-            newName = '{} starting at {} {}'.format(first_part.strip(), self.requested_startDatetime, last_part)
+        if not ' starting at ' in newName:
+            if self.requested_startDatetime and self.requested_endDatetime:
+                if '(stride' in self.activityName:
+                    first_part = self.activityName[:self.activityName.find('(stride')]
+                    last_part = self.activityName[self.activityName.find('(stride'):]
+                else:
+                    first_part = self.activityName
+                    last_part = ''
+                newName = '{} starting at {} {}'.format(first_part.strip(), self.requested_startDatetime, last_part)
 
         return newName
 
@@ -842,6 +849,231 @@ class Base_Loader(STOQS_Loader):
 
                 l = l + 1
 
+    def get_load_structure(self):
+        '''Return data structure organized by Parameters with common coordinates.
+        This supports the use of bulk_create() to spee the loading of data.
+        '''
+        ac = {}
+        load_groups = defaultdict(list)
+        coor_groups = {}
+        for pname in self.include_names:
+            if pname not in list(self.ds.keys()):
+                logger.warn('include_name %s not in dataset %s', pname, self.url)
+                continue
+
+            ac[pname] = self.getAuxCoordinates(pname)
+            load_groups[''.join(sorted(list(ac[pname].values())))].append(pname)
+            coor_groups[''.join(sorted(list(ac[pname].values())))] = ac[pname]
+
+        return load_groups, coor_groups
+
+    def load_trajectory(self):
+        '''Stream trajectory data directly from pydap proxies to generators fed to bulk_create() calls
+        '''
+        load_groups, coor_groups = self.get_load_structure()
+        for i, (k, pnames) in enumerate(load_groups.items()):
+            ac = coor_groups[k]
+            if i == 0:
+                # First time through, bulk load the coordinates: instant_points and measurements
+                tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
+                times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
+                time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
+                if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
+                    timeUnits = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
+                mtimes = (from_udunits(mt, time_units) for mt in times)
+
+                try:
+                    depths = self.ds[ac[DEPTH]][ac[DEPTH]][tindx[0]:tindx[-1]:self.stride]
+                except KeyError:
+                    # Allow for variables with no depth coordinate to be loaded at the depth specified in auxCoords
+                    if isinstance(ac[DEPTH], float):
+                        depths =  ac[DEPTH] * np.ones(len(times))
+
+                latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
+                longitudes = self.ds[ac[LONGITUDE]][ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
+
+                mtimes, depths, latitudes, longitudes = zip(*self.good_coords(
+                                                    pnames, mtimes, depths, latitudes, longitudes))
+
+                points = (f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes))
+
+                ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
+                meass = (Measurement(depth=repr(de), geom=po) for de, po in zip(depths, points))
+
+                # Reassign meass with Measurement objects that have their id set
+                meass = self._bulk_load_coordinates(ips, meass)
+        
+            total_loaded = 0   
+            for pname in pnames:
+                logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tindx[0], tindx[-1], self.stride)
+                values = self.ds[pname][pname][tindx[0]:tindx[-1]:self.stride]
+                if isinstance(values[0], (list, tuple)):
+                    mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
+                                                dataarray=list(va)) for me, va in zip(meass, values))
+                else:
+                    mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
+                                                datavalue=va) for me, va in zip(meass, values))
+
+                # All items but mess are generators, so we can call len() on it
+                logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter')
+                mps = self._measuredparameter_with_measurement(meass, mps)
+                mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
+                total_loaded += len(mps)
+
+            return total_loaded
+
+    def load_timeseriesprofile(self):
+        '''Stream timeseriesprofile data directly from pydap proxies to generators fed to bulk_create() calls
+        '''
+        load_groups, coor_groups = self.get_load_structure()
+        for i, (k, pnames) in enumerate(load_groups.items()):
+            ac = coor_groups[k]
+            if i == 0:
+                # First time through, bulk load the coordinates: instant_points and measurements
+                # As all pnames share the same coordinates we can use pnames[0] to access them
+                firstp = pnames[0]
+
+                if ac[TIME] != list(self.ds[firstp].keys())[1]:
+                    # Gratuitous check 
+                    self.logger.warn("Auxillary time coordinate '{ac[TIME]}' != first COARDS"
+                                     "coordnate '{list(self.ds[firstp].keys())[1]}'")
+
+                # CF (nee COARDS) has tzyx coordinate ordering, time is at index [1] and depth is at [2]
+                # - times: Assume CF/COARDS, override if EPIC data detected
+                tindx = self.getTimeBegEndIndices(self.ds[list(self.ds[firstp].keys())[1]])
+                times = self.ds[self.ds[firstp].keys()[1]][tindx[0]:tindx[-1]:self.stride]
+                time_units = self.ds[list(self.ds[firstp].keys())[1]].units.lower()
+
+                if time_units == 'true julian day': # pragma: no cover
+                    # Create COARDS time from EPIC data
+                    time2s = self.ds['time2']['time2'][tIndx[0]:tIndx[-1]:self.stride]
+                    time_units = 'seconds since 1970-01-01 00:00:00'
+                    epoch_secs = []
+                    for jd, ms in zip(times[firstp], time2s):
+                        gcal = jd2gcal(jd - 0.5, ms / 86400000.0)
+                        gcal_datetime = datetime(*gcal[:3]) + timedelta(days=gcal[3])
+                        epoch_secs.append(to_udunits(gcal_datetime, time_units))
+
+                    times = epoch_secs
+
+                time_units = time_units.replace('utc', 'UTC')           # coards requires UTC in uppercase
+                if self.ds[list(self.ds[firstp].keys())[1]].units == 'seconds since 1970-01-01T00:00:00Z':
+                    time_units = 'seconds since 1970-01-01 00:00:00'    # coards 1.0.4 and earlier doesn't like ISO format
+
+                mtimes = [from_udunits(mt, time_units) for mt in times]
+
+                # - depths: first by CF/COARDS coordinate rules, then by EPIC conventions
+                nomLat = None
+                nomLon = None
+                try:
+                    depths = self.ds[self.ds[firstp].keys()[2]][:]   # TODO lookup more precise depth from conversion from pressure
+                except IndexError:
+                    logger.warn(f'Variable {firstp} has less than 2 coordinates: {self.ds[pname].keys()}')
+                    depths = []
+
+                if len(depths) == 1:
+                    try:
+                        logger.info('Attempting to set nominal depth from EPIC Convention sensor_depth variable attribute')
+                        depths = [self.ds[firstp].attributes['sensor_depth']]
+                    except KeyError:
+                        logger.info('Variable %s does not have a sensor_depth attribute', firstp)
+                if not list(depths):
+                    logger.warn('Depth coordinate not found at index [2]. Looking for nominal position from EPIC Convention global attributes.')
+                    try:
+                        depths = [self.ds.attributes['NC_GLOBAL']['nominal_instrument_depth']]
+                        nomLat = self.ds.attributes['NC_GLOBAL']['latitude']
+                        nomLon = self.ds.attributes['NC_GLOBAL']['longitude']
+                    except KeyError:
+                        logger.warn('EPIC nominal position not found in global attributes. Assigning from variables.')
+                        depths = self.ds['depth'][0]
+                        nomLat = self.ds['lat'][0][0]
+                        nomLon = self.ds['lon'][0][0]
+
+                if depths.any() and nomLat and nomLon:
+                    logger.info('Nominal position assigned from EPIC Convention global attributes')
+                    nomDepths = depths
+                else:
+                    # Possible to have both precise and nominal locations with this approach
+                    nom_loc = self.getNominalLocation()
+                    nomDepths, nomLat, nomLon = nom_loc[0][firstp], nom_loc[1][firstp], nom_loc[2][firstp]
+
+                # - latitudes & longitudes: first by CF/COARDS coordinate rules, then by EPIC conventions
+                shape_length = self.get_shape_length(firstp)
+                if shape_length == 4:
+                    logger.info('%s has shape of 4, assume that singleton dimensions are used for nominal latitude and longitude', firstp)
+                    # Assumes COARDS coordinate ordering
+                    latitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
+                    longitudes = float(self.ds[list(self.ds[firstp].keys())[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                elif shape_length == 3 and 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper(): # pragma: no cover
+                    # Special fix for USGS EPIC ADCP variables missing depth coordinate, but having nominal sensor depth metadata
+                    latitudes = float(self.ds[list(self.ds[firstp].keys())[2]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
+                    longitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                    depths = nomDepths
+                elif shape_length == 2:
+                    logger.info('%s has shape of 2, assuming no latitude and longitude singletime'
+                                ' dimensions. Using nominal location read from auxially coordinates', firstp)
+                    longitudes = nomLons
+                    latitudes = nomLats
+                elif shape_length == 1:
+                    logger.info('%s has shape of 1, assuming no latitude, longitude, and'
+                                ' depth singletime dimensions. Using nominal location read'
+                                ' from auxially coordinates', firstp)
+                    longitudes = nomLons
+                    latitudes = nomLats
+                    depths = nomDepths
+                else:
+                    raise Exception('{} has shape of {}. Can handle only shapes of 2, and 4'.format(firstp, shape_length))
+
+                if hasattr(latitudes, '__iter__') and hasattr(longitudes, '__iter__'):
+                    # We have precise gps positions, a location for each time value
+                    points = [f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes)]
+                else:
+                    points = [f'POINT({repr(longitudes)} {repr(latitudes)})'] * len(list(mtimes))
+
+                points = points * len(list(depths))
+
+                ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
+                try:
+                    logger.info(f'Calling bulk_create() for InstantPoints in ips generator')
+                    ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips)
+                except (IntegrityError, psycopg2.IntegrityError) as e:
+                    logger.error(str(e))
+                    logger.exception(f"Maybe you should delete Activity '{self.activity.name}' first?")
+                    sys.exit(-1)
+
+                meass = []
+                for ip in ips:
+                    for de, po in zip(depths, points):
+                        if self.is_coordinate_bad(firstp, ip.timevalue, de):
+                            logger.warn(f'Bad coordinate: {ip}, {de}')
+                        meass.append(Measurement(depth=repr(de), geom=po, instantpoint=ip))
+
+                try:
+                    logger.info(f'Calling bulk_create() for {len(meass)} Measurements')
+                    meass = Measurement.objects.using(self.dbAlias).bulk_create(meass)
+                except (IntegrityError, psycopg2.IntegrityError) as e:
+                    logger.error(str(e))
+                    logger.exception(f"Maybe you should delete Activity '{self.activity.name}' first?")
+                    sys.exit(-1)
+           
+            total_loaded = 0   
+            for pname in pnames:
+                values = self.ds[pname][pname][tindx[0]:tindx[-1]:self.stride]
+                if len(values.shape) == 1:
+                    logger.info("len(values.shape) = 1; likely EPIC timeseries data - reshaping to add a 'depth' dimension")
+                    values = values.reshape(values.shape[0], 1)
+
+                mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
+                                                datavalue=va) for me, va in zip(meass, values.flatten()))
+
+                # All items but mess are generators, so we can call len() on it
+                logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter')
+                mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
+                total_loaded += len(mps)
+
+            return total_loaded
+
+
     def _genTrajectory(self):
         '''
         Generator of trajectory data. The data values are a function of time and the coordinates attribute 
@@ -1222,30 +1454,27 @@ class Base_Loader(STOQS_Loader):
 
         return _innerInsertRow(self, parmCount, parameterCount, measurement, row)
 
-    def _bulk_load_measurements(self, ip_list, meas_list, mp_list):
+    def _measurement_with_instantpoint(self, ips, meass):
+        for ip, meas in zip(ips, meass):
+            meas.instantpoint = ip
+            yield meas
+        
+    def _bulk_load_coordinates(self, ips, meass):
 
-        # If any of the ip_list items has an id then it exists in the database already via a get_or_create()
-        if ip_list[0].id:
-            ips = ip_list
-        else:
-            logger.info(f'Calling bulk_create() for {len(ip_list)} InstantPoints')
-            ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ip_list)
+        logger.info(f'Calling bulk_create() for InstantPoints in ips generator')
+        ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips)
 
-        for i, ip in enumerate(ips):
-            meas_list[i].instantpoint = ip
+        meass = self._measurement_with_instantpoint(ips, meass)
 
-        # If any of the meas_list items has an id then it exists in the database already via a get_or_create()
-        if meas_list[0].id:
-            meass = meas_list
-        else:
-            logger.info(f'Calling bulk_create() for {len(meas_list)} Measurements')
-            meass = Measurement.objects.using(self.dbAlias).bulk_create(meas_list)
+        logger.info(f'Calling bulk_create() for Measurements in meass generator')
+        meass = Measurement.objects.using(self.dbAlias).bulk_create(meass)
 
-        for i, meas in enumerate(meass):
-            mp_list[i].measurement = meas
+        return meass
 
-        logger.info(f'Calling bulk_create() for {len(mp_list)} MeasuredParameters')
-        MeasuredParameter.objects.using(self.dbAlias).bulk_create(mp_list)
+    def _measuredparameter_with_measurement(self, meass, mps):
+        for meas, mp in zip(meass, mps):
+            mp.measurement = meas
+            yield mp
 
     def process_data(self, generator=None, featureType=''): 
         '''Wrapper so as to apply self.dbAlias in the decorator
@@ -1263,7 +1492,6 @@ class Base_Loader(STOQS_Loader):
 
             self.initDB()
 
-            self.loaded = 0
             parmCount = {}
             parameterCount = {}
             for key in self.include_names:
@@ -1276,200 +1504,227 @@ class Base_Loader(STOQS_Loader):
                 if hasattr(self, 'backfill_timedelta') and self.dataStartDatetime:
                     if self.backfill_timedelta:
                         self.dataStartDatetime = self.dataStartDatetime - self.backfill_timedelta
-            if generator:
-                logger.info('Using data generator passed into process_data')
-                data_generator = generator()
-                featureType = TRAJECTORY
-            else:
-                logger.info('self.getFeatureType() = %s', self.getFeatureType())
-                if self.getFeatureType() == TIMESERIESPROFILE:
-                    data_generator = self._genTimeSeriesGridType()
-                    featureType = TIMESERIESPROFILE
-                elif self.getFeatureType() == TRAJECTORYPROFILE:
-                    data_generator = self._genTrajectoryProfileGridType()
-                    featureType = TRAJECTORYPROFILE
-                elif self.getFeatureType() == TIMESERIES:
-                    data_generator = self._genTimeSeriesGridType()
-                    featureType = TIMESERIES
-                elif self.getFeatureType() == TRAJECTORY:
-                    data_generator = self._genTrajectory()
-                    featureType = TRAJECTORY
+
+            self.param_by_key = {}
+            self.mv_by_key = {}
+            self.fv_by_key = {}
+
+            for key in (set(self.include_names) & set(self.ds.keys())):
+                self.param_by_key[key] = self.getParameterByName(key)
+                parameterCount[self.param_by_key[key]] = 0
+
+            for key in self.ds.keys():
+                self.mv_by_key[key] = self.getmissing_value(key)
+                self.fv_by_key[key] = self.get_FillValue(key)
 
             self.totalRecords = self.getTotalRecords()
 
-            if not featureType:
+            logger.info("From: %s", self.url)
+            if featureType:
+                featureType = featureType.lower()
+            else:
+                featureType = self.getFeatureType()
+
+            if featureType== TRAJECTORY:
+                mps_loaded = self.load_trajectory()
+            elif featureType == TIMESERIES:
+                mps_loaded = self.load_timeseriesprofile()
+            elif featureType == TIMESERIESPROFILE:
+                mps_loaded = self.load_timeseriesprofile()
+            elif featureType == TRAJECTORYPROFILE:
+                pass
+            else:
                 raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
                         " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
                         " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
 
-            # Organize loops in order to do batch saves, speeding up the loads
-            ##if featureType == TRAJECTORY:
-            if True:
-                batch_size = 5000
-                param_by_key = {}
-                self.mv_by_key = {}
-                self.fv_by_key = {}
 
-                ip_list = []
-                meas_list = []
-                mp_list = []
-                nl_set = set()
-        
-                nomDepth = None
-                nom_point = None
+            if False:
 
-                last_key = ''
+                if generator:
+                    logger.info('Using data generator passed into process_data')
+                    data_generator = generator()
+                    featureType = TRAJECTORY
+                else:
+                    logger.info('self.getFeatureType() = %s', self.getFeatureType())
+                    if self.getFeatureType() == TIMESERIESPROFILE:
+                        data_generator = self._genTimeSeriesGridType()
+                        featureType = TIMESERIESPROFILE
+                    elif self.getFeatureType() == TRAJECTORYPROFILE:
+                        data_generator = self._genTrajectoryProfileGridType()
+                        featureType = TRAJECTORYPROFILE
+                    elif self.getFeatureType() == TIMESERIES:
+                        data_generator = self._genTimeSeriesGridType()
+                        featureType = TIMESERIES
+                    elif self.getFeatureType() == TRAJECTORY:
+                        data_generator = self._genTrajectory()
+                        featureType = TRAJECTORY
 
-                for key in (set(self.include_names) & set(self.ds.keys())):
-                    param_by_key[key] = self.getParameterByName(key)
-                    parameterCount[param_by_key[key]] = 0
+                self.totalRecords = self.getTotalRecords()
 
-                for key in self.ds.keys():
-                    self.mv_by_key[key] = self.getmissing_value(key)
-                    self.fv_by_key[key] = self.get_FillValue(key)
+                if not featureType:
+                    raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
+                            " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
+                            " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
 
-                for row in data_generator:
-                    row = self.preProcessParams(row)
-                    (longitude, latitude, mtime, depth) = (
-                                    row.pop('longitude'),
-                                    row.pop('latitude'),
-                                    from_udunits(row.pop('time'), row.pop('timeUnits')),
-                                    row.pop('depth'))
+                # Organize loops in order to do batch saves, speeding up the loads
+                ##if featureType == TRAJECTORY:
+                if True:
+                    batch_size = 5000
 
-                    # timeSeries and timeSeriesProfile will have nominal location
-                    if 'nomLon' in row and 'nomLat' in row and 'nomDepth' in row:
-                        nomLon, nomLat, nomDepth = (row.pop('nomLon'), row.pop('nomLat'),
-                                                    row.pop('nomDepth'))
-                        nom_point = f'POINT({repr(nomLon)} {repr(nomLat)})'
-                        
-                    # Perhaps multiple Parameters in row for each ip/meas?  Maybe not. 
-                    # Must maintain ip/meas/mp relationships, raise error if more than one.
-                    if len(row) != 1:
-                        raise ValueError(f'More than one item in row: {row}')
+                    ip_list = []
+                    meas_list = []
+                    mp_list = []
+                    nl_set = set()
+            
+                    nomDepth = None
+                    nom_point = None
 
-                    key, value = list(row.items()).pop()
-                    value = float(value)
-                    if key != last_key:
-                        logger.info(f'Loading values for Parameter {key}')
-                    last_key = key
+                    last_key = ''
 
-                    if self.is_coordinate_bad(key, mtime, depth, latitude, longitude):
-                        continue
 
-                    if self.is_value_bad(key, value):
-                        continue
+                    for row in data_generator:
+                        row = self.preProcessParams(row)
+                        (longitude, latitude, mtime, depth) = (
+                                        row.pop('longitude'),
+                                        row.pop('latitude'),
+                                        from_udunits(row.pop('time'), row.pop('timeUnits')),
+                                        row.pop('depth'))
 
-                    # Collect model instances for bulk_create()s or get_or_create() for non-trajectory data
-                    ##if featureType == TRAJECTORY or featureType == TIMESERIES:
-                    ##    ip = InstantPoint(activity=self.activity, timevalue=mtime)
-                    ##elif featureType == TIMESERIESPROFILE or featureType == TRAJECTORYPROFILE:
-                    ##    ip, _ = InstantPoint.objects.using(self.dbAlias).get_or_create(
-                    ##                        activity=self.activity, timevalue=mtime)
-                    ip, _ = InstantPoint.objects.using(self.dbAlias).get_or_create(
-                                        activity=self.activity, timevalue=mtime)
+                        # timeSeries and timeSeriesProfile will have nominal location
+                        if 'nomLon' in row and 'nomLat' in row and 'nomDepth' in row:
+                            nomLon, nomLat, nomDepth = (row.pop('nomLon'), row.pop('nomLat'),
+                                                        row.pop('nomDepth'))
+                            nom_point = f'POINT({repr(nomLon)} {repr(nomLat)})'
+                            
+                        # Perhaps multiple Parameters in row for each ip/meas?  Maybe not. 
+                        # Must maintain ip/meas/mp relationships, raise error if more than one.
+                        if len(row) != 1:
+                            raise ValueError(f'More than one item in row: {row}')
 
-                    nl = None
-                    if nomDepth and nom_point:
-                        nl, _ = NominalLocation.objects.using(self.dbAlias).get_or_create(
-                                    depth=repr(nomDepth), geom=nom_point, activity=self.activity)
+                        key, value = list(row.items()).pop()
+                        value = float(value)
+                        if key != last_key:
+                            logger.info(f'Loading values for Parameter {key}')
+                        last_key = key
 
-                    if 'measurement' in row:
-                        # For data like LOPC which assigns a 'measurement' item
-                        meas = row['measurement']
-                    else:
-                        point = f'POINT({repr(longitude)} {repr(latitude)})'
-                        ##if featureType == TRAJECTORY:
-                        ##    meas = Measurement(instantpoint=ip, depth=repr(depth), geom=point)
-                        ##elif featureType == TIMESERIESPROFILE or featureType == TIMESERIES:
-                        ##    meas, _ = Measurement.objects.using(self.dbAlias).get_or_create(
-                        ##                    instantpoint=ip, depth=repr(depth), geom=point, nominallocation=nl)
-                        meas, _ = Measurement.objects.using(self.dbAlias).get_or_create(
-                                        instantpoint=ip, depth=repr(depth), geom=point, nominallocation=nl)
+                        if self.is_coordinate_bad(key, mtime, depth, latitude, longitude):
+                            continue
 
-                    if isinstance(value, (list, tuple)):
-                        mp = MeasuredParameter(measurement=meas, 
-                                                 parameter=param_by_key[key], dataarray=list(value))
-                    else:
-                        # Single-valued datavalue
-                        mp = MeasuredParameter(measurement=meas, 
-                                                 parameter=param_by_key[key], datavalue=value)
+                        if self.is_value_bad(key, value):
+                            continue
 
-                    ip_list.append(ip)
-                    meas_list.append(meas)
-                    mp_list.append(mp)
+                        # Collect model instances for bulk_create()s or get_or_create() for non-trajectory data
+                        ##if featureType == TRAJECTORY or featureType == TIMESERIES:
+                        ##    ip = InstantPoint(activity=self.activity, timevalue=mtime)
+                        ##elif featureType == TIMESERIESPROFILE or featureType == TRAJECTORYPROFILE:
+                        ##    ip, _ = InstantPoint.objects.using(self.dbAlias).get_or_create(
+                        ##                        activity=self.activity, timevalue=mtime)
+                        ip, _ = InstantPoint.objects.using(self.dbAlias).get_or_create(
+                                            activity=self.activity, timevalue=mtime)
 
-                    parameterCount[param_by_key[key]] += 1
-                    self.loaded += 1
+                        nl = None
+                        if nomDepth and nom_point:
+                            nl, _ = NominalLocation.objects.using(self.dbAlias).get_or_create(
+                                        depth=repr(nomDepth), geom=nom_point, activity=self.activity)
 
-                    try:
-                        # Exceptions must be handled outside of context manager to achieve batch commit speedup
-                        with transaction.atomic():
-                            if (self.loaded % 500) == 0:
-                                logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
-                            if (self.loaded % batch_size) == 0:
-                                ##logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
-                                self._bulk_load_measurements(ip_list, meas_list, mp_list)
-                                ip_list = []
-                                meas_list = []
-                                mp_list = []
-
-                    except HasMeasurement:
-                        logger.warn("HasMeasurement: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
-                    except SkipRecord as e:
-                        logger.warn("SkipRecord: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
-                    except IntegrityError as e:
-                        logger.warn(f'IntegrityError: {str(e)}')
-                    except DatabaseError as e:
-                        logger.warn(f'DatabaseError: {str(e)}')
-                        
-                # Save remaining items in the saved-up lists
-                self._bulk_load_measurements(ip_list, meas_list, mp_list)
- 
-            ##for row in data_generator:
-            for row in ():
-                try:
-                    row = self.preProcessParams(row)
-                except HasMeasurement:
-                    pass
-                except SkipRecord as e:
-                    logger.warn("SkipRecord: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
-                    continue
-                except Exception as e:
-                    logger.exception(str(e))
-                    sys.exit(-1)
-                
-                try:
-                    if featureType == TIMESERIESPROFILE or featureType == TIMESERIES or featureType == TRAJECTORYPROFILE:
-                        longitude, latitude, mtime, depth, nomLon, nomLat, nomDepth = (row.pop('longitude'), row.pop('latitude'),
-                                                            from_udunits(row.pop('time'), row.pop('timeUnits')),
-                                                            row.pop('depth'), row.pop('nomLon'), row.pop('nomLat'),row.pop('nomDepth'))
-                        measurement = self.createMeasurement(mtime=mtime, depth=depth, lat=latitude, lon=longitude,
-                                                            nomDepth=nomDepth, nomLat=nomLat, nomLong=nomLon)
-                    elif featureType == 'not_trajectory':
                         if 'measurement' in row:
                             # For data like LOPC which assigns a 'measurement' item
-                            measurement = row['measurement']
+                            meas = row['measurement']
                         else:
-                            longitude, latitude, mtime, depth = (row.pop('longitude'), row.pop('latitude'),
+                            point = f'POINT({repr(longitude)} {repr(latitude)})'
+                            ##if featureType == TRAJECTORY:
+                            ##    meas = Measurement(instantpoint=ip, depth=repr(depth), geom=point)
+                            ##elif featureType == TIMESERIESPROFILE or featureType == TIMESERIES:
+                            ##    meas, _ = Measurement.objects.using(self.dbAlias).get_or_create(
+                            ##                    instantpoint=ip, depth=repr(depth), geom=point, nominallocation=nl)
+                            meas, _ = Measurement.objects.using(self.dbAlias).get_or_create(
+                                            instantpoint=ip, depth=repr(depth), geom=point, nominallocation=nl)
+
+                        if isinstance(value, (list, tuple)):
+                            mp = MeasuredParameter(measurement=meas, 
+                                                     parameter=param_by_key[key], dataarray=list(value))
+                        else:
+                            # Single-valued datavalue
+                            mp = MeasuredParameter(measurement=meas, 
+                                                     parameter=param_by_key[key], datavalue=value)
+
+                        ip_list.append(ip)
+                        meas_list.append(meas)
+                        mp_list.append(mp)
+
+                        parameterCount[param_by_key[key]] += 1
+                        self.loaded += 1
+
+                        try:
+                            # Exceptions must be handled outside of context manager to achieve batch commit speedup
+                            with transaction.atomic():
+                                if (self.loaded % 500) == 0:
+                                    logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
+                                if (self.loaded % batch_size) == 0:
+                                    ##logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
+                                    self._bulk_load_measurements(ip_list, meas_list, mp_list)
+                                    ip_list = []
+                                    meas_list = []
+                                    mp_list = []
+
+                        except HasMeasurement:
+                            logger.warn("HasMeasurement: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
+                        except SkipRecord as e:
+                            logger.warn("SkipRecord: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
+                        except IntegrityError as e:
+                            logger.warn(f'IntegrityError: {str(e)}')
+                        except DatabaseError as e:
+                            logger.warn(f'DatabaseError: {str(e)}')
+                            
+                    # Save remaining items in the saved-up lists
+                    self._bulk_load_measurements(ip_list, meas_list, mp_list)
+     
+                ##for row in data_generator:
+                for row in ():
+                    try:
+                        row = self.preProcessParams(row)
+                    except HasMeasurement:
+                        pass
+                    except SkipRecord as e:
+                        logger.warn("SkipRecord: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
+                        continue
+                    except Exception as e:
+                        logger.exception(str(e))
+                        sys.exit(-1)
+                    
+                    try:
+                        if featureType == TIMESERIESPROFILE or featureType == TIMESERIES or featureType == TRAJECTORYPROFILE:
+                            longitude, latitude, mtime, depth, nomLon, nomLat, nomDepth = (row.pop('longitude'), row.pop('latitude'),
                                                                 from_udunits(row.pop('time'), row.pop('timeUnits')),
-                                                                row.pop('depth'))
-                            measurement = self.createMeasurement(mtime=mtime, depth=depth, lat=latitude, lon=longitude)
-                    else:
-                        raise Exception('No handler for featureType = %s' % featureType)
+                                                                row.pop('depth'), row.pop('nomLon'), row.pop('nomLat'),row.pop('nomDepth'))
+                            measurement = self.createMeasurement(mtime=mtime, depth=depth, lat=latitude, lon=longitude,
+                                                                nomDepth=nomDepth, nomLat=nomLat, nomLong=nomLon)
+                        elif featureType == 'not_trajectory':
+                            if 'measurement' in row:
+                                # For data like LOPC which assigns a 'measurement' item
+                                measurement = row['measurement']
+                            else:
+                                longitude, latitude, mtime, depth = (row.pop('longitude'), row.pop('latitude'),
+                                                                    from_udunits(row.pop('time'), row.pop('timeUnits')),
+                                                                    row.pop('depth'))
+                                measurement = self.createMeasurement(mtime=mtime, depth=depth, lat=latitude, lon=longitude)
+                        else:
+                            raise Exception('No handler for featureType = %s' % featureType)
 
-                except ValueError:
-                    logger.info('Bad time value')
-                    continue
-                except SkipRecord as e:
-                    logger.debug("Skipping record: %s", e)
-                    continue
-                except Exception as e:
-                    logger.exception(str(e))
-                    sys.exit(-1)
+                    except ValueError:
+                        logger.info('Bad time value')
+                        continue
+                    except SkipRecord as e:
+                        logger.debug("Skipping record: %s", e)
+                        continue
+                    except Exception as e:
+                        logger.exception(str(e))
+                        sys.exit(-1)
 
-                self._insertRow(parmCount, parameterCount, measurement, row)
+                    self._insertRow(parmCount, parameterCount, measurement, row)
 
-            # End for row in data_generator:
+                # End for row in data_generator:
 
             #
             # Query database to a path for trajectory or stationPoint for timeSeriesProfile and timeSeries
@@ -1527,7 +1782,7 @@ class Base_Loader(STOQS_Loader):
                             comment=newComment,
                             maptrack=path,
                             mappoint=stationPoint,
-                            num_measuredparameters=self.loaded,
+                            num_measuredparameters=mps_loaded,
                             loaded_date=datetime.utcnow())
             logger.debug("%d activitie(s) updated with new attributes.", num_updated)
 
@@ -1546,17 +1801,18 @@ class Base_Loader(STOQS_Loader):
             self.updateActivityParameterStats(parameterCount)
             self.updateCampaignStartEnd()
             self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
-            if featureType.lower() == TRAJECTORY:
+            if featureType == TRAJECTORY:
                 self.insertSimpleDepthTimeSeries()
                 self.saveBottomDepth()
                 self.insertSimpleBottomDepthTimeSeries()
-            elif self.getFeatureType().lower() == TIMESERIES or self.getFeatureType().lower() == TIMESERIESPROFILE:
+            elif featureType == TIMESERIES or featureType == TIMESERIESPROFILE:
+                import pdb; pdb.set_trace()
                 self.insertSimpleDepthTimeSeriesByNominalDepth()
-            elif self.getFeatureType().lower() == TRAJECTORYPROFILE:
+            elif featureType == TRAJECTORYPROFILE:
                 self.insertSimpleDepthTimeSeriesByNominalDepth(trajectoryProfileDepths=self.timeDepthProfiles)
-            logger.info("Data load complete, %d records loaded.", self.loaded)
+            logger.info("Data load complete, %d records loaded.", mps_loaded)
 
-            return self.loaded, path, parmCount
+            return mps_loaded, path, parmCount
 
         return innerProcess_data(self, generator, featureType)
 
