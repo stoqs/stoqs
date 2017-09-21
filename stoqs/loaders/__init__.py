@@ -537,6 +537,9 @@ class STOQS_Loader(object):
             self.activityType, created = m.ActivityType.objects.using(self.dbAlias
                                         ).get_or_create(name = self.activitytypeName)
 
+        if hasattr(self, 'getActivityName'):
+            self.activityName = self.getActivityName()
+
         # Get or create Activity based on unique identifiers
         self.activity, created = m.Activity.objects.using(self.dbAlias).get_or_create(    
                                         name__contains = self.activityName,
@@ -749,7 +752,7 @@ class STOQS_Loader(object):
 
         return measurement
    
-    def is_coordinate_bad(self, key, mtime, depth, lat, lon, min_depth=-1000, max_depth=5000,
+    def is_coordinate_bad(self, key, mtime, depth, lat=None, lon=None, min_depth=-1000, max_depth=5000,
                                          min_lat=-90, max_lat=90, min_lon=-720, max_lon=720):
         '''Return True if coordinate if missing or fill_value, or falls outside of reasonable bounds
         '''
@@ -759,36 +762,41 @@ class STOQS_Loader(object):
             if np.isclose(depth, self.mv_by_key[ac['depth']]):
                 return True
 
-        if self.mv_by_key[ac['latitude']]:
-            if np.isclose(lat, self.mv_by_key[ac['latitude']]):
-                return True
+        if lat:
+            if self.mv_by_key[ac['latitude']]:
+                if np.isclose(lat, self.mv_by_key[ac['latitude']]):
+                    return True
 
-        if self.mv_by_key[ac['longitude']]:
-            if np.isclose(lon, self.mv_by_key[ac['longitude']]):
-                return True
+        if lon:
+            if self.mv_by_key[ac['longitude']]:
+                if np.isclose(lon, self.mv_by_key[ac['longitude']]):
+                    return True
 
         # fill_value rejections
         if self.fv_by_key[ac['depth']]:
             if np.isclose(depth, self.fv_by_key[ac['depth']]):
                 return True
 
-        if self.fv_by_key[ac['latitude']]:
-            if np.isclose(lat, self.fv_by_key[ac['latitude']]):
-                return True
+        if lat:
+            if self.fv_by_key[ac['latitude']]:
+                if np.isclose(lat, self.fv_by_key[ac['latitude']]):
+                    return True
 
-        if self.fv_by_key[ac['longitude']]:
-            if np.isclose(lon, self.fv_by_key[ac['longitude']]):
-                return True
+        if lon:
+            if self.fv_by_key[ac['longitude']]:
+                if np.isclose(lon, self.fv_by_key[ac['longitude']]):
+                    return True
 
         # Brute force QC check on depth to remove egregous outliers
         if depth < min_depth or depth > max_depth:
             return True
 
-        # Brute force QC check on latitude and longitude to remove egregous outliers
-        if lat < min_lat or lat > max_lat:
-            return True
-        if lon < min_lon or lon > max_lon:
-            return True
+        if lat and lon:
+            # Brute force QC check on latitude and longitude to remove egregous outliers
+            if lat < min_lat or lat > max_lat:
+                return True
+            if lon < min_lon or lon > max_lon:
+                return True
 
         return False
 
@@ -805,7 +813,21 @@ class STOQS_Loader(object):
             return True
 
         return False
- 
+
+    def good_coords(self, pnames, mtimes, depths, latitudes, longitudes):
+        '''Generate good coordinate if any of the parameters has good coordinate data.
+        Appropriate for trajectory data where there is one-to-one match of coorcinates.
+        '''
+        for mt, de, la, lo in zip(mtimes, depths, latitudes, longitudes):
+             all_bad = True
+             for pname in pnames:
+                 if not self.is_coordinate_bad(pname, mt, de, la, lo):
+                     all_bad = False
+             if all_bad:
+                 continue
+
+             yield mt, de, la, lo
+
     def preProcessParams(self, row):
         '''
         This method is designed to perform any final pre-processing, such as adding new
