@@ -1,17 +1,4 @@
-#####################################################################
-# NOTE: preliminary, see README.md
-#####################################################################
-
-FROM mbari/stoqs-base:0.0.0
-
-MAINTAINER Carlos Rueda <carueda@mbari.org>
-
-#-------------------------------------------------------------------------------------------------------
-# NOTE: In general, NO start of services at all to be included in the image itself, but to be done as
-# part of lanching the corresponding containers and in combination with support from host server (e.g.,
-# Apache server, along with for proxy-passes, etc.)
-#-------------------------------------------------------------------------------------------------------
-
+FROM mbari/stoqs-postgres:0.0.1
 
 # Configure and start services
 #RUN /usr/pgsql-9.4/bin/postgresql94-setup initdb &&\

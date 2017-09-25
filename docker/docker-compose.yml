@@ -1,0 +1,50 @@
+version: '2'
+
+services:
+  stoqs_rabbitmq:
+    volumes:
+      - $PWD/vols/rabbitmq:/var/lib/rabbitmq
+
+    ports:
+      - "4369:4369"
+
+    environment:
+      - RABBITMQ_DEFAULT_VHOST=stoqs
+      - RABBITMQ_DEFAULT_USER=stoqs
+      - RABBITMQ_DEFAULT_PASS=stoqs
+
+    container_name: stoqs_rabbitmq
+    image: rabbitmq:3
+
+  # still very incomplete
+  stoqs_postgres:
+    volumes:
+      - $PWD/vols/postgres:/var/lib/postgresql/data
+
+    ports:
+      - "5432:5432"
+
+    environment:
+      - POSTGRES_USER=stoqs
+      - POSTGRES_PASSWORD=stoqs
+
+    container_name: stoqs_postgres
+    image: mbari/stoqs-postgres:0.0.1
+
+#  stoqs:
+#    #volumes:
+#    #  - ...
+#
+#    ports:
+#      - "${STOQS_HOST_PORT}:8080"
+#
+#    environment:
+#      - ???=???
+#      - ???=???
+#
+#    image: mbari/stoqs:0.0.1
+#    container_name: stoqs
+#    depends_on:
+#      - stoqs_postgres
+#      - stoqs_rabbitmq
+#
