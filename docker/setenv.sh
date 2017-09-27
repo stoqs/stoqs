@@ -3,6 +3,9 @@
 # Environment variables to be defined prior to running the containers:
 #
 
+# STOQS_VOLS_DIR: Base volume directory on the host
+export STOQS_VOLS_DIR=/tmp/stoqs_vols
+
 # ___ RabbitMQ ___
 export RABBITMQ_DEFAULT_VHOST=stoqs
 export RABBITMQ_DEFAULT_USER=stoqs

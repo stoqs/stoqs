@@ -1,19 +1,9 @@
-#
-# Unfortunately I'm noticing issue https://github.com/docker/compose/issues/4337:
-# docker-compose refuses to reflect updates to the mbari/stoqs-postgis image, even
-# after explicitly removing any associated container (docker rm) and even using
-# --force-recreate.
-# The only solution at this point is not to use docker-compose but docker directly
-# as indicated in the README.
-# We can revisit this at some point.
-#
-
 version: '2'
 
 services:
   rabbitmq:
     volumes:
-      - $PWD/vols/rabbitmq:/var/lib/rabbitmq
+      - ${STOQS_VOLS_DIR}/rabbitmq:/var/lib/rabbitmq
 
     ports:
       - "${STOQS_RABBITMQ_PORT}:4369"
@@ -29,7 +19,7 @@ services:
 
   postgis:
     volumes:
-      - $PWD/vols/pgdata:/var/lib/postgresql/data
+      - ${STOQS_VOLS_DIR}/pgdata:/var/lib/postgresql/data
 
     ports:
       - "${STOQS_POSTGRES_PORT}:5432"
