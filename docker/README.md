@@ -2,6 +2,11 @@
 
 **NOTE: WIP**
 
+# Some TODOs/questions
+
+- `yum -y groups install "GNOME Desktop"` - perhaps unneeded?
+
+
 ## Basic idea
 
 Images involved toward a fully operational STOQS instance would be:
