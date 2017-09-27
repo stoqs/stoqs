@@ -23,21 +23,13 @@ RUN yum -y install deltarpm scipy mod_wsgi memcached python-memcached &&\
     wget http://doc.instantreality.org/media/uploads/downloads/2.8.0/InstantReality-RedHat-7-x64-2.8.0.38619.rpm &&\
     rpm -Uvh InstantReality-RedHat-7-x64-2.8.0.38619.rpm
 
-# Build and install MB-System, setting overcommit_memory to wizardry mode
-# NOTE: Instead of:
-#    echo 1 > /proc/sys/vm/overcommit_memory
-# which triggers error:
-#    /bin/sh: /proc/sys/vm/overcommit_memory: Read-only file system
-# and noting that in the centos:7 image such file already exists and has "1" as content,
-# I'm making the instruction conditional as shown,
+# Build and install MB-System
 RUN wget -q -N ftp://ftp.ldeo.columbia.edu/pub/MB-System/mbsystem-5.5.2284.tar.gz &&\
     tar -xzf mbsystem-5.5.2284.tar.gz &&\
     cd mbsystem-5.5.2284/ &&\
     ./configure --with-otps-dir=/usr/local/OTPS2 &&\
     make -j 2 && make install &&\
-    ([ "`cat /proc/sys/vm/overcommit_memory`" = "1" ] || echo 2 > /proc/sys/vm/overcommit_memory) &&\
     cd ..
-# TODO: such overcommit_memory setting should probably be moved to the base image.
 
 # TODO Mapserver should probably be in its own image so it can be launched separately.
 # Build and install Mapserver

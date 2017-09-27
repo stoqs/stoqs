@@ -1,15 +1,11 @@
-#
-# mdillon/postgis seems promising.
-# For now, just some basic skeleton here while we get more
-# clarification about interdependencies...
-#
 FROM mdillon/postgis:9.6
 
-# Put geckodriver in /usr/local/bin
-RUN pushd /usr/local/bin &&\
-    wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.11.1/geckodriver-v0.11.1-linux64.tar.gz &&\
-    tar -xzf geckodriver-v0.11.1-linux64.tar.gz &&\
-    popd
+# The base image already has 'postgis.sh' under /docker-entrypoint-initdb.d/.
+# Since the initialization files will be executed in sorted name order,
+# we name our init script such that it's processed after 'postgis.sh'.
+ADD stoqs-init-db.sh /docker-entrypoint-initdb.d/
 
-
-# what else ...???
+# Modify pg_hba.conf and pg_ident.conf.
+# Note: handled as a script (and not via RUN command in the docker file)
+# so /var/lib/postgresql/data/ already exists by the time the logic is run.
+ADD stoqs-pg_hba.sh /docker-entrypoint-initdb.d/

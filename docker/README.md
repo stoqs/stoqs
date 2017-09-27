@@ -2,87 +2,102 @@
 
 **NOTE: WIP**
 
-## Images
+## Basic idea
 
 Images involved toward a fully operational STOQS instance would be:
 
-| Image                  | Purpose |
-| -----                  | ------  |
-| `rabbitmq:3          ` | RabbitMQ |
-| `???/mapserver       ` | mapServer |
-| `mbari/stoqs-postgres` | Configured Postgres server/database for STOQS use |
-| `mbari/stoqs         ` | STOQS system itself |
+- `rabbitmq:3`: RabbitMQ
+- `???/mapserver`: mapServer
+- `mbari/stoqs-postgis`: Configured Postgres/Postgis server/database for STOQS use
+- `mbari/stoqs`: STOQS system itself
 
 The basic idea is that each image corresponds to a service that can be started/stopped/restarted
 as a unit, and, of course, according to relevant dependencies (for example, the STOQS system
 itself requires the Postgres service, while perhaps RabbitMQ is optional..).
 
+## Building / running / testing
 
-## docker-compose.yml
+`setenv.sh` captures environment variables that are used in build/run commands below.
 
-Mainly as a preliminary mechanism to specify the orchestration of the corresponding containers
-at run time (data volumes, ports, environment, etc),
-I'm using Docker Compose.
+```shell
+$ cd docker/
+$ vim setenv.sh
+$ source setenv.sh
+```
 
 For the tests I'm using `$PWD/vols/` as a base directory for volume mappings.
 
+
+**Note**: Along with the direct `docker run ...` commands below I'm also 
+capturing the component set-up in docker-compose.yml. 
+
+
 ### RabbitMQ
 
+We simply run a `rabbitmq:3` container directly:
+
+```shell
+$ docker run --name stoqs-rabbitmq \
+       -e RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST} \
+       -e RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER} \
+       -e RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS} \
+       -e STOQS_RABBITMQ_PORT=${STOQS_RABBITMQ_PORT} \
+       -d rabbitmq:3
+```
+
 - Using official image `rabbitmq:3` directly as the necessary settings 
-  ("stoqs" vhost, username and password), as seen in provision.sh,
+  ("stoqs" vhost, username and password), as seen in `provision.sh`,
   can simply be indicated via environment variables in this entry.
 
-- Port 4369 is exposed to the host as is, but can be adjusted as needed.
-  Other ports can of course also be mapped as needed.
+- At the moment only port 4369 is explicitly exposed to the host.
 
 - No dependencies on other services.
 
-
-### Postgres
-
-TODO
+- TODO: any needed data volume mappings?
 
 
-### MapServer
+### Postgis image
 
-TODO
-
-
-### STOQS
-
-TODO
-
-
-## Building the images
+In this case we build an image on top of 
+[mdillon/postgis:9.6](https://hub.docker.com/r/mdillon/postgis/)
+to include the intialization of the database and the necessary 
+adjustments to `pg_hba.conf` and `pg_hba_ident.conf`:
 
 ```
-$ cd docker/
+$ docker build -f Dockerfile-postgis -t "mbari/stoqs-postgis:0.0.1" .
 ```
 
-### Base image
+This image can be run as follows:
 
-It seems that a key set of OS level libraries/tools could be captured in a base
-image, `mbari/stoqs-base`.
+```shell
+$ docker run --name stoqs-postgis \
+         -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
+         -e STOQSADM_PASS=${STOQSADM_PASS} \
+         -v $PWD/vols/pgdata:/var/lib/postgresql/data \
+         -d mbari/stoqs-postgis:0.0.1
+```
+
+**NOTE**: The host `$PWD/vols/pgdata` directory is created upon first 
+execution of the command above. Subsequent runs will use the existing
+contents. So, keep this in mind in particular regarding any futher
+needed adjustments to `pg_hba.conf` and `pg_hba_ident.conf`.
+
+### STOQS image
+
+For convenience, we capture a key set of OS level libraries/tools 
+in a base image, `mbari/stoqs-base`.
 
 ```
 $ docker build -f Dockerfile-base -t "mbari/stoqs-base:0.0.1" .
 ```
 
-### Postgres image
+We then build the STOQS image on top of the above:
 
-- Base on the mbari/stoqs-postgres image
-
-```
-$ docker build -f Dockerfile-postgres -t "mbari/stoqs-postgres:0.0.1" .
-```
-
-### STOQS image
-
-- Base on the mbari/stoqs-postgres image
+**WIP**
 
 ```
 $ cd ..    # i.e., cd to root directory of this repo
-$ docker build -f docker/Dockerfile -t "mbari/stoqs:0.0.1" .
+$ docker build -f docker/Dockerfile-stoqs -t "mbari/stoqs:0.0.1" .
 ```
 
 
@@ -91,7 +106,7 @@ $ docker build -f docker/Dockerfile -t "mbari/stoqs:0.0.1" .
 When the time comes:
 
 ```
+$ docker push mbari/stoqs-postgis:0.0.1
 $ docker push mbari/stoqs-base:0.0.1
-$ docker push mbari/stoqs-postgres:0.0.1
 $ docker push mbari/stoqs:0.0.1
 ```

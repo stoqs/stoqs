@@ -1,35 +1,45 @@
+#
+# Unfortunately I'm noticing issue https://github.com/docker/compose/issues/4337:
+# docker-compose refuses to reflect updates to the mbari/stoqs-postgis image, even
+# after explicitly removing any associated container (docker rm) and even using
+# --force-recreate.
+# The only solution at this point is not to use docker-compose but docker directly
+# as indicated in the README.
+# We can revisit this at some point.
+#
+
 version: '2'
 
 services:
-  stoqs_rabbitmq:
+  rabbitmq:
     volumes:
       - $PWD/vols/rabbitmq:/var/lib/rabbitmq
 
     ports:
-      - "4369:4369"
+      - "${STOQS_RABBITMQ_PORT}:4369"
 
     environment:
-      - RABBITMQ_DEFAULT_VHOST=stoqs
-      - RABBITMQ_DEFAULT_USER=stoqs
-      - RABBITMQ_DEFAULT_PASS=stoqs
+      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - STOQS_RABBITMQ_PORT=${STOQS_RABBITMQ_PORT}
 
-    container_name: stoqs_rabbitmq
+    container_name: stoqs-rabbitmq
     image: rabbitmq:3
 
-  # still very incomplete
-  stoqs_postgres:
+  postgis:
     volumes:
-      - $PWD/vols/postgres:/var/lib/postgresql/data
+      - $PWD/vols/pgdata:/var/lib/postgresql/data
 
     ports:
-      - "5432:5432"
+      - "${STOQS_POSTGRES_PORT}:5432"
 
     environment:
-      - POSTGRES_USER=stoqs
-      - POSTGRES_PASSWORD=stoqs
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - STOQSADM_PASS=${STOQSADM_PASS}
 
-    container_name: stoqs_postgres
-    image: mbari/stoqs-postgres:0.0.1
+    container_name: stoqs-postgis
+    image: mbari/stoqs-postgis:0.0.1
 
 #  stoqs:
 #    #volumes:
@@ -45,6 +55,6 @@ services:
 #    image: mbari/stoqs:0.0.1
 #    container_name: stoqs
 #    depends_on:
-#      - stoqs_postgres
-#      - stoqs_rabbitmq
+#      - postgis
+#      - rabbitmq
 #
