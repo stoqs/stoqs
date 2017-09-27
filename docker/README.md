@@ -9,6 +9,9 @@
   - `export LD_PRELOAD=...`  BTW check the actual path to ligdal.so.1
   - Basemap installation
   - natgrid installation
+- base image:
+  - installing nginx (as opposed to extending some image) due to the 
+  whole needed provisioning.
 - stoqs image:
   - volume mappings
   - environment variables
@@ -166,3 +169,10 @@ $ docker push mbari/stoqs-base:0.0.1
 $ docker push mbari/stoqs-mapserver:0.0.1
 $ docker push mbari/stoqs:0.0.1
 ```
+
+
+## Some notes
+
+Regarding the `firewall-cmd` commands in provision.sh, 
+"You don't want to run a firewall inside the container,"
+see https://github.com/CentOS/sig-cloud-instance-images/issues/2#issuecomment-57486012
