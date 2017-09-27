@@ -89,6 +89,8 @@ needed adjustments to `pg_hba.conf` and `pg_hba_ident.conf`.
 
 ### STOQS image
 
+#### stoqs-base
+
 For convenience, we capture a key set of OS level libraries/tools 
 in a base image, `mbari/stoqs-base`.
 
@@ -96,12 +98,36 @@ in a base image, `mbari/stoqs-base`.
 $ docker build -f Dockerfile-base -t "mbari/stoqs-base:0.0.1" .
 ```
 
-We then build the STOQS image on top of the above:
+#### stoqs-mapserver
+
+Then we build a MapServer image on top of `mbari/stoqs-base`:
+
+```
+$ docker build -f Dockerfile-mapserver -t "mbari/stoqs-mapserver:0.0.1" .
+```
+
+Basically, this image sets up MapServer and starts `httpd`.
+
+A basic test:
+
+```shell
+$ docker run --name stoqs-mapserver -it --rm -p 3131:80 mbari/stoqs-mapserver:0.0.1
+```
+
+Then open in your browser:
+- http://localhost:3131/ - 
+  should show the typical "Testing 123.." default page  
+- http://localhost:3131/cgi-bin/mapserv -
+  should show `No query information to decode. QUERY_STRING is set, but empty.`
+
+#### stoqs
+
+We then build the STOQS image on top of `mbari/stoqs-mapserver`:
 
 **WIP**
 
 ```
-$ cd ..    # i.e., cd to root directory of this repo
+$ cd ..    # i.e., cd to root directory of the stoqs repo
 $ docker build -f docker/Dockerfile-stoqs -t "mbari/stoqs:0.0.1" .
 ```
 
@@ -113,5 +139,6 @@ When the time comes:
 ```
 $ docker push mbari/stoqs-postgis:0.0.1
 $ docker push mbari/stoqs-base:0.0.1
+$ docker push mbari/stoqs-mapserver:0.0.1
 $ docker push mbari/stoqs:0.0.1
 ```
