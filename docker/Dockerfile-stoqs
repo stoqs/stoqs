@@ -1,3 +1,13 @@
 FROM mbari/stoqs-mapserver:0.0.1
 
-# TODO
+RUN mkdir -p /opt/stoqsgit
+
+# TODO perhaps no need to copy everything for a production env?
+COPY . /opt/stoqsgit
+
+RUN cd /opt/stoqsgit &&\
+    git config core.preloadindex true &&\
+    export PATH="/usr/local/bin:$PATH" &&\
+    python3.6 -m venv venv-stoqs &&\
+    source venv-stoqs/bin/activate &&\
+    ./setup.sh

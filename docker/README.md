@@ -5,6 +5,10 @@
 # Some TODOs/questions
 
 - `yum -y groups install "GNOME Desktop"` - perhaps unneeded?
+- seems like some pieces from setup.sh could be put in the base image:
+  - `export LD_PRELOAD=...`  BTW check the actual path to ligdal.so.1
+  - Basemap installation
+  - natgrid installation
 
 
 ## Basic idea
