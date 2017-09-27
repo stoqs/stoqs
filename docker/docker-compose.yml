@@ -31,20 +31,13 @@ services:
     container_name: stoqs-postgis
     image: mbari/stoqs-postgis:0.0.1
 
-#  stoqs:
-#    #volumes:
-#    #  - ...
-#
-#    ports:
-#      - "${STOQS_HOST_PORT}:8080"
-#
-#    environment:
-#      - ???=???
-#      - ???=???
-#
-#    image: mbari/stoqs:0.0.1
-#    container_name: stoqs
-#    depends_on:
-#      - postgis
-#      - rabbitmq
-#
+  stoqs:
+    ports:
+      - "${STOQS_HOST_PORT}:80"
+
+    image: mbari/stoqs:0.0.1
+    container_name: stoqs
+    depends_on:
+      - postgis
+      - rabbitmq
+

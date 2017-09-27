@@ -25,3 +25,9 @@ export STOQSADM_PASS=changeme
 
 # STOQS_POSTGRES_PORT: host port to map postgres container's 5432 port
 export STOQS_POSTGRES_PORT=5432
+
+
+# ___ STOQS ___
+
+# STOQS_HOST_PORT: host port to map container's httpd 80 port
+export STOQS_HOST_PORT=80

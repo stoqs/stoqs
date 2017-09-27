@@ -2,13 +2,18 @@
 
 **NOTE: WIP**
 
-# Some TODOs/questions
+# Some TODOs
 
 - `yum -y groups install "GNOME Desktop"` - perhaps unneeded?
 - seems like some pieces from setup.sh could be put in the base image:
   - `export LD_PRELOAD=...`  BTW check the actual path to ligdal.so.1
   - Basemap installation
   - natgrid installation
+- stoqs image:
+  - volume mappings
+  - environment variables
+- in general, "interlinking" in terms of the stoqs container able to
+  interact with the database, rabbitmq, etc.
 
 
 ## Basic idea
@@ -115,25 +120,40 @@ Basically, this image sets up MapServer and starts `httpd`.
 A basic test:
 
 ```shell
-$ docker run --name stoqs-mapserver -it --rm -p 3131:80 mbari/stoqs-mapserver:0.0.1
+$ docker run --name stoqs-mapserver -it --rm \
+         -p ${STOQS_HOST_PORT}:80 \
+         mbari/stoqs-mapserver:0.0.1
 ```
 
-Then open in your browser:
-- http://localhost:3131/ - 
-  should show the typical "Testing 123.." default page  
-- http://localhost:3131/cgi-bin/mapserv -
+Then, in your browser:
+- open http://localhost:${STOQS_HOST_PORT}/ - 
+  should show the typical Apache "Testing 123.." default page  
+- open http://localhost:${STOQS_HOST_PORT}/cgi-bin/mapserv -
   should show `No query information to decode. QUERY_STRING is set, but empty.`
 
 #### stoqs
 
 We then build the STOQS image on top of `mbari/stoqs-mapserver`:
 
-**WIP**
-
 ```
 $ cd ..    # i.e., cd to root directory of the stoqs repo
 $ docker build -f docker/Dockerfile-stoqs -t "mbari/stoqs:0.0.1" .
 ```
+
+Basic test (similar to the mapserver case above but with the stoqs image):
+
+```shell
+$ docker run --name stoqs -it --rm \
+         -p ${STOQS_HOST_PORT}:80 \
+         mbari/stoqs:0.0.1
+```
+
+Then, in your browser:
+- open http://localhost:${STOQS_HOST_PORT}/ 
+- open http://localhost:${STOQS_HOST_PORT}/cgi-bin/mapserv 
+
+
+TO BE CONTINUED ...
 
 
 ## Publishing the images
