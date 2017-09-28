@@ -12,7 +12,6 @@ services:
       - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
-      - STOQS_RABBITMQ_PORT=${STOQS_RABBITMQ_PORT}
 
     container_name: stoqs-rabbitmq
     image: rabbitmq:3
@@ -31,6 +30,16 @@ services:
     container_name: stoqs-postgis
     image: mbari/stoqs-postgis:0.0.1
 
+  mapserver:
+    volumes:
+      - ${STOQS_VOLS_DIR}/maps:/maps:ro
+
+    ports:
+      - "${STOQS_MAPSERVER_PORT}:80"
+
+    container_name: stoqs-mapserver
+    image: geodata/mapserver:7.0.1
+
   stoqs:
     ports:
       - "${STOQS_HOST_PORT}:80"
@@ -38,6 +47,6 @@ services:
     image: mbari/stoqs:0.0.1
     container_name: stoqs
     depends_on:
+      - mapserver
       - postgis
       - rabbitmq
-

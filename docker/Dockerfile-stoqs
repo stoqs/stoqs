@@ -1,8 +1,8 @@
-FROM mbari/stoqs-mapserver:0.0.1
+FROM mbari/stoqs-base:0.0.1
 
 RUN mkdir -p /opt/stoqsgit
 
-# TODO perhaps no need to copy everything for a production env?
+# TODO perhaps no need to copy everything for a production env.
 COPY . /opt/stoqsgit
 
 RUN cd /opt/stoqsgit &&\
@@ -10,4 +10,15 @@ RUN cd /opt/stoqsgit &&\
     export PATH="/usr/local/bin:$PATH" &&\
     python3.6 -m venv venv-stoqs &&\
     source venv-stoqs/bin/activate &&\
-    ./setup.sh
+    ./setup.sh production
+
+# the following for the 'root' user but can be adjusted as needed
+RUN echo -e "\n\
+# ======= STOQS =======\n\
+alias psql='psql --host=stoqs-postgis --port=5432'\n\
+\n\
+export STOQS_HOME=/opt/stoqsgit\n\
+export PATH=/usr/pgsql-9.6/bin:$PATH\n\
+\n\
+cd /opt/stoqsgit\n\
+source venv-stoqs/bin/activate\n" >> /root/.bashrc

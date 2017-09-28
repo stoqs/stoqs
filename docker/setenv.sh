@@ -4,7 +4,7 @@
 #
 
 # STOQS_VOLS_DIR: Base volume directory on the host
-export STOQS_VOLS_DIR=/tmp/stoqs_vols
+export STOQS_VOLS_DIR=${PWD}/tmp/stoqs_vols
 
 # ___ RabbitMQ ___
 export RABBITMQ_DEFAULT_VHOST=stoqs
@@ -26,6 +26,11 @@ export STOQSADM_PASS=changeme
 # STOQS_POSTGRES_PORT: host port to map postgres container's 5432 port
 export STOQS_POSTGRES_PORT=5432
 
+
+# ___ MapServer ___
+
+# STOQS_MAPSERVER_PORT: host port to map mapserver container's 80 port
+export STOQS_MAPSERVER_PORT=7000
 
 # ___ STOQS ___
 

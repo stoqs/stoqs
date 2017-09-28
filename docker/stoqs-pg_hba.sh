@@ -7,8 +7,9 @@ echo "STOQS: PGDATA = ${PGDATA}"
 echo "STOQS: Adjusting pg_hba.conf ..."
 cp -p ${PGDATA}/pg_hba.conf ${PGDATA}/pg_hba.conf.bak
 echo -e "\
-# -------------------------\n\
+# ======= STOQS =======\n\
 # Allow user/password login\n\
+host    all     stoqsadm     stoqs          md5\n\
 host    all     stoqsadm     127.0.0.1/32   md5\n\
 host    all     stoqsadm     10.0.2.0/24    md5\n\
 local   all     all                         trust\n\
