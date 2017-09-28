@@ -1,3 +1,9 @@
+#
+# This was an initial attempt building MapServer itself (as indicated in provision.sh)
+# on top our the base image.
+# But we are now trying to use an already exisiting MapServer image. See README.
+#
+
 FROM mbari/stoqs-base:0.0.1
 
 # TODO Mapserver should probably be in its own image so it can be launched separately.
