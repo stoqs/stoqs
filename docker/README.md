@@ -7,7 +7,7 @@
 - `yum -y groups install "GNOME Desktop"` - perhaps unneeded?
 - seems like most of setup.sh (with the `production` argument) could 
   actually be put in the base image:
-  - `export LD_PRELOAD=...`  BTW check the actual path to ligdal.so.1
+  - `export LD_PRELOAD=/usr/lib64/libgdal.so.1`
   - Basemap installation
   - natgrid installation
 - base image:
@@ -106,7 +106,9 @@ as its contents are to be `COPY`'ed to the image:
 
 ```
 $ cd ..    # i.e., 
-$ docker build -f docker/Dockerfile-stoqs -t "mbari/stoqs:0.0.1" .
+$ docker build -f docker/Dockerfile-stoqs \
+         --build-arg STOQSADM_PASS=${STOQSADM_PASS} \
+         -t "mbari/stoqs:0.0.1" .
 ```
 
 
@@ -149,16 +151,112 @@ postgres=> \d
 
 #### MapServer
 
-- open "http://localhost:${STOQS_MAPSERVER_PORT}/" - 
+- open "http://localhost:${STOQS_HOST_MAPSERVER_PORT}/" - 
   should show `No query information to decode. QUERY_STRING is set, but empty.`
 
-- open "http://localhost:${STOQS_MAPSERVER_PORT}/?map=/usr/local/share/mapserver/examples/test.map&mode=map" - 
+- open "http://localhost:${STOQS_HOST_MAPSERVER_PORT}/?map=/usr/local/share/mapserver/examples/test.map&mode=map" - 
   should show the basic example provided in the docker image.
 
 #### STOQS image
 
-- open "http://localhost:${STOQS_HOST_PORT}/"
+Basic:
 
+- open "http://localhost:${STOQS_HOST_HTTP_PORT}/"
+  - currently this shows the default nginx page.
+
+
+Interaction with the database:
+
+```shell
+$ docker exec -it stoqs bash
+(venv-stoqs) [root@a9bbe3f55dc6 stoqsgit]# psql -U stoqsadm -d postgres
+Password for user stoqsadm:
+psql (9.6.5, server 9.6.3)
+Type "help" for help.
+
+postgres=> \d
+               List of relations
+ Schema |       Name        | Type  |  Owner
+--------+-------------------+-------+----------
+ public | geography_columns | view  | postgres
+ public | geometry_columns  | view  | postgres
+ public | raster_columns    | view  | postgres
+ public | raster_overviews  | view  | postgres
+ public | spatial_ref_sys   | table | postgres
+(5 rows)
+```
+
+Trying some of the instructions included in test.sh:
+
+```shell
+(venv-stoqs) [root@a9bbe3f55dc6 stoqsgit]# cd stoqs
+(venv-stoqs) [root@a9bbe3f55dc6 stoqs]# ./manage.py makemigrations stoqs --settings=config.settings.ci --noinput
+# (completed fine)
+```
+
+However:
+
+```shell
+(venv-stoqs) [root@a9bbe3f55dc6 stoqs]# ./manage.py migrate --settings=config.settings.ci --noinput --database=default
+Traceback (most recent call last):
+  File "/opt/stoqsgit/venv-stoqs/lib64/python3.6/site-packages/django/db/backends/utils.py", line 63, in execute
+    return self.cursor.execute(sql)
+psycopg2.ProgrammingError: permission denied to create extension "postgis"
+HINT:  Must be superuser to create this extension.
+```
+
+TODO 
+- actually, the "postgis" extension already exists.
+  Are there still missing privileges to be given to stoqsadm?
+ 
+
+
+Other exercises:
+
+Adjusted the image so it launches django as entry point ..
+
+Running this container directly:
+
+```shell
+$ docker run --name stoqs -it --rm \
+         -p 8000:8000 \
+         --net docker_default mbari/stoqs:0.0.1
+
+
+Performing system checks...
+
+System check identified no issues (0 silenced).
+```
+
+seems to work. I can open ???? and see
+
+
+
+But not when launched via docker compose 
+(note, I'm temporarily commenting out the rabbitqs service):
+
+```shell
+$ docker-compose up
+Starting stoqs-mapserver ...
+Starting stoqs-mapserver
+Starting stoqs-postgis ...
+Starting stoqs-mapserver ... done
+Recreating stoqs ...
+Recreating stoqs ... done
+Attaching to stoqs-postgis, stoqs-mapserver, stoqs
+stoqs-mapserver |  * Starting FastCGI wrapper fcgiwrap
+stoqs-mapserver |    ...done.
+stoqs exited with code 0
+stoqs-postgis | LOG:  database system was interrupted; last known up at 2017-09-29 00:12:13 UTC
+stoqs-postgis | LOG:  database system was not properly shut down; automatic recovery in progress
+stoqs-postgis | LOG:  invalid record length at 0/2D64510: wanted 24, got 0
+stoqs-postgis | LOG:  redo is not required
+stoqs-postgis | LOG:  MultiXact member wraparound protections are now enabled
+stoqs-postgis | LOG:  database system is ready to accept connections
+stoqs-postgis | LOG:  autovacuum launcher started
+```
+
+That is, the stoqs container is launched but it exits immediately.
 
 
 ## Publishing the images
