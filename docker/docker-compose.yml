@@ -1,6 +1,7 @@
 version: '2'
 
 services:
+  ### Commented out for the moment
   #rabbitmq:
   #  volumes:
   #    - ${STOQS_VOLS_DIR}/rabbitmq:/var/lib/rabbitmq
@@ -41,7 +42,6 @@ services:
     image: geodata/mapserver:7.0.1
 
   stoqs:
-    entrypoint: bash
     ports:
       - "${STOQS_HOST_DJANGO_PORT}:8000"
       - "${STOQS_HOST_HTTP_PORT}:80"

@@ -2,22 +2,26 @@
 
 **WIP**
 
-# Some TODOs/comments/questions
+Status in short:
+
+- STOQS GUI running and exposed on host: http://localhost:8000/
+  (with empty Campaigns table at the moment) 
+
+
+# Some comments/questions/TODOs
 
 - `yum -y groups install "GNOME Desktop"` - perhaps unneeded?
-- seems like most of setup.sh (with the `production` argument) could 
-  actually be put in the base image:
-  - `export LD_PRELOAD=/usr/lib64/libgdal.so.1`
-  - Basemap installation
-  - natgrid installation
 - base image:
   - for now _installing_ nginx (as opposed to _extending_ some image) 
     due to the whole needed provisioning.
+  - includes basically what `setup.sh production` does, that is:
+    - pip3.6 install -r requirements/production.txt
+    - Basemap installation
+    - natgrid installation
 - stoqs image:
-  - volume mappings?
-  - environment variables?
-- No really need to create any python virtualenv because the enviroment 
-  is already containerized
+  - Note: no python virtualenv used as the environment is already containerized
+  - TODO: any volume mappings?
+  - TODO: any additional environment variables?
 
 
 ## General approach
@@ -88,11 +92,14 @@ Currently playing with `geodata/mapserver:7.0.1` directly.
 
 ### STOQS base image
 
-For convenience, we capture a key set of OS level libraries/tools 
+We capture the whole set of OS level libraries/tools, as well
+as all production requirements (basically what `setup.sh production` does) 
 in a base image, `mbari/stoqs-base`.
 
+In this case, `cd` to the root directory of the stoqs repository clone.
+
 ```
-$ docker build -f Dockerfile-base -t "mbari/stoqs-base:0.0.1" .
+$ docker build -f docker/Dockerfile-base -t "mbari/stoqs-base:0.0.1" .
 ```
 
 This image also has nginx enabled as entry point.
@@ -101,11 +108,9 @@ This image also has nginx enabled as entry point.
 
 We build the STOQS image on top of `mbari/stoqs-base`:
 
-In this case, `cd` to the root directory of the stoqs repository clone
-as its contents are to be `COPY`'ed to the image:
+Also in this case, make sure to `cd` to the root directory of the stoqs repository clone.
 
 ```
-$ cd ..    # i.e., 
 $ docker build -f docker/Dockerfile-stoqs \
          --build-arg STOQSADM_PASS=${STOQSADM_PASS} \
          -t "mbari/stoqs:0.0.1" .
@@ -159,10 +164,13 @@ postgres=> \d
 
 #### STOQS image
 
-Basic:
-
+- open "http://localhost:${STOQS_HOST_DJANGO_PORT}/"
+  shows the STOQS GUI 
+  (currently with an empty Campaigns table)
+  
 - open "http://localhost:${STOQS_HOST_HTTP_PORT}/"
   - currently this shows the default nginx page.
+  
 
 
 Interaction with the database:
@@ -213,9 +221,8 @@ TODO
 
 Other exercises:
 
-Adjusted the image so it launches django as entry point ..
-
-Running this container directly:
+Running this container directly
+(assuming stoqs-postgis is already running as launched by docker-compose):
 
 ```shell
 $ docker run --name stoqs -it --rm \
@@ -227,36 +234,6 @@ Performing system checks...
 
 System check identified no issues (0 silenced).
 ```
-
-seems to work. I can open ???? and see
-
-
-
-But not when launched via docker compose 
-(note, I'm temporarily commenting out the rabbitqs service):
-
-```shell
-$ docker-compose up
-Starting stoqs-mapserver ...
-Starting stoqs-mapserver
-Starting stoqs-postgis ...
-Starting stoqs-mapserver ... done
-Recreating stoqs ...
-Recreating stoqs ... done
-Attaching to stoqs-postgis, stoqs-mapserver, stoqs
-stoqs-mapserver |  * Starting FastCGI wrapper fcgiwrap
-stoqs-mapserver |    ...done.
-stoqs exited with code 0
-stoqs-postgis | LOG:  database system was interrupted; last known up at 2017-09-29 00:12:13 UTC
-stoqs-postgis | LOG:  database system was not properly shut down; automatic recovery in progress
-stoqs-postgis | LOG:  invalid record length at 0/2D64510: wanted 24, got 0
-stoqs-postgis | LOG:  redo is not required
-stoqs-postgis | LOG:  MultiXact member wraparound protections are now enabled
-stoqs-postgis | LOG:  database system is ready to accept connections
-stoqs-postgis | LOG:  autovacuum launcher started
-```
-
-That is, the stoqs container is launched but it exits immediately.
 
 
 ## Publishing the images

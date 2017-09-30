@@ -3,30 +3,17 @@ FROM mbari/stoqs-base:0.0.1
 ARG STOQSADM_PASS
 
 # TODO perhaps no need to copy everything for a production env.
-COPY requirements     /opt/stoqsgit/requirements/
-COPY stoqs            /opt/stoqsgit/stoqs/
-COPY docker-setup.sh test.sh /opt/stoqsgit/
+COPY stoqs  /opt/stoqsgit/stoqs/
 
-COPY basemap-1.0.7.tar.gz /opt/stoqsgit/
-COPY natgrid-0.2.1.tar.gz /opt/stoqsgit/
+ENV STOQS_HOME=/opt/stoqsgit \
+    DATABASE_URL="postgis://stoqsadm:${STOQSADM_PASS}@stoqs-postgis:5432/stoqs" \
+    PATH=/usr/pgsql-9.6/bin:${PATH}
 
-RUN cd /opt/stoqsgit &&\
-    python3.6 -m venv venv-stoqs &&\
-    source venv-stoqs/bin/activate &&\
-    ./docker-setup.sh
-
-# the following for the 'root' user but can (should?) be adjusted
+# The following mainly in case the container is run with bash as entry point
 RUN echo -e "\n\
 # ======= STOQS =======\n\
 alias psql='psql --host=stoqs-postgis --port=5432'\n\
-\n\
-export STOQS_HOME=/opt/stoqsgit\n\
-export PATH=/usr/pgsql-9.6/bin:\$PATH\n\
-export DATABASE_URL=postgis://stoqsadm:${STOQSADM_PASS}@stoqs-postgis:5432/stoqs\n\
 " >> /root/.bashrc
 
-COPY run-stoqs.sh /opt/stoqsgit/
-
-WORKDIR /opt/stoqsgit
-ENTRYPOINT ["./run-stoqs.sh"]
-CMD []
+WORKDIR    /opt/stoqsgit
+ENTRYPOINT ["stoqs/manage3.6.py", "runserver", "0.0.0.0:8000", "--settings=config.settings.local"]

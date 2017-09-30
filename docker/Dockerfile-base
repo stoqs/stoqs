@@ -138,6 +138,31 @@ RUN wget -q -N ftp://ftp.ldeo.columbia.edu/pub/MB-System/mbsystem-5.5.2284.tar.g
     make -j 2 && make install &&\
     cd ..
 
+COPY requirements     /opt/stoqsgit/requirements/
+
+RUN /bin/bash -c '\
+    export PATH=/usr/pgsql-9.6/bin:/usr/bin:\$PATH ;\
+    export LD_PRELOAD=/usr/lib64/libgdal.so.1 ;\
+    cd /opt/stoqsgit ;\
+    pip3.6 install -r requirements/production.txt'
+
+# Required for plotting basemap in LRAUV plots
+RUN /bin/bash -c '\
+    cd /tmp \n\
+    export PATH=/usr/pgsql-9.6/bin:/usr/bin:\$PATH ;\
+    wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz ;\
+    tar -xzf basemap-1.0.7.tar.gz ;\
+    cd /tmp/basemap-1.0.7 ;\
+    export GEOS_DIR=/usr/local ;\
+    python3.6 setup.py install ;\
+    \
+    cd /tmp ;\
+    wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/natgrid-0.2/natgrid-0.2.1.tar.gz ;\
+    tar -xzf natgrid-0.2.1.tar.gz ;\
+    cd /tmp/natgrid-0.2.1 ;\
+    python3.6 setup.py install'
+
+
 # Build database for locate command
 # (updatedb/locate are not included in base centos:7 image)
 RUN yum -y install mlocate &&\
