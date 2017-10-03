@@ -7,6 +7,7 @@ COPY stoqs  /opt/stoqsgit/stoqs/
 
 ENV STOQS_HOME=/opt/stoqsgit \
     DATABASE_URL="postgis://stoqsadm:${STOQSADM_PASS}@stoqs-postgis:5432/stoqs" \
+    MAPSERVER_DATABASE_URL="postgis://stoqsadm:${STOQSADM_PASS}@stoqs-postgis:5432/stoqs" \
     PATH=/usr/pgsql-9.6/bin:${PATH}
 
 # The following mainly in case the container is run with bash as entry point

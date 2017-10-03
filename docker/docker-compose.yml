@@ -42,6 +42,9 @@ services:
     image: geodata/mapserver:7.0.1
 
   stoqs:
+    volumes:
+      - ${STOQS_VOLS_DIR}/maps:/dev/shm
+
     ports:
       - "${STOQS_HOST_DJANGO_PORT}:8000"
       - "${STOQS_HOST_HTTP_PORT}:80"
