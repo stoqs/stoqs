@@ -36,10 +36,10 @@ services:
       - ${STOQS_VOLS_DIR}/maps:/maps:ro
 
     ports:
-      - "${STOQS_HOST_MAPSERVER_PORT}:80"
+      - "${STOQS_HOST_MAPSERVER_PORT}:7000"
 
     container_name: stoqs-mapserver
-    image: geodata/mapserver:7.0.1
+    image: mbari/stoqs-mapserver:0.0.1
 
   stoqs:
     # TODO probably need to adjust STOQS code to use a different location for

@@ -5,7 +5,6 @@
 Status:
 
 - STOQS GUI running and exposed on host: http://localhost:8000/
-  (with empty Campaigns table at the moment) 
 
 - On the `stoqs` container:
  
@@ -24,6 +23,13 @@ Status:
   then errors like `... FATAL:  Ident authentication failed for user "stoqsadm"`
   occur.
 
+- NOTE: creating a stoqs/mapserver image (based on geodata/mapserver:7.0.1) 
+only to proxy `/cgi-bin/mapserv` to `/`. 
+That is, geodata/mapserver:7.0.1 sets the mapserver endpoint to simply `/`;
+however, various STOQS resources add `/cgi-bin/mapserv` to the 
+`MAPSERVER_HOST` setting.
+Suggestion here would be to let the `MAPSERVER_HOST` to include any path
+for the actual mapserver endpoint.  
 
 # Some comments/questions/TODOs
 
@@ -46,7 +52,7 @@ Status:
 Images involved toward a fully operational STOQS instance would be:
 
 - `rabbitmq:3`: RabbitMQ
-- `???/mapserver`: mapServer
+- `???/mapserver`: MapServer
 - `mbari/stoqs-postgis`: Configured Postgres/Postgis server/database for STOQS use
 - `mbari/stoqs`: STOQS system itself
 
@@ -98,6 +104,7 @@ $ docker build -f Dockerfile-postgis -t "mbari/stoqs-postgis:0.0.1" .
 ### MapServer image
 
 Currently playing with `geodata/mapserver:7.0.1` directly.
+(NOTE: actually an adjusted one, see above)
 
 
 ### STOQS base image
@@ -124,6 +131,7 @@ Also in this case, make sure to `cd` to the root directory of the stoqs reposito
 $ docker build -f docker/Dockerfile-stoqs \
          --build-arg STOQSADM_PASS=${STOQSADM_PASS} \
          --build-arg POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
+         --build-arg STOQS_HOST_MAPSERVER_PORT=${STOQS_HOST_MAPSERVER_PORT} \
          -t "mbari/stoqs:0.0.1" .
 ```
 
