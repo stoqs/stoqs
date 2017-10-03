@@ -172,9 +172,9 @@ def process_command_line():
     parser.add_argument('--contourUrl', action='store', help='base url to store cross referenced contour plot resources',
                         default='http://dods.mbari.org/opendap/data/lrauv/stoqs/',required=False)
     parser.add_argument('--iparm', action='store', help='parameter to interpolate against; must exist in the -p/--parms list',
-                        default='bin_mean_chlorophyll',required=False)
+                        default='chlorophyll',required=False)
     parser.add_argument('--plotDotParmName', action='store', help='parameter to plot as colored dot in map; must exist in the -p/--parms list',
-                        default='vertical_temperature_homogeneity_index',required=False)
+                        default='VTHI',required=False)
     parser.add_argument('--booleanPlotGroup', action='store', help='List of space separated boolean parameters to plot as symbols in the map against; must exist in the -p/--parms list',
                         default=['front'],required=False)
     parser.add_argument('--contourDir', action='store', help='output directory to store 24 hour contour output',
@@ -188,32 +188,47 @@ def process_command_line():
     parser.add_argument('--post', action='store_true', help='Post message to slack about new data. Disable this during initial database load or when debugging',required=False)
     parser.add_argument('--debug', action='store_true', help='Useful for debugging plots - does not allow data loading',required=False, default=False)
     parser.add_argument('--plotparms', action='store', help='List of space separated parameters to plot', nargs='*', default=
-                                ['front', 'VTHI', 'bin_mean_stemperature', 'bin_mean_salinity', 'bin_mean_chlorophyll'])
+                                ['front', 'VTHI', 'temperature', 'salinity', 'chlorophyll'])
     parser.add_argument('--parms', action='store', help='List of space separated (non group) parameters to load', nargs='*',
-                        default= ['front', 'VTHI', 'sea_water_temperature', 'sea_water_salinity'])
+                        default= ['front', 'VTHI', 'temperature', 'salinity'])
     parser.add_argument('--groupparms', action='store',
                         help='List of JSON formatted parameter groups, variables and renaming of variables',
                         default='{' \
                                  '"CTD_NeilBrown": [ ' \
                                  '{ "name":"sea_water_salinity" , "rename":"salinity" }, ' \
-                                 '{ "name":"sea_water_temperature" , "rename":"temperature" } ' \
+                                 '{ "name":"bin_mean_sea_water_salinity" , "rename":"salinity" }, ' \
+                                 '{ "name":"bin_median_sea_water_salinity" , "rename":"salinity" }, ' \
+                                 '{ "name":"sea_water_temperature" , "rename":"temperature" }, ' \
+                                 '{ "name":"bin_mean_sea_water_temperature" , "rename":"temperature" }, ' \
+                                 '{ "name":"bin_median_sea_water_temperature" , "rename":"temperature" } ' \
                                  '],' \
                                  '"WetLabsBB2FL": [ ' \
                                  '{ "name":"mass_concentration_of_chlorophyll_in_sea_water", "rename":"chlorophyll" }, ' \
+                                 '{ "name":"bin_mean_mass_concentration_of_chlorophyll_in_sea_water", "rename":"chlorophyll" }, ' \
+                                 '{ "name":"bin_median_mass_concentration_of_chlorophyll_in_sea_water", "rename":"chlorophyll" }, ' \
                                  '{ "name":"Output470", "rename":"bbp470" }, ' \
                                  '{ "name":"Output650", "rename":"bbp650" } ' \
                                  '],' \
                                  '"PAR_Licor": [ ' \
-                                 '{ "name":"downwelling_photosynthetic_photon_flux_in_sea_water", "rename":"PAR" } ' \
+                                 '{ "name":"downwelling_photosynthetic_photon_flux_in_sea_water", "rename":"PAR" }, ' \
+                                 '{ "name":"bin_mean_downwelling_photosynthetic_photon_flux_in_sea_water", "rename":"PAR" }, ' \
+                                 '{ "name":"bin_median_downwelling_photosynthetic_photon_flux_in_sea_water", "rename":"PAR" } ' \
+                                 '],' \
+                                 '"VerticalTemperatureHomogeneityIndexCalculator" : [ ' \
+                                 '{ "name":"vertical_temperature_homogeneity_index", "rename":"VTHI" } ' \
                                  '],' \
                                  '"ISUS" : [ ' \
-                                 '{ "name":"mole_concentration_of_nitrate_in_sea_water", "rename":"nitrate" } ' \
+                                 '{ "name":"mole_concentration_of_nitrate_in_sea_water", "rename":"nitrate" }, ' \
+                                 '{ "name":"bin_mean_mole_concentration_of_nitrate_in_sea_water", "rename":"nitrate" }, ' \
+                                 '{ "name":"bin_median_mole_concentration_of_nitrate_in_sea_water", "rename":"nitrate" } ' \
                                  '],' \
                                  '"Aanderaa_O2": [ ' \
-                                 '{ "name":"mass_concentration_of_oxygen_in_sea_water", "rename":"oxygen" } ' \
+                                 '{ "name":"mass_concentration_of_oxygen_in_sea_water", "rename":"oxygen" }, ' \
+                                 '{ "name":"bin_mean_mass_concentration_of_oxygen_in_sea_water", "rename":"oxygen" }, ' \
+                                 '{ "name":"bin_median_mass_concentration_of_oxygen_in_sea_water", "rename":"oxygen" } ' \
                                  '] }')
     parser.add_argument('-g', '--plotgroup', action='store', help='List of space separated parameters to plot', nargs='*', default=
-                            ['vertical_temperature_homogeneity_index', 'bin_mean_sea_water_temperature', 'bin_mean_sea_water_salinity', 'sea_water_salinity', 'bin_mean_mass_concentration_of_chlorophyll_in_sea_water'])
+                            ['VTHI', 'temperature', 'salinity', 'chlorophyll'])
 
     parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
     parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150911T150000', required=False)
