@@ -42,8 +42,10 @@ services:
     image: geodata/mapserver:7.0.1
 
   stoqs:
-    volumes:
-      - ${STOQS_VOLS_DIR}/maps:/dev/shm
+    # TODO probably need to adjust STOQS code to use a different location for
+    # this volume mapping -- /dev/shm seems to prevent the exposure of the ports below
+    #volumes:
+    #  - ${STOQS_VOLS_DIR}/maps:/dev/shm
 
     ports:
       - "${STOQS_HOST_DJANGO_PORT}:8000"

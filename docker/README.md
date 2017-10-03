@@ -2,10 +2,27 @@
 
 **WIP**
 
-Status in short:
+Status:
 
 - STOQS GUI running and exposed on host: http://localhost:8000/
   (with empty Campaigns table at the moment) 
+
+- On the `stoqs` container:
+ 
+        docker exec -it stoqs bash
+ 
+   all of the following seem to complete Ok:
+
+        cd stoqs/
+        ./manage.py makemigrations stoqs --settings=config.settings.ci --noinput
+        ./manage.py migrate --settings=config.settings.ci --noinput --database=default
+        wget -q -N -O loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
+        loaders/loadTestData.py
+
+- However, if trying the above with the `stoqsadm` username, that is, with
+  `DATABASE_URL=postgis://stoqsadm:changeme@stoqs-postgis:5432/stoqs`,
+  then errors like `... FATAL:  Ident authentication failed for user "stoqsadm"`
+  occur.
 
 
 # Some comments/questions/TODOs
@@ -20,7 +37,7 @@ Status in short:
     - natgrid installation
 - stoqs image:
   - Note: no python virtualenv used as the environment is already containerized
-  - TODO: any volume mappings?
+  - TODO: any other volume mappings (besides the mapserver one)?
   - TODO: any additional environment variables?
 
 
@@ -73,13 +90,6 @@ $ docker build -f Dockerfile-postgis -t "mbari/stoqs-postgis:0.0.1" .
 
 **NOTE**: 
 
-- In particular, the following line:
-
-        host    all     stoqsadm     stoqs          md5
-        
-  is added to `pg_hba_conf` so the `stoqs` container (see below) 
-  can access the database,  e.g., via `psql --host=stoqs-postgis ...`.
-  
 - The host `${STOQS_VOLS_DIR}/pgdata` directory is created upon first 
   execution of the command above. Subsequent runs will use the existing
   contents. So, keep this in mind in particular regarding any futher
@@ -113,8 +123,13 @@ Also in this case, make sure to `cd` to the root directory of the stoqs reposito
 ```
 $ docker build -f docker/Dockerfile-stoqs \
          --build-arg STOQSADM_PASS=${STOQSADM_PASS} \
+         --build-arg POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
          -t "mbari/stoqs:0.0.1" .
 ```
+
+The entry point in this image launches the Django application in development mode.
+
+TODO configure the STOQS app on the inherited nginx endpoint.
 
 
 ## Execution
@@ -134,7 +149,7 @@ $ docker-compose up -d
 
 #### Postgis
 
-Assumimg you have `psql` on your host:
+Assuming you have `psql` on your host:
 
 ```shell
 $ psql -h localhost -p 5432 -U stoqsadm -d postgres
@@ -217,23 +232,6 @@ TODO
 - actually, the "postgis" extension already exists.
   Are there still missing privileges to be given to stoqsadm?
  
-
-
-Other exercises:
-
-Running this container directly
-(assuming stoqs-postgis is already running as launched by docker-compose):
-
-```shell
-$ docker run --name stoqs -it --rm \
-         -p 8000:8000 \
-         --net docker_default mbari/stoqs:0.0.1
-
-
-Performing system checks...
-
-System check identified no issues (0 silenced).
-```
 
 
 ## Publishing the images
