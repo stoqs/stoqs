@@ -168,4 +168,10 @@ RUN /bin/bash -c '\
 RUN yum -y install mlocate &&\
     updatedb
 
+# Make sure python and python-config refer to corresponding 3.6 versions
+RUN (cd /usr/bin/                             &&
+     ln -fs python3.6        python           &&
+     ln -fs python3.6-config python-config
+    )
+
 CMD ["nginx", "-g", "daemon off;"]
