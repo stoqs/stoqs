@@ -71,7 +71,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2017/netcdf/'
 cl.dorado_files = [
-                    'Dorado389_2017_157_00_157_00_decim.nc',
+                  'Dorado389_2017_269_01_269_01_decim.nc',
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
@@ -234,7 +234,7 @@ cl.slocum_nemesis_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20170630/realTime/20170630.nc',
+                      'wgTiny/20170921/realTime/20170921.nc',
                    ]
 
 
@@ -399,8 +399,8 @@ else:
     cl.loadOpah()
     cl.loadL_662a()
     ##cl.load_NPS34()  ## not in this campaign
-    cl.load_NPS34a()
-    cl.load_slocum_nemesis()
+    ##cl.load_NPS34a() ## not in this campaign
+    ##cl.load_slocum_nemesis()  ## not in this campaign
     ##cl.load_SG621(stride=2) ## KISS glider
     ##cl.load_SG539(stride=2) ## KISS glider
     cl.load_wg_Tiny()
@@ -411,8 +411,8 @@ else:
     ##cl.loadMakai()  ## not in this campaign
     ##cl.loadRCuctd()  ## not in this campaign
     ##cl.loadRCpctd()  ## not in this campaign
-    #cl.loadWFuctd()
-    #cl.loadWFpctd()
+    ##cl.loadWFuctd()  ## not in this campaign
+    ##cl.loadWFpctd()  ## not in this campaign
 
     #cl.loadSubSamples() ## no subSamples yet...
 
