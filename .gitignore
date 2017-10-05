@@ -33,3 +33,5 @@ stoqs/loaders/MolecularEcology/BOG_Data/*.csv
 
 # Backup files from 2to3
 *.bak
+
+docker/tmp/

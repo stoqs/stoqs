@@ -1,0 +1,59 @@
+version: '2'
+
+services:
+  ### Commented out for the moment
+  #rabbitmq:
+  #  volumes:
+  #    - ${STOQS_VOLS_DIR}/rabbitmq:/var/lib/rabbitmq
+  #
+  #  ports:
+  #    - "${STOQS_HOST_RABBITMQ_PORT}:4369"
+  #
+  #  environment:
+  #    - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
+  #    - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+  #    - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+  #
+  #  container_name: stoqs-rabbitmq
+  #  image: rabbitmq:3
+
+  postgis:
+    volumes:
+      - ${STOQS_VOLS_DIR}/pgdata:/var/lib/postgresql/data
+
+    ports:
+      - "${STOQS_HOST_POSTGRES_PORT}:5432"
+
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - STOQSADM_PASS=${STOQSADM_PASS}
+
+    container_name: stoqs-postgis
+    image: mbari/stoqs-postgis:0.0.1
+
+  mapserver:
+    volumes:
+      - ${STOQS_VOLS_DIR}/maps:/maps:ro
+
+    ports:
+      - "${STOQS_HOST_MAPSERVER_PORT}:7000"
+
+    container_name: stoqs-mapserver
+    image: mbari/stoqs-mapserver:0.0.1
+
+  stoqs:
+    # TODO probably need to adjust STOQS code to use a different location for
+    # this volume mapping -- /dev/shm seems to prevent the exposure of the ports below
+    #volumes:
+    #  - ${STOQS_VOLS_DIR}/maps:/dev/shm
+
+    ports:
+      - "${STOQS_HOST_DJANGO_PORT}:8000"
+      - "${STOQS_HOST_HTTP_PORT}:80"
+
+    image: mbari/stoqs:0.0.1
+    container_name: stoqs
+    depends_on:
+      - mapserver
+      - postgis
+      #- rabbitmq

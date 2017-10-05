@@ -72,6 +72,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2017/netcdf/'
 cl.dorado_files = [
                     'Dorado389_2017_157_00_157_00_decim.nc',
+                    'Dorado389_2017_248_01_248_01_decim.nc',
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
@@ -879,9 +880,12 @@ cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data
 cl.wg_Tiny_files = [
 ##                     'wgTiny/20170412/realTime/20170412.nc',
 ##                     'wgTiny/20170605/realTime/20170605.nc',
+##                     'wgTiny/20170630/realTime/20170630.nc',
                      'wgTiny/20170412/QC/20170412_QC.nc', ## replace realTime with QC. Load only once.
                      'wgTiny/20170605/QC/20170605_QC.nc', ## replace realTime with QC. Load only once.
-                      'wgTiny/20170630/realTime/20170630.nc',
+                     'wgTiny/20170630/QC/20170630_QC.nc', ## replace realTime with QC. Load only once.
+                     'wgTiny/20170823/realTime/20170823.nc',
+
                    ]
 
 
@@ -902,9 +906,11 @@ cl.wg_Tiny_endDatetime = enddate
 ######################################################################
 #  MOORINGS
 ######################################################################
-cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201608/'
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
 cl.m1_files = [
-  'OS_M1_20160829hourly_CMSTV.nc'
+   '201608/OS_M1_20160829hourly_CMSTV.nc',
+   '201708/OS_M1_20170808hourly_CMSTV.nc',
+
 ]
 cl.m1_parms = [
   'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',

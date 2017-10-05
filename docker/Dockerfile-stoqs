@@ -1,0 +1,23 @@
+FROM mbari/stoqs-base:0.0.1
+
+ARG STOQSADM_PASS
+ARG POSTGRES_PASSWORD
+ARG STOQS_HOST_MAPSERVER_PORT
+
+# TODO perhaps no need to copy everything for a production env.
+COPY stoqs    /opt/stoqsgit/stoqs/
+COPY test.sh  /opt/stoqsgit/
+
+ENV STOQS_HOME=/opt/stoqsgit \
+    PATH=/usr/pgsql-9.6/bin:${PATH}
+
+# TODO use DATABASE_URL="postgis://stoqsadm:${STOQSADM_PASS}@stoqs-postgis:5432/stoqs"
+ENV DATABASE_URL="postgis://postgres:${POSTGRES_PASSWORD}@stoqs-postgis:5432/stoqs" \
+    MAPSERVER_DATABASE_URL="${DATABASE_URL}" \
+    MAPSERVER_HOST="localhost:${STOQS_HOST_MAPSERVER_PORT}"
+
+# The following mainly as a convenience in case the container is run with bash as entry point
+RUN echo "alias psql='psql --host=stoqs-postgis --port=5432'" >> /root/.bashrc
+
+WORKDIR    /opt/stoqsgit
+ENTRYPOINT ["stoqs/manage.py", "runserver", "0.0.0.0:8000", "--settings=config.settings.local"]
