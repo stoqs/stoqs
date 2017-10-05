@@ -1041,12 +1041,24 @@ class Base_Loader(STOQS_Loader):
                     logger.exception(f"Maybe you should delete Activity '{self.activity.name}' first?")
                     sys.exit(-1)
 
+                if nomLon and nomLat:
+                    nom_point = f'POINT({repr(nomLon)} {repr(nomLat)})'
+
+                if nomDepths.any() and nom_point:
+                    nls = []
+                    for nd in nomDepths:
+                        nl, _ = NominalLocation.objects.using(self.dbAlias).get_or_create(
+                                    depth=repr(nd), geom=nom_point, activity=self.activity)
+                        nls.append(nl)
+                else:
+                    nls = [None] * len(list(depths))
+
                 meass = []
                 for ip in ips:
-                    for de, po in zip(depths, points):
+                    for de, po, nl in zip(depths, points, nls):
                         if self.is_coordinate_bad(firstp, ip.timevalue, de):
                             logger.warn(f'Bad coordinate: {ip}, {de}')
-                        meass.append(Measurement(depth=repr(de), geom=po, instantpoint=ip))
+                        meass.append(Measurement(depth=repr(de), geom=po, instantpoint=ip, nominallocation=nl))
 
                 try:
                     logger.info(f'Calling bulk_create() for {len(meass)} Measurements')
@@ -1063,8 +1075,16 @@ class Base_Loader(STOQS_Loader):
                     logger.info("len(values.shape) = 1; likely EPIC timeseries data - reshaping to add a 'depth' dimension")
                     values = values.reshape(values.shape[0], 1)
 
+                # Need to bulk_create() all values, set bad ones to None and remove them after insert
+                good_values = []
+                for value in values.flatten():
+                    if self.is_value_bad(pname, value):
+                        value = None
+
+                    good_values.append(value)
+
                 mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
-                                                datavalue=va) for me, va in zip(meass, values.flatten()))
+                                                datavalue=va) for me, va in zip(meass, good_values))
 
                 # All items but mess are generators, so we can call len() on it
                 logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter')
@@ -1806,7 +1826,6 @@ class Base_Loader(STOQS_Loader):
                 self.saveBottomDepth()
                 self.insertSimpleBottomDepthTimeSeries()
             elif featureType == TIMESERIES or featureType == TIMESERIESPROFILE:
-                import pdb; pdb.set_trace()
                 self.insertSimpleDepthTimeSeriesByNominalDepth()
             elif featureType == TRAJECTORYPROFILE:
                 self.insertSimpleDepthTimeSeriesByNominalDepth(trajectoryProfileDepths=self.timeDepthProfiles)
