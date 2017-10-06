@@ -1558,6 +1558,8 @@ class Base_Loader(STOQS_Loader):
                         " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
                         " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
 
+            # Bulk loading may introduce Null values for non-trajectory data, get rid of them
+            MeasuredParameter.objects.filter(datavalue=None, dataarray=None).delete()
 
             if False:
 
