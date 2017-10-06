@@ -919,7 +919,7 @@ class STOQS_Loader(object):
                                 parameter=p, measurement__instantpoint__activity=activity
                                 ).values_list('datavalue', flat=True)
 
-            np_data = np.array((float(d) for d in data if d is not None))
+            np_data = np.array([float(d) for d in data if d is not None])
             np_data.sort()
             ap.number = len(np_data)
             ap.min = np_data.min()
