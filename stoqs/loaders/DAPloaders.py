@@ -871,40 +871,42 @@ class Base_Loader(STOQS_Loader):
         '''Stream trajectory data directly from pydap proxies to generators fed to bulk_create() calls
         '''
         load_groups, coor_groups = self.get_load_structure()
-        for i, (k, pnames) in enumerate(load_groups.items()):
+        for k, pnames in load_groups.items():
             ac = coor_groups[k]
-            if i == 0:
-                # First time through, bulk load the coordinates: instant_points and measurements
-                tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
-                times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
-                time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
-                if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
-                    timeUnits = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
-                mtimes = (from_udunits(mt, time_units) for mt in times)
-
-                try:
-                    depths = self.ds[ac[DEPTH]][ac[DEPTH]][tindx[0]:tindx[-1]:self.stride]
-                except KeyError:
-                    # Allow for variables with no depth coordinate to be loaded at the depth specified in auxCoords
-                    if isinstance(ac[DEPTH], float):
-                        depths =  ac[DEPTH] * np.ones(len(times))
-
-                latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
-                longitudes = self.ds[ac[LONGITUDE]][ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
-
-                mtimes, depths, latitudes, longitudes = zip(*self.good_coords(
-                                                    pnames, mtimes, depths, latitudes, longitudes))
-
-                points = (f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes))
-
-                ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
-                meass = (Measurement(depth=repr(de), geom=po) for de, po in zip(depths, points))
-
-                # Reassign meass with Measurement objects that have their id set
-                meass = self._bulk_load_coordinates(ips, meass)
-        
             total_loaded = 0   
-            for pname in pnames:
+            for i, pname in enumerate(pnames):
+                if i == 0:
+                    # First time through, bulk load the coordinates: instant_points and measurements
+                    tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
+                    times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
+                    time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
+                    if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
+                        timeUnits = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
+                    mtimes = (from_udunits(mt, time_units) for mt in times)
+
+                    try:
+                        depths = self.ds[ac[DEPTH]][ac[DEPTH]][tindx[0]:tindx[-1]:self.stride]
+                    except KeyError:
+                        # Allow for variables with no depth coordinate to be loaded at the depth specified in auxCoords
+                        if isinstance(ac[DEPTH], float):
+                            depths =  ac[DEPTH] * np.ones(len(times))
+
+                    latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
+                    longitudes = self.ds[ac[LONGITUDE]][ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
+
+                    mtimes, depths, latitudes, longitudes = zip(*self.good_coords(
+                                                        pnames, mtimes, depths, latitudes, longitudes))
+
+                    points = (f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes))
+
+                    ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
+                    meass = (Measurement(depth=repr(de), geom=po) for de, po in zip(depths, points))
+
+                    # Reassign meass with Measurement objects that have their id set
+                    meass = self._bulk_load_coordinates(ips, meass)
+
+                # End if i == 0 
+
                 logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tindx[0], tindx[-1], self.stride)
                 values = self.ds[pname][pname][tindx[0]:tindx[-1]:self.stride]
                 if isinstance(values[0], (list, tuple)):
@@ -920,156 +922,201 @@ class Base_Loader(STOQS_Loader):
                 mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
                 total_loaded += len(mps)
 
-            return total_loaded
+        return total_loaded
 
     def load_timeseriesprofile(self):
         '''Stream timeseriesprofile data directly from pydap proxies to generators fed to bulk_create() calls
         '''
+        time_axes_loaded = set()
+        depth_axes_loaded = set()
         load_groups, coor_groups = self.get_load_structure()
-        for i, (k, pnames) in enumerate(load_groups.items()):
+        for k, pnames in load_groups.items():
             ac = coor_groups[k]
-            if i == 0:
-                # First time through, bulk load the coordinates: instant_points and measurements
-                # As all pnames share the same coordinates we can use pnames[0] to access them
-                firstp = pnames[0]
-
-                if ac[TIME] != list(self.ds[firstp].keys())[1]:
-                    # Gratuitous check 
-                    self.logger.warn("Auxillary time coordinate '{ac[TIME]}' != first COARDS"
-                                     "coordnate '{list(self.ds[firstp].keys())[1]}'")
-
-                # CF (nee COARDS) has tzyx coordinate ordering, time is at index [1] and depth is at [2]
-                # - times: Assume CF/COARDS, override if EPIC data detected
-                tindx = self.getTimeBegEndIndices(self.ds[list(self.ds[firstp].keys())[1]])
-                times = self.ds[self.ds[firstp].keys()[1]][tindx[0]:tindx[-1]:self.stride]
-                time_units = self.ds[list(self.ds[firstp].keys())[1]].units.lower()
-
-                if time_units == 'true julian day': # pragma: no cover
-                    # Create COARDS time from EPIC data
-                    time2s = self.ds['time2']['time2'][tIndx[0]:tIndx[-1]:self.stride]
-                    time_units = 'seconds since 1970-01-01 00:00:00'
-                    epoch_secs = []
-                    for jd, ms in zip(times[firstp], time2s):
-                        gcal = jd2gcal(jd - 0.5, ms / 86400000.0)
-                        gcal_datetime = datetime(*gcal[:3]) + timedelta(days=gcal[3])
-                        epoch_secs.append(to_udunits(gcal_datetime, time_units))
-
-                    times = epoch_secs
-
-                time_units = time_units.replace('utc', 'UTC')           # coards requires UTC in uppercase
-                if self.ds[list(self.ds[firstp].keys())[1]].units == 'seconds since 1970-01-01T00:00:00Z':
-                    time_units = 'seconds since 1970-01-01 00:00:00'    # coards 1.0.4 and earlier doesn't like ISO format
-
-                mtimes = [from_udunits(mt, time_units) for mt in times]
-
-                # - depths: first by CF/COARDS coordinate rules, then by EPIC conventions
-                nomLat = None
-                nomLon = None
-                try:
-                    depths = self.ds[self.ds[firstp].keys()[2]][:]   # TODO lookup more precise depth from conversion from pressure
-                except IndexError:
-                    logger.warn(f'Variable {firstp} has less than 2 coordinates: {self.ds[pname].keys()}')
-                    depths = []
-
-                if len(depths) == 1:
-                    try:
-                        logger.info('Attempting to set nominal depth from EPIC Convention sensor_depth variable attribute')
-                        depths = [self.ds[firstp].attributes['sensor_depth']]
-                    except KeyError:
-                        logger.info('Variable %s does not have a sensor_depth attribute', firstp)
-                if not list(depths):
-                    logger.warn('Depth coordinate not found at index [2]. Looking for nominal position from EPIC Convention global attributes.')
-                    try:
-                        depths = [self.ds.attributes['NC_GLOBAL']['nominal_instrument_depth']]
-                        nomLat = self.ds.attributes['NC_GLOBAL']['latitude']
-                        nomLon = self.ds.attributes['NC_GLOBAL']['longitude']
-                    except KeyError:
-                        logger.warn('EPIC nominal position not found in global attributes. Assigning from variables.')
-                        depths = self.ds['depth'][0]
-                        nomLat = self.ds['lat'][0][0]
-                        nomLon = self.ds['lon'][0][0]
-
-                if depths.any() and nomLat and nomLon:
-                    logger.info('Nominal position assigned from EPIC Convention global attributes')
-                    nomDepths = depths
-                else:
-                    # Possible to have both precise and nominal locations with this approach
-                    nom_loc = self.getNominalLocation()
-                    nomDepths, nomLat, nomLon = nom_loc[0][firstp], nom_loc[1][firstp], nom_loc[2][firstp]
-
-                # - latitudes & longitudes: first by CF/COARDS coordinate rules, then by EPIC conventions
-                shape_length = self.get_shape_length(firstp)
-                if shape_length == 4:
-                    logger.info('%s has shape of 4, assume that singleton dimensions are used for nominal latitude and longitude', firstp)
-                    # Assumes COARDS coordinate ordering
-                    latitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
-                    longitudes = float(self.ds[list(self.ds[firstp].keys())[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
-                elif shape_length == 3 and 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper(): # pragma: no cover
-                    # Special fix for USGS EPIC ADCP variables missing depth coordinate, but having nominal sensor depth metadata
-                    latitudes = float(self.ds[list(self.ds[firstp].keys())[2]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
-                    longitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
-                    depths = nomDepths
-                elif shape_length == 2:
-                    logger.info('%s has shape of 2, assuming no latitude and longitude singletime'
-                                ' dimensions. Using nominal location read from auxially coordinates', firstp)
-                    longitudes = nomLons
-                    latitudes = nomLats
-                elif shape_length == 1:
-                    logger.info('%s has shape of 1, assuming no latitude, longitude, and'
-                                ' depth singletime dimensions. Using nominal location read'
-                                ' from auxially coordinates', firstp)
-                    longitudes = nomLons
-                    latitudes = nomLats
-                    depths = nomDepths
-                else:
-                    raise Exception('{} has shape of {}. Can handle only shapes of 2, and 4'.format(firstp, shape_length))
-
-                if hasattr(latitudes, '__iter__') and hasattr(longitudes, '__iter__'):
-                    # We have precise gps positions, a location for each time value
-                    points = [f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes)]
-                else:
-                    points = [f'POINT({repr(longitudes)} {repr(latitudes)})'] * len(list(mtimes))
-
-                points = points * len(list(depths))
-
-                ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
-                try:
-                    logger.info(f'Calling bulk_create() for InstantPoints in ips generator')
-                    ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips)
-                except (IntegrityError, psycopg2.IntegrityError) as e:
-                    logger.error(str(e))
-                    logger.exception(f"Maybe you should delete Activity '{self.activity.name}' first?")
-                    sys.exit(-1)
-
-                if nomLon and nomLat:
-                    nom_point = f'POINT({repr(nomLon)} {repr(nomLat)})'
-
-                if nomDepths.any() and nom_point:
-                    nls = []
-                    for nd in nomDepths:
-                        nl, _ = NominalLocation.objects.using(self.dbAlias).get_or_create(
-                                    depth=repr(nd), geom=nom_point, activity=self.activity)
-                        nls.append(nl)
-                else:
-                    nls = [None] * len(list(depths))
-
-                meass = []
-                for ip in ips:
-                    for de, po, nl in zip(depths, points, nls):
-                        if self.is_coordinate_bad(firstp, ip.timevalue, de):
-                            logger.warn(f'Bad coordinate: {ip}, {de}')
-                        meass.append(Measurement(depth=repr(de), geom=po, instantpoint=ip, nominallocation=nl))
-
-                try:
-                    logger.info(f'Calling bulk_create() for {len(meass)} Measurements')
-                    meass = Measurement.objects.using(self.dbAlias).bulk_create(meass)
-                except (IntegrityError, psycopg2.IntegrityError) as e:
-                    logger.error(str(e))
-                    logger.exception(f"Maybe you should delete Activity '{self.activity.name}' first?")
-                    sys.exit(-1)
-           
             total_loaded = 0   
-            for pname in pnames:
+            for i, pname in enumerate(pnames):
+                if i == 0:
+                    # First time through, bulk load the coordinates: instant_points and measurements
+                    # As all pnames share the same coordinates we can use pnames[0] to access them
+                    firstp = pnames[0]
+
+                    if ac[TIME] != list(self.ds[firstp].keys())[1]:
+                        # Gratuitous check 
+                        self.logger.warn("Auxillary time coordinate '{ac[TIME]}' != first COARDS"
+                                         "coordnate '{list(self.ds[firstp].keys())[1]}'")
+
+                    # CF (nee COARDS) has tzyx coordinate ordering, time is at index [1] and depth is at [2]
+                    # - times: Assume CF/COARDS, override if EPIC data detected
+                    tindx = self.getTimeBegEndIndices(self.ds[list(self.ds[firstp].keys())[1]])
+                    times = self.ds[self.ds[firstp].keys()[1]][tindx[0]:tindx[-1]:self.stride]
+                    time_units = self.ds[list(self.ds[firstp].keys())[1]].units.lower()
+
+                    if time_units == 'true julian day': # pragma: no cover
+                        # Create COARDS time from EPIC data
+                        time2s = self.ds['time2']['time2'][tIndx[0]:tIndx[-1]:self.stride]
+                        time_units = 'seconds since 1970-01-01 00:00:00'
+                        epoch_secs = []
+                        for jd, ms in zip(times[firstp], time2s):
+                            gcal = jd2gcal(jd - 0.5, ms / 86400000.0)
+                            gcal_datetime = datetime(*gcal[:3]) + timedelta(days=gcal[3])
+                            epoch_secs.append(to_udunits(gcal_datetime, time_units))
+
+                        times = epoch_secs
+
+                    time_units = time_units.replace('utc', 'UTC')           # coards requires UTC in uppercase
+                    if self.ds[list(self.ds[firstp].keys())[1]].units == 'seconds since 1970-01-01T00:00:00Z':
+                        time_units = 'seconds since 1970-01-01 00:00:00'    # coards 1.0.4 and earlier doesn't like ISO format
+
+                    mtimes = [from_udunits(mt, time_units) for mt in times]
+
+                    # - depths: first by CF/COARDS coordinate rules, then by EPIC conventions
+                    nomLat = None
+                    nomLon = None
+                    try:
+                        depths = self.ds[self.ds[firstp].keys()[2]][:]   # TODO lookup more precise depth from conversion from pressure
+                    except IndexError:
+                        logger.warn(f'Variable {firstp} has less than 2 coordinates: {self.ds[pname].keys()}')
+                        depths = []
+
+                    if len(depths) == 1:
+                        try:
+                            logger.info('Attempting to set nominal depth from EPIC Convention sensor_depth variable attribute')
+                            depths = [self.ds[firstp].attributes['sensor_depth']]
+                        except KeyError:
+                            logger.info('Variable %s does not have a sensor_depth attribute', firstp)
+                    if not list(depths):
+                        logger.warn('Depth coordinate not found at index [2]. Looking for nominal position from EPIC Convention global attributes.')
+                        try:
+                            depths = [self.ds.attributes['NC_GLOBAL']['nominal_instrument_depth']]
+                            nomLat = self.ds.attributes['NC_GLOBAL']['latitude']
+                            nomLon = self.ds.attributes['NC_GLOBAL']['longitude']
+                        except KeyError:
+                            logger.warn('EPIC nominal position not found in global attributes. Assigning from variables.')
+                            depths = self.ds['depth'][0]
+                            nomLat = self.ds['lat'][0][0]
+                            nomLon = self.ds['lon'][0][0]
+
+                    if depths.any() and nomLat and nomLon:
+                        logger.info('Nominal position assigned from EPIC Convention global attributes')
+                        nomDepths = depths
+                    else:
+                        # Possible to have both precise and nominal locations with this approach
+                        nom_loc = self.getNominalLocation()
+                        nomDepths, nomLat, nomLon = nom_loc[0][firstp], nom_loc[1][firstp], nom_loc[2][firstp]
+
+                    # - latitudes & longitudes: first by CF/COARDS coordinate rules, then by EPIC conventions
+                    shape_length = self.get_shape_length(firstp)
+                    if shape_length == 4:
+                        logger.info('%s has shape of 4, assume that singleton dimensions are used for nominal latitude and longitude', firstp)
+                        # Assumes COARDS coordinate ordering
+                        latitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
+                        longitudes = float(self.ds[list(self.ds[firstp].keys())[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                    elif shape_length == 3 and 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper(): # pragma: no cover
+                        # Special fix for USGS EPIC ADCP variables missing depth coordinate, but having nominal sensor depth metadata
+                        latitudes = float(self.ds[list(self.ds[firstp].keys())[2]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
+                        longitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                        depths = nomDepths
+                    elif shape_length == 2:
+                        logger.info('%s has shape of 2, assuming no latitude and longitude singletime'
+                                    ' dimensions. Using nominal location read from auxially coordinates', firstp)
+                        longitudes = nomLons
+                        latitudes = nomLats
+                    elif shape_length == 1:
+                        logger.info('%s has shape of 1, assuming no latitude, longitude, and'
+                                    ' depth singletime dimensions. Using nominal location read'
+                                    ' from auxially coordinates', firstp)
+                        longitudes = nomLons
+                        latitudes = nomLats
+                        depths = nomDepths
+                    else:
+                        raise Exception('{} has shape of {}. Can handle only shapes of 2, and 4'.format(firstp, shape_length))
+
+                    if hasattr(latitudes, '__iter__') and hasattr(longitudes, '__iter__'):
+                        # We have precise gps positions, a location for each time value
+                        points = [f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes)]
+                    else:
+                        points = [f'POINT({repr(longitudes)} {repr(latitudes)})'] * len(list(mtimes))
+
+                    points = points * len(list(depths))
+
+                    ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
+                    try:
+                        logger.info(f'Calling bulk_create() for InstantPoints in ips generator')
+                        ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips)
+                    except (IntegrityError, psycopg2.IntegrityError) as e:
+                        logger.info(f"Time axis '{ac[TIME]}' likely has timevalues already loaded from an axis in {time_axes_loaded}")
+                        logger.info(f'Getting matching InstantPoints from the database, creating new ones not yet there.')
+                        ips_new = []
+                        num_created = 0
+                        for ip in (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes):
+                            ip_db, created = InstantPoint.objects.using(self.dbAlias).get_or_create(
+                                            activity=self.activity, timevalue=ip.timevalue)
+                            if created:
+                                num_created += 1
+
+                            ips_new.append(ip_db) 
+
+                        ips = ips_new 
+                        logger.info(f'Got {len(ips) - num_created} InstantPoints from the database, created {num_created} new ones')
+                       
+                        if not ips: 
+                            logger.error(f'Unable to load load InstantPoints for axis {ac[TIME]}. Exiting.')
+                            logger.exception(f"Maybe you should delete Activity '{self.activity.name}' first?")
+                            sys.exit(-1)
+
+                    # TIME axes are commonly shared amongst variables on different grids in timeseriesprofile data
+                    # Keep track of axis names for use in logger info messages
+                    time_axes_loaded.add(ac[TIME])
+
+                    if nomLon and nomLat:
+                        nom_point = f'POINT({repr(nomLon)} {repr(nomLat)})'
+
+                    if nomDepths.any() and nom_point:
+                        nls = []
+                        for nd in nomDepths:
+                            nl, _ = NominalLocation.objects.using(self.dbAlias).get_or_create(
+                                        depth=repr(nd), geom=nom_point, activity=self.activity)
+                            nls.append(nl)
+                    else:
+                        nls = [None] * len(list(depths))
+
+                    meass = []
+                    for ip in ips:
+                        for de, po, nl in zip(depths, points, nls):
+                            if self.is_coordinate_bad(firstp, ip.timevalue, de):
+                                logger.warn(f'Bad coordinate: {ip}, {de}')
+                            meass.append(Measurement(depth=repr(de), geom=po, instantpoint=ip, nominallocation=nl))
+
+                    try:
+                        logger.info(f'Calling bulk_create() for {len(meass)} Measurements')
+                        meass = Measurement.objects.using(self.dbAlias).bulk_create(meass)
+                    except (IntegrityError, psycopg2.IntegrityError) as e:
+                        logger.info(f"Depth axis '{ac[DEPTH]}' likely has depths already loaded from an axis in {depth_axes_loaded}")
+                        logger.info(f'Getting matching Measurements from the database, creating new ones not yet there.')
+                        meass_new = []
+                        num_created = 0
+                        for meas in meass:
+                            meas_db, created = Measurement.objects.using(self.dbAlias).get_or_create(
+                                            instantpoint=meas.instantpoint, depth=meas.depth, 
+                                            geom=meas.geom, nominallocation=meas.nominallocation) 
+                            if created:
+                                num_created += 1
+
+                            meass_new.append(meas_db) 
+
+                        meass = meass_new
+
+                        if not meass:
+                            logger.error(f'Unable to load load Measurements for axis {ac[DEPTH]}. Exiting.')
+                            logger.exception(f"Maybe you should delete Activity '{self.activity.name}' first?")
+                            sys.exit(-1)
+
+                    # DEPTH axes are commonly shared amongst variables on different grids in timeseriesprofile data
+                    # Keep track of axis names for use in logger info messages
+                    depth_axes_loaded.add(ac[DEPTH])
+
+
+                # End if i == 0 (loading coords for list of pnames)
+ 
                 values = self.ds[pname][pname][tindx[0]:tindx[-1]:self.stride]
                 if len(values.shape) == 1:
                     logger.info("len(values.shape) = 1; likely EPIC timeseries data - reshaping to add a 'depth' dimension")
@@ -1091,7 +1138,7 @@ class Base_Loader(STOQS_Loader):
                 mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
                 total_loaded += len(mps)
 
-            return total_loaded
+        return total_loaded
 
 
     def _genTrajectory(self):
