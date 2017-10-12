@@ -101,22 +101,16 @@ class BaseTestCase(StaticLiveServerTestCase):
         except TimeoutException:
             print(f"TimeoutException: Waited {delay} seconds for <img src='{src_string}'... to appear")
 
-    def _wait_until_text_is_visible(self, text_string, delay=2):
+    def _wait_until_text_is_visible(self, element_id, expected_text, delay=2, contains=True):
         try:
-            element_present = EC.presence_of_element_located((By.XPATH, f"//div[contains(text(),'{text_string}')]"))
-            element = WebDriverWait(self.browser, delay).until(element_present)
-            return element
+            if contains:
+                WebDriverWait(self.browser, delay, poll_frequency=.2).until(
+                              wait_for_text_to_match((By.ID, element_id), expected_text))
+            else:
+                WebDriverWait(self.browser, delay, poll_frequency=.2).until(
+                              EC.text_to_be_present_in_element((By.ID, element_id), expected_text))
         except TimeoutException:
-            print(f"TimeoutException: Waited {delay} seconds for text '{text_string}'... to appear")
-
-    def _wait_until_text_is_visible(self, element_id, expected_text, contains=False):
-
-        if contains:
-            WebDriverWait(self.browser, 5, poll_frequency=.2).until(
-                          wait_for_text_to_match((By.ID, element_id), expected_text))
-        else:
-            WebDriverWait(self.browser, 5, poll_frequency=.2).until(
-                          EC.text_to_be_present_in_element((By.ID, element_id), expected_text))
+            print(f"TimeoutException: Waited {delay} seconds for text '{expected_text}'... to appear")
 
     def _test_share_view(self, func_name):
         # Generic for any func_name that creates a view to share
@@ -177,11 +171,11 @@ class BrowserTestCase(BaseTestCase):
         altitude_plot_button = self.browser.find_element(By.XPATH,
                 "//input[@name='parameters_plot' and @value='{}']".format(altitude_id))
         self._wait_until_visible_then_click(altitude_plot_button)
-        self._wait_until_src_is_visible('dorado_colorbar')
+        self._wait_until_src_is_visible('dorado_colorbar', delay=6)
         # - Colormap
         colorbar = self.browser.find_element_by_id('mp-colormap')
         self._wait_until_visible_then_click(colorbar)
-        colormap = self._wait_until_src_is_visible('deep.png')
+        colormap = self._wait_until_src_is_visible('deep.png', delay=4)
         self._wait_until_visible_then_click(colormap)
         # - 3D measuement data
         showgeox3dmeasurement = self.browser.find_element_by_id('showgeox3dmeasurement')
@@ -198,22 +192,22 @@ class BrowserTestCase(BaseTestCase):
     def test_m1_timeseries(self):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
         # Test Temporal->Parameter for timeseries plots
-        self._wait_until_id_is_visible('temporal-parameter-li')
+        self._wait_until_id_is_visible('temporal-parameter-li', delay=4)
         parameter_tab = self.browser.find_element_by_id('temporal-parameter-li')
-        self._wait_until_visible_then_click(parameter_tab)
-        expected_text = 'bbp420'
-        self._wait_until_text_is_visible('stride-info', expected_text, contains=True)
+        self._wait_until_visible_then_click(parameter_tab, delay=4)
+        expected_text = 'every single point'
+        self._wait_until_text_is_visible('stride-info', expected_text, delay=4)
         self.assertIn(expected_text, self.browser.find_element_by_id('stride-info').text)
 
     def test_share_view_trajectory(self):
         self._test_share_view('test_dorado_trajectory')
-        self.browser.implicitly_wait(10)
+        self._wait_until_id_is_visible('dorado_LOCATION', delay=8)
         self.assertEquals('geolocation', self.browser.find_element_by_id('dorado_LOCATION').tag_name)
 
     def test_share_view_timeseries(self):
         self._test_share_view('test_m1_timeseries')
-        expected_text = 'bbp420'
-        self._wait_until_text_is_visible('stride-info', expected_text, contains=True)
+        expected_text = 'every single point'
+        self._wait_until_text_is_visible('stride-info', expected_text, delay=8)
         self.assertIn(expected_text, self.browser.find_element_by_id('stride-info').text)
 
     def test_contour_plots(self):
