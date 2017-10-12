@@ -1104,6 +1104,7 @@ class Base_Loader(STOQS_Loader):
                             meass_new.append(meas_db) 
 
                         meass = meass_new
+                        logger.info(f'Got {len(meass) - num_created} Measurements from the database, created {num_created} new ones')
 
                         if not meass:
                             logger.error(f'Unable to load load Measurements for axis {ac[DEPTH]}. Exiting.')
