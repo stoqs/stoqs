@@ -2048,6 +2048,7 @@ class STOQSQManager(object):
 
         # Take the union of all geometry types found in Activities and Samples
         logger.debug("Collected %d geometry extents from Activities and Samples", len(extentList))
+        geom_union = None
         if extentList:
             logger.debug('extentList = %s', extentList)
 
@@ -2068,9 +2069,9 @@ class STOQSQManager(object):
                         geom_union = geom_union.union(fromstr('LINESTRING (%s %s, %s %s)' % extent, srid=srid))
 
             # Aggressive try/excepts done here for better reporting on the production servers
-            try:
+            if geom_union:
                 logger.debug('Final geom_union = %s', geom_union)
-            except UnboundLocalError:
+            else:
                 logger.exception('geom_union could not be set from extentList = %s', extentList)
                 return ([], None, None)
 
