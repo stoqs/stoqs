@@ -885,14 +885,24 @@ class Base_Loader(STOQS_Loader):
                     mtimes = (from_udunits(mt, time_units) for mt in times)
 
                     try:
-                        depths = self.ds[ac[DEPTH]][ac[DEPTH]][tindx[0]:tindx[-1]:self.stride]
+                        if isinstance(self.ds[ac[DEPTH]], pydap.model.GridType):
+                            depths = self.ds[ac[DEPTH]][ac[DEPTH]][tindx[0]:tindx[-1]:self.stride]
+                        else:
+                            depths = self.ds[ac[DEPTH]][tindx[0]:tindx[-1]:self.stride]
                     except KeyError:
                         # Allow for variables with no depth coordinate to be loaded at the depth specified in auxCoords
                         if isinstance(ac[DEPTH], float):
                             depths =  ac[DEPTH] * np.ones(len(times))
 
-                    latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
-                    longitudes = self.ds[ac[LONGITUDE]][ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
+                    if isinstance(self.ds[ac[LATITUDE]], pydap.model.GridType):
+                        latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
+                    else:
+                        latitudes = self.ds[ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
+
+                    if isinstance(self.ds[ac[LONGITUDE]], pydap.model.GridType):
+                        longitudes = self.ds[ac[LONGITUDE]][ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
+                    else:
+                        longitudes = self.ds[ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
 
                     mtimes, depths, latitudes, longitudes = zip(*self.good_coords(
                                                         pnames, mtimes, depths, latitudes, longitudes))
@@ -907,8 +917,13 @@ class Base_Loader(STOQS_Loader):
 
                 # End if i == 0 
 
-                logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tindx[0], tindx[-1], self.stride)
-                values = self.ds[pname][pname][tindx[0]:tindx[-1]:self.stride]
+                if isinstance(self.ds[pname], pydap.model.GridType):
+                    logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tindx[0], tindx[-1], self.stride)
+                    values = self.ds[pname][pname][tindx[0]:tindx[-1]:self.stride]
+                else:
+                    logger.info("Using constraints: ds['%s'][%d:%d:%d]", pname, tindx[0], tindx[-1], self.stride)
+                    values = self.ds[pname][tindx[0]:tindx[-1]:self.stride]
+
                 if isinstance(values[0], (list, tuple)):
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
                                                 dataarray=list(va)) for me, va in zip(meass, values))
