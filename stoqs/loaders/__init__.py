@@ -1237,6 +1237,7 @@ class STOQS_Loader(object):
             # Find all measurements with 'sea_water_temperature' and ('sea_water_salinity' or 'sea_water_practical_salinity')
             ms = m.Measurement.objects.using(self.dbAlias)
             if activity:
+                self.logger.info(f'activity = {activity}')
                 ms = ms.filter(instantpoint__activity=activity)
 
             ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_temperature')
