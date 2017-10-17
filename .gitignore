@@ -23,7 +23,7 @@ stoqs/stoqs/migrations/
 venv-stoqs
 
 # Let user make this symlink, which isn't tracked
-/stoqs/campaigns.py
+stoqs/campaigns.py
 
 # Loader output log files
 stoqs/loaders/*/*.out
@@ -34,4 +34,8 @@ stoqs/loaders/MolecularEcology/BOG_Data/*.csv
 # Backup files from 2to3
 *.bak
 
+# Docker work area
 docker/tmp/
+
+# Log files from data loading
+stoqs/stoqs/media/loadlogs/
