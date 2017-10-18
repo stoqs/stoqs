@@ -572,7 +572,7 @@ class MeasuredParameter(BaseParameter):
                 # Silently ignore
                 pass
 
-            if not self.x and not self.y and not self.z:
+            if not self.x and not self.y and not self.z and self.qs_mp is not None:
                 self.loadData(self.qs_mp)
 
             # Copy x, y, z values for color plot (scatter or "contour")
@@ -616,11 +616,12 @@ class MeasuredParameter(BaseParameter):
 
                 self.logger.debug('zi = %s', zi)
 
-            COLORED_DOT_SIZE_THRESHOLD = 5000
-            if self.qs_mp.count() > COLORED_DOT_SIZE_THRESHOLD:
-                coloredDotSize = 10
-            else:
-                coloredDotSize = 20
+            if self.qs_mp is not None:
+                COLORED_DOT_SIZE_THRESHOLD = 5000
+                if self.qs_mp.count() > COLORED_DOT_SIZE_THRESHOLD:
+                    coloredDotSize = 10
+                else:
+                    coloredDotSize = 20
 
             parm_info = self.parameterMinMax
             full_screen = False
