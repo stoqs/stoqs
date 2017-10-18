@@ -196,7 +196,7 @@ class BrowserTestCase(BaseTestCase):
         parameter_tab = self.browser.find_element_by_id('temporal-parameter-li')
         self._wait_until_visible_then_click(parameter_tab, delay=4)
         expected_text = 'every single point'
-        self._wait_until_text_is_visible('stride-info', expected_text, delay=4)
+        self._wait_until_text_is_visible('stride-info', expected_text, delay=6)
         self.assertIn(expected_text, self.browser.find_element_by_id('stride-info').text)
 
     def test_share_view_trajectory(self):
@@ -207,7 +207,7 @@ class BrowserTestCase(BaseTestCase):
     def test_share_view_timeseries(self):
         self._test_share_view('test_m1_timeseries')
         expected_text = 'every single point'
-        self._wait_until_text_is_visible('stride-info', expected_text, delay=8)
+        self._wait_until_text_is_visible('stride-info', expected_text, delay=10)
         self.assertIn(expected_text, self.browser.find_element_by_id('stride-info').text)
 
     def test_contour_plots(self):
@@ -249,7 +249,7 @@ class BrowserTestCase(BaseTestCase):
         parameter_contour_plot_radio_button.click()
 
         expected_text = 'Lines: SEA_WATER_SALINITY_HR from M1_Mooring'
-        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text)
+        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text, delay=6)
         self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
 
         # Clear the Color plot leaving just the Lines plot
@@ -258,8 +258,8 @@ class BrowserTestCase(BaseTestCase):
 
         expected_text_color = ''
         expected_text_lines = 'Lines: SEA_WATER_SALINITY_HR from M1_Mooring'
-        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text_color)
-        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text_lines)
+        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text_color, delay=6)
+        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text_lines, delay=6)
         self.assertEquals(expected_text_color, self.browser.find_element_by_id('temporalparameterplotinfo').text)
         self.assertEquals(expected_text_lines, self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
 
