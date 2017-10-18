@@ -1291,6 +1291,7 @@ class STOQS_Loader(object):
             self.assignParameterGroup({p_spice: ms.count()}, groupName=MEASUREDINSITU)
 
             # Loop through all Measurements, compute Sigma-T & Spice, and add to the Measurement
+            self.logger.info(f'Looping through {parameterCounts[p_sigmat]} Measurments to add Sigma-T & Spice')
             for me in ms.distinct():
                 try:
                     with transaction.atomic():
@@ -1313,6 +1314,7 @@ class STOQS_Loader(object):
                 except IntegrityError as e:
                     self.logger.warn(e)
 
+            self.logger.info('Done.')
             return parameterCounts
 
         return _innerAddSigmaTandSpice(self, parameterCounts, activity)
