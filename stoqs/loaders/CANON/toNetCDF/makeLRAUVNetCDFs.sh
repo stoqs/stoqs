@@ -32,7 +32,21 @@ logdir="missionlogs/${year}"
 search="${logdir}/.*nc4$"
 
 parms_sci="{
-            \"CTD_NeilBrown\": [
+            \"PNI_TCM\": [
+            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\", \"units\":\"degree\", \"standard_name\": \"platform_roll_angle\" },
+            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\", \"units\":\"degree\", \"standard_name\": \"platform_pitch_angle\" }, 
+            { \"name\": \"platform_orientation\", \"rename\":\"yaw\", \"units\":\"degree\", \"standard_name\": \"platform_yaw_angle\" }
+            ],
+            \"AHRS_sp3003D\": [
+            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\", \"units\":\"degree\", \"standard_name\": \"platform_roll_angle\" }, 
+            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\", \"units\":\"degree\", \"standard_name\": \"platform_pitch_angle\" }, 
+            { \"name\": \"platform_orientation\", \"rename\":\"yaw\", \"units\":\"degree\", \"standard_name\": \"platform_yaw_angle\" }
+            ],
+            \"CTD_Seabird\": [
+            { \"name\":\"sea_water_salinity\" , \"rename\":\"salinity\" },
+            { \"name\":\"sea_water_temperature\" , \"rename\":\"temperature\" }
+            ],
+            \"CTD_NeilBrown\": [ \
             { \"name\":\"sea_water_salinity\" , \"rename\":\"salinity\" },
             { \"name\":\"sea_water_temperature\" , \"rename\":\"temperature\" }
             ],
@@ -108,6 +122,6 @@ parms_eng="{
 for platform in "${platforms[@]}"
 do
         python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_sci}" --resampleFreq '10S' -a 'sci' --start "${start_datetime}" --end "${end_datetime}"
-        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start "${start_datetime}" --end "${end_datetime}"
+        #python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start "${start_datetime}" --end "${end_datetime}"
 done
 

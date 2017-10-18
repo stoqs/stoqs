@@ -12,7 +12,7 @@ function s_array = dbconn_jdbc_stoqs(database, sqlstr)
 %   sql = clipboard('paste')
 %   cout = dbconn_jdbc_stoqs('stoqs_september2013_o', sql)
 %
-% To make work in your Matlab installion:
+% To make work in your Matlab installation:
 % 1. Download appropriate .jar file from http://jdbc.postgresql.org/download.html
 % 2. Add the file to the static java classpath.  On my system I added
 %      /Users/mccann/Documents/MATLAB/postgresql-9.3-1100.jdbc4.jar to 
