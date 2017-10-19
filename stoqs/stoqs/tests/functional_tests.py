@@ -76,6 +76,18 @@ class BaseTestCase(StaticLiveServerTestCase):
         else:
             return ''
 
+    def _time_depth_loading_panel_test(self, delay=2):
+        '''Wait for ajax-loader GIF image to go away'''
+        wait = WebDriverWait(self.browser, delay)
+        try:
+            wait.until(lambda display: self.browser.find_element_by_id('time-depth-flot').
+                        find_element_by_class_name('stoqs-background-ajax-loader-pulse') == None)
+        except TimeoutException as e:
+            return ('Time-depth images did not load after waiting ' +
+                    str(delay) + ' seconds')
+        else:
+            return ''
+
     def _wait_until_visible_then_click(self, element, scroll_up=True, delay=5):
         # See: http://stackoverflow.com/questions/23857145/selenium-python-element-not-clickable
         element = WebDriverWait(self.browser, delay, poll_frequency=.2).until(
@@ -226,7 +238,7 @@ class BrowserTestCase(BaseTestCase):
         parameter_plot_radio_button = self.browser.find_element(By.XPATH,
             "//input[@name='parameters_plot' and @value='{}']".format(northward_sea_water_velocity_HR_id))
         parameter_plot_radio_button.click()
-        self._wait_until_src_is_visible('M1_Mooring_colorbar')
+        self._wait_until_src_is_visible('M1_Mooring_colorbar', delay=6)
         contour_button = self.browser.find_element(By.XPATH, "//input[@name='showdataas' and @value='contour']")
         self._wait_until_visible_then_click(contour_button)
 
@@ -255,11 +267,13 @@ class BrowserTestCase(BaseTestCase):
         # Clear the Color plot leaving just the Lines plot
         clear_color_plot_radio_button = self.browser.find_element_by_id('mp_parameters_plot_clear')
         clear_color_plot_radio_button.click()
+        self.browser.execute_script("window.scrollTo(0, 0)")
 
         expected_text_color = ''
         expected_text_lines = 'Lines: SEA_WATER_SALINITY_HR from M1_Mooring'
         self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text_color, delay=6)
         self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text_lines, delay=6)
+        self._time_depth_loading_panel_test(delay=4)
         self.assertEquals(expected_text_color, self.browser.find_element_by_id('temporalparameterplotinfo').text)
         self.assertEquals(expected_text_lines, self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
 
