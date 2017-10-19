@@ -58,7 +58,7 @@ cl = CANONLoader('stoqs_canon_september2017', 'CANON - September 2017',
 # beyond the temporal bounds of the campaign
 #
 startdate = datetime.datetime(2017, 9, 18)  # Fixed start. September 18, 2017
-enddate = datetime.datetime(2017, 10, 7)  # Fixed end. October 7, 2017
+enddate = datetime.datetime(2017, 12, 31)  # Fixed end. October 7, 2017. Extended to end of year.
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -180,6 +180,7 @@ for p in platforms:
 cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662a_files = [
                    'OS_Glider_L_662_20170713_TS.nc',
+                   'OS_Glider_L_662_20171012_TS.nc',
                   ]
 cl.l_662a_parms = ['temperature', 'salinity', 'fluorescence','oxygen']
 cl.l_662a_startDatetime = startdate
