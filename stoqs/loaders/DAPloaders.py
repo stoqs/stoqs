@@ -1315,168 +1315,163 @@ class Base_Loader(STOQS_Loader):
             yield mp
 
     def process_data(self, generator=None, featureType=''): 
-        '''Wrapper so as to apply self.dbAlias in the decorator
+        '''Iterate over the data source and load the data in by creating new objects
+        for each measurement.
+
+        Note that due to the use of large-precision numerics, we'll convert all numbers to
+        strings prior to performing the import.  Django uses the Decimal type (arbitrary precision
+        numeric type), so we won't lose any precision.
+
+        Return the number of MeasuredParameters loaded.
         '''
-        def innerProcess_data(self, generator=None, featureType=''):
-            '''Iterate over the data source and load the data in by creating new objects
-            for each measurement.
 
-            Note that due to the use of large-precision numerics, we'll convert all numbers to
-            strings prior to performing the import.  Django uses the Decimal type (arbitrary precision
-            numeric type), so we won't lose any precision.
+        self.initDB()
 
-            Return the number of MeasuredParameters loaded.
-            '''
+        path = None
+        parmCount = {}
+        parameterCount = {}
+        for key in self.include_names:
+            parmCount[key] = 0
 
-            self.initDB()
+        if self.appendFlag: # pragma: no cover
+            self.dataStartDatetime = (InstantPoint.objects.using(self.dbAlias)
+                                        .filter(activity__name=self.getActivityName())
+                                        .aggregate(Max('timevalue'))['timevalue__max'])
+            if hasattr(self, 'backfill_timedelta') and self.dataStartDatetime:
+                if self.backfill_timedelta:
+                    self.dataStartDatetime = self.dataStartDatetime - self.backfill_timedelta
 
-            path = None
-            parmCount = {}
-            parameterCount = {}
-            for key in self.include_names:
-                parmCount[key] = 0
+        self.param_by_key = {}
+        self.mv_by_key = {}
+        self.fv_by_key = {}
 
-            if self.appendFlag: # pragma: no cover
-                self.dataStartDatetime = (InstantPoint.objects.using(self.dbAlias)
-                                            .filter(activity__name=self.getActivityName())
-                                            .aggregate(Max('timevalue'))['timevalue__max'])
-                if hasattr(self, 'backfill_timedelta') and self.dataStartDatetime:
-                    if self.backfill_timedelta:
-                        self.dataStartDatetime = self.dataStartDatetime - self.backfill_timedelta
+        for key in (set(self.include_names) & set(self.ds.keys())):
+            self.param_by_key[key] = self.getParameterByName(key)
+            parameterCount[self.param_by_key[key]] = 0
 
-            self.param_by_key = {}
-            self.mv_by_key = {}
-            self.fv_by_key = {}
+        for key in self.ds.keys():
+            self.mv_by_key[key] = self.getmissing_value(key)
+            self.fv_by_key[key] = self.get_FillValue(key)
 
-            for key in (set(self.include_names) & set(self.ds.keys())):
-                self.param_by_key[key] = self.getParameterByName(key)
-                parameterCount[self.param_by_key[key]] = 0
+        self.totalRecords = self.getTotalRecords()
 
-            for key in self.ds.keys():
-                self.mv_by_key[key] = self.getmissing_value(key)
-                self.fv_by_key[key] = self.get_FillValue(key)
+        logger.info("From: %s", self.url)
+        if featureType:
+            featureType = featureType.lower()
+        else:
+            featureType = self.getFeatureType()
 
-            self.totalRecords = self.getTotalRecords()
-
-            logger.info("From: %s", self.url)
-            if featureType:
-                featureType = featureType.lower()
-            else:
-                featureType = self.getFeatureType()
-
-            mps_loaded = 0
-            try:
-                if featureType== TRAJECTORY:
-                    mps_loaded = self.load_trajectory()
-                elif featureType == TIMESERIES:
-                    mps_loaded = self.load_timeseriesprofile()
-                elif featureType == TIMESERIESPROFILE:
-                    mps_loaded = self.load_timeseriesprofile()
-                elif featureType == TRAJECTORYPROFILE:
-                    pass
-                else:
-                    raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
-                            " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
-                            " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
-            except IntegrityError as e:
-                # Likely duplicate key value violates unique constraint "stoqs_measuredparameter_measurement_id_parameter_1328c3fb_uniq"
-                # Can't append data from source with bulk_create(), give appropriate warning
-                logger.error(str(e))
-                logger.error(f'Failed to bulk_create() data from URL: {self.url}')
-                logger.error(f'If you need to load data that has been appended to the URL then delete its Activity before loading.')
-
-                return mps_loaded, path, parmCount
-
-            # Bulk loading may introduce Null values for non-trajectory data, get rid of them
-            MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
-
-            #
-            # Query database to a path for trajectory or stationPoint for timeSeriesProfile and timeSeries
-            #
-            stationPoint = None
-            linestringPoints = Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=self.activity
-                                                           ).order_by('instantpoint__timevalue').values_list('geom')
-            try:
-                path = LineString([p[0] for p in linestringPoints]).simplify(tolerance=.001)
-            except TypeError as e:
-                logger.warn("%s\nSetting path to None", e)
-            except Exception as e:
-                logger.error('%s', e)    # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
-            else:
-                if len(path) == 2:
-                    logger.info("Length of path = 2: path = %s", path)
-                    if path[0][0] == path[1][0] and path[0][1] == path[1][1]:
-                        logger.info("And the 2 points are identical. Saving the first point of this"
-                                    " path as a point as the featureType is also %s.", featureType)
-                        stationPoint = Point(path[0][0], path[0][1])
-                        path = None
-
-            # Add additional Parameters for all appropriate Measurements
-            logger.info("Adding SigmaT and Spiciness to the Measurements...")
-            self.addSigmaTandSpice(parameterCount, self.activity)
-            if self.grdTerrain:
-                logger.info("Adding altitude to the Measurements...")
-                try:
-                    self.addAltitude(parameterCount, self.activity)
-                except FileNotFound as e:
-                    logger.warn(str(e))
-
-            # Update the Activity with information we now have following the load
-            try:
-                varList = ', '.join(self.varsLoaded)
-            except AttributeError:
-                # ROVCTDloader creates self.vSeen dictionary with counts of each parameter
-                varList = ', '.join(list(self.vSeen.keys()))
-
-            # Construct a meaningful comment that looks good in the UI Metadata->NetCDF area
-            fmt_comment = 'Loaded variables {} from {}'
-            comment_vars = [varList, self.url.split('/')[-1]]
-            if self.requested_startDatetime and self.requested_endDatetime:
-                fmt_comment += ' between {} and {}'
-                comment_vars.extend([self.requested_startDatetime, self.requested_endDatetime])
-            fmt_comment += ' with a stride of {} on {}Z'
-            comment_vars.extend([self.stride, str(datetime.utcnow()).split('.')[0]])
-            newComment = fmt_comment.format(*comment_vars)
-
-            logger.debug("Updating its comment with newComment = %s", newComment)
-
-            num_updated = Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
-                            name=self.getActivityName(),
-                            comment=newComment,
-                            maptrack=path,
-                            mappoint=stationPoint,
-                            num_measuredparameters=mps_loaded,
-                            loaded_date=datetime.utcnow())
-            logger.debug("%d activitie(s) updated with new attributes.", num_updated)
-
-            #
-            # Add resources after loading data to capture additional metadata that may be added
-            #
-            try:
-                self.addResources() 
-            except IntegrityError as e:
-                logger.error('Failed to properly addResources: %s', e)
-
-            # 
-            # Update the stats and store simple line values
-            #
-            self.updateActivityMinMaxDepth()
-            self.updateActivityParameterStats(parameterCount)
-            self.updateCampaignStartEnd()
-            self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
-            if featureType == TRAJECTORY:
-                self.insertSimpleDepthTimeSeries()
-                self.saveBottomDepth()
-                self.insertSimpleBottomDepthTimeSeries()
-            elif featureType == TIMESERIES or featureType == TIMESERIESPROFILE:
-                self.insertSimpleDepthTimeSeriesByNominalDepth()
+        mps_loaded = 0
+        try:
+            if featureType== TRAJECTORY:
+                mps_loaded = self.load_trajectory()
+            elif featureType == TIMESERIES:
+                mps_loaded = self.load_timeseriesprofile()
+            elif featureType == TIMESERIESPROFILE:
+                mps_loaded = self.load_timeseriesprofile()
             elif featureType == TRAJECTORYPROFILE:
-                self.insertSimpleDepthTimeSeriesByNominalDepth(trajectoryProfileDepths=self.timeDepthProfiles)
-            logger.info("Data load complete, %d records loaded.", mps_loaded)
+                pass
+            else:
+                raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
+                        " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
+                        " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
+        except IntegrityError as e:
+            # Likely duplicate key value violates unique constraint "stoqs_measuredparameter_measurement_id_parameter_1328c3fb_uniq"
+            # Can't append data from source with bulk_create(), give appropriate warning
+            logger.error(str(e))
+            logger.error(f'Failed to bulk_create() data from URL: {self.url}')
+            logger.error(f'If you need to load data that has been appended to the URL then delete its Activity before loading.')
 
             return mps_loaded, path, parmCount
 
-        return innerProcess_data(self, generator, featureType)
+        # Bulk loading may introduce Null values for non-trajectory data, get rid of them
+        MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
+
+        #
+        # Query database to a path for trajectory or stationPoint for timeSeriesProfile and timeSeries
+        #
+        stationPoint = None
+        linestringPoints = Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=self.activity
+                                                       ).order_by('instantpoint__timevalue').values_list('geom')
+        try:
+            path = LineString([p[0] for p in linestringPoints]).simplify(tolerance=.001)
+        except TypeError as e:
+            logger.warn("%s\nSetting path to None", e)
+        except Exception as e:
+            logger.error('%s', e)    # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
+        else:
+            if len(path) == 2:
+                logger.info("Length of path = 2: path = %s", path)
+                if path[0][0] == path[1][0] and path[0][1] == path[1][1]:
+                    logger.info("And the 2 points are identical. Saving the first point of this"
+                                " path as a point as the featureType is also %s.", featureType)
+                    stationPoint = Point(path[0][0], path[0][1])
+                    path = None
+
+        # Add additional Parameters for all appropriate Measurements
+        logger.info("Adding SigmaT and Spiciness to the Measurements...")
+        self.addSigmaTandSpice(parameterCount, self.activity)
+        if self.grdTerrain:
+            logger.info("Adding altitude to the Measurements...")
+            try:
+                self.addAltitude(parameterCount, self.activity)
+            except FileNotFound as e:
+                logger.warn(str(e))
+
+        # Update the Activity with information we now have following the load
+        try:
+            varList = ', '.join(self.varsLoaded)
+        except AttributeError:
+            # ROVCTDloader creates self.vSeen dictionary with counts of each parameter
+            varList = ', '.join(list(self.vSeen.keys()))
+
+        # Construct a meaningful comment that looks good in the UI Metadata->NetCDF area
+        fmt_comment = 'Loaded variables {} from {}'
+        comment_vars = [varList, self.url.split('/')[-1]]
+        if self.requested_startDatetime and self.requested_endDatetime:
+            fmt_comment += ' between {} and {}'
+            comment_vars.extend([self.requested_startDatetime, self.requested_endDatetime])
+        fmt_comment += ' with a stride of {} on {}Z'
+        comment_vars.extend([self.stride, str(datetime.utcnow()).split('.')[0]])
+        newComment = fmt_comment.format(*comment_vars)
+
+        logger.debug("Updating its comment with newComment = %s", newComment)
+
+        num_updated = Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
+                        name=self.getActivityName(),
+                        comment=newComment,
+                        maptrack=path,
+                        mappoint=stationPoint,
+                        num_measuredparameters=mps_loaded,
+                        loaded_date=datetime.utcnow())
+        logger.debug("%d activitie(s) updated with new attributes.", num_updated)
+
+        #
+        # Add resources after loading data to capture additional metadata that may be added
+        #
+        try:
+            self.addResources() 
+        except IntegrityError as e:
+            logger.error('Failed to properly addResources: %s', e)
+
+        # 
+        # Update the stats and store simple line values
+        #
+        self.updateActivityMinMaxDepth()
+        self.updateActivityParameterStats(parameterCount)
+        self.updateCampaignStartEnd()
+        self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
+        if featureType == TRAJECTORY:
+            self.insertSimpleDepthTimeSeries()
+            self.saveBottomDepth()
+            self.insertSimpleBottomDepthTimeSeries()
+        elif featureType == TIMESERIES or featureType == TIMESERIESPROFILE:
+            self.insertSimpleDepthTimeSeriesByNominalDepth()
+        elif featureType == TRAJECTORYPROFILE:
+            self.insertSimpleDepthTimeSeriesByNominalDepth(trajectoryProfileDepths=self.timeDepthProfiles)
+        logger.info("Data load complete, %d records loaded.", mps_loaded)
+
+        return mps_loaded, path, parmCount
 
 
 class Trajectory_Loader(Base_Loader):
