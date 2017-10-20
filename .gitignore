@@ -2,6 +2,7 @@
 *.py[cod]
 *.pyc
 __pycache__
+*.swp
 
 # Logs
 *.log
