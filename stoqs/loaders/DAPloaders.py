@@ -797,10 +797,10 @@ class Base_Loader(STOQS_Loader):
 
                     if time_units == 'true julian day': # pragma: no cover
                         # Create COARDS time from EPIC data
-                        time2s = self.ds['time2']['time2'][tIndx[0]:tIndx[-1]:self.stride]
+                        time2s = self.ds['time2']['time2'][tindx[0]:tindx[-1]:self.stride]
                         time_units = 'seconds since 1970-01-01 00:00:00'
                         epoch_secs = []
-                        for jd, ms in zip(times[firstp], time2s):
+                        for jd, ms in zip(times, time2s):
                             gcal = jd2gcal(jd - 0.5, ms / 86400000.0)
                             gcal_datetime = datetime(*gcal[:3]) + timedelta(days=gcal[3])
                             epoch_secs.append(to_udunits(gcal_datetime, time_units))
@@ -862,15 +862,15 @@ class Base_Loader(STOQS_Loader):
                         depths = nomDepths
                     elif shape_length == 2:
                         logger.info('%s has shape of 2, assuming no latitude and longitude singletime'
-                                    ' dimensions. Using nominal location read from auxially coordinates', firstp)
-                        longitudes = nomLons
-                        latitudes = nomLats
+                                    ' dimensions. Using nominal location read from auxillary coordinates', firstp)
+                        longitudes = nomLon
+                        latitudes = nomLat
                     elif shape_length == 1:
                         logger.info('%s has shape of 1, assuming no latitude, longitude, and'
                                     ' depth singletime dimensions. Using nominal location read'
                                     ' from auxially coordinates', firstp)
-                        longitudes = nomLons
-                        latitudes = nomLats
+                        longitudes = nomLon
+                        latitudes = nomLat
                         depths = nomDepths
                     else:
                         raise Exception('{} has shape of {}. Can handle only shapes of 2, and 4'.format(firstp, shape_length))
@@ -917,6 +917,9 @@ class Base_Loader(STOQS_Loader):
 
                     if nomDepths.any() and nom_point:
                         nls = []
+                        if not hasattr(nomDepths, '__iter__') and not hasattr(nomDepths, '__iter__'):
+                            nomDepths = np.array([nomDepths])
+
                         for nd in nomDepths:
                             nl, _ = NominalLocation.objects.using(self.dbAlias).get_or_create(
                                         depth=repr(nd), geom=nom_point, activity=self.activity)
