@@ -831,7 +831,7 @@ class Base_Loader(STOQS_Loader):
                     if not list(depths):
                         logger.warn('Depth coordinate not found at index [2]. Looking for nominal position from EPIC Convention global attributes.')
                         try:
-                            depths = [self.ds.attributes['NC_GLOBAL']['nominal_instrument_depth']]
+                            depths = np.array([self.ds.attributes['NC_GLOBAL']['nominal_instrument_depth']])
                             nomLat = self.ds.attributes['NC_GLOBAL']['latitude']
                             nomLon = self.ds.attributes['NC_GLOBAL']['longitude']
                         except KeyError:
