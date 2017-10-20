@@ -10,14 +10,15 @@ MBARI 26 January March 2016
 
 import os
 import sys
-from collections import namedtuple
-from datetime import datetime
 parent_dir = os.path.join(os.path.dirname(__file__), "../")
-sys.path.insert(0, parent_dir)  # settings.py is one dir up
+sys.path.insert(0, parent_dir)  # So that CCE is found
+from CCE import CCELoader
+
+from collections import namedtuple
 from DAPloaders import NoValidData
+from datetime import datetime
 import numpy as np
 
-from CCE import CCELoader
 
 cl = CCELoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
                 description = 'Coordinated Canyon Experiment - Measuring turbidity flows in Monterey Submarine Canyon',
