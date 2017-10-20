@@ -30,6 +30,7 @@ stoqs/loaders/*/*.out
 
 # Ex-situ Sample data files
 stoqs/loaders/MolecularEcology/BOG_Data/*.csv
+stoqs/loaders/MolecularEcology/SIMZAug2013/*.csv
 
 # Backup files from 2to3
 *.bak
@@ -39,3 +40,4 @@ docker/tmp/
 
 # Log files from data loading
 stoqs/stoqs/media/loadlogs/
+
