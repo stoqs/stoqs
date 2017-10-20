@@ -1330,6 +1330,7 @@ class Base_Loader(STOQS_Loader):
 
             self.initDB()
 
+            path = None
             parmCount = {}
             parameterCount = {}
             for key in self.include_names:
@@ -1363,18 +1364,28 @@ class Base_Loader(STOQS_Loader):
             else:
                 featureType = self.getFeatureType()
 
-            if featureType== TRAJECTORY:
-                mps_loaded = self.load_trajectory()
-            elif featureType == TIMESERIES:
-                mps_loaded = self.load_timeseriesprofile()
-            elif featureType == TIMESERIESPROFILE:
-                mps_loaded = self.load_timeseriesprofile()
-            elif featureType == TRAJECTORYPROFILE:
-                pass
-            else:
-                raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
-                        " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
-                        " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
+            mps_loaded = 0
+            try:
+                if featureType== TRAJECTORY:
+                    mps_loaded = self.load_trajectory()
+                elif featureType == TIMESERIES:
+                    mps_loaded = self.load_timeseriesprofile()
+                elif featureType == TIMESERIESPROFILE:
+                    mps_loaded = self.load_timeseriesprofile()
+                elif featureType == TRAJECTORYPROFILE:
+                    pass
+                else:
+                    raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
+                            " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
+                            " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
+            except IntegrityError as e:
+                # Likely duplicate key value violates unique constraint "stoqs_measuredparameter_measurement_id_parameter_1328c3fb_uniq"
+                # Can't append data from source with bulk_create(), give appropriate warning
+                logger.error(str(e))
+                logger.error(f'Failed to bulk_create() data from URL: {self.url}')
+                logger.error(f'If you need to load data that has been appended to the URL then delete its Activity before loading.')
+
+                return mps_loaded, path, parmCount
 
             # Bulk loading may introduce Null values for non-trajectory data, get rid of them
             MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
@@ -1382,7 +1393,6 @@ class Base_Loader(STOQS_Loader):
             #
             # Query database to a path for trajectory or stationPoint for timeSeriesProfile and timeSeries
             #
-            path = None
             stationPoint = None
             linestringPoints = Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=self.activity
                                                            ).order_by('instantpoint__timevalue').values_list('geom')
