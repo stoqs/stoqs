@@ -44,17 +44,7 @@ campaign.lores_event_times = [campaign.lores_event_times[1]]
 campaign.hires_event_times = []
 campaign.load_cce_moorings(low_res_stride=100, start_mooring=2, end_mooring=3)
 
-# Add Trajectory data for the same event time period
-# - No Waveglider data in the time period :-(
-##wg_url = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/wgTiny/20160315/SV3_20160315.nc'
-##wg_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp',
-##             'water_temp', 'sal',  'bb_470', 'bb_650', 'chl', 'beta_470', 'beta_650', 
-##             'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
-##runGliderLoader(wg_url, campaign_name, '', '/'.join(wg_url.split('/')[-3:]),
-##                'wg_OA_Glider', '0f9cd4', 'waveglider', 'Glider Mission',
-##                wg_parms, db_alias, 10, campaign.lores_event_times[0][0], 
-##                campaign.lores_event_times[0][1])
-
+# Add Trajectory data for the same time period
 l_662_url = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/OS_Glider_L_662_20151124_TS.nc'
 l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 runGliderLoader(l_662_url, campaign_name, '', '/'.join(l_662_url.split('/')[-1:]),
