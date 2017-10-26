@@ -73,6 +73,7 @@ cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2017/netcdf/
 cl.dorado_files = [
                   'Dorado389_2017_269_01_269_01_decim.nc',
                   'Dorado389_2017_275_01_275_01_decim.nc',
+                  'Dorado389_2017_284_00_284_00_decim.nc',
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
