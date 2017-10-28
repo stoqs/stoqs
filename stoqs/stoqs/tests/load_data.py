@@ -24,7 +24,7 @@ class Campaigns():
 
 # Reuse CCELoader and Loader code to create our test db and load a
 # small amount of data for testing of the loading code
-db_alias = 'stoqs_load_test'
+db_alias = 'stoqs'
 campaign_name = 'Loading test database'
 campaign = CCE_2015_Campaign(db_alias, campaign_name)
 loader = Loader()
