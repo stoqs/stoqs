@@ -19,6 +19,17 @@ from DAPloaders import NoValidData
 from datetime import datetime
 import numpy as np
 
+# CCE event start and end times for loading mooring data
+Event = namedtuple('Event', ['start', 'end'])
+lores_event_times = [
+        Event(datetime(2016, 1, 15,  0,  0), datetime(2016, 1, 18,  0,  0)),
+        Event(datetime(2016, 3,  5,  0,  0), datetime(2016, 3,  8,  0,  0)),
+                     ]
+hires_event_times = [
+        Event(datetime(2016, 1, 15, 21,  0), datetime(2016, 1, 16,  2,  0)),
+        Event(datetime(2016, 3,  6,  0,  0), datetime(2016, 3,  7,  0,  0)),
+                     ]
+
 class CCE_2015_Campaign:
 
     def __init__(self, db_alias='stoqs_cce2015', campaign_name='Coordinated Canyon Experiment'):
@@ -187,16 +198,8 @@ class CCE_2015_Campaign:
         ##self.cl.bed_depths = np.round(self.cl.get_start_bed_depths(), 1)
 
         # CCE event start and end times for loading mooring data
-        Event = namedtuple('Event', ['start', 'end'])
-        self.lores_event_times = [
-                Event(datetime(2016, 1, 15,  0,  0), datetime(2016, 1, 18,  0,  0)),
-                Event(datetime(2016, 3,  5,  0,  0), datetime(2016, 3,  8,  0,  0)),
-                             ]
-        self.hires_event_times = [
-                Event(datetime(2016, 1, 15, 21,  0), datetime(2016, 1, 16,  2,  0)),
-                Event(datetime(2016, 3,  6,  0,  0), datetime(2016, 3,  7,  0,  0)),
-                             ]
-
+        self.lores_event_times = lores_event_times
+        self.hires_event_times = hires_event_times
 
         # CCE BIN data
         self.cl.ccebin_nominaldepth = 1836
