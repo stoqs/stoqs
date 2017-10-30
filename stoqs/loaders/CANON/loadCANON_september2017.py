@@ -157,9 +157,9 @@ for p in platforms:
                                 'pose_latitude_DeadReckonUsingMultipleVelocitySources',
                                 'pose_depth_DeadReckonUsingMultipleVelocitySources'])
     try:
-        urls_eng = find_urls(base, '.*2S_eng.nc$')
+        #urls_eng = find_urls(base, '.*2S_eng.nc$')
         urls_sci = find_urls(base, '.*10S_sci.nc$')
-        urls = urls_sci + urls_eng
+        urls = urls_sci# + urls_eng
         files = []
         if len(urls) > 0 :
             for url in sorted(urls):
