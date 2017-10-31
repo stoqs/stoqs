@@ -68,19 +68,22 @@ fi
 
 # Run tests using the continuous integration (ci) setting
 # Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL
-export DATABASE_URL=postgis://127.0.0.1:5432/stoqs
 echo "Unit tests..."
+export DATABASE_URL=postgis://127.0.0.1:5432/stoqs
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
 unit_tests_status=$?
 
-echo "Loading tests..."
+echo "Loading additional data to test loading software..."
+export DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:5432/stoqs"
 coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/load_data.py
 ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_load_test.json
+echo "Loading tests..."
+export DATABASE_URL=postgis://127.0.0.1:5432/stoqs
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
 unit_tests_status=$?
 
 # MAPSERVER_DATABASE_URL needs to use postgres role for proper mapfile CONNECTION settings
-export MAPSERVER_DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+export MAPSERVER_DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:5432/stoqs"
 echo "Functional tests..."
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.functional_tests --settings=config.settings.ci
 functional_tests_status=$?
