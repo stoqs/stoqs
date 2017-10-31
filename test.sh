@@ -75,7 +75,7 @@ unit_tests_status=$?
 
 echo "Loading additional data to test loading software..."
 export DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:5432/stoqs"
-coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/load_data.py
+coverage run -a --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/load_data.py
 ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_load_test.json
 echo "Loading tests..."
 export DATABASE_URL=postgis://127.0.0.1:5432/stoqs
