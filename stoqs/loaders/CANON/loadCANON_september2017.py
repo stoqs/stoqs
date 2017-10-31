@@ -58,7 +58,7 @@ cl = CANONLoader('stoqs_canon_september2017', 'CANON - September 2017',
 # beyond the temporal bounds of the campaign
 #
 startdate = datetime.datetime(2017, 9, 18)  # Fixed start. September 18, 2017
-enddate = datetime.datetime(2017, 10, 7)  # Fixed end. October 7, 2017
+enddate = datetime.datetime(2017, 12, 31)  # Fixed end. October 7, 2017. Extended to end of year.
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -73,6 +73,7 @@ cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2017/netcdf/
 cl.dorado_files = [
                   'Dorado389_2017_269_01_269_01_decim.nc',
                   'Dorado389_2017_275_01_275_01_decim.nc',
+                  'Dorado389_2017_284_00_284_00_decim.nc',
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
@@ -156,9 +157,9 @@ for p in platforms:
                                 'pose_latitude_DeadReckonUsingMultipleVelocitySources',
                                 'pose_depth_DeadReckonUsingMultipleVelocitySources'])
     try:
-        urls_eng = find_urls(base, '.*2S_eng.nc$')
+        #urls_eng = find_urls(base, '.*2S_eng.nc$')
         urls_sci = find_urls(base, '.*10S_sci.nc$')
-        urls = urls_sci + urls_eng
+        urls = urls_sci# + urls_eng
         files = []
         if len(urls) > 0 :
             for url in sorted(urls):
@@ -180,6 +181,7 @@ for p in platforms:
 cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662a_files = [
                    'OS_Glider_L_662_20170713_TS.nc',
+                   'OS_Glider_L_662_20171012_TS.nc',
                   ]
 cl.l_662a_parms = ['temperature', 'salinity', 'fluorescence','oxygen']
 cl.l_662a_startDatetime = startdate
