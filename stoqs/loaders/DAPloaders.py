@@ -681,16 +681,15 @@ class Base_Loader(STOQS_Loader):
 
     def get_load_structure(self):
         '''Return data structure organized by Parameters with common coordinates.
-        This supports the use of bulk_create() to spee the loading of data.
+        This supports the use of bulk_create() to speed the loading of data.
         '''
         ac = {}
         load_groups = defaultdict(list)
         coor_groups = {}
         for pname in self.include_names:
             if pname not in list(self.ds.keys()):
-                logger.warn('include_name %s not in dataset %s', pname, self.url)
+                logger.info('include_name %s not in dataset %s', pname, self.url)
                 continue
-
             ac[pname] = self.getAuxCoordinates(pname)
             load_groups[''.join(sorted(list(ac[pname].values())))].append(pname)
             coor_groups[''.join(sorted(list(ac[pname].values())))] = ac[pname]
@@ -820,15 +819,16 @@ class Base_Loader(STOQS_Loader):
                         depths = self.ds[self.ds[firstp].keys()[2]][:]   # TODO lookup more precise depth from conversion from pressure
                     except IndexError:
                         logger.warn(f'Variable {firstp} has less than 2 coordinates: {self.ds[pname].keys()}')
-                        depths = []
+                        depths = np.array([])
 
-                    if len(depths) == 1:
+                    # If data aren't COARDS then index 2 will not be depths, but could be latitude, detect by testing length & auxCoords
+                    if len(depths) == 1 and 'depth' not in ac:
                         try:
                             logger.info('Attempting to set nominal depth from EPIC Convention sensor_depth variable attribute')
-                            depths = [self.ds[firstp].attributes['sensor_depth']]
+                            depths = np.array([self.ds[firstp].attributes['sensor_depth']])
                         except KeyError:
                             logger.info('Variable %s does not have a sensor_depth attribute', firstp)
-                    if not list(depths):
+                    elif not depths.any():
                         logger.warn('Depth coordinate not found at index [2]. Looking for nominal position from EPIC Convention global attributes.')
                         try:
                             depths = np.array([self.ds.attributes['NC_GLOBAL']['nominal_instrument_depth']])
@@ -836,7 +836,7 @@ class Base_Loader(STOQS_Loader):
                             nomLon = self.ds.attributes['NC_GLOBAL']['longitude']
                         except KeyError:
                             logger.warn('EPIC nominal position not found in global attributes. Assigning from variables.')
-                            depths = self.ds['depth'][0]
+                            depths = np.array([self.ds['depth'][0]])
                             nomLat = self.ds['lat'][0][0]
                             nomLon = self.ds['lon'][0][0]
 
@@ -847,6 +847,8 @@ class Base_Loader(STOQS_Loader):
                         # Possible to have both precise and nominal locations with this approach
                         nom_loc = self.getNominalLocation()
                         nomDepths, nomLat, nomLon = nom_loc[0][firstp], nom_loc[1][firstp], nom_loc[2][firstp]
+                        if not hasattr(nomDepths, 'any'):
+                            nomDepths = np.array(nomDepths)
 
                     # - latitudes & longitudes: first by CF/COARDS coordinate rules, then by EPIC conventions
                     shape_length = self.get_shape_length(firstp)
@@ -961,7 +963,8 @@ class Base_Loader(STOQS_Loader):
 
                     # DEPTH axes are commonly shared amongst variables on different grids in timeseriesprofile data
                     # Keep track of axis names for use in logger info messages
-                    depth_axes_loaded.add(ac[DEPTH])
+                    if DEPTH in ac:
+                        depth_axes_loaded.add(ac[DEPTH])
 
 
                 # End if i == 0 (loading coords for list of pnames)
