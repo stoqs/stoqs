@@ -80,7 +80,7 @@ coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/lo
 echo "Loading tests..."
 export DATABASE_URL=postgis://127.0.0.1:5432/stoqs
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
-unit_tests_status=$?
+loading_tests_status=$?
 
 # MAPSERVER_DATABASE_URL needs to use postgres role for proper mapfile CONNECTION settings
 export MAPSERVER_DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:5432/stoqs"
@@ -94,6 +94,6 @@ tools/removeTmpFiles.sh > /dev/null 2>&1
 cd ..
 
 # Return code used by Travis-CI 
-##exit $(($unit_tests_status + $functional_tests_status))
+##exit $(($unit_tests_status + $loading_tests_status + $functional_tests_status))
 exit $unit_tests_status
 
