@@ -152,8 +152,13 @@ class CCELoader(LoadScript):
             loader.auxCoords = {}
             if 'adcp' in f.lower():
                 Mooring_Loader.getFeatureType = lambda self: 'timeseriesprofile'
-                for p in ['u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']:
+                # The timeseries variables 'Hdg_1215', 'Ptch_1216', 'Roll_1217' should have a coordinate of
+                # a singleton depth variable, but EPIC files has this as a sensor_depth variable attribute.  
+                # Need special handling in the loader for these data.
+                for p in ['u_1205', 'v_1206', 'w_1204', 'AGC_1202']:
                     loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
+                for p in ['Hdg_1215', 'Ptch_1216', 'Roll_1217']:
+                    loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon'}
             else:
                 Mooring_Loader.getFeatureType = lambda self: 'timeseries'
 
@@ -208,8 +213,16 @@ def make_load_ccems_method(name):
             loader.include_names = parms
             loader.auxCoords = {}
             for p in parms:
-                loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat',
-                                       'longitude': 'lon', 'depth': 'depth'}
+                # The timeseries variables 'Hdg_1215', 'Ptch_1216', 'Roll_1217' should have a coordinate of
+                # a singleton depth variable, but EPIC files has this as a sensor_depth variable attribute.  
+                # Need special handling in the loader for these data.
+                if p in ['u_1205', 'v_1206', 'w_1204', 'AGC_1202']:
+                    loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
+                if p in ['Hdg_1215', 'Ptch_1216', 'Roll_1217']:
+                    loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon'}
+                else:
+                    loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat',
+                                           'longitude': 'lon', 'depth': 'depth'}
             loader.process_data()
 
     return _generic_load_ccems
