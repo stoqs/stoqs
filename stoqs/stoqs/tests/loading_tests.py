@@ -27,18 +27,18 @@ from stoqs.models import MeasuredParameter
 from CCE.loadCCE_2015 import lores_event_times
 
 logger = logging.getLogger('stoqs.tests')
-settings.LOGGING['loggers']['stoqs.tests']['level'] = 'DEBUG'
+settings.LOGGING['loggers']['stoqs.tests']['level'] = 'INFO'
 
 class MeasuredParameterTestCase(TestCase):
     fixtures = ['stoqs_load_test.json']
     multi_db = False
 
-    def test_epic_timeseries1(self):
+    def test_epic_timeseries_lastday(self):
 
-        # Expected number of records for all the timeseries Parameters from 
+        # Expected number of records for the timeseries Parameters from 
         # the MS moorings
-        parm_counts = dict(D_3=29, Hdg_1215=29, NEP_56=2, P_1=29, Pitch_1216=29, 
-                           Roll_1217=29, S_41=29, T_28=29, Trb_980=2)
+        parm_counts = dict(D_3=6, Hdg_1215=12, P_1=6, Ptch_1216=12, 
+                           Roll_1217=12, S_41=6, T_28=6)
 
         # Use last day of the 2nd event from CCE.loadCCE_2015 - March 2016
         one_day_from_end = lores_event_times[1][1] - timedelta(days=1)
@@ -51,5 +51,13 @@ class MeasuredParameterTestCase(TestCase):
             logger.debug(f'{parm:10s}({parm_counts[parm]:2d}) {mp_count:-6d}')
             self.assertNotEquals(mp_count, 0, f'Expected {parm_counts[parm]} values for {parm}')
 
+    def test_epic_timeseries_full(self):
 
+        # Expected number of records 
+        parm_counts = dict(NEP_56=1, Trb_980=1)
+
+        for parm in list(parm_counts.keys()):
+            mp_count = MeasuredParameter.objects.filter(parameter__name=parm).count()
+            logger.debug(f'{parm:10s}({parm_counts[parm]:2d}) {mp_count:-6d}')
+            self.assertNotEquals(mp_count, 0, f'Expected {parm_counts[parm]} values for {parm}')
 
