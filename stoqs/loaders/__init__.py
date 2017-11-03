@@ -607,7 +607,7 @@ class STOQS_Loader(object):
 
         self.logger.info('Adding attributes of all the variables from the original NetCDF file')
         for v in self.include_names + ['altitude']:
-            self.logger.info('v = %s', v)
+            self.logger.debug('v = %s', v)
             try:
                 for rn, value in list(self.ds[v].attributes.items()):
                     self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
@@ -621,7 +621,7 @@ class STOQS_Loader(object):
             except KeyError as e:
                 # Just skip derived parameters that may have been added for a sub-classed Loader
                 if v != 'altitude':
-                    self.logger.warn('include_name %s is not in %s - skipping', v, self.url)
+                    self.logger.debug('include_name %s is not in %s - skipping', v, self.url)
             except AttributeError as e:
                 # Just skip over loaders that don't have the plotTimeSeriesDepth attribute
                 self.logger.warn('%s for include_name %s in %s. Skipping', e, v, self.url)
@@ -632,7 +632,7 @@ class STOQS_Loader(object):
         for v in self.include_names + ['altitude']:
             if hasattr(self, 'plotTimeSeriesDepth'):
                 if self.plotTimeSeriesDepth.get(v, None) is not None:
-                    self.logger.info('v = %s', v)
+                    self.logger.debug('v = %s', v)
                     try:
                         uiResType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name='ui_instruction')
                         resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
@@ -855,7 +855,7 @@ class STOQS_Loader(object):
         self.logger.debug("include_names = %s", self.include_names)
         for v in self.include_names:
             allNaNFlag[v] = True
-            self.logger.info("include_name: %s", v)
+            self.logger.debug("include_name: %s", v)
             try:
                 try:
                     values = self.ds[v].array[:].flatten()
@@ -878,7 +878,7 @@ class STOQS_Loader(object):
         for v in list(allNaNFlag.keys()):
             if not allNaNFlag[v]:
                 self.varsLoaded.append(v)
-        self.logger.info("Variables that have data: self.varsLoaded = %s", self.varsLoaded)
+        self.logger.info(f"Variables that have data: {self.varsLoaded}")
 
         return anyValidData
     
@@ -1190,7 +1190,7 @@ class STOQS_Loader(object):
                     except ObjectDoesNotExist:
                         self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
-            self.logger.info('Inserted %d values into SimpleDepthTime for nomDepth = %f', len(simple_line), nomDepth)
+            self.logger.debug('Inserted %d values into SimpleDepthTime for nomDepth = %f', len(simple_line), nomDepth)
 
     def updateActivityMinMaxDepth(self):
         '''
