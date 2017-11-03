@@ -23,7 +23,23 @@ fi
 # Assume starting in project home (stoqsgit) directory
 cd stoqs
 
-if [ ${2:-load} == 'load' ]
+# If there is a second argument and it is 'loaded' don't execute this block, otherwise execute
+if [ ${2:-loaded} == 'loaded' ]
+
+    echo "Loading additional data (EPIC, etc.) to test loading software..."
+    export DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:5432/stoqs"
+    coverage run -a --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/load_data.py
+    if [ $? != 0 ]
+    then
+        echo "Cannot create default database stoqs; refer to above message."
+        exit -1
+    fi
+    ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_load_test.json
+    echo "Loading tests..."
+    export DATABASE_URL=postgis://127.0.0.1:5432/stoqs
+    coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
+    loading_tests_status=$?
+
     then
     psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
     psql -c "DROP DATABASE IF EXISTS stoqs;" -U postgres
@@ -72,15 +88,6 @@ echo "Unit tests..."
 export DATABASE_URL=postgis://127.0.0.1:5432/stoqs
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
 unit_tests_status=$?
-
-echo "Loading additional data to test loading software..."
-export DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:5432/stoqs"
-coverage run -a --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/load_data.py
-./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_load_test.json
-echo "Loading tests..."
-export DATABASE_URL=postgis://127.0.0.1:5432/stoqs
-coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
-loading_tests_status=$?
 
 # MAPSERVER_DATABASE_URL needs to use postgres role for proper mapfile CONNECTION settings
 export MAPSERVER_DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:5432/stoqs"
