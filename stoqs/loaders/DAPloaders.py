@@ -214,7 +214,7 @@ class Base_Loader(STOQS_Loader):
             try:
                 ac = self.getAuxCoordinates(v)
             except ParameterNotFound as e:
-                logger.warn(str(e))
+                logger.debug(str(e))
                 continue
 
             if self.getFeatureType() == TRAJECTORY or self.getFeatureType() == TRAJECTORYPROFILE: 
@@ -460,8 +460,7 @@ class Base_Loader(STOQS_Loader):
         reqCoords = set(('time', 'latitude', 'longitude', 'depth'))
         logger.debug('coordDict = %s', coordDict)
         if set(coordDict.keys()) != reqCoords:
-            logger.warn('Required coordinate(s) %s missing in NetCDF file. Consider overriding by setting an'
-                        ' auxCoords dictionary in your Loader.', 
+            logger.warn('Required coordinate(s) %s missing in NetCDF file.',
                         list(reqCoords - set(coordDict.keys())))
             if not self.auxCoords:
                 raise VariableMissingCoordinatesAttribute('%s: %s missing coordinates attribute' % (self.url, variable,))
@@ -493,14 +492,15 @@ class Base_Loader(STOQS_Loader):
             try:
                 ac = self.getAuxCoordinates(v)
             except ParameterNotFound as e:
-                logger.warn('Skipping include_name = %s: %s', v, e)
+                logger.debug('Skipping include_name = %s: %s', v, e)
                 continue
      
             # depth may be single-valued or an array 
             if self.getFeatureType() == TIMESERIES: 
                 logger.debug('Initializing depths list for timeseries, ac = %s', ac)
                 try:
-                    depths[v] = self.ds[v][ac['depth']][:][0]
+                    if 'depth' in ac:
+                        depths[v] = self.ds[v][ac['depth']][:][0]
                 except KeyError:
                     logger.warn('No depth coordinate found for %s.  Assuming EPIC scalar and assigning depth from first element', v)
                     depths[v] = self.ds[ac['depth']][0]
@@ -640,15 +640,15 @@ class Base_Loader(STOQS_Loader):
         For the url count all the records that are to be loaded from all the include_names and return it.
         Computes the sum of the product of the time slice and the rest of the elements of the shape.
         '''
+        pcount = 0
         count = 0
         numDerived = 0
         trajSingleParameterCount = 0
         for name in self.include_names:
-            logger.info('Counting valid data for parameter: %s', name)
             try:
                 tIndx = self.getTimeBegEndIndices(self.ds[self.getAuxCoordinates(name)['time']])
             except ParameterNotFound:
-                logger.warn('Ignoring parameter: %s', name)
+                logger.debug('Ignoring parameter: %s', name)
             except InvalidSliceRequest:
                 logger.warn('No valid data for parameter: %s', name)
                 continue
@@ -663,15 +663,18 @@ class Base_Loader(STOQS_Loader):
                         # Likely using pydap 3.2+
                         trajSingleParameterCount = np.prod(self.ds[name].array.shape[1:] + (np.diff(tIndx)[0],))
                 try:
-                    count += (np.prod(self.ds[name].shape[1:] + (np.diff(tIndx)[0],)) / self.stride)
+                    pcount = (np.prod(self.ds[name].shape[1:] + (np.diff(tIndx)[0],)) / self.stride)
+                    count += pcount
                 except AttributeError:
                     # Likely using pydap 3.2+
-                    count += (np.prod(self.ds[name].array.shape[1:] + (np.diff(tIndx)[0],)) / self.stride)
+                    pcount = (np.prod(self.ds[name].array.shape[1:] + (np.diff(tIndx)[0],)) / self.stride)
+                    count += pcount
             except KeyError as e:
                 if self.getFeatureType() == TRAJECTORY:
                     # Assume that it's a derived variable and add same count as 
                     logger.debug("%s: Assuming it's a derived parameter", e)
                     numDerived += 1
+            logger.info(f'Count of parameter {name:20}: {int(pcount):7d}')
                     
         logger.debug('Adding %d derived parameters of length %d to the count', numDerived, trajSingleParameterCount / self.stride)
         if trajSingleParameterCount:
@@ -688,7 +691,7 @@ class Base_Loader(STOQS_Loader):
         coor_groups = {}
         for pname in self.include_names:
             if pname not in list(self.ds.keys()):
-                logger.info('include_name %s not in dataset %s', pname, self.url)
+                logger.debug('include_name %s not in dataset %s', pname, self.url)
                 continue
             ac[pname] = self.getAuxCoordinates(pname)
             load_groups[''.join(sorted(list(ac[pname].values())))].append(pname)
@@ -747,10 +750,12 @@ class Base_Loader(STOQS_Loader):
                 # End if i == 0 
 
                 if isinstance(self.ds[pname], pydap.model.GridType):
-                    logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tindx[0], tindx[-1], self.stride)
+                    logger.debug("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tindx[0], tindx[-1], self.stride)
+                    constraint_string = f"Using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                     values = self.ds[pname][pname][tindx[0]:tindx[-1]:self.stride]
                 else:
-                    logger.info("Using constraints: ds['%s'][%d:%d:%d]", pname, tindx[0], tindx[-1], self.stride)
+                    logger.debug("Using constraints: ds['%s'][%d:%d:%d]", pname, tindx[0], tindx[-1], self.stride)
+                    constraint_string = f"Using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                     values = self.ds[pname][tindx[0]:tindx[-1]:self.stride]
 
                 if isinstance(values[0], (list, tuple)):
@@ -761,7 +766,7 @@ class Base_Loader(STOQS_Loader):
                                                 datavalue=va) for me, va in zip(meass, values))
 
                 # All items but mess are generators, so we can call len() on it
-                logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter')
+                logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
                 mps = self._measuredparameter_with_measurement(meass, mps)
                 mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
                 total_loaded += len(mps)
@@ -813,6 +818,7 @@ class Base_Loader(STOQS_Loader):
                     mtimes = [from_udunits(mt, time_units) for mt in times]
 
                     # - depths: first by CF/COARDS coordinate rules, then by EPIC conventions
+                    nomDepths = None
                     nomLat = None
                     nomLon = None
                     try:
@@ -835,20 +841,31 @@ class Base_Loader(STOQS_Loader):
                             nomLat = self.ds.attributes['NC_GLOBAL']['latitude']
                             nomLon = self.ds.attributes['NC_GLOBAL']['longitude']
                         except KeyError:
-                            logger.warn('EPIC nominal position not found in global attributes. Assigning from variables.')
-                            depths = np.array([self.ds['depth'][0]])
+                            logger.warn('EPIC nominal position not found in global attributes. Assigning from variables (and maybe variable attribute).')
+                            if not hasattr(self.ds['depth'][0], '__iter__'):
+                                depths = np.array([self.ds['depth'][0]])
+                            if 'nominal_instrument_depth' in self.ds[firstp].attributes:
+                                nomDepths = self.ds[firstp].attributes['nominal_instrument_depth']
                             nomLat = self.ds['lat'][0][0]
                             nomLon = self.ds['lon'][0][0]
 
-                    if depths.any() and nomLat and nomLon:
+                    if nomDepths and nomLat and nomLon:
+                        pass
+                    elif depths.any() and nomLat and nomLon:
                         logger.info('Nominal position assigned from EPIC Convention global attributes')
                         nomDepths = depths
                     else:
                         # Possible to have both precise and nominal locations with this approach
                         nom_loc = self.getNominalLocation()
                         nomDepths, nomLat, nomLon = nom_loc[0][firstp], nom_loc[1][firstp], nom_loc[2][firstp]
-                        if not hasattr(nomDepths, 'any'):
-                            nomDepths = np.array(nomDepths)
+
+                    # Ensure that nomDepths is a numpy array
+                    if not hasattr(nomDepths, '__iter__'):
+                        nomDepths = np.array([nomDepths])
+                    try:
+                        _ = nomDepths.any()
+                    except AttributeError:
+                        nomDepths = np.array(nomDepths)
 
                     # - latitudes & longitudes: first by CF/COARDS coordinate rules, then by EPIC conventions
                     shape_length = self.get_shape_length(firstp)
@@ -887,7 +904,7 @@ class Base_Loader(STOQS_Loader):
 
                     ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
                     try:
-                        logger.info(f'Calling bulk_create() for InstantPoints in ips generator')
+                        logger.info(f'Calling bulk_create() for InstantPoints in ips generator for firstp = {firstp}')
                         ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips)
                     except (IntegrityError, psycopg2.IntegrityError) as e:
                         logger.info(f"Time axis '{ac[TIME]}' likely has timevalues already loaded from an axis in {time_axes_loaded}")
@@ -917,11 +934,9 @@ class Base_Loader(STOQS_Loader):
                     if nomLon and nomLat:
                         nom_point = f'POINT({repr(nomLon)} {repr(nomLat)})'
 
+                    # Expect that nomDepths is a numpy array, even it is single-valued
                     if nomDepths.any() and nom_point:
                         nls = []
-                        if not hasattr(nomDepths, '__iter__') and not hasattr(nomDepths, '__iter__'):
-                            nomDepths = np.array([nomDepths])
-
                         for nd in nomDepths:
                             nl, _ = NominalLocation.objects.using(self.dbAlias).get_or_create(
                                         depth=repr(nd), geom=nom_point, activity=self.activity)
