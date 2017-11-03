@@ -72,6 +72,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2017/netcdf/'
 cl.dorado_files = [
                     'Dorado389_2017_157_00_157_00_decim.nc',
+                    'Dorado389_2017_248_01_248_01_decim.nc',
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
@@ -903,9 +904,10 @@ cl.wg_Tiny_endDatetime = enddate
 ######################################################################
 #  MOORINGS
 ######################################################################
-cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201608/'
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
 cl.m1_files = [
-  'OS_M1_20160829hourly_CMSTV.nc'
+  '201608/OS_M1_20160829hourly_CMSTV.nc',
+  '201708/OS_M1_20170808hourly_CMSTV.nc',
 ]
 cl.m1_parms = [
   'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
