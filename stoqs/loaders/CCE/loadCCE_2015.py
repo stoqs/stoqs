@@ -195,6 +195,7 @@ class CCE_2015_Campaign:
         self.cl.bed_files = [ffg[0] for ffg in self.cl.bed_files_framegrabs]
         self.cl.bed_framegrabs = [ffg[1] for ffg in self.cl.bed_files_framegrabs]
         self.cl.bed_platforms = [f.split('/')[0] for f in  self.cl.bed_files ]
+        # Execute just before loading BEDs data, as this delays the start of loading mooring data
         ##self.cl.bed_depths = np.round(self.cl.get_start_bed_depths(), 1)
 
         # CCE event start and end times for loading mooring data
@@ -326,7 +327,7 @@ class CCE_2015_Campaign:
                     try:
                         getattr(self.cl, 'load_ccems{:d}'.format(mooring))(stride=low_res_stride)
                     except NoValidData as e:
-                        print(str(e))
+                        self.cl.logger.warn(str(e))
 
                 for event in self.hires_event_times:
                     setattr(self.cl, 'ccems{:d}_start_datetime'.format(mooring), event.start)
@@ -334,7 +335,7 @@ class CCE_2015_Campaign:
                     try:
                         getattr(self.cl, 'load_ccems{:d}'.format(mooring))(stride=high_res_stride)
                     except NoValidData as e:
-                        print(str(e))
+                        self.cl.logger.warn(str(e))
 
     def load_cce_bin(self, low_res_stride=300, high_res_stride=1):
         # BIN: Low-res (10 minute) 
@@ -344,7 +345,7 @@ class CCE_2015_Campaign:
             try:
                 getattr(self.cl, 'loadCCEBIN')(stride=low_res_stride)
             except NoValidData as e:
-                print(str(e))
+                self.cl.logger.warn(str(e))
 
         # BIN: High-res (2 second)
         for event in hires_event_times:
@@ -353,7 +354,7 @@ class CCE_2015_Campaign:
             try:
                 getattr(self.cl, 'loadCCEBIN')(stride=high_res_stride)
             except NoValidData as e:
-                print(str(e))
+                self.cl.logger.warn(str(e))
 
 
 if __name__ == '__main__':
@@ -361,21 +362,24 @@ if __name__ == '__main__':
     if campaign.cl.args.test:
         campaign.load_cce_moorings(low_res_stride=1000, high_res_stride=100)
         campaign.load_cce_bin(low_res_stride=1000, high_res_stride=100)
+        campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
         campaign.cl.loadBEDS(stride=5, featureType='trajectory')
 
     elif campaign.cl.args.optimal_stride:
         campaign.load_cce_moorings(low_res_stride=300, high_res_stride=10)
         campaign.load_cce_bin(low_res_stride=300, high_res_stride=10)
+        campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
         campaign.cl.loadBEDS(stride=1, featureType='trajectory')
 
     else:
         campaign.cl.stride = campaign.cl.args.stride
         campaign.load_cce_moorings()
         campaign.load_cce_bin()
+        campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
         campaign.cl.loadBEDS(featureType='trajectory')
 
     # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
     campaign.cl.addTerrainResources()
 
-    print("All Done.")
+    campaign.cl.logger.info("All Done.")
 
