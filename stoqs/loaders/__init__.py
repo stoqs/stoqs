@@ -88,7 +88,6 @@ class LoadScript(object):
     ''' 
 
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
 
     def __init__(self, base_dbAlias, base_campaignName, description=None, stride=1, x3dTerrains=None, grdTerrain=None):
         self.base_dbAlias = base_dbAlias
@@ -199,6 +198,8 @@ class LoadScript(object):
 
         if self.args.verbose:
             self.logger.setLevel(logging.DEBUG)
+        else:
+            self.logger.setLevel(logging.INFO)
 
         self.commandline = ' '.join(sys.argv)
         self.logger.info('Executing command: %s', self.commandline)
@@ -313,8 +314,7 @@ class STOQS_Loader(object):
                 'DEPTH','depth') # A list (tuple) of parameters that should not be imported as parameters
     global_dbAlias = ''
 
-    logger = logging.getLogger('__main__')
-    logger.setLevel(logging.INFO)
+    logger = logging.getLogger(__name__)
 
     def __init__(self, activityName, platformName, dbAlias='default', campaignName=None, 
                  campaignDescription=None, activitytypeName=None, platformColor=None, 

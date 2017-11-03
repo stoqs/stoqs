@@ -60,7 +60,7 @@ from collections import defaultdict
 
 # Set up logging
 logger = logging.getLogger(__name__)
-# Logging level set in stoqs/config/common.py, but may override here
+# Logging level set in stoqs/config/common.py or via command line from LoadScript(), but may override here
 ##logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
@@ -191,11 +191,11 @@ class Base_Loader(STOQS_Loader):
             self.ds = open_url(url)
         except (socket.error, pydap.exceptions.ServerError, pydap.exceptions.ClientError):
             message = 'Failed in attempt to open_url("%s")' % url
-            logger.warn(message)
+            self.logger.warn(message)
             # Give calling routing option of catching and ignoring
             raise OpendapError(message)
         except Exception:
-            logger.error('Failed in attempt to open_url("%s")', url)
+            self.logger.error('Failed in attempt to open_url("%s")', url)
             raise
 
         self.ignored_names = list(self.global_ignored_names)    # Start with copy of list of global ignored names
@@ -214,24 +214,24 @@ class Base_Loader(STOQS_Loader):
             try:
                 ac = self.getAuxCoordinates(v)
             except ParameterNotFound as e:
-                logger.debug(str(e))
+                self.logger.debug(str(e))
                 continue
 
             if self.getFeatureType() == TRAJECTORY or self.getFeatureType() == TRAJECTORYPROFILE: 
-                logger.debug('Getting trajectory min and max times for v = %s', v)
-                logger.debug("self.ds[ac['time']][0] = %s", self.ds[ac['time']][0])
+                self.logger.debug('Getting trajectory min and max times for v = %s', v)
+                self.logger.debug("self.ds[ac['time']][0] = %s", self.ds[ac['time']][0])
                 try:
                     minDT[v] = from_udunits(self.ds[ac['time']][0][0], self.ds[ac['time']].attributes['units'])
                     maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
                 except ParserError as e:
-                    logger.warn("%s. Trying to fix up time units", e)
+                    self.logger.warn("%s. Trying to fix up time units", e)
                     # Tolerate units like 1970-01-01T00:00:00Z - which is found on the IOOS Glider DAC
                     if self.ds[ac['time']].attributes['units'] == 'seconds since 1970-01-01T00:00:00Z':
                         minDT[v] = from_udunits(self.ds[ac['time']][0][0], 'seconds since 1970-01-01 00:00:00')
                         maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], 'seconds since 1970-01-01 00:00:00')
                     
             elif self.getFeatureType() == TIMESERIES or self.getFeatureType() == TIMESERIESPROFILE: # pragma: no cover
-                logger.debug('Getting timeseries start time for v = %s', v)
+                self.logger.debug('Getting timeseries start time for v = %s', v)
                 minDT[v] = from_udunits(self.ds[v][ac['time']][0][0], self.ds[ac['time']].attributes['units'])
                 maxDT[v] = from_udunits(self.ds[v][ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
             else:
@@ -239,8 +239,8 @@ class Base_Loader(STOQS_Loader):
                 minDT[v] = from_udunits(self.ds[ac['time']][0][0], self.ds[ac['time']].attributes['units'])
                 maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
 
-        logger.debug('minDT = %s', minDT)
-        logger.debug('maxDT = %s', maxDT)
+        self.logger.debug('minDT = %s', minDT)
+        self.logger.debug('maxDT = %s', maxDT)
 
         # STOQS does not deal with data in the future and in B.C.
         startDatetime = datetime.utcnow()
@@ -263,7 +263,7 @@ class Base_Loader(STOQS_Loader):
         if not maxDT or not minDT:
             raise NoValidData('No valid dates')
 
-        logger.info('Activity startDatetime = %s, endDatetime = %s', startDatetime, endDatetime)
+        self.logger.info('Activity startDatetime = %s, endDatetime = %s', startDatetime, endDatetime)
         return startDatetime, endDatetime
 
     def initDB(self):
@@ -290,9 +290,9 @@ class Base_Loader(STOQS_Loader):
         try:
             mv = float(self.ds[var].attributes['missing_value'])
         except KeyError:
-            logger.debug('Cannot get attribute missing_value for variable %s from url %s', var, self.url)
+            self.logger.debug('Cannot get attribute missing_value for variable %s from url %s', var, self.url)
         except AttributeError as e:
-            logger.debug(str(e))
+            self.logger.debug(str(e))
         
         return mv
 
@@ -304,7 +304,7 @@ class Base_Loader(STOQS_Loader):
         try:
             fv = float(self.ds[var].attributes['_FillValue'])
         except KeyError:
-            logger.debug('Cannot get attribute _FillValue for variable %s from url %s', var, self.url)
+            self.logger.debug('Cannot get attribute _FillValue for variable %s from url %s', var, self.url)
             try:
                 # Fred's L_662 and other glider data files have the 'FillValue' attribute, not '_FillValue'
                 fv = float(self.ds[var].attributes['FillValue'])
@@ -313,11 +313,11 @@ class Base_Loader(STOQS_Loader):
                     # http://odss.mbari.org/thredds/dodsC/CANON/2013_Sep/Platforms/AUVs/Daphne/NetCDF/Daphne_CANON_Fall2013.nc.html has 'fill_value'
                     fv = float(self.ds[var].attributes['fill_value'])
                 except Exception as e:
-                    logger.debug('Cannot get FillValue for variable %s from url %s: %s', var, self.url, str(e))
+                    self.logger.debug('Cannot get FillValue for variable %s from url %s: %s', var, self.url, str(e))
         except ValueError as e:
-            logger.warn('%s for variable %s from url %s', str(e), var, self.url)
+            self.logger.warn('%s for variable %s from url %s', str(e), var, self.url)
         except AttributeError as e:
-            logger.debug(str(e))
+            self.logger.debug(str(e))
 
         return fv
 
@@ -360,7 +360,7 @@ class Base_Loader(STOQS_Loader):
         try:
             nc_global_keys = self.ds.attributes['NC_GLOBAL']
         except KeyError:
-            logger.warn('Dataset does not have an NC_GLOBAL attribute! Setting featureType to "trajectory" assuming that this is an old Tethys file')
+            self.logger.warn('Dataset does not have an NC_GLOBAL attribute! Setting featureType to "trajectory" assuming that this is an old Tethys file')
             return TRAJECTORY
 
         if 'Conventions' in nc_global_keys:
@@ -438,14 +438,14 @@ class Base_Loader(STOQS_Loader):
             coords = self.ds[variable].attributes['coordinates'].split()
             coordSN, snCoord = self._getCoordinates(coords)
             for coord in coords:
-                logger.debug(coord)
+                self.logger.debug(coord)
                 try:
-                    logger.debug(snCoord)
+                    self.logger.debug(snCoord)
                     coordDict[coordSN[coord]] = coord
                 except KeyError as e:
                     raise AuxCoordMissingStandardName(e)
         else:
-            logger.debug('Variable %s is missing coordinates attribute, checking if loader has specified it in auxCoords', variable)
+            self.logger.debug('Variable %s is missing coordinates attribute, checking if loader has specified it in auxCoords', variable)
             if variable in self.auxCoords:
                 # Try getting it from overridden values provided
                 for coordSN, coord in list(self.auxCoords[variable].items()):
@@ -454,24 +454,24 @@ class Base_Loader(STOQS_Loader):
                     except KeyError as e:
                         raise AuxCoordMissingStandardName(e)
             else:
-                logger.warn('%s not in auxCoords' % variable)
+                self.logger.warn('%s not in auxCoords' % variable)
 
         # Check for all 4 coordinates needed for spatial-temporal location - if any are missing raise exception with suggestion
         reqCoords = set(('time', 'latitude', 'longitude', 'depth'))
-        logger.debug('coordDict = %s', coordDict)
+        self.logger.debug('coordDict = %s', coordDict)
         if set(coordDict.keys()) != reqCoords:
-            logger.warn('Required coordinate(s) %s missing in NetCDF file.',
+            self.logger.debug('Required coordinate(s) %s missing in NetCDF file.',
                         list(reqCoords - set(coordDict.keys())))
             if not self.auxCoords:
                 raise VariableMissingCoordinatesAttribute('%s: %s missing coordinates attribute' % (self.url, variable,))
 
-        logger.debug('coordDict = %s', coordDict)
+        self.logger.debug('coordDict = %s', coordDict)
 
         if not coordDict: # pragma: no cover
             if self.auxCoords:
                 if variable in self.auxCoords:
                     # Simply return self.auxCoords if specified in the constructor
-                    logger.debug('Returning auxCoords for variable %s that were specified in the constructor: %s', variable, self.auxCoords[variable])
+                    self.logger.debug('Returning auxCoords for variable %s that were specified in the constructor: %s', variable, self.auxCoords[variable])
                     return self.auxCoords[variable]
                 else:
                     raise ParameterNotFound('auxCoords is specified, but variable requested (%s) is not in %s' % (variable, self.auxCoords))
@@ -488,24 +488,24 @@ class Base_Loader(STOQS_Loader):
         lats = {}
         lons = {}
         for v in self.include_names:
-            logger.debug('Calling self.getAuxCoordinates() for v = %s', v)
+            self.logger.debug('Calling self.getAuxCoordinates() for v = %s', v)
             try:
                 ac = self.getAuxCoordinates(v)
             except ParameterNotFound as e:
-                logger.debug('Skipping include_name = %s: %s', v, e)
+                self.logger.debug('Skipping include_name = %s: %s', v, e)
                 continue
      
             # depth may be single-valued or an array 
             if self.getFeatureType() == TIMESERIES: 
-                logger.debug('Initializing depths list for timeseries, ac = %s', ac)
+                self.logger.debug('Initializing depths list for timeseries, ac = %s', ac)
                 try:
                     if 'depth' in ac:
                         depths[v] = self.ds[v][ac['depth']][:][0]
                 except KeyError:
-                    logger.warn('No depth coordinate found for %s.  Assuming EPIC scalar and assigning depth from first element', v)
+                    self.logger.warn('No depth coordinate found for %s.  Assuming EPIC scalar and assigning depth from first element', v)
                     depths[v] = self.ds[ac['depth']][0]
             elif self.getFeatureType() == TIMESERIESPROFILE:
-                logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac) 
+                self.logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac) 
                 try:
                     depths[v] = self.ds[v][ac['depth']][:]
                 except KeyError:
@@ -513,7 +513,7 @@ class Base_Loader(STOQS_Loader):
                     # look elsewhere for a nominal depth
                     depths[v] = [float(self.ds.attributes['NC_GLOBAL']['nominal_sensor_depth'])]
             elif self.getFeatureType() == TRAJECTORYPROFILE:
-                logger.debug('Initializing depths list for trajectoryprofile, ac = %s', ac)
+                self.logger.debug('Initializing depths list for trajectoryprofile, ac = %s', ac)
                 depths[v] = self.ds[v][ac['depth']][:]
 
             try:
@@ -522,7 +522,7 @@ class Base_Loader(STOQS_Loader):
                 if len(self.ds[ac['longitude']][:]) == 1:
                     lons[v] = self.ds[ac['longitude']][:][0]
                 else:
-                    logger.warn('Variable %s has longitude auxillary coordinate of length %d, expecting it to be 1.',
+                    self.logger.warn('Variable %s has longitude auxillary coordinate of length %d, expecting it to be 1.',
                                 v, len(self.ds[ac['longitude']][:]))
 
             try:
@@ -531,7 +531,7 @@ class Base_Loader(STOQS_Loader):
                 if len(self.ds[ac['latitude']][:]) == 1:
                     lats[v] = self.ds[ac['latitude']][:][0]
                 else:
-                    logger.warn('Variable %s has latitude auxillary coordidate of length %d, expecting it to be 1.', 
+                    self.logger.warn('Variable %s has latitude auxillary coordidate of length %d, expecting it to be 1.', 
                                 v, len(self.ds[ac['latitude']][:]))
 
         # All variables must have the same nominal location 
@@ -554,7 +554,7 @@ class Base_Loader(STOQS_Loader):
             # does not have a Conventions global attribute, so also check for time, time2 and the units
             isEPIC = 'time' in self.ds.keys() and 'time2' in self.ds.keys() and self.ds['time'].attributes['units'] == 'True Julian Day'
             if isEPIC:
-                logger.warn("%s does not have 'Conventions', yet appears to be EPIC from its time/time2 variables", self.url)
+                self.logger.warn("%s does not have 'Conventions', yet appears to be EPIC from its time/time2 variables", self.url)
 
         if isEPIC:
             # True Julian dates are at noon, so take int() to match EPIC's time axis values and to satisfy:
@@ -598,37 +598,37 @@ class Base_Loader(STOQS_Loader):
         if timeAxis.units == 'seconds since 1970-01-01T00:00:00Z'or timeAxis.units == 'seconds since 1970/01/01 00:00:00Z':
             timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards doesn't like ISO format
         if self.startDatetime: 
-            logger.debug('self.startDatetime, timeAxis.units = %s, %s', self.startDatetime, timeAxis.units)
+            self.logger.debug('self.startDatetime, timeAxis.units = %s, %s', self.startDatetime, timeAxis.units)
             s = to_udunits(self.startDatetime, timeAxisUnits)
-            logger.debug("For startDatetime = %s, the udnits value is %f", self.startDatetime, s)
+            self.logger.debug("For startDatetime = %s, the udnits value is %f", self.startDatetime, s)
 
         if self.dataStartDatetime: 
             # Override s if self.dataStartDatetime is specified
-            logger.debug('self.dataStartDatetime, timeAxis.units = %s, %s', self.dataStartDatetime, timeAxis.units)
+            self.logger.debug('self.dataStartDatetime, timeAxis.units = %s, %s', self.dataStartDatetime, timeAxis.units)
             s = to_udunits(self.dataStartDatetime, timeAxisUnits)
-            logger.debug("For dataStartDatetime = %s, the udnits value is %f", self.dataStartDatetime, s)
+            self.logger.debug("For dataStartDatetime = %s, the udnits value is %f", self.dataStartDatetime, s)
 
         if self.requested_endDatetime:
             # endDatetime may be None, in which case just read until the end
             e = to_udunits(self.endDatetime, timeAxisUnits)
-            logger.debug("For endDatetime = %s, the udnits value is %f", self.endDatetime, e)
+            self.logger.debug("For endDatetime = %s, the udnits value is %f", self.endDatetime, e)
         else:
             e = timeAxis[-1]
-            logger.debug("requested_endDatetime not given, using the last value of timeAxis = %f", e)
+            self.logger.debug("requested_endDatetime not given, using the last value of timeAxis = %f", e)
 
         tf = (s <= timeAxis) & (timeAxis <= e)
-        logger.debug('tf = %s', tf)
+        self.logger.debug('tf = %s', tf)
         tIndx = np.nonzero(tf == True)[0]
         if tIndx.size == 0:
             raise NoValidData('No data from %s for time values between %s and %s.  Skipping.' % (self.url, s, e))
 
         # For python slicing add 1 to the end index
-        logger.debug('tIndx = %s', tIndx)
+        self.logger.debug('tIndx = %s', tIndx)
         try:
             indices = (tIndx[0], tIndx[-1] + 1)
         except IndexError:
             raise NoValidData('Could not get first and last indexes from tIndex = %s. Skipping.' % (tIndx))
-        logger.debug('Start and end indices are: %s', indices)
+        self.logger.debug('Start and end indices are: %s', indices)
 
         if tIndx[-1] <= tIndx[0]:
             raise InvalidSliceRequest('Cannot issue OPeNDAP temporal constraint expression with length 0 or less.')
@@ -648,12 +648,12 @@ class Base_Loader(STOQS_Loader):
             try:
                 tIndx = self.getTimeBegEndIndices(self.ds[self.getAuxCoordinates(name)['time']])
             except ParameterNotFound:
-                logger.debug('Ignoring parameter: %s', name)
+                self.logger.debug('Ignoring parameter: %s', name)
             except InvalidSliceRequest:
-                logger.warn('No valid data for parameter: %s', name)
+                self.logger.warn('No valid data for parameter: %s', name)
                 continue
             except KeyError as e:
-                logger.warn("%s: Skipping", e)
+                self.logger.warn("%s: Skipping", e)
                 continue
             try:
                 if self.getFeatureType() == TRAJECTORY:
@@ -672,11 +672,11 @@ class Base_Loader(STOQS_Loader):
             except KeyError as e:
                 if self.getFeatureType() == TRAJECTORY:
                     # Assume that it's a derived variable and add same count as 
-                    logger.debug("%s: Assuming it's a derived parameter", e)
+                    self.logger.debug("%s: Assuming it's a derived parameter", e)
                     numDerived += 1
-            logger.info(f'Count of parameter {name:20}: {int(pcount):7d}')
+            self.logger.info(f'Count of parameter {name:20}: {int(pcount):7d}')
                     
-        logger.debug('Adding %d derived parameters of length %d to the count', numDerived, trajSingleParameterCount / self.stride)
+        self.logger.debug('Adding %d derived parameters of length %d to the count', numDerived, trajSingleParameterCount / self.stride)
         if trajSingleParameterCount:
             count += (numDerived * trajSingleParameterCount / self.stride)
 
@@ -691,7 +691,7 @@ class Base_Loader(STOQS_Loader):
         coor_groups = {}
         for pname in self.include_names:
             if pname not in list(self.ds.keys()):
-                logger.debug('include_name %s not in dataset %s', pname, self.url)
+                self.logger.debug('include_name %s not in dataset %s', pname, self.url)
                 continue
             ac[pname] = self.getAuxCoordinates(pname)
             load_groups[''.join(sorted(list(ac[pname].values())))].append(pname)
@@ -750,11 +750,11 @@ class Base_Loader(STOQS_Loader):
                 # End if i == 0 
 
                 if isinstance(self.ds[pname], pydap.model.GridType):
-                    logger.debug("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tindx[0], tindx[-1], self.stride)
+                    self.logger.debug("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tindx[0], tindx[-1], self.stride)
                     constraint_string = f"Using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                     values = self.ds[pname][pname][tindx[0]:tindx[-1]:self.stride]
                 else:
-                    logger.debug("Using constraints: ds['%s'][%d:%d:%d]", pname, tindx[0], tindx[-1], self.stride)
+                    self.logger.debug("Using constraints: ds['%s'][%d:%d:%d]", pname, tindx[0], tindx[-1], self.stride)
                     constraint_string = f"Using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                     values = self.ds[pname][tindx[0]:tindx[-1]:self.stride]
 
@@ -766,7 +766,7 @@ class Base_Loader(STOQS_Loader):
                                                 datavalue=va) for me, va in zip(meass, values))
 
                 # All items but mess are generators, so we can call len() on it
-                logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
+                self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
                 mps = self._measuredparameter_with_measurement(meass, mps)
                 mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
                 total_loaded += len(mps)
@@ -824,24 +824,24 @@ class Base_Loader(STOQS_Loader):
                     try:
                         depths = self.ds[self.ds[firstp].keys()[2]][:]   # TODO lookup more precise depth from conversion from pressure
                     except IndexError:
-                        logger.warn(f'Variable {firstp} has less than 2 coordinates: {self.ds[pname].keys()}')
+                        self.logger.warn(f'Variable {firstp} has less than 2 coordinates: {self.ds[pname].keys()}')
                         depths = np.array([])
 
                     # If data aren't COARDS then index 2 will not be depths, but could be latitude, detect by testing length & auxCoords
                     if len(depths) == 1 and 'depth' not in ac:
                         try:
-                            logger.info('Attempting to set nominal depth from EPIC Convention sensor_depth variable attribute')
+                            self.logger.info('Attempting to set nominal depth from EPIC Convention sensor_depth variable attribute')
                             depths = np.array([self.ds[firstp].attributes['sensor_depth']])
                         except KeyError:
-                            logger.info('Variable %s does not have a sensor_depth attribute', firstp)
+                            self.logger.info('Variable %s does not have a sensor_depth attribute', firstp)
                     elif not depths.any():
-                        logger.warn('Depth coordinate not found at index [2]. Looking for nominal position from EPIC Convention global attributes.')
+                        self.logger.warn('Depth coordinate not found at index [2]. Looking for nominal position from EPIC Convention global attributes.')
                         try:
                             depths = np.array([self.ds.attributes['NC_GLOBAL']['nominal_instrument_depth']])
                             nomLat = self.ds.attributes['NC_GLOBAL']['latitude']
                             nomLon = self.ds.attributes['NC_GLOBAL']['longitude']
                         except KeyError:
-                            logger.warn('EPIC nominal position not found in global attributes. Assigning from variables (and maybe variable attribute).')
+                            self.logger.warn('EPIC nominal position not found in global attributes. Assigning from variables (and maybe variable attribute).')
                             if not hasattr(self.ds['depth'][0], '__iter__'):
                                 depths = np.array([self.ds['depth'][0]])
                             if 'nominal_instrument_depth' in self.ds[firstp].attributes:
@@ -852,7 +852,7 @@ class Base_Loader(STOQS_Loader):
                     if nomDepths and nomLat and nomLon:
                         pass
                     elif depths.any() and nomLat and nomLon:
-                        logger.info('Nominal position assigned from EPIC Convention global attributes')
+                        self.logger.info('Nominal position assigned from EPIC Convention global attributes')
                         nomDepths = depths
                     else:
                         # Possible to have both precise and nominal locations with this approach
@@ -870,7 +870,7 @@ class Base_Loader(STOQS_Loader):
                     # - latitudes & longitudes: first by CF/COARDS coordinate rules, then by EPIC conventions
                     shape_length = self.get_shape_length(firstp)
                     if shape_length == 4:
-                        logger.info('%s has shape of 4, assume that singleton dimensions are used for nominal latitude and longitude', firstp)
+                        self.logger.info('%s has shape of 4, assume that singleton dimensions are used for nominal latitude and longitude', firstp)
                         # Assumes COARDS coordinate ordering
                         latitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
                         longitudes = float(self.ds[list(self.ds[firstp].keys())[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
@@ -880,12 +880,12 @@ class Base_Loader(STOQS_Loader):
                         longitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
                         depths = nomDepths
                     elif shape_length == 2:
-                        logger.info('%s has shape of 2, assuming no latitude and longitude singletime'
+                        self.logger.info('%s has shape of 2, assuming no latitude and longitude singletime'
                                     ' dimensions. Using nominal location read from auxillary coordinates', firstp)
                         longitudes = nomLon
                         latitudes = nomLat
                     elif shape_length == 1:
-                        logger.info('%s has shape of 1, assuming no latitude, longitude, and'
+                        self.logger.info('%s has shape of 1, assuming no latitude, longitude, and'
                                     ' depth singletime dimensions. Using nominal location read'
                                     ' from auxially coordinates', firstp)
                         longitudes = nomLon
@@ -904,11 +904,11 @@ class Base_Loader(STOQS_Loader):
 
                     ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
                     try:
-                        logger.info(f'Calling bulk_create() for InstantPoints in ips generator for firstp = {firstp}')
+                        self.logger.info(f'Calling bulk_create() for InstantPoints in ips generator for firstp = {firstp}')
                         ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips)
                     except (IntegrityError, psycopg2.IntegrityError) as e:
-                        logger.info(f"Time axis '{ac[TIME]}' likely has timevalues already loaded from an axis in {time_axes_loaded}")
-                        logger.info(f'Getting matching InstantPoints from the database, creating new ones not yet there.')
+                        self.logger.info(f"Time axis '{ac[TIME]}' likely has timevalues already loaded from an axis in {time_axes_loaded}")
+                        self.logger.info(f'Getting matching InstantPoints from the database, creating new ones not yet there.')
                         ips_new = []
                         num_created = 0
                         for ip in (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes):
@@ -920,11 +920,11 @@ class Base_Loader(STOQS_Loader):
                             ips_new.append(ip_db) 
 
                         ips = ips_new 
-                        logger.info(f'Got {len(ips) - num_created} InstantPoints from the database, created {num_created} new ones')
+                        self.logger.info(f'Got {len(ips) - num_created} InstantPoints from the database, created {num_created} new ones')
                        
                         if not ips: 
-                            logger.error(f'Unable to load load InstantPoints for axis {ac[TIME]}. Exiting.')
-                            logger.exception(f"Maybe you should delete Activity '{self.activity.name}' first?")
+                            self.logger.error(f'Unable to load load InstantPoints for axis {ac[TIME]}. Exiting.')
+                            self.logger.exception(f"Maybe you should delete Activity '{self.activity.name}' first?")
                             sys.exit(-1)
 
                     # TIME axes are commonly shared amongst variables on different grids in timeseriesprofile data
@@ -948,15 +948,15 @@ class Base_Loader(STOQS_Loader):
                     for ip in ips:
                         for de, po, nl in zip(depths, points, nls):
                             if self.is_coordinate_bad(firstp, ip.timevalue, de):
-                                logger.warn(f'Bad coordinate: {ip}, {de}')
+                                self.logger.warn(f'Bad coordinate: {ip}, {de}')
                             meass.append(Measurement(depth=repr(de), geom=po, instantpoint=ip, nominallocation=nl))
 
                     try:
-                        logger.info(f'Calling bulk_create() for {len(meass)} Measurements')
+                        self.logger.info(f'Calling bulk_create() for {len(meass)} Measurements')
                         meass = Measurement.objects.using(self.dbAlias).bulk_create(meass)
                     except (IntegrityError, psycopg2.IntegrityError) as e:
-                        logger.info(f"Depth axis '{ac[DEPTH]}' likely has depths already loaded from an axis in {depth_axes_loaded}")
-                        logger.info(f'Getting matching Measurements from the database, creating new ones not yet there.')
+                        self.logger.info(f"Depth axis '{ac[DEPTH]}' likely has depths already loaded from an axis in {depth_axes_loaded}")
+                        self.logger.info(f'Getting matching Measurements from the database, creating new ones not yet there.')
                         meass_new = []
                         num_created = 0
                         for meas in meass:
@@ -969,11 +969,11 @@ class Base_Loader(STOQS_Loader):
                             meass_new.append(meas_db) 
 
                         meass = meass_new
-                        logger.info(f'Got {len(meass) - num_created} Measurements from the database, created {num_created} new ones')
+                        self.logger.info(f'Got {len(meass) - num_created} Measurements from the database, created {num_created} new ones')
 
                         if not meass:
-                            logger.error(f'Unable to load load Measurements for axis {ac[DEPTH]}. Exiting.')
-                            logger.exception(f"Maybe you should delete Activity '{self.activity.name}' first?")
+                            self.logger.error(f'Unable to load load Measurements for axis {ac[DEPTH]}. Exiting.')
+                            self.logger.exception(f"Maybe you should delete Activity '{self.activity.name}' first?")
                             sys.exit(-1)
 
                     # DEPTH axes are commonly shared amongst variables on different grids in timeseriesprofile data
@@ -986,7 +986,7 @@ class Base_Loader(STOQS_Loader):
  
                 values = self.ds[pname][pname][tindx[0]:tindx[-1]:self.stride]
                 if len(values.shape) == 1:
-                    logger.info("len(values.shape) = 1; likely EPIC timeseries data - reshaping to add a 'depth' dimension")
+                    self.logger.info("len(values.shape) = 1; likely EPIC timeseries data - reshaping to add a 'depth' dimension")
                     values = values.reshape(values.shape[0], 1)
 
                 # Need to bulk_create() all values, set bad ones to None and remove them after insert
@@ -1001,7 +1001,7 @@ class Base_Loader(STOQS_Loader):
                                                 datavalue=va) for me, va in zip(meass, good_values))
 
                 # All items but mess are generators, so we can call len() on it
-                logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter')
+                self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter')
                 mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
                 total_loaded += len(mps)
 
@@ -1032,35 +1032,35 @@ class Base_Loader(STOQS_Loader):
         # The reads here take advantage of OPeNDAP access mechanisms to efficiently transfer data across the network
         for pname in self.include_names:
             if pname not in list(self.ds.keys()):
-                logger.warn('include_name %s not in dataset %s', pname, self.url)
+                self.logger.warn('include_name %s not in dataset %s', pname, self.url)
                 continue
             # Peek at the shape and pull apart the data from its grid coordinates 
             # Only single trajectories are allowed
             shape_length = self.get_shape_length(pname)
-            logger.info('Reading data from %s: %s %s %s', self.url, pname, shape_length, type(self.ds[pname]))
+            self.logger.info('Reading data from %s: %s %s %s', self.url, pname, shape_length, type(self.ds[pname]))
             if shape_length == 1 and isinstance(self.ds[pname], pydap.model.BaseType): # pragma: no cover
                 # Legacy Dorado data need to be processed as BaseType; Example data:
                 #   dsdorado = open_url('http://odss.mbari.org/thredds/dodsC/CANON_september2012/dorado/Dorado389_2012_256_00_256_00_decim.nc')
                 #   dsdorado['temperature'].shape = (12288,)
                 ac[pname] = self.getAuxCoordinates(pname)
                 try:
-                    logger.debug("ac[pname]['time'] = %s", ac[pname]['time'])
+                    self.logger.debug("ac[pname]['time'] = %s", ac[pname]['time'])
                     tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
                 except (NoValidData, InvalidSliceRequest) as e:
-                    logger.warn('Skipping this parameter. %s', e)
+                    self.logger.warn('Skipping this parameter. %s', e)
                     continue
                 try:
                     # Subselect along the time axis
-                    logger.info("Using constraints: ds['%s'][%d:%d:%d]", pname, tIndx[0], tIndx[-1], self.stride)
+                    self.logger.info("Using constraints: ds['%s'][%d:%d:%d]", pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][tIndx[0]:tIndx[-1]:self.stride]
                 except ValueError as err:
-                    logger.error('\nGot error "%s" reading data from URL: %s.\n'
+                    self.logger.error('\nGot error "%s" reading data from URL: %s.\n'
                                  'If it is: "string size must be a multiple of element size"'
                                  ' and the URL is a TDS aggregation then the cache files must'
                                  ' be removed and the tomcat hosting TDS restarted.', err, self.url)
                     sys.exit(1)
                 except pydap.exceptions.ServerError as e:
-                    logger.exception('%s', e)
+                    self.logger.exception('%s', e)
                     sys.exit(-1)
                     continue
     
@@ -1068,7 +1068,7 @@ class Base_Loader(STOQS_Loader):
                 data[pname] = iter(v)      # Iterator on time axis delivering all values in an array with .next()
 
                 # Peek at coordinate attribute to get depth, latitude, longitude values from the other BaseTypes
-                logger.info('ac = %s', ac)
+                self.logger.info('ac = %s', ac)
 
                 times[pname] = self.ds[ac[pname]['time']][tIndx[0]:tIndx[-1]:self.stride]
                 try:
@@ -1091,27 +1091,27 @@ class Base_Loader(STOQS_Loader):
                 tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
                 try:
                     # Subselect along the time axis
-                    logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
+                    self.logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride]
                 except ValueError as err:
                     if str(err) == 'need more than 1 value to unpack':
                         # Likely stride is larger than length of array; report and skip
-                        logger.error('%s', err)
+                        self.logger.error('%s', err)
                         continue
                     else:
-                        logger.error('''\nGot error '%s' reading data from URL: %s.
+                        self.logger.error('''\nGot error '%s' reading data from URL: %s.
                         If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
                         then the cache files must be removed and the tomcat hosting TDS restarted.''', err, self.url)
                         sys.exit(1)
                 except pydap.exceptions.ServerError as e:
-                    logger.error('%s', e)
+                    self.logger.error('%s', e)
                     continue
     
                 # The STOQS datavalue 
                 data[pname] = iter(v)      # Iterator on time axis delivering all values in an array with .next()
 
                 # Peek at coordinate attribute to get depth, latitude, longitude values from the other BaseTypes
-                logger.info('ac = %s', ac)
+                self.logger.info('ac = %s', ac)
 
                 times[pname] = self.ds[ac[pname]['time']][tIndx[0]:tIndx[-1]:self.stride]
                 depths[pname] = self.ds[ac[pname]['depth']][ac[pname]['depth']][tIndx[0]:tIndx[-1]:self.stride]
@@ -1127,20 +1127,20 @@ class Base_Loader(STOQS_Loader):
                 tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
                 try:
                     # Subselect along the time axis
-                    logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
+                    self.logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride]
                 except ValueError as err:
                     if self.stride > tIndx[-1] - tIndx[0]:
-                        logger.error('Stride value is too high for this dataset. Not loading any of its data.')
+                        self.logger.error('Stride value is too high for this dataset. Not loading any of its data.')
                         continue
                     else:
-                        logger.error('\nGot error "%s" reading data from URL: %s.\n'
+                        self.logger.error('\nGot error "%s" reading data from URL: %s.\n'
                                      'If it is: "string size must be a multiple of element size"'
                                      ' and the URL is a TDS aggregation then the cache files must'
                                      ' be removed and the tomcat hosting TDS restarted.', err, self.url)
                         sys.exit(1)
                 except pydap.exceptions.ServerError as e:
-                    logger.error('%s', e)
+                    self.logger.error('%s', e)
                     continue
     
                 # The STOQS MeasureParameter dataarray  - v is a list of Arrays
@@ -1161,23 +1161,23 @@ class Base_Loader(STOQS_Loader):
                         ip, secs_diff = get_closest_instantpoint(self.associatedActivityName, tv, self.dbAlias)
                         max_secs_diff = 2
                         if secs_diff > max_secs_diff:
-                            logger.warn('LOPC data at %s more than %s secs different from existing measurement: %s', 
+                            self.logger.warn('LOPC data at %s more than %s secs different from existing measurement: %s', 
                                     tv, max_secs_diff, secs_diff)
                     except ClosestTimeNotFoundException as e:
-                        logger.error('Could not find corresponding measurment for LOPC data measured at %s', tv)
+                        self.logger.error('Could not find corresponding measurment for LOPC data measured at %s', tv)
                         continue
                     else:
                         measurements[pname].append(Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
 
             else:
-                logger.warn('Variable %s is not of type pydap.model.GridType with a '
+                self.logger.warn('Variable %s is not of type pydap.model.GridType with a '
                             'shape length of 1 or 2 (for LOPC/LISST-100 data).  It '
                             'is type %s with shape length = %d.', 
                             pname, type(self.ds[pname]), shape_length)
 
         # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
         for pname in list(data.keys()):
-            logger.debug('Delivering rows of data for %s', pname)
+            self.logger.debug('Delivering rows of data for %s', pname)
             l = 0
             values = {}
             for dv in data[pname]:
@@ -1193,123 +1193,6 @@ class Base_Loader(STOQS_Loader):
                 yield values
                 l = l + 1
 
-    def _genTrajectoryProfileGridType(self):
-        '''
-        Generator of TrajectoryProfile data where data along a t:xyz path are arranged in bins above (or below) the instrument.
-        Using terminology from CF-1.6 assume data is from a discrete sampling geometry type of trajectoryProfile.  Data may be
-        in an upstream format that can be converted to trajectoryProfile data.  Yields a uniform values dictionary for 
-        inserting rows into the database.
-        '''
-        # No longer called following bulk_create() work in October 2017. 
-        # Leave here until bulk_create() is implemented for TrajectoryProfile data.  -mpm 20 October 2017
-        data = {} 
-        times = {}
-        depths = {}
-        nomDepths = {}
-        latitudes = {}
-        longitudes = {}
-        timeUnits = {}
-        self.adcpDepths = defaultdict(lambda: [])            # Special for depth varying ADCP data such as from IMOS-EAC
-
-        # Read the data from the OPeNDAP url into arrays keyed on parameter name - these arrays may take a bit of memory 
-        # The reads here take advantage of OPeNDAP access mechanisms to effeciently transfer data across the network
-        for pname in self.include_names:
-            if pname not in self.ds:
-                continue    # Quietly skip over parameters not in ds: allows combination of variables and files in same loader
-            # Peek at the shape and pull apart the data from its grid coordinates 
-            logger.info('Reading data from %s: %s', self.url, pname)
-            if isinstance(self.ds[pname], pydap.model.GridType):
-                # On tzyx grid - default for all OS formatted station data COARDS coordinate ordering conventions
-                # E.g. for http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74040, 11, 1, 1) 
-                #       or http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74850, 1, 1, 1)
-                tIndx = self.getTimeBegEndIndices(self.ds[list(self.ds[pname].keys())[1]])
-                try:
-                    # Subselect along the time axis, get all z values
-                    logger.info("From: %s", self.url)
-                    logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d,:,0,0]", pname, pname, tIndx[0], tIndx[-1], self.stride)
-                    v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride,:,0,0]
-                except ValueError as err:
-                    logger.error('\nGot error "%s" reading data from URL: %s.\n'
-                                 'If it is: "string size must be a multiple of element size"'
-                                 ' and the URL is a TDS aggregation then the cache files must'
-                                 ' be removed and the tomcat hosting TDS restarted.', err, self.url)
-                    sys.exit(1)
-                except pydap.exceptions.ServerError as e:
-                    if self.stride > 1:
-                        logger.warn('%s and stride > 1.  Skipping dataset %s', e, self.url)
-                        continue
-                    else:
-                        logger.exception('%s', e)
-                        sys.exit(-1)
-    
-                # The STOQS datavalue 
-                data[pname] = iter(v)      # Iterator on time axis delivering all z values in an array with .next()
-
-                # CF (nee COARDS) has tzyx coordinate ordering
-                times[pname] = self.ds[list(self.ds[pname].keys())[1]][tIndx[0]:tIndx[-1]:self.stride]
-                depths[pname] = self.ds[list(self.ds[pname].keys())[2]][:]                # TODO lookup more precise depth from conversion from pressure
-
-                timeUnits[pname] = self.ds[list(self.ds[pname].keys())[1]].units.lower()
-                timeUnits[pname] = timeUnits[pname].replace('utc', 'UTC')           # coards requires UTC in uppercase
-                if self.ds[list(self.ds[pname].keys())[1]].units == 'seconds since 1970-01-01T00:00:00Z':
-                    timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards 1.0.4 and earlier doesn't like ISO format
-
-                _, nomLats, nomLons = self.getNominalLocation()                  # Possible to have both precise and nominal locations with this approach
-
-                shape_length = self.get_shape_length(pname) 
-                # TODO: Handle real CF-1.6 trajectoryProfile data
-                if shape_length == 5:
-                    logger.info('%s has shape of 5, assuming ADCP data from IMOS singleton dimensions are used for nominal latitude and longitude', pname)
-                    # Use DEPTH and values of bin depths for nominal depths & make Integer - overriding what self.getNominalLocation() returns
-                    nomDepths[pname] = [int(float(self.ds['DEPTH'][0]) - float(h)) for h in self.ds['HEIGHT_ABOVE_SENSOR'][:]]
-                    # Add height above sensor array to actual depth of sensor - creates 2D array who's columns need to be delivered in the yields below
-                    heights = self.ds['HEIGHT_ABOVE_SENSOR'][:]
-                    logger.info('Assuming ADCP data from IMOS and that bin depths need to be combined of the sensor depth and height above sensor')
-                    for depth in self.ds['ZPOS']['ZPOS'][tIndx[0]:tIndx[-1]:self.stride]:
-                        self.adcpDepths[pname].append([float(depth) - float(h) for h in heights])
-
-                    # Save last one for insertSimpleDepthTimeSeriesByNominalDepth()
-                    self.timeDepthProfiles = self.adcpDepths[pname]
-
-                    # Assumes COARDS coordinate ordering
-                    latitudes[pname] = float(self.ds[list(self.ds[pname].keys())[4]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
-                    longitudes[pname] = float(self.ds[list(self.ds[pname].keys())[5]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
-                else:
-                    raise Exception('%s has shape of %d. Can handle only shapes of 2, 4, and 5.', pname, shape_length)
-                    
-            else:
-                logger.warn('Variable %s is not of type pydap.model.GridType', pname)
-                logger.warn('Variable %s is not of type pydap.model.GridType with a shape length of 4.'
-                            ' It has a shape length of %d.', pname, shape_length)
-
-        # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
-        for pname in list(data.keys()):
-            logger.info('Delivering rows of data for %s', pname)
-            l = 0
-            for depthArray in data[pname]:
-                k = 0
-                ##logger.debug('depthArray = %s', depthArray)
-                ##logger.debug('nomDepths = %s', nomDepths)
-                values = {}
-                for dv in depthArray:
-                    values[pname] = float(dv)
-                    values['time'] = times[pname][l]
-                    #values['depth'] = depths[pname][k]
-                    values['depth'] = self.adcpDepths[pname][l][k]
-                    values['latitude'] = latitudes[pname]
-                    values['longitude'] = longitudes[pname]
-                    values['timeUnits'] = timeUnits[pname]
-                    try:
-                        values['nomDepth'] = nomDepths[pname][k]
-                    except IndexError:
-                        values['nomDepth'] = nomDepths[pname]
-                    values['nomLat'] = nomLats[pname]
-                    values['nomLon'] = nomLons[pname]
-                    yield values
-                    k = k + 1
-
-                l = l + 1
-
     def _measurement_with_instantpoint(self, ips, meass):
         for ip, meas in zip(ips, meass):
             meas.instantpoint = ip
@@ -1317,12 +1200,12 @@ class Base_Loader(STOQS_Loader):
         
     def _bulk_load_coordinates(self, ips, meass):
 
-        logger.info(f'Calling bulk_create() for InstantPoints in ips generator')
+        self.logger.info(f'Calling bulk_create() for InstantPoints in ips generator')
         ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips)
 
         meass = self._measurement_with_instantpoint(ips, meass)
 
-        logger.info(f'Calling bulk_create() for Measurements in meass generator')
+        self.logger.info(f'Calling bulk_create() for Measurements in meass generator')
         meass = Measurement.objects.using(self.dbAlias).bulk_create(meass)
 
         return meass
@@ -1373,7 +1256,7 @@ class Base_Loader(STOQS_Loader):
 
         self.totalRecords = self.getTotalRecords()
 
-        logger.info("From: %s", self.url)
+        self.logger.info("From: %s", self.url)
         if featureType:
             featureType = featureType.lower()
         else:
@@ -1396,9 +1279,9 @@ class Base_Loader(STOQS_Loader):
         except IntegrityError as e:
             # Likely duplicate key value violates unique constraint "stoqs_measuredparameter_measurement_id_parameter_1328c3fb_uniq"
             # Can't append data from source with bulk_create(), give appropriate warning
-            logger.error(str(e))
-            logger.error(f'Failed to bulk_create() data from URL: {self.url}')
-            logger.error(f'If you need to load data that has been appended to the URL then delete its Activity before loading.')
+            self.logger.error(str(e))
+            self.logger.error(f'Failed to bulk_create() data from URL: {self.url}')
+            self.logger.error(f'If you need to load data that has been appended to the URL then delete its Activity before loading.')
 
             return mps_loaded, path, parmCount
 
@@ -1414,27 +1297,27 @@ class Base_Loader(STOQS_Loader):
         try:
             path = LineString([p[0] for p in linestringPoints]).simplify(tolerance=.001)
         except TypeError as e:
-            logger.warn("%s\nSetting path to None", e)
+            self.logger.warn("%s\nSetting path to None", e)
         except Exception as e:
-            logger.error('%s', e)    # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
+            self.logger.error('%s', e)    # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
         else:
             if len(path) == 2:
-                logger.info("Length of path = 2: path = %s", path)
+                self.logger.info("Length of path = 2: path = %s", path)
                 if path[0][0] == path[1][0] and path[0][1] == path[1][1]:
-                    logger.info("And the 2 points are identical. Saving the first point of this"
+                    self.logger.info("And the 2 points are identical. Saving the first point of this"
                                 " path as a point as the featureType is also %s.", featureType)
                     stationPoint = Point(path[0][0], path[0][1])
                     path = None
 
         # Add additional Parameters for all appropriate Measurements
-        logger.info("Adding SigmaT and Spiciness to the Measurements...")
+        self.logger.info("Adding SigmaT and Spiciness to the Measurements...")
         self.addSigmaTandSpice(parameterCount, self.activity)
         if self.grdTerrain:
-            logger.info("Adding altitude to the Measurements...")
+            self.logger.info("Adding altitude to the Measurements...")
             try:
                 self.addAltitude(parameterCount, self.activity)
             except FileNotFound as e:
-                logger.warn(str(e))
+                self.logger.warn(str(e))
 
         # Update the Activity with information we now have following the load
         try:
@@ -1453,7 +1336,7 @@ class Base_Loader(STOQS_Loader):
         comment_vars.extend([self.stride, str(datetime.utcnow()).split('.')[0]])
         newComment = fmt_comment.format(*comment_vars)
 
-        logger.debug("Updating its comment with newComment = %s", newComment)
+        self.logger.debug("Updating its comment with newComment = %s", newComment)
 
         num_updated = Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
                         name=self.getActivityName(),
@@ -1462,7 +1345,7 @@ class Base_Loader(STOQS_Loader):
                         mappoint=stationPoint,
                         num_measuredparameters=mps_loaded,
                         loaded_date=datetime.utcnow())
-        logger.debug("%d activitie(s) updated with new attributes.", num_updated)
+        self.logger.debug("%d activitie(s) updated with new attributes.", num_updated)
 
         #
         # Add resources after loading data to capture additional metadata that may be added
@@ -1470,7 +1353,7 @@ class Base_Loader(STOQS_Loader):
         try:
             self.addResources() 
         except IntegrityError as e:
-            logger.error('Failed to properly addResources: %s', e)
+            self.logger.error('Failed to properly addResources: %s', e)
 
         # 
         # Update the stats and store simple line values
@@ -1487,7 +1370,7 @@ class Base_Loader(STOQS_Loader):
             self.insertSimpleDepthTimeSeriesByNominalDepth()
         elif featureType == TRAJECTORYPROFILE:
             self.insertSimpleDepthTimeSeriesByNominalDepth(trajectoryProfileDepths=self.timeDepthProfiles)
-        logger.info("Data load complete, %d records loaded.", mps_loaded)
+        self.logger.info("Data load complete, %d records loaded.", mps_loaded)
 
         return mps_loaded, path, parmCount
 
@@ -1531,12 +1414,12 @@ class Dorado_Loader(Trajectory_Loader):
         survey = self.url.split('/')[-1].split('.nc')[0].split('_decim')[0] # Works for both .nc and _decim.nc files
         yyyy = int(survey.split('_')[1])
         # Quick-look plots
-        logger.debug("Getting or Creating ResourceType quick_look...")
+        self.logger.debug("Getting or Creating ResourceType quick_look...")
         resourceType, _ = ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                         name='quick_look', description='Quick Look plot of data from this AUV survey')
         for ql in ['2column', 'biolume', 'hist_stats', 'lopc', 'nav_adjust', 'prof_stats']:
             url = '%s/%4d/images/%s_%s.png' % (baseUrl, yyyy, survey, ql)
-            logger.debug("Getting or Creating Resource with name = %s, url = %s", ql, url )
+            self.logger.debug("Getting or Creating Resource with name = %s, url = %s", ql, url )
             resource, _ = Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name=ql, uristring=url, resourcetype=resourceType)
             ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
@@ -1567,9 +1450,9 @@ class Dorado_Loader(Trajectory_Loader):
                 url = '%s/%4d/mat/%s_gridded.mat' % (baseUrl, yyyy, survey)
                 rt = matResourceType
             else:
-                logger.warn('No handler for res = %s', res)
+                self.logger.warn('No handler for res = %s', res)
 
-            logger.debug("Getting or Creating Resource with name = %s, url = %s", res, url )
+            self.logger.debug("Getting or Creating Resource with name = %s, url = %s", res, url )
             resource, _ = Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name=res, uristring=url, resourcetype=rt)
             ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
@@ -1605,11 +1488,11 @@ class Lrauv_Loader(Trajectory_Loader):
             outurl = re.sub('\.nc$','.png', self.url)
 
             # Contour plots
-            logger.debug("Getting or Creating ResourceType quick_look...")
+            self.logger.debug("Getting or Creating ResourceType quick_look...")
             resourceType, _ = ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                             name = 'quick_look', description='Quick Look plot of data from this AUV survey')
 
-            logger.debug("Getting or Creating Resource with name = log, url = %s", outurl)
+            self.logger.debug("Getting or Creating Resource with name = log, url = %s", outurl)
             resource, _ = Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name='log', uristring=outurl, resourcetype=resourceType)
             ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
@@ -1628,7 +1511,7 @@ class Lrauv_Loader(Trajectory_Loader):
 
             outurl = self.contourUrl + self.platformName  + '_log_' + startDateTimeUTC.strftime(
                     '%Y%m%dT%H%M%S') + '_' + endDateTimeUTC.strftime('%Y%m%dT%H%M%S') + '.png'
-            logger.debug("Getting or Creating Resource with name = 24hr, url = %s", outurl)
+            self.logger.debug("Getting or Creating Resource with name = 24hr, url = %s", outurl)
             resource, _ = Resource.objects.db_manager(self.dbAlias).get_or_create(
                     name='24hr', uristring=outurl, resourcetype=resourceType)
             ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
@@ -1705,11 +1588,11 @@ class BED_Trajectory_Loader(Trajectory_Loader):
         '''
         In addition to the NC_GLOBAL attributes that are added in the base class also add the frame grab URL
         '''
-        logger.debug("Getting or Creating ResourceType framegrab...")
+        self.logger.debug("Getting or Creating ResourceType framegrab...")
         resourceType, _ = ResourceType.objects.using(self.dbAlias).get_or_create(
                         name='quick_look', description='Video framegrab of BED located on sea floor')
 
-        logger.debug("Getting or Creating Resource with framegrab = self.framegrab")
+        self.logger.debug("Getting or Creating Resource with framegrab = self.framegrab")
         resource, _ = Resource.objects.using(self.dbAlias).get_or_create(
                     name='framegrab', uristring=self.framegrab, resourcetype=resourceType)
         ActivityResource.objects.using(self.dbAlias).get_or_create(
@@ -1730,7 +1613,6 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
     Parameter loaded; this gives instruction to the STOQS UI to also plot timeSries data
     in the Parameter tab.
     '''
-    logger.debug("Instantiating Trajectory_Loader for url = %s", url)
     loader = Trajectory_Loader(
             url = url,
             campaignName = cName,
@@ -1744,7 +1626,6 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
             stride = stride,
             grdTerrain = grdTerrain)
 
-    logger.debug("Setting include_names to %s", parmList)
     loader.include_names = parmList
 
     # Fix up legacy data files
@@ -1759,7 +1640,7 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
         loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
 
     loader.process_data()
-    logger.debug("Loaded Activity with name = %s", aName)
+    loader.logger.debug("Loaded Activity with name = %s", aName)
 
 def runBEDTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName,
                            parmList, dbAlias, stride, plotTimeSeriesDepth=None,
@@ -1772,7 +1653,6 @@ def runBEDTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, a
     Parameter loaded; this gives instruction to the STOQS UI to also plot timeSries data
     in the Parameter tab.
     '''
-    logger.debug("Instantiating BED_Trajectory_Loader for url = %s", url)
     loader = BED_Trajectory_Loader(
             url = url,
             campaignName = cName,
@@ -1787,16 +1667,14 @@ def runBEDTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, a
             grdTerrain = grdTerrain,
             framegrab = framegrab)
 
-    logger.debug("Setting include_names to %s", parmList)
     loader.include_names = parmList
-    logger.debug("loader.ignored_names = %s", loader.ignored_names)
 
     if plotTimeSeriesDepth:
         # Used first for BEDS where we want both trajectory and timeSeries plots - assumes starting depth of BED
         loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
 
     loader.process_data()
-    logger.debug("Loaded Activity with name = %s", aName)
+    loader.logger.debug("Loaded Activity with name = %s", aName)
 
 def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
                     dbAlias, stride, grdTerrain=None, plotTimeSeriesDepth=None):
@@ -1805,7 +1683,6 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
-    logger.debug("Instantiating Dorado_Loader for url = %s", url)
     loader = Dorado_Loader(
             url = url,
             campaignName = cName,
@@ -1820,7 +1697,6 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
             grdTerrain = grdTerrain)
 
     if parmList:
-        logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
 
     # Auxillary coordinates are the same for all include_names
@@ -1835,9 +1711,9 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     try:
         loader.process_data()
     except VariableMissingCoordinatesAttribute as e:
-        logger.exception(str(e))
+        loader.logger.exception(str(e))
     else:
-        logger.debug("Loaded Activity with name = %s", aName)
+        loader.logger.debug("Loaded Activity with name = %s", aName)
 
     if 'sepCountList' in loader.include_names or 'mepCountList' in loader.include_names:
         # Construct LOPC data url that looks like:
@@ -1855,7 +1731,7 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
 
         lopc_aName = '{} (stride={})'.format(lopc_url, stride)
 
-        logger.debug("Instantiating Dorado_Loader for url = %s", lopc_url)
+        loader.logger.debug("Instantiating Dorado_Loader for url = %s", lopc_url)
         try:
             lopc_loader = Dorado_Loader(url = lopc_url, campaignName = cName,
                                         campaignDescription = cDesc, dbAlias = dbAlias,
@@ -1864,7 +1740,7 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
                                         platformTypeName = pTypeName, stride = stride,
                                         grdTerrain = grdTerrain)
         except Exception:
-            logger.warn('No LOPC data to load at %s', lopc_url)
+            loader.logger.warn('No LOPC data to load at %s', lopc_url)
             return
 
         lopc_loader.include_names = ['sepCountList', 'mepCountList']
@@ -1888,13 +1764,13 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
             lopc_loader.process_data(generator=lopc_loader._genTrajectory, 
                     featureType=TRAJECTORY)
         except VariableMissingCoordinatesAttribute as e:
-            logger.exception(str(e))
+            loader.logger.exception(str(e))
         except NoValidData as e:
-            logger.warn(str(e))
+            loader.logger.warn(str(e))
         except KeyError as e:
-            logger.warn(str(e))
+            loader.logger.warn(str(e))
         else:
-            logger.debug("Loaded Activity with name = %s", lopc_loader.activityName)
+            loader.logger.debug("Loaded Activity with name = %s", lopc_loader.activityName)
 
 
 def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
@@ -1906,7 +1782,6 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
-    logger.debug("Instantiating Lrauv_Loader for url = %s", url)
     appendFlag = False
     if isinstance(command_line_args, Namespace):
         if command_line_args.append:
@@ -1938,7 +1813,7 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
             if p.find('.') == -1:
                 loader.include_names.append(p)
             else:
-                logger.warn('Parameter %s not included. CANNOT HAVE PARAMETER NAMES WITH PERIODS. Period.', p)
+                loader.logger.warn('Parameter %s not included. CANNOT HAVE PARAMETER NAMES WITH PERIODS. Period.', p)
 
     # Auxiliary coordinates are generally the same for all include_names
     if auxCoords is None:
@@ -1957,10 +1832,10 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
     try:
         loader.process_data()
     except NoValidData as e:
-        logger.warn(str(e))
+        loader.logger.warn(str(e))
         raise
     else:    
-        logger.debug("Loaded Activity with name = %s", aName)
+        loader.logger.debug("Loaded Activity with name = %s", aName)
 
 
 def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
@@ -1971,7 +1846,6 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
-    logger.debug("Instantiating Glider_Loader for url = %s", url)
     appendFlag = False
     if isinstance(command_line_args, Namespace):
         if command_line_args.append:
@@ -1995,7 +1869,7 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
             appendFlag = appendFlag)
 
     if parmList:
-        logger.debug("Setting include_names to %s", parmList)
+        loader.logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
 
     # Auxillary coordinates are the same for all include_names
@@ -2047,9 +1921,9 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     try:
         loader.process_data()
     except VariableMissingCoordinatesAttribute as e:
-        logger.exception(str(e))
+        loader.logger.exception(str(e))
     else:    
-        logger.debug("Loaded Activity with name = %s", aName)
+        loader.logger.debug("Loaded Activity with name = %s", aName)
 
 
 def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
@@ -2057,7 +1931,6 @@ def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
     Run the DAPloader for Generic CF Metadata timeSeries featureType data. 
     Following the load important updates are made to the database.
     '''
-    logger.debug("Instantiating TimeSeries_Loader for url = %s", url)
     loader = TimeSeries_Loader(
             url = url,
             campaignName = cName,
@@ -2073,11 +1946,11 @@ def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
             endDatetime = endDatetime)
 
     if parmList:
-        logger.debug("Setting include_names to %s", parmList)
+        loader.logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
 
     loader.process_data()
-    logger.debug("Loaded Activity with name = %s", aName)
+    loader.logger.debug("Loaded Activity with name = %s", aName)
 
 
 def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
@@ -2088,7 +1961,6 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
-    logger.debug("Instantiating Mooring_Loader for url = %s", url)
     appendFlag = False
     if isinstance(command_line_args, Namespace):
         if command_line_args.append:
@@ -2112,7 +1984,7 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
             backfill_timedelta = backfill_timedelta)
 
     if parmList:
-        logger.debug("Setting include_names to %s", parmList)
+        loader.logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
 
     loader.auxCoords = {} 
@@ -2127,7 +1999,7 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
             elif v in ['SW_FLUX_HR', 'AIR_TEMPERATURE_HR', 'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR']:
                 loader.auxCoords[v] = {'time': 'hr_time_met', 'latitude': 'Latitude', 'longitude': 'Longitude', 'depth': 'HR_DEPTH_met'}
             else:
-                logger.warn('Do not have an auxCoords assignment for variable %s in url %s', v, url)
+                loader.logger.warn('Do not have an auxCoords assignment for variable %s in url %s', v, url)
     elif url.find('_hs2_') != -1:
         # Special for fluorometer on M1 - the HS2
         for v in loader.include_names:
@@ -2155,9 +2027,9 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
 
     try:
         loader.process_data()
-        logger.debug("Loaded Activity with name = %s", aName)
+        loader.logger.debug("Loaded Activity with name = %s", aName)
     except NoValidData as e:
-        logger.warning(str(e))
+        loader.logger.warning(str(e))
 
 
 if __name__ == '__main__':
