@@ -699,6 +699,82 @@ class Base_Loader(STOQS_Loader):
 
         return load_groups, coor_groups
 
+    def _load_coords_from_dsg_ds(self, tindx, ac, pnames):
+        '''Pull coordinates from Discrete Sampling Geometry NetCDF dataset,
+        (with accomodations made so that it works as well for EPIC conventions)
+        and bulk create in the database.
+        '''
+        times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
+        time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
+        if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
+            timeUnits = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
+        mtimes = (from_udunits(mt, time_units) for mt in times)
+
+        try:
+            if isinstance(self.ds[ac[DEPTH]], pydap.model.GridType):
+                depths = self.ds[ac[DEPTH]][ac[DEPTH]][tindx[0]:tindx[-1]:self.stride]
+            else:
+                depths = self.ds[ac[DEPTH]][tindx[0]:tindx[-1]:self.stride]
+        except KeyError:
+            # Allow for variables with no depth coordinate to be loaded at the depth specified in auxCoords
+            if ac[DEPTH] in self.ds:
+                if isinstance(ac[DEPTH], float):
+                    depths =  ac[DEPTH] * np.ones(len(times))
+            else:
+                self.logger.warn(f'Variable {pname} does not have a DEPTH coordinate: {ac}')
+
+        if isinstance(self.ds[ac[LATITUDE]], pydap.model.GridType):
+            latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
+        else:
+            latitudes = self.ds[ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
+
+        if isinstance(self.ds[ac[LONGITUDE]], pydap.model.GridType):
+            longitudes = self.ds[ac[LONGITUDE]][ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
+        else:
+            longitudes = self.ds[ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
+
+        mtimes, depths, latitudes, longitudes = zip(*self.good_coords(
+                                            pnames, mtimes, depths, latitudes, longitudes))
+
+        points = (f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes))
+
+        ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
+        meass = (Measurement(depth=repr(de), geom=po) for de, po in zip(depths, points))
+
+        # Reassign meass with Measurement objects that have their id set
+        meass = self._bulk_load_coordinates(ips, meass)
+
+        return meass
+
+    def _load_coords_from_instr_ds(self, tindx, ac):
+        '''Pull coordinates from Instrument (time-coordinate-only) NetCDF dataset (e.g. LOPC)
+        and bulk create in the database.
+        '''
+        times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
+        time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
+        if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
+            timeUnits = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
+        mtimes = (from_udunits(mt, time_units) for mt in times)
+
+        max_secs_diff = 2
+        ips = []
+        meass = []
+        for mt in mtimes:
+            try:
+                ip, secs_diff = get_closest_instantpoint(self.associatedActivityName, mt, self.dbAlias)
+            except ClosestTimeNotFoundException as e:
+                self.logger.error('Could not find corresponding measurment for LOPC data measured at %s', tv)
+            else:
+                if secs_diff > max_secs_diff:
+                    self.logger.warn('LOPC data at %s more than %s secs different from existing measurement: %s', 
+                            mt, max_secs_diff, secs_diff)
+                ips.append(ip)
+                meass.append(Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
+
+        meass = self._bulk_load_coordinates(ips, meass)
+
+        return meass
+
     def load_trajectory(self):
         '''Stream trajectory data directly from pydap proxies to generators fed to bulk_create() calls
         '''
@@ -707,47 +783,15 @@ class Base_Loader(STOQS_Loader):
             ac = coor_groups[k]
             total_loaded = 0   
             for i, pname in enumerate(pnames):
+                tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
                 if i == 0:
                     # First time through, bulk load the coordinates: instant_points and measurements
-                    tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
-                    times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
-                    time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
-                    if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
-                        timeUnits = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
-                    mtimes = (from_udunits(mt, time_units) for mt in times)
-
-                    try:
-                        if isinstance(self.ds[ac[DEPTH]], pydap.model.GridType):
-                            depths = self.ds[ac[DEPTH]][ac[DEPTH]][tindx[0]:tindx[-1]:self.stride]
-                        else:
-                            depths = self.ds[ac[DEPTH]][tindx[0]:tindx[-1]:self.stride]
-                    except KeyError:
-                        # Allow for variables with no depth coordinate to be loaded at the depth specified in auxCoords
-                        if isinstance(ac[DEPTH], float):
-                            depths =  ac[DEPTH] * np.ones(len(times))
-
-                    if isinstance(self.ds[ac[LATITUDE]], pydap.model.GridType):
-                        latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
+                    if ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
+                        # Expect CF-dsg compliant or EPIC dataset
+                        meass = self._load_coords_from_dsg_ds(tindx, ac, pnames)
                     else:
-                        latitudes = self.ds[ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
-
-                    if isinstance(self.ds[ac[LONGITUDE]], pydap.model.GridType):
-                        longitudes = self.ds[ac[LONGITUDE]][ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
-                    else:
-                        longitudes = self.ds[ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
-
-                    mtimes, depths, latitudes, longitudes = zip(*self.good_coords(
-                                                        pnames, mtimes, depths, latitudes, longitudes))
-
-                    points = (f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes))
-
-                    ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
-                    meass = (Measurement(depth=repr(de), geom=po) for de, po in zip(depths, points))
-
-                    # Reassign meass with Measurement objects that have their id set
-                    meass = self._bulk_load_coordinates(ips, meass)
-
-                # End if i == 0 
+                        # Expect instrument (time-coordinate-only) dataset
+                        meass = self._load_coords_from_instr_ds(tindx, ac)
 
                 if isinstance(self.ds[pname], pydap.model.GridType):
                     self.logger.debug("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tindx[0], tindx[-1], self.stride)
