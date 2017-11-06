@@ -32,7 +32,7 @@ import logging
 from django.conf import settings
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from stoqs.models import Activity, Parameter, Resource
+from stoqs.models import Activity, Parameter, Resource, MeasuredParameter
 
 logger = logging.getLogger(__name__)
 
@@ -565,4 +565,15 @@ class BugsFoundTestCase(TestCase):
                            '</Point>\n</Placemark> \n<Placemark>\n<styleUrl>#ffd10000') 
         self.assertTrue(required_string in response.content.decode("utf-8"), 
                         'required_string not found in response.content')
+
+    def test_lopc_data_load(self):
+        # Make sure 'sepCountList', 'mepCountList' are loaded into dataarray
+
+        # Expected number of records
+        parm_counts = dict(sepCountList=6090, mepCountList=6090)
+
+        for parm in list(parm_counts.keys()):
+            mp_count = MeasuredParameter.objects.filter(parameter__name=parm).count()
+            logger.debug(f'{parm:10s}({parm_counts[parm]:2d}) {mp_count:-6d}')
+            self.assertNotEquals(mp_count, 0, f'Expected {parm_counts[parm]} values for {parm}')
 
