@@ -25,22 +25,26 @@ cd stoqs
 
 # If there is a second argument and it is 'loaded' don't execute this block, otherwise execute
 if [ ${2:-loaded} == 'loaded' ]
+then
 
-    echo "Loading additional data (EPIC, etc.) to test loading software..."
-    export DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:5432/stoqs"
-    coverage run -a --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/load_data.py
-    if [ $? != 0 ]
+    LOADING_TESTS=false
+    if [ "$LOADING_TESTS" = true ]
     then
-        echo "Cannot create default database stoqs; refer to above message."
-        exit -1
+        echo "Loading additional data (EPIC, etc.) to test loading software..."
+        export DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:5432/stoqs"
+        coverage run -a --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/load_data.py
+        if [ $? != 0 ]
+        then
+            echo "Cannot create default database stoqs; refer to above message."
+            exit -1
+        fi
+        ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_load_test.json
+        echo "Loading tests..."
+        export DATABASE_URL=postgis://127.0.0.1:5432/stoqs
+        coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
+        loading_tests_status=$?
     fi
-    ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_load_test.json
-    echo "Loading tests..."
-    export DATABASE_URL=postgis://127.0.0.1:5432/stoqs
-    coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
-    loading_tests_status=$?
 
-    then
     psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
     psql -c "DROP DATABASE IF EXISTS stoqs;" -U postgres
     psql -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
@@ -53,7 +57,7 @@ if [ ${2:-loaded} == 'loaded' ]
     fi
     psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
 
-    # DATABASE_URL environment variable must be set outside of this script
+    export DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:5432/stoqs"
     ./manage.py makemigrations stoqs --settings=config.settings.ci --noinput
     ./manage.py migrate --settings=config.settings.ci --noinput --database=default
     if [ $? != 0 ]
