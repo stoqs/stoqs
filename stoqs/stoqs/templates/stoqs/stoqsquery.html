@@ -1358,6 +1358,17 @@
         if ( ! $('body').data()['init']) {
             $('input[name=terrain_view][value="' + $('body').data()['terrain_view'] + '"]').prop('checked', true).trigger("click");
         }
+        if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
+            // Set color of animated 3D model
+            $.each($('body').data()['platformAnimation'], function(index, plat) {
+                // Axes & all Material IDs starting with 'MAT' in inlined model X3D + ENU axes
+                x3d_color = hexToX3D($('body').data()['platformColors'][plat]);
+                $('#' + plat + '_AAROT_model__Grey > Material').attr('diffuseColor', x3d_color);
+                $("[id*='" + plat + "_AAROT_model__MAT']").attr('diffuseColor', x3d_color);
+                $('#' + plat + '_axesENU__Grey > Material').attr('diffuseColor', x3d_color);
+                $('#' + plat + '_axesENU__Black > Material').attr('diffuseColor', x3d_color);
+            });
+        }
     }
 
     // Called with an element that was selectable, should make that element non-selectable.
@@ -1674,46 +1685,13 @@
                     }
                 }
             }
-            else if (value == 'stoqstoolbox') {
-                // Required parameters for stoqs_down as of stoqstoolbox release noted in the Matlab comment below
-                var req_params = ['campaign', 'start_time', 'end_time', 'min_depth', 'max_depth', 'platforms', group_name + 'parametersgroup', 'parameterstandardname'];
+            else if (value == 'matlab') {
                 var hasParametervalues = false;
-                var st_text_comm = "% Copy and paste into a Matlab session where stoqstoolbox build 2013-01-08 or\n";
-                st_text_comm = st_text_comm + "% later has been installed from https://code.google.com/p/stoqs/downloads\n\n";
-                st_text = st_text_comm;
-                st_text = st_text + "campaign = '{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}';\n";
-                $.each(req_params, function(k, v) {
-                    if (typeof params[v] != "undefined") {
-                        if (v.match(/depth$/)) {
-                            // Numeric value, don't quote
-                            st_text = st_text + v + " = " + params[v] + ";\n";
-                        }
-                        else {
-                            st_text = st_text + v + " = '" + params[v] + "';\n";
-                        }
-                    }
-                    else if (v != 'campaign') {
-                        st_text = st_text + v + " = '';\n";
-                    }
-                });
-
-                if (parametervalues) {
-                    for (var parameter in parametervalues) {
-                        var min = parametervalues[parameter]['xmin'];
-                        var max = parametervalues[parameter]['xmax'];
-                        if (typeof min != 'undefined' && typeof max != 'undefined') {
-                            st_text = st_text + parameter + "_MIN = " + min.toPrecision(4) + ";\n";
-                            st_text = st_text + parameter + "_MAX = " + max.toPrecision(4) + ";\n";
-                            hasParametervalues = true;
-                        }
-                    };
-                }
-                if (hasParametervalues) {
-                    $('#'+group+'-'+value+'-field').text(st_text_comm + "data = stoqs_down('" + base_url + "json" + mp_param + "');\n");
-                }
-                else {
-                    $('#'+group+'-'+value+'-field').text(st_text + "\ndata = stoqs_down(" + req_params.join() + ");\n");
-                }
+                var st_text = "Install this m-file on your system (instructions are in the comments):\n"
+                st_text += "https://raw.githubusercontent.com/stoqs/stoqs/master/stoqs/contrib/analysis/dbconn_jdbc_stoqs.m\n\n"
+                st_text += "Then use the 'SQL' in the adjacent tab to load data into Matlab."
+                $('#'+group+'-'+value+'-field').text(st_text);
+                $('#'+group+'-'+value+'-link').attr('href', 'https://raw.githubusercontent.com/stoqs/stoqs/master/stoqs/contrib/analysis/dbconn_jdbc_stoqs.m');
             }
             // Queries made using measuredparameter or sampledparamter REST requests - use mp_parm for Django queries 
             else if (value == 'json') {
@@ -2655,12 +2633,14 @@
 
     var formats=[{% for format in formats %}'{{format.0}}'{% if not forloop.last %},{% endif %}{%endfor%}]
     $.each(formats, function (index, value) {
-        $('#mp-' + value + '-field').click( function() { 
-            SelectText('mp-' + value + '-field') 
-        });
-        $('#sp-' + value + '-field').click( function() { 
-            SelectText('sp-' + value + '-field') 
-        });
+        if (value != 'matlab') {
+            $('#mp-' + value + '-field').click( function() { 
+                SelectText('mp-' + value + '-field') 
+            });
+            $('#sp-' + value + '-field').click( function() { 
+                SelectText('sp-' + value + '-field') 
+            });
+        }
     });
     
     
@@ -5413,6 +5393,13 @@ function enable_cardboard(){
                 });
             }
         }
+    }
+
+    function hexToX3D(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? 
+         (parseInt(result[1], 16) / 256).toString() + ' ' + (parseInt(result[2], 16) / 256).toString() + ' ' + (parseInt(result[3], 16) / 256).toString()
+         : null;
     }
 
 

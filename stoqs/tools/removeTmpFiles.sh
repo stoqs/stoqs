@@ -19,3 +19,6 @@ rm -vf /tmp/functional_tests_server.log
 
 # HTML templates
 rm -v /tmp/*.html
+
+# Loading tests fixture
+rm stoqs/stoqs/fixtures/stoqs_load_test.json

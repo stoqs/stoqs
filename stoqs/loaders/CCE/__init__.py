@@ -25,9 +25,9 @@ except AttributeError:
 
 import matplotlib as mpl
 mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
-import DAPloaders
 from loaders import LoadScript
-from DAPloaders import Mooring_Loader
+from DAPloaders import (Mooring_Loader, logger, runBEDTrajectoryLoader, runTimeSeriesLoader,
+                        OpendapError, InvalidSliceRequest)
 import matplotlib.pyplot as plt
 from matplotlib.colors import rgb2hex
 import numpy as np
@@ -75,7 +75,7 @@ class CCELoader(LoadScript):
         depths = []
         for file in self.bed_files:
             url = os.path.join(self.bed_base, file)
-            print('Getting start depth for {}'. format(url))
+            logger.info(f'{url}')
             ds = open_url(url)
             if ds.attributes['NC_GLOBAL']['featureType'].lower() == 'timeseries':
                 depths.append(ds['depth'][0][0])
@@ -100,18 +100,18 @@ class CCELoader(LoadScript):
                 if featureType.lower() == 'trajectory':
                     # To get timeSeries plotting for trajectories (in the Parameter tab of the UI) 
                     # assign a plotTimeSeriesDepth value of the starting depth in meters.
-                    DAPloaders.runBEDTrajectoryLoader(url, self.campaignName, self.campaignDescription,
-                                                      aName, pName, self.colors[pName.lower()], 'bed',
-                                                      'deployment', self.bed_parms, self.dbAlias, stride,
-                                                      plotTimeSeriesDepth=plotTimeSeriesDepth,
-                                                      grdTerrain=self.grdTerrain, framegrab=fg)
+                    runBEDTrajectoryLoader(url, self.campaignName, self.campaignDescription,
+                                           aName, pName, self.colors[pName.lower()], 'bed',
+                                           'deployment', self.bed_parms, self.dbAlias, stride,
+                                           plotTimeSeriesDepth=plotTimeSeriesDepth,
+                                           grdTerrain=self.grdTerrain, framegrab=fg)
                 elif featureType.lower() == 'timeseries':
-                    DAPloaders.runTimeSeriesLoader(url, self.campaignName, self.campaignDescription,
-                                                   aName, pName, self.colors[pName.lower()], 'bed', 
-                                                   'deployment', self.bed_parms, self.dbAlias, stride)
+                    runTimeSeriesLoader(url, self.campaignName, self.campaignDescription,
+                                        aName, pName, self.colors[pName.lower()], 'bed', 
+                                        'deployment', self.bed_parms, self.dbAlias, stride)
                 self.addPlatformResources('http://stoqs.mbari.org/x3d/beds/beds_housing_with_axes_src_scene.x3d',
                                           pName, scalefactor=10)
-            except (DAPloaders.OpendapError, DAPloaders.InvalidSliceRequest, webob.exc.HTTPError):
+            except (OpendapError, InvalidSliceRequest, webob.exc.HTTPError):
                 pass
 
     def loadCCEBIN(self, stride=None):
@@ -152,8 +152,13 @@ class CCELoader(LoadScript):
             loader.auxCoords = {}
             if 'adcp' in f.lower():
                 Mooring_Loader.getFeatureType = lambda self: 'timeseriesprofile'
-                for p in ['u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']:
+                # The timeseries variables 'Hdg_1215', 'Ptch_1216', 'Roll_1217' should have a coordinate of
+                # a singleton depth variable, but EPIC files has this as a sensor_depth variable attribute.  
+                # Need special handling in the loader for these data.
+                for p in ['u_1205', 'v_1206', 'w_1204', 'AGC_1202']:
                     loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
+                for p in ['Hdg_1215', 'Ptch_1216', 'Roll_1217']:
+                    loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon'}
             else:
                 Mooring_Loader.getFeatureType = lambda self: 'timeseries'
 
@@ -208,8 +213,16 @@ def make_load_ccems_method(name):
             loader.include_names = parms
             loader.auxCoords = {}
             for p in parms:
-                loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat',
-                                       'longitude': 'lon', 'depth': 'depth'}
+                # The timeseries variables 'Hdg_1215', 'Ptch_1216', 'Roll_1217' should have a coordinate of
+                # a singleton depth variable, but EPIC files has this as a sensor_depth variable attribute.  
+                # Need special handling in the loader for these data.
+                if p in ['u_1205', 'v_1206', 'w_1204', 'AGC_1202']:
+                    loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
+                if p in ['Hdg_1215', 'Ptch_1216', 'Roll_1217']:
+                    loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon'}
+                else:
+                    loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat',
+                                           'longitude': 'lon', 'depth': 'depth'}
             loader.process_data()
 
     return _generic_load_ccems

@@ -406,8 +406,10 @@ local   all             all                                     peer
         print(('\n'.join(stoqs_campaigns)))
         print(('export STOQS_CAMPAIGNS="' + ','.join(stoqs_campaigns) + '"'))
 
-    def load(self):
-        campaigns = importlib.import_module(self.args.campaigns)
+    def load(self, campaigns=None, create_only=False):
+        if not campaigns:
+            campaigns = importlib.import_module(self.args.campaigns)
+
         for db,load_command in list(campaigns.campaigns.items()):
             if self.args.db:
                 if db not in self.args.db:
@@ -420,6 +422,7 @@ local   all             all                                     peer
                 load_command += ' -t'
                 db += '_t'
 
+            if db not in settings.DATABASES:
                 # Django docs say not to do this, but I can't seem to force a settings reload.
                 # Note that databases in campaigns.py are put in settings by settings.local.
                 settings.DATABASES[db] = settings.DATABASES.get('default').copy()
@@ -432,7 +435,6 @@ local   all             all                                     peer
                 self.logger.warn('Use the --clobber option, or fix the problem indicated.')
                 raise Exception('Maybe use the --clobber option to recreate the database...')
 
-
             if self.args.drop_indexes:
                 self.logger.info('Dropping indexes...')
                 self._drop_indexes()
@@ -440,6 +442,9 @@ local   all             all                                     peer
                 call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
 
             call_command('migrate', settings='config.settings.local', noinput=True, database=db)
+
+            if create_only:
+                return
 
             # === Execute the load
             script = os.path.join(app_dir, 'loaders', load_command)

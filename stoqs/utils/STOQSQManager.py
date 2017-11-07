@@ -476,7 +476,7 @@ class STOQSQManager(object):
                             qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p025'), Max('p975'))
                             plot_results = [pid, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
                     except TypeError:
-                        logger.warn('Failed to get plot_results for qs = %s', qs)
+                        logger.debug('Failed to get plot_results for qs = %s', qs)
             except ValueError as e:
                 if pid in ('longitude', 'latitude'):
                     # Get limits from Activity maptrack for which we have our getExtent() method
@@ -510,7 +510,8 @@ class STOQSQManager(object):
                         qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Avg('p025'), Avg('p975'))
                         plot_results = [parameterID, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError as e:
-                    logger.warn(str(e))
+                    # Likely 'Cannot plot Parameter' that is not in selection, ignore for cleaner functional tests
+                    logger.debug(f'parameterID = {parameterID}: {str(e)}')
 
         if 'measuredparametersgroup' in self.kwargs:
             if len(self.kwargs['measuredparametersgroup']) == 1:
@@ -570,7 +571,7 @@ class STOQSQManager(object):
                     plot_results = cmincmax
             else:
                 # Likely a selection from the UI that doesn't include the plot parameter
-                logger.warn('plot_results is empty')
+                logger.debug('plot_results is empty')
 
         return {'plot': plot_results, 'dataaccess': da_results, 'cmincmax': cmincmax}
 
@@ -2048,6 +2049,7 @@ class STOQSQManager(object):
 
         # Take the union of all geometry types found in Activities and Samples
         logger.debug("Collected %d geometry extents from Activities and Samples", len(extentList))
+        geom_union = None
         if extentList:
             logger.debug('extentList = %s', extentList)
 
@@ -2068,9 +2070,9 @@ class STOQSQManager(object):
                         geom_union = geom_union.union(fromstr('LINESTRING (%s %s, %s %s)' % extent, srid=srid))
 
             # Aggressive try/excepts done here for better reporting on the production servers
-            try:
+            if geom_union:
                 logger.debug('Final geom_union = %s', geom_union)
-            except UnboundLocalError:
+            else:
                 logger.exception('geom_union could not be set from extentList = %s', extentList)
                 return ([], None, None)
 

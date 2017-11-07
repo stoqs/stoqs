@@ -64,6 +64,7 @@ cl.dorado_files = [
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
+                    'roll', 'pitch', 'yaw',
                     'sepCountList', 'mepCountList' ]
 
 # Rachel Carson Underway CTD

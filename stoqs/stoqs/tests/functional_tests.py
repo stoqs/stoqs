@@ -76,6 +76,19 @@ class BaseTestCase(StaticLiveServerTestCase):
         else:
             return ''
 
+    def _temporal_loading_panel_test(self, delay=2):
+        '''Wait for ajax-loader GIF image to go away'''
+        wait = WebDriverWait(self.browser, delay)
+        try:
+            wait.until(lambda display: self.browser
+                        .find_element_by_id('metadata-loading')
+                        .get_attribute('innerHTML') == '')
+        except TimeoutException as e:
+            return ('Time-depth images did not load after waiting ' +
+                    str(delay) + ' seconds')
+        else:
+            return ''
+
     def _wait_until_visible_then_click(self, element, scroll_up=True, delay=5):
         # See: http://stackoverflow.com/questions/23857145/selenium-python-element-not-clickable
         element = WebDriverWait(self.browser, delay, poll_frequency=.2).until(
@@ -101,22 +114,16 @@ class BaseTestCase(StaticLiveServerTestCase):
         except TimeoutException:
             print(f"TimeoutException: Waited {delay} seconds for <img src='{src_string}'... to appear")
 
-    def _wait_until_text_is_visible(self, text_string, delay=2):
+    def _wait_until_text_is_visible(self, element_id, expected_text, delay=2, contains=True):
         try:
-            element_present = EC.presence_of_element_located((By.XPATH, f"//div[contains(text(),'{text_string}')]"))
-            element = WebDriverWait(self.browser, delay).until(element_present)
-            return element
+            if contains:
+                WebDriverWait(self.browser, delay, poll_frequency=.2).until(
+                              wait_for_text_to_match((By.ID, element_id), expected_text))
+            else:
+                WebDriverWait(self.browser, delay, poll_frequency=.2).until(
+                              EC.text_to_be_present_in_element((By.ID, element_id), expected_text))
         except TimeoutException:
-            print(f"TimeoutException: Waited {delay} seconds for text '{text_string}'... to appear")
-
-    def _wait_until_text_is_visible(self, element_id, expected_text, contains=False):
-
-        if contains:
-            WebDriverWait(self.browser, 5, poll_frequency=.2).until(
-                          wait_for_text_to_match((By.ID, element_id), expected_text))
-        else:
-            WebDriverWait(self.browser, 5, poll_frequency=.2).until(
-                          EC.text_to_be_present_in_element((By.ID, element_id), expected_text))
+            print(f"TimeoutException: Waited {delay} seconds for text '{expected_text}'... to appear")
 
     def _test_share_view(self, func_name):
         # Generic for any func_name that creates a view to share
@@ -177,11 +184,11 @@ class BrowserTestCase(BaseTestCase):
         altitude_plot_button = self.browser.find_element(By.XPATH,
                 "//input[@name='parameters_plot' and @value='{}']".format(altitude_id))
         self._wait_until_visible_then_click(altitude_plot_button)
-        self._wait_until_src_is_visible('dorado_colorbar')
+        self._wait_until_src_is_visible('dorado_colorbar', delay=6)
         # - Colormap
         colorbar = self.browser.find_element_by_id('mp-colormap')
         self._wait_until_visible_then_click(colorbar)
-        colormap = self._wait_until_src_is_visible('deep.png')
+        colormap = self._wait_until_src_is_visible('deep.png', delay=4)
         self._wait_until_visible_then_click(colormap)
         # - 3D measuement data
         showgeox3dmeasurement = self.browser.find_element_by_id('showgeox3dmeasurement')
@@ -198,22 +205,24 @@ class BrowserTestCase(BaseTestCase):
     def test_m1_timeseries(self):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
         # Test Temporal->Parameter for timeseries plots
-        self._wait_until_id_is_visible('temporal-parameter-li')
+        self._wait_until_id_is_visible('temporal-parameter-li', delay=4)
         parameter_tab = self.browser.find_element_by_id('temporal-parameter-li')
-        self._wait_until_visible_then_click(parameter_tab)
-        expected_text = 'bbp420'
-        self._wait_until_text_is_visible('stride-info', expected_text, contains=True)
+        self._temporal_loading_panel_test(delay=6)
+        self._wait_until_visible_then_click(parameter_tab, delay=4)
+        expected_text = 'every single point'
+        self._wait_until_text_is_visible('stride-info', expected_text, delay=6)
         self.assertIn(expected_text, self.browser.find_element_by_id('stride-info').text)
 
     def test_share_view_trajectory(self):
         self._test_share_view('test_dorado_trajectory')
-        self.browser.implicitly_wait(10)
+        self._temporal_loading_panel_test(delay=6)
+        self._wait_until_id_is_visible('dorado_LOCATION', delay=8)
         self.assertEquals('geolocation', self.browser.find_element_by_id('dorado_LOCATION').tag_name)
 
     def test_share_view_timeseries(self):
         self._test_share_view('test_m1_timeseries')
-        expected_text = 'bbp420'
-        self._wait_until_text_is_visible('stride-info', expected_text, contains=True)
+        expected_text = 'every single point'
+        self._wait_until_text_is_visible('stride-info', expected_text, delay=10)
         self.assertIn(expected_text, self.browser.find_element_by_id('stride-info').text)
 
     def test_contour_plots(self):
@@ -232,11 +241,13 @@ class BrowserTestCase(BaseTestCase):
         parameter_plot_radio_button = self.browser.find_element(By.XPATH,
             "//input[@name='parameters_plot' and @value='{}']".format(northward_sea_water_velocity_HR_id))
         parameter_plot_radio_button.click()
-        self._wait_until_src_is_visible('M1_Mooring_colorbar')
+        self._temporal_loading_panel_test(delay=6)
+        self._wait_until_src_is_visible('M1_Mooring_colorbar', delay=6)
         contour_button = self.browser.find_element(By.XPATH, "//input[@name='showdataas' and @value='contour']")
         self._wait_until_visible_then_click(contour_button)
 
         expected_text = 'Color: northward_sea_water_velocity_HR from M1_Mooring'
+        self._temporal_loading_panel_test(delay=6)
         self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
         self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo').text)
 
@@ -255,17 +266,20 @@ class BrowserTestCase(BaseTestCase):
         parameter_contour_plot_radio_button.click()
 
         expected_text = 'Lines: SEA_WATER_SALINITY_HR from M1_Mooring'
-        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text)
+        self._temporal_loading_panel_test(delay=6)
+        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text, delay=6)
         self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
 
         # Clear the Color plot leaving just the Lines plot
         clear_color_plot_radio_button = self.browser.find_element_by_id('mp_parameters_plot_clear')
         clear_color_plot_radio_button.click()
+        self.browser.execute_script("window.scrollTo(0, 0)")
 
         expected_text_color = ''
         expected_text_lines = 'Lines: SEA_WATER_SALINITY_HR from M1_Mooring'
-        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text_color)
-        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text_lines)
+        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text_color, delay=6)
+        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text_lines, delay=6)
+        self._temporal_loading_panel_test(delay=6)
         self.assertEquals(expected_text_color, self.browser.find_element_by_id('temporalparameterplotinfo').text)
         self.assertEquals(expected_text_lines, self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
 
@@ -281,14 +295,16 @@ class BugsFoundTestCase(BaseTestCase):
     multi_db = False
 
     def test_select_wrong_platform_after_plot(self):
-        self.browser.get('http://localhost:8000/default/query/')
+        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
 
         # Open Measured Parameters section and plot Parameter bb470 from M1
         mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
         self._wait_until_visible_then_click(mp_section)
-        self.browser.find_element(By.XPATH,
+        bb470_button = self.browser.find_element(By.XPATH,
                 "//input[@name='parameters_plot' and @value='{}']".format(
-                Parameter.objects.get(name='bb470').id)).click()
+                Parameter.objects.get(name='bb470').id))
+        bb470_button.click()
+        self._temporal_loading_panel_test(delay=6)
 
         # Select 'dorado' Platform - bb470 will not be in the selection
         platforms_anchor = self.browser.find_element_by_id('platforms-anchor')
@@ -298,8 +314,10 @@ class BugsFoundTestCase(BaseTestCase):
         self._wait_until_visible_then_click(dorado_button)
 
         expected_text = 'Cannot plot Parameter'
+        self._temporal_loading_panel_test(delay=6)
         self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
         self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo').text)
 
         # Uncomment to visually inspect the plot for correctness
+        ##self.browser.execute_script("window.scrollTo(0, 0)")
         ##import pdb; pdb.set_trace()

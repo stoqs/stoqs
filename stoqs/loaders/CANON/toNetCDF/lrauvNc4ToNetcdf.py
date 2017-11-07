@@ -62,6 +62,12 @@ class InterpolatorWriter(BaseWriter):
     all_coord = {}
     all_attrib = {}
 
+    def reset(self):
+        self.df = []
+        self.all_sub_ts = {}
+        self.all_coord = {}
+        self.all_attrib = {}
+
     def write_netcdf(self, out_file, in_url):
 
         # Check parent directory and create if needed
@@ -273,6 +279,8 @@ class InterpolatorWriter(BaseWriter):
         for key in parm:
             try:
                 ts = self.createSeriesPydap(key, key + '_time')
+                if ts.size == 0:
+                    continue
                 self.all_attrib[key] = self.df[key].attributes
                 self.all_attrib[key + '_i'] = self.df[key].attributes
                 self.all_coord[key] = {'time':'time','depth':'depth','latitude':'latitude','longitude':'longitude'}
@@ -381,10 +389,7 @@ class InterpolatorWriter(BaseWriter):
     # End createCoord
 
     def processNc4FileDecimated(self, url, in_file, out_file, parms, group_parms, interp_key):
-        self.df = []
-        self.all_sub_ts = {}
-        self.all_coord = {}
-        self.all_attrib = {}
+        self.reset()
         parm_valid = []
         coord =  ['latitude','longitude','depth']
 
@@ -395,6 +400,10 @@ class InterpolatorWriter(BaseWriter):
         for key in parms:
           try:
             ts = self.createSeriesPydap(key, key + '_time')
+            if ts.size == 0:
+                self.logger.info('Variable ' + var + ' empty so skipping')
+                continue
+
             attr = {}
             for name in self.df[key].ncattrs(): 
                 attr[name]=getattr(self.df[key],name)
@@ -440,6 +449,7 @@ class InterpolatorWriter(BaseWriter):
 
                         # don't store or try to interpolate empty time series
                         if ts.size == 0:
+                            self.logger.info('Variable ' + var + ' empty so skipping')
                             continue
 
                         for name in subgroup.variables[var].ncattrs():
@@ -523,7 +533,7 @@ class InterpolatorWriter(BaseWriter):
         # End processSingleParm
 
     def processNc4File(self, in_file, out_file, parm, resampleFreq):
-
+        self.reset()
         all_ts = {}
         start_times = []
         end_times = []
@@ -568,6 +578,7 @@ class InterpolatorWriter(BaseWriter):
 
                         # don't store or try to interpolate empty time series
                         if ts.size == 0:
+                            self.logger.info('Variable ' + var + ' empty so skipping')
                             continue
 
                         attr = {}
@@ -621,7 +632,7 @@ class InterpolatorWriter(BaseWriter):
 
 
     def processResampleNc4File(self, in_file, out_file, parm, resampleFreq, rad_to_deg):
-
+        self.reset()
         coord_ts = {}
         start_times = []
         end_times = []
@@ -671,6 +682,7 @@ class InterpolatorWriter(BaseWriter):
 
                         # don't store or try to interpolate empty time series
                         if ts.size == 0:
+                            self.logger.info('Variable ' + var + ' empty so skipping')
                             continue
 
                         for name in subgroup.variables[var].ncattrs():
@@ -731,16 +743,14 @@ class InterpolatorWriter(BaseWriter):
 
         self.logger.info("%s", list(self.all_sub_ts.keys()))
 
-        # Write data to the file
         self.write_netcdf(out_file, in_file)
         self.logger.info('Wrote ' + out_file)
 
         # End processResampleNc4File
 
     def processResample(self, url, out_file, parm, interpFreq, resampleFreq):
+        self.reset()
         esec_list = []
-        self.df = []
-        self.all_sub_ts = {}
         self.parm =  ['latitude','longitude','depth'] + parm
         all_ts = {}
         start_times = []
@@ -829,6 +839,7 @@ if __name__ == '__main__':
     pw = InterpolatorWriter()
     pw.process_command_line()
     nc4_file='/home/vagrant/LRAUV/daphne/missionlogs/2015/20150930_20151008/20151006T201728/201510062017_201510062027.nc4'
+    nc4_file='/mbari/LRAUV/opah/missionlogs/2017/20170502_20170508/20170508T185643/201705081856_201705090002.nc4'
     outDir = '/tmp/'
     resample_freq='10S'
     rad_to_deg = True

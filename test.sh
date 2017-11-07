@@ -1,10 +1,13 @@
 #!/bin/bash
-# Do database operations to create default database and create fixture for testing.
-# Designed for re-running on development system - ignore errors in Vagrant and Travis-ci.
-# Pass the stoqsadm password as an argument on first execution in order to create the
+# Do database operations to create default database and create fixture(s) for testing.
+# Designed for re-running on development system.
+# Pass the stoqsadm password as an argument in order to create the
 # stoqsadm user; it must match what's in DATABASE_URL.  Must also set MAPSERVER_HOST.
 # Make sure none of these are set: STATIC_FILES, STATIC_URL, MEDIA_FILES, MEDIA_URL 
-# and that nothing is connected to the default stoqs database.
+# and that nothing is using to the default stoqs database.  Standard execution on
+# a development system is to execute like: './test.sh <DB_PASSWORD>'; optional
+# arguments like './test.sh CHANGME load noextraload' may be used, e.g. on travis-ci,
+# to skip some of the loading tests.
 
 if [ -z $1 ]
 then
@@ -23,8 +26,28 @@ fi
 # Assume starting in project home (stoqsgit) directory
 cd stoqs
 
-if [ ${2:-load} == 'load' ]
+# If there is a third argument and it is 'extraload' execute this block, use 3rd arg of 'noextraload' to not execute
+if [ ${3:-extraload} == 'extraload' ]
+then
+    echo "Loading additional data (EPIC, etc.) to test loading software..."
+    coverage run -a --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/load_data.py
+    if [ $? != 0 ]
     then
+        echo "Cannot create default database stoqs; refer to above message."
+        exit -1
+    fi
+    ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_load_test.json
+    echo "Loading tests..."
+    # Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL.
+    # Note that DATABASE_URL is exported before this script is executed, this is so that it also works in Travis-CI.
+    DATABASE_URL=postgis://127.0.0.1:5432/stoqs coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
+    loading_tests_status=$?
+fi
+
+# If there is a second argument and it is 'load' execute this block, use 2nd arg of 'noload' to not execute
+if [ ${2:-load} == 'load' ]
+then
+    echo "Loading standard data for unit and functional tests..."
     psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
     psql -c "DROP DATABASE IF EXISTS stoqs;" -U postgres
     psql -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
@@ -37,7 +60,6 @@ if [ ${2:-load} == 'load' ]
     fi
     psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
 
-    # DATABASE_URL environment variable must be set outside of this script
     ./manage.py makemigrations stoqs --settings=config.settings.ci --noinput
     ./manage.py migrate --settings=config.settings.ci --noinput --database=default
     if [ $? != 0 ]
@@ -68,13 +90,13 @@ fi
 
 # Run tests using the continuous integration (ci) setting
 # Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL
-export DATABASE_URL=postgis://127.0.0.1:5432/stoqs
 echo "Unit tests..."
+DATABASE_URL=postgis://127.0.0.1:5432/stoqs
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
 unit_tests_status=$?
 
 # MAPSERVER_DATABASE_URL needs to use postgres role for proper mapfile CONNECTION settings
-export MAPSERVER_DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+MAPSERVER_DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:5432/stoqs"
 echo "Functional tests..."
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.functional_tests --settings=config.settings.ci
 functional_tests_status=$?
@@ -85,6 +107,6 @@ tools/removeTmpFiles.sh > /dev/null 2>&1
 cd ..
 
 # Return code used by Travis-CI 
-##exit $(($unit_tests_status + $functional_tests_status))
+##exit $(($unit_tests_status + $loading_tests_status + $functional_tests_status))
 exit $unit_tests_status
 

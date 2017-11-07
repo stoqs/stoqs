@@ -88,7 +88,6 @@ class LoadScript(object):
     ''' 
 
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
 
     def __init__(self, base_dbAlias, base_campaignName, description=None, stride=1, x3dTerrains=None, grdTerrain=None):
         self.base_dbAlias = base_dbAlias
@@ -199,6 +198,8 @@ class LoadScript(object):
 
         if self.args.verbose:
             self.logger.setLevel(logging.DEBUG)
+        else:
+            self.logger.setLevel(logging.INFO)
 
         self.commandline = ' '.join(sys.argv)
         self.logger.info('Executing command: %s', self.commandline)
@@ -313,8 +314,7 @@ class STOQS_Loader(object):
                 'DEPTH','depth') # A list (tuple) of parameters that should not be imported as parameters
     global_dbAlias = ''
 
-    logger = logging.getLogger('__main__')
-    logger.setLevel(logging.INFO)
+    logger = logging.getLogger(__name__)
 
     def __init__(self, activityName, platformName, dbAlias='default', campaignName=None, 
                  campaignDescription=None, activitytypeName=None, platformColor=None, 
@@ -525,7 +525,7 @@ class STOQS_Loader(object):
         Use provided activity information to add the activity to the database.
         '''
         
-        self.logger.info("Creating Activity with startDate = %s and endDate = %s", 
+        self.logger.debug("Creating Activity with startDate = %s and endDate = %s", 
                 self.startDatetime, self.endDatetime)
         comment = 'Loaded on %s with these include_names: %s' % (datetime.now(), 
                 ' '.join(self.include_names))
@@ -537,6 +537,9 @@ class STOQS_Loader(object):
             self.activityType, created = m.ActivityType.objects.using(self.dbAlias
                                         ).get_or_create(name = self.activitytypeName)
 
+        if hasattr(self, 'getActivityName'):
+            self.activityName = self.getActivityName()
+
         # Get or create Activity based on unique identifiers
         self.activity, created = m.Activity.objects.using(self.dbAlias).get_or_create(    
                                         name__contains = self.activityName,
@@ -546,8 +549,10 @@ class STOQS_Loader(object):
                                         startdate = self.startDatetime)
 
         if created:
+            self.activity.name = self.activityName
+            self.activity.save(using=self.dbAlias)
             self.logger.info("Created activity %s in database %s with startDate=%s, endDate = %s",
-                    self.activityName, self.dbAlias, self.startDatetime, self.endDatetime)
+                    self.activity.name, self.dbAlias, self.activity.startdate, self.activity.enddate)
         else:
             self.logger.info("Retrieved activity %s from database %s", self.activityName, self.dbAlias)
 
@@ -602,7 +607,7 @@ class STOQS_Loader(object):
 
         self.logger.info('Adding attributes of all the variables from the original NetCDF file')
         for v in self.include_names + ['altitude']:
-            self.logger.info('v = %s', v)
+            self.logger.debug('v = %s', v)
             try:
                 for rn, value in list(self.ds[v].attributes.items()):
                     self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
@@ -616,7 +621,7 @@ class STOQS_Loader(object):
             except KeyError as e:
                 # Just skip derived parameters that may have been added for a sub-classed Loader
                 if v != 'altitude':
-                    self.logger.warn('include_name %s is not in %s - skipping', v, self.url)
+                    self.logger.debug('include_name %s is not in %s - skipping', v, self.url)
             except AttributeError as e:
                 # Just skip over loaders that don't have the plotTimeSeriesDepth attribute
                 self.logger.warn('%s for include_name %s in %s. Skipping', e, v, self.url)
@@ -627,7 +632,7 @@ class STOQS_Loader(object):
         for v in self.include_names + ['altitude']:
             if hasattr(self, 'plotTimeSeriesDepth'):
                 if self.plotTimeSeriesDepth.get(v, None) is not None:
-                    self.logger.info('v = %s', v)
+                    self.logger.debug('v = %s', v)
                     try:
                         uiResType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name='ui_instruction')
                         resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
@@ -746,7 +751,85 @@ class STOQS_Loader(object):
             raise SkipRecord
 
         return measurement
-    
+   
+    def is_coordinate_bad(self, key, mtime, depth, lat=None, lon=None, min_depth=-1000, max_depth=5000,
+                                         min_lat=-90, max_lat=90, min_lon=-720, max_lon=720):
+        '''Return True if coordinate if missing or fill_value, or falls outside of reasonable bounds
+        '''
+        # Missing value rejections
+        ac = self.getAuxCoordinates(key)
+        if 'depth' in ac:   # Tolerate EPIC 'sensor_depth' type data
+            if self.mv_by_key[ac['depth']]:
+                if np.isclose(depth, self.mv_by_key[ac['depth']]):
+                    return True
+
+        if lat:
+            if self.mv_by_key[ac['latitude']]:
+                if np.isclose(lat, self.mv_by_key[ac['latitude']]):
+                    return True
+
+        if lon:
+            if self.mv_by_key[ac['longitude']]:
+                if np.isclose(lon, self.mv_by_key[ac['longitude']]):
+                    return True
+
+        # fill_value rejections
+        if 'depth' in ac:   # Tolerate EPIC 'sensor_depth' type data
+            if self.fv_by_key[ac['depth']]:
+                if np.isclose(depth, self.fv_by_key[ac['depth']]):
+                    return True
+
+        if lat:
+            if self.fv_by_key[ac['latitude']]:
+                if np.isclose(lat, self.fv_by_key[ac['latitude']]):
+                    return True
+
+        if lon:
+            if self.fv_by_key[ac['longitude']]:
+                if np.isclose(lon, self.fv_by_key[ac['longitude']]):
+                    return True
+
+        # Brute force QC check on depth to remove egregous outliers
+        if depth < min_depth or depth > max_depth:
+            return True
+
+        if lat and lon:
+            # Brute force QC check on latitude and longitude to remove egregous outliers
+            if lat < min_lat or lat > max_lat:
+                return True
+            if lon < min_lon or lon > max_lon:
+                return True
+
+        return False
+
+    def is_value_bad(self, key, value):
+        if self.mv_by_key[key]:
+            if np.isclose(value, self.mv_by_key[key]):
+                return True
+
+        if self.fv_by_key[key]:
+            if np.isclose(value, self.fv_by_key[key]):
+                return True
+
+        if value == 'null' or np.isnan(value):
+            return True
+
+        return False
+
+    def good_coords(self, pnames, mtimes, depths, latitudes, longitudes):
+        '''Generate good coordinate if any of the parameters has good coordinate data.
+        Appropriate for trajectory data where there is one-to-one match of coorcinates.
+        '''
+        for mt, de, la, lo in zip(mtimes, depths, latitudes, longitudes):
+             all_bad = True
+             for pname in pnames:
+                 if not self.is_coordinate_bad(pname, mt, de, la, lo):
+                     all_bad = False
+             if all_bad:
+                 continue
+
+             yield mt, de, la, lo
+
     def preProcessParams(self, row):
         '''
         This method is designed to perform any final pre-processing, such as adding new
@@ -755,25 +838,6 @@ class STOQS_Loader(object):
         columns such as chlorophyl count, etc.
         @param row: A dictionary representing a single "row" of parameter data to be added to the database. 
         '''
-        self.logger.debug(row)
-        if 'measurement' in row:
-            # Special for things like LOPC data 
-            raise HasMeasurement()
-               
-        try:
-            if (row['longitude'] == missing_value or row['latitude'] == missing_value or
-                    #float(row['longitude']) == 0.0 or float(row['latitude']) == 0.0 or
-                    math.isnan(row['longitude'] ) or math.isnan(row['latitude'])):
-                raise SkipRecord('Invalid latitude or longitude coordinate')
-        except KeyError as e:
-            raise SkipRecord('KeyError: ' + str(e))
-
-        # Additional sanity check on latitude and longitude
-        if row['latitude'] > 90 or row['latitude'] < -90:
-            raise SkipRecord('Invalid latitude = %s' % row['latitude'])
-        if row['longitude'] > 720 or row['longitude'] < -720:
-            raise SkipRecord('Invalid longitude = %s' % row['longitude'])
-
         # First seen in April 2017 Nemesis data
         if row['depth'] == self.get_FillValue('depth'):
             raise SkipRecord('depth == _FillValue (%s)' % row['depth'])
@@ -791,7 +855,7 @@ class STOQS_Loader(object):
         self.logger.debug("include_names = %s", self.include_names)
         for v in self.include_names:
             allNaNFlag[v] = True
-            self.logger.info("include_name: %s", v)
+            self.logger.debug("include_name: %s", v)
             try:
                 try:
                     values = self.ds[v].array[:].flatten()
@@ -814,7 +878,7 @@ class STOQS_Loader(object):
         for v in list(allNaNFlag.keys()):
             if not allNaNFlag[v]:
                 self.varsLoaded.append(v)
-        self.logger.info("Variables that have data: self.varsLoaded = %s", self.varsLoaded)
+        self.logger.info(f"Variables that have data: {self.varsLoaded}")
 
         return anyValidData
     
@@ -857,7 +921,7 @@ class STOQS_Loader(object):
                                 parameter=p, measurement__instantpoint__activity=activity
                                 ).values_list('datavalue', flat=True)
 
-            np_data = np.array([float(d) for d in data])
+            np_data = np.array([float(d) for d in data if d is not None])
             np_data.sort()
             ap.number = len(np_data)
             ap.min = np_data.min()
@@ -1126,7 +1190,7 @@ class STOQS_Loader(object):
                     except ObjectDoesNotExist:
                         self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
-            self.logger.info('Inserted %d values into SimpleDepthTime for nomDepth = %f', len(simple_line), nomDepth)
+            self.logger.debug('Inserted %d values into SimpleDepthTime for nomDepth = %f', len(simple_line), nomDepth)
 
     def updateActivityMinMaxDepth(self):
         '''
@@ -1175,6 +1239,7 @@ class STOQS_Loader(object):
             # Find all measurements with 'sea_water_temperature' and ('sea_water_salinity' or 'sea_water_practical_salinity')
             ms = m.Measurement.objects.using(self.dbAlias)
             if activity:
+                self.logger.info(f'activity = {activity}')
                 ms = ms.filter(instantpoint__activity=activity)
 
             ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_temperature')
@@ -1228,6 +1293,7 @@ class STOQS_Loader(object):
             self.assignParameterGroup({p_spice: ms.count()}, groupName=MEASUREDINSITU)
 
             # Loop through all Measurements, compute Sigma-T & Spice, and add to the Measurement
+            self.logger.info(f'Looping through {parameterCounts[p_sigmat]} Measurments to add Sigma-T & Spice')
             for me in ms.distinct():
                 try:
                     with transaction.atomic():
@@ -1250,6 +1316,7 @@ class STOQS_Loader(object):
                 except IntegrityError as e:
                     self.logger.warn(e)
 
+            self.logger.info('Done.')
             return parameterCounts
 
         return _innerAddSigmaTandSpice(self, parameterCounts, activity)
@@ -1330,7 +1397,7 @@ class STOQS_Loader(object):
                 time.sleep(300)
 
             # Create our new Parameter
-            self.logger.info('Getting or creating new altitude Parameter')
+            self.logger.debug('Getting or creating new altitude Parameter')
             try:
                 p_alt, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
                         standard_name='height_above_sea_floor',
@@ -1353,18 +1420,19 @@ class STOQS_Loader(object):
             # Read values from the grid sampling (bottom depths) and add datavalues to the altitude parameter using the save Measurements
             count = 0
             with open(bdepthFileName) as altFH:
-                for line in altFH:
-                    bdepth = line.split()[2]
-                    alt = -float(bdepth)-depthList.pop(0)
-                    try:
-                        meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
-                        mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
-                        mp_alt.save(using=self.dbAlias)
-                    except IntegrityError as e:
-                        self.logger.warn(e)
-                    except DatabaseError as e:
-                        self.logger.warn(e)
-                    count += 1
+                try:
+                    with transaction.atomic():
+                        for line in altFH:
+                            bdepth = line.split()[2]
+                            alt = -float(bdepth)-depthList.pop(0)
+                            meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
+                            mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
+                            mp_alt.save(using=self.dbAlias)
+                            count += 1
+                except IntegrityError as e:
+                    self.logger.warn(e)
+                except DatabaseError as e:
+                    self.logger.warn(e)
 
             # Cleanup and sanity check
             os.remove(xyFileName)
