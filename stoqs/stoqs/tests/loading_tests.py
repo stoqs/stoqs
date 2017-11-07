@@ -27,7 +27,7 @@ from stoqs.models import MeasuredParameter, ActivityParameter
 from CCE.loadCCE_2015 import lores_event_times
 
 logger = logging.getLogger('stoqs.tests')
-settings.LOGGING['loggers']['stoqs.tests']['level'] = 'DEBUG'
+settings.LOGGING['loggers']['stoqs.tests']['level'] = 'INFO'
 
 class MeasuredParameterTestCase(TestCase):
     fixtures = ['stoqs_load_test.json']
