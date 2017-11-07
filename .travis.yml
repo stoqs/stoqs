@@ -41,7 +41,7 @@ before_script:
   - sudo rabbitmqctl add_vhost stoqs
   - sudo rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
 script:  
-  - ./test.sh CHANGEME
+  - ./test.sh CHANGEME load extraloaded
 after_script:
   - COVERALLS_REPO_TOKEN=W1wSPd6A9HGyoPWXGlyZ6mxkGsZR7BybT coveralls --base_dir stoqs
 notifications:

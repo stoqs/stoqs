@@ -23,27 +23,27 @@ fi
 # Assume starting in project home (stoqsgit) directory
 cd stoqs
 
+# If there is a third argument and it is 'extraloaded' don't execute this block, otherwise execute
+if [ ${3:-extraloaded} == 'extraloaded' ]
+then
+    echo "Loading additional data (EPIC, etc.) to test loading software..."
+    coverage run -a --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/load_data.py
+    if [ $? != 0 ]
+    then
+        echo "Cannot create default database stoqs; refer to above message."
+        exit -1
+    fi
+    ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_load_test.json
+    echo "Loading tests..."
+    # Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL.
+    # Note that DATABASE_URL is exported before this script is executed, this is so that it also works in Travis-CI.
+    DATABASE_URL=postgis://127.0.0.1:5432/stoqs coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
+    loading_tests_status=$?
+fi
+
 # If there is a second argument and it is 'loaded' don't execute this block, otherwise execute
 if [ ${2:-loaded} == 'loaded' ]
 then
-
-    LOADING_TESTS=true
-    if [ "$LOADING_TESTS" = true ]
-    then
-        echo "Loading additional data (EPIC, etc.) to test loading software..."
-        coverage run -a --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/load_data.py
-        if [ $? != 0 ]
-        then
-            echo "Cannot create default database stoqs; refer to above message."
-            exit -1
-        fi
-        ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_load_test.json
-        echo "Loading tests..."
-        # Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL.
-        # Note that DATABASE_URL is exported before this script is executed, this is so that it also works in Travis-CI.
-        DATABASE_URL=postgis://127.0.0.1:5432/stoqs coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
-        loading_tests_status=$?
-    fi
 
     psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
     psql -c "DROP DATABASE IF EXISTS stoqs;" -U postgres
