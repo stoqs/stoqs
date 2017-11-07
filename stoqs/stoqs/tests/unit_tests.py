@@ -34,7 +34,8 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 from stoqs.models import Activity, Parameter, Resource, MeasuredParameter
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('stoqs.tests')
+settings.LOGGING['loggers']['stoqs.tests']['level'] = 'INFO'
 
 class BaseAndMeasurementViewsTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
@@ -569,11 +570,17 @@ class BugsFoundTestCase(TestCase):
     def test_lopc_data_load(self):
         # Make sure 'sepCountList', 'mepCountList' are loaded into dataarray
 
-        # Expected number of records
-        parm_counts = dict(sepCountList=6090, mepCountList=6090)
+        # Expected number of records and bins in dataarrat
+        parm_counts = dict(sepCountList=7, mepCountList=7)
+        bin_counts = dict(sepCountList=994, mepCountList=994)
 
         for parm in list(parm_counts.keys()):
             mp_count = MeasuredParameter.objects.filter(parameter__name=parm).count()
-            logger.debug(f'{parm:10s}({parm_counts[parm]:2d}) {mp_count:-6d}')
-            self.assertNotEquals(mp_count, 0, f'Expected {parm_counts[parm]} values for {parm}')
+
+            # Check only the first element for number of dataarray bins
+            bin_count = len(MeasuredParameter.objects.filter(parameter__name=parm)[0].dataarray)
+
+            logger.debug(f'{parm:10s}({parm_counts[parm]:2d}) mp_count: {mp_count} bin_count: {bin_count}')
+            self.assertEqual(mp_count, parm_counts[parm], f'Expected {parm_counts[parm]} MeasuredParameter values for {parm}')
+            self.assertEqual(bin_count, bin_counts[parm], f'Expected {bin_counts[parm]} dataarray bins for {parm}')
 
