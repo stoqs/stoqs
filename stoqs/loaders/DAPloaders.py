@@ -774,6 +774,15 @@ class Base_Loader(STOQS_Loader):
 
         return meass
 
+    def _good_value_generator(self, pname, values):
+        '''Generate good data values where bad values and nans are replaced consistently with None
+        '''
+        for value in values:
+            if self.is_value_bad(pname, value):
+                value = None
+
+            yield value
+
     def load_trajectory(self):
         '''Stream trajectory data directly from pydap proxies to generators fed to bulk_create() calls
         '''
@@ -800,10 +809,12 @@ class Base_Loader(STOQS_Loader):
                     values = self.ds[pname][tindx[0]:tindx[-1]:self.stride]
 
                 if hasattr(values[0], '__iter__'):
-                    # For data like LOPC data
+                    # For data like LOPC data - expect all values to be non-nan
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
                                                 dataarray=list(va)) for me, va in zip(meass, values))
                 else:
+                    # Need to bulk_create() all values, set bad ones to None and remove them after insert
+                    values = self._good_value_generator(pname, values)
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
                                                 datavalue=va) for me, va in zip(meass, values))
 
@@ -1032,15 +1043,10 @@ class Base_Loader(STOQS_Loader):
                     values = values.reshape(values.shape[0], 1)
 
                 # Need to bulk_create() all values, set bad ones to None and remove them after insert
-                good_values = []
-                for value in values.flatten():
-                    if self.is_value_bad(pname, value):
-                        value = None
-
-                    good_values.append(value)
+                values = self._good_value_generator(pname, values.flatten())
 
                 mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
-                                                datavalue=va) for me, va in zip(meass, good_values))
+                                                datavalue=va) for me, va in zip(meass, values))
 
                 # All items but mess are generators, so we can call len() on it
                 self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter')
@@ -1141,7 +1147,7 @@ class Base_Loader(STOQS_Loader):
 
             return mps_loaded, path, parmCount
 
-        # Bulk loading may introduce Null values for non-trajectory data, get rid of them
+        # Bulk loading may introduce None values, get rid of them
         MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
 
         #
