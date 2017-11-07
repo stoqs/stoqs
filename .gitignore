@@ -16,6 +16,7 @@ pip-log.txt
 
 # Test fixtures
 stoqs/stoqs/fixtures/stoqs_test_data.json
+stoqs/stoqs/fixtures/stoqs_load_test.json
 
 # Migrations
 stoqs/stoqs/migrations/
