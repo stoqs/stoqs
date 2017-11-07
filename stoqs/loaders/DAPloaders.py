@@ -1049,192 +1049,6 @@ class Base_Loader(STOQS_Loader):
 
         return total_loaded
 
-
-    def _genTrajectory(self):
-        '''
-        Generator of trajectory data. The data values are a function of time and the coordinates attribute 
-        identifies the depth, latitude, and longitude from where the measurement was made.
-        Using terminology from CF-1.6 assume data is from a discrete geometry type of trajectory.
-        Provides a uniform dictionary that contains attributes and their associated values without the need
-        to individualize code for each data source.
-        '''
-        # Still called by runDoradoLoader() for LOPC data
-        ac = {}
-        data = {} 
-        times = {}
-        depths = {}
-        latitudes = {}
-        longitudes = {}
-        timeUnits = {}
-        measurements = {}
-
-        # TODO: Refactor to simplify. McCabe MC0001 pylint complexity warning issued. Too many local variables.
-
-        # Read the data from the OPeNDAP url into arrays keyed on parameter name - these arrays may take a bit of memory 
-        # The reads here take advantage of OPeNDAP access mechanisms to efficiently transfer data across the network
-        for pname in self.include_names:
-            if pname not in list(self.ds.keys()):
-                self.logger.warn('include_name %s not in dataset %s', pname, self.url)
-                continue
-            # Peek at the shape and pull apart the data from its grid coordinates 
-            # Only single trajectories are allowed
-            shape_length = self.get_shape_length(pname)
-            self.logger.info('Reading data from %s: %s %s %s', self.url, pname, shape_length, type(self.ds[pname]))
-            if shape_length == 1 and isinstance(self.ds[pname], pydap.model.BaseType): # pragma: no cover
-                # Legacy Dorado data need to be processed as BaseType; Example data:
-                #   dsdorado = open_url('http://odss.mbari.org/thredds/dodsC/CANON_september2012/dorado/Dorado389_2012_256_00_256_00_decim.nc')
-                #   dsdorado['temperature'].shape = (12288,)
-                ac[pname] = self.getAuxCoordinates(pname)
-                try:
-                    self.logger.debug("ac[pname]['time'] = %s", ac[pname]['time'])
-                    tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
-                except (NoValidData, InvalidSliceRequest) as e:
-                    self.logger.warn('Skipping this parameter. %s', e)
-                    continue
-                try:
-                    # Subselect along the time axis
-                    self.logger.info("Using constraints: ds['%s'][%d:%d:%d]", pname, tIndx[0], tIndx[-1], self.stride)
-                    v = self.ds[pname][tIndx[0]:tIndx[-1]:self.stride]
-                except ValueError as err:
-                    self.logger.error('\nGot error "%s" reading data from URL: %s.\n'
-                                 'If it is: "string size must be a multiple of element size"'
-                                 ' and the URL is a TDS aggregation then the cache files must'
-                                 ' be removed and the tomcat hosting TDS restarted.', err, self.url)
-                    sys.exit(1)
-                except pydap.exceptions.ServerError as e:
-                    self.logger.exception('%s', e)
-                    sys.exit(-1)
-                    continue
-    
-                # The STOQS datavalue 
-                data[pname] = iter(v)      # Iterator on time axis delivering all values in an array with .next()
-
-                # Peek at coordinate attribute to get depth, latitude, longitude values from the other BaseTypes
-                self.logger.info('ac = %s', ac)
-
-                times[pname] = self.ds[ac[pname]['time']][tIndx[0]:tIndx[-1]:self.stride]
-                try:
-                    depths[pname] = self.ds[ac[pname]['depth']][tIndx[0]:tIndx[-1]:self.stride]
-                except KeyError:
-                    # Allow for variables with no depth coordinate to be loaded at the depth specified in auxCoords
-                    if isinstance(ac[pname]['depth'], float):
-                        depths[pname] =  ac[pname]['depth'] * np.ones(len(times[pname]))
-
-                latitudes[pname] = self.ds[ac[pname]['latitude']][tIndx[0]:tIndx[-1]:self.stride]
-                longitudes[pname] = self.ds[ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
-                timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
-                timeUnits[pname] = timeUnits[pname].replace('utc', 'UTC')           # coards requires UTC in uppercase
-                if self.ds[ac[pname]['time']].units == 'seconds since 1970-01-01T00:00:00Z':
-                    timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
-
-            elif shape_length == 1 and isinstance(self.ds[pname], pydap.model.GridType):
-                # LRAUV data need to be processed as GridType
-                ac[pname] = self.getAuxCoordinates(pname)
-                tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
-                try:
-                    # Subselect along the time axis
-                    self.logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
-                    v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride]
-                except ValueError as err:
-                    if str(err) == 'need more than 1 value to unpack':
-                        # Likely stride is larger than length of array; report and skip
-                        self.logger.error('%s', err)
-                        continue
-                    else:
-                        self.logger.error('''\nGot error '%s' reading data from URL: %s.
-                        If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
-                        then the cache files must be removed and the tomcat hosting TDS restarted.''', err, self.url)
-                        sys.exit(1)
-                except pydap.exceptions.ServerError as e:
-                    self.logger.error('%s', e)
-                    continue
-    
-                # The STOQS datavalue 
-                data[pname] = iter(v)      # Iterator on time axis delivering all values in an array with .next()
-
-                # Peek at coordinate attribute to get depth, latitude, longitude values from the other BaseTypes
-                self.logger.info('ac = %s', ac)
-
-                times[pname] = self.ds[ac[pname]['time']][tIndx[0]:tIndx[-1]:self.stride]
-                depths[pname] = self.ds[ac[pname]['depth']][ac[pname]['depth']][tIndx[0]:tIndx[-1]:self.stride]
-                latitudes[pname] = self.ds[ac[pname]['latitude']][ac[pname]['latitude']][tIndx[0]:tIndx[-1]:self.stride]
-                longitudes[pname] = self.ds[ac[pname]['longitude']][ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
-                timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
-
-            elif shape_length == 2 and isinstance(self.ds[pname], pydap.model.GridType):
-                # Customized for accepting LOPC data from Dorado - has only time coordinate
-                # LOPC data has only time therefore we look up the closest Instantpoint and 
-                # assign it's corresponding Measurement from other already loaded Dorado data.
-                ac[pname] = self.getAuxCoordinates(pname)
-                tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
-                try:
-                    # Subselect along the time axis
-                    self.logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
-                    v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride]
-                except ValueError as err:
-                    if self.stride > tIndx[-1] - tIndx[0]:
-                        self.logger.error('Stride value is too high for this dataset. Not loading any of its data.')
-                        continue
-                    else:
-                        self.logger.error('\nGot error "%s" reading data from URL: %s.\n'
-                                     'If it is: "string size must be a multiple of element size"'
-                                     ' and the URL is a TDS aggregation then the cache files must'
-                                     ' be removed and the tomcat hosting TDS restarted.', err, self.url)
-                        sys.exit(1)
-                except pydap.exceptions.ServerError as e:
-                    self.logger.error('%s', e)
-                    continue
-    
-                # The STOQS MeasureParameter dataarray  - v is a list of Arrays
-                data[pname] = iter(v)      # Iterator on time axis delivering all arrays in an array with .next()
-
-                times[pname] = self.ds[ac[pname]['time']][tIndx[0]:tIndx[-1]:self.stride]
-                timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
-
-                # Add LOPC's bin array to the Parameter's domain
-                # TODO: save its attributes as Resources
-                self.getParameterByName(pname).domain = list(self.ds['bin'][:])
-                self.getParameterByName(pname).save(using=self.dbAlias)
-
-                measurements[pname] = []
-                for udtime in times[pname]:
-                    tv = from_udunits(udtime, timeUnits[pname])
-                    try:
-                        ip, secs_diff = get_closest_instantpoint(self.associatedActivityName, tv, self.dbAlias)
-                        max_secs_diff = 2
-                        if secs_diff > max_secs_diff:
-                            self.logger.warn('LOPC data at %s more than %s secs different from existing measurement: %s', 
-                                    tv, max_secs_diff, secs_diff)
-                    except ClosestTimeNotFoundException as e:
-                        self.logger.error('Could not find corresponding measurment for LOPC data measured at %s', tv)
-                        continue
-                    else:
-                        measurements[pname].append(Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
-
-            else:
-                self.logger.warn('Variable %s is not of type pydap.model.GridType with a '
-                            'shape length of 1 or 2 (for LOPC/LISST-100 data).  It '
-                            'is type %s with shape length = %d.', 
-                            pname, type(self.ds[pname]), shape_length)
-
-        # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
-        for pname in list(data.keys()):
-            self.logger.debug('Delivering rows of data for %s', pname)
-            l = 0
-            values = {}
-            for dv in data[pname]:
-                values[pname] = dv
-                values['time'] = times[pname][l]
-                values['timeUnits'] = timeUnits[pname]
-                try:
-                    values['depth'] = depths[pname][l]
-                    values['latitude'] = latitudes[pname][l]
-                    values['longitude'] = longitudes[pname][l]
-                except KeyError:
-                    values['measurement'] = measurements[pname][l]
-                yield values
-                l = l + 1
-
     def _measurement_with_instantpoint(self, ips, meass):
         for ip, meas in zip(ips, meass):
             meas.instantpoint = ip
@@ -1257,7 +1071,7 @@ class Base_Loader(STOQS_Loader):
             mp.measurement = meas
             yield mp
 
-    def process_data(self, generator=None, featureType=''): 
+    def process_data(self, featureType=''): 
         '''Iterate over the data source and load the data in by creating new objects
         for each measurement.
 
@@ -1802,9 +1616,8 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
 
         Dorado_Loader.getFeatureType = lambda self: TRAJECTORY
         try:
-            # Specify generator and featureType so that non-CF LOPC data can me loaded
-            lopc_loader.process_data(generator=lopc_loader._genTrajectory, 
-                    featureType=TRAJECTORY)
+            # Specify featureType so that non-CF LOPC data can be loaded
+            lopc_loader.process_data(featureType=TRAJECTORY)
         except VariableMissingCoordinatesAttribute as e:
             loader.logger.exception(str(e))
         except NoValidData as e:
