@@ -747,8 +747,9 @@ class Base_Loader(STOQS_Loader):
         return meass
 
     def _load_coords_from_instr_ds(self, tindx, ac):
-        '''Pull coordinates from Instrument (time-coordinate-only) NetCDF dataset (e.g. LOPC)
-        and bulk create in the database.
+        '''Pull itime coordinate from Instrument (time-coordinate-only) NetCDF dataset (e.g. LOPC),
+        lookup matching Measurment (containing depth, latitude, and longitude) and bulk create 
+        Instantpoints and Measurements in the database.
         '''
         times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
@@ -766,12 +767,10 @@ class Base_Loader(STOQS_Loader):
                 self.logger.error('Could not find corresponding measurment for LOPC data measured at %s', tv)
             else:
                 if secs_diff > max_secs_diff:
-                    self.logger.warn('LOPC data at %s more than %s secs different from existing measurement: %s', 
-                            mt, max_secs_diff, secs_diff)
-                ips.append(ip)
-                meass.append(Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
+                    self.logger.warn(f'LOPC data at {mt} is more than {max_secs_diff} secs different'
+                                     ' from existing measurement: {secs_diff}')
 
-        meass = self._bulk_load_coordinates(ips, meass)
+                meass.append(Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
 
         return meass
 
@@ -787,22 +786,21 @@ class Base_Loader(STOQS_Loader):
                 if i == 0:
                     # First time through, bulk load the coordinates: instant_points and measurements
                     if ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
-                        # Expect CF-dsg compliant or EPIC dataset
+                        # Expect CF Discrete Sampling Geometry or EPIC dataset
                         meass = self._load_coords_from_dsg_ds(tindx, ac, pnames)
                     else:
                         # Expect instrument (time-coordinate-only) dataset
                         meass = self._load_coords_from_instr_ds(tindx, ac)
 
                 if isinstance(self.ds[pname], pydap.model.GridType):
-                    self.logger.debug("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tindx[0], tindx[-1], self.stride)
                     constraint_string = f"Using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                     values = self.ds[pname][pname][tindx[0]:tindx[-1]:self.stride]
                 else:
-                    self.logger.debug("Using constraints: ds['%s'][%d:%d:%d]", pname, tindx[0], tindx[-1], self.stride)
                     constraint_string = f"Using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                     values = self.ds[pname][tindx[0]:tindx[-1]:self.stride]
 
-                if isinstance(values[0], (list, tuple)):
+                if hasattr(values[0], '__iter__'):
+                    # For data like LOPC data
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
                                                 dataarray=list(va)) for me, va in zip(meass, values))
                 else:
