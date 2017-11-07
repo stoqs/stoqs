@@ -23,11 +23,11 @@ from datetime import timedelta
 from django.conf import settings
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from stoqs.models import MeasuredParameter
+from stoqs.models import MeasuredParameter, ActivityParameter
 from CCE.loadCCE_2015 import lores_event_times
 
 logger = logging.getLogger('stoqs.tests')
-settings.LOGGING['loggers']['stoqs.tests']['level'] = 'INFO'
+settings.LOGGING['loggers']['stoqs.tests']['level'] = 'DEBUG'
 
 class MeasuredParameterTestCase(TestCase):
     fixtures = ['stoqs_load_test.json']
@@ -60,4 +60,16 @@ class MeasuredParameterTestCase(TestCase):
             mp_count = MeasuredParameter.objects.filter(parameter__name=parm).count()
             logger.debug(f'{parm:10s}({parm_counts[parm]:2d}) {mp_count:-6d}')
             self.assertNotEquals(mp_count, 0, f'Expected {parm_counts[parm]} values for {parm}')
+
+    def test_glider_trajectory(self):
+
+        # Non-grid type data with CF-1.6 coordinates attributes and original data containing a nan
+        act_name = 'OS_Glider_L_662_20151124_TS'
+        parm_names = ('PSAL', 'TEMP', 'FLU2')
+        ap_fields = ('min', 'max', 'mean', 'median', 'mode', 'p025', 'p975', 'p010', 'p990')
+
+        for parm in parm_names:
+            ap = ActivityParameter.objects.get(activity__name__contains=act_name, parameter__name=parm)
+            for field in ap_fields:
+                self.assertIsNotNone(getattr(ap, field), f'ActivityParameter field {field} cannot be None')
 
