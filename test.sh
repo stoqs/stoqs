@@ -1,10 +1,13 @@
 #!/bin/bash
-# Do database operations to create default database and create fixture for testing.
-# Designed for re-running on development system - ignore errors in Vagrant and Travis-ci.
-# Pass the stoqsadm password as an argument on first execution in order to create the
+# Do database operations to create default database and create fixture(s) for testing.
+# Designed for re-running on development system.
+# Pass the stoqsadm password as an argument in order to create the
 # stoqsadm user; it must match what's in DATABASE_URL.  Must also set MAPSERVER_HOST.
 # Make sure none of these are set: STATIC_FILES, STATIC_URL, MEDIA_FILES, MEDIA_URL 
-# and that nothing is connected to the default stoqs database.
+# and that nothing is using to the default stoqs database.  Standard execution on
+# a development system is to execute like: './test.sh <DB_PASSWORD>'; optional
+# arguments like './test.sh CHANGME load noextraload' may be used, e.g. on travis-ci,
+# to skip some of the loading tests.
 
 if [ -z $1 ]
 then
@@ -23,8 +26,8 @@ fi
 # Assume starting in project home (stoqsgit) directory
 cd stoqs
 
-# If there is a third argument and it is 'extraloaded' don't execute this block, otherwise execute
-if [ ${3:-extraloaded} == 'extraloaded' ]
+# If there is a third argument and it is 'extraload' execute this block, use 3rd arg of 'noextraload' to not execute
+if [ ${3:-extraload} == 'extraload' ]
 then
     echo "Loading additional data (EPIC, etc.) to test loading software..."
     coverage run -a --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/load_data.py
@@ -41,10 +44,10 @@ then
     loading_tests_status=$?
 fi
 
-# If there is a second argument and it is 'loaded' don't execute this block, otherwise execute
-if [ ${2:-loaded} == 'loaded' ]
+# If there is a second argument and it is 'load' execute this block, use 2nd arg of 'noload' to not execute
+if [ ${2:-load} == 'load' ]
 then
-
+    echo "Loading standard data for unit and functional tests..."
     psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
     psql -c "DROP DATABASE IF EXISTS stoqs;" -U postgres
     psql -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
