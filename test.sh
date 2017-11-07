@@ -27,7 +27,7 @@ cd stoqs
 if [ ${2:-loaded} == 'loaded' ]
 then
 
-    LOADING_TESTS=false
+    LOADING_TESTS=true
     if [ "$LOADING_TESTS" = true ]
     then
         echo "Loading additional data (EPIC, etc.) to test loading software..."
