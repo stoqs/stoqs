@@ -1,4 +1,4 @@
-![STOQS logo](stoqs/static/images/STOQS_logo_gray1_689.png) Spatial Temporal Oceanographic Query System
+Spatial Temporal Oceanographic Query System
 -------------------------------------------
 
 [![Build Status](https://travis-ci.org/stoqs/stoqs.svg)](https://travis-ci.org/stoqs/stoqs/branches)
@@ -85,3 +85,4 @@ If you use STOQS for your research please cite this publication:
 > in *Autonomous Underwater Vehicles (AUV), 2014 IEEE/OES*, pp.1-10, 6-9 Oct. 2014
 > doi: 10.1109/AUV.2014.7054414
 
+![STOQS logo](stoqs/static/images/STOQS_logo_gray1_689.png)
