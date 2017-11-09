@@ -799,9 +799,13 @@ class STOQS_Loader(object):
             self.logger.info("include_name: %s", v)
             try:
                 try:
-                    values = self.ds[v].array[:].flatten()
+                    # Pydap==3.2.2 has the numpy array on the data attribute
+                    values = self.ds[v].array[:].data.flatten()
                 except AttributeError:
-                    values = self.ds[v][:].flatten()
+                    try:
+                        values = self.ds[v].array[:].flatten()
+                    except AttributeError:
+                        values = self.ds[v][:].flatten()
                 for value in values:
                     if not np.isnan(value).all():
                         allNaNFlag[v] = False

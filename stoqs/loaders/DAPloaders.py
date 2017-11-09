@@ -208,23 +208,23 @@ class Base_Loader(STOQS_Loader):
                 logger.debug('Getting trajectory min and max times for v = %s', v)
                 logger.debug("self.ds[ac['time']][0] = %s", self.ds[ac['time']][0])
                 try:
-                    minDT[v] = from_udunits(self.ds[ac['time']][0][0], self.ds[ac['time']].attributes['units'])
-                    maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
+                    minDT[v] = from_udunits(self.ds[ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
+                    maxDT[v] = from_udunits(self.ds[ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'])
                 except ParserError as e:
                     logger.warn("%s. Trying to fix up time units", e)
                     # Tolerate units like 1970-01-01T00:00:00Z - which is found on the IOOS Glider DAC
                     if self.ds[ac['time']].attributes['units'] == 'seconds since 1970-01-01T00:00:00Z':
-                        minDT[v] = from_udunits(self.ds[ac['time']][0][0], 'seconds since 1970-01-01 00:00:00')
-                        maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], 'seconds since 1970-01-01 00:00:00')
+                        minDT[v] = from_udunits(self.ds[ac['time']].data[0][0], 'seconds since 1970-01-01 00:00:00')
+                        maxDT[v] = from_udunits(self.ds[ac['time']].data[-1][0], 'seconds since 1970-01-01 00:00:00')
                     
             elif self.getFeatureType() == 'timeseries' or self.getFeatureType() == 'timeseriesprofile':
                 logger.debug('Getting timeseries start time for v = %s', v)
-                minDT[v] = from_udunits(self.ds[v][ac['time']][0][0], self.ds[ac['time']].attributes['units'])
-                maxDT[v] = from_udunits(self.ds[v][ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
+                minDT[v] = from_udunits(self.ds[v][ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
+                maxDT[v] = from_udunits(self.ds[v][ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'])
             else:
                 # Perhaps a strange file like LOPC size class data along a trajectory
-                minDT[v] = from_udunits(self.ds[ac['time']][0][0], self.ds[ac['time']].attributes['units'])
-                maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
+                minDT[v] = from_udunits(self.ds[ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
+                maxDT[v] = from_udunits(self.ds[ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'])
 
         logger.debug('minDT = %s', minDT)
         logger.debug('maxDT = %s', maxDT)
