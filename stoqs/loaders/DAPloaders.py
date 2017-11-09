@@ -871,7 +871,7 @@ class Base_Loader(STOQS_Loader):
                 try:
                     # Subselect along the time axis
                     logger.info("Using constraints: ds['%s'][%d:%d:%d]", pname, tIndx[0], tIndx[-1], self.stride)
-                    v = self.ds[pname][tIndx[0]:tIndx[-1]:self.stride]
+                    v = self.ds[pname].data[tIndx[0]:tIndx[-1]:self.stride]
                 except ValueError as err:
                     logger.error('\nGot error "%s" reading data from URL: %s.\n'
                                  'If it is: "string size must be a multiple of element size"'
@@ -889,16 +889,16 @@ class Base_Loader(STOQS_Loader):
                 # Peek at coordinate attribute to get depth, latitude, longitude values from the other BaseTypes
                 logger.info('ac = %s', ac)
 
-                times[pname] = self.ds[ac[pname]['time']][tIndx[0]:tIndx[-1]:self.stride]
+                times[pname] = self.ds[ac[pname]['time']].data[tIndx[0]:tIndx[-1]:self.stride]
                 try:
-                    depths[pname] = self.ds[ac[pname]['depth']][tIndx[0]:tIndx[-1]:self.stride]
+                    depths[pname] = self.ds[ac[pname]['depth']].data[tIndx[0]:tIndx[-1]:self.stride]
                 except KeyError:
                     # Allow for variables with no depth coordinate to be loaded at the depth specified in auxCoords
                     if isinstance(ac[pname]['depth'], float):
                         depths[pname] =  ac[pname]['depth'] * np.ones(len(times[pname]))
 
-                latitudes[pname] = self.ds[ac[pname]['latitude']][tIndx[0]:tIndx[-1]:self.stride]
-                longitudes[pname] = self.ds[ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
+                latitudes[pname] = self.ds[ac[pname]['latitude']].data[tIndx[0]:tIndx[-1]:self.stride]
+                longitudes[pname] = self.ds[ac[pname]['longitude']].data[tIndx[0]:tIndx[-1]:self.stride]
                 timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
                 timeUnits[pname] = timeUnits[pname].replace('utc', 'UTC')           # coards requires UTC in uppercase
                 if self.ds[ac[pname]['time']].units == 'seconds since 1970-01-01T00:00:00Z':
@@ -911,7 +911,7 @@ class Base_Loader(STOQS_Loader):
                 try:
                     # Subselect along the time axis
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
-                    v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride]
+                    v = self.ds[pname][pname].data[tIndx[0]:tIndx[-1]:self.stride]
                 except ValueError as err:
                     if str(err) == 'need more than 1 value to unpack':
                         # Likely stride is larger than length of array; report and skip
@@ -932,10 +932,10 @@ class Base_Loader(STOQS_Loader):
                 # Peek at coordinate attribute to get depth, latitude, longitude values from the other BaseTypes
                 logger.info('ac = %s', ac)
 
-                times[pname] = self.ds[ac[pname]['time']][tIndx[0]:tIndx[-1]:self.stride]
-                depths[pname] = self.ds[ac[pname]['depth']][ac[pname]['depth']][tIndx[0]:tIndx[-1]:self.stride]
-                latitudes[pname] = self.ds[ac[pname]['latitude']][ac[pname]['latitude']][tIndx[0]:tIndx[-1]:self.stride]
-                longitudes[pname] = self.ds[ac[pname]['longitude']][ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
+                times[pname] = self.ds[ac[pname]['time']].data[tIndx[0]:tIndx[-1]:self.stride]
+                depths[pname] = self.ds[ac[pname]['depth']][ac[pname]['depth']].data[tIndx[0]:tIndx[-1]:self.stride]
+                latitudes[pname] = self.ds[ac[pname]['latitude']][ac[pname]['latitude']].data[tIndx[0]:tIndx[-1]:self.stride]
+                longitudes[pname] = self.ds[ac[pname]['longitude']][ac[pname]['longitude']].data[tIndx[0]:tIndx[-1]:self.stride]
                 timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
 
             elif shape_length == 2 and isinstance(self.ds[pname], pydap.model.GridType):
@@ -947,7 +947,7 @@ class Base_Loader(STOQS_Loader):
                 try:
                     # Subselect along the time axis
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
-                    v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride]
+                    v = self.ds[pname][pname].data[tIndx[0]:tIndx[-1]:self.stride]
                 except ValueError as err:
                     logger.error('\nGot error "%s" reading data from URL: %s.\n'
                                  'If it is: "string size must be a multiple of element size"'
@@ -961,7 +961,7 @@ class Base_Loader(STOQS_Loader):
                 # The STOQS MeasureParameter dataarray  - v is a list of Arrays
                 data[pname] = iter(v)      # Iterator on time axis delivering all arrays in an array with .next()
 
-                times[pname] = self.ds[ac[pname]['time']][tIndx[0]:tIndx[-1]:self.stride]
+                times[pname] = self.ds[ac[pname]['time']].data[tIndx[0]:tIndx[-1]:self.stride]
                 timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
 
                 # Add LOPC's bin array to the Parameter's domain
@@ -1040,7 +1040,7 @@ class Base_Loader(STOQS_Loader):
                     # Subselect along the time axis, get all z values
                     logger.info("From: %s", self.url)
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d,:,0,0]", pname, pname, tIndx[0], tIndx[-1], self.stride)
-                    v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride,:,0,0]
+                    v = self.ds[pname][pname].data[tIndx[0]:tIndx[-1]:self.stride,:,0,0]
                 except ValueError as err:
                     logger.error('\nGot error "%s" reading data from URL: %s.\n'
                                  'If it is: "string size must be a multiple of element size"'
@@ -1059,7 +1059,7 @@ class Base_Loader(STOQS_Loader):
                 data[pname] = iter(v)      # Iterator on time axis delivering all z values in an array with .next()
 
                 # CF (nee COARDS) has tzyx coordinate ordering
-                times[pname] = self.ds[self.ds[pname].keys()[1]][tIndx[0]:tIndx[-1]:self.stride]
+                times[pname] = self.ds[self.ds[pname].keys()[1]].data[tIndx[0]:tIndx[-1]:self.stride]
                 depths[pname] = self.ds[self.ds[pname].keys()[2]][:]                # TODO lookup more precise depth from conversion from pressure
 
                 timeUnits[pname] = self.ds[self.ds[pname].keys()[1]].units.lower()
@@ -1078,7 +1078,7 @@ class Base_Loader(STOQS_Loader):
                     # Add height above sensor array to actual depth of sensor - creates 2D array who's columns need to be delivered in the yields below
                     heights = self.ds['HEIGHT_ABOVE_SENSOR'][:]
                     logger.info('Assuming ADCP data from IMOS and that bin depths need to be combined of the sensor depth and height above sensor')
-                    for depth in self.ds['ZPOS']['ZPOS'][tIndx[0]:tIndx[-1]:self.stride]:
+                    for depth in self.ds['ZPOS']['ZPOS'].data[tIndx[0]:tIndx[-1]:self.stride]:
                         self.adcpDepths[pname].append([float(depth) - float(h) for h in heights])
 
                     # Save last one for insertSimpleDepthTimeSeriesByNominalDepth()
