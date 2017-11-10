@@ -479,10 +479,10 @@ class Base_Loader(STOQS_Loader):
             if self.getFeatureType() == 'timeseries': 
                 logger.debug('Initializing depths list for timeseries, ac = %s', ac)
                 try:
-                    depths[v] = self.ds[v][ac['depth']][:].data[0]
+                    depths[v] = self.ds[v][ac['depth']].data[:][0]
                 except KeyError:
                     logger.warn('No depth coordinate found for %s.  Assuming EPIC scalar and assigning depth from first element', v)
-                    depths[v] = self.ds[ac['depth']][0]
+                    depths[v] = self.ds[ac['depth']].data[0]
             elif self.getFeatureType() == 'timeseriesprofile':
                 logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac) 
                 try:
@@ -493,22 +493,22 @@ class Base_Loader(STOQS_Loader):
                     depths[v] = [float(self.ds.attributes['NC_GLOBAL']['nominal_sensor_depth'])]
             elif self.getFeatureType() == 'trajectoryprofile':
                 logger.debug('Initializing depths list for trajectoryprofile, ac = %s', ac)
-                depths[v] = self.ds[v][ac['depth']][:]
+                depths[v] = self.ds[v][ac['depth']].data[:]
 
             try:
-                lons[v] = self.ds[v][ac['longitude']][:].data[0]
+                lons[v] = self.ds[v][ac['longitude']].data[:][0]
             except KeyError:
                 if len(self.ds[ac['longitude']][:]) == 1:
-                    lons[v] = self.ds[ac['longitude']][:].data[0]
+                    lons[v] = self.ds[ac['longitude']].data[:][0]
                 else:
                     logger.warn('Variable %s has longitude auxillary coordinate of length %d, expecting it to be 1.',
-                                v, len(self.ds[ac['longitude']][:]))
+                                v, len(self.ds[ac['longitude']].data[:]))
 
             try:
-                lats[v] = self.ds[v][ac['latitude']][:].data[0]
+                lats[v] = self.ds[v][ac['latitude']].data[:][0]
             except KeyError:
-                if len(self.ds[ac['latitude']][:]) == 1:
-                    lats[v] = self.ds[ac['latitude']][:].data[0]
+                if len(self.ds[ac['latitude']].data[:]) == 1:
+                    lats[v] = self.ds[ac['latitude']].data[:][0]
                 else:
                     logger.warn('Variable %s has latitude auxillary coordidate of length %d, expecting it to be 1.', 
                                 v, len(self.ds[ac['latitude']].data[:]))
@@ -724,7 +724,7 @@ class Base_Loader(STOQS_Loader):
 
                 # Try and get the depths array, first by CF/COARDS coordinate rules, then by EPIC conventions
                 try:
-                    depths[pname] = self.ds[self.ds[pname].keys()[2]][:]                # TODO lookup more precise depth from conversion from pressure
+                    depths[pname] = self.ds[self.ds[pname].keys()[2]].data[:]            # TODO lookup more precise depth from conversion from pressure
                 except IndexError:
                     logger.warn('Variable %s has less than 2 coordinates: %s', pname, self.ds[pname].keys())
                     depths[pname] = []
