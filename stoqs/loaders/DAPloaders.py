@@ -767,8 +767,7 @@ class Base_Loader(STOQS_Loader):
                 self.logger.error('Could not find corresponding measurment for LOPC data measured at %s', tv)
             else:
                 if secs_diff > max_secs_diff:
-                    self.logger.warn(f'LOPC data at {mt} is more than {max_secs_diff} secs different'
-                                     ' from existing measurement: {secs_diff}')
+                    self.logger.warn(f"LOPC data at {mt.strftime('%Y-%m-%d %H:%M:%S')} more than {max_secs_diff} secs away from existing measurement: {secs_diff}")
 
                 meass.append(Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
 
