@@ -354,18 +354,6 @@ LOGGING['loggers']['loaders'] = {
                             'level':'INFO',
                             'formatter': 'verbose'
 }
-LOGGING['loggers']['DAPloaders'] = {
-                            'handlers':['console'],
-                            'propagate': True,
-                            'level':'INFO',
-                            'formatter': 'verbose'
-}
-LOGGING['loggers']['SampleLoaders'] = {
-                            'handlers':['console'],
-                            'propagate': True,
-                            'level':'INFO',
-                            'formatter': 'verbose'
-}
 LOGGING['loggers']['utils'] = {
                             'handlers':['console'],
                             'propagate': True,
