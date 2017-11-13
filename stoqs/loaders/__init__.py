@@ -1327,120 +1327,115 @@ class STOQS_Loader(object):
         subtract the depth and add altitude as a new Parameter to the Measurement
         To be called from load script after process_command_line().
         '''
-        @transaction.atomic(using=self.dbAlias)
-        def _innerAddAltitude(self, parameterCounts, activity=None):
-            # Read the bounding box of the terrain file. The grdtrack command quietly does not write any lines for points outside of the grid.
-            if self.grdTerrain:
-                try:
-                    fh = Dataset(self.grdTerrain)
-                    # Old GMT format
-                    xmin, xmax = fh.variables['x_range'][:]
-                    ymin, ymax = fh.variables['y_range'][:]
-                except IOError as e:
-                    self.logger.error('Cannot add altitude. Make sure file %s is present.', self.grdTerrain)
-                except KeyError as e:
-                    try:
-                        # New GMT format
-                        xmin, xmax = fh.variables['lon'].actual_range
-                        ymin, ymax = fh.variables['lat'].actual_range
-                    except Exception as e:
-                        try:
-                            # Yet another format (seen in SanPedroBasin50.grd)
-                            xmin, xmax = fh.variables['x'].actual_range
-                            ymin, ymax = fh.variables['y'].actual_range
-                        except Exception as e:
-                            self.logger.error('Cannot read range metadata from %s. Not able to load'
-                                              ' altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
-                            return parameterCounts
-                except Exception as e:
-                    self.logger.exception(e)
-                    return parameterCounts
-                finally:
-                    fh.close()
-
-                bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
-
-            # Build file of Measurement lon & lat for grdtrack to process
-            xyFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_LatLon_', suffix='.txt').name
-            xyFH = open(xyFileName, 'w')
-            ms = m.Measurement.objects.using(self.dbAlias).filter(geom__within=bbox)
-            if activity:
-                ms = ms.filter(instantpoint__activity=activity)
-            ms = ms.order_by('instantpoint__activity__id', 'instantpoint__timevalue').values('id', 'geom', 'depth').distinct()
-            mList = []
-            depthList = []
-            for me in ms:
-                mList.append(me['id'])
-                depthList.append(me['depth'])
-                xyFH.write("%f %f\n" % (me['geom'].x, me['geom'].y))
-
-            xyFH.close()
-            inputFileCount = len(mList)
-            self.logger.debug('Wrote file %s with %d records', xyFileName, inputFileCount)
-
-            # Requires GMT (yum install GMT)
-            bdepthFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_BDepth', suffix='.txt').name
-            if cmd_exists('grdtrack'):
-                cmd = "grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
-            else:
-                # Assume we have GMT Version 5 installed
-                cmd = "gmt grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
-
-            self.logger.info('Executing %s' % cmd)
-            os.system(cmd)
-            if self.totalRecords > 1e6:
-                self.logger.info('Sleeping 60 seconds to give time for system call to finish writing to %s', bdepthFileName)
-                time.sleep(60)
-            if self.totalRecords > 1e7:
-                self.logger.info('Sleeping another 300 seconds to give time for system call to'
-                                 ' finish writing to %s for more than 10 million records', bdepthFileName)
-                time.sleep(300)
-
-            # Create our new Parameter
-            self.logger.debug('Getting or creating new altitude Parameter')
+        # Read the bounding box of the terrain file. The grdtrack command quietly does not write any lines for points outside of the grid.
+        if self.grdTerrain:
             try:
-                p_alt, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
-                        standard_name='height_above_sea_floor',
-                        long_name='Altitude',
-                        description=("Calculated in STOQS loader by using GMT's grdtrack(1) program on the Platform's"
-                                     " latitude, longitude values and differencing the Platform's depth with the"
-                                     " bottom depth data in file %s." % self.grdTerrain.split('/')[-1]),
-                        units='m',
-                        name='altitude',
-                        origin='https://github.com/stoqs/stoqs/blob/45f53d134d336fdbdb38f73959a2ce3be4148227/stoqs/loaders/__init__.py#L1216-L1322'
-                )
-            except IntegrityError:
-                # A bit of a mystery why sometimes this Exception happens (simply get p_alt if it happens):
-                # IntegrityError: duplicate key value violates unique constraint "stoqs_parameter_name_key"
-                p_alt = m.Parameter.objects.using(self.dbAlias).get(name='altitude')
-
-            parameterCounts[p_alt] = ms.count()
-            self.assignParameterGroup({p_alt: ms.count()}, groupName=MEASUREDINSITU)
-
-            # Read values from the grid sampling (bottom depths) and add datavalues to the altitude parameter using the save Measurements
-            count = 0
-            with open(bdepthFileName) as altFH:
+                fh = Dataset(self.grdTerrain)
+                # Old GMT format
+                xmin, xmax = fh.variables['x_range'][:]
+                ymin, ymax = fh.variables['y_range'][:]
+            except IOError as e:
+                self.logger.error('Cannot add altitude. Make sure file %s is present.', self.grdTerrain)
+            except KeyError as e:
                 try:
-                    with transaction.atomic():
-                        for line in altFH:
-                            bdepth = line.split()[2]
-                            alt = -float(bdepth)-depthList.pop(0)
-                            meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
-                            mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
-                            mp_alt.save(using=self.dbAlias)
-                            count += 1
-                except IntegrityError as e:
-                    self.logger.warn(e)
-                except DatabaseError as e:
-                    self.logger.warn(e)
+                    # New GMT format
+                    xmin, xmax = fh.variables['lon'].actual_range
+                    ymin, ymax = fh.variables['lat'].actual_range
+                except Exception as e:
+                    try:
+                        # Yet another format (seen in SanPedroBasin50.grd)
+                        xmin, xmax = fh.variables['x'].actual_range
+                        ymin, ymax = fh.variables['y'].actual_range
+                    except Exception as e:
+                        self.logger.error('Cannot read range metadata from %s. Not able to load'
+                                          ' altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
+                        return parameterCounts
+            except Exception as e:
+                self.logger.exception(e)
+                return parameterCounts
+            finally:
+                fh.close()
 
-            # Cleanup and sanity check
-            os.remove(xyFileName)
-            os.remove(bdepthFileName)
-            if inputFileCount != count:
-                self.logger.warn('Counts are not equal! inputFileCount = %s, count from grdtrack output = %s', inputFileCount, count)
+            bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
 
-            return parameterCounts
+        # Build file of Measurement lon & lat for grdtrack to process
+        xyFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_LatLon_', suffix='.txt').name
+        xyFH = open(xyFileName, 'w')
+        ms = m.Measurement.objects.using(self.dbAlias).filter(geom__within=bbox)
+        if activity:
+            ms = ms.filter(instantpoint__activity=activity)
+        ms = ms.order_by('instantpoint__activity__id', 'instantpoint__timevalue').values('id', 'geom', 'depth').distinct()
+        mList = []
+        depthList = []
+        for me in ms:
+            mList.append(me['id'])
+            depthList.append(me['depth'])
+            xyFH.write("%f %f\n" % (me['geom'].x, me['geom'].y))
 
-        return _innerAddAltitude(self, parameterCounts, activity)
+        xyFH.close()
+        inputFileCount = len(mList)
+        self.logger.debug('Wrote file %s with %d records', xyFileName, inputFileCount)
 
+        # Requires GMT (yum install GMT)
+        bdepthFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_BDepth', suffix='.txt').name
+        if cmd_exists('grdtrack'):
+            cmd = "grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
+        else:
+            # Assume we have GMT Version 5 installed
+            cmd = "gmt grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
+
+        self.logger.info('Executing %s' % cmd)
+        os.system(cmd)
+        if self.totalRecords > 1e6:
+            self.logger.info('Sleeping 60 seconds to give time for system call to finish writing to %s', bdepthFileName)
+            time.sleep(60)
+        if self.totalRecords > 1e7:
+            self.logger.info('Sleeping another 300 seconds to give time for system call to'
+                             ' finish writing to %s for more than 10 million records', bdepthFileName)
+            time.sleep(300)
+
+        # Create our new Parameter
+        self.logger.debug('Getting or creating new altitude Parameter')
+        try:
+            p_alt, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
+                    standard_name='height_above_sea_floor',
+                    long_name='Altitude',
+                    description=("Calculated in STOQS loader by using GMT's grdtrack(1) program on the Platform's"
+                                 " latitude, longitude values and differencing the Platform's depth with the"
+                                 " bottom depth data in file %s." % self.grdTerrain.split('/')[-1]),
+                    units='m',
+                    name='altitude',
+                    origin='https://github.com/stoqs/stoqs/blob/45f53d134d336fdbdb38f73959a2ce3be4148227/stoqs/loaders/__init__.py#L1216-L1322'
+            )
+        except IntegrityError:
+            # A bit of a mystery why sometimes this Exception happens (simply get p_alt if it happens):
+            # IntegrityError: duplicate key value violates unique constraint "stoqs_parameter_name_key"
+            p_alt = m.Parameter.objects.using(self.dbAlias).get(name='altitude')
+
+        parameterCounts[p_alt] = ms.count()
+        self.assignParameterGroup({p_alt: ms.count()}, groupName=MEASUREDINSITU)
+
+        # Read values from the grid sampling (bottom depths) and add datavalues to the altitude parameter using the save Measurements
+        count = 0
+        with open(bdepthFileName) as altFH:
+            try:
+                with transaction.atomic():
+                    for line in altFH:
+                        bdepth = line.split()[2]
+                        alt = -float(bdepth)-depthList.pop(0)
+                        meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
+                        mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
+                        mp_alt.save(using=self.dbAlias)
+                        count += 1
+            except IntegrityError as e:
+                self.logger.warn(e)
+            except DatabaseError as e:
+                self.logger.warn(e)
+
+        # Cleanup and sanity check
+        os.remove(xyFileName)
+        os.remove(bdepthFileName)
+        if inputFileCount != count:
+            self.logger.warn('Counts are not equal! inputFileCount = %s, count from grdtrack output = %s', inputFileCount, count)
+
+        return parameterCounts
