@@ -760,6 +760,7 @@ class Base_Loader(STOQS_Loader):
         max_secs_diff = 2
         ips = []
         meass = []
+        i = 0
         for mt in mtimes:
             try:
                 ip, secs_diff = get_closest_instantpoint(self.associatedActivityName, mt, self.dbAlias)
@@ -767,11 +768,16 @@ class Base_Loader(STOQS_Loader):
                 self.logger.error('Could not find corresponding measurment for LOPC data measured at %s', tv)
             else:
                 if secs_diff > max_secs_diff:
-                    self.logger.warn(f"LOPC data at {mt.strftime('%Y-%m-%d %H:%M:%S')} more than {max_secs_diff} secs away from existing measurement: {secs_diff}")
+                    i += 1
+                    self.logger.warn(f"{i:3d}. LOPC data at {mt.strftime('%Y-%m-%d %H:%M:%S')} more than {max_secs_diff} secs away from existing measurement: {secs_diff}")
 
                 meass.append(Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
 
-        return meass
+        meass_set = set(meass)
+        if len(meass_set) != len(meass):
+            self.logger.info(f'{len(meass) - len(meass_set)} duplicate Measurements removed')
+
+        return meass_set
 
     def _good_value_generator(self, pname, values):
         '''Generate good data values where bad values and nans are replaced consistently with None
