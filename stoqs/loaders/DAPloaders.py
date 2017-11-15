@@ -733,7 +733,7 @@ class Base_Loader(STOQS_Loader):
         else:
             longitudes = self.ds[ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
 
-        mtimes, depths, latitudes, longitudes = zip(*self.good_coords(
+        mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
                                             pnames, mtimes, depths, latitudes, longitudes))
 
         points = (f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes))
@@ -742,9 +742,9 @@ class Base_Loader(STOQS_Loader):
         meass = (Measurement(depth=repr(de), geom=po) for de, po in zip(depths, points))
 
         # Reassign meass with Measurement objects that have their id set
-        meass = self._bulk_load_coordinates(ips, meass)
+        meass = self._bulk_load_coordinates(ips, meass, dup_times)
 
-        return meass
+        return meass, dup_times
 
     def _load_coords_from_instr_ds(self, tindx, ac):
         '''Pull itime coordinate from Instrument (time-coordinate-only) NetCDF dataset (e.g. LOPC),
@@ -801,7 +801,7 @@ class Base_Loader(STOQS_Loader):
                     # First time through, bulk load the coordinates: instant_points and measurements
                     if ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
                         # Expect CF Discrete Sampling Geometry or EPIC dataset
-                        meass = self._load_coords_from_dsg_ds(tindx, ac, pnames)
+                        meass, dup_times = self._load_coords_from_dsg_ds(tindx, ac, pnames)
                     else:
                         # Expect instrument (time-coordinate-only) dataset
                         meass = self._load_coords_from_instr_ds(tindx, ac)
@@ -821,7 +821,7 @@ class Base_Loader(STOQS_Loader):
                     # Need to bulk_create() all values, set bad ones to None and remove them after insert
                     values = self._good_value_generator(pname, values)
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
-                                                datavalue=va) for me, va in zip(meass, values))
+                                                datavalue=va) for me, va, dt in zip(meass, values, dup_times) if not dt)
 
                 # All items but mess are generators, so we can call len() on it
                 self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
@@ -1066,10 +1066,10 @@ class Base_Loader(STOQS_Loader):
             meas.instantpoint = ip
             yield meas
         
-    def _bulk_load_coordinates(self, ips, meass):
+    def _bulk_load_coordinates(self, ips, meass, dup_times):
 
         self.logger.info(f'Calling bulk_create() for InstantPoints in ips generator')
-        ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips)
+        ips = InstantPoint.objects.using(self.dbAlias).bulk_create((ip for ip, dt in zip(ips, dup_times) if not dt))
 
         meass = self._measurement_with_instantpoint(ips, meass)
 
@@ -1147,7 +1147,7 @@ class Base_Loader(STOQS_Loader):
         except IntegrityError as e:
             # Likely duplicate key value violates unique constraint "stoqs_measuredparameter_measurement_id_parameter_1328c3fb_uniq"
             # Can't append data from source with bulk_create(), give appropriate warning
-            self.logger.error(str(e))
+            self.logger.exception(str(e))
             self.logger.error(f'Failed to bulk_create() data from URL: {self.url}')
             self.logger.error(f'If you need to load data that has been appended to the URL then delete its Activity before loading.')
 

@@ -820,15 +820,21 @@ class STOQS_Loader(object):
         '''Generate good coordinate if any of the parameters has good coordinate data.
         Appropriate for trajectory data where there is one-to-one match of coorcinates.
         '''
+        previous_times = []
         for mt, de, la, lo in zip(mtimes, depths, latitudes, longitudes):
-             all_bad = True
-             for pname in pnames:
-                 if not self.is_coordinate_bad(pname, mt, de, la, lo):
-                     all_bad = False
-             if all_bad:
-                 continue
+            all_bad = True
+            dup_time = False
+            for pname in pnames:
+                if not self.is_coordinate_bad(pname, mt, de, la, lo):
+                    all_bad = False
+            if all_bad:
+                continue
 
-             yield mt, de, la, lo
+            previous_times.append(mt)
+            if mt in previous_times[:-1]:
+                dup_time = True
+
+            yield mt, de, la, lo, dup_time
 
     def preProcessParams(self, row):
         '''
