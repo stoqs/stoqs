@@ -660,7 +660,7 @@ class SubSamplesLoader(STOQS_Loader):
         subCount = 0
         p = None
         loadedParentSamples = []
-        parameterCount = {}
+        self.parameter_counts = {}
         for r in csv.DictReader(open(fileName, encoding='latin-1')):
             logger.debug(r)
             aName = r['Cruise']
@@ -733,9 +733,9 @@ class SubSamplesLoader(STOQS_Loader):
                 else:
                     subCount = subCount + 1
                     try:
-                        parameterCount[p] += 1
+                        self.parameter_counts[p] += 1
                     except KeyError:
-                        parameterCount[p] = 0
+                        self.parameter_counts[p] = 0
 
                     loadedParentSamples.append(parentSample)
    
@@ -743,10 +743,10 @@ class SubSamplesLoader(STOQS_Loader):
             # Last logger info message and finish up the loading for this file
             logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
 
-            self.assignParameterGroup(parameterCount, groupName=SAMPLED)
-            self.postProcess(parameterCount)
+            self.assignParameterGroup(groupName=SAMPLED)
+            self.postProcess()
 
-    def postProcess(self, parameterCount):
+    def postProcess(self):
         '''
         Perform step(s) following subsample loads, namely inserting/updating records in the ActivityParameter
         table.  The updateActivityParameterStats() method in STOQS_Loader expects a hash of parameters
@@ -756,7 +756,7 @@ class SubSamplesLoader(STOQS_Loader):
             a_id = row['sample__instantpoint__activity__pk']
             logger.debug('a_id = %d', a_id)
             self.activity = Activity.objects.using(self.dbAlias).get(pk=a_id)
-            self.updateActivityParameterStats(parameterCount, sampledFlag=True)
+            self.updateActivityParameterStats(sampledFlag=True)
 
 
 if __name__ == '__main__':

@@ -827,6 +827,7 @@ class Base_Loader(STOQS_Loader):
                 self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
                 mps = self._measuredparameter_with_measurement(meass, mps)
                 mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
+                self.parameter_counts[self.param_by_key[pname]] = len(mps)
                 total_loaded += len(mps)
 
         return total_loaded
@@ -1097,7 +1098,7 @@ class Base_Loader(STOQS_Loader):
 
         path = None
         parmCount = {}
-        parameterCount = {}
+        self.parameter_counts = {}
         for key in self.include_names:
             parmCount[key] = 0
 
@@ -1115,7 +1116,7 @@ class Base_Loader(STOQS_Loader):
 
         for key in (set(self.include_names) & set(self.ds.keys())):
             self.param_by_key[key] = self.getParameterByName(key)
-            parameterCount[self.param_by_key[key]] = 0
+            self.parameter_counts[self.param_by_key[key]] = 0
 
         for key in self.ds.keys():
             self.mv_by_key[key] = self.getmissing_value(key)
@@ -1178,11 +1179,11 @@ class Base_Loader(STOQS_Loader):
 
         # Add additional Parameters for all appropriate Measurements
         self.logger.info("Adding SigmaT and Spiciness to the Measurements...")
-        self.addSigmaTandSpice(parameterCount, self.activity)
+        self.addSigmaTandSpice(self.activity)
         if self.grdTerrain:
             self.logger.info("Adding altitude to the Measurements...")
             try:
-                self.addAltitude(parameterCount, self.activity)
+                self.addAltitude(self.activity)
             except FileNotFound as e:
                 self.logger.warn(str(e))
 
@@ -1226,9 +1227,9 @@ class Base_Loader(STOQS_Loader):
         # Update the stats and store simple line values
         #
         self.updateActivityMinMaxDepth()
-        self.updateActivityParameterStats(parameterCount)
+        self.updateActivityParameterStats()
         self.updateCampaignStartEnd()
-        self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
+        self.assignParameterGroup(groupName=MEASUREDINSITU)
         if featureType == TRAJECTORY:
             self.insertSimpleDepthTimeSeries()
             self.saveBottomDepth()
