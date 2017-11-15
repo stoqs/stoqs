@@ -908,10 +908,7 @@ class STOQS_Loader(object):
         '''Update the database with descriptive statistics for parameters
         belonging to the activity.
         '''
-        for p in parameters:
-            ap, _ = m.ActivityParameter.objects.using(dbAlias).get_or_create(
-                            parameter=p, activity=activity)
-
+        for p in list(parameters.keys()):
             if sampledFlag:
                 data = m.SampledParameter.objects.using(dbAlias).filter(
                                 parameter=p, sample__instantpoint__activity=activity
@@ -921,11 +918,26 @@ class STOQS_Loader(object):
                                 parameter=p, measurement__instantpoint__activity=activity
                                 ).values_list('datavalue', flat=True)
 
+            # Just don't create an ActivityParameter for data that don't exist
+            if len(data) == 0:
+                continue
+
+            ap, _ = m.ActivityParameter.objects.using(dbAlias).get_or_create(
+                            parameter=p, activity=activity)
+
             np_data = np.array([float(d) for d in data if d is not None])
             np_data.sort()
             ap.number = len(np_data)
-            ap.min = np_data.min()
-            ap.max = np_data.max()
+            try:
+                ap.min = np_data.min()
+                ap.max = np_data.max()
+            except ValueError as err:
+                if not err.args:
+                    err.args=('',)
+
+                err.args += (f'Parameter: {p}',)
+                raise
+
             ap.mean = np_data.mean()
             ap.median = median(list(np_data))
             ap.mode = mode(np_data)
@@ -953,7 +965,7 @@ class STOQS_Loader(object):
         '''
         cls.update_ap_stats(dbAlias, activity, parameters, sampledFlag)
 
-    def updateActivityParameterStats(self, parameterCounts, sampledFlag=False):
+    def updateActivityParameterStats(self, sampledFlag=False):
         ''' 
         Examine the data for the Activity, compute and update some statistics on the measuredparameters
         for this activity.  Store the histogram in the associated table.
@@ -964,7 +976,7 @@ class STOQS_Loader(object):
             raise Exception('Must have an activity defined in self.activity')
 
         try:
-            self.update_activityparameter_stats(self.dbAlias, act, parameterCounts, sampledFlag)
+            self.update_activityparameter_stats(self.dbAlias, act, self.parameter_counts, sampledFlag)
         except ValueError as e:
             self.logger.warn('%s. Likely a dataarray as from LOPC data', e)
         except IntegrityError as e:
@@ -1215,12 +1227,12 @@ class STOQS_Loader(object):
         except AttributeError as e:
             self.logger.warn(e)
 
-    def assignParameterGroup(self, parameterCounts, groupName=MEASUREDINSITU):
+    def assignParameterGroup(self, groupName=MEASUREDINSITU):
         ''' 
-        For all the parameters in @parameterCounts create a many-to-many association with the Group named @groupName
+        For all the parameters in self.parameter_counts create a many-to-many association with the Group named @groupName
         '''                 
         g, _ = m.ParameterGroup.objects.using(self.dbAlias).get_or_create(name=groupName)
-        for p in parameterCounts:
+        for p in self.parameter_counts:
             pgps = m.ParameterGroupParameter.objects.using(self.dbAlias).filter(parameter=p, parametergroup=g)
             if not pgps:
                 # Attempt saving relation only if it does not exist
@@ -1230,12 +1242,12 @@ class STOQS_Loader(object):
                 except Exception as e:
                     self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
-    def addSigmaTandSpice(self, parameterCounts, activity=None):
+    def addSigmaTandSpice(self, activity=None):
         ''' 
         For all measurements that have standard_name parameters of (sea_water_salinity or sea_water_practical_salinity) and sea_water_temperature 
         compute sigma-t and add it as a parameter
         '''                 
-        def _innerAddSigmaTandSpice(self, parameterCounts, activity):
+        def _innerAddSigmaTandSpice(self, activity):
             # Find all measurements with 'sea_water_temperature' and ('sea_water_salinity' or 'sea_water_practical_salinity')
             ms = m.Measurement.objects.using(self.dbAlias)
             if activity:
@@ -1255,7 +1267,7 @@ class STOQS_Loader(object):
 
             if not ms:
                 self.logger.info("No sea_water_temperature and sea_water_salinity; can't add SigmaT and Spice.")
-                return parameterCounts
+                return
 
             if self.dataStartDatetime:
                 ms = ms.filter(instantpoint__timevalue__gt=self.dataStartDatetime)
@@ -1287,13 +1299,13 @@ class STOQS_Loader(object):
                                    " http://www.satlab.hawaii.edu/spice.")
             p_spice.save(using=self.dbAlias)
 
-            parameterCounts[p_sigmat] = ms.count()
-            parameterCounts[p_spice] = ms.count()
-            self.assignParameterGroup({p_sigmat: ms.count()}, groupName=MEASUREDINSITU)
-            self.assignParameterGroup({p_spice: ms.count()}, groupName=MEASUREDINSITU)
+            self.parameter_counts[p_sigmat] = ms.count()
+            self.parameter_counts[p_spice] = ms.count()
+            self.assignParameterGroup(groupName=MEASUREDINSITU)
+            self.assignParameterGroup(groupName=MEASUREDINSITU)
 
             # Loop through all Measurements, compute Sigma-T & Spice, and add to the Measurement
-            self.logger.info(f'Looping through {parameterCounts[p_sigmat]} Measurments to add Sigma-T & Spice')
+            self.logger.info(f'Looping through {self.parameter_counts[p_sigmat]} Measurments to add Sigma-T & Spice')
             for me in ms.distinct():
                 try:
                     with transaction.atomic():
@@ -1317,11 +1329,11 @@ class STOQS_Loader(object):
                     self.logger.warn(e)
 
             self.logger.info('Done.')
-            return parameterCounts
+            return
 
-        return _innerAddSigmaTandSpice(self, parameterCounts, activity)
+        return _innerAddSigmaTandSpice(self, activity)
 
-    def addAltitude(self, parameterCounts, activity=None):
+    def addAltitude(self, activity=None):
         ''' 
         For all measurements lookup the water depth from a GMT grd file using grdtrack(1), 
         subtract the depth and add altitude as a new Parameter to the Measurement
@@ -1349,10 +1361,10 @@ class STOQS_Loader(object):
                     except Exception as e:
                         self.logger.error('Cannot read range metadata from %s. Not able to load'
                                           ' altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
-                        return parameterCounts
+                        return
             except Exception as e:
                 self.logger.exception(e)
-                return parameterCounts
+                return
             finally:
                 fh.close()
 
@@ -1412,8 +1424,8 @@ class STOQS_Loader(object):
             # IntegrityError: duplicate key value violates unique constraint "stoqs_parameter_name_key"
             p_alt = m.Parameter.objects.using(self.dbAlias).get(name='altitude')
 
-        parameterCounts[p_alt] = ms.count()
-        self.assignParameterGroup({p_alt: ms.count()}, groupName=MEASUREDINSITU)
+        self.parameter_counts[p_alt] = ms.count()
+        self.assignParameterGroup(groupName=MEASUREDINSITU)
 
         # Read values from the grid sampling (bottom depths) and add datavalues to the altitude parameter using the save Measurements
         count = 0
@@ -1438,4 +1450,4 @@ class STOQS_Loader(object):
         if inputFileCount != count:
             self.logger.warn('Counts are not equal! inputFileCount = %s, count from grdtrack output = %s', inputFileCount, count)
 
-        return parameterCounts
+        return
