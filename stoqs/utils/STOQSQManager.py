@@ -1138,7 +1138,7 @@ class STOQSQManager(object):
                 if float(aseconds) > float(secondsperpixel) or len(self.kwargs.get('platforms')) == 1:
                     # Multiple points of this activity can be displayed in the flot, get an appropriate stride
                     logger.debug('PIXELS_WIDE = %s, ndCounts[p] = %s', PIXELS_WIDE, ndCounts[p])
-                    stride = qs_mp_a.count() / PIXELS_WIDE / ndCounts[p]        # Integer factors -> integer result
+                    stride = int(round(qs_mp_a.count() / PIXELS_WIDE / ndCounts[p]))
                     if stride < 1:
                         stride = 1
                     logger.debug('Getting timeseries from MeasuredParameter table with stride = %s', stride)
