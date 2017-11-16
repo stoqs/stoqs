@@ -850,6 +850,31 @@ class STOQS_Loader(object):
 
         return row
 
+    def _is_any_value_good(self, dap_type):
+        '''Return True if any data element in dap_type (numpy array) is not NaN
+        '''
+        # Retreiving data via .array[:] can take some time, do initial retrieval of small number first
+        try:
+            values = dap_type.array[:10].flatten()
+        except AttributeError:
+            values = dap_type[:10].flatten()
+
+        for value in values:
+            if not np.isnan(value).all():
+                return True
+
+        # No good data found in initial records, test the entire dataset
+        try:
+            values = dap_type.array[:].flatten()
+        except AttributeError:
+            values = dap_type[:].flatten()
+
+        for value in values:
+            if not np.isnan(value).all():
+                return True
+
+        return False
+
     def checkForValidData(self):
         '''
         Do a pre- check on the OPeNDAP url for the include_names variables. If there are non-NaN data in
@@ -863,16 +888,10 @@ class STOQS_Loader(object):
             allNaNFlag[v] = True
             self.logger.debug("include_name: %s", v)
             try:
-                try:
-                    values = self.ds[v].array[:].flatten()
-                except AttributeError:
-                    values = self.ds[v][:].flatten()
-                for value in values:
-                    if not np.isnan(value).all():
-                        allNaNFlag[v] = False
-                        anyValidData = True
-                        break
-
+                anyValidData = self._is_any_value_good(self.ds[v])
+                if anyValidData:
+                    allNaNFlag[v] = False
+                    break
             except KeyError:
                 self.logger.debug('Parameter %s not in %s. Skipping.', v, list(self.ds.keys()))
                 if v.find('.') != -1:
