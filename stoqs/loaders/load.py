@@ -422,6 +422,10 @@ local   all             all                                     peer
                 load_command += ' -t'
                 db += '_t'
 
+            if hasattr(self.args, 'verbose'):
+                if self.args.verbose > 2:
+                    load_command += ' -v'
+
             if db not in settings.DATABASES:
                 # Django docs say not to do this, but I can't seem to force a settings reload.
                 # Note that databases in campaigns.py are put in settings by settings.local.

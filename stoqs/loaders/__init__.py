@@ -820,15 +820,21 @@ class STOQS_Loader(object):
         '''Generate good coordinate if any of the parameters has good coordinate data.
         Appropriate for trajectory data where there is one-to-one match of coorcinates.
         '''
+        previous_times = []
         for mt, de, la, lo in zip(mtimes, depths, latitudes, longitudes):
-             all_bad = True
-             for pname in pnames:
-                 if not self.is_coordinate_bad(pname, mt, de, la, lo):
-                     all_bad = False
-             if all_bad:
-                 continue
+            all_bad = True
+            dup_time = False
+            for pname in pnames:
+                if not self.is_coordinate_bad(pname, mt, de, la, lo):
+                    all_bad = False
+            if all_bad:
+                continue
 
-             yield mt, de, la, lo
+            previous_times.append(mt)
+            if mt in previous_times[:-1]:
+                dup_time = True
+
+            yield mt, de, la, lo, dup_time
 
     def preProcessParams(self, row):
         '''
@@ -844,6 +850,31 @@ class STOQS_Loader(object):
 
         return row
 
+    def _is_any_value_good(self, dap_type):
+        '''Return True if any data element in dap_type (numpy array) is not NaN
+        '''
+        # Retreiving data via .array[:] can take some time, do initial retrieval of small number first
+        try:
+            values = dap_type.array[:10].flatten()
+        except AttributeError:
+            values = dap_type[:10].flatten()
+
+        for value in values:
+            if not np.isnan(value).all():
+                return True
+
+        # No good data found in initial records, test the entire dataset
+        try:
+            values = dap_type.array[:].flatten()
+        except AttributeError:
+            values = dap_type[:].flatten()
+
+        for value in values:
+            if not np.isnan(value).all():
+                return True
+
+        return False
+
     def checkForValidData(self):
         '''
         Do a pre- check on the OPeNDAP url for the include_names variables. If there are non-NaN data in
@@ -857,16 +888,10 @@ class STOQS_Loader(object):
             allNaNFlag[v] = True
             self.logger.debug("include_name: %s", v)
             try:
-                try:
-                    values = self.ds[v].array[:].flatten()
-                except AttributeError:
-                    values = self.ds[v][:].flatten()
-                for value in values:
-                    if not np.isnan(value).all():
-                        allNaNFlag[v] = False
-                        anyValidData = True
-                        break
-
+                anyValidData = self._is_any_value_good(self.ds[v])
+                if anyValidData:
+                    allNaNFlag[v] = False
+                    break
             except KeyError:
                 self.logger.debug('Parameter %s not in %s. Skipping.', v, list(self.ds.keys()))
                 if v.find('.') != -1:
@@ -908,10 +933,7 @@ class STOQS_Loader(object):
         '''Update the database with descriptive statistics for parameters
         belonging to the activity.
         '''
-        for p in parameters:
-            ap, _ = m.ActivityParameter.objects.using(dbAlias).get_or_create(
-                            parameter=p, activity=activity)
-
+        for p in list(parameters.keys()):
             if sampledFlag:
                 data = m.SampledParameter.objects.using(dbAlias).filter(
                                 parameter=p, sample__instantpoint__activity=activity
@@ -921,11 +943,26 @@ class STOQS_Loader(object):
                                 parameter=p, measurement__instantpoint__activity=activity
                                 ).values_list('datavalue', flat=True)
 
+            # Just don't create an ActivityParameter for data that don't exist
+            if len(data) == 0:
+                continue
+
+            ap, _ = m.ActivityParameter.objects.using(dbAlias).get_or_create(
+                            parameter=p, activity=activity)
+
             np_data = np.array([float(d) for d in data if d is not None])
             np_data.sort()
             ap.number = len(np_data)
-            ap.min = np_data.min()
-            ap.max = np_data.max()
+            try:
+                ap.min = np_data.min()
+                ap.max = np_data.max()
+            except ValueError as err:
+                if not err.args:
+                    err.args=('',)
+
+                err.args += (f'Parameter: {p}',)
+                raise
+
             ap.mean = np_data.mean()
             ap.median = median(list(np_data))
             ap.mode = mode(np_data)
@@ -953,7 +990,7 @@ class STOQS_Loader(object):
         '''
         cls.update_ap_stats(dbAlias, activity, parameters, sampledFlag)
 
-    def updateActivityParameterStats(self, parameterCounts, sampledFlag=False):
+    def updateActivityParameterStats(self, sampledFlag=False):
         ''' 
         Examine the data for the Activity, compute and update some statistics on the measuredparameters
         for this activity.  Store the histogram in the associated table.
@@ -964,7 +1001,7 @@ class STOQS_Loader(object):
             raise Exception('Must have an activity defined in self.activity')
 
         try:
-            self.update_activityparameter_stats(self.dbAlias, act, parameterCounts, sampledFlag)
+            self.update_activityparameter_stats(self.dbAlias, act, self.parameter_counts, sampledFlag)
         except ValueError as e:
             self.logger.warn('%s. Likely a dataarray as from LOPC data', e)
         except IntegrityError as e:
@@ -1215,12 +1252,12 @@ class STOQS_Loader(object):
         except AttributeError as e:
             self.logger.warn(e)
 
-    def assignParameterGroup(self, parameterCounts, groupName=MEASUREDINSITU):
+    def assignParameterGroup(self, groupName=MEASUREDINSITU):
         ''' 
-        For all the parameters in @parameterCounts create a many-to-many association with the Group named @groupName
+        For all the parameters in self.parameter_counts create a many-to-many association with the Group named @groupName
         '''                 
         g, _ = m.ParameterGroup.objects.using(self.dbAlias).get_or_create(name=groupName)
-        for p in parameterCounts:
+        for p in self.parameter_counts:
             pgps = m.ParameterGroupParameter.objects.using(self.dbAlias).filter(parameter=p, parametergroup=g)
             if not pgps:
                 # Attempt saving relation only if it does not exist
@@ -1230,12 +1267,12 @@ class STOQS_Loader(object):
                 except Exception as e:
                     self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
-    def addSigmaTandSpice(self, parameterCounts, activity=None):
+    def addSigmaTandSpice(self, activity=None):
         ''' 
         For all measurements that have standard_name parameters of (sea_water_salinity or sea_water_practical_salinity) and sea_water_temperature 
         compute sigma-t and add it as a parameter
         '''                 
-        def _innerAddSigmaTandSpice(self, parameterCounts, activity):
+        def _innerAddSigmaTandSpice(self, activity):
             # Find all measurements with 'sea_water_temperature' and ('sea_water_salinity' or 'sea_water_practical_salinity')
             ms = m.Measurement.objects.using(self.dbAlias)
             if activity:
@@ -1255,7 +1292,7 @@ class STOQS_Loader(object):
 
             if not ms:
                 self.logger.info("No sea_water_temperature and sea_water_salinity; can't add SigmaT and Spice.")
-                return parameterCounts
+                return
 
             if self.dataStartDatetime:
                 ms = ms.filter(instantpoint__timevalue__gt=self.dataStartDatetime)
@@ -1287,13 +1324,13 @@ class STOQS_Loader(object):
                                    " http://www.satlab.hawaii.edu/spice.")
             p_spice.save(using=self.dbAlias)
 
-            parameterCounts[p_sigmat] = ms.count()
-            parameterCounts[p_spice] = ms.count()
-            self.assignParameterGroup({p_sigmat: ms.count()}, groupName=MEASUREDINSITU)
-            self.assignParameterGroup({p_spice: ms.count()}, groupName=MEASUREDINSITU)
+            self.parameter_counts[p_sigmat] = ms.count()
+            self.parameter_counts[p_spice] = ms.count()
+            self.assignParameterGroup(groupName=MEASUREDINSITU)
+            self.assignParameterGroup(groupName=MEASUREDINSITU)
 
             # Loop through all Measurements, compute Sigma-T & Spice, and add to the Measurement
-            self.logger.info(f'Looping through {parameterCounts[p_sigmat]} Measurments to add Sigma-T & Spice')
+            self.logger.info(f'Looping through {self.parameter_counts[p_sigmat]} Measurments to add Sigma-T & Spice')
             for me in ms.distinct():
                 try:
                     with transaction.atomic():
@@ -1317,130 +1354,125 @@ class STOQS_Loader(object):
                     self.logger.warn(e)
 
             self.logger.info('Done.')
-            return parameterCounts
+            return
 
-        return _innerAddSigmaTandSpice(self, parameterCounts, activity)
+        return _innerAddSigmaTandSpice(self, activity)
 
-    def addAltitude(self, parameterCounts, activity=None):
+    def addAltitude(self, activity=None):
         ''' 
         For all measurements lookup the water depth from a GMT grd file using grdtrack(1), 
         subtract the depth and add altitude as a new Parameter to the Measurement
         To be called from load script after process_command_line().
         '''
-        @transaction.atomic(using=self.dbAlias)
-        def _innerAddAltitude(self, parameterCounts, activity=None):
-            # Read the bounding box of the terrain file. The grdtrack command quietly does not write any lines for points outside of the grid.
-            if self.grdTerrain:
-                try:
-                    fh = Dataset(self.grdTerrain)
-                    # Old GMT format
-                    xmin, xmax = fh.variables['x_range'][:]
-                    ymin, ymax = fh.variables['y_range'][:]
-                except IOError as e:
-                    self.logger.error('Cannot add altitude. Make sure file %s is present.', self.grdTerrain)
-                except KeyError as e:
-                    try:
-                        # New GMT format
-                        xmin, xmax = fh.variables['lon'].actual_range
-                        ymin, ymax = fh.variables['lat'].actual_range
-                    except Exception as e:
-                        try:
-                            # Yet another format (seen in SanPedroBasin50.grd)
-                            xmin, xmax = fh.variables['x'].actual_range
-                            ymin, ymax = fh.variables['y'].actual_range
-                        except Exception as e:
-                            self.logger.error('Cannot read range metadata from %s. Not able to load'
-                                              ' altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
-                            return parameterCounts
-                except Exception as e:
-                    self.logger.exception(e)
-                    return parameterCounts
-                finally:
-                    fh.close()
-
-                bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
-
-            # Build file of Measurement lon & lat for grdtrack to process
-            xyFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_LatLon_', suffix='.txt').name
-            xyFH = open(xyFileName, 'w')
-            ms = m.Measurement.objects.using(self.dbAlias).filter(geom__within=bbox)
-            if activity:
-                ms = ms.filter(instantpoint__activity=activity)
-            ms = ms.order_by('instantpoint__activity__id', 'instantpoint__timevalue').values('id', 'geom', 'depth').distinct()
-            mList = []
-            depthList = []
-            for me in ms:
-                mList.append(me['id'])
-                depthList.append(me['depth'])
-                xyFH.write("%f %f\n" % (me['geom'].x, me['geom'].y))
-
-            xyFH.close()
-            inputFileCount = len(mList)
-            self.logger.debug('Wrote file %s with %d records', xyFileName, inputFileCount)
-
-            # Requires GMT (yum install GMT)
-            bdepthFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_BDepth', suffix='.txt').name
-            if cmd_exists('grdtrack'):
-                cmd = "grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
-            else:
-                # Assume we have GMT Version 5 installed
-                cmd = "gmt grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
-
-            self.logger.info('Executing %s' % cmd)
-            os.system(cmd)
-            if self.totalRecords > 1e6:
-                self.logger.info('Sleeping 60 seconds to give time for system call to finish writing to %s', bdepthFileName)
-                time.sleep(60)
-            if self.totalRecords > 1e7:
-                self.logger.info('Sleeping another 300 seconds to give time for system call to'
-                                 ' finish writing to %s for more than 10 million records', bdepthFileName)
-                time.sleep(300)
-
-            # Create our new Parameter
-            self.logger.debug('Getting or creating new altitude Parameter')
+        # Read the bounding box of the terrain file. The grdtrack command quietly does not write any lines for points outside of the grid.
+        if self.grdTerrain:
             try:
-                p_alt, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
-                        standard_name='height_above_sea_floor',
-                        long_name='Altitude',
-                        description=("Calculated in STOQS loader by using GMT's grdtrack(1) program on the Platform's"
-                                     " latitude, longitude values and differencing the Platform's depth with the"
-                                     " bottom depth data in file %s." % self.grdTerrain.split('/')[-1]),
-                        units='m',
-                        name='altitude',
-                        origin='https://github.com/stoqs/stoqs/blob/45f53d134d336fdbdb38f73959a2ce3be4148227/stoqs/loaders/__init__.py#L1216-L1322'
-                )
-            except IntegrityError:
-                # A bit of a mystery why sometimes this Exception happens (simply get p_alt if it happens):
-                # IntegrityError: duplicate key value violates unique constraint "stoqs_parameter_name_key"
-                p_alt = m.Parameter.objects.using(self.dbAlias).get(name='altitude')
-
-            parameterCounts[p_alt] = ms.count()
-            self.assignParameterGroup({p_alt: ms.count()}, groupName=MEASUREDINSITU)
-
-            # Read values from the grid sampling (bottom depths) and add datavalues to the altitude parameter using the save Measurements
-            count = 0
-            with open(bdepthFileName) as altFH:
+                fh = Dataset(self.grdTerrain)
+                # Old GMT format
+                xmin, xmax = fh.variables['x_range'][:]
+                ymin, ymax = fh.variables['y_range'][:]
+            except IOError as e:
+                self.logger.error('Cannot add altitude. Make sure file %s is present.', self.grdTerrain)
+            except KeyError as e:
                 try:
-                    with transaction.atomic():
-                        for line in altFH:
-                            bdepth = line.split()[2]
-                            alt = -float(bdepth)-depthList.pop(0)
-                            meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
-                            mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
-                            mp_alt.save(using=self.dbAlias)
-                            count += 1
-                except IntegrityError as e:
-                    self.logger.warn(e)
-                except DatabaseError as e:
-                    self.logger.warn(e)
+                    # New GMT format
+                    xmin, xmax = fh.variables['lon'].actual_range
+                    ymin, ymax = fh.variables['lat'].actual_range
+                except Exception as e:
+                    try:
+                        # Yet another format (seen in SanPedroBasin50.grd)
+                        xmin, xmax = fh.variables['x'].actual_range
+                        ymin, ymax = fh.variables['y'].actual_range
+                    except Exception as e:
+                        self.logger.error('Cannot read range metadata from %s. Not able to load'
+                                          ' altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
+                        return
+            except Exception as e:
+                self.logger.exception(e)
+                return
+            finally:
+                fh.close()
 
-            # Cleanup and sanity check
-            os.remove(xyFileName)
-            os.remove(bdepthFileName)
-            if inputFileCount != count:
-                self.logger.warn('Counts are not equal! inputFileCount = %s, count from grdtrack output = %s', inputFileCount, count)
+            bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
 
-            return parameterCounts
+        # Build file of Measurement lon & lat for grdtrack to process
+        xyFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_LatLon_', suffix='.txt').name
+        xyFH = open(xyFileName, 'w')
+        ms = m.Measurement.objects.using(self.dbAlias).filter(geom__within=bbox)
+        if activity:
+            ms = ms.filter(instantpoint__activity=activity)
+        ms = ms.order_by('instantpoint__activity__id', 'instantpoint__timevalue').values('id', 'geom', 'depth').distinct()
+        mList = []
+        depthList = []
+        for me in ms:
+            mList.append(me['id'])
+            depthList.append(me['depth'])
+            xyFH.write("%f %f\n" % (me['geom'].x, me['geom'].y))
 
-        return _innerAddAltitude(self, parameterCounts, activity)
+        xyFH.close()
+        inputFileCount = len(mList)
+        self.logger.debug('Wrote file %s with %d records', xyFileName, inputFileCount)
 
+        # Requires GMT (yum install GMT)
+        bdepthFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_BDepth', suffix='.txt').name
+        if cmd_exists('grdtrack'):
+            cmd = "grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
+        else:
+            # Assume we have GMT Version 5 installed
+            cmd = "gmt grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
+
+        self.logger.info('Executing %s' % cmd)
+        os.system(cmd)
+        if self.totalRecords > 1e6:
+            self.logger.info('Sleeping 60 seconds to give time for system call to finish writing to %s', bdepthFileName)
+            time.sleep(60)
+        if self.totalRecords > 1e7:
+            self.logger.info('Sleeping another 300 seconds to give time for system call to'
+                             ' finish writing to %s for more than 10 million records', bdepthFileName)
+            time.sleep(300)
+
+        # Create our new Parameter
+        self.logger.debug('Getting or creating new altitude Parameter')
+        try:
+            p_alt, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
+                    standard_name='height_above_sea_floor',
+                    long_name='Altitude',
+                    description=("Calculated in STOQS loader by using GMT's grdtrack(1) program on the Platform's"
+                                 " latitude, longitude values and differencing the Platform's depth with the"
+                                 " bottom depth data in file %s." % self.grdTerrain.split('/')[-1]),
+                    units='m',
+                    name='altitude',
+                    origin='https://github.com/stoqs/stoqs/blob/45f53d134d336fdbdb38f73959a2ce3be4148227/stoqs/loaders/__init__.py#L1216-L1322'
+            )
+        except IntegrityError:
+            # A bit of a mystery why sometimes this Exception happens (simply get p_alt if it happens):
+            # IntegrityError: duplicate key value violates unique constraint "stoqs_parameter_name_key"
+            p_alt = m.Parameter.objects.using(self.dbAlias).get(name='altitude')
+
+        self.parameter_counts[p_alt] = ms.count()
+        self.assignParameterGroup(groupName=MEASUREDINSITU)
+
+        # Read values from the grid sampling (bottom depths) and add datavalues to the altitude parameter using the save Measurements
+        count = 0
+        with open(bdepthFileName) as altFH:
+            try:
+                with transaction.atomic():
+                    for line in altFH:
+                        bdepth = line.split()[2]
+                        alt = -float(bdepth)-depthList.pop(0)
+                        meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
+                        mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
+                        mp_alt.save(using=self.dbAlias)
+                        count += 1
+            except IntegrityError as e:
+                self.logger.warn(e)
+            except DatabaseError as e:
+                self.logger.warn(e)
+
+        # Cleanup and sanity check
+        os.remove(xyFileName)
+        os.remove(bdepthFileName)
+        if inputFileCount != count:
+            self.logger.warn('Counts are not equal! inputFileCount = %s, count from grdtrack output = %s', inputFileCount, count)
+
+        return

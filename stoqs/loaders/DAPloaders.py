@@ -733,7 +733,7 @@ class Base_Loader(STOQS_Loader):
         else:
             longitudes = self.ds[ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
 
-        mtimes, depths, latitudes, longitudes = zip(*self.good_coords(
+        mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
                                             pnames, mtimes, depths, latitudes, longitudes))
 
         points = (f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes))
@@ -742,9 +742,9 @@ class Base_Loader(STOQS_Loader):
         meass = (Measurement(depth=repr(de), geom=po) for de, po in zip(depths, points))
 
         # Reassign meass with Measurement objects that have their id set
-        meass = self._bulk_load_coordinates(ips, meass)
+        meass = self._bulk_load_coordinates(ips, meass, dup_times)
 
-        return meass
+        return meass, dup_times
 
     def _load_coords_from_instr_ds(self, tindx, ac):
         '''Pull itime coordinate from Instrument (time-coordinate-only) NetCDF dataset (e.g. LOPC),
@@ -760,6 +760,7 @@ class Base_Loader(STOQS_Loader):
         max_secs_diff = 2
         ips = []
         meass = []
+        i = 0
         for mt in mtimes:
             try:
                 ip, secs_diff = get_closest_instantpoint(self.associatedActivityName, mt, self.dbAlias)
@@ -767,12 +768,16 @@ class Base_Loader(STOQS_Loader):
                 self.logger.error('Could not find corresponding measurment for LOPC data measured at %s', tv)
             else:
                 if secs_diff > max_secs_diff:
-                    self.logger.warn(f'LOPC data at {mt} is more than {max_secs_diff} secs different'
-                                     ' from existing measurement: {secs_diff}')
+                    i += 1
+                    self.logger.warn(f"{i:3d}. LOPC data at {mt.strftime('%Y-%m-%d %H:%M:%S')} more than {max_secs_diff} secs away from existing measurement: {secs_diff}")
 
                 meass.append(Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
 
-        return meass
+        meass_set = set(meass)
+        if len(meass_set) != len(meass):
+            self.logger.info(f'{len(meass) - len(meass_set)} duplicate Measurements removed')
+
+        return meass_set
 
     def _good_value_generator(self, pname, values):
         '''Generate good data values where bad values and nans are replaced consistently with None
@@ -796,7 +801,7 @@ class Base_Loader(STOQS_Loader):
                     # First time through, bulk load the coordinates: instant_points and measurements
                     if ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
                         # Expect CF Discrete Sampling Geometry or EPIC dataset
-                        meass = self._load_coords_from_dsg_ds(tindx, ac, pnames)
+                        meass, dup_times = self._load_coords_from_dsg_ds(tindx, ac, pnames)
                     else:
                         # Expect instrument (time-coordinate-only) dataset
                         meass = self._load_coords_from_instr_ds(tindx, ac)
@@ -816,12 +821,13 @@ class Base_Loader(STOQS_Loader):
                     # Need to bulk_create() all values, set bad ones to None and remove them after insert
                     values = self._good_value_generator(pname, values)
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
-                                                datavalue=va) for me, va in zip(meass, values))
+                                                datavalue=va) for me, va, dt in zip(meass, values, dup_times) if not dt)
 
                 # All items but mess are generators, so we can call len() on it
                 self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
                 mps = self._measuredparameter_with_measurement(meass, mps)
                 mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
+                self.parameter_counts[self.param_by_key[pname]] = len(mps)
                 total_loaded += len(mps)
 
         return total_loaded
@@ -924,11 +930,15 @@ class Base_Loader(STOQS_Loader):
                     shape_length = self.get_shape_length(firstp)
                     if shape_length == 4:
                         self.logger.info('%s has shape of 4, assume that singleton dimensions are used for nominal latitude and longitude', firstp)
-                        # Assumes COARDS coordinate ordering
-                        latitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
-                        longitudes = float(self.ds[list(self.ds[firstp].keys())[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                        # Would like all data set to have COARDS coordinate ordering, but they don't
+                        # - http://dods.mbari.org/opendap/data/CCE_Archive/MS1/20151006/TU65m/MBCCE_MS1_TU65m_20151006.nc.html - has COARDS ordering
+                        # - http://dods.mbari.org/opendap/data/CCE_Archive/MS2/20151005/ADCP300/MBCCE_MS2_ADCP300_20151005.nc - does not have COARDS ordering!
+                        longitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])     # TODO lookup more precise gps lat via coordinates pointing to a vector
+                        latitudes = float(self.ds[list(self.ds[firstp].keys())[4]][0])      # TODO lookup more precise gps lon via coordinates pointing to a vector
+
                     elif shape_length == 3 and 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper(): # pragma: no cover
                         # Special fix for USGS EPIC ADCP variables missing depth coordinate, but having nominal sensor depth metadata
+                        # - http://dods.mbari.org/opendap/data/CCE_Archive/MS1/20151006/ADCP300/MBCCE_MS1_ADCP300_20151006.nc - does not have COARDS ordering!
                         latitudes = float(self.ds[list(self.ds[firstp].keys())[2]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
                         longitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
                         depths = nomDepths
@@ -947,6 +957,14 @@ class Base_Loader(STOQS_Loader):
                     else:
                         raise Exception('{} has shape of {}. Can handle only shapes of 2, and 4'.format(firstp, shape_length))
 
+                    if abs(latitudes) > 90:
+                        # Brute-force fix for non-COARDS ordering, swap the coordinates
+                        self.logger.info('%s appears to not have COARDS ordering of coordinate dimensions, swapping them', firstp)
+                        tmp_var = latitudes
+                        latitudes = longitudes
+                        longitudes = tmp_var
+
+                    # Ensure uniqueness
                     if hasattr(latitudes, '__iter__') and hasattr(longitudes, '__iter__'):
                         # We have precise gps positions, a location for each time value
                         points = [f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes)]
@@ -1060,10 +1078,10 @@ class Base_Loader(STOQS_Loader):
             meas.instantpoint = ip
             yield meas
         
-    def _bulk_load_coordinates(self, ips, meass):
+    def _bulk_load_coordinates(self, ips, meass, dup_times):
 
         self.logger.info(f'Calling bulk_create() for InstantPoints in ips generator')
-        ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips)
+        ips = InstantPoint.objects.using(self.dbAlias).bulk_create((ip for ip, dt in zip(ips, dup_times) if not dt))
 
         meass = self._measurement_with_instantpoint(ips, meass)
 
@@ -1092,7 +1110,7 @@ class Base_Loader(STOQS_Loader):
 
         path = None
         parmCount = {}
-        parameterCount = {}
+        self.parameter_counts = {}
         for key in self.include_names:
             parmCount[key] = 0
 
@@ -1110,7 +1128,7 @@ class Base_Loader(STOQS_Loader):
 
         for key in (set(self.include_names) & set(self.ds.keys())):
             self.param_by_key[key] = self.getParameterByName(key)
-            parameterCount[self.param_by_key[key]] = 0
+            self.parameter_counts[self.param_by_key[key]] = 0
 
         for key in self.ds.keys():
             self.mv_by_key[key] = self.getmissing_value(key)
@@ -1141,7 +1159,7 @@ class Base_Loader(STOQS_Loader):
         except IntegrityError as e:
             # Likely duplicate key value violates unique constraint "stoqs_measuredparameter_measurement_id_parameter_1328c3fb_uniq"
             # Can't append data from source with bulk_create(), give appropriate warning
-            self.logger.error(str(e))
+            self.logger.exception(str(e))
             self.logger.error(f'Failed to bulk_create() data from URL: {self.url}')
             self.logger.error(f'If you need to load data that has been appended to the URL then delete its Activity before loading.')
 
@@ -1173,11 +1191,11 @@ class Base_Loader(STOQS_Loader):
 
         # Add additional Parameters for all appropriate Measurements
         self.logger.info("Adding SigmaT and Spiciness to the Measurements...")
-        self.addSigmaTandSpice(parameterCount, self.activity)
+        self.addSigmaTandSpice(self.activity)
         if self.grdTerrain:
             self.logger.info("Adding altitude to the Measurements...")
             try:
-                self.addAltitude(parameterCount, self.activity)
+                self.addAltitude(self.activity)
             except FileNotFound as e:
                 self.logger.warn(str(e))
 
@@ -1221,9 +1239,9 @@ class Base_Loader(STOQS_Loader):
         # Update the stats and store simple line values
         #
         self.updateActivityMinMaxDepth()
-        self.updateActivityParameterStats(parameterCount)
+        self.updateActivityParameterStats()
         self.updateCampaignStartEnd()
-        self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
+        self.assignParameterGroup(groupName=MEASUREDINSITU)
         if featureType == TRAJECTORY:
             self.insertSimpleDepthTimeSeries()
             self.saveBottomDepth()
