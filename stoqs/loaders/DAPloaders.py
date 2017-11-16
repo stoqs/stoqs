@@ -930,11 +930,15 @@ class Base_Loader(STOQS_Loader):
                     shape_length = self.get_shape_length(firstp)
                     if shape_length == 4:
                         self.logger.info('%s has shape of 4, assume that singleton dimensions are used for nominal latitude and longitude', firstp)
-                        # Assumes COARDS coordinate ordering
-                        latitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
-                        longitudes = float(self.ds[list(self.ds[firstp].keys())[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                        # Would like all data set to have COARDS coordinate ordering, but they don't
+                        # - http://dods.mbari.org/opendap/data/CCE_Archive/MS1/20151006/TU65m/MBCCE_MS1_TU65m_20151006.nc.html - has COARDS ordering
+                        # - http://dods.mbari.org/opendap/data/CCE_Archive/MS2/20151005/ADCP300/MBCCE_MS2_ADCP300_20151005.nc - does not have COARDS ordering!
+                        longitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])     # TODO lookup more precise gps lat via coordinates pointing to a vector
+                        latitudes = float(self.ds[list(self.ds[firstp].keys())[4]][0])      # TODO lookup more precise gps lon via coordinates pointing to a vector
+
                     elif shape_length == 3 and 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper(): # pragma: no cover
                         # Special fix for USGS EPIC ADCP variables missing depth coordinate, but having nominal sensor depth metadata
+                        # - http://dods.mbari.org/opendap/data/CCE_Archive/MS1/20151006/ADCP300/MBCCE_MS1_ADCP300_20151006.nc - does not have COARDS ordering!
                         latitudes = float(self.ds[list(self.ds[firstp].keys())[2]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
                         longitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
                         depths = nomDepths
@@ -953,6 +957,14 @@ class Base_Loader(STOQS_Loader):
                     else:
                         raise Exception('{} has shape of {}. Can handle only shapes of 2, and 4'.format(firstp, shape_length))
 
+                    if abs(latitudes) > 90:
+                        # Brute-force fix for non-COARDS ordering, swap the coordinates
+                        self.logger.info('%s appears to not have COARDS ordering of coordinate dimensions, swapping them', firstp)
+                        tmp_var = latitudes
+                        latitudes = longitudes
+                        longitudes = tmp_var
+
+                    # Ensure uniqueness
                     if hasattr(latitudes, '__iter__') and hasattr(longitudes, '__iter__'):
                         # We have precise gps positions, a location for each time value
                         points = [f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes)]
