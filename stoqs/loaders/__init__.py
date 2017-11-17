@@ -832,6 +832,7 @@ class STOQS_Loader(object):
 
             previous_times.append(mt)
             if mt in previous_times[:-1]:
+                self.logger.warn(f'Will not load data from duplicate time coordinate: {mt}')
                 dup_time = True
 
             yield mt, de, la, lo, dup_time
@@ -1272,91 +1273,87 @@ class STOQS_Loader(object):
         For all measurements that have standard_name parameters of (sea_water_salinity or sea_water_practical_salinity) and sea_water_temperature 
         compute sigma-t and add it as a parameter
         '''                 
-        def _innerAddSigmaTandSpice(self, activity):
-            # Find all measurements with 'sea_water_temperature' and ('sea_water_salinity' or 'sea_water_practical_salinity')
-            ms = m.Measurement.objects.using(self.dbAlias)
-            if activity:
-                self.logger.info(f'activity = {activity}')
-                ms = ms.filter(instantpoint__activity=activity)
+        # Find all measurements with 'sea_water_temperature' and ('sea_water_salinity' or 'sea_water_practical_salinity')
+        ms = m.Measurement.objects.using(self.dbAlias)
+        if activity:
+            self.logger.info(f'activity = {activity}')
+            ms = ms.filter(instantpoint__activity=activity)
 
-            ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_temperature')
+        ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_temperature')
 
-            # Test whether our measurements use 'sea_water_salinity' or 'sea_water_practical_salinity'
+        # Test whether our measurements use 'sea_water_salinity' or 'sea_water_practical_salinity'
+        salinity_standard_name = 'sea_water_salinity'
+        if ms.filter(measuredparameter__parameter__standard_name='sea_water_practical_salinity'):
+            salinity_standard_name = 'sea_water_practical_salinity'
+        elif ms.filter(measuredparameter__parameter__standard_name='sea_water_salinity'):
             salinity_standard_name = 'sea_water_salinity'
-            if ms.filter(measuredparameter__parameter__standard_name='sea_water_practical_salinity'):
-                salinity_standard_name = 'sea_water_practical_salinity'
-            elif ms.filter(measuredparameter__parameter__standard_name='sea_water_salinity'):
-                salinity_standard_name = 'sea_water_salinity'
 
-            ms = ms.filter(measuredparameter__parameter__standard_name=salinity_standard_name)
+        ms = ms.filter(measuredparameter__parameter__standard_name=salinity_standard_name)
 
-            if not ms:
-                self.logger.info("No sea_water_temperature and sea_water_salinity; can't add SigmaT and Spice.")
-                return
-
-            if self.dataStartDatetime:
-                ms = ms.filter(instantpoint__timevalue__gt=self.dataStartDatetime)
-
-            # Create our new Parameters
-            p_sigmat, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
-                    standard_name='sea_water_sigma_t',
-                    long_name='Sigma-T',
-                    units='kg m-3',
-                    name='sigmat',
-            )
-            if 'spice' in self.include_names:
-                p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
-                        name='stoqs_spice',
-                        defaults={'long_name': 'Spiciness'}
-                )
-            else:
-                p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
-                        name='spice',
-                        defaults={'long_name': 'Spiciness'}
-                )
-            # Update with descriptions, being kind to legacy databases
-            p_sigmat.description = ("Calculated in STOQS loader from Measured Parameters having standard_names"
-                                    " sea_water_temperature and sea_water_salinity, and pressure converted from depth"
-                                    " using seawater.eos80 module: sw.pden(s, t, sw.pres(me.depth, me.geom.y)) - 1000.0.")
-            p_sigmat.save(using=self.dbAlias)
-            p_spice.description = ("Calculated in STOQS loader from Measured Parameters having standard_names"
-                                   " sea_water_temperature and sea_water_salinity using algorithm from Flament (2002):"
-                                   " http://www.satlab.hawaii.edu/spice.")
-            p_spice.save(using=self.dbAlias)
-
-            self.parameter_counts[p_sigmat] = ms.count()
-            self.parameter_counts[p_spice] = ms.count()
-            self.assignParameterGroup(groupName=MEASUREDINSITU)
-            self.assignParameterGroup(groupName=MEASUREDINSITU)
-
-            # Loop through all Measurements, compute Sigma-T & Spice, and add to the Measurement
-            self.logger.info(f'Looping through {self.parameter_counts[p_sigmat]} Measurments to add Sigma-T & Spice')
-            for me in ms.distinct():
-                try:
-                    with transaction.atomic():
-                        t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
-                                parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
-                        s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
-                                parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
-                except IntegrityError as e:
-                    self.logger.warn(e)
-
-                sigmat = sw.pden(s, t, sw.pres(me.depth, me.geom.y)) - 1000.0
-                spice = spiciness(t, s)
-
-                mp_sigmat = m.MeasuredParameter(datavalue=sigmat, measurement=me, parameter=p_sigmat)
-                mp_spice = m.MeasuredParameter(datavalue=spice, measurement=me, parameter=p_spice)
-                try:
-                    with transaction.atomic():
-                        mp_sigmat.save(using=self.dbAlias)
-                        mp_spice.save(using=self.dbAlias)
-                except IntegrityError as e:
-                    self.logger.warn(e)
-
-            self.logger.info('Done.')
+        if not ms:
+            self.logger.info("No sea_water_temperature and sea_water_salinity. Not adding SigmaT and Spice.")
             return
 
-        return _innerAddSigmaTandSpice(self, activity)
+        if self.dataStartDatetime:
+            ms = ms.filter(instantpoint__timevalue__gt=self.dataStartDatetime)
+
+        # Create our new Parameters
+        p_sigmat, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
+                standard_name='sea_water_sigma_t',
+                long_name='Sigma-T',
+                units='kg m-3',
+                name='sigmat',
+        )
+        if 'spice' in self.include_names:
+            p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
+                    name='stoqs_spice',
+                    defaults={'long_name': 'Spiciness'}
+            )
+        else:
+            p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
+                    name='spice',
+                    defaults={'long_name': 'Spiciness'}
+            )
+        # Update with descriptions, being kind to legacy databases
+        p_sigmat.description = ("Calculated in STOQS loader from Measured Parameters having standard_names"
+                                " sea_water_temperature and sea_water_salinity, and pressure converted from depth"
+                                " using seawater.eos80 module: sw.pden(s, t, sw.pres(me.depth, me.geom.y)) - 1000.0.")
+        p_sigmat.save(using=self.dbAlias)
+        p_spice.description = ("Calculated in STOQS loader from Measured Parameters having standard_names"
+                               " sea_water_temperature and sea_water_salinity using algorithm from Flament (2002):"
+                               " http://www.satlab.hawaii.edu/spice.")
+        p_spice.save(using=self.dbAlias)
+
+        self.parameter_counts[p_sigmat] = ms.count()
+        self.parameter_counts[p_spice] = ms.count()
+        self.assignParameterGroup(groupName=MEASUREDINSITU)
+        self.assignParameterGroup(groupName=MEASUREDINSITU)
+
+        # Loop through all Measurements, compute Sigma-T & Spice, and add to the Measurement
+        self.logger.info(f'Looping through {self.parameter_counts[p_sigmat]} Measurments to add Sigma-T & Spice')
+        for me in ms.distinct():
+            try:
+                with transaction.atomic():
+                    t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
+                            parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
+                    s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
+                            parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
+            except IntegrityError as e:
+                self.logger.warn(e)
+
+            sigmat = sw.pden(s, t, sw.pres(me.depth, me.geom.y)) - 1000.0
+            spice = spiciness(t, s)
+
+            mp_sigmat = m.MeasuredParameter(datavalue=sigmat, measurement=me, parameter=p_sigmat)
+            mp_spice = m.MeasuredParameter(datavalue=spice, measurement=me, parameter=p_spice)
+            try:
+                with transaction.atomic():
+                    mp_sigmat.save(using=self.dbAlias)
+                    mp_spice.save(using=self.dbAlias)
+            except IntegrityError as e:
+                self.logger.warn(e)
+
+        self.logger.info('Done.')
 
     def addAltitude(self, activity=None):
         ''' 
