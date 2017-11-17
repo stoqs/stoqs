@@ -1268,6 +1268,23 @@ class STOQS_Loader(object):
                 except Exception as e:
                     self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
+    def _generate_sigmat_and_spice_mps(self, meass, p_sigmat, p_spice, salinity_standard_name):
+        '''Yield calculated sigmat and spice from data already in the database
+        '''
+        for me in meass.distinct():
+            t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
+                    parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
+            s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
+                    parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
+
+            sigmat = sw.pden(s, t, sw.pres(me.depth, me.geom.y)) - 1000.0
+            spice = spiciness(t, s)
+
+            sigmat_mp = m.MeasuredParameter(measurement=me, parameter=p_sigmat, datavalue=sigmat)
+            spice_mp = m.MeasuredParameter(measurement=me, parameter=p_spice, datavalue=spice)
+
+            yield sigmat_mp, spice_mp
+
     def addSigmaTandSpice(self, activity=None):
         ''' 
         For all measurements that have standard_name parameters of (sea_water_salinity or sea_water_practical_salinity) and sea_water_temperature 
@@ -1329,31 +1346,17 @@ class STOQS_Loader(object):
         self.assignParameterGroup(groupName=MEASUREDINSITU)
         self.assignParameterGroup(groupName=MEASUREDINSITU)
 
-        # Loop through all Measurements, compute Sigma-T & Spice, and add to the Measurement
-        self.logger.info(f'Looping through {self.parameter_counts[p_sigmat]} Measurments to add Sigma-T & Spice')
-        for me in ms.distinct():
-            try:
-                with transaction.atomic():
-                    t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
-                            parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
-                    s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
-                            parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
-            except IntegrityError as e:
-                self.logger.warn(e)
+        sigmat_mps = []
+        spice_mps = []
+        self.logger.info(f'Calculating {self.parameter_counts[p_sigmat]} sigmat & spice MeasuredParameters')
+        for sigmat_mp, spice_mp in self._generate_sigmat_and_spice_mps(ms.distinct(), p_sigmat, p_spice, salinity_standard_name):
+            sigmat_mps.append(sigmat_mp)
+            spice_mps.append(spice_mp)
 
-            sigmat = sw.pden(s, t, sw.pres(me.depth, me.geom.y)) - 1000.0
-            spice = spiciness(t, s)
-
-            mp_sigmat = m.MeasuredParameter(datavalue=sigmat, measurement=me, parameter=p_sigmat)
-            mp_spice = m.MeasuredParameter(datavalue=spice, measurement=me, parameter=p_spice)
-            try:
-                with transaction.atomic():
-                    mp_sigmat.save(using=self.dbAlias)
-                    mp_spice.save(using=self.dbAlias)
-            except IntegrityError as e:
-                self.logger.warn(e)
-
-        self.logger.info('Done.')
+        self.logger.info(f'Bulk loading {self.parameter_counts[p_sigmat]} sigmat MeasuredParameters')
+        m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(sigmat_mps)
+        self.logger.info(f'Bulk loading {self.parameter_counts[p_spice]} spice MeasuredParameters')
+        m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(spice_mps)
 
     def addAltitude(self, activity=None):
         ''' 
