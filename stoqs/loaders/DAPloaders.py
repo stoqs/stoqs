@@ -184,6 +184,7 @@ class Base_Loader(STOQS_Loader):
         self.grdTerrain = grdTerrain
         self.appendFlag = appendFlag
         self.backfill_timedelta = backfill_timedelta
+        self.coord_dict = {}
 
         self.url = url
         self.varsLoaded = []
@@ -433,7 +434,9 @@ class Base_Loader(STOQS_Loader):
         if variable not in self.ds:
             raise ParameterNotFound('Variable %s is not in dataset %s' % (variable, self.url))
 
-        coordDict = {}
+        if self.coord_dict:
+            return self.coord_dict
+
         if 'coordinates' in self.ds[variable].attributes:
             coords = self.ds[variable].attributes['coordinates'].split()
             coordSN, snCoord = self._getCoordinates(coords)
@@ -441,7 +444,7 @@ class Base_Loader(STOQS_Loader):
                 self.logger.debug(coord)
                 try:
                     self.logger.debug(snCoord)
-                    coordDict[coordSN[coord]] = coord
+                    self.coord_dict[coordSN[coord]] = coord
                 except KeyError as e:
                     raise AuxCoordMissingStandardName(e)
         else:
@@ -450,7 +453,7 @@ class Base_Loader(STOQS_Loader):
                 # Try getting it from overridden values provided
                 for coordSN, coord in list(self.auxCoords[variable].items()):
                     try:
-                        coordDict[coordSN] = coord
+                        self.coord_dict[coordSN] = coord
                     except KeyError as e:
                         raise AuxCoordMissingStandardName(e)
             else:
@@ -458,16 +461,16 @@ class Base_Loader(STOQS_Loader):
 
         # Check for all 4 coordinates needed for spatial-temporal location - if any are missing raise exception with suggestion
         reqCoords = set(('time', 'latitude', 'longitude', 'depth'))
-        self.logger.debug('coordDict = %s', coordDict)
-        if set(coordDict.keys()) != reqCoords:
+        self.logger.debug('self.coord_dict = %s', self.coord_dict)
+        if set(self.coord_dict.keys()) != reqCoords:
             self.logger.debug('Required coordinate(s) %s missing in NetCDF file.',
-                        list(reqCoords - set(coordDict.keys())))
+                        list(reqCoords - set(self.coord_dict.keys())))
             if not self.auxCoords:
                 raise VariableMissingCoordinatesAttribute('%s: %s missing coordinates attribute' % (self.url, variable,))
 
-        self.logger.debug('coordDict = %s', coordDict)
+        self.logger.debug('self.coord_dict = %s', self.coord_dict)
 
-        if not coordDict: # pragma: no cover
+        if not self.coord_dict: # pragma: no cover
             if self.auxCoords:
                 if variable in self.auxCoords:
                     # Simply return self.auxCoords if specified in the constructor
@@ -476,7 +479,7 @@ class Base_Loader(STOQS_Loader):
                 else:
                     raise ParameterNotFound('auxCoords is specified, but variable requested (%s) is not in %s' % (variable, self.auxCoords))
         else:
-            return coordDict
+            return self.coord_dict
 
     def getNominalLocation(self):
         '''
@@ -721,7 +724,7 @@ class Base_Loader(STOQS_Loader):
                 if isinstance(ac[DEPTH], float):
                     depths =  ac[DEPTH] * np.ones(len(times))
             else:
-                self.logger.warn(f'Variable {pname} does not have a DEPTH coordinate: {ac}')
+                self.logger.warn(f'No depth coordinate {ac[DEPTH]} in {self.ds}')
 
         if isinstance(self.ds[ac[LATITUDE]], pydap.model.GridType):
             latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
@@ -733,9 +736,11 @@ class Base_Loader(STOQS_Loader):
         else:
             longitudes = self.ds[ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
 
+        self.logger.debug(f'Getting good_coords for {pnames}...')
         mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
                                             pnames, mtimes, depths, latitudes, longitudes))
 
+        self.logger.debug(f'Making points generator...')
         points = (f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes))
 
         ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
