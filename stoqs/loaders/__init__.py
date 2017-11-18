@@ -820,20 +820,32 @@ class STOQS_Loader(object):
         '''Generate good coordinate if any of the parameters has good coordinate data.
         Appropriate for trajectory data where there is one-to-one match of coorcinates.
         '''
+        # Checking for duplicate times is time consuming, do it for only known
+        # problematic sources of data
+        known_dup_time_sources = ('pctd',)
+
+        known_dup_time_problem = False
+        for string in known_dup_time_sources:
+            if string in self.url:
+                logger.debug(f'Setting known_dup_time_problem for known_dup_time_source: {string}')
+                known_dup_time_problem = True
+        
+        dup_time = False
         previous_times = []
         for mt, de, la, lo in zip(mtimes, depths, latitudes, longitudes):
             all_bad = True
-            dup_time = False
             for pname in pnames:
                 if not self.is_coordinate_bad(pname, mt, de, la, lo):
                     all_bad = False
             if all_bad:
                 continue
 
-            previous_times.append(mt)
-            if mt in previous_times[:-1]:
-                self.logger.warn(f'Will not load data from duplicate time coordinate: {mt}')
-                dup_time = True
+            if known_dup_time_problem:
+                dup_time = False
+                previous_times.append(mt)
+                if mt in previous_times[:-1]:
+                    self.logger.warn(f'Will not load data from duplicate time coordinate: {mt}')
+                    dup_time = True
 
             yield mt, de, la, lo, dup_time
 
@@ -1269,19 +1281,36 @@ class STOQS_Loader(object):
                     self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
     def _generate_sigmat_and_spice_mps(self, meass, p_sigmat, p_spice, salinity_standard_name):
-        '''Yield calculated sigmat and spice from data already in the database
+        '''Yield calculated sigmat and spice from data already in the database, use raw query to get t & s
+        with one query
         '''
-        for me in meass.distinct():
-            t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
-                    parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
-            s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
-                    parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
 
-            sigmat = sw.pden(s, t, sw.pres(me.depth, me.geom.y)) - 1000.0
-            spice = spiciness(t, s)
+        sql = f'''
+SELECT DISTINCT mp_x.id, stoqs_measurement.depth as depth, mp_x.datavalue AS t, mp_y.datavalue AS s, 
+ST_Y(stoqs_measurement.geom) AS lat, m_x.id AS m_id
+FROM stoqs_measuredparameter
+INNER JOIN stoqs_measurement ON (stoqs_measuredparameter.measurement_id = stoqs_measurement.id)
+INNER JOIN stoqs_instantpoint ON (stoqs_measurement.instantpoint_id = stoqs_instantpoint.id)
+INNER JOIN stoqs_activity ON (stoqs_instantpoint.activity_id = stoqs_activity.id)
+INNER JOIN stoqs_platform ON (stoqs_activity.platform_id = stoqs_platform.id)
+INNER JOIN stoqs_measurement m_x ON m_x.instantpoint_id = stoqs_instantpoint.id
+INNER JOIN stoqs_measuredparameter mp_x ON mp_x.measurement_id = m_x.id
+INNER JOIN stoqs_parameter p_x ON mp_x.parameter_id = p_x.id
+INNER JOIN stoqs_measurement m_y ON m_y.instantpoint_id = stoqs_instantpoint.id
+INNER JOIN stoqs_measuredparameter mp_y ON mp_y.measurement_id = m_y.id
+INNER JOIN stoqs_parameter p_y ON mp_y.parameter_id = p_y.id
+WHERE (p_x.standard_name = 'sea_water_temperature')
+  AND (p_y.standard_name = '{salinity_standard_name}')
+  AND (stoqs_activity.name = '{self.activity}')
+'''
+        sql = sql.replace('\n', ' ').strip()
+        for meas in m.MeasuredParameter.objects.using(self.dbAlias).raw(sql):
+            measurement = m.Measurement.objects.using(self.dbAlias).get(id=meas.m_id)
+            sigmat = sw.pden(meas.s, meas.t, sw.pres(meas.depth, meas.lat)) - 1000.0
+            spice = spiciness(meas.t, meas.s)
 
-            sigmat_mp = m.MeasuredParameter(measurement=me, parameter=p_sigmat, datavalue=sigmat)
-            spice_mp = m.MeasuredParameter(measurement=me, parameter=p_spice, datavalue=spice)
+            sigmat_mp = m.MeasuredParameter(measurement=measurement, parameter=p_sigmat, datavalue=sigmat)
+            spice_mp = m.MeasuredParameter(measurement=measurement, parameter=p_spice, datavalue=spice)
 
             yield sigmat_mp, spice_mp
 
@@ -1349,7 +1378,7 @@ class STOQS_Loader(object):
         sigmat_mps = []
         spice_mps = []
         self.logger.info(f'Calculating {self.parameter_counts[p_sigmat]} sigmat & spice MeasuredParameters')
-        for sigmat_mp, spice_mp in self._generate_sigmat_and_spice_mps(ms.distinct(), p_sigmat, p_spice, salinity_standard_name):
+        for sigmat_mp, spice_mp in self._generate_sigmat_and_spice_mps(ms, p_sigmat, p_spice, salinity_standard_name):
             sigmat_mps.append(sigmat_mp)
             spice_mps.append(spice_mp)
 
