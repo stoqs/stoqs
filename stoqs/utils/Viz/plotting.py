@@ -1024,7 +1024,7 @@ class ParameterParameter(BaseParameter):
             # Make the figure
             fig = plt.figure()
             plt.grid(True)
-            ax = fig.add_subplot(111)
+            ax = plt.gca()
             if not ppfrFlag:
                 ax.set_xlim(self.pMinMax['x'][1], self.pMinMax['x'][2])
                 ax.set_ylim(self.pMinMax['y'][1], self.pMinMax['y'][2])
