@@ -184,7 +184,7 @@ class Base_Loader(STOQS_Loader):
         self.grdTerrain = grdTerrain
         self.appendFlag = appendFlag
         self.backfill_timedelta = backfill_timedelta
-        self.coord_dict = {}
+        self.coord_dicts = {}
 
         self.url = url
         self.varsLoaded = []
@@ -213,8 +213,8 @@ class Base_Loader(STOQS_Loader):
         maxDT = {}
         for v in self.include_names:
             try:
-                ac = self.getAuxCoordinates(v)
-            except ParameterNotFound as e:
+                ac = self.coord_dicts[v]
+            except KeyError as e:
                 self.logger.debug(str(e))
                 continue
 
@@ -434,9 +434,7 @@ class Base_Loader(STOQS_Loader):
         if variable not in self.ds:
             raise ParameterNotFound('Variable %s is not in dataset %s' % (variable, self.url))
 
-        if self.coord_dict:
-            return self.coord_dict
-
+        coord_dict = {}
         if 'coordinates' in self.ds[variable].attributes:
             coords = self.ds[variable].attributes['coordinates'].split()
             coordSN, snCoord = self._getCoordinates(coords)
@@ -444,7 +442,7 @@ class Base_Loader(STOQS_Loader):
                 self.logger.debug(coord)
                 try:
                     self.logger.debug(snCoord)
-                    self.coord_dict[coordSN[coord]] = coord
+                    coord_dict[coordSN[coord]] = coord
                 except KeyError as e:
                     raise AuxCoordMissingStandardName(e)
         else:
@@ -453,7 +451,7 @@ class Base_Loader(STOQS_Loader):
                 # Try getting it from overridden values provided
                 for coordSN, coord in list(self.auxCoords[variable].items()):
                     try:
-                        self.coord_dict[coordSN] = coord
+                        coord_dict[coordSN] = coord
                     except KeyError as e:
                         raise AuxCoordMissingStandardName(e)
             else:
@@ -461,16 +459,16 @@ class Base_Loader(STOQS_Loader):
 
         # Check for all 4 coordinates needed for spatial-temporal location - if any are missing raise exception with suggestion
         reqCoords = set(('time', 'latitude', 'longitude', 'depth'))
-        self.logger.debug('self.coord_dict = %s', self.coord_dict)
-        if set(self.coord_dict.keys()) != reqCoords:
+        self.logger.debug('coord_dict = %s', coord_dict)
+        if set(coord_dict.keys()) != reqCoords:
             self.logger.debug('Required coordinate(s) %s missing in NetCDF file.',
-                        list(reqCoords - set(self.coord_dict.keys())))
+                        list(reqCoords - set(coord_dict.keys())))
             if not self.auxCoords:
                 raise VariableMissingCoordinatesAttribute('%s: %s missing coordinates attribute' % (self.url, variable,))
 
-        self.logger.debug('self.coord_dict = %s', self.coord_dict)
+        self.logger.debug('coord_dict = %s', coord_dict)
 
-        if not self.coord_dict: # pragma: no cover
+        if not coord_dict: # pragma: no cover
             if self.auxCoords:
                 if variable in self.auxCoords:
                     # Simply return self.auxCoords if specified in the constructor
@@ -479,7 +477,7 @@ class Base_Loader(STOQS_Loader):
                 else:
                     raise ParameterNotFound('auxCoords is specified, but variable requested (%s) is not in %s' % (variable, self.auxCoords))
         else:
-            return self.coord_dict
+            return coord_dict
 
     def getNominalLocation(self):
         '''
@@ -491,10 +489,10 @@ class Base_Loader(STOQS_Loader):
         lats = {}
         lons = {}
         for v in self.include_names:
-            self.logger.debug('Calling self.getAuxCoordinates() for v = %s', v)
+            self.logger.debug('v = %s', v)
             try:
-                ac = self.getAuxCoordinates(v)
-            except ParameterNotFound as e:
+                ac = self.coord_dicts[v]
+            except KeyError as e:
                 self.logger.debug('Skipping include_name = %s: %s', v, e)
                 continue
      
@@ -649,8 +647,8 @@ class Base_Loader(STOQS_Loader):
         trajSingleParameterCount = 0
         for name in self.include_names:
             try:
-                tIndx = self.getTimeBegEndIndices(self.ds[self.getAuxCoordinates(name)['time']])
-            except ParameterNotFound:
+                tIndx = self.getTimeBegEndIndices(self.ds[self.coord_dicts[name]['time']])
+            except KeyError:
                 self.logger.debug('Ignoring parameter: %s', name)
             except InvalidSliceRequest:
                 self.logger.warn('No valid data for parameter: %s', name)
@@ -696,7 +694,7 @@ class Base_Loader(STOQS_Loader):
             if pname not in list(self.ds.keys()):
                 self.logger.debug('include_name %s not in dataset %s', pname, self.url)
                 continue
-            ac[pname] = self.getAuxCoordinates(pname)
+            ac[pname] = self.coord_dicts[pname]
             load_groups[''.join(sorted(list(ac[pname].values())))].append(pname)
             coor_groups[''.join(sorted(list(ac[pname].values())))] = ac[pname]
 
@@ -1057,7 +1055,6 @@ class Base_Loader(STOQS_Loader):
                     if DEPTH in ac:
                         depth_axes_loaded.add(ac[DEPTH])
 
-
                 # End if i == 0 (loading coords for list of pnames)
  
                 values = self.ds[pname][pname][tindx[0]:tindx[-1]:self.stride]
@@ -1067,7 +1064,6 @@ class Base_Loader(STOQS_Loader):
 
                 # Need to bulk_create() all values, set bad ones to None and remove them after insert
                 values = self._good_value_generator(pname, values.flatten())
-
                 mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
                                                 datavalue=va) for me, va in zip(meass, values))
 
@@ -1110,6 +1106,13 @@ class Base_Loader(STOQS_Loader):
 
         Return the number of MeasuredParameters loaded.
         '''
+
+        self.coord_dicts = {}
+        for v in self.include_names:
+            try:
+                self.coord_dicts[v] = self.getAuxCoordinates(v)
+            except ParameterNotFound as e:
+                self.logger.debug(str(e))
 
         self.initDB()
 
