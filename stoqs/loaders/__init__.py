@@ -902,15 +902,15 @@ class STOQS_Loader(object):
             self.logger.debug("include_name: %s", v)
             try:
                 anyValidData = self._is_any_value_good(self.ds[v])
-                if anyValidData:
-                    allNaNFlag[v] = False
-                    break
             except KeyError:
                 self.logger.debug('Parameter %s not in %s. Skipping.', v, list(self.ds.keys()))
                 if v.find('.') != -1:
                     raise Exception('Parameter names must not contain periods - cannot load data. Paramater %s violates CF conventions.' % v)
             except ValueError:
                 pass
+
+            if anyValidData:
+                allNaNFlag[v] = False
 
         self.logger.debug("allNaNFlag = %s", allNaNFlag)
         for v in list(allNaNFlag.keys()):
