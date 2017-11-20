@@ -18,7 +18,7 @@ fi
 if [ -L stoqs/campaigns.py ]
 then
     echo "Found stoqs/campaigns.py symbolic link.  For faster processing it's"
-    echo "suggested that you remove stoqs/campaigns.py and stoqs/campaigns.pyc so"
+    echo "suggested that you remove stoqs/campaigns.py so"
     echo "that test_ databases don't get created for all the campaigns there."
     exit -1
 fi
