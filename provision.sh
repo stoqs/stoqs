@@ -92,9 +92,9 @@ make -j 2 && sudo make install
 cd ..
 
 echo Build and install gdal
-wget -q -N http://download.osgeo.org/gdal/2.2.1/gdal-2.2.1.tar.gz        
-tar -xzf gdal-2.2.1.tar.gz
-cd gdal-2.2.1
+wget -q -N http://download.osgeo.org/gdal/2.2.2/gdal-2.2.2.tar.gz        
+tar -xzf gdal-2.2.2.tar.gz
+cd gdal-2.2.2
 export PATH=$(pwd):$PATH
 ./configure --prefix=/usr/local
 gmake -j 2 && gmake install
@@ -113,7 +113,7 @@ then
     popd
 
     yum -y install deltarpm rabbitmq-server scipy mod_wsgi memcached python-memcached
-    yum -y install graphviz-devel graphviz-python ImageMagick postgis2_96
+    yum -y install graphviz-devel graphviz-python ImageMagick postgis2_96 SFCGAL-devel
     yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
     yum -y install proj-nad proj-epsg libxml2-devel libxslt-devel pam-devel
     yum -y install python-psycopg2 libpqxx-devel hdf hdf-devel freetds-devel postgresql-devel
