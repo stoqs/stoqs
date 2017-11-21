@@ -868,9 +868,9 @@ class STOQS_Loader(object):
         '''
         # Retreiving data via .array[:] can take some time, do initial retrieval of small number first
         try:
-            values = dap_type.array[:10].flatten()
+            values = dap_type.array[:10].data.flatten()
         except AttributeError:
-            values = dap_type[:10].flatten()
+            values = dap_type.data[:10].flatten()
 
         for value in values:
             if not np.isnan(value).all():

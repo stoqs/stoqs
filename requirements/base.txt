@@ -34,7 +34,7 @@ PasteScript==2.0.2
 Pillow==4.3.0
 psycopg2==2.7.3.2
 pupynere==1.0.15
-Pydap==3.2.1
+Pydap==3.2.2
 python-dateutil==2.6.1
 python3-memcached==1.51
 python-openid==2.2.5

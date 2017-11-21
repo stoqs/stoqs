@@ -222,23 +222,23 @@ class Base_Loader(STOQS_Loader):
                 self.logger.debug('Getting trajectory min and max times for v = %s', v)
                 self.logger.debug("self.ds[ac['time']][0] = %s", self.ds[ac['time']][0])
                 try:
-                    minDT[v] = from_udunits(self.ds[ac['time']][0][0], self.ds[ac['time']].attributes['units'])
-                    maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
+                    minDT[v] = from_udunits(self.ds[ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
+                    maxDT[v] = from_udunits(self.ds[ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'])
                 except ParserError as e:
                     self.logger.warn("%s. Trying to fix up time units", e)
                     # Tolerate units like 1970-01-01T00:00:00Z - which is found on the IOOS Glider DAC
                     if self.ds[ac['time']].attributes['units'] == 'seconds since 1970-01-01T00:00:00Z':
-                        minDT[v] = from_udunits(self.ds[ac['time']][0][0], 'seconds since 1970-01-01 00:00:00')
-                        maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], 'seconds since 1970-01-01 00:00:00')
+                        minDT[v] = from_udunits(self.ds[ac['time']].data[0][0], 'seconds since 1970-01-01 00:00:00')
+                        maxDT[v] = from_udunits(self.ds[ac['time']].data[-1][0], 'seconds since 1970-01-01 00:00:00')
                     
             elif self.getFeatureType() == TIMESERIES or self.getFeatureType() == TIMESERIESPROFILE: # pragma: no cover
                 self.logger.debug('Getting timeseries start time for v = %s', v)
-                minDT[v] = from_udunits(self.ds[v][ac['time']][0][0], self.ds[ac['time']].attributes['units'])
-                maxDT[v] = from_udunits(self.ds[v][ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
+                minDT[v] = from_udunits(self.ds[v][ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
+                maxDT[v] = from_udunits(self.ds[v][ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'])
             else:
                 # Perhaps a strange file like LOPC size class data along a trajectory
-                minDT[v] = from_udunits(self.ds[ac['time']][0][0], self.ds[ac['time']].attributes['units'])
-                maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
+                minDT[v] = from_udunits(self.ds[ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
+                maxDT[v] = from_udunits(self.ds[ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'])
 
         self.logger.debug('minDT = %s', minDT)
         self.logger.debug('maxDT = %s', maxDT)
@@ -501,39 +501,39 @@ class Base_Loader(STOQS_Loader):
                 self.logger.debug('Initializing depths list for timeseries, ac = %s', ac)
                 try:
                     if 'depth' in ac:
-                        depths[v] = self.ds[v][ac['depth']][:][0]
+                        depths[v] = self.ds[v][ac['depth']].data[:][0]
                 except KeyError:
                     self.logger.warn('No depth coordinate found for %s.  Assuming EPIC scalar and assigning depth from first element', v)
-                    depths[v] = self.ds[ac['depth']][0]
+                    depths[v] = self.ds[ac['depth']].data[0]
             elif self.getFeatureType() == TIMESERIESPROFILE:
                 self.logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac) 
                 try:
-                    depths[v] = self.ds[v][ac['depth']][:]
+                    depths[v] = self.ds[v][ac['depth']].data[:]
                 except KeyError:
                     # Likely a TIMESERIES variable in a TIMESERIESPROFILE file (e.g. heading in ADCP file)
                     # look elsewhere for a nominal depth
                     depths[v] = [float(self.ds.attributes['NC_GLOBAL']['nominal_sensor_depth'])]
             elif self.getFeatureType() == TRAJECTORYPROFILE:
                 self.logger.debug('Initializing depths list for trajectoryprofile, ac = %s', ac)
-                depths[v] = self.ds[v][ac['depth']][:]
+                depths[v] = self.ds[v][ac['depth']].data[:]
 
             try:
-                lons[v] = self.ds[v][ac['longitude']][:][0]
+                lons[v] = self.ds[v][ac['longitude']].data[:][0]
             except KeyError:
-                if len(self.ds[ac['longitude']][:]) == 1:
-                    lons[v] = self.ds[ac['longitude']][:][0]
+                if len(self.ds[ac['longitude']].data[:]) == 1:
+                    lons[v] = self.ds[ac['longitude']].data[:][0]
                 else:
                     self.logger.warn('Variable %s has longitude auxillary coordinate of length %d, expecting it to be 1.',
-                                v, len(self.ds[ac['longitude']][:]))
+                                v, len(self.ds[ac['longitude']].data[:]))
 
             try:
-                lats[v] = self.ds[v][ac['latitude']][:][0]
+                lats[v] = self.ds[v][ac['latitude']].data[:][0]
             except KeyError:
-                if len(self.ds[ac['latitude']][:]) == 1:
-                    lats[v] = self.ds[ac['latitude']][:][0]
+                if len(self.ds[ac['latitude']].data[:]) == 1:
+                    lats[v] = self.ds[ac['latitude']].data[:][0]
                 else:
                     self.logger.warn('Variable %s has latitude auxillary coordidate of length %d, expecting it to be 1.', 
-                                v, len(self.ds[ac['latitude']][:]))
+                                v, len(self.ds[ac['latitude']].data[:]))
 
         # All variables must have the same nominal location 
         if len(set(lats.values())) != 1 or len(set(lons.values())) != 1:
@@ -811,10 +811,10 @@ class Base_Loader(STOQS_Loader):
 
                 if isinstance(self.ds[pname], pydap.model.GridType):
                     constraint_string = f"Using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
-                    values = self.ds[pname][pname][tindx[0]:tindx[-1]:self.stride]
+                    values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
                 else:
                     constraint_string = f"Using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
-                    values = self.ds[pname][tindx[0]:tindx[-1]:self.stride]
+                    values = self.ds[pname].data[tindx[0]:tindx[-1]:self.stride]
 
                 if hasattr(values[0], '__iter__'):
                     # For data like LOPC data - expect all values to be non-nan
@@ -858,12 +858,12 @@ class Base_Loader(STOQS_Loader):
                     # CF (nee COARDS) has tzyx coordinate ordering, time is at index [1] and depth is at [2]
                     # - times: Assume CF/COARDS, override if EPIC data detected
                     tindx = self.getTimeBegEndIndices(self.ds[list(self.ds[firstp].keys())[1]])
-                    times = self.ds[self.ds[firstp].keys()[1]][tindx[0]:tindx[-1]:self.stride]
-                    time_units = self.ds[list(self.ds[firstp].keys())[1]].units.lower()
+                    times = self.ds[list(self.ds[firstp].maps.keys())[0]].data[tindx[0]:tindx[-1]:self.stride]
+                    time_units = self.ds[list(self.ds[firstp].maps.keys())[0]].units.lower()
 
                     if time_units == 'true julian day': # pragma: no cover
                         # Create COARDS time from EPIC data
-                        time2s = self.ds['time2']['time2'][tindx[0]:tindx[-1]:self.stride]
+                        time2s = self.ds['time2']['time2'].data[tindx[0]:tindx[-1]:self.stride]
                         time_units = 'seconds since 1970-01-01 00:00:00'
                         epoch_secs = []
                         for jd, ms in zip(times, time2s):
@@ -874,7 +874,7 @@ class Base_Loader(STOQS_Loader):
                         times = epoch_secs
 
                     time_units = time_units.replace('utc', 'UTC')           # coards requires UTC in uppercase
-                    if self.ds[list(self.ds[firstp].keys())[1]].units == 'seconds since 1970-01-01T00:00:00Z':
+                    if self.ds[list(self.ds[firstp].maps.keys())[0]].units == 'seconds since 1970-01-01T00:00:00Z':
                         time_units = 'seconds since 1970-01-01 00:00:00'    # coards 1.0.4 and earlier doesn't like ISO format
 
                     mtimes = [from_udunits(mt, time_units) for mt in times]
@@ -884,7 +884,7 @@ class Base_Loader(STOQS_Loader):
                     nomLat = None
                     nomLon = None
                     try:
-                        depths = self.ds[self.ds[firstp].keys()[2]][:]   # TODO lookup more precise depth from conversion from pressure
+                        depths = self.ds[list(self.ds[firstp].maps.keys())[1]].data[:]   # TODO lookup more precise depth from conversion from pressure
                     except IndexError:
                         self.logger.warn(f'Variable {firstp} has less than 2 coordinates: {self.ds[pname].keys()}')
                         depths = np.array([])
@@ -904,12 +904,12 @@ class Base_Loader(STOQS_Loader):
                             nomLon = self.ds.attributes['NC_GLOBAL']['longitude']
                         except KeyError:
                             self.logger.warn('EPIC nominal position not found in global attributes. Assigning from variables (and maybe variable attribute).')
-                            if not hasattr(self.ds['depth'][0], '__iter__'):
-                                depths = np.array([self.ds['depth'][0]])
+                            if not hasattr(self.ds['depth'].data[0], '__iter__'):
+                                depths = np.array([self.ds['depth'].data[0]])
                             if 'nominal_instrument_depth' in self.ds[firstp].attributes:
                                 nomDepths = self.ds[firstp].attributes['nominal_instrument_depth']
-                            nomLat = self.ds['lat'][0][0]
-                            nomLon = self.ds['lon'][0][0]
+                            nomLat = self.ds['lat'].data[0][0]
+                            nomLon = self.ds['lon'].data[0][0]
 
                     if nomDepths and nomLat and nomLon:
                         pass
@@ -936,14 +936,14 @@ class Base_Loader(STOQS_Loader):
                         # Would like all data set to have COARDS coordinate ordering, but they don't
                         # - http://dods.mbari.org/opendap/data/CCE_Archive/MS1/20151006/TU65m/MBCCE_MS1_TU65m_20151006.nc.html - has COARDS ordering
                         # - http://dods.mbari.org/opendap/data/CCE_Archive/MS2/20151005/ADCP300/MBCCE_MS2_ADCP300_20151005.nc - does not have COARDS ordering!
-                        longitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])     # TODO lookup more precise gps lat via coordinates pointing to a vector
-                        latitudes = float(self.ds[list(self.ds[firstp].keys())[4]][0])      # TODO lookup more precise gps lon via coordinates pointing to a vector
+                        longitudes = float(self.ds[list(self.ds[firstp].maps.keys())[2]].data[0])     # TODO lookup more precise gps lat via coordinates pointing to a vector
+                        latitudes = float(self.ds[list(self.ds[firstp].maps.keys())[3]].data[0])      # TODO lookup more precise gps lon via coordinates pointing to a vector
 
                     elif shape_length == 3 and 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper(): # pragma: no cover
                         # Special fix for USGS EPIC ADCP variables missing depth coordinate, but having nominal sensor depth metadata
                         # - http://dods.mbari.org/opendap/data/CCE_Archive/MS1/20151006/ADCP300/MBCCE_MS1_ADCP300_20151006.nc - does not have COARDS ordering!
-                        latitudes = float(self.ds[list(self.ds[firstp].keys())[2]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
-                        longitudes = float(self.ds[list(self.ds[firstp].keys())[3]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                        latitudes = float(self.ds[list(self.ds[firstp].maps.keys())[1]].data[0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
+                        longitudes = float(self.ds[list(self.ds[firstp].maps.keys())[2]].data[0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
                         depths = nomDepths
                     elif shape_length == 2:
                         self.logger.info('%s has shape of 2, assuming no latitude and longitude singletime'
@@ -1057,7 +1057,7 @@ class Base_Loader(STOQS_Loader):
 
                 # End if i == 0 (loading coords for list of pnames)
  
-                values = self.ds[pname][pname][tindx[0]:tindx[-1]:self.stride]
+                values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
                 if len(values.shape) == 1:
                     self.logger.info("len(values.shape) = 1; likely EPIC timeseries data - reshaping to add a 'depth' dimension")
                     values = values.reshape(values.shape[0], 1)
