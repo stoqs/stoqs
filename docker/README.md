@@ -116,7 +116,7 @@ in a base image, `mbari/stoqs-base`.
 In this case, `cd` to the root directory of the stoqs repository clone.
 
 ```
-$ docker build -f docker/Dockerfile-base -t "mbari/stoqs-base:0.0.1" .
+$ docker build -f Dockerfile-base -t "mbari/stoqs-base:0.0.1" .
 ```
 
 This image also has nginx enabled as entry point.
@@ -128,7 +128,7 @@ We build the STOQS image on top of `mbari/stoqs-base`:
 Also in this case, make sure to `cd` to the root directory of the stoqs repository clone.
 
 ```
-$ docker build -f docker/Dockerfile-stoqs \
+$ docker build -f Dockerfile-stoqs \
          --build-arg STOQSADM_PASS=${STOQSADM_PASS} \
          --build-arg POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
          --build-arg STOQS_HOST_MAPSERVER_PORT=${STOQS_HOST_MAPSERVER_PORT} \

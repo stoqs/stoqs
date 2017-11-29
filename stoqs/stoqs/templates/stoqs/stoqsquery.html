@@ -858,6 +858,13 @@
                                     </div>
                                     <div class="row-fluid" id="time-parameter-plot" style="height:400px" class="disabled row-fluid">
                                         <div id="time-parameter-flot" style="width:100%;height:90%;" class="disabled"></div>
+                                        <div class="row-fluid">
+                                            <div class="span5">
+                                                Color by: 
+                                                <input type="radio" name="pt-colors" value="platform" /> Platform color
+                                                <input type="radio" name="pt-colors" value="activity" checked /> Activity
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div><!-- tab-content -->
@@ -1302,6 +1309,7 @@
     var runtime = null;
     var rtLeft, rtRight;
     var lastW, lastH;
+    var num_pt_colors = 16;
 
     var vrHMD = null, vrSensor = null;
     var pyr = new x3dom.fields.SFVec3f(0, 0, 0);        // For the Leap Motion
@@ -1422,6 +1430,29 @@
         }
     }
     
+    function recolorParameterTime(type) {
+
+        var timeparameterplot = $('#time-parameter-flot').data()['plot'];
+
+        // Color lines according to the platform color
+        $.each(timeparameterplot.getData(), function(index, ds) {
+            if (type == 'platform') {
+                $.each($('body').data()['activitycolors'], function(activity, color) {
+                    if (ds.label.indexOf(activity) != -1) {
+                        ds.color = '#' + color;
+                        return;
+                    }
+                });
+            }
+            else {
+                indx = index % num_pt_colors;
+                ds.color = timeparameterplot.getOptions().colors[indx];
+            }
+        });
+
+        timeparameterplot.draw();
+    }
+
     // Called with an element that was selectable, should make that element selectable.
     function enableButton(element) {
         if ($(element).is('.disabled')) {
@@ -2310,6 +2341,10 @@
 
     $('#showsensortracks').on('click', function (event) {
         update_sensortrackskml();
+        });
+
+    $('input[name="pt-colors"]').on('click', function (e) {
+        recolorParameterTime($('input:radio[name=pt-colors]:checked').val());
     });
 
     $('#show-filtered-sp-checkbox').on('click', function (e) {
@@ -3365,9 +3400,8 @@ function enable_cardboard(){
                                 };
     // Rotate from red to green - See http://www.benknowscode.com/2013/02/graphing-with-flot-controlling-series_9976.html
     parametertime_options.colors = [];
-    var maxColors = 16;
-    for (var i=0; i<=maxColors; i++) {
-        var hue = i * 360 / maxColors;
+    for (var i=0; i<=num_pt_colors; i++) {
+        var hue = i * 360 / num_pt_colors;
         parametertime_options.colors.push(jQuery.Color({ hue: hue, saturation: 0.95, lightness: 0.35, alpha: 1 }).toHexString());
     }
 
@@ -3984,11 +4018,13 @@ function enable_cardboard(){
                 // Check the Activities that need checking and initialize checkbox state in $('body').data()
                 if ( init ) {
                     $('body').data()['activitynames'] = {};
+                    $('body').data()['activitycolors'] = {};
                     $('input[name=activity_select_cb]').prop('checked', true);
                     $('input[name=all_activity_select_cb]').prop('checked', true);
                     $.each(data.resources.netcdf, function (plat, activities) {
                         $.each(activities, function (name, activity) {
                             $('body').data()['activitynames'][name] = true;
+                            $('body').data()['activitycolors'][name] = $('body').data()['platformColors'][plat];
                         });
                     });
                 }
@@ -4500,6 +4536,8 @@ function enable_cardboard(){
                     options = $.extend(true, {}, options, { crosshair: { mode: "x" } });
                 }
                 timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, options);
+
+                recolorParameterTime($('input:radio[name=pt-colors]:checked').val());
 
                 $.each(timeparameterplot.getData(), function(index, series) {
                     // TODO: color the lables
