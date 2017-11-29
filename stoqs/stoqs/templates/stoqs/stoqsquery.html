@@ -1309,6 +1309,7 @@
     var runtime = null;
     var rtLeft, rtRight;
     var lastW, lastH;
+    var num_pt_colors = 16;
 
     var vrHMD = null, vrSensor = null;
     var pyr = new x3dom.fields.SFVec3f(0, 0, 0);        // For the Leap Motion
@@ -1444,7 +1445,8 @@
                 });
             }
             else {
-                ds.color = timeparameterplot.getOptions().colors[index];
+                indx = index % num_pt_colors;
+                ds.color = timeparameterplot.getOptions().colors[indx];
             }
         });
 
@@ -2341,11 +2343,9 @@
         update_sensortrackskml();
         });
 
-
     $('input[name="pt-colors"]').on('click', function (e) {
-            recolorParameterTime($('input:radio[name=pt-colors]:checked').val());
+        recolorParameterTime($('input:radio[name=pt-colors]:checked').val());
     });
-
 
     $('#show-filtered-sp-checkbox').on('click', function (e) {
         if ( $('#show-filtered-sp-checkbox').is(':checked') ) {
@@ -3400,9 +3400,8 @@ function enable_cardboard(){
                                 };
     // Rotate from red to green - See http://www.benknowscode.com/2013/02/graphing-with-flot-controlling-series_9976.html
     parametertime_options.colors = [];
-    var maxColors = 16;
-    for (var i=0; i<=maxColors; i++) {
-        var hue = i * 360 / maxColors;
+    for (var i=0; i<=num_pt_colors; i++) {
+        var hue = i * 360 / num_pt_colors;
         parametertime_options.colors.push(jQuery.Color({ hue: hue, saturation: 0.95, lightness: 0.35, alpha: 1 }).toHexString());
     }
 
