@@ -51,13 +51,27 @@ class CCELoader(LoadScript):
     colors = {}
 
     # Colors for BEDs 
-    num_beds = 15
+    num_beds = 11
     beds_names = [('bed{:02d}').format(n) for n in range(num_beds+1)]
     reds = plt.cm.Reds
     for b, c in zip(beds_names, reds(np.arange(0, reds.N, reds.N/num_beds))):
         colors[b] = rgb2hex(c)[1:]
         # Duplicate color  for Trajectory 't' version
         colors[b + 't'] = rgb2hex(c)[1:]
+
+    # Override with Roberto's Kaleidagraph colors - from email on 29 November 2017
+    colors['bed09'] = 'D3F33C'
+    colors['bed09t'] = 'D3F33C'
+    colors['bed08'] = 'D94C7B'
+    colors['bed08t'] = 'D94C7B'
+    colors['bed04'] = 'F0660F'
+    colors['bed04t'] = 'F0660F'
+    colors['bed03'] = '90E7F0'
+    colors['bed03t'] = '90E7F0'
+    colors['bed10'] = 'BC8FD9'
+    colors['bed10t'] = 'BC8FD9'
+    colors['bed11'] = 'A4A4A4'
+    colors['bed11t'] = 'A4A4A4'
 
     # color for BIN
     colors['ccebin'] = 'ff0000'
