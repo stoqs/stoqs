@@ -9,8 +9,8 @@
     <meta name="author" content="Mike McCann, MBARI" />
 
     <!-- The styles -->
-    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet">
-    <link href="{{STATIC_URL}}media/font/orbitron.css" rel="stylesheet">
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet"></link>
+    <link href="{{STATIC_URL}}media/font/orbitron.css" rel="stylesheet"></link>
     <style>
         body {
             padding-top: 35px;  /* 35px to make the container go all the way to the bottom of the topbar */
@@ -97,12 +97,12 @@
             }
         }
     </style>
-    <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
-    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.icon-large.min.css" rel="stylesheet">
-    <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet">
-    <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet">
-    <link type="text/css" href="{{ STATIC_URL }}x3dom-1.7.1/x3dom.css" rel="stylesheet">
-    <!--<link type="text/css" href="http://www.x3dom.org/x3dom/dist/x3dom.css" rel="stylesheet">
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet"></link>
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.icon-large.min.css" rel="stylesheet"></link>
+    <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet"></link>
+    <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet"></link>
+    <link type="text/css" href="{{ STATIC_URL }}x3dom-1.7.1/x3dom.css" rel="stylesheet"></link>
+    <!--<link type="text/css" href="http://www.x3dom.org/x3dom/dist/x3dom.css" rel="stylesheet">-->
     
 
     <!-- The HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -112,10 +112,10 @@
     <![endif]-->
 
     <!-- The fav and touch icons -->
-    <link rel="shortcut icon" href="{{STATIC_URL}}images/stoqs_favicon.ico" type="image/x-icon">
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-114-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-72-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-57-precomposed.png">
+    <link rel="shortcut icon" href="{{STATIC_URL}}images/stoqs_favicon.ico" type="image/x-icon"></link>
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-114-precomposed.png"></link>
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-72-precomposed.png"></link>
+    <link rel="apple-touch-icon-precomposed" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-57-precomposed.png"></link>
 
     {% if google_analytics_code %}
     <!-- Google Analytics -->
@@ -143,7 +143,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="{{home_page_link}}" style="padding-top:4px;"><img src="{{STATIC_URL}}images/{{home_page_logo}}" alt="{{home_page_alt}}"></a>
+          <a class="brand" href="{{home_page_link}}" style="padding-top:4px;"><img src="{{STATIC_URL}}images/{{home_page_logo}}" alt="{{home_page_alt}}"/></a>
           <a class="brand" href="#">{{request.META.dbAlias}}</a>
           <div class="nav-collapse">
             <ul class="nav">
@@ -154,7 +154,7 @@
                 <i class="icon-eye-open icon-white"></i> Share this view</a></li>
             </ul>
             <a class="brand" href="https://github.com/stoqs/stoqs" style="padding-top:6px;" target="_new" title="STOQS GitHub">
-            <img src="{{STATIC_URL}}images/STOQS_logo_gray1_24.png" alt="STOQS GitHub"></a>
+            <img src="{{STATIC_URL}}images/STOQS_logo_gray1_24.png" alt="STOQS GitHub"/></a>
             <!--
             <form action="">
                 <input type="text" placeholder="Search" />
@@ -174,7 +174,7 @@
     <div class="modal-body">
         <h4>Copy this link to your clipboard to and use it in e-mail, etc. to share this view of the data</h4>
         <div id="permalink-box" style="display:none">
-            <input type="text" name="permalink" style="width: 100%">
+            <input type="text" name="permalink" style="width: 100%" />
         </div>
     </div>
     <div class="modal-footer">
@@ -934,13 +934,13 @@
                                                 <input type="radio" name="colormap_choice" value="{{cm}}" id="{{cm}}" style="float:left;clear:none;display:block;margin-right:5px;"/>
                                                 <label for="{{cm}}">{{cm}}</label>
                                             </td>
-                                            <td style="border-top:0px;"><label for="{{cm}}"><img src="{{STATIC_URL}}images/colormaps/{{cm}}.png"></label></td>
+                                            <td style="border-top:0px;"><label for="{{cm}}"><img src="{{STATIC_URL}}images/colormaps/{{cm}}.png"/></label></td>
 
                                             <td style="white-space:nowrap;border-top:0px;">
                                                 <input type="radio" name="colormap_choice" value="{{cm}}_r" id="{{cm}}_r" style="float:left;clear:none;display:block;margin-right:5px;"/>
                                                 <label for="{{cm}}_r">{{cm}}_r</label>
                                             </td>
-                                            <td style="border-top:0px;"><label for="{{cm}}_r"><img src="{{STATIC_URL}}images/colormaps/{{cm}}_r.png"></label></td>
+                                            <td style="border-top:0px;"><label for="{{cm}}_r"><img src="{{STATIC_URL}}images/colormaps/{{cm}}_r.png"/></label></td>
                                         </tr>
                                     {% endfor %}            
                                     </table>
@@ -1341,16 +1341,18 @@
         var sc = f * d;
         var scale = sc + ',' + sc + ',' + sc;
 
-        // Set scale attribute and distance text for all platforms in the scene
-        $.each($('body').data()['platformAnimation'].concat( 
-                $.map($('body').data()['platformModels'], function(v, k) {return k})), function(index, plat) {
-            $('#' + plat + '_SCALE').attr('scale', scale);
-            // Axes are 10m long in the axes_enu.x3d inlined file
-            up_text = Math.round(sc  * 10 / $('body').data()['ve'])  + ' m';
-            e_text = Math.round(sc * 10) + ' m';
-            $('#' + plat + '_axesENU__upString').attr('string', up_text);
-            $('#' + plat + '_axesENU__eString').attr('string', e_text);
-        });
+        if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
+            // Set scale attribute and distance text for all platforms in the scene
+            $.each($('body').data()['platformAnimation'].concat( 
+                    $.map($('body').data()['platformModels'], function(v, k) {return k})), function(index, plat) {
+                $('#' + plat + '_SCALE').attr('scale', scale);
+                // Axes are 10m long in the axes_enu.x3d inlined file
+                up_text = Math.round(sc  * 10 / $('body').data()['ve'])  + ' m';
+                e_text = Math.round(sc * 10) + ' m';
+                $('#' + plat + '_axesENU__upString').attr('string', up_text);
+                $('#' + plat + '_axesENU__eString').attr('string', e_text);
+            });
+        }
     }
 
     function updateCrosshairs(fraction, timeAxis, limits) {
