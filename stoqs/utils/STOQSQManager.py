@@ -604,8 +604,8 @@ class STOQSQManager(object):
                     return modelInfo
 
                 if len(geom_list) > 1:
-                    logger.error('More than one location for %s returned.'
-                                 'Using first one found: %s', platformName, geom)
+                    logger.warn('More than one location for %s returned.'
+                                'Using first one found: %s', platformName, geom)
 
                 # TimeseriesProfile data has multiple nominaldepths - look to 
                 # Resource for nominaldepth of the Platform for these kind of data.
