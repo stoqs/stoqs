@@ -1341,16 +1341,18 @@
         var sc = f * d;
         var scale = sc + ',' + sc + ',' + sc;
 
-        // Set scale attribute and distance text for all platforms in the scene
-        $.each($('body').data()['platformAnimation'].concat( 
-                $.map($('body').data()['platformModels'], function(v, k) {return k})), function(index, plat) {
-            $('#' + plat + '_SCALE').attr('scale', scale);
-            // Axes are 10m long in the axes_enu.x3d inlined file
-            up_text = Math.round(sc  * 10 / $('body').data()['ve'])  + ' m';
-            e_text = Math.round(sc * 10) + ' m';
-            $('#' + plat + '_axesENU__upString').attr('string', up_text);
-            $('#' + plat + '_axesENU__eString').attr('string', e_text);
-        });
+        if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
+            // Set scale attribute and distance text for all platforms in the scene
+            $.each($('body').data()['platformAnimation'].concat( 
+                    $.map($('body').data()['platformModels'], function(v, k) {return k})), function(index, plat) {
+                $('#' + plat + '_SCALE').attr('scale', scale);
+                // Axes are 10m long in the axes_enu.x3d inlined file
+                up_text = Math.round(sc  * 10 / $('body').data()['ve'])  + ' m';
+                e_text = Math.round(sc * 10) + ' m';
+                $('#' + plat + '_axesENU__upString').attr('string', up_text);
+                $('#' + plat + '_axesENU__eString').attr('string', e_text);
+            });
+        }
     }
 
     function updateCrosshairs(fraction, timeAxis, limits) {
@@ -4922,17 +4924,17 @@ function enable_cardboard(){
                 if (data[key]) {
                     if (data[key]['points']) {
                         if ( ! $.isEmptyObject(data.measuredparameterx3d.points) ) {
-                            if ( ! $('#mp-x3d-track').length ) {
-                                // Add Shape here to reduce X3DOM error/warnings of missing geometry in shape node
-                                $('#spatial-3d-scene').append('<Shape id="mp-x3d-track"></Shape>');
+                            if ( $('#mp-x3d-track').length == 0) {
+                                $('#spatial-3d-scene').append([
+                                    '<Shape id="mp-x3d-track">',
+                                        '<Appearance><LineProperties linewidthScaleFactor="5"></LineProperties></Appearance>',
+                                        '<indexedlineset coordIndex="' + data.measuredparameterx3d.index + '">',
+                                            '<color color="' + data.measuredparameterx3d.colors + '"></color>',
+                                            '<geocoordinate point="' + data.measuredparameterx3d.points  + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>',
+                                        '</indexedlineset>',
+                                    '</Shape>'
+                                ].join(''));
                             }
-                            $('#mp-x3d-track').html([
-                                '<Appearance><LineProperties linewidthScaleFactor="5"></LineProperties></Appearance>',
-                                '<indexedlineset coordIndex="' + data.measuredparameterx3d.index + '">',
-                                    '<color color="' + data.measuredparameterx3d.colors + '"></color>',
-                                    '<geocoordinate point="' + data.measuredparameterx3d.points  + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>',
-                                '</indexedlineset>',
-                            ].join(''));
                         }
                         $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data.measuredparameterx3d.colorbar + '" />');
                     }
