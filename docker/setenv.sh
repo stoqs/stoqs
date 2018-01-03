@@ -3,6 +3,10 @@
 # Environment variables to be defined prior to running the containers:
 #
 
+# STOQS_HOST: publically accesible host name, used for ALLOWED_HOSTS and MAPSERVER_HOST
+# May want to be explicit if hostname command isn't accurate
+export STOQS_HOST=`hostname`
+
 # STOQS_VOLS_DIR: Base volume directory on the host
 export STOQS_VOLS_DIR=${PWD}/tmp/stoqs_vols
 
@@ -31,8 +35,12 @@ export STOQS_HOST_POSTGRES_PORT=5432
 
 # STOQS_HOST_MAPSERVER_PORT: host port to map mapserver container's 80 port
 export STOQS_HOST_MAPSERVER_PORT=7000
+export MAPSERVER_HOST=${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}
 
 # ___ STOQS ___
+
+# Django's database connection string
+export DATABASE_URL="postgis://stoqsadm:${STOQSADM_PASS}@stoqs-postgis:5432/stoqs"
 
 # STOQS_HOST_DJANGO_PORT: host port to map container's django 8000 port
 export STOQS_HOST_DJANGO_PORT=8000
@@ -40,3 +48,4 @@ export STOQS_HOST_DJANGO_PORT=8000
 # TODO remove, this is temporary..
 # STOQS_HOST_HTTP_PORT: host port to map container's http server 80 port
 export STOQS_HOST_HTTP_PORT=80
+
