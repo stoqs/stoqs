@@ -317,7 +317,7 @@ LOGGING = {
 MAPSERVER_HOST = env('MAPSERVER_HOST', default='localhost:8080')
 
 # For template generated .map files
-MAPFILE_DIR = '/dev/shm'
+MAPFILE_DIR = env('MAPFILE_DIR', default='/dev/shm')
 
 
 # STOQS specific logging
