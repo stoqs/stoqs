@@ -121,6 +121,7 @@ then
     yum -y install scipy blas blas-devel lapack lapack-devel lvm2 firefox cachefilesd
     yum -y groups install "GNOME Desktop"
     yum -y install fftw-devel motif-devel ghc-OpenGL-devel
+    yum -y install docker docker-compose
     # For InstantReality's aopt command referenced in doc/instructions/SPATIAL_3d.md
     yum -y install freeglut luajit
     wget http://doc.instantreality.org/media/uploads/downloads/2.8.0/InstantReality-RedHat-7-x64-2.8.0.38619.rpm
@@ -224,6 +225,8 @@ rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
 /usr/bin/systemctl start memcached.service
 /usr/bin/systemctl enable cachefilesd
 /usr/bin/systemctl start cachefilesd
+/usr/bin/systemctl enable docker
+/usr/bin/systemctl start docker
 
 echo Modify pg_hba.conf
 mv -f /var/lib/pgsql/9.6/data/pg_hba.conf /var/lib/pgsql/9.6/data/pg_hba.conf.bak
