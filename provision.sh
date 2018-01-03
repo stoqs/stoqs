@@ -208,6 +208,7 @@ chown apache.apache /tmp/mapserver_stoqshg.log
 sudo chmod go+w /tmp/mapserver_stoqshg.log
 
 # Needed for network support from docker containers
+hostnamectl set-hostname localhost
 cat <<EOT >> /etc/sysctl.conf
 net.ipv4.ip_forward=1
 EOT
