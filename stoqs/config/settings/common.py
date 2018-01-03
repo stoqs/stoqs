@@ -313,7 +313,7 @@ LOGGING = {
 
 # Must be externally accessible if your STOQS server is to be externally accessible
 # The default of 'localhost:8080' is for a Vagrant install, set MAPSERVER_HOST for
-# other cases, e.g. export MAPSERVER_HOST='172.16.130.204'
+# other cases, e.g. export MAPSERVER_HOST='172.16.130.204:80'
 MAPSERVER_HOST = env('MAPSERVER_HOST', default='localhost:8080')
 
 # For template generated .map files
