@@ -207,6 +207,12 @@ touch /tmp/mapserver_stoqshg.log
 chown apache.apache /tmp/mapserver_stoqshg.log
 sudo chmod go+w /tmp/mapserver_stoqshg.log
 
+# Needed for network support from docker containers
+cat <<EOT >> /etc/sysctl.conf
+net.ipv4.ip_forward=1
+EOT
+systemctl restart network
+
 echo Build database for locate command
 updatedb
 
