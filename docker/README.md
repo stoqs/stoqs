@@ -129,10 +129,10 @@ Also in this case, make sure to execute `docker build` from the parent directory
 
 ```
 $ docker build -f docker/Dockerfile-stoqs \
-         --build-arg STOQSADM_PASS=${STOQSADM_PASS} \
-         --build-arg POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
-         --build-arg STOQS_HOST_MAPSERVER_PORT=${STOQS_HOST_MAPSERVER_PORT} \
-         -t "mbari/stoqs:0.0.1" .
+         --build-arg STOQS_HOST=${STOQSADM_HOST} \
+         --build-arg MAPSERVER_HOST=${MAPSERVER_HOST} \
+         --build-arg DATABASE_URL=${DATABASE_URL} \
+         -t "mbari/stoqs" .
 ```
 
 The entry point in this image launches the Django application in development mode.
