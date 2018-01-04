@@ -1,4 +1,4 @@
-FROM mbari/stoqs-base:0.0.1
+FROM mbari/stoqs-base
 
 ARG STOQS_HOST
 ARG MAPSERVER_HOST
