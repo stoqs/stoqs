@@ -28,14 +28,15 @@ export POSTGRES_PASSWORD=changeme
 export STOQSADM_PASS=changeme
 
 # STOQS_HOST_POSTGRES_PORT: host port to map postgres container's 5432 port
-export STOQS_HOST_POSTGRES_PORT=5432
+# Default value set so as not to conflict with Vagrant VM's instance
+export STOQS_HOST_POSTGRES_PORT=5433
 
 
 # ___ MapServer ___
 
 # STOQS_HOST_MAPSERVER_PORT: host port to map mapserver container's 80 port
 export STOQS_HOST_MAPSERVER_PORT=7000
-export MAPSERVER_HOST=${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}
+export MAPSERVER_HOST="${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}"
 
 # ___ STOQS ___
 
@@ -47,5 +48,5 @@ export STOQS_HOST_DJANGO_PORT=8000
 
 # TODO remove, this is temporary..
 # STOQS_HOST_HTTP_PORT: host port to map container's http server 80 port
-export STOQS_HOST_HTTP_PORT=80
+export STOQS_HOST_HTTP_PORT=88
 
