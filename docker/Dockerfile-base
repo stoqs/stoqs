@@ -1,5 +1,8 @@
 FROM centos:7
 
+# STOQS base Docker image does not include InstantReality, OSTPS, GNU Desktop,
+# or MB-System. These tools are available in the Vagrant installation of STOQS.
+
 # Disable SELinux
 # TODO There's no /etc/selinux/config file on the centos:7 image
 #RUN sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
@@ -79,33 +82,6 @@ RUN wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-5.3.1-src.tar.gz &&\
     make -j 2 && make install &&\
     cd ../..
 
-
-# Build and install OSU Tidal Prediction Software
-RUN pushd /usr/local &&\
-    wget -q -N ftp://ftp.oce.orst.edu/dist/tides/OTPS2.tar.Z &&\
-    tar -xzf OTPS2.tar.Z &&\
-    cd /usr/local/OTPS2 &&\
-    wget -q -N ftp://ftp.oce.orst.edu/dist/tides/TPXO8_compact/tpxo8_atlas_compact_v1.tar.Z &&\
-    tar -xzf tpxo8_atlas_compact_v1.tar.Z &&\
-    make extract_HC &&\
-    make predict_tide &&\
-    cp setup.inp setup.inp.bak &&\
-    echo -e "\
-DATA/Model_atlas_v1        ! 1. tidal model control file\n\
-lat_lon_time               ! 2. latitude/longitude/<time> file\n\
-z                          ! 3. z/U/V/u/v\n\
-m2,s2                      ! 4. tidal constituents to include\n\
-AP                         ! 5. AP/RI\n\
-oce                        ! 6. oce/geo\n\
-1                          ! 7. 1/0 correct for minor constituents\n\
-sample.out                 ! 8. output file (ASCII)\n" > setup.inp &&\
-    cp DATA/Model_atlas_v1 DATA/Model_atlas_v1.bak &&\
-    echo -e "\
-/usr/local/OTPS2/DATA/hf.tpxo8_atlas_30_v1\n\
-/usr/local/OTPS2/DATA/uv.tpxo8_atlas_30_v1\n\
-/usr/local/OTPS2/DATA/grid_tpxo8atlas_30_v1\n" > DATA/Model_atlas_v1 &&\
-    popd
-
 # Put geckodriver in /usr/local/bin
 RUN pushd /usr/local/bin &&\
     wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.11.1/geckodriver-v0.11.1-linux64.tar.gz &&\
@@ -116,27 +92,12 @@ RUN yum -y install nginx
 
 RUN yum -y install deltarpm scipy mod_wsgi memcached python-memcached &&\
     yum -y install graphviz-devel graphviz-python ImageMagick postgis2_96 &&\
-    yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel &&\
-    yum -y install proj-nad proj-epsg libxml2-devel libxslt-devel pam-devel &&\
+    yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
+
+RUN yum -y install proj-nad proj-epsg libxml2-devel libxslt-devel pam-devel &&\
     yum -y install python-psycopg2 libpqxx-devel hdf hdf-devel freetds-devel postgresql-devel &&\
     yum -y install gdal-python mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate &&\
-    yum -y install scipy blas blas-devel lapack lapack-devel lvm2 firefox cachefilesd &&\
-    yum -y groups install "GNOME Desktop" &&\
-    yum -y install fftw-devel motif-devel ghc-OpenGL-devel
-
-
-# For InstantReality's aopt command referenced in doc/instructions/SPATIAL_3d.md
-RUN yum -y install freeglut luajit
-#RUN wget http://doc.instantreality.org/media/uploads/downloads/2.8.0/InstantReality-RedHat-7-x64-2.8.0.38619.rpm &&\
-#    rpm -Uvh InstantReality-RedHat-7-x64-2.8.0.38619.rpm
-
-# Build and install MB-System
-RUN wget -q -N ftp://ftp.ldeo.columbia.edu/pub/MB-System/mbsystem-5.5.2284.tar.gz &&\
-    tar -xzf mbsystem-5.5.2284.tar.gz &&\
-    cd mbsystem-5.5.2284/ &&\
-    ./configure --with-otps-dir=/usr/local/OTPS2 &&\
-    make -j 2 && make install &&\
-    cd ..
+    yum -y install blas blas-devel lapack lapack-devel lvm2 firefox cachefilesd
 
 COPY requirements     /opt/stoqsgit/requirements/
 
