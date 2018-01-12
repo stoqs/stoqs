@@ -121,7 +121,7 @@ then
     yum -y install scipy blas blas-devel lapack lapack-devel lvm2 firefox cachefilesd
     yum -y groups install "GNOME Desktop"
     yum -y install fftw-devel motif-devel ghc-OpenGL-devel
-    yum -y install docker docker-compose
+    yum -y install docker docker-compose nginx
     # For InstantReality's aopt command referenced in doc/instructions/SPATIAL_3d.md
     yum -y install freeglut luajit
     wget http://doc.instantreality.org/media/uploads/downloads/2.8.0/InstantReality-RedHat-7-x64-2.8.0.38619.rpm
