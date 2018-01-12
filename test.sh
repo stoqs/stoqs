@@ -6,7 +6,7 @@
 # Make sure none of these are set: STATIC_FILES, STATIC_URL, MEDIA_FILES, MEDIA_URL 
 # and that nothing is using to the default stoqs database.  Standard execution on
 # a development system is to execute like: './test.sh <DB_PASSWORD>'; optional
-# arguments like './test.sh CHANGME load noextraload' may be used, e.g. on travis-ci,
+# arguments like './test.sh CHANGEME load noextraload' may be used, e.g. on travis-ci,
 # to skip some of the loading tests.
 
 if [ -z $1 ]
