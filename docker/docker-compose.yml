@@ -18,8 +18,8 @@ services:
   #  image: rabbitmq:3
 
   postgis:
-    volumes:
-      - ${STOQS_VOLS_DIR}/pgdata:/var/lib/postgresql/data
+    ##volumes:
+    ##  - ${STOQS_VOLS_DIR}/pgdata:/var/lib/postgresql/data
 
     ports:
       - "${STOQS_HOST_POSTGRES_PORT}:5432"
@@ -29,7 +29,7 @@ services:
       - STOQSADM_PASS=${STOQSADM_PASS}
 
     container_name: stoqs-postgis
-    image: mbari/stoqs-postgis:0.0.1
+    image: mbari/stoqs-postgis
 
   mapserver:
     volumes:
@@ -39,7 +39,7 @@ services:
       - "${STOQS_HOST_MAPSERVER_PORT}:7000"
 
     container_name: stoqs-mapserver
-    image: mbari/stoqs-mapserver:0.0.1
+    image: mbari/stoqs-mapserver
 
   stoqs:
     # TODO probably need to adjust STOQS code to use a different location for
@@ -50,10 +50,24 @@ services:
     ports:
       - "${STOQS_HOST_DJANGO_PORT}:8000"
       - "${STOQS_HOST_HTTP_PORT}:80"
+      # For testing serving directly from uwsgi
+      - 9090:9090
 
-    image: mbari/stoqs:0.0.1
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+
+    image: mbari/stoqs
     container_name: stoqs
     depends_on:
       - mapserver
       - postgis
       #- rabbitmq
+
+  nginx:
+    image: nginx:latest
+    container_name: stoqs-nginx
+    ports:
+      - "81:80"
+    depends_on:
+      - stoqs
+
