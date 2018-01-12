@@ -1,25 +1,42 @@
-FROM mbari/stoqs-base
+FROM pcic/geospatial-python
+MAINTAINER Mike McCann <mccann@mbari.org>
 
-ARG STOQS_HOST
-ARG MAPSERVER_HOST
-ARG DATABASE_URL
+# Modeled after http://michal.karzynski.pl/blog/2015/04/19/packaging-django-applications-as-docker-container-images/
 
-# TODO perhaps no need to copy everything for a production env.
-COPY stoqs    /opt/stoqsgit/stoqs/
-COPY test.sh  /opt/stoqsgit/
+ENV STOQS_SRVHOME=/srv
+ENV STOQS_SRVPROJ=/srv/stoqs
 
-ENV STOQS_HOME=/opt/stoqsgit \
-    PATH=/usr/pgsql-9.6/bin:${PATH}
+RUN apt-get update && \
+    apt-get -qq -y install \
+    freetds-dev \
+    git \
+    ##gmt \
+    ##gmt-dcw \
+    ##gmt-gshhg \
+    libncurses-dev \
+    postgresql-9.6 \
+    wget
 
-ENV STOQS_HOST="${STOQS_HOST}" \
-    DATABASE_URL="${DATABASE_URL}" \
-    MAPSERVER_DATABASE_URL="${DATABASE_URL}" \
-    MAPSERVER_HOST="${MAPSERVER_HOST}"
 
-# The following mainly as a convenience in case the container is run with bash as entry point
+# Make sure python and python-config refer to corresponding Python 3 versions
+RUN cd /usr/bin/ &&\
+    ln -fs python3 python &&\
+    ln -fs python3-config python-config
+
+# Create application subdirectories
+WORKDIR $STOQS_SRVHOME
+RUN mkdir media static logs
+VOLUME ["$STOQS_SRVHOME/media/", "$STOQS_SRVHOME/logs/"]
+
+
+COPY requirements $STOQS_SRVPROJ/requirements/
+RUN /bin/bash -c '\
+    pip3 install -r $STOQS_SRVPROJ/requirements/production.txt'
+
 RUN echo "alias psql='psql --host=stoqs-postgis --port=5432'" >> /root/.bashrc
 
-WORKDIR    /opt/stoqsgit
-ENTRYPOINT ["stoqs/manage.py", "runserver", "0.0.0.0:8000", "--settings=config.settings.local"]
+COPY stoqs $STOQS_SRVPROJ
+COPY test.sh $STOQS_SRVHOME
+COPY docker/stoqs-entrypoint.sh /
 
-# TODO: Replace ENTRYPOINT with nginx/wsgi execution
+ENTRYPOINT ["/stoqs-entrypoint.sh"]
