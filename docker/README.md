@@ -91,7 +91,7 @@ to include the intialization of the database and the necessary
 adjustments to `pg_hba.conf` and `pg_hba_ident.conf`:
 
 ```
-$ docker build -f Dockerfile-postgis -t "mbari/stoqs-postgis:0.0.1" .
+docker build -f Dockerfile-postgis -t "mbari/stoqs-postgis" .
 ```
 
 **NOTE**: 
@@ -106,26 +106,16 @@ $ docker build -f Dockerfile-postgis -t "mbari/stoqs-postgis:0.0.1" .
 Currently playing with `geodata/mapserver:7.0.1` directly.
 (NOTE: actually an adjusted one, see above)
 
-
-### STOQS base image
-
-We capture the whole set of OS level libraries/tools, as well
-as all production requirements (basically what `setup.sh production` does) 
-in a base image, `mbari/stoqs-base`.
-
-The `docker build` command must be executed from the parent directory:
-
 ```
-$ docker build -f docker/Dockerfile-base -t "mbari/stoqs-base:0.0.1" .
+docker build -f Dockerfile-mapserver -t "mbari/stoqs-mapserver" .
 ```
-
-This image also has nginx enabled as entry point.
 
 ### STOQS image
 
 We build the STOQS image on top of `mbari/stoqs-base`:
 
-Also in this case, make sure to execute `docker build` from the parent directory:
+Make sure to execute `docker build` from the parent directory:
+(Are environment variable settings needed in the build step, or just in cocker-compose?)
 
 ```
 $ docker build -f docker/Dockerfile-stoqs \
@@ -247,9 +237,9 @@ TODO
 When the time comes:
 
 ```
-$ docker push mbari/stoqs-postgis:0.0.1
-$ docker push mbari/stoqs-base:0.0.1
-$ docker push mbari/stoqs:0.0.1
+docker push mbari/stoqs-postgis
+docker push mbari/stoqs-mapserver
+docker push mbari/stoqs
 ```
 
 
