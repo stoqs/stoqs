@@ -55,6 +55,7 @@ services:
 
     environment:
       - DATABASE_URL=${DATABASE_URL}
+      - PGHOST=${STOQS_PGHOST}
 
     image: mbari/stoqs
     container_name: stoqs
