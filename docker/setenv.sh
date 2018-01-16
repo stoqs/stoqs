@@ -41,10 +41,11 @@ export MAPSERVER_HOST="${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}"
 # ___ STOQS ___
 
 # Django's database connection string
-export DATABASE_URL="postgis://stoqsadm:${STOQSADM_PASS}@stoqs-postgis:5432/stoqs"
+export STOQS_PGHOST=stoqs-postgis
+export DATABASE_URL="postgis://stoqsadm:${STOQSADM_PASS}@${STOQS_PGHOST}:5432/stoqs"
 
 # STOQS_HOST_DJANGO_PORT: host port to map container's django 8000 port
-export STOQS_HOST_DJANGO_PORT=8000
+export STOQS_HOST_DJANGO_PORT=8002
 
 # TODO remove, this is temporary..
 # STOQS_HOST_HTTP_PORT: host port to map container's http server 80 port
