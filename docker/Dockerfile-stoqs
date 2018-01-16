@@ -33,8 +33,6 @@ COPY requirements $STOQS_SRVPROJ/requirements/
 RUN /bin/bash -c '\
     pip3 install -r $STOQS_SRVPROJ/requirements/production.txt'
 
-RUN echo "alias psql='psql --host=stoqs-postgis --port=5432'" >> /root/.bashrc
-
 COPY stoqs $STOQS_SRVPROJ
 COPY test.sh $STOQS_SRVHOME
 COPY docker/stoqs-entrypoint.sh /
