@@ -12,6 +12,7 @@ echo -e "\
 host    all     stoqsadm     10.0.0.0/8     md5\n\
 host    all     stoqsadm     172.16.0.0/12  md5\n\
 host    all     stoqsadm     192.168.0.0/16 md5\n\
+host    all     stoqsadm     all            trust\n\
 host    all     postgres     all            trust\n\
 host    all     all          all            ident map=root_as_others\n\
 local   all     all                         trust\n\
