@@ -35,7 +35,7 @@ from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
 
 cl = CANONLoader('stoqs_os2018', 'CANON - Off Season 2018',
-                 description='September 2018 campaign observations in Monterey Bay',
+                 description='Off Season 2018 campaign observations in Monterey Bay',
                  x3dTerrains={
                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -391,22 +391,22 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
 
-    cl.loadM1()  ## start with just M1
-#    cl.loadTethys()
-#    cl.loadAku()
-#    cl.loadAhi()
-#    cl.loadOpah()
-#    cl.loadL_662a()
+    cl.loadM1()  
+    cl.loadTethys()
+    cl.loadAku()
+    cl.loadAhi()
+    cl.loadOpah()
+    cl.loadL_662a()
     ##cl.load_NPS34()  ## not in this campaign
     ##cl.load_NPS34a() ## not in this campaign
     ##cl.load_slocum_nemesis()  ## not in this campaign
     ##cl.load_SG621(stride=2) ## KISS glider
     ##cl.load_SG539(stride=2) ## KISS glider
-#    cl.load_wg_Tiny()
-#    cl.load_oa1()
-#    cl.load_oa2()
-#    cl.loadDorado()
-#    cl.loadDaphne()
+    cl.load_wg_Tiny()
+    cl.load_oa1()
+    cl.load_oa2()
+    cl.loadDorado()
+    cl.loadDaphne()
     ##cl.loadMakai()  ## not in this campaign
     ##cl.loadRCuctd()  ## not in this campaign
     ##cl.loadRCpctd()  ## not in this campaign
