@@ -69,7 +69,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 #  DORADO
 #####################################################################
 # special location for dorado data
-cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2018/netcdf/'
+cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2017/netcdf/'
 cl.dorado_files = [
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
@@ -177,21 +177,21 @@ for p in platforms:
 # L_662a updated parameter names in netCDF file
 cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662a_files = [
-                   'OS_Glider_L_662_20181012_TS.nc',
+                   'OS_Glider_L_662_20171012_TS.nc',
                   ]
 cl.l_662a_parms = ['temperature', 'salinity', 'fluorescence','oxygen']
 cl.l_662a_startDatetime = startdate
 cl.l_662a_endDatetime = enddate
 
 # SG_539 ## KISS glider from Caltech/JPL
-cl.sg539_base = cl.dodsBase + 'Activity/canon/2018_Apr/Platforms/Gliders/SG539/'
+cl.sg539_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG539/'
 cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(1,291)] ## index needs to be 1 higher than terminal file name
 cl.sg539_parms = ['temperature', 'salinity']
 cl.sg539_startDatetime = startdate
 cl.sg539_endDatetime = enddate
 
 # SG_621 ## KISS glider from Caltech/JPL
-cl.sg621_base = cl.dodsBase + 'Activity/canon/2018_Apr/Platforms/Gliders/SG621/'
+cl.sg621_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG621/'
 cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(1,291)] ## index needs to be 1 higher than terminal file name
 cl.sg621_parms = ['temperature', 'salinity'] # 'aanderaa4330_dissolved_oxygen' throws DAPloader KeyError
 cl.sg621_startDatetime = startdate
@@ -201,19 +201,19 @@ cl.sg621_endDatetime = enddate
 # NPS_34a updated parameter names in netCDF file
 ## The following loads decimated subset of data telemetered during deployment
 cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.nps34a_files = [ 'OS_Glider_NPS_G34_20180405_TS.nc' ]
+cl.nps34a_files = [ 'OS_Glider_NPS_G34_20170405_TS.nc' ]
 cl.nps34a_parms = ['temperature', 'salinity','fluorescence']
 cl.nps34a_startDatetime = startdate
 cl.nps34a_endDatetime = enddate
 
 # Slocum Teledyne nemesis Glider
 ## from ioos site ## these files proved to be not compatible with python loader
-## cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20180412T0000/'
-## cl.slocum_nemesis_files = [ 'Nemesis-20180412T0000.nc3.nc' ]
+## cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20170412T0000/'
+## cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
 ##   from cencoos directory, single non-aggregated files
-cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201805/'
+cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201705/'
 cl.slocum_nemesis_files = [
-         'nemesis_20180802T164114_rt0.nc',
+         'nemesis_20170802T164114_rt0.nc',
                           ]
 cl.slocum_nemesis_parms = [ 'temperature', 'salinity', 'u', 'v' ] #'oxygen', 'cdom', 'opbs', 'fluorescence' not populated
 cl.slocum_nemesis_startDatetime = startdate
@@ -233,7 +233,7 @@ cl.slocum_nemesis_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20181019/realTime/20181019.nc',
+                      'wgTiny/20171019/realTime/20171019.nc',
                    ]
 
 
@@ -256,7 +256,7 @@ cl.wg_Tiny_endDatetime = enddate
 ######################################################################
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
 cl.m1_files = [
-  '201808/OS_M1_20180808hourly_CMSTV.nc',]
+  '201708/OS_M1_20170808hourly_CMSTV.nc',]
 cl.m1_parms = [
   'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
   'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
@@ -269,8 +269,8 @@ cl.m1_endDatetime = enddate
 # Mooring 0A1
 cl.oa1_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA1/201607/realTime/'
 cl.oa1_files = [
-               'OA1_201607.nc' 
-               ] 
+               'OA1_201607.nc'
+               ]
 cl.oa1_parms = [
                'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
                'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
@@ -292,7 +292,7 @@ cl.oa2_endDatetime = enddate
 
 
 ######################################################################
-#  RACHEL CARSON: Jan 2018 --
+#  RACHEL CARSON: Jan 2017 --
 ######################################################################
 # UCTD
 cl.rcuctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/RachelCarson/uctd/'
@@ -311,7 +311,7 @@ cl.rcpctd_files = [
                   ]
 
 ######################################################################
-#  WESTERN FLYER: Apr 2018 --
+#  WESTERN FLYER: Apr 2017 --
 ######################################################################
 # UCTD
 cl.wfuctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/uctd/'
@@ -331,7 +331,7 @@ cl.wfpctd_files = [
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/
 #   copied to local BOG_Data/CANON_OS2107 dir
 ###################################################################################################
-cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON_OS2018/bctd/')
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON_OS2017/bctd/')
 cl.subsample_csv_files = [
 ##   'STOQS_00917_OXY_PS.csv',
 ##   'STOQS_00917_CARBON_GFF.csv',
