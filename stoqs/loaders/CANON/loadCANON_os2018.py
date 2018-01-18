@@ -35,7 +35,7 @@ from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
 
 cl = CANONLoader('stoqs_os2018', 'CANON - Off Season 2018',
-                 description='September 2017 campaign observations in Monterey Bay',
+                 description='September 2018 campaign observations in Monterey Bay',
                  x3dTerrains={
                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -136,8 +136,8 @@ platforms = ['tethys', 'aku', 'makai', 'ahi', 'opah', 'daphne']
 
 
 for p in platforms:
-    base =  'http://dods.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2017/'
-    dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2017/'
+    base =  'http://dods.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2018/'
+    dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2018/'
     setattr(cl, p + '_files', [])
     setattr(cl, p + '_base', dods_base)
     setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
@@ -269,8 +269,8 @@ cl.m1_endDatetime = enddate
 # Mooring 0A1
 cl.oa1_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA1/201607/realTime/'
 cl.oa1_files = [
-               'OA1_201607.nc' 
-               ] 
+               'OA1_201607.nc'
+               ]
 cl.oa1_parms = [
                'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
                'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
