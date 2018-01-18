@@ -178,6 +178,7 @@ for p in platforms:
 cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662a_files = [
                    'OS_Glider_L_662_20171012_TS.nc',
+                   'OS_Glider_L_662_20180117_TS.nc',
                   ]
 cl.l_662a_parms = ['temperature', 'salinity', 'fluorescence','oxygen']
 cl.l_662a_startDatetime = startdate
@@ -233,7 +234,8 @@ cl.slocum_nemesis_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20171019/realTime/20171019.nc',
+                      'wgTiny/20171212/realTime/20171212.nc',
+                      'wgTiny/20180116/realTime/20180116.nc',
                    ]
 
 
