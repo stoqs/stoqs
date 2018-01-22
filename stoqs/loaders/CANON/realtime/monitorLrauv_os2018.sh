@@ -1,7 +1,7 @@
 #!/bin/bash
-cd /opt/stoqsgit_dj1.8/venv-stoqs/bin
+cd /opt/stoqsgit/venv-stoqs/bin
 source activate
-cd /opt/stoqsgit_dj1.8/stoqs/loaders/CANON/realtime
+cd /opt/stoqsgit/stoqs/loaders/CANON/realtime
 post='--post'
 #post=''
 debug=''
