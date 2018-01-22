@@ -1,7 +1,7 @@
 #!/bin/bash
-cd /opt/stoqsgit_dj1.8/venv-stoqs/bin
+cd /opt/stoqsgit/venv-stoqs/bin
 source activate
-cd /opt/stoqsgit_dj1.8/stoqs/loaders/CANON/realtime
+cd /opt/stoqsgit/stoqs/loaders/CANON/realtime
 post='--post'
 #post=''
 debug=''
@@ -10,7 +10,7 @@ export SLACKTOKEN=${SLACKTOCKEN}
 database='stoqs_os2018'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 declare -a searchstr=("/realtime/sbdlogs/2018/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
-declare -a platforms=("daphne" "tethys")
+declare -a platforms=("daphne" "makai" "ahi" "aku")
 
 pos=$(( ${#searchstr[*]} - 1 ))
 last=${searchstr[$pos]}
@@ -30,7 +30,7 @@ do
         # get everything before the last /  - this is used as the directory base for saving the interpolated .nc files
         directory=`echo ${search} | sed 's:/[^/]*$::'`
         python monitorLrauv.py --start '20180101T000000' --end '20181231T000000' -d  'LRAUV Monterey data - Off Season 2018' --productDir '/mbari/ODSS/data/other/routine/Products/LRAUV' \
- 	--contourDir '/mbari/LRAUV/stoqs' --contourUrl 'http://dods.mbari.org/opendap/data/lrauv/stoqs/' -o /mbari/LRAUV/${platform}/${directory}/ \
+ 	--contourDir '/mbari/LRAUV/stoqs' --contourUrl 'http://dods.mbari.org/opendap/data/lrauv/stoqs/' -o /mbari/LRAUV/${platform}/${directory}/ -i /mbari/LRAUV/${platform}/${directory} \
         -u ${urlbase}/${platform}/${search} -b ${database} -c 'LRAUV Monterey data - Off Season 2018'  --append --autoscale \
         --iparm bin_mean_mass_concentration_of_chlorophyll_in_sea_water \
 	--booleanPlotGroup front \
