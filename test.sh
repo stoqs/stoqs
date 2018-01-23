@@ -23,6 +23,11 @@ then
     exit -1
 fi
 
+if [ -z $DATABASE_SUPERUSER_URL ]
+then
+    DATABASE_SUPERUSER_URL=postgis://127.0.0.1:5432/stoqs
+fi
+
 # Assume starting in project home (stoqsgit) directory
 cd stoqs
 
@@ -40,7 +45,8 @@ then
     echo "Loading tests..."
     # Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL.
     # Note that DATABASE_URL is exported before this script is executed, this is so that it also works in Travis-CI.
-    DATABASE_URL=postgis://127.0.0.1:5432/stoqs coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
+    
+    DATABASE_URL=$DATABASE_SUPERUSER_URL coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
     loading_tests_status=$?
 fi
 
@@ -91,7 +97,7 @@ fi
 # Run tests using the continuous integration (ci) setting
 # Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL
 echo "Unit tests..."
-DATABASE_URL=postgis://127.0.0.1:5432/stoqs
+DATABASE_URL=$DATABASE_SUPERUSER_URL
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
 unit_tests_status=$?
 

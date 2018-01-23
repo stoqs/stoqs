@@ -18,8 +18,8 @@ services:
   #  image: rabbitmq:3
 
   postgis:
-    ##volumes:
-    ##  - ${STOQS_VOLS_DIR}/pgdata:/var/lib/postgresql/data
+    volumes:
+      - ${STOQS_VOLS_DIR}/pgdata:/var/lib/postgresql/data
 
     ports:
       - "${STOQS_HOST_POSTGRES_PORT}:5432"
@@ -55,6 +55,7 @@ services:
 
     environment:
       - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_SUPERUSER_URL=${DATABASE_SUPERUSER_URL}
       - PGHOST=${STOQS_PGHOST}
 
     image: mbari/stoqs
