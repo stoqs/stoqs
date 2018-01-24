@@ -22,7 +22,10 @@ sudo -E docker build -f Dockerfile-postgis -t "mbari/stoqs-postgis" .
 
 pushd ..
 echo "Building mbari/stoqs image..."
-sudo -E docker build -f docker/Dockerfile-stoqs -t "mbari/stoqs" .
+sudo -E docker build -f docker/Dockerfile-stoqs \
+    --build-arg STOQS_PGHOST=${STOQS_PGHOST} \
+    --build-arg POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
+    -t "mbari/stoqs" .
 popd
 
 popd
