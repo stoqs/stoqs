@@ -22,13 +22,11 @@ export STOQS_HOST_RABBITMQ_PORT=4369
 
 # ___ Postgres/Postgis ___
 
-# POSTGRES_USER: create the specified user with superuser power and a database with the same name
 # POSTGRES_PASSWORD: Desired password for the super user in Postgres
-export POSTGRES_USER=stoqsadm
 export POSTGRES_PASSWORD=changeme
 
 # STOQSADM_PASS: Desired password for the 'stoqsadm' user in Postgres
-export STOQSADM_PASS=changeme
+export STOQSADM_PASS=CHANGEME
 
 # STOQS_HOST_POSTGRES_PORT: host port to map postgres container's 5432 port
 # Default value set so as not to conflict with Vagrant VM's instance
