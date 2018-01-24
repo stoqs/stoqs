@@ -95,7 +95,7 @@ then
 fi
 
 # Run tests using the continuous integration (ci) setting
-# Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL
+# Need to create and drop test_ databases using shell account or sa url, hence reassign DATABASE_URL
 echo "Unit tests..."
 DATABASE_URL=$DATABASE_SUPERUSER_URL
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
