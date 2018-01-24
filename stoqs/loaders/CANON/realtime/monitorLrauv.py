@@ -336,6 +336,8 @@ if __name__ == '__main__':
             logger.info('Looking for {0} in {1}'.format(year_str, url))
             if '{0}'.format(start.year) in url:
                 (url_src, startDatetime, endDatetime) = processDecimated(args, pw, url, lastDatetime, start, end)
+            else:
+              raise Exception('{0} not in search year'.format(url))
         except ServerError as e:
             logger.warn(e)
             continue
