@@ -18,7 +18,7 @@ Vagrant.configure("2") do |config|
   config.ssh.forward_x11 = true
   config.ssh.insert_key = false
   config.vm.network :private_network, ip: '192.168.50.50'
-  config.vm.synced_folder '.', '/vagrant', nfs: true,  mount_options: ['tcp', 'fsc' ,'actimeo=300']
+  config.vm.synced_folder '.', '/vagrant', nfs: true,  mount_options: ['tcp', 'fsc' ,'actimeo=300', 'no_root_squash']
   config.vbguest.auto_update = false
   config.vm.provision "shell", path: "provision.sh"
 end
