@@ -15,14 +15,14 @@ pushd $docker_dir
 source ./setenv.sh
 
 echo "Building mbari/stoqs-mapserver image..."
-sudo -E docker build -f Dockerfile-mapserver -t "mbari/stoqs-mapserver" .
+docker build -f Dockerfile-mapserver -t "mbari/stoqs-mapserver" .
 
 echo "Building mbari/stoqs-postgis image..."
-sudo -E docker build -f Dockerfile-postgis -t "mbari/stoqs-postgis" .
+docker build -f Dockerfile-postgis -t "mbari/stoqs-postgis" .
 
 pushd ..
 echo "Building mbari/stoqs image..."
-sudo -E docker build -f docker/Dockerfile-stoqs \
+docker build -f docker/Dockerfile-stoqs \
     --build-arg STOQS_PGHOST=${STOQS_PGHOST} \
     --build-arg POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
     -t "mbari/stoqs" .
