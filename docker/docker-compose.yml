@@ -44,8 +44,9 @@ services:
   stoqs:
     # TODO probably need to adjust STOQS code to use a different location for
     # this volume mapping -- /dev/shm seems to prevent the exposure of the ports below
-    #volumes:
-    #  - ${STOQS_VOLS_DIR}/maps:/dev/shm
+    volumes:
+      - ${STOQS_VOLS_DIR}/maps:/dev/shm
+      - ${STOQS_VOLS_DIR}/stoqs_root:/root
 
     ports:
       - "${STOQS_HOST_DJANGO_PORT}:8000"
@@ -56,7 +57,9 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - DATABASE_SUPERUSER_URL=${DATABASE_SUPERUSER_URL}
+      # Map STOQS_PGHOST to PGHOST, which sets default host for psql
       - PGHOST=${STOQS_PGHOST}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 
     image: mbari/stoqs
     container_name: stoqs

@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# On first entry into container create the default database
+##if
+##then
+##fi
+
+# Allow for psql execution (used for database creation) without a password
+echo ${PGHOST}:\*:\*:postgres:${POSTGRES_PASSWORD} > /root/.pgpass &&\
+    chmod 600 /root/.pgpass
+
 SAVE_DATABASE_URL=$DATABASE_URL
 DATABASE_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
 export PYTHONPATH="${STOQS_SRVPROJ}:${PYTHONPATH}"

@@ -3,9 +3,6 @@ MAINTAINER Mike McCann <mccann@mbari.org>
 
 # Modeled after http://michal.karzynski.pl/blog/2015/04/19/packaging-django-applications-as-docker-container-images/
 
-ARG STOQS_PGHOST 
-ARG POSTGRES_PASSWORD
-
 ENV STOQS_SRVHOME=/srv STOQS_SRVPROJ=/srv/stoqs
 
 # Additional requirements for stoqs not in pcic/geospatial-python
@@ -25,10 +22,6 @@ ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 RUN cd /usr/bin/ &&\
     ln -fs python3 python &&\
     ln -fs python3-config python-config
-
-# Allow for psql execution (used for database creation) without a password
-RUN echo ${STOQS_PGHOST}:\*:\*:postgres:${POSTGRES_PASSWORD} > /root/.pgpass &&\
-    chmod 600 /root/.pgpass
 
 # Create application subdirectories
 WORKDIR $STOQS_SRVHOME
