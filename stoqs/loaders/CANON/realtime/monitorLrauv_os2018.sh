@@ -32,7 +32,7 @@ do
         python monitorLrauv.py --start '20180101T000000' --end '20181231T000000' -d  'LRAUV Monterey data - Off Season 2018' --productDir '/mbari/ODSS/data/other/routine/Products/LRAUV' \
  	--contourDir '/mbari/LRAUV/stoqs' --contourUrl 'http://dods.mbari.org/opendap/data/lrauv/stoqs/' -o /mbari/LRAUV/${platform}/${directory}/ -i /mbari/LRAUV/${platform}/${directory} \
         -u ${urlbase}/${platform}/${search} -b ${database} -c 'LRAUV Monterey data - Off Season 2018'  --append --autoscale \
-        --iparm bin_mean_mass_concentration_of_chlorophyll_in_sea_water \
+        --iparm chlorophyll \
 	--booleanPlotGroup front \
  	--plotDotParmName vertical_temperature_homogeneity_index \
         --parms bin_median_mass_concentration_of_chlorophyll_in_sea_water \
