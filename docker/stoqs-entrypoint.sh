@@ -41,7 +41,7 @@ tail -n 0 -f /srv/logs/*.log &
 ##    "$@"
 
 # Taken from start_uwsgi.sh... Start the stoqs uWSGI application for nginx
-# TODO: move env variables to setenv.sh
+# TODO: move env variables to .env
 export STOQS_HOME=/srv
 ##export STATIC_ROOT=/usr/share/nginx/html/static
 ##export MEDIA_ROOT=/usr/share/nginx/html/media
