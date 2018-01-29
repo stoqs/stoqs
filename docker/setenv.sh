@@ -7,8 +7,9 @@
 # May want to be explicit if hostname command isn't accurate
 export STOQS_HOST=`hostname`
 
-# STOQS_VOLS_DIR: Base volume directory on the host
-export STOQS_VOLS_DIR=${PWD}/tmp/stoqs_vols
+# STOQS_VOLS_DIR: Base volume directory on the host - If this is NFS mounted (as on Vagrant home dir)
+# there will be problems, see: https://github.com/docker-library/postgres/issues/361#issuecomment-346562603
+export STOQS_VOLS_DIR=/opt/docker_stoqs_vols
 
 # ___ RabbitMQ ___
 export RABBITMQ_DEFAULT_VHOST=stoqs
@@ -25,27 +26,30 @@ export STOQS_HOST_RABBITMQ_PORT=4369
 export POSTGRES_PASSWORD=changeme
 
 # STOQSADM_PASS: Desired password for the 'stoqsadm' user in Postgres
-export STOQSADM_PASS=changeme
+export STOQSADM_PASS=CHANGEME
 
 # STOQS_HOST_POSTGRES_PORT: host port to map postgres container's 5432 port
-export STOQS_HOST_POSTGRES_PORT=5432
+# Default value set so as not to conflict with Vagrant VM's instance
+export STOQS_HOST_POSTGRES_PORT=5433
 
 
 # ___ MapServer ___
 
 # STOQS_HOST_MAPSERVER_PORT: host port to map mapserver container's 80 port
 export STOQS_HOST_MAPSERVER_PORT=7000
-export MAPSERVER_HOST=${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}
+export MAPSERVER_HOST="${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}"
 
 # ___ STOQS ___
 
 # Django's database connection string
-export DATABASE_URL="postgis://stoqsadm:${STOQSADM_PASS}@stoqs-postgis:5432/stoqs"
+export STOQS_PGHOST=stoqs-postgis
+export DATABASE_URL="postgis://stoqsadm:${STOQSADM_PASS}@${STOQS_PGHOST}:5432/stoqs"
+export DATABASE_SUPERUSER_URL="postgis://postgres:${POSTGRES_PASS}@${STOQS_PGHOST}:5432/stoqs"
 
 # STOQS_HOST_DJANGO_PORT: host port to map container's django 8000 port
-export STOQS_HOST_DJANGO_PORT=8000
+export STOQS_HOST_DJANGO_PORT=8002
 
 # TODO remove, this is temporary..
 # STOQS_HOST_HTTP_PORT: host port to map container's http server 80 port
-export STOQS_HOST_HTTP_PORT=80
+export STOQS_HOST_HTTP_PORT=88
 

@@ -233,21 +233,6 @@ class BaseAndMeasurementViewsTestCase(TestCase):
                 'Should find "%s" in string at %s, instead got: %s' % (
                     loadedText, req, response.content))
         
-        req = '/test_stoqs/deleteActivity/1'
-        response = self.client.get(req)
-        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-        
-        # Now test that the activity was deleted, after sleeping for a bit.  Need to see if Celery can provide notification
-        # This should work, but as of 10 Jan 2010 it does not.  Commented out for now.
-#        logger.info('Sleeping after delete')
-#        time.sleep(20)
-#        req = '/test_stoqs/activities'
-#        response = self.client.get(req)
-#        logger.debug(response.content)
-#        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-#        self.assertTrue(response.content.find(loadedText) == -1, 'Should not find "%s" string at %s' % (loadedText, req))
-
-    
 #    def test_admin_stoqs_that_should_be_there(self):
 #	'''Need to pass login credentials, and create the login...'''
 #        req='http://localhost:8000/test_stoqs/admin/stoqs'

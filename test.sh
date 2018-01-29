@@ -6,7 +6,7 @@
 # Make sure none of these are set: STATIC_FILES, STATIC_URL, MEDIA_FILES, MEDIA_URL 
 # and that nothing is using to the default stoqs database.  Standard execution on
 # a development system is to execute like: './test.sh <DB_PASSWORD>'; optional
-# arguments like './test.sh CHANGME load noextraload' may be used, e.g. on travis-ci,
+# arguments like './test.sh CHANGEME load noextraload' may be used, e.g. on travis-ci,
 # to skip some of the loading tests.
 
 if [ -z $1 ]
@@ -21,6 +21,11 @@ then
     echo "suggested that you remove stoqs/campaigns.py so"
     echo "that test_ databases don't get created for all the campaigns there."
     exit -1
+fi
+
+if [ -z $DATABASE_SUPERUSER_URL ]
+then
+    DATABASE_SUPERUSER_URL=postgis://127.0.0.1:5432/stoqs
 fi
 
 # Assume starting in project home (stoqsgit) directory
@@ -40,7 +45,8 @@ then
     echo "Loading tests..."
     # Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL.
     # Note that DATABASE_URL is exported before this script is executed, this is so that it also works in Travis-CI.
-    DATABASE_URL=postgis://127.0.0.1:5432/stoqs coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
+    
+    DATABASE_URL=$DATABASE_SUPERUSER_URL coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
     loading_tests_status=$?
 fi
 
@@ -89,9 +95,9 @@ then
 fi
 
 # Run tests using the continuous integration (ci) setting
-# Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL
+# Need to create and drop test_ databases using shell account or sa url, hence reassign DATABASE_URL
 echo "Unit tests..."
-DATABASE_URL=postgis://127.0.0.1:5432/stoqs
+DATABASE_URL=$DATABASE_SUPERUSER_URL
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
 unit_tests_status=$?
 
