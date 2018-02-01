@@ -31,6 +31,9 @@ fi
 # Assume starting in project home (stoqsgit) directory
 cd stoqs
 
+# Create database role used by STOQS applications - don't print out errors, e.g.: role already exists
+psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres 2> /dev/null
+
 # If there is a third argument and it is 'extraload' execute this block, use 3rd arg of 'noextraload' to not execute
 if [ ${3:-extraload} == 'extraload' ]
 then
@@ -50,11 +53,11 @@ then
     loading_tests_status=$?
 fi
 
-# If there is a second argument and it is 'load' execute this block, use 2nd arg of 'noload' to not execute
+# If there is a second argument and it is 'load' execute this block, use 2nd arg of 'noload' to not execute; execute if no second argument
+# Note: These manual database creation and migration steps are performed by loaders/load.py, which is used above in the 'extraload' test block
 if [ ${2:-load} == 'load' ]
 then
     echo "Loading standard data for unit and functional tests..."
-    psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
     psql -c "DROP DATABASE IF EXISTS stoqs;" -U postgres
     psql -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
     psql -c "CREATE EXTENSION postgis;" -d stoqs -U postgres
