@@ -53,7 +53,7 @@ export STOQS_HOME=/srv
 
 # Execute uwsgi for command-line testing
 ##uwsgi --ini stoqs/stoqs_uwsgi_docker.ini
-uwsgi --http :9090 --wsgi-file stoqs/wsgi.py --master --processes 4 --threads 2
+##uwsgi --http :9090 --wsgi-file stoqs/wsgi.py --master --processes 4 --threads 2
 
 # Start development server
-##stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
+stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
