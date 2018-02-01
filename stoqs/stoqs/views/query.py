@@ -27,11 +27,12 @@ from utils import encoders
 import json
 import pprint
 import csv
-
+import random
+import string
 
 import logging 
 from .wms import ActivityView
-from tempfile import NamedTemporaryFile
+from os import path
 from utils.MPQuery import MPQuerySet
 
 logger = logging.getLogger(__name__)
@@ -104,7 +105,7 @@ def _buildMapFile(request, qm, options):
     if 'mappath' in request.session:
         logger.debug("Reusing request.session['mappath'] = %s", request.session['mappath'])
     else:
-        request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name
+        request.session['mappath'] = __name__ + '_' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) + '.map'
         logger.debug("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
     # A rudimentary class of items for passing a list of them to the activity.map template
@@ -258,7 +259,7 @@ def queryMap(request):
 
     return response
 
-# Do not cache this "view", otherwise the incrorrect mappath is used
+# Do not cache this "view", otherwise the incorrect url_mappath is used
 def queryUI(request):
     '''
     Build and return main query web page
@@ -268,7 +269,7 @@ def queryUI(request):
     if 'mappath' in request.session:
         logger.debug("Reusing request.session['mappath'] = %s", request.session['mappath'])
     else:
-        request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name
+        request.session['mappath'] = __name__ + '_' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) + '.map'
         logger.debug("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
     # Use list of tuples to preserve order
@@ -280,11 +281,12 @@ def queryUI(request):
              ('tsv', 'Tabbed Separated Values', ),
              ('html', 'Hyper Text Markup Language table', ),
             ]
+
     config_settings = {'site_uri': request.build_absolute_uri('/')[:-1],
                        'formats': formats,
                        'colormaps': cmaps,
                        'mapserver_host': settings.MAPSERVER_HOST,
-                       'mappath': request.session['mappath'],
+                       'mappath': path.join(settings.URL_MAPFILE_DIR, request.session['mappath']),
                        'home_page_link': settings.HOME_PAGE_LINK,
                        'home_page_logo': settings.HOME_PAGE_LOGO,
                        'home_page_alt': settings.HOME_PAGE_ALT,

@@ -60,6 +60,8 @@ services:
       # Map STOQS_PGHOST to PGHOST, which sets default host for psql
       - PGHOST=${STOQS_PGHOST}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - MAPSERVER_HOST=${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}
+      - URL_MAPFILE_DIR=/maps
 
     image: mbari/stoqs
     container_name: stoqs

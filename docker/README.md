@@ -62,12 +62,12 @@ itself requires the Postgres and MapServer services, while RabbitMQ is optional.
 
 ## Building the mbari/stoqs* images
 
-`setenv.sh` captures environment variables that are used in build/run commands below.
+The `.env` file captures environment variables that are used in build/run commands below.
+Edit the file following guidance in the comments to make proper settings for your deployment.
 
 ```shell
-$ cd docker/
-$ vim setenv.sh
-$ source setenv.sh
+cd docker/
+source .env
 ```
 
 ### RabbitMQ image

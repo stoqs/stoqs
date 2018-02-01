@@ -316,8 +316,9 @@ LOGGING = {
 # other cases, e.g. export MAPSERVER_HOST='172.16.130.204:80'
 MAPSERVER_HOST = env('MAPSERVER_HOST', default='localhost:8080')
 
-# For template generated .map files
+# For template generated .map files, the URL_ version is for Docker shared volume setup
 MAPFILE_DIR = env('MAPFILE_DIR', default='/dev/shm')
+URL_MAPFILE_DIR = env('URL_MAPFILE_DIR', default='/dev/shm')
 
 
 # STOQS specific logging

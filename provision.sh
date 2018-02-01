@@ -122,6 +122,7 @@ then
     yum -y groups install "GNOME Desktop"
     yum -y install fftw-devel motif-devel ghc-OpenGL-devel
     yum -y install docker docker-compose nginx
+    yum -y install harfbuzz-devel fribidi-devel
     # For InstantReality's aopt command referenced in doc/instructions/SPATIAL_3d.md
     yum -y install freeglut luajit
     wget http://doc.instantreality.org/media/uploads/downloads/2.8.0/InstantReality-RedHat-7-x64-2.8.0.38619.rpm
@@ -187,12 +188,12 @@ echo 1 > /proc/sys/vm/overcommit_memory
 cd ..
 
 echo Build and install Mapserver
-wget -q -N http://download.osgeo.org/mapserver/mapserver-6.4.1.tar.gz
-tar xzf mapserver-6.4.1.tar.gz
-cd mapserver-6.4.1
+wget -q -N http://download.osgeo.org/mapserver/mapserver-7.0.7.tar.gz
+tar xzf mapserver-7.0.7.tar.gz
+cd mapserver-7.0.7
 mkdir build
 cd build
-/opt/cmake/bin/cmake .. -DWITH_FRIBIDI=0 -DWITH_CAIRO=0 -DWITH_FCGI=0 -DCMAKE_PREFIX_PATH="/usr/local;/usr/pgsql-9.6"
+/opt/cmake/bin/cmake .. -DWITH_FRIBIDI=1 -DWITH_CAIRO=0 -DWITH_FCGI=0 -DCMAKE_PREFIX_PATH="/usr/local;/usr/pgsql-9.6"
 make -j 2 && make install
 cp /usr/local/bin/mapserv /var/www/cgi-bin
 ldconfig
