@@ -21,9 +21,8 @@ from datetime import datetime
 import stoqs.models as mod
 import logging 
 import os
-from random import randint
+import random
 import tempfile
-from tempfile import NamedTemporaryFile
 from utils.utils import addAttributeToListItems
 
 logger = logging.getLogger(__name__)
@@ -68,7 +67,8 @@ class ActivityView(object):
         self.itemList = itemList 
         self.trajectory_union_layer_string = trajectory_union_layer_string
         self.station_union_layer_string = station_union_layer_string
-        self.mappath = self.request.session['mappath']
+        self.file_mappath = os.path.join(settings.MAPFILE_DIR, self.request.session['mappath'])
+        self.url_mappath = os.path.join(settings.URL_MAPFILE_DIR, self.request.session['mappath'])
     
         if settings.LOGGING['loggers']['stoqs']['level'] == 'DEBUG':
             self.map_debug_level = 5             # Mapserver debug level: [off|on|0|1|2|3|4|5]
@@ -85,10 +85,10 @@ class ActivityView(object):
         if 'mappath' in self.request.session:
             logger.debug("Reusing request.session['mappath'] = %s", self.request.session['mappath'])
         else:
-            self.request.session['mappath'] =  tempfile.NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=filename + '_' , suffix=ext).name
+            self.request.session['mappath'] = __name__ + '_' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) + '.map'
             logger.debug("Setting new request.session['mappath'] = %s", self.request.session['mappath'])
 
-        # mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
+        # mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<url_mappath>' works
         # With Apache RewriteBase rule this pattern also works for cleaner URLs:
         # Allow WMS requests to any file in /dev/shm by providing a URL like /wms/ADFASDFASDF (where /dev/shm/ADFASDFASDF.map is the name of the mapfile)
         # this means that the "?map=" need not be provided as part of the URL
@@ -110,17 +110,18 @@ class ActivityView(object):
                             'layer_debug_level': self.layer_debug_level,
                             'copyright_string': 'MBARI %d' % datetime.today().year,
                             'dbconn': settings.MAPSERVER_DATABASES[self.request.META['dbAlias']],
-                            'mappath': self.mappath,
+                            'mappath': self.url_mappath,
                             'imagepath': settings.MAPFILE_DIR,
                             'STATIC_ROOT': settings.STATIC_ROOT})
 
         try:
-            fh = open(self.mappath, 'w')    
+            fh = open(self.file_mappath, 'w')    
         except IOError:
             # In case of accessed denied error, create a new mappath and store it in the session, and open that
-            self.request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name
-            self.mappath = self.request.session['mappath']
-            fh = open(self.mappath, 'w')
+            self.request.session['mappath'] = __name__ + '_' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) + '.map'
+            self.file_mappath = os.path.join(settings.MAPFILE_DIR, self.request.session['mappath'])
+            self.url_mappath = os.path.join(settings.URL_MAPFILE_DIR, self.request.session['mappath'])
+            fh = open(self.file_mappath, 'w')
                 
         for line in response:
             ##logger.info(line.decode("utf-8"))
@@ -134,9 +135,9 @@ class ActivityView(object):
         if item.id not in self.itemColor_dict:
             logger.debug("Creating a random color for item with id = %d", item.id)
             c = Color()
-            c.r = randint(100, 255)
-            c.g = randint(100, 255)
-            c.b = randint(50, 150)
+            c.r = random.randint(100, 255)
+            c.g = random.randint(100, 255)
+            c.b = random.randint(50, 150)
             self.itemColor_dict[item.id] = c
         else:
             logger.debug("Returing saved color for item with id = %d", item.id)
@@ -174,7 +175,7 @@ class ActivityView(object):
                                    {'mapserver_host': settings.MAPSERVER_HOST, 
                                     'list': self.itemList,
                                     'dbAlias': self.request.META['dbAlias'],
-                                    'mappath': self.mappath})
+                                    'mappath': self.url_mappath})
 
 # Addressed pylint issues in December 2015, but realized that the functions
 # below never got fully implemented and are candidates for removal.
