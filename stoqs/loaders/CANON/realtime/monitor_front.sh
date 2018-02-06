@@ -1,6 +1,6 @@
 #!/bin/bash
-cd /opt/stoqsgit_dj1.8/venv-stoqs/bin
+cd /opt/stoqsgit/venv-stoqs/bin
 source activate
-cd /opt/stoqsgit_dj1.8/stoqs/loaders/CANON/realtime
+cd /opt/stoqsgit/stoqs/loaders/CANON/realtime
 export SLACKTOKEN=${SLACKTOCKEN}
-python monitor_front.py -i /mbari/LRAUV/ -p tethys daphne makai opah aku ahi &
+python monitor_front.py -i /mbari/LRAUV/  -s 'realtime/sbdlogs/2018' 'realtime/cell-logs' -p tethys daphne makai &
