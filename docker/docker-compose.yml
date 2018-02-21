@@ -1,21 +1,6 @@
 version: '2'
 
 services:
-  ### Commented out for the moment
-  #rabbitmq:
-  #  volumes:
-  #    - ${STOQS_VOLS_DIR}/rabbitmq:/var/lib/rabbitmq
-  #
-  #  ports:
-  #    - "${STOQS_HOST_RABBITMQ_PORT}:4369"
-  #
-  #  environment:
-  #    - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
-  #    - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-  #    - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
-  #
-  #  container_name: stoqs-rabbitmq
-  #  image: rabbitmq:3
 
   postgis:
     volumes:
@@ -42,8 +27,6 @@ services:
     image: mbari/stoqs-mapserver
 
   stoqs:
-    # TODO probably need to adjust STOQS code to use a different location for
-    # this volume mapping -- /dev/shm seems to prevent the exposure of the ports below
     volumes:
       - ${STOQS_VOLS_DIR}/maps:/dev/shm
       - ${STOQS_VOLS_DIR}/stoqs_root:/root
@@ -68,7 +51,6 @@ services:
     depends_on:
       - mapserver
       - postgis
-      #- rabbitmq
 
   nginx:
     image: nginx:latest
