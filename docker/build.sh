@@ -20,6 +20,9 @@ docker build -f Dockerfile-mapserver -t "mbari/stoqs-mapserver" .
 echo "Building mbari/stoqs-postgis image..."
 docker build -f Dockerfile-postgis -t "mbari/stoqs-postgis" .
 
+echo "Building mbari/stoqs-nginx image..."
+docker build -f Dockerfile-nginx -t "mbari/stoqs-nginx" .
+
 pushd ..
 echo "Building mbari/stoqs image..."
 docker build -f docker/Dockerfile-stoqs -t "mbari/stoqs" .
