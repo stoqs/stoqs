@@ -35,6 +35,6 @@ RUN /bin/bash -c '\
 
 COPY stoqs $STOQS_SRVPROJ
 COPY test.sh $STOQS_SRVHOME
-COPY docker/stoqs-entrypoint.sh /
+COPY docker/stoqs-start.sh /
 
-ENTRYPOINT ["/stoqs-entrypoint.sh"]
+CMD ["/stoqs-start.sh"]
