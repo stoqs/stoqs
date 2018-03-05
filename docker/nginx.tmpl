@@ -16,7 +16,7 @@ http {
     server_tokens off;
 
     upstream django {
-        server webapp:8000;
+        server stoqs:8000;
     }
 
     server {
@@ -24,7 +24,7 @@ http {
         listen 80;
         server_name ${NGINX_SERVER_NAME};
 
-        return 301 https://${NGINX_SERVER_NAME}$request_uri;
+        ##return 301 https://${NGINX_SERVER_NAME}$request_uri;
     }
 
     server {
@@ -54,7 +54,7 @@ http {
 
         location / {
             uwsgi_pass      django;
-            include         uwsgi_params;
+            include         stoqs/uwsgi_params;
             
         }
     }
