@@ -54,7 +54,7 @@ http {
 
         location / {
             uwsgi_pass      django;
-            include         stoqs/uwsgi_params;
+            include         uwsgi_params;
             
         }
     }
