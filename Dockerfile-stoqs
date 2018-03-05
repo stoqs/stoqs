@@ -26,7 +26,7 @@ RUN cd /usr/bin/ &&\
 # Create application subdirectories
 WORKDIR $STOQS_SRVHOME
 RUN mkdir media static logs
-VOLUME ["$STOQS_SRVHOME/media/", "$STOQS_SRVHOME/logs/"]
+##VOLUME ["$STOQS_SRVHOME/media/", "$STOQS_SRVHOME/logs/"]
 
 
 COPY requirements $STOQS_SRVPROJ/requirements/
@@ -35,6 +35,8 @@ RUN /bin/bash -c '\
 
 COPY stoqs $STOQS_SRVPROJ
 COPY test.sh $STOQS_SRVHOME
+COPY docker/database-check.py $STOQS_SRVHOME
 COPY docker/stoqs-start.sh /
 
 CMD ["/stoqs-start.sh"]
+
