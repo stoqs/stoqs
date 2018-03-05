@@ -1,25 +1,14 @@
 FROM nginx:1.13
 
 # Add start script
-RUN chmod +x start.sh
+ADD nginx-start.sh /
+RUN chmod +x nginx-start.sh
 
 # Add nginx config file
-ADD ./services/webserver/config/nginx.tmpl /
+ADD nginx.tmpl /
 
 # Add SSL certs to location specified in nginx.conf
-ADD ./services/webserver/config/*.crt /etc/ssl/certs/
-ADD ./services/webserver/config/*.key /etc/ssl/private/
-
-# Execute start script
-# - Need to run manage.py collectstatic - use shared volume or put in image?
-
-##COPY static-html-directory /usr/share/nginx/html
-
-##....
-
-##mkdir /usr/share/nginx/html/media
-##mkdir /usr/share/nginx/html/static
-##chown $USER /usr/share/nginx/html/static
-##STATIC_ROOT=/usr/share/nginx/html/static
+ADD *.crt /etc/ssl/certs/
+ADD *.key /etc/ssl/private/
 
 CMD ["./nginx-start.sh"]
