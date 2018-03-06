@@ -52,7 +52,7 @@ stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
 
 Visit your server's STOQS User Interface using your host computer's browser:
 
-    http://localhost:8000
+    http://localhost:8008
 
 More instructions are in the doc/instructions directory &mdash; see [LOADING](doc/instructions/LOADING.md) 
 for specifics on loading your own data. For example, you may create your own database of an archived MBARI campaign:

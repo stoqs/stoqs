@@ -203,6 +203,8 @@ cat <<EOT >> /etc/sysconfig/httpd
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
 export LD_LIBRARY_PATH
 EOT
+cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.bak
+sed -i 's#Listen 80#Listen 8080#' /etc/httpd/conf/httpd.conf
 cd ../..
 touch /tmp/mapserver_stoqshg.log
 chown apache.apache /tmp/mapserver_stoqshg.log
