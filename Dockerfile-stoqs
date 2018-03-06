@@ -3,7 +3,7 @@ MAINTAINER Mike McCann <mccann@mbari.org>
 
 # Modeled after http://michal.karzynski.pl/blog/2015/04/19/packaging-django-applications-as-docker-container-images/
 
-ENV STOQS_SRVHOME=/srv STOQS_SRVPROJ=/srv/stoqs ALLOWED_HOSTS=localhost
+ENV STOQS_SRVHOME=/srv STOQS_SRVPROJ=/srv/stoqs 
 
 # Additional requirements for stoqs not in pcic/geospatial-python
 RUN apt-get update && \
