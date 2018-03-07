@@ -37,7 +37,7 @@ installation finishes log into your new VM and test it:
 ```bash
 vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt
 cd /vagrant/dev/stoqsgit && source venv-stoqs/bin/activate
-export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
 ./test.sh CHANGEME load noextraload
 ```
 
@@ -46,7 +46,7 @@ In another terminal window start the development server (after a `cd ~/Vagrants/
 ```bash
 vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt
 cd /vagrant/dev/stoqsgit && source venv-stoqs/bin/activate
-export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
 stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
 ```
 
