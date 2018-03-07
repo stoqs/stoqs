@@ -23,7 +23,7 @@ then
     exit -1
 fi
 
-PGPORT=`echo $DATABASE_URL | cut -d':' -f3 | cut -d'/' -f1`
+PGPORT=`echo $DATABASE_URL | cut -d':' -f4 | cut -d'/' -f1`
 
 if [ -z $DATABASE_SUPERUSER_URL ]
 then
