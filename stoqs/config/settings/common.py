@@ -86,7 +86,7 @@ DEBUG = env.bool("DJANGO_DEBUG", default=True)
 # ALLOWED_HOSTS
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-default_allowed_hosts = ['localhost', '127.0.0.1', '[::1]']
+default_allowed_hosts = ['localhost', '127.0.0.1', '[::1]', '0.0.0.0']
 try:
     import netifaces as ni
     #ni.ifaddresses('eth0')

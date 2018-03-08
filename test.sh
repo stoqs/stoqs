@@ -23,16 +23,18 @@ then
     exit -1
 fi
 
+PGPORT=`echo $DATABASE_URL | cut -d':' -f4 | cut -d'/' -f1`
+
 if [ -z $DATABASE_SUPERUSER_URL ]
 then
-    DATABASE_SUPERUSER_URL=postgis://127.0.0.1:5432/stoqs
+    DATABASE_SUPERUSER_URL=postgis://127.0.0.1:$PGPORT/stoqs
 fi
 
 # Assume starting in project home (stoqsgit) directory
 cd stoqs
 
 # Create database role used by STOQS applications - don't print out errors, e.g.: role already exists
-psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres 2> /dev/null
+psql -p $PGPORT -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres 2> /dev/null
 
 # If there is a third argument and it is 'extraload' execute this block, use 3rd arg of 'noextraload' to not execute
 if [ ${3:-extraload} == 'extraload' ]
@@ -58,16 +60,16 @@ fi
 if [ ${2:-load} == 'load' ]
 then
     echo "Loading standard data for unit and functional tests..."
-    psql -c "DROP DATABASE IF EXISTS stoqs;" -U postgres
-    psql -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
-    psql -c "CREATE EXTENSION postgis;" -d stoqs -U postgres
-    psql -c "CREATE EXTENSION postgis_topology;" -d stoqs -U postgres
+    psql -p $PGPORT -c "DROP DATABASE IF EXISTS stoqs;" -U postgres
+    psql -p $PGPORT -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
+    psql -p $PGPORT -c "CREATE EXTENSION postgis;" -d stoqs -U postgres
+    psql -p $PGPORT -c "CREATE EXTENSION postgis_topology;" -d stoqs -U postgres
     if [ $? != 0 ]
     then
         echo "Cannot create default database stoqs; refer to above message."
         exit -1
     fi
-    psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
+    psql -p $PGPORT -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
 
     ./manage.py makemigrations stoqs --settings=config.settings.ci --noinput
     ./manage.py migrate --settings=config.settings.ci --noinput --database=default
@@ -76,7 +78,7 @@ then
         echo "Cannot migrate default database; refer to above error message."
         exit -1
     fi
-    psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
+    psql -p $PGPORT -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
 
     # Get bathymetry and load data from MBARI data servers
     wget -q -N -O loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
@@ -105,7 +107,7 @@ coverage run -a --source=utils,stoqs manage.py test stoqs.tests.unit_tests --set
 unit_tests_status=$?
 
 # MAPSERVER_DATABASE_URL needs to use postgres role for proper mapfile CONNECTION settings
-MAPSERVER_DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:5432/stoqs"
+MAPSERVER_DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:$PGPORT/stoqs"
 echo "Functional tests..."
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.functional_tests --settings=config.settings.ci
 functional_tests_status=$?

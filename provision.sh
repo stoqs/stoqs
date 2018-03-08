@@ -203,6 +203,8 @@ cat <<EOT >> /etc/sysconfig/httpd
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
 export LD_LIBRARY_PATH
 EOT
+cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.bak
+sed -i 's#Listen 80#Listen 8080#' /etc/httpd/conf/httpd.conf
 cd ../..
 touch /tmp/mapserver_stoqshg.log
 chown apache.apache /tmp/mapserver_stoqshg.log
@@ -237,6 +239,10 @@ rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
 /usr/bin/systemctl start cachefilesd
 /usr/bin/systemctl enable docker
 /usr/bin/systemctl start docker
+
+echo Have postgresql listen on port 5438
+cp /var/lib/pgsql/9.6/data/postgresql.conf /var/lib/pgsql/9.6/data/postgresql.conf.bak
+sed -i 's/#port = 5432/port = 5438/' /var/lib/pgsql/9.6/data/postgresql.conf
 
 echo Modify pg_hba.conf
 mv -f /var/lib/pgsql/9.6/data/pg_hba.conf /var/lib/pgsql/9.6/data/pg_hba.conf.bak
@@ -313,6 +319,6 @@ echo "(These commands are also found in /vagrant/dev/stoqsgit/README.md)"
 echo ---------------------------------------------------------------------
 echo vagrant ssh -- -X
 echo "cd /vagrant/dev/stoqsgit && source venv-stoqs/bin/activate"
-echo export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+echo export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
 echo ./test.sh CHANGEME
 

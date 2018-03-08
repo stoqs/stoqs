@@ -33,7 +33,7 @@ Paste==2.0.3
 PasteDeploy==1.5.2
 PasteScript==2.0.2
 Pillow==5.0.0
-psycopg2==2.7.4
+psycopg2-binary==2.7.4
 pupynere==1.0.15
 Pydap==3.2.2
 python-dateutil==2.6.1

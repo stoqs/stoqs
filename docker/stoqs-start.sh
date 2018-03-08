@@ -1,22 +1,36 @@
 #!/bin/bash
 
+#####
+# Postgres: wait until container is created
+#
+# $?                most recent foreground pipeline exit status
+# > /dev/null 2>&1  get stderr while discarding stdout
+#####
+set -e
+python ${STOQS_SRVHOME}/database-check.py > /dev/null 2>&1
+while [[ $? != 0 ]] ; do
+    sleep 5; echo "*** Waiting for postgres container ..."
+    python3 ${STOQS_SRVHOME}/database-check.py > /dev/null 2>&1
+done
+set +e
+
 # On first entry into container create the default database
 ##if
 ##then
 ##fi
 
 # Allow for psql execution (used for database creation) without a password
-echo ${PGHOST}:\*:\*:postgres:${POSTGRES_PASSWORD} > /root/.pgpass &&\
+echo ${PGHOST}:\*:\*:postgres:${POSTGRES_PASS} > /root/.pgpass &&\
     chmod 600 /root/.pgpass
 
 SAVE_DATABASE_URL=$DATABASE_URL
 DATABASE_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
 export PYTHONPATH="${STOQS_SRVPROJ}:${PYTHONPATH}"
 
-python stoqs/manage.py makemigrations stoqs --settings=config.settings.local --noinput
-python stoqs/manage.py migrate --settings=config.settings.local --noinput --database=default
+python ${STOQS_SRVPROJ}/manage.py makemigrations stoqs --settings=config.settings.local --noinput
+python ${STOQS_SRVPROJ}/manage.py migrate --settings=config.settings.local --noinput --database=default
 
-wget -q -N -O stoqs/loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
+wget -q -N -O ${STOQS_SRVPROJ}/loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
 ##DATABASE_URL=$SAVE_DATABASE_URL
 ##python stoqs/loaders/loadTestData.py
 
@@ -24,25 +38,13 @@ wget -q -N -O stoqs/loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monter
 
 
 # Prepare log files and start outputting logs to stdout
-touch /srv/logs/gunicorn.log
-touch /srv/logs/access.log
-tail -n 0 -f /srv/logs/*.log &
+touch ${STOQS_SRVHOME}/logs/access.log
+tail -n 0 -f ${STOQS_SRVHOME}/logs/*.log &
 
-# Start Gunicorn processes
-##echo Starting Gunicorn.
-##exec gunicorn stoqs.wsgi:application \
-##    --pythonpath "${STOQS_SRVPROJ}:${PYTHONPATH}" \
-##    --name stoqs \
-##    --bind 0.0.0.0:8000 \
-##    --workers 3 \
-##    --log-level=info \
-##    --log-file=/srv/logs/gunicorn.log \
-##    --access-logfile=/srv/logs/access.log \
-##    "$@"
 
 # Taken from start_uwsgi.sh... Start the stoqs uWSGI application for nginx
 # TODO: move env variables to .env
-export STOQS_HOME=/srv
+export STOQS_HOME=${STOQS_SRVHOME}
 ##export STATIC_ROOT=/usr/share/nginx/html/static
 ##export MEDIA_ROOT=/usr/share/nginx/html/media
 ##export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
@@ -52,8 +54,9 @@ export STOQS_HOME=/srv
 ##export GDAL_DATA=/usr/share/gdal
 
 # Execute uwsgi for command-line testing
-##uwsgi --ini stoqs/stoqs_uwsgi_docker.ini
-##uwsgi --http :9090 --wsgi-file stoqs/wsgi.py --master --processes 4 --threads 2
+##uwsgi --ini ${STOQS_SRVPROJ}/stoqs_uwsgi_docker.ini
+##uwsgi --http :9090 --wsgi-file ${STOQS_SRVPROJ}/wsgi.py --master --processes 4 --threads 2
 
 # Start development server
-stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
+${STOQS_SRVPROJ}/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
+
