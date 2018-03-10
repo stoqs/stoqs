@@ -20,13 +20,14 @@ set +e
 ##fi
 
 # Allow for psql execution (used for database creation) without a password
-echo ${PGHOST}:\*:\*:postgres:${POSTGRES_PASS} > /root/.pgpass &&\
+echo ${PGHOST}:\*:\*:postgres:${POSTGRES_PASSWORD} > /root/.pgpass &&\
     chmod 600 /root/.pgpass
 
 SAVE_DATABASE_URL=$DATABASE_URL
 DATABASE_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
 export PYTHONPATH="${STOQS_SRVPROJ}:${PYTHONPATH}"
 
+psql -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
 python ${STOQS_SRVPROJ}/manage.py makemigrations stoqs --settings=config.settings.local --noinput
 python ${STOQS_SRVPROJ}/manage.py migrate --settings=config.settings.local --noinput --database=default
 
@@ -54,9 +55,9 @@ export STOQS_HOME=${STOQS_SRVHOME}
 ##export GDAL_DATA=/usr/share/gdal
 
 # Execute uwsgi for command-line testing
-##uwsgi --ini ${STOQS_SRVPROJ}/stoqs_uwsgi_docker.ini
-##uwsgi --http :9090 --wsgi-file ${STOQS_SRVPROJ}/wsgi.py --master --processes 4 --threads 2
+uwsgi --ini ${STOQS_SRVPROJ}/stoqs_uwsgi_docker.ini
+uwsgi --http :8000 --wsgi-file ${STOQS_SRVPROJ}/wsgi.py --master --processes 4 --threads 2
 
 # Start development server
-${STOQS_SRVPROJ}/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
+##${STOQS_SRVPROJ}/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
 

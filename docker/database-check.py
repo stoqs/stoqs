@@ -16,7 +16,7 @@ import psycopg2
 def database_check():
     dbname = os.environ.get('POSTGRES_DB')
     user = os.environ.get('STOQSADM_USER')
-    password = os.environ.get('STOQSADM_PASS')
+    password = os.environ.get('STOQSADM_PASSWORD')
     host = os.environ.get('STOQS_PGHOST')
     port = os.environ.get('STOQS_HOST_POSTGRES_PORT')
 

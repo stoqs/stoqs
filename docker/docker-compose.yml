@@ -11,8 +11,8 @@ services:
     ports:
       - "${STOQS_HOST_POSTGRES_PORT}:5432"
     environment:
-      - POSTGRES_PASS=${POSTGRES_PASS}
-      - STOQSADM_PASS=${STOQSADM_PASS}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - STOQSADM_PASSWORD=${STOQSADM_PASSWORD}
     container_name: stoqs-postgis
     env_file:
       - ./.env
@@ -38,19 +38,17 @@ services:
       - ${STOQS_VOLS_DIR}/stoqs_root:/root
       - ${STOQS_VOLS_DIR}/nginx:/usr/share/nginx
     ports:
-      # For testing serving directly from uwsgi
-      - 9090:9090
+      ##- "9090:9090"
+      - "${STOQS_HOST_DJANGO_PORT}:8000"
     environment:
-      - DATABASE_URL=postgis://${STOQSADM_USER}:${STOQSADM_PASS}@${STOQS_PGHOST}:5432/stoqs
-      - DATABASE_SUPERUSER_URL=postgis://postgres:${POSTGRES_PASS}@${STOQS_PGHOST}:5432/stoqs
+      - DATABASE_URL=postgis://${STOQSADM_USER}:${STOQSADM_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
+      - DATABASE_SUPERUSER_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
       # Map STOQS_PGHOST to PGHOST, which sets default host for psql
       - PGHOST=${STOQS_PGHOST}
-      - POSTGRES_PASS=${POSTGRES_PASS}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - MAPSERVER_HOST="${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}"
       - URL_MAPFILE_DIR=/maps
     container_name: stoqs
-    expose:
-      - "8000"
     depends_on:
       - mapserver
       - postgis
