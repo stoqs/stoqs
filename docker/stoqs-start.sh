@@ -6,13 +6,11 @@
 # $?                most recent foreground pipeline exit status
 # > /dev/null 2>&1  get stderr while discarding stdout
 #####
-set -e
 python ${STOQS_SRVHOME}/database-check.py > /dev/null 2>&1
 while [[ $? != 0 ]] ; do
     sleep 5; echo "*** Waiting for postgres container ..."
-    python3 ${STOQS_SRVHOME}/database-check.py > /dev/null 2>&1
+    python ${STOQS_SRVHOME}/database-check.py > /dev/null 2>&1
 done
-set +e
 
 # On first entry into container create the default database
 ##if
