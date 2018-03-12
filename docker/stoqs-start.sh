@@ -55,5 +55,5 @@ else
     ##export GDAL_DATA=/usr/share/gdal
 
     # Connect with nginx
-    /usr/local/bin/uwsgi --emperor /etc/uwsgi/django-uwsgi.ini --uid www-data --gid www-data
+    /usr/local/bin/uwsgi --emperor /etc/uwsgi/django-uwsgi.ini
 fi
