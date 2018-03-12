@@ -1,5 +1,8 @@
 version: '2'
 
+volumes:
+    static-files:
+
 services:
 
   postgis:
@@ -31,14 +34,14 @@ services:
 
   stoqs:
     build:
-        context: ..
+        context: .
         dockerfile: Dockerfile-stoqs
     volumes:
       - ${STOQS_VOLS_DIR}/maps:/dev/shm
       - ${STOQS_VOLS_DIR}/stoqs_root:/root
       - ${STOQS_VOLS_DIR}/nginx:/usr/share/nginx
+      - static-files:/srv/static-files
     ports:
-      ##- "9090:9090"
       - "${STOQS_HOST_DJANGO_PORT}:8000"
     environment:
       - DATABASE_URL=postgis://${STOQSADM_USER}:${STOQSADM_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
@@ -48,6 +51,9 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - MAPSERVER_HOST="${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}"
       - URL_MAPFILE_DIR=/maps
+      - STATIC_URL=/static/
+      - STATIC_ROOT=/srv/static-files
+      - MEDIA_ROOT=/srv/media-files
     container_name: stoqs
     depends_on:
       - mapserver
@@ -60,7 +66,7 @@ services:
         context: .
         dockerfile: Dockerfile-nginx
     volumes:
-      - ${STOQS_VOLS_DIR}/static-files:/srv/static-files
+      - static-files:/srv/static-files
     container_name: stoqs-nginx
     ports:
       - "80:80"
