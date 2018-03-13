@@ -11,7 +11,7 @@ done
 echo ${PGHOST}:\*:\*:postgres:${POSTGRES_PASSWORD} > /root/.pgpass &&\
     chmod 600 /root/.pgpass
 
-export DATABASE_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
+##export DATABASE_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
 ##DATABASE_URL=postgis://stoqsadm:CHANGEME@stoqs-postgis:5432/stoqs
 export PYTHONPATH="${STOQS_SRVPROJ}:${PYTHONPATH}"
 
@@ -25,11 +25,8 @@ fi
 echo "Checking for presence of stoqs database..."
 POSTGRES_DB=stoqs python ${STOQS_SRVHOME}/database-check.py
 if [[ $? != 0 ]]; then
-    echo "Creating default stoqs database..."
-    psql -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
-    python ${STOQS_SRVPROJ}/manage.py makemigrations stoqs --settings=config.settings.local --noinput
-    python ${STOQS_SRVPROJ}/manage.py migrate --settings=config.settings.local --noinput --database=default
-    python stoqs/loaders/loadTestData.py
+    echo "Creating default stoqs database and running tests..."
+    ./test.sh changeme
 fi
 
 # Fire up stoqs web app
