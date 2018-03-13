@@ -40,7 +40,7 @@ psql -p $PGPORT -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres 2> /de
 if [ ${3:-extraload} == 'extraload' ]
 then
     echo "Loading additional data (EPIC, etc.) to test loading software..."
-    coverage run -a --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/load_data.py
+    DATABASE_URL=$DATABASE_SUPERUSER_URL coverage run -a --include="loaders/__in*,loaders/DAP*,loaders/Samp*" stoqs/tests/load_data.py
     if [ $? != 0 ]
     then
         echo "Cannot create default database stoqs; refer to above message."

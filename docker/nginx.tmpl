@@ -23,8 +23,19 @@ http {
         # rewrite all HTTP to HTTPS
         listen 80;
         server_name ${NGINX_SERVER_NAME};
+        return 301 https://${NGINX_SERVER_NAME}$request_uri;
+    }
 
-        ##return 301 https://${NGINX_SERVER_NAME}$request_uri;
+    server {
+        # Serve legacy port 8000 requests
+        listen 8000;
+        server_name ${NGINX_SERVER_NAME};
+
+        location / {
+            uwsgi_pass      django;
+            include         uwsgi_params;
+            uwsgi_read_timeout 300;         # 5 minute timeout for AJAX requests            
+        }
     }
 
     server {
@@ -55,7 +66,7 @@ http {
         location / {
             uwsgi_pass      django;
             include         uwsgi_params;
-            
+            uwsgi_read_timeout 300;         # 5 minute timeout for AJAX requests            
         }
     }
 }

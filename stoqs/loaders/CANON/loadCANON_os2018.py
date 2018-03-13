@@ -237,6 +237,7 @@ cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data
 cl.wg_Tiny_files = [
                       'wgTiny/20171212/realTime/20171212.nc',
                       'wgTiny/20180116/realTime/20180116.nc',
+                      'wgTiny/20180208/realTime/20180208.nc',
                    ]
 
 

@@ -1,62 +1,68 @@
 #!/bin/bash
 
-#####
-# Postgres: wait until container is created
-#
-# $?                most recent foreground pipeline exit status
-# > /dev/null 2>&1  get stderr while discarding stdout
-#####
-set -e
+# Ensure that stoqs-postgis container is serving databases before continuing
 python ${STOQS_SRVHOME}/database-check.py > /dev/null 2>&1
 while [[ $? != 0 ]] ; do
     sleep 5; echo "*** Waiting for postgres container ..."
-    python3 ${STOQS_SRVHOME}/database-check.py > /dev/null 2>&1
+    python ${STOQS_SRVHOME}/database-check.py > /dev/null 2>&1
 done
-set +e
-
-# On first entry into container create the default database
-##if
-##then
-##fi
 
 # Allow for psql execution (used for database creation) without a password
-echo ${PGHOST}:\*:\*:postgres:${POSTGRES_PASS} > /root/.pgpass &&\
+echo ${PGHOST}:\*:\*:postgres:${POSTGRES_PASSWORD} > /root/.pgpass &&\
     chmod 600 /root/.pgpass
 
-SAVE_DATABASE_URL=$DATABASE_URL
-DATABASE_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
+##export DATABASE_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
+##DATABASE_URL=postgis://stoqsadm:CHANGEME@stoqs-postgis:5432/stoqs
 export PYTHONPATH="${STOQS_SRVPROJ}:${PYTHONPATH}"
 
-python ${STOQS_SRVPROJ}/manage.py makemigrations stoqs --settings=config.settings.local --noinput
-python ${STOQS_SRVPROJ}/manage.py migrate --settings=config.settings.local --noinput --database=default
+# Monterey Bay bathymetry data is needed for default (and many other) database loads
+if [ -f ${STOQS_SRVPROJ}/loaders/Monterey25.grd ]; then
+    echo "Getting Monterey25.grd..."
+    wget -q -N -O ${STOQS_SRVPROJ}/loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
+fi
 
-wget -q -N -O ${STOQS_SRVPROJ}/loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
-##DATABASE_URL=$SAVE_DATABASE_URL
-##python stoqs/loaders/loadTestData.py
+# If default stoqs database doesn't exist then load it - also running the unit and functional tests
+echo "Checking for presence of stoqs database..."
+POSTGRES_DB=stoqs python ${STOQS_SRVHOME}/database-check.py
+if [[ $? != 0 ]]; then
 
-##python stoqs/manage.py collectstatic --noinput  # Collect static files
+    # NCAR's natgrid needed for contour plotting
+    wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/natgrid-0.2/natgrid-0.2.1.tar.gz
+    tar -xzf natgrid-0.2.1.tar.gz
+    cd natgrid-0.2.1
+    python setup.py install
+    cd ..
 
+    echo "Creating directories for image generation and serving by nginx..."
+    mkdir -p ${MEDIA_ROOT}/sections ${MEDIA_ROOT}/parameterparameter
+    chmod 733 ${MEDIA_ROOT}/sections ${MEDIA_ROOT}/parameterparameter
 
-# Prepare log files and start outputting logs to stdout
-touch ${STOQS_SRVHOME}/logs/access.log
-tail -n 0 -f ${STOQS_SRVHOME}/logs/*.log &
+    echo "Creating default stoqs database and running tests..."
+    ./test.sh changeme
+fi
 
+# Fire up stoqs web app
+if [ "$PRODUCTION" == "false" ]; then
+    echo "Starting development server..."
+    ${STOQS_SRVPROJ}/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
+else
+    echo "Starting production server..."
 
-# Taken from start_uwsgi.sh... Start the stoqs uWSGI application for nginx
-# TODO: move env variables to .env
-export STOQS_HOME=${STOQS_SRVHOME}
-##export STATIC_ROOT=/usr/share/nginx/html/static
-##export MEDIA_ROOT=/usr/share/nginx/html/media
-##export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
-##export MAPSERVER_HOST="<mapserver_ip_address>"
-##export STOQS_CAMPAIGNS="<comma_separated>,<databases>,<not_in_campaigns>"
-##export SECRET_KEY="<random_sequence_of_impossible_to_guess_characters>"
-##export GDAL_DATA=/usr/share/gdal
+    python stoqs/manage.py collectstatic --noinput  # Collect static files
 
-# Execute uwsgi for command-line testing
-##uwsgi --ini ${STOQS_SRVPROJ}/stoqs_uwsgi_docker.ini
-##uwsgi --http :9090 --wsgi-file ${STOQS_SRVPROJ}/wsgi.py --master --processes 4 --threads 2
+    # Taken from start_uwsgi.sh... Start the stoqs uWSGI application for nginx
+    # TODO: move env variables to .env
 
-# Start development server
-${STOQS_SRVPROJ}/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
+    # These are set in docker-compose.yml...
+    export STOQS_HOME=${STOQS_SRVHOME}
+    ##export STATIC_ROOT=/usr/share/nginx/html/static
+    ##export MEDIA_ROOT=/usr/share/nginx/html/media
+    ##export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
+    ##export MAPSERVER_HOST="<mapserver_ip_address>"
+    ##export STOQS_CAMPAIGNS="<comma_separated>,<databases>,<not_in_campaigns>"
+    ##export SECRET_KEY="<random_sequence_of_impossible_to_guess_characters>"
+    ##export GDAL_DATA=/usr/share/gdal
 
+    # Connect with nginx
+    /usr/local/bin/uwsgi --emperor /etc/uwsgi/django-uwsgi.ini
+fi
