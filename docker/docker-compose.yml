@@ -41,8 +41,6 @@ services:
       - ${STOQS_VOLS_DIR}/stoqs_root:/root
       - ${STOQS_VOLS_DIR}/nginx:/usr/share/nginx
       - static-files:/srv/static-files
-    ports:
-      - "${STOQS_HOST_DJANGO_PORT}:8000"
     environment:
       ##- DATABASE_URL=postgis://${STOQSADM_USER}:${STOQSADM_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
       - DATABASE_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
@@ -71,6 +69,7 @@ services:
     container_name: stoqs-nginx
     ports:
       - "80:80"
+      - "8000:8000"
       - "443:443"
     depends_on:
       - stoqs
