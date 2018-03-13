@@ -2,6 +2,7 @@ version: '2'
 
 volumes:
     static-files:
+    media-files:
 
 services:
 
@@ -51,8 +52,8 @@ services:
       - MAPSERVER_HOST=${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}
       - URL_MAPFILE_DIR=/maps
       - STATIC_URL=/static/
-      - STATIC_ROOT=/srv/static-files
-      - MEDIA_ROOT=/srv/media-files
+      - STATIC_ROOT=${STATIC_ROOT}
+      - MEDIA_ROOT=${MEDIA_ROOT}
     container_name: stoqs
     depends_on:
       - mapserver
@@ -65,7 +66,8 @@ services:
         context: .
         dockerfile: Dockerfile-nginx
     volumes:
-      - static-files:/srv/static-files
+      - static-files:${STATIC_ROOT}
+      - media-files:${MEDIA_ROOT}
     container_name: stoqs-nginx
     ports:
       - "80:80"
