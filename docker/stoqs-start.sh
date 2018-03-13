@@ -21,14 +21,22 @@ if [ -f ${STOQS_SRVPROJ}/loaders/Monterey25.grd ]; then
     wget -q -N -O ${STOQS_SRVPROJ}/loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
 fi
 
-# Create directories for image generation and serving by nginx
-mkdir -p ${MEDIA_ROOT}/sections ${MEDIA_ROOT}/parameterparameter
-chmod 733 ${MEDIA_ROOT}/sections ${MEDIA_ROOT}/parameterparameter
-
 # If default stoqs database doesn't exist then load it - also running the unit and functional tests
 echo "Checking for presence of stoqs database..."
 POSTGRES_DB=stoqs python ${STOQS_SRVHOME}/database-check.py
 if [[ $? != 0 ]]; then
+
+    # NCAR's natgrid needed for contour plotting
+    wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/natgrid-0.2/natgrid-0.2.1.tar.gz
+    tar -xzf natgrid-0.2.1.tar.gz
+    cd natgrid-0.2.1
+    python setup.py install
+    cd ..
+
+    echo "Creating directories for image generation and serving by nginx..."
+    mkdir -p ${MEDIA_ROOT}/sections ${MEDIA_ROOT}/parameterparameter
+    chmod 733 ${MEDIA_ROOT}/sections ${MEDIA_ROOT}/parameterparameter
+
     echo "Creating default stoqs database and running tests..."
     ./test.sh changeme
 fi
