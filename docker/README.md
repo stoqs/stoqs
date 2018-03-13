@@ -177,7 +177,7 @@ postgres=> \d
 
 #### STOQS image
 
-- open "http://localhost:${STOQS_HOST_DJANGO_PORT}/"
+- open "http://localhost/"
   shows the STOQS GUI 
   (currently with an empty Campaigns table)
   
