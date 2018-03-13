@@ -33,7 +33,7 @@ COPY requirements $STOQS_SRVPROJ/requirements/
 RUN /bin/bash -c '\
     pip3 install -r $STOQS_SRVPROJ/requirements/production.txt'
 
-COPY stoqs $STOQS_SRVPROJ
+##COPY stoqs $STOQS_SRVPROJ
 COPY test.sh $STOQS_SRVHOME
 COPY docker/database-check.py $STOQS_SRVHOME
 COPY docker/stoqs-start.sh /

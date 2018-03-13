@@ -1,0 +1,9 @@
+FROM mbari/stoqs-base
+MAINTAINER Mike McCann <mccann@mbari.org>
+
+COPY stoqs /srv/stoqs
+COPY docker/docker-stoqs-uwsgi.ini /etc/uwsgi/django-uwsgi.ini
+COPY docker/stoqs-start.sh /
+
+CMD ["/stoqs-start.sh"]
+
