@@ -34,7 +34,7 @@ services:
 
   stoqs:
     build:
-        context: .
+        context: ..
         dockerfile: Dockerfile-stoqs
     volumes:
       - ${STOQS_VOLS_DIR}/maps:/dev/shm
@@ -44,12 +44,13 @@ services:
     ports:
       - "${STOQS_HOST_DJANGO_PORT}:8000"
     environment:
-      - DATABASE_URL=postgis://${STOQSADM_USER}:${STOQSADM_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
+      ##- DATABASE_URL=postgis://${STOQSADM_USER}:${STOQSADM_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
+      - DATABASE_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
       - DATABASE_SUPERUSER_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
       # Map STOQS_PGHOST to PGHOST, which sets default host for psql
       - PGHOST=${STOQS_PGHOST}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - MAPSERVER_HOST="${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}"
+      - MAPSERVER_HOST=${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}
       - URL_MAPFILE_DIR=/maps
       - STATIC_URL=/static/
       - STATIC_ROOT=/srv/static-files
