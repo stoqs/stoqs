@@ -300,7 +300,7 @@ echo Cloning STOQS repo from https://github.com/stoqs/stoqs.git...
 echo ">>> See CONTRIBUTING.md for how to configure your development system so that you can contribute to STOQS"
 mkdir /vagrant/dev
 cd /vagrant/dev
-git clone -b python3 --depth=50 https://github.com/stoqs/stoqs.git stoqsgit
+git clone --depth=50 https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit
 git config core.preloadindex true
 export PATH="/usr/local/bin:$PATH"

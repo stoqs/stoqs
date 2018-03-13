@@ -78,6 +78,25 @@ git pull
 ./setup.sh
 ```
 
+#### Production Deployment with Docker
+
+First, install [Docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/install/)
+ on your system.  Then clone the repository and execute `docker-compose up` from the docker directory:
+
+```bash
+git clone https://github.com/stoqs/stoqs.git stoqsgit
+cd stoqsgit/docker
+docker-compose up
+```
+
+After the production uwsgi/nginx services start (about an hour) visit https://localhost/default.
+
+To load some existing MBARI campaign data:
+
+```bash
+docker-compose exec stoqs stoqs/loaders/load.py --db stoqs_cce2015
+```
+
 If you use STOQS for your research please cite this publication:
 
 > McCann, M.; Schramm, R.; Cline, D.; Michisaki, R.; Harvey, J.; Ryan, J., "Using STOQS (The spatial 
