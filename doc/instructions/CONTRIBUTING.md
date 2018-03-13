@@ -24,7 +24,7 @@ installing all the required software.
 
 4. Rename the existing `origin` remote to `upstream`:
 
-        cd ~/dev/stoqsgit
+        cd /vagrant/dev/stoqsgit
         git remote rename origin upstream
 
 5. Assign `origin` remote to your forked repository:
@@ -37,9 +37,9 @@ installing all the required software.
 
 1. cd into your working directory, e.g.:
 
-        cd ~/dev/stoqsgit
+        cd /vagrant/dev/stoqsgit
 
-2. Create a branch for the new feature: 
+2. Create a branch off of master for the new feature: 
 
         git checkout master
         git checkout -b my_new_feature

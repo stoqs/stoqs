@@ -297,10 +297,10 @@ class Contour(object):
         mint=min(datetimes)
         maxt=max(datetimes)
         numdays = (maxt - mint).days
-        d = [mint + timedelta(days=dt2) for dt2 in xrange(numdays+1)]
+        d = [mint + timedelta(days=dt2) for dt2 in range(numdays+1)]
         d.sort()
-        sunrise = map(lambda x:dates.date2num(loc.next_rising(sun,start=x).datetime()),d)
-        sunset = map(lambda x:dates.date2num(loc.next_setting(sun,start=x).datetime()),d)
+        sunrise = [dates.date2num(loc.next_rising(sun,start=x).datetime()) for x in d]
+        sunset = [dates.date2num(loc.next_setting(sun,start=x).datetime()) for x in d]
 
         result = []
         for st in datetimes:
@@ -573,14 +573,14 @@ class Contour(object):
                 try:
                     track = LineString(points).simplify(tolerance=.001)
                     if track is not None:
-                        ln,lt = zip(*track)
+                        ln,lt = list(zip(*track))
                         mp.plot(ln,lt,'-',c='k',alpha=0.5,linewidth=2, zorder=1)
-                except TypeError, e:
+                except TypeError as e:
                     logger.warn("%s\nCannot plot map track path to None", e)
             else:
                 for track in maptracks:
                     if track is not None:
-                        ln,lt = zip(*track)
+                        ln,lt = list(zip(*track))
                         mp.plot(ln,lt,'-',c='k',alpha=0.5,linewidth=2, zorder=1)
 
             logger.debug('done plotting tracks')
@@ -655,7 +655,7 @@ class Contour(object):
             logger.debug('Gridding')
             zi = griddata((x, y), np.array(z), (xi[None,:], yi[:,None]), method='nearest')
             logger.debug('Done gridding')
-        except KeyError, e:
+        except KeyError as e:
             logger.warn('Got KeyError. Could not grid the data')
             zi = None
             raise(e)
@@ -707,7 +707,7 @@ class Contour(object):
 
         try:
             scale_factor = float(tmax -tmin) / (dmax - dmin)
-        except ZeroDivisionError, e:
+        except ZeroDivisionError as e:
             logger.warn('Not setting scale_factor.  Scatter plots will still work.')
             contour_flag = False
             scale_factor = 1

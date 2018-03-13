@@ -1,3 +1,11 @@
 -r base.txt
 
-scikit-learn==0.19.1
+# Packages excluded from travis-ci.txt, but included in development.txt and production.txt:
+# -netCDF4
+# -numpy
+# -pandas
+# -pymssql
+# -requests
+#
+# Do not factor these out into base.txt!
+

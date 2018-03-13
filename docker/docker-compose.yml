@@ -1,0 +1,80 @@
+version: '2'
+
+volumes:
+    static-files:
+    media-files:
+
+services:
+
+  postgis:
+    build:
+        context: .
+        dockerfile: Dockerfile-postgis
+    volumes:
+      - ${STOQS_VOLS_DIR}/pgdata:/var/lib/postgresql/data
+    ports:
+      - "${STOQS_HOST_POSTGRES_PORT}:5432"
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - STOQSADM_PASSWORD=${STOQSADM_PASSWORD}
+    container_name: stoqs-postgis
+    env_file:
+      - ./.env
+
+  mapserver:
+    build:
+        context: .
+        dockerfile: Dockerfile-mapserver
+    volumes:
+      - ${STOQS_VOLS_DIR}/maps:/maps:ro
+    ports:
+      - "${STOQS_HOST_MAPSERVER_PORT}:7000"
+    container_name: stoqs-mapserver
+    env_file:
+      - ./.env
+
+  stoqs:
+    build:
+        context: ..
+        dockerfile: Dockerfile-stoqs
+    volumes:
+      - ${STOQS_VOLS_DIR}/maps:/dev/shm
+      - ${STOQS_VOLS_DIR}/stoqs_root:/root
+      - ${STOQS_VOLS_DIR}/nginx:/usr/share/nginx
+      - static-files:/srv/static-files
+    environment:
+      ##- DATABASE_URL=postgis://${STOQSADM_USER}:${STOQSADM_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
+      - DATABASE_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
+      - DATABASE_SUPERUSER_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
+      # Map STOQS_PGHOST to PGHOST, which sets default host for psql
+      - PGHOST=${STOQS_PGHOST}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - MAPSERVER_HOST=${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}
+      - URL_MAPFILE_DIR=/maps
+      - STATIC_URL=/static/
+      - STATIC_ROOT=${STATIC_ROOT}
+      - MEDIA_ROOT=${MEDIA_ROOT}
+    container_name: stoqs
+    depends_on:
+      - mapserver
+      - postgis
+    env_file:
+      - ./.env
+
+  nginx:
+    build:
+        context: .
+        dockerfile: Dockerfile-nginx
+    volumes:
+      - static-files:${STATIC_ROOT}
+      - media-files:${MEDIA_ROOT}
+    container_name: stoqs-nginx
+    ports:
+      - "80:80"
+      - "8000:8000"
+      - "443:443"
+    depends_on:
+      - stoqs
+    env_file:
+      - ./.env
+

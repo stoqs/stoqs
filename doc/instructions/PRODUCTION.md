@@ -71,8 +71,11 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         vi $STOQS_HOME/stoqs/stoqs_nginx_<host>.conf
         sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx_<host>.conf /etc/nginx/conf.d
 
-8. Edit the `$STOQS_HOME/stoqs/stoqs_uwsgi.ini` file making sure that all the 
-   absolute directory paths are correct.
+8. Copy the `stoqs/stoqs_uwsgi.ini` file to one specific for your host and edit
+   so the the value of $STOQS_HOME is explicit:
+
+        cp $STOQS_HOME/stoqs/stoqs_uwsgi.ini $STOQS_HOME/stoqs/stoqs_uwsgi_$HOST.ini
+        vi $STOQS_HOME/stoqs/stoqs_uwsgi_$HOST.ini    # Edit to make sure paths are correct
 
 9. Create the media and static web directories and copy the static files to the 
    production web server location. The $STATIC_ROOT directory must be writable 
@@ -96,10 +99,12 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         sudo chmod 733 $MEDIA_ROOT/parameterparameter
 
 
-11. Start the stoqs uWSGI application, replacing `<dbuser>, <pw>, <host>, <port>, 
-    <mapserver_ip_address>`, and other values that are specific to your 
-    server, e.g.:
+11. Create a bash script to start the stoqs uWSGI application, replacing 
+    `<dbuser>, <pw>, <host>, <port>, <mapserver_ip_address>`, and other values 
+    that are specific to your server, e.g.:
 
+        vi $STOQS_HOME/start_uwsgi.sh
+        # Start the stoqs uWSGI application for nginx
         export STOQS_HOME=/opt/stoqsgit
         export STATIC_ROOT=/usr/share/nginx/html/static
         export MEDIA_ROOT=/usr/share/nginx/html/media
@@ -108,35 +113,63 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         export STOQS_CAMPAIGNS="<comma_separated>,<databases>,<not_in_campaigns>"
         export SECRET_KEY="<random_sequence_of_impossible_to_guess_characters>"
         export GDAL_DATA=/usr/share/gdal
-        uwsgi --ini stoqs/stoqs_uwsgi.ini
+        # Execute uwsgi for command-line testing
+        uwsgi --ini stoqs/stoqs_uwsgi_$HOST.ini
+        # Execute uwsgi in daemon mode for use in production
+        ##uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data --daemonize /var/log/uwsgi/uwsgi-emperor.log --pidfile /var/run/uwsgi.pid
 
-12. Test the STOQS user interface using the configuration of your nginx server:
+12. Execute the `$STOQS_HOME/start_uwsgi.sh` script and confirm that the
+    web application works the same way as it does when the development 
+    server is running:
 
+        $STOQS_HOME/start_uwsgi.sh
         http://<server_name>:<port>/
 
 13. Configure your server to run uWSGI in emperor mode (see: http://bit.ly/1KQH5Sv
     for complete instructions) and test:
 
         deactivate
-        sudo /usr/local/bin/pip install uwsgi
+        sudo pip3.6 install uwsgi
         sudo mkdir -p /etc/uwsgi/vassals
-        sudo ln -s $STOQS_HOME/stoqs/stoqs_uwsgi.ini /etc/uwsgi/vassals
+        sudo ln -s $STOQS_HOME/stoqs/stoqs_uwsgi_$HOST.ini /etc/uwsgi/vassals
+        # Set env variables that are set in start_uwsgi.sh and test at command line
         /usr/local/bin/uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
 
-14. To configure uWSGI to start on system boot put the commands from step 11 into 
-    a script file named something like `start_uwsgi.sh` and put the full path of the file
-    `in /etc/rc.d/rc.local`.  To have it run in emperor mode replace the last line 
-    in the script with:
-
-           /usr/local/bin/uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data --daemonize /var/log/uwsgi/uwsgi-emperor.log --pidfile /var/run/uwsgi.pid
+14. To configure uWSGI to start on system boot comment out the first uwsgi 
+    line in file $STOQS_HOME/start_uwsgi.sh and uncomment the daemon mode 
+    version of uwsgi.
    
-   As this script contains keys and database credentials take appropriate steps to protect it from prying eyes. On a CentOS 6 system you may use this [sample_uwsgi_startstop.sh](sample_uwsgi_startstop.sh) script to have uWSGI start on boot.
+    As this script contains keys and database credentials take appropriate steps to 
+    protect it from prying eyes. On a CentOS 7 system you may copy an edited version of
+    [sample_uwsgi.service](sample_uwsgi.service) /etc/systemd/system/ to create
+    a unit for systemctl.  Then enable and start it:
+
+        cp doc/instructions/sample_uwsgi.service $STOQS_HOME/stoqs/uwsgi.service
+        vi $STOQS_HOME/stoqs/uwsgi.service    # Edit to execute start_uwsgi_$HOST.sh
+        sudo cp $STOQS_HOME/stoqs/uwsgi.service /etc/systemd/system
+        sudo systemctl enable uwsgi
+        sudo systemctl start uwsgi
 
 15. To restart a production uWSGI server running in emperor mode simply `touch`
     the file that is linked in the `/etc/uwsgi/vassals/` directory, e.g.:
 
-        touch $STOQS_HOME/stoqs/stoqs_uwsgi.ini
+        touch $STOQS_HOME/stoqs/stoqs_uwsgi_$HOST.ini
 
     A restart is needed to use updated software or configurations, for example
     following a `git pull` command.
+
+    It is a good idea to monitor the log file whenever restarting a service:
+
+        tail -f /var/log/uwsgi/uwsgi-emperor.log
+
+16. These steps will generate serveral customized files in $STOQS_HOME.  They should
+    not be checked into version control.  If you are comfortable with seeing them
+    listed in a `git status` command and have the discipline to not add and commit
+    them then leave them be; otherwise, you may want to add them to .gitignore, e.g.:
+
+        # Special for kraken2 installation - do not commit this change!
+        start_uwsgi.sh
+        stoqs/stoqs/media/loadlogs/
+        stoqs/stoqs_nginx_kraken2.conf
+        stoqs/stoqs_uwsgi_kraken2.ini
 

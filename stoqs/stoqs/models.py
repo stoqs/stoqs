@@ -9,7 +9,7 @@ Mike McCann
 MBARI 17 March 2012
 '''
 
-from __future__ import unicode_literals
+
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.utils.encoding import python_2_unicode_compatible
@@ -32,7 +32,7 @@ class UUIDField(models.CharField) :
         if add:
             value=getattr(model_instance,self.attname)
             if not value:
-                value = unicode(uuid.uuid4()).replace('-','')
+                value = str(uuid.uuid4()).replace('-','')
             setattr(model_instance, self.attname, value)
             return value
         else:
@@ -216,6 +216,7 @@ class InstantPoint(models.Model):
     objects = models.GeoManager()
     class Meta(object):
         app_label = 'stoqs'
+        unique_together = ('activity', 'timevalue')
     def __str__(self):
         return "%s" % (self.timevalue,)
 
@@ -406,9 +407,10 @@ class Measurement(models.Model):
     class Meta(object):
         verbose_name = 'Measurement'
         verbose_name_plural = 'Measurements'
+        unique_together = ('instantpoint', 'depth', 'geom')
         app_label = 'stoqs'
     def __str__(self):
-        return "Measurement at %s" % (self.geom,)
+        return "Measurement at %s, %s" % (self.geom, self.depth)
 
 
 @python_2_unicode_compatible

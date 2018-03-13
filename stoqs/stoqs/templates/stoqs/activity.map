@@ -37,33 +37,6 @@ MAP
     FILLED true
   END # SYMBOL
 
-  LAYER
-    NAME "copyright"
-    STATUS ON
-    TYPE annotation
-    TRANSFORM ll                    #set the image origin to be lower left
-    FEATURE
-      POINTS
-        60 -10                      #set the offset from lower left position in pixels
-      END
-      TEXT "© {{ copyright_string }}" 
-    END
-    CLASS
-      LABEL                         #defines the font, colors etc. of the text
-        FONT "sans"
-        TYPE TRUETYPE
-        SIZE 8
-        BUFFER 1
-        COLOR 0 0 0
-        FORCE TRUE
-        STYLE                       # new in mapserver 6
-          GEOMTRANSFORM 'labelpoly'
-          COLOR 255 255 255
-        END # STYLE
-      END
-    END
-    UNITS PIXELS                    #sets the units for the feature object
-  END
   # Union layer needs to have an empty CLASS section for it to draw the connected layer
   {% if trajectory_union_layer_string %}
   LAYER

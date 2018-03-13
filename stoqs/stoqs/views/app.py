@@ -19,7 +19,7 @@ from stoqs.views import BaseOutputer, EmptyQuerySetException
 import stoqs.models as mod
 ##import matplotlib.pyplot as plt
 import logging 
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.views.decorators.cache import cache_page
 
@@ -129,7 +129,7 @@ class ActivityParameterHistogram(BaseOutputer):
     '''
     fields = [ 'binlo', 'binhi', 'bincount', 'activityparameter__parameter__name', 'activityparameter__activity__name']
 
-    def process_request(self):
+    def process_request(self): # pragma: no cover
         fields = self.getFields()
         self.assign_qs()
         self.responses.append('.png')
@@ -195,7 +195,7 @@ def showResourceActivity(request, fmt='json'):
     ra = ResourceActivity(request, fmt, query_set, stoqs_object)
     return ra.process_request()
 
-def showQuickLookPlots(request):
+def showQuickLookPlots(request): # pragma: no cover
     stoqs_object = mod.Resource
     query_set = stoqs_object.objects.filter(resourcetype__name='quick_look').order_by('name')
 
@@ -208,7 +208,7 @@ def showQuickLookPlots(request):
     except:
         pass
 
-    return render_to_response('quicklookplots.html', {'activity': activityName, 'images': ra.qs}, context_instance=RequestContext(request))
+    return render(request, 'quicklookplots.html', context={'activity': activityName, 'images': ra.qs})
 
 def showSampleDT(request, fmt='json'):
     stoqs_object = mod.Sample

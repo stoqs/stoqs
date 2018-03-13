@@ -1,0 +1,15 @@
+# Unzip before running explore_BIOM_data_for_SIMZ.ipynb Jupyter Notebook:
+
+gunzip otu_table_newsiernounclass_wmetadata.biom.gz
+
+# After running the cells in the Notebook this file will appear here:
+
+otu_table_newsiernounclass_wmetadata_stoqs.biom
+
+# Repository cleanup:
+
+rm otu_table_newsiernounclass_wmetadata_stoqs.biom
+gzip otu_table_newsiernounclass_wmetadata.biom
+git checkout otu_table_newsiernounclass_wmetadata.biom.gz   # if needed
+
+

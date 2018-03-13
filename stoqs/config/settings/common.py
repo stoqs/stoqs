@@ -8,7 +8,7 @@ https://docs.djangoproject.com/en/dev/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/dev/ref/settings/
 """
-from __future__ import absolute_import, unicode_literals
+
 
 import environ
 
@@ -35,9 +35,9 @@ DJANGO_APPS = (
     'django.contrib.admin',
 )
 THIRD_PARTY_APPS = (
-    'crispy_forms',  # Form layouts
-    'allauth',  # registration
-    'allauth.account',  # registration
+    ##'crispy_forms',  # Form layouts
+    ##'allauth',  # registration
+    ##'allauth.account',  # registration
     # See: https://github.com/pennersr/django-allauth/blob/master/docs/installation.rst
     # and https://github.com/pennersr/django-allauth/commit/b1bce45012a808aef233e7f7b60a956d8a2524ee
     # Expect allauth.socialaccount to work when 0.22 is in pypi
@@ -75,7 +75,7 @@ MIDDLEWARE_CLASSES = (
 # MIGRATIONS CONFIGURATION
 # ------------------------------------------------------------------------------
 MIGRATION_MODULES = {
-    'sites': 'stoqs.contrib.sites.migrations'
+    ##'sites': 'stoqs.contrib.sites.migrations'
 }
 
 # DEBUG
@@ -86,7 +86,7 @@ DEBUG = env.bool("DJANGO_DEBUG", default=True)
 # ALLOWED_HOSTS
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-default_allowed_hosts = ['localhost', '127.0.0.1', '[::1]']
+default_allowed_hosts = ['localhost', '127.0.0.1', '[::1]', '0.0.0.0']
 try:
     import netifaces as ni
     #ni.ifaddresses('eth0')
@@ -132,12 +132,24 @@ DATABASES = {
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
+# Functional tests require a separate MAPSERVER_DATABASE_URL setting
+MAPSERVER_DATABASE_URL = env('MAPSERVER_DATABASE_URL', default=env('DATABASE_URL'))
+if MAPSERVER_DATABASE_URL == env('DATABASE_URL'):
+    MAPSERVER_DATABASES = DATABASES.copy()
+else:
+    MAPSERVER_DATABASES = {
+        'default': env.db("MAPSERVER_DATABASE_URL")
+    }
+    MAPSERVER_DATABASES['default']['ATOMIC_REQUESTS'] = True
+    
 # For running additional databases append entries from STOQS_CAMPAIGNS environment
 # Example: export STOQS_CAMPAIGNS='stoqs_beds_canyon_events_t,stoqs_os2015_t'
 for campaign in env.list('STOQS_CAMPAIGNS', default=[]):
     DATABASES[campaign] = DATABASES.get('default').copy()
     DATABASES[campaign]['NAME'] = campaign
-
+    MAPSERVER_DATABASES[campaign] = MAPSERVER_DATABASES.get('default').copy()
+    MAPSERVER_DATABASES[campaign]['NAME'] = campaign
+    
 # GENERAL CONFIGURATION
 # ------------------------------------------------------------------------------
 # Local time zone for this installation. Choices can be found here:
@@ -301,11 +313,12 @@ LOGGING = {
 
 # Must be externally accessible if your STOQS server is to be externally accessible
 # The default of 'localhost:8080' is for a Vagrant install, set MAPSERVER_HOST for
-# other cases, e.g. export MAPSERVER_HOST='172.16.130.204'
+# other cases, e.g. export MAPSERVER_HOST='172.16.130.204:80'
 MAPSERVER_HOST = env('MAPSERVER_HOST', default='localhost:8080')
 
-# For template generated .map files
-MAPFILE_DIR = '/dev/shm'
+# For template generated .map files, the URL_ version is for Docker shared volume setup
+MAPFILE_DIR = env('MAPFILE_DIR', default='/dev/shm')
+URL_MAPFILE_DIR = env('URL_MAPFILE_DIR', default='/dev/shm')
 
 
 # STOQS specific logging
@@ -337,18 +350,6 @@ LOGGING['loggers']['stoqs.db_router'] = {
                             'formatter': 'verbose'
 }
 LOGGING['loggers']['loaders'] = {
-                            'handlers':['console'],
-                            'propagate': True,
-                            'level':'INFO',
-                            'formatter': 'verbose'
-}
-LOGGING['loggers']['DAPloaders'] = {
-                            'handlers':['console'],
-                            'propagate': True,
-                            'level':'INFO',
-                            'formatter': 'verbose'
-}
-LOGGING['loggers']['SampleLoaders'] = {
                             'handlers':['console'],
                             'propagate': True,
                             'level':'INFO',

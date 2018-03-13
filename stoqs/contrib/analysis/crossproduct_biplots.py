@@ -1,23 +1,9 @@
 #!/usr/bin/env python
-
-__author__ = "Mike McCann"
-__copyright__ = "Copyright 2013, MBARI"
-__license__ = "GPL"
-__maintainer__ = "Mike McCann"
-__email__ = "mccann at mbari.org"
-__status__ = "Development"
-__doc__ = '''
-
+'''
 Script to create biplots of a cross product of all Parameters in a database.
 
 Mike McCann
 MBARI 10 February 2014
-
-@var __date__: Date of last svn commit
-@undocumented: __doc__ parser
-@author: __author__
-@status: __status__
-@license: __license__
 '''
 
 import os
@@ -68,7 +54,7 @@ class CrossProductBiPlot(BiPlot):
             fig.text(0.5, 0.975, self.args.title, horizontalalignment='center', verticalalignment='top')
 
         fileName = self.getFileName(figCount)
-        print 'Saving file', fileName
+        print('Saving file', fileName)
         fig.savefig(fileName)
 
     def makeCrossProductBiPlots(self):
@@ -87,28 +73,33 @@ class CrossProductBiPlot(BiPlot):
         axisNum = 1
         figCount = 1
         newFigFlag = True
-        xpList = xParmsHash.keys()
+        xpList = list(xParmsHash.keys())
         xpList.sort(key=lambda p: p.name.lower())
         for xP in xpList:
             xPlats = xParmsHash[xP]
-            if self.args.verbose: print xP.name
-            ypList = allParmsHash.keys()
+            if self.args.verbose: print(xP.name)
+            ypList = list(allParmsHash.keys())
             ypList.sort(key=lambda p: p.name.lower())
             for yP in ypList:
                 yPlats = allParmsHash[yP]
                 commonPlatforms = xPlats.intersection(yPlats)
                 if xP.name == yP.name or set((xP.name, yP.name)) in setList or not commonPlatforms:
                     continue
-                if self.args.verbose: print '\t%s' % yP.name
+                if self.args.verbose: print('\t%s' % yP.name)
 
                 try:
-                    x, y, points = self._getPPData(None, None, None, xP.name, yP.name)
-                except NoPPDataException, e:
-                    if self.args.verbose: print e
+                    x, y, points = self._getPPData(None, None, None, xP.name, yP.name, {})
+                except (NoPPDataException, TypeError) as e:
+                    if self.args.verbose: print(f"\tCan't plot {yP.name}: {str(e)}")
                     continue
 
                 # Assess the correlation
-                m, b = polyfit(x, y, 1)
+                try:
+                    m, b = polyfit(x, y, 1)
+                except ValueError as e:
+                    if self.args.verbose: print(f"\tCan't polyfit {yP.name}: {str(e)}")
+                    continue
+
                 yfit = polyval([m, b], x)
                 r = np.corrcoef(x, y)[0,1]
                 r2 = r**2
@@ -154,7 +145,7 @@ class CrossProductBiPlot(BiPlot):
         # Save last set of subplots
         self.saveFigure(fig, figCount)
 
-        print 'Done.'
+        print('Done.')
 
     def process_command_line(self):
         '''
@@ -189,7 +180,7 @@ class CrossProductBiPlot(BiPlot):
         parser.add_argument('--plotDir', action='store', help='Directory where to write the plot output', default='.')
         parser.add_argument('--plotPrefix', action='store', help='Prefix to use in naming plot files', default='')
         parser.add_argument('--title', action='store', help='Title to appear on top of plot')
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1, default=0)
     
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)

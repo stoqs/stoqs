@@ -14,12 +14,12 @@ The class hides the complexities of getting datavalues from both MeasuredParamet
 @license: GPL
 '''
 from django.conf import settings
-from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet, ValuesQuerySet
+from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet, QuerySet
 from django.contrib.gis.db.models.query import GeoQuerySet
 from django.db import DatabaseError
 from datetime import datetime
 from stoqs.models import MeasuredParameter, Parameter, ParameterGroupParameter, MeasuredParameterResource
-from utils import postgresifySQL, getGet_Actual_Count, EPOCH_STRING
+from .utils import postgresifySQL, getGet_Actual_Count, EPOCH_STRING
 from loaders.SampleLoaders import SAMPLED
 from loaders import MEASUREDINSITU
 import logging
@@ -79,7 +79,7 @@ class PQuerySet(object):
             else:
                 self.mp_query = MeasuredParameter.objects.raw(query)
  
-    def __iter__(self):
+    def __iter__(self): # pragma: no cover
         '''
         Main way to access data that is used by interators in templates, etc.
         Simulate behavior of regular GeoQuerySets.  Modify & format output as needed.
@@ -94,8 +94,8 @@ class PQuerySet(object):
         logger.debug('self.query = %s', self.query)
         logger.debug('type(self.mp_query) = %s', type(self.mp_query))
 
-        if isinstance(self.mp_query, ValuesQuerySet):
-            logger.debug('self.mp_query is ValuesQuerySet')
+        if isinstance(self.mp_query, QuerySet):
+            logger.debug('self.mp_query is QuerySet')
         if isinstance(self.mp_query, GeoQuerySet):
             logger.debug('self.mp_query is GeoQuerySet')
         if isinstance(self.mp_query, RawQuerySet):
@@ -162,12 +162,12 @@ class PQuerySet(object):
             data[-1] = "...(remaining elements truncated)..."
         return repr(data)
  
-    def __getitem__(self, k):
+    def __getitem__(self, k): # pragma: no cover
         '''
         Boiler plate copied from http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  Does not seem to be used
         by Django templates and other uses of this class, which seem to mainly use __iter__().
         '''
-        if not isinstance(k, (slice, int, long)):
+        if not isinstance(k, (slice, int)):
             raise TypeError
         assert ((not isinstance(k, slice) and (k >= 0))
                 or (isinstance(k, slice) and (k.start is None or k.start >= 0)
@@ -329,25 +329,25 @@ class PQuery(object):
         '''
         qparams = {}
 
-        if self.kwargs.has_key('measuredparametersgroup'):
+        if 'measuredparametersgroup' in self.kwargs:
             if self.kwargs['measuredparametersgroup']:
                 qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
-        if self.kwargs.has_key('sampledparametersgroup'):
+        if 'sampledparametersgroup' in self.kwargs:
             if self.kwargs['sampledparametersgroup']:
                 qparams['parameter__name__in'] = self.kwargs['sampledparametersgroup']
-        if self.kwargs.has_key('parameterstandardname'):
+        if 'parameterstandardname' in self.kwargs:
             if self.kwargs['parameterstandardname']:
                 qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
         
-        if self.kwargs.has_key('platforms'):
+        if 'platforms' in self.kwargs:
             if self.kwargs['platforms']:
                 qparams['measurement__instantpoint__activity__platform__name__in'] = self.kwargs['platforms']
-        if self.kwargs.has_key('time'):
+        if 'time' in self.kwargs:
             if self.kwargs['time'][0] is not None:
                 qparams['measurement__instantpoint__timevalue__gte'] = self.kwargs['time'][0]
             if self.kwargs['time'][1] is not None:
                 qparams['measurement__instantpoint__timevalue__lte'] = self.kwargs['time'][1]
-        if self.kwargs.has_key('depth'):
+        if 'depth' in self.kwargs:
             if self.kwargs['depth'][0] is not None:
                 qparams['measurement__depth__gte'] = self.kwargs['depth'][0]
             if self.kwargs['depth'][1] is not None:
@@ -360,7 +360,7 @@ class PQuery(object):
 
         if getGet_Actual_Count(self.kwargs):
             # Make sure that we have at least time so that the instantpoint table is included
-            if not qparams.has_key('measurement__instantpoint__timevalue__gte'):
+            if 'measurement__instantpoint__timevalue__gte' not in qparams:
                 qparams['measurement__instantpoint__pk__isnull'] = False
 
         self.logger.debug('qparams = %s', pprint.pformat(qparams))
@@ -382,7 +382,7 @@ class PQuery(object):
 
         # Wrap PQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
         qs_mpq = PQuerySet(None, values_list, qs_mp=qs_mp)
-        if self.kwargs.has_key('parametervalues'):
+        if 'parametervalues' in self.kwargs:
             if self.kwargs['parametervalues'] != [{}]:
                 # A depth of 4 is needed in order to see Platform
                 qs_mp = MeasuredParameter.objects.using(
@@ -462,7 +462,7 @@ class PQuery(object):
             #            INNER JOIN stoqs_parameter p1 
             #            ON mp1.parameter_id = p1.id
 
-            for k,v in pminmax.iteritems():
+            for k,v in list(pminmax.items()):
                 if k in Parameter.objects.using(self.request.META['dbAlias']).values_list('name', flat=True):
                     p = re.compile("[';]")
                     if p.search(v[0]) or p.search(v[1]):
@@ -484,7 +484,7 @@ class PQuery(object):
                             where_sql += "(mp" + str(i) + ".datavalue < " + str(v[1]) + ") AND "
                         where_sql += "(mp" + str(i) + ".parameter_id = p" + str(i) + ".id) AND "
 
-                    elif self.isParameterSampled(k):
+                    elif self.isParameterSampled(k): # pragma: no cover
                         from_sql += 'INNER JOIN stoqs_sample s' + str(i) + ' '
                         from_sql += 'on s' + str(i) + '.instantpoint_id = stoqs_instantpoint.id '
                         from_sql += 'INNER JOIN stoqs_sampledparameter sp' + str(i) + ' '
@@ -509,7 +509,7 @@ class PQuery(object):
         containsSampleFlag = False
         containsMeasuredFlag = False
         for axis in select_order:
-            if pDict.has_key(axis):
+            if axis in pDict:
                 if pDict[axis]:
                     try:
                         if self.isParameterMeasured(int(pDict[axis])):
@@ -688,7 +688,7 @@ For sampledparameter to sampledparamter query an example is:
         # Construct SELECT strings, must be in proper order, include depth for possible sigma-t calculation
         xyzc_items = ''
         for axis in select_order:
-            if pDict.has_key(axis):
+            if axis in pDict:
                 if pDict[axis]:
                     try:
                         if self.isParameterMeasured(int(pDict[axis])):
@@ -737,7 +737,7 @@ For sampledparameter to sampledparamter query an example is:
         # Construct INNER JOINS and WHERE sql for Sampled and Measured Parameter selections
         # Use aliases for joins on each axis
         where_sql = '' 
-        for axis, pid in pDict.iteritems():
+        for axis, pid in list(pDict.items()):
             if pid:
                 self.logger.debug('axis, pid = %s, %s', axis, pid)
                 add_to_from += '\n'

@@ -9,8 +9,8 @@
     <meta name="author" content="Mike McCann, MBARI" />
 
     <!-- The styles -->
-    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet">
-    <link href="{{STATIC_URL}}media/font/orbitron.css" rel="stylesheet">
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet"></link>
+    <link href="{{STATIC_URL}}media/font/orbitron.css" rel="stylesheet"></link>
     <style>
         body {
             padding-top: 35px;  /* 35px to make the container go all the way to the bottom of the topbar */
@@ -97,12 +97,12 @@
             }
         }
     </style>
-    <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
-    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.icon-large.min.css" rel="stylesheet">
-    <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet">
-    <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet">
-    <link type="text/css" href="{{ STATIC_URL }}x3dom-1.7.1/x3dom.css" rel="stylesheet">
-    <!--<link type="text/css" href="http://www.x3dom.org/x3dom/dist/x3dom.css" rel="stylesheet">
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet"></link>
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.icon-large.min.css" rel="stylesheet"></link>
+    <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet"></link>
+    <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet"></link>
+    <link type="text/css" href="{{ STATIC_URL }}x3dom-1.7.1/x3dom.css" rel="stylesheet"></link>
+    <!--<link type="text/css" href="http://www.x3dom.org/x3dom/dist/x3dom.css" rel="stylesheet">-->
     
 
     <!-- The HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -112,10 +112,10 @@
     <![endif]-->
 
     <!-- The fav and touch icons -->
-    <link rel="shortcut icon" href="{{STATIC_URL}}images/stoqs_favicon.ico" type="image/x-icon">
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-114-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-72-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-57-precomposed.png">
+    <link rel="shortcut icon" href="{{STATIC_URL}}images/stoqs_favicon.ico" type="image/x-icon"></link>
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-114-precomposed.png"></link>
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-72-precomposed.png"></link>
+    <link rel="apple-touch-icon-precomposed" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-57-precomposed.png"></link>
 
     {% if google_analytics_code %}
     <!-- Google Analytics -->
@@ -143,7 +143,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="{{home_page_link}}" style="padding-top:4px;"><img src="{{STATIC_URL}}images/{{home_page_logo}}" alt="{{home_page_alt}}"></a>
+          <a class="brand" href="{{home_page_link}}" style="padding-top:4px;"><img src="{{STATIC_URL}}images/{{home_page_logo}}" alt="{{home_page_alt}}"/></a>
           <a class="brand" href="#">{{request.META.dbAlias}}</a>
           <div class="nav-collapse">
             <ul class="nav">
@@ -154,7 +154,7 @@
                 <i class="icon-eye-open icon-white"></i> Share this view</a></li>
             </ul>
             <a class="brand" href="https://github.com/stoqs/stoqs" style="padding-top:6px;" target="_new" title="STOQS GitHub">
-            <img src="{{STATIC_URL}}images/STOQS_logo_gray1_24.png" alt="STOQS GitHub"></a>
+            <img src="{{STATIC_URL}}images/STOQS_logo_gray1_24.png" alt="STOQS GitHub"/></a>
             <!--
             <form action="">
                 <input type="text" placeholder="Search" />
@@ -174,7 +174,7 @@
     <div class="modal-body">
         <h4>Copy this link to your clipboard to and use it in e-mail, etc. to share this view of the data</h4>
         <div id="permalink-box" style="display:none">
-            <input type="text" name="permalink" style="width: 100%">
+            <input type="text" name="permalink" style="width: 100%" />
         </div>
     </div>
     <div class="modal-footer">
@@ -676,7 +676,7 @@
                             <ul id="sp-dataaccessdownloadtabs" class="nav nav-tabs">
                                 <li class="active"><a href="#table" data-toggle="tab">Table</a></li>
                                 {% for format in formats %}
-                                    {% if format.0 = 'sql' %}
+                                    {% if format.0 == 'sql' %}
                                         <li id="spsql" class="sql-tab"><a href="#sp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                     {% else %}
                                         <li><a href="#sp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
@@ -695,7 +695,7 @@
                                     </table>
                                 </div>
                                 {% for format in formats %}
-                                    {% if format.0 = 'kml' %}
+                                    {% if format.0 == 'kml' %}
                                 <div class="tab-pane active" id="sp-{{format.0}}">
                                     {% else %}
                                 <div class="tab-pane" id="sp-{{format.0}}">
@@ -706,7 +706,7 @@
                                             <th style="vertical-align:text-top;"><span>&nbsp;{{format.1}}</span></th>
                                         </tr>
                                     </table>
-                                    {% if format.0 = 'kml' %}
+                                    {% if format.0 == 'kml' %}
                                         <div style="text-align: center;">
                                         <span id="sp-kml-parameter"></span>
                                         <form style="text-align: center;" class="form-inline">
@@ -719,7 +719,7 @@
                                         </div>
                                         <pre id="sp-{{format.0}}-field"></pre>
                                     {% else %}
-                                        {% if format.0 = 'sql' %}
+                                        {% if format.0 == 'sql' %}
                                             <pre id="sp-{{format.0}}-field" style="font-size:xx-small;"></pre>
                                         {% else %}
                                             <pre id="sp-{{format.0}}-field"></pre>
@@ -745,10 +745,10 @@
 
                             <ul id="mp-dataaccessdownloadtabs" class="nav nav-tabs">
                                 {% for format in formats %}
-                                    {% if format.0 = 'kml' %}
+                                    {% if format.0 == 'kml' %}
                                         <li class="active"><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                     {% else %}
-                                        {% if format.0 = 'sql' %}
+                                        {% if format.0 == 'sql' %}
                                             <li id="mpsql" class="sql-tab"><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                         {% else %}
                                             <li><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
@@ -758,7 +758,7 @@
                             </ul>
                             <div class="tab-content">
                                 {% for format in formats %}
-                                    {% if format.0 = 'kml' %}
+                                    {% if format.0 == 'kml' %}
                                         <div class="tab-pane active" id="mp-{{format.0}}">
                                     {% else %}
                                         <div class="tab-pane" id="mp-{{format.0}}">
@@ -769,7 +769,7 @@
                                             <th style="vertical-align:text-top;"><span>&nbsp;{{format.1}}</span></th>
                                         </tr>
                                     </table>
-                                    {% if format.0 = 'kml' %}
+                                    {% if format.0 == 'kml' %}
                                         <div style="text-align: center;">
                                         <span id="mp-kml-parameter"></span>
                                         <form style="text-align: center;" class="form-inline">
@@ -782,7 +782,7 @@
                                         </div>
                                         <pre id="mp-{{format.0}}-field"></pre>
                                     {% else %}
-                                        {% if format.0 = 'sql' %}
+                                        {% if format.0 == 'sql' %}
                                             <pre id="mp-{{format.0}}-field" style="font-size:xx-small;"></pre>
                                         {% else %}
                                             <pre id="mp-{{format.0}}-field"></pre>
@@ -934,13 +934,13 @@
                                                 <input type="radio" name="colormap_choice" value="{{cm}}" id="{{cm}}" style="float:left;clear:none;display:block;margin-right:5px;"/>
                                                 <label for="{{cm}}">{{cm}}</label>
                                             </td>
-                                            <td style="border-top:0px;"><label for="{{cm}}"><img src="{{STATIC_URL}}images/colormaps/{{cm}}.png"></label></td>
+                                            <td style="border-top:0px;"><label for="{{cm}}"><img src="{{STATIC_URL}}images/colormaps/{{cm}}.png"/></label></td>
 
                                             <td style="white-space:nowrap;border-top:0px;">
                                                 <input type="radio" name="colormap_choice" value="{{cm}}_r" id="{{cm}}_r" style="float:left;clear:none;display:block;margin-right:5px;"/>
                                                 <label for="{{cm}}_r">{{cm}}_r</label>
                                             </td>
-                                            <td style="border-top:0px;"><label for="{{cm}}_r"><img src="{{STATIC_URL}}images/colormaps/{{cm}}_r.png"></label></td>
+                                            <td style="border-top:0px;"><label for="{{cm}}_r"><img src="{{STATIC_URL}}images/colormaps/{{cm}}_r.png"/></label></td>
                                         </tr>
                                     {% endfor %}            
                                     </table>
@@ -1511,8 +1511,8 @@
         if ( $('#showsensortracks').is(':checked') && $('input:radio[name=parameters_plot]').is(':checked') ) {
             if ( $('input:radio[name=parameters_plot]:checked').val() ) {
                 // Generate KML url for the parameters_plot radio button selection - this is separate from the filtered selection for Measurement Data Access
-                var base_url_mp = '{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias fmt='.kml'%}';
-                var base_url_sp = '{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias fmt='.kml'%}';
+                var base_url_mp = "{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias fmt='.kml'%}";
+                var base_url_sp = "{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias fmt='.kml'%}";
                 var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
                 if (param != '') {
                     param = '?' + param;
@@ -1668,13 +1668,13 @@
         var base_url;
         if ( group == 'mp' ) {
             group_name = 'measured';
-            base_url = '{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias fmt='.'%}';
+            base_url = "{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias fmt='.'%}";
         }
         else if ( group == 'sp' ) {
             group_name = 'sampled';
-            base_url = '{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias fmt='.'%}';
+            base_url = "{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias fmt='.'%}";
         }
-        var query_url = '{{site_uri}}{% url 'stoqs:stoqs-query-ui' dbAlias=request.META.dbAlias %}';
+        var query_url = "{{site_uri}}{% url 'stoqs:stoqs-query-ui' dbAlias=request.META.dbAlias %}";
         var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
         if (param != '') {
             param = '?' + param;
@@ -3478,7 +3478,7 @@ function enable_cardboard(){
 
     function showSampleData(label) {
             //http://172.16.130.129:8000/stoqs_october2010/sample.json?instantpoint__activity__name__contains=Dorado389_2010_278_01_278_01&name=4.0
-            var sample_url = '{{site_uri}}{% url 'stoqs:show-sample-datatable' dbAlias=request.META.dbAlias fmt=".json" %}';
+            var sample_url = "{{site_uri}}{% url 'stoqs:show-sample-datatable' dbAlias=request.META.dbAlias fmt='.json' %}";
             sample_url = sample_url + '?instantpoint__activity__name__contains=' + label.split(' ')[0] + '&name=' + label.split(' ')[1];
             console.log('sample_url = ' + sample_url);
 
@@ -3504,8 +3504,8 @@ function enable_cardboard(){
 
     function showQuickLooks(label) {
             // http://172.16.130.135:8000/stoqs_may2012/resourceactivity.json?resourcetype__name=quick_look&activityresource__activity__name__contains=Dorado389_2012_150_00_150_00_decim
-            //var quicklook_url = '{{site_uri}}{% url 'stoqs:show-resourceactivity' dbAlias=request.META.dbAlias fmt=".json" %}?resourcetype__name=quick_look&';
-            var quicklook_url = '{{site_uri}}{% url 'stoqs:show-quicklookplots' dbAlias=request.META.dbAlias %}?';
+            //var quicklook_url = "{{site_uri}}{% url 'stoqs:show-resourceactivity' dbAlias=request.META.dbAlias fmt='.json' %}?resourcetype__name=quick_look&";
+            var quicklook_url = "{{site_uri}}{% url 'stoqs:show-quicklookplots' dbAlias=request.META.dbAlias %}?";
             quicklook_url = quicklook_url + 'activityresource__activity__name__contains=' + label.split(' ')[0];
             //var nwin = window.open(quicklook_url, '', 'height=800,width=1000');
             //if (window.focus) {
@@ -4547,21 +4547,32 @@ function enable_cardboard(){
                     series.color;
                 });
                 if ( ! $.isEmptyObject(data.parametertime.strides) ) {
+                    // Sort by the Parameter names
+                    var k, parameters = [], ik, len;
+                    for (k in data.parametertime.strides) {
+                        if (data.parametertime.strides.hasOwnProperty(k)) {
+                            parameters.push(k);
+                        }
+                    }
+                    parameters.sort();
+                    len = parameters.length;
+
                     $('#stride-info').html('');
                     var i = 0;
                     var not_listed = 0;
-                    $.each(data.parametertime.strides, function(p, act_value) {
+                    for (ik = 0; ik < len; ik++) {
+                        act_value = data.parametertime.strides[parameters[ik]];
                         $.each(act_value, function(act, value) {
                             i = i + 1;
                             if (i <= 3) {
                                 ordinal = getValueOrdinal(value);
-                                $('#stride-info').append('<b>' + p + '</b>: every ' + ordinal + ' point from ' + act + '<br>');
+                                $('#stride-info').append('<b>' + parameters[ik] + '</b>: every ' + ordinal + ' point from ' + act + '<br>');
                             }
                             else {
                                 not_listed = not_listed + 1;
                             }
                         });
-                    });
+                    }
                     if (not_listed > 0) {
                         $('#stride-info').append('...<b>' + not_listed + '</b> more parameters not listed...<br>');
                     }
@@ -5420,7 +5431,7 @@ function enable_cardboard(){
                     alert('Permalink loading failed: ' + err + ' (Perhaps the permalink_id value is invalid?)');
                 }
             } else {
-                var url='{% url 'stoqs:load_permalink' dbAlias=request.META.dbAlias pid='REPLACE' %}';
+                var url="{% url 'stoqs:load_permalink' dbAlias=request.META.dbAlias pid='REPLACE' %}";
                 url=url.replace('REPLACE', permalink_id);
                 console.log(url);
                 $.get(url).
@@ -5587,7 +5598,7 @@ function enable_cardboard(){
             projection: map.displayProjection,
             strategies: [new OpenLayers.Strategy.BBOX()],
             protocol: new OpenLayers.Protocol.WFS({
-                url: '{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}wfs',
+                url: "{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}wfs",
                 headers: {'X-CSRFToken': csrf_token},
                 featureType: 'Sample'
             }),

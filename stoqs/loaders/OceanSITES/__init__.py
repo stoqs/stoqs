@@ -174,6 +174,6 @@ class OSLoader(LoadScript):
             try:
                 (nMP, path, parmCountHash) = ml.process_data()
                 logger.debug("Loaded Activity with name = %s", aName)
-            except NoValidData, e:
+            except NoValidData as e:
                 logger.warning(e)
     

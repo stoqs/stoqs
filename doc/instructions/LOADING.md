@@ -6,7 +6,7 @@ Instructions for loading your data in STOQS
 Log into the virtual machine:
 
     vagrant ssh -- -X
-    cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
+    cd /vagrant/dev/stoqsgit && source venv-stoqs/bin/activate
 
 Use the `stoqs/loaders/load.py` script to create a database and load data for an existing campaign. First
 use it to list existing campaigns (after creating a `campaigns.py` symbolic link in

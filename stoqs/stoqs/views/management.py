@@ -22,7 +22,7 @@ MBARI Jan 9, 2012
 @license: __license__
 '''
 
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.conf import settings
 from django.db import DatabaseError
@@ -45,7 +45,7 @@ def deleteActivity(request, activityId):
     '''
     
     tasks.delete_activity.delay(request.META['dbAlias'], activityId)
-    return render_to_response('deletion.html', {'dbAlias': request.META['dbAlias'], 'activityId': activityId})
+    return render(request, 'deletion.html', context={'dbAlias': request.META['dbAlias'], 'activityId': activityId})
     
     
 class Act():
@@ -108,7 +108,7 @@ def showDatabase(request):
 
     pList = mod.Parameter.objects.all().order_by('name')    
 
-    return render_to_response('management.html', 
+    return render(request, 'management.html', context=
                 {'dbAlias': request.META['dbAlias'], 
                  'actList': actList,
                  'pList': pList,
@@ -123,21 +123,21 @@ def showCampaigns(request,format=None):
     Present list of Campaigns from scanning the DATABASES dictionary from settings.
     '''
 
-    dbAliases = settings.DATABASES.keys()
+    dbAliases = list(settings.DATABASES.keys())
     logger.debug("DATABASES")
     logger.debug(settings.DATABASES)
     logger.debug("DATABASES.keys()")
-    logger.debug(settings.DATABASES.keys())
+    logger.debug(list(settings.DATABASES.keys()))
   
     # Data structure hash of lists.  Possible to have multiple campaigns in a database
     cHash = {}
     rHash = {}
-    for dbAlias in settings.DATABASES.keys():
+    for dbAlias in list(settings.DATABASES.keys()):
         # Initialize Campaign and Resource hash lists
         cHash[dbAlias] = []
         rHash[dbAlias] = []
 
-    for dbAlias in settings.DATABASES.keys():
+    for dbAlias in list(settings.DATABASES.keys()):
         try:
             logger.debug("Getting Campaign from dbAlias = %s", dbAlias)
             cqs = mod.Campaign.objects.using(dbAlias).all()
@@ -163,7 +163,7 @@ def showCampaigns(request,format=None):
     # Create a hash keyed by startdate of the dbAliases and campaigns so that we display a time sorted list of campaigns
     timeSortHash = {}
     dummyTime = datetime(1970,1,1)
-    for k in cHash.iterkeys():
+    for k in list(cHash.keys()):
         logger.debug('k = %s', k)
         for c,r in zip(cHash[k], rHash[k]):
             logger.debug('c.name = %s', c.name)
@@ -182,9 +182,9 @@ def showCampaigns(request,format=None):
 
     # Build list of hashes to pass to the campaigns.html template
     camList = []
-    for d in sorted(timeSortHash.iterkeys(), reverse=True):
+    for d in sorted(list(timeSortHash.keys()), reverse=True):
         logger.debug("d = %s, timeSortHash[d] = %s", d, timeSortHash[d])
-        for k,(c, r) in timeSortHash[d].iteritems():
+        for k,(c, r) in list(timeSortHash[d].items()):
             logger.debug(k)
             logger.debug(c)
             description = ''
@@ -212,7 +212,7 @@ def showCampaigns(request,format=None):
     elif format == 'count':
         return HttpResponse(len(camList), mimetype='text/plain')
     else:
-        return render_to_response('campaigns.html', {'cList': camList }, context_instance=RequestContext(request)) 
+        return render(request, 'campaigns.html', context={'cList': camList })
 
 def showActivitiesMBARICustom(request):
     '''Present list of Activities in the database.  Unlike showDatabase(), show show the Activities and their
@@ -293,10 +293,7 @@ def showActivitiesMBARICustom(request):
 
         actList.append(act)
 
-    return render_to_response('activities.html', 
-                {'aList': actList, 'dbAlias': request.META['dbAlias']},
-                context_instance=RequestContext(request)
-                ) 
+    return render(request, 'activities.html', context={'aList': actList, 'dbAlias': request.META['dbAlias']})
     
     # End showActivities()
 

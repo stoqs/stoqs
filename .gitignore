@@ -2,6 +2,7 @@
 *.py[cod]
 *.pyc
 __pycache__
+*.swp
 
 # Logs
 *.log
@@ -15,6 +16,7 @@ pip-log.txt
 
 # Test fixtures
 stoqs/stoqs/fixtures/stoqs_test_data.json
+stoqs/stoqs/fixtures/stoqs_load_test.json
 
 # Migrations
 stoqs/stoqs/migrations/
@@ -23,10 +25,21 @@ stoqs/stoqs/migrations/
 venv-stoqs
 
 # Let user make this symlink, which isn't tracked
-/stoqs/campaigns.py
+stoqs/campaigns.py
 
 # Loader output log files
 stoqs/loaders/*/*.out
 
 # Ex-situ Sample data files
 stoqs/loaders/MolecularEcology/BOG_Data/*.csv
+stoqs/loaders/MolecularEcology/SIMZAug2013/*.csv
+
+# Backup files from 2to3
+*.bak
+
+# Docker work area
+docker/tmp/
+
+# Log files from data loading
+stoqs/stoqs/media/loadlogs/
+

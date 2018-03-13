@@ -78,3 +78,4 @@ class DatabaseRouter(object):
         if obj1._meta.app_label ==  'stoqs' or obj2._meta.app_label == 'stoqs':
             return True
         return None
+

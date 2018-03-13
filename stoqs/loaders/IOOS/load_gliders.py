@@ -57,7 +57,7 @@ def loadGliders(loader, stride=1):
 
     c = Crawl("http://tds.gliders.ioos.us/thredds/catalog.xml", select=[".*_Time$"])
     urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
-    colors = loader.colors.values()
+    colors = list(loader.colors.values())
 
     for url in urls:
         aName = url.split('/')[-1].split('.')[0]
@@ -70,7 +70,7 @@ def loadGliders(loader, stride=1):
         try:
             runGliderLoader(url, loader.campaignName, il.campaignDescription, aName, pName, colors.pop(), 'glider', 'Glider Mission', 
                             loader.parms, loader.dbAlias, stride, loader.startDatetime, loader.endDatetime, il.grdTerrain)
-        except Exception, e:
+        except Exception as e:
             logger.error('%s. Skipping this dataset.', e)
 
 
@@ -89,5 +89,5 @@ else:
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 il.addTerrainResources()
 
-print "All Done."
+print("All Done.")
 

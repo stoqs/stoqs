@@ -1,0 +1,13 @@
+doc
+docker/tmp
+Vagrantfile
+venv-stoqs
+stoqs/campaigns.py
+stoqs/loaders/Monterey25.grd
+stoqs/loaders/MontereyCanyonBeds_1m+5m.grd
+stoqs/loaders/MolecularEcology/BIOM/otu_table_newsiernounclass_wmetadata.biom.gz
+stoqs/loaders/MolecularEcology/SIMZAug2013/2013_Aug_SIMZ_Niskin_microscopy_STOQS.csv.gz
+stoqs/loaders/MolecularEcology/SIMZAug2013/2013_SIMZ_AUV_STOQS.csv.gz
+stoqs/loaders/MolecularEcology/SIMZAug2013/2013_SIMZ_Niskins_STOQS.csv.gz
+stoqs/loaders/MolecularEcology/SIMZAug2013/2013_SIMZ_TowNets_STOQS.csv.gz
+stoqs/loaders/MolecularEcology/SIMZAug2013/SIMZ_2013_PPump_STOQS_tidy_v2.csv.gz

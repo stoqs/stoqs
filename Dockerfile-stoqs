@@ -1,0 +1,42 @@
+FROM pcic/geospatial-python
+MAINTAINER Mike McCann <mccann@mbari.org>
+
+# Modeled after http://michal.karzynski.pl/blog/2015/04/19/packaging-django-applications-as-docker-container-images/
+
+ENV STOQS_SRVHOME=/srv STOQS_SRVPROJ=/srv/stoqs 
+
+# Additional requirements for stoqs not in pcic/geospatial-python
+RUN apt-get update && \
+    apt-get -qq -y install \
+    freetds-dev \
+    git \
+    libncurses-dev \
+    postgresql-9.6 \
+    wget
+
+# Set the locale
+RUN locale-gen en_US.UTF-8
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
+
+# Make sure python and python-config refer to corresponding Python 3 versions
+RUN cd /usr/bin/ &&\
+    ln -fs python3 python &&\
+    ln -fs python3-config python-config
+
+# Create application subdirectories
+WORKDIR $STOQS_SRVHOME
+RUN mkdir media static logs
+
+
+COPY requirements $STOQS_SRVPROJ/requirements/
+RUN /bin/bash -c '\
+    pip3 install -r $STOQS_SRVPROJ/requirements/production.txt'
+
+COPY stoqs $STOQS_SRVPROJ
+COPY test.sh $STOQS_SRVHOME
+COPY docker/database-check.py $STOQS_SRVHOME
+COPY docker/docker-stoqs-uwsgi.ini /etc/uwsgi/django-uwsgi.ini
+COPY docker/stoqs-start.sh /
+
+CMD ["/stoqs-start.sh"]
+

@@ -1,10 +1,10 @@
-![STOQS logo](stoqs/static/images/STOQS_logo_gray1_689.png) Spatial Temporal Oceanographic Query System
+Spatial Temporal Oceanographic Query System
 -------------------------------------------
 
-[![Build Status](https://travis-ci.org/stoqs/stoqs.svg)](https://travis-ci.org/stoqs/stoqs)
-[![Coverage Status](https://coveralls.io/repos/stoqs/stoqs/badge.svg?branch=master&service=github)](https://coveralls.io/github/stoqs/stoqs?branch=master)
-[![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=master)](https://requires.io/github/stoqs/stoqs/requirements/?branch=master)
-[![Code Health](https://landscape.io/github/stoqs/stoqs/master/landscape.svg?style=flat)](https://landscape.io/github/stoqs/stoqs/master)
+[![Build Status](https://travis-ci.org/stoqs/stoqs.svg)](https://travis-ci.org/stoqs/stoqs/branches)
+[![Coverage Status](https://coveralls.io/repos/stoqs/stoqs/badge.svg?branch=python3&service=github)](https://coveralls.io/github/stoqs/stoqs?branch=python3)
+[![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=python3)](https://requires.io/github/stoqs/stoqs/requirements/?branch=python3)
+[![Code Health](https://landscape.io/github/stoqs/stoqs/python3/landscape.svg?style=flat)](https://landscape.io/github/stoqs/stoqs/python3)
 [![DOI](https://zenodo.org/badge/20654/stoqs/stoqs.svg)](https://zenodo.org/badge/latestdoi/20654/stoqs/stoqs)
 
 STOQS is a geospatial database and web application designed to give oceanographers
@@ -20,44 +20,51 @@ home directory such as `Vagrants/stoqsvm`, open a command prompt window, cd to t
 commands:
 
 ```bash
-curl "https://raw.githubusercontent.com/stoqs/stoqs/master/Vagrantfile" -o Vagrantfile
-curl "https://raw.githubusercontent.com/stoqs/stoqs/master/provision.sh" -o provision.sh
+curl "https://raw.githubusercontent.com/stoqs/stoqs/python3/Vagrantfile" -o Vagrantfile
+curl "https://raw.githubusercontent.com/stoqs/stoqs/python3/provision.sh" -o provision.sh
 vagrant plugin install vagrant-vbguest
 vagrant up --provider virtualbox
 ```
 
 The `vagrant up` command takes an hour or so to provision and setup a complete CentOS 7 
-STOQS server that also includes MB-System, InstantReality, and all the Python data science 
-tools bundled in packages such as Anaconda.  All connections to this virtual machine are 
+STOQS Virtual Machine that also includes MB-System, InstantReality, and all the Python data science 
+tools bundled in packages such as Anaconda.  You will be prompted for your admin password
+for configuring a shared folder from the VM.  All connections to this VM are 
 performed from the the directory you installed it in; you must cd to it (e.g. `cd
 ~/Vagrants/stoqsvm`) before logging in with the `vagrant ssh -- -X` command.  After 
-installation finishes log into your new virtual machine and test it:
+installation finishes log into your new VM and test it:
 
 ```bash
 vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt
-cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
-export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
-./test.sh CHANGEME
+cd /vagrant/dev/stoqsgit && source venv-stoqs/bin/activate
+export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
+./test.sh CHANGEME load noextraload
 ```
 
 In another terminal window start the development server (after a `cd ~/Vagrants/stoqsvm`):
 
 ```bash
 vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt
-cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
-export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+cd /vagrant/dev/stoqsgit && source venv-stoqs/bin/activate
+export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
 stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
 ```
 
 Visit your server's STOQS User Interface using your host computer's browser:
 
-    http://localhost:8000
+    http://localhost:8008
 
 More instructions are in the doc/instructions directory &mdash; see [LOADING](doc/instructions/LOADING.md) 
-for how to load your own data and [CONTRIBUTING](doc/instructions/CONTRIBUTING.md) for how to share your work.
-See example [Jupyter Notebooks](http://nbviewer.jupyter.org/github/stoqs/stoqs/blob/master/stoqs/contrib/notebooks)
- that demonstrate specific analyses and 
-visualizations that cannot be accomplished in the STOQS User Interface.
+for specifics on loading your own data. For example, you may create your own database of an archived MBARI campaign:
+
+    cd stoqs
+    ln -s mbari_campaigns.py campaigns.py
+    loaders/load.py --db stoqs_cce2015
+
+You are encouraged to contribute to the STOQS project! Please see [CONTRIBUTING](doc/instructions/CONTRIBUTING.md)
+for how to share your work.  Also, see example 
+[Jupyter Notebooks](http://nbviewer.jupyter.org/github/stoqs/stoqs/blob/master/stoqs/contrib/notebooks)
+that demonstrate specific analyses and visualizations that go beyond the capabilities of the STOQS User Interface.
 Visit the [STOQS Wiki pages](https://github.com/stoqs/stoqs/wiki) for updates and links to presentations.
 The [stoqs-discuss](https://groups.google.com/forum/#!forum/stoqs-discuss) list in Google Groups is also 
 a good place to ask questions and engage in discussion with the STOQS user and developer communities.
@@ -78,3 +85,4 @@ If you use STOQS for your research please cite this publication:
 > in *Autonomous Underwater Vehicles (AUV), 2014 IEEE/OES*, pp.1-10, 6-9 Oct. 2014
 > doi: 10.1109/AUV.2014.7054414
 
+![STOQS logo](stoqs/static/images/STOQS_logo_gray1_689.png)

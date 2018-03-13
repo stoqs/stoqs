@@ -32,9 +32,10 @@ import logging
 from django.conf import settings
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from stoqs.models import Activity, Parameter, Resource
+from stoqs.models import Activity, Parameter, Resource, MeasuredParameter
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('stoqs.tests')
+settings.LOGGING['loggers']['stoqs.tests']['level'] = 'INFO'
 
 class BaseAndMeasurementViewsTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
@@ -171,7 +172,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
                         'cmin': 11.5,
                         'cmax': 14.1 }
             qstring = ''
-            for k,v in params.iteritems():
+            for k,v in list(params.items()):
                 qstring = qstring + k + '=' + str(v) + '&'
 
             req = base + '?' + qstring
@@ -180,7 +181,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
             if fmt == '.count':
                 logger.debug(response.content)
-                self.assertEqual(response.content, '50', 'Response should be "50" for %s' % req)
+                self.assertEqual(response.content, b'50', 'Response should be "50" for %s' % req)
     
    
     def test_measuredparameter_with_parametervalues(self):
@@ -194,7 +195,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
                         'sea_water_sigma_t_MIN': 25.0,
                         'sea_water_sigma_t_MAX': 25.33 }
             qstring = ''
-            for k,v in params.iteritems():
+            for k,v in list(params.items()):
                 qstring = qstring + k + '=' + str(v) + '&'
 
             req = base + '?' + qstring
@@ -203,7 +204,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
             if fmt == '.count':
                 logger.debug(response.content)
-                self.assertEqual(response.content, '50', 'Response should be "50" for %s' % req)
+                self.assertEqual(response.content, b'50', 'Response should be "50" for %s' % req)
 
     def test_query_summary(self):
         req = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
@@ -228,25 +229,10 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
         # Number of Dorado MeasuredParameters will be on a line in the content
         loadedText = 'Loaded variables'
-        self.assertTrue(response.content.find(loadedText) != -1, 
+        self.assertTrue(str(response.content).find(loadedText) != -1, 
                 'Should find "%s" in string at %s, instead got: %s' % (
                     loadedText, req, response.content))
         
-        req = '/test_stoqs/deleteActivity/1'
-        response = self.client.get(req)
-        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-        
-        # Now test that the activity was deleted, after sleeping for a bit.  Need to see if Celery can provide notification
-        # This should work, but as of 10 Jan 2010 it does not.  Commented out for now.
-#        logger.info('Sleeping after delete')
-#        time.sleep(20)
-#        req = '/test_stoqs/activities'
-#        response = self.client.get(req)
-#        logger.debug(response.content)
-#        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-#        self.assertTrue(response.content.find(loadedText) == -1, 'Should not find "%s" string at %s' % (loadedText, req))
-
-    
 #    def test_admin_stoqs_that_should_be_there(self):
 #	'''Need to pass login credentials, and create the login...'''
 #        req='http://localhost:8000/test_stoqs/admin/stoqs'
@@ -563,5 +549,23 @@ class BugsFoundTestCase(TestCase):
         kml_data = response.content
         required_string = ('<coordinates>\n-121.934521, 36.868014,-29.8\n</coordinates>\n'
                            '</Point>\n</Placemark> \n<Placemark>\n<styleUrl>#ffd10000') 
-        self.assertTrue(required_string in response.content, 'required_string not found in response.content')
+        self.assertTrue(required_string in response.content.decode("utf-8"), 
+                        'required_string not found in response.content')
+
+    def test_lopc_data_load(self):
+        # Make sure 'sepCountList', 'mepCountList' are loaded into dataarray
+
+        # Expected number of records and bins in dataarrat
+        parm_counts = dict(sepCountList=7, mepCountList=7)
+        bin_counts = dict(sepCountList=994, mepCountList=994)
+
+        for parm in list(parm_counts.keys()):
+            mp_count = MeasuredParameter.objects.filter(parameter__name=parm).count()
+
+            # Check only the first element for number of dataarray bins
+            bin_count = len(MeasuredParameter.objects.filter(parameter__name=parm)[0].dataarray)
+
+            logger.debug(f'{parm:10s}({parm_counts[parm]:2d}) mp_count: {mp_count} bin_count: {bin_count}')
+            self.assertEqual(mp_count, parm_counts[parm], f'Expected {parm_counts[parm]} MeasuredParameter values for {parm}')
+            self.assertEqual(bin_count, bin_counts[parm], f'Expected {bin_counts[parm]} dataarray bins for {parm}')
 
