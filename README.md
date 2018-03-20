@@ -61,7 +61,7 @@ for specifics on loading your own data. For example, you may create your own dat
     ln -s mbari_campaigns.py campaigns.py
     loaders/load.py --db stoqs_cce2015
 
-You are encouraged to contribute to the STOQS project! Please see [CONTRIBUTING](doc/instructions/CONTRIBUTING.md)
+You are encouraged to contribute to the STOQS project! Please see [CONTRIBUTING](CONTRIBUTING.md)
 for how to share your work.  Also, see example 
 [Jupyter Notebooks](http://nbviewer.jupyter.org/github/stoqs/stoqs/blob/master/stoqs/contrib/notebooks)
 that demonstrate specific analyses and visualizations that go beyond the capabilities of the STOQS User Interface.
