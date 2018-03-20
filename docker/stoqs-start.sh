@@ -11,12 +11,15 @@ done
 echo ${PGHOST}:\*:\*:postgres:${POSTGRES_PASSWORD} > /root/.pgpass &&\
     chmod 600 /root/.pgpass
 
+# Ensure that shared volume for Mapserver map files is readable by nginx's uwsgi
+chmod 777 /dev/shm
+
 ##export DATABASE_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
 ##DATABASE_URL=postgis://stoqsadm:CHANGEME@stoqs-postgis:5432/stoqs
 export PYTHONPATH="${STOQS_SRVPROJ}:${PYTHONPATH}"
 
 # Monterey Bay bathymetry data is needed for default (and many other) database loads
-if [ -f ${STOQS_SRVPROJ}/loaders/Monterey25.grd ]; then
+if [ ! -f ${STOQS_SRVPROJ}/loaders/Monterey25.grd ]; then
     echo "Getting Monterey25.grd..."
     wget -q -N -O ${STOQS_SRVPROJ}/loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
 fi
