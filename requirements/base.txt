@@ -45,7 +45,7 @@ pyzmq==17.0.0
 readline==6.2.4.1
 requests-oauthlib==0.8.0
 scikit-learn==0.19.1
-scipy==1.0.0
+scipy==1.0.1
 seawater==3.3.4
 selenium==3.11.0
 simplejson==3.13.2
