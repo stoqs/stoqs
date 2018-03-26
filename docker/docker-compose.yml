@@ -28,7 +28,7 @@ services:
     volumes:
       - ${STOQS_VOLS_DIR}/maps:/maps:ro
     ports:
-      - "${STOQS_HOST_MAPSERVER_PORT}:7000"
+      - "7000:7000"
     container_name: stoqs-mapserver
     env_file:
       - ./.env
@@ -49,7 +49,7 @@ services:
       # Map STOQS_PGHOST to PGHOST, which sets default host for psql
       - PGHOST=${STOQS_PGHOST}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - MAPSERVER_HOST=${STOQS_HOST}:${STOQS_HOST_MAPSERVER_PORT}
+      - MAPSERVER_HOST=${STOQS_HOST}:7000
       - URL_MAPFILE_DIR=/maps
       - STATIC_URL=/static/
       - STATIC_ROOT=${STATIC_ROOT}
