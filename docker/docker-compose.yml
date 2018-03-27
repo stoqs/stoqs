@@ -43,9 +43,9 @@ services:
       - ${STOQS_VOLS_DIR}/nginx:/usr/share/nginx
       - static-files:/srv/static-files
     environment:
-      ##- DATABASE_URL=postgis://${STOQSADM_USER}:${STOQSADM_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
-      - DATABASE_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
-      - DATABASE_SUPERUSER_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:5432/stoqs
+      ##- DATABASE_URL=postgis://${STOQSADM_USER}:${STOQSADM_PASSWORD}@${STOQS_PGHOST}:${STOQS_PGHOST_PORT}/stoqs
+      - DATABASE_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:${STOQS_PGHOST_PORT}/stoqs
+      - DATABASE_SUPERUSER_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:${STOQS_PGHOST_PORT}/stoqs
       # Map STOQS_PGHOST to PGHOST, which sets default host for psql
       - PGHOST=${STOQS_PGHOST}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -54,6 +54,7 @@ services:
       - STATIC_URL=/static/
       - STATIC_ROOT=${STATIC_ROOT}
       - MEDIA_ROOT=${MEDIA_ROOT}
+      - STOQS_HOST=${STOQS_HOST}
     container_name: stoqs
     depends_on:
       - mapserver
