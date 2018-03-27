@@ -19,9 +19,17 @@ chmod 777 /dev/shm
 export PYTHONPATH="${STOQS_SRVPROJ}:${PYTHONPATH}"
 
 # Monterey Bay bathymetry data is needed for default (and many other) database loads
-if [ ! -f ${STOQS_SRVPROJ}/loaders/Monterey25.grd ]; then
+if [ ! -e ${STOQS_SRVPROJ}/loaders/Monterey25.grd ]; then
     echo "Getting Monterey25.grd..."
     wget -q -N -O ${STOQS_SRVPROJ}/loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
+fi
+
+# Volume shared with nginx for writing Matplotlib-generated images
+echo "Checking for presence of ${MEDIA_ROOT}/sections..."
+if [[ ! -e ${MEDIA_ROOT}/sections ]]; then
+    echo "Creating directories for image generation and serving by nginx..."
+    mkdir -p ${MEDIA_ROOT}/sections ${MEDIA_ROOT}/parameterparameter
+    chmod 733 ${MEDIA_ROOT}/sections ${MEDIA_ROOT}/parameterparameter
 fi
 
 # If default stoqs database doesn't exist then load it - also running the unit and functional tests
@@ -36,13 +44,10 @@ if [[ $? != 0 ]]; then
     python setup.py install
     cd ..
 
-    echo "Creating directories for image generation and serving by nginx..."
-    mkdir -p ${MEDIA_ROOT}/sections ${MEDIA_ROOT}/parameterparameter
-    chmod 733 ${MEDIA_ROOT}/sections ${MEDIA_ROOT}/parameterparameter
-
     echo "Creating default stoqs database and running tests..."
     ./test.sh changeme
 fi
+
 
 # Fire up stoqs web app
 if [ "$PRODUCTION" == "false" ]; then
