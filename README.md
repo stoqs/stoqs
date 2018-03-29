@@ -81,15 +81,19 @@ git pull
 #### Production Deployment with Docker
 
 First, install [Docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/install/)
- on your system.  Then clone the repository and execute `docker-compose up` from the docker directory:
+on your system.  Then clone the repository; in the docker directory copy the `template.env` file to `.env` 
+and edit it for your specific installation, then execute `docker-compose up`:
 
 ```bash
 git clone https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit/docker
+cp template.env .env    # Edit .env to customize
 docker-compose up
 ```
 
-After the production uwsgi/nginx services start (about an hour) visit https://localhost/default.
+The default settings in template.env will run a production nginx/uwsgi/stoqs server configured
+for https://localhost/default.  To configure a server for intranet or public serving of
+your data follow the instructions provided in the comments for the settings in your .env file.
 
 To load some existing MBARI campaign data:
 
