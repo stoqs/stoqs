@@ -72,6 +72,8 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2018/netcdf/'
 cl.dorado_files = [
                    'Dorado389_2018_030_00_030_00_decim.nc',
+                   'Dorado389_2018_059_00_059_00_decim.nc', 
+                   'Dorado389_2018_079_00_079_00_decim.nc',
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
@@ -238,6 +240,7 @@ cl.wg_Tiny_files = [
                       'wgTiny/20171212/realTime/20171212.nc',
                       'wgTiny/20180116/realTime/20180116.nc',
                       'wgTiny/20180208/realTime/20180208.nc',
+                      'wgTiny/20180323/realTime/20180323.nc',
                    ]
 
 
