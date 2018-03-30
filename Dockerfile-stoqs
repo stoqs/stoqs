@@ -30,6 +30,11 @@ COPY requirements $STOQS_SRVPROJ/requirements/
 RUN /bin/bash -c '\
     pip3 install -r $STOQS_SRVPROJ/requirements/production.txt'
 
+# NCAR's natgrid needed for contour plotting
+RUN wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/natgrid-0.2/natgrid-0.2.1.tar.gz
+RUN tar -xzf natgrid-0.2.1.tar.gz
+RUN cd natgrid-0.2.1 && python setup.py install && cd ..
+
 COPY stoqs $STOQS_SRVPROJ
 COPY test.sh $STOQS_SRVHOME
 COPY docker/database-check.py $STOQS_SRVHOME
