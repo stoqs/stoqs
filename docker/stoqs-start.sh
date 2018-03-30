@@ -34,14 +34,6 @@ fi
 echo "Checking for presence of stoqs database..."
 POSTGRES_DB=stoqs python ${STOQS_SRVHOME}/database-check.py
 if [[ $? != 0 ]]; then
-
-    # NCAR's natgrid needed for contour plotting
-    wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/natgrid-0.2/natgrid-0.2.1.tar.gz
-    tar -xzf natgrid-0.2.1.tar.gz
-    cd natgrid-0.2.1
-    python setup.py install
-    cd ..
-
     echo "Creating default stoqs database and running tests..."
     ./test.sh changeme
 fi
@@ -60,3 +52,4 @@ else
     python stoqs/manage.py collectstatic --noinput  # Collect static files
     /usr/local/bin/uwsgi --emperor /etc/uwsgi/django-uwsgi.ini
 fi
+
