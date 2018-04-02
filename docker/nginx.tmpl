@@ -31,6 +31,13 @@ http {
         listen 8000;
         server_name ${NGINX_SERVER_NAME};
 
+        location /static {
+            alias /srv/static-files;
+
+            # http://stackoverflow.com/q/19213510/1346257
+            include /etc/nginx/mime.types;
+        }
+
         location / {
             uwsgi_pass      django;
             include         uwsgi_params;
