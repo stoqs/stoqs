@@ -53,6 +53,7 @@ services:
       - STATIC_ROOT=${STATIC_ROOT}
       - MEDIA_ROOT=${MEDIA_ROOT}
       - STOQS_HOST=${STOQS_HOST}
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
     container_name: stoqs
     depends_on:
       - mapserver
