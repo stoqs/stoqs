@@ -50,8 +50,8 @@ services:
       - MAPSERVER_HOST=${STOQS_HOST}:7000
       - URL_MAPFILE_DIR=/maps
       - STATIC_URL=/static/
-      - STATIC_ROOT=${STATIC_ROOT}
-      - MEDIA_ROOT=${MEDIA_ROOT}
+      - STATIC_ROOT=/srv/static-files
+      - MEDIA_ROOT=/srv/media-files
       - STOQS_HOST=${STOQS_HOST}
       - DJANGO_DEBUG=${DJANGO_DEBUG}
     container_name: stoqs
@@ -66,8 +66,8 @@ services:
         context: .
         dockerfile: Dockerfile-nginx
     volumes:
-      - static-files:${STATIC_ROOT}
-      - media-files:${MEDIA_ROOT}
+      - static-files:/srv/static-files
+      - media-files:/srv/media-files
     container_name: stoqs-nginx
     ports:
       - "80:80"
