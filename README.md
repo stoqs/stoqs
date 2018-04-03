@@ -94,6 +94,11 @@ docker-compose up
 The default settings in template.env will run a production nginx/uwsgi/stoqs server configured
 for https://localhost/default.  To configure a server for intranet or public serving of
 your data follow the instructions provided in the comments for the settings in your .env file.
+After editing your .env file you will need to rebuild your stoqs image:
+
+```bash
+docker-compose build stoqs
+```
 
 To load some existing MBARI campaign data:
 

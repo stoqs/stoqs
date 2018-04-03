@@ -47,7 +47,6 @@ class ResourceType(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, db_index=True, unique=True)
     description = models.CharField(max_length=256, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         app_label = 'stoqs'
     def __str__(self):
@@ -66,7 +65,6 @@ class Resource(models.Model):
     value = models.TextField(null=True)
     uristring = models.CharField(max_length=256, null=True)
     resourcetype = models.ForeignKey(ResourceType, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'Resource'
         verbose_name_plural = 'Resources'
@@ -86,7 +84,6 @@ class Campaign(models.Model):
     startdate = models.DateTimeField(null=True)
     enddate = models.DateTimeField(null=True)
     description = models.CharField(max_length=4096, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         app_label = 'stoqs'
         verbose_name='Campaign'
@@ -110,7 +107,6 @@ class CampaignLog(models.Model):
     geom = models.PointField(srid=4326, spatial_index=True, dim=2, blank=True, null=True)
     depth = models.FloatField(blank=True, null=True)
     username = models.CharField(max_length=128, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         app_label = 'stoqs'
         verbose_name='Campaign Log'
@@ -126,7 +122,6 @@ class ActivityType(models.Model):
     '''
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, db_index=True, unique=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Activity Type'
         verbose_name_plural='Activity Types'
@@ -143,7 +138,6 @@ class PlatformType(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, db_index=True, unique=True)
     color = models.CharField(max_length=8, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         app_label = 'stoqs'
     def __str__(self):
@@ -159,7 +153,6 @@ class Platform(models.Model):
     name = models.CharField(max_length=128)
     platformtype = models.ForeignKey(PlatformType) 
     color = models.CharField(max_length=8, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'Platform'
         verbose_name_plural = 'Platforms'
@@ -192,7 +185,6 @@ class Activity(models.Model):
     mindepth = models.FloatField(null=True)
     maxdepth = models.FloatField(null=True)
     activitytype = models.ForeignKey(ActivityType, blank=True, null=True, default=None) 
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Activity'
         verbose_name_plural='Activities'
@@ -213,7 +205,6 @@ class InstantPoint(models.Model):
     '''
     activity = models.ForeignKey(Activity) 
     timevalue = models.DateTimeField(db_index=True)
-    objects = models.GeoManager()
     class Meta(object):
         app_label = 'stoqs'
         unique_together = ('activity', 'timevalue')
@@ -232,7 +223,6 @@ class NominalLocation(models.Model):
     activity = models.ForeignKey(Activity) 
     depth= models.FloatField(db_index=True)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'NominalLocation'
         verbose_name_plural = 'NominalLocations'
@@ -250,7 +240,6 @@ class SimpleDepthTime(models.Model):
     instantpoint = models.ForeignKey(InstantPoint)
     epochmilliseconds = models.FloatField()
     depth= models.FloatField()
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Simple depth time series'
         verbose_name_plural='Simple depth time series'
@@ -266,7 +255,6 @@ class SimpleBottomDepthTime(models.Model):
     instantpoint = models.ForeignKey(InstantPoint)
     epochmilliseconds = models.FloatField()
     bottomdepth= models.FloatField()
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Simple bottom depth time series'
         verbose_name_plural='Simple bottom depth time series'
@@ -280,7 +268,6 @@ class PlannedDepthTime(models.Model):
     activity = models.ForeignKey(Activity) 
     epochmilliseconds = models.FloatField()
     depth= models.FloatField()
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Planned depth time series'
         verbose_name_plural='Planned depth time series'
@@ -305,7 +292,6 @@ class Parameter(models.Model):
     units = models.CharField(max_length=128, blank=True, null=True)
     origin = models.CharField(max_length=256, blank=True, null=True)
     domain = ArrayField(models.FloatField(), null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'Parameter'
         verbose_name_plural = 'Parameters'
@@ -324,7 +310,6 @@ class ParameterGroup(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, unique=True)
     description= models.CharField(max_length=128, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'ParameterGroup'
         verbose_name_plural = 'ParameterGroups'
@@ -349,7 +334,7 @@ class ParameterGroupParameter(models.Model):
 
 class CampaignResource(models.Model):
     '''
-    Association class pairing Campaigns and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing Campaigns and Resources.  Must use explicit many-to-many.
     '''
     uuid = UUIDField(editable=False)
     campaign = models.ForeignKey(Campaign)
@@ -365,7 +350,7 @@ class CampaignResource(models.Model):
 
 class ActivityResource(models.Model):
     '''
-    Association class pairing Activities and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing Activities and Resources.  Must use explicit many-to-many.
     '''
     uuid = UUIDField(editable=False)
     activity = models.ForeignKey(Activity)
@@ -379,7 +364,7 @@ class ActivityResource(models.Model):
 
 class ParameterResource(models.Model):
     '''
-    Association class pairing Parameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing Parameters and Resources.  Must use explicit many-to-many.
     '''
     uuid = UUIDField(editable=False)
     parameter = models.ForeignKey(Parameter)
@@ -403,7 +388,6 @@ class Measurement(models.Model):
     depth= models.FloatField(db_index=True)
     bottomdepth= models.FloatField(db_index=True, null=True)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'Measurement'
         verbose_name_plural = 'Measurements'
@@ -420,7 +404,6 @@ class SampleType(models.Model):
     '''
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, db_index=True, unique=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Sample Type'
         verbose_name_plural='Sample Types'
@@ -437,7 +420,6 @@ class SamplePurpose(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, unique=True)
     description = models.CharField(max_length=1024)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Sample Purpose'
         verbose_name_plural='Sample Purposes'
@@ -454,7 +436,6 @@ class AnalysisMethod(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=256, db_index=True, unique=True)
     uristring = models.CharField(max_length=256, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Analysis Method'
         verbose_name_plural='Analysis Methods'
@@ -487,7 +468,6 @@ class Sample(models.Model):
     filterporesize = models.FloatField(blank=True, null=True)
     laboratory = models.CharField(max_length=128, blank=True, null=True)
     researcher = models.CharField(max_length=128, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'Sample'
         verbose_name_plural = 'Samples'
@@ -512,7 +492,7 @@ class SampleRelationship(models.Model):
 
 class SampleResource(models.Model):
     '''
-    Association class pairing Samples and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing Samples and Resources.  Must use explicit many-to-many.
     '''
     uuid = UUIDField(editable=False)
     sample = models.ForeignKey(Sample)
@@ -526,7 +506,7 @@ class SampleResource(models.Model):
 
 class PlatformResource(models.Model):
     '''
-    Association class pairing Platforms and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing Platforms and Resources.  Must use explicit many-to-many.
     '''
     uuid = UUIDField(editable=False)
     platform = models.ForeignKey(Platform)
@@ -598,7 +578,6 @@ class MeasuredParameter(models.Model):
     parameter = models.ForeignKey(Parameter) 
     datavalue = models.FloatField(db_index=True, null=True)
     dataarray = ArrayField(models.FloatField(), null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'Measured Parameter'
         verbose_name_plural = 'Measured Parameter'
@@ -615,7 +594,6 @@ class SampledParameter(models.Model):
     parameter = models.ForeignKey(Parameter) 
     datavalue = models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
     analysismethod = models.ForeignKey(AnalysisMethod, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'Sampled Parameter'
         verbose_name_plural = 'Sampled Parameter'
@@ -625,7 +603,7 @@ class SampledParameter(models.Model):
 
 class MeasuredParameterResource(models.Model):
     '''
-    Association class pairing MeasuredParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing MeasuredParameters and Resources.  Must use explicit many-to-many.
     Class contains activity field for ease of association in the filter set of the UI.
     '''
     uuid = UUIDField(editable=False)
@@ -641,7 +619,7 @@ class MeasuredParameterResource(models.Model):
 
 class SampledParameterResource(models.Model):
     '''
-    Association class pairing SampledParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing SampledParameters and Resources.  Must use explicit many-to-many.
     Class contains activity field for ease of association in the filter set of the UI.
     '''
     uuid = UUIDField(editable=False)
