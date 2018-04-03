@@ -42,6 +42,7 @@ services:
       - ${STOQS_VOLS_DIR}/stoqs_root:/root
       - ${STOQS_VOLS_DIR}/nginx:/usr/share/nginx
       - static-files:/srv/static-files
+      - media-files:/srv/media-files
     environment:
       - DATABASE_URL=postgis://${STOQSADM_USER}:${STOQSADM_PASSWORD}@${STOQS_PGHOST}:${STOQS_PGHOST_PORT}/stoqs
       - DATABASE_SUPERUSER_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:${STOQS_PGHOST_PORT}/stoqs
@@ -51,6 +52,7 @@ services:
       - URL_MAPFILE_DIR=/maps
       - STATIC_URL=/static/
       - STATIC_ROOT=/srv/static-files
+      - MEDIA_URL=/media/
       - MEDIA_ROOT=/srv/media-files
       - STOQS_HOST=${STOQS_HOST}
       - DJANGO_DEBUG=${DJANGO_DEBUG}
