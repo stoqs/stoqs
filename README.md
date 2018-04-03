@@ -61,7 +61,7 @@ for specifics on loading your own data. For example, you may create your own dat
     ln -s mbari_campaigns.py campaigns.py
     loaders/load.py --db stoqs_cce2015
 
-You are encouraged to contribute to the STOQS project! Please see [CONTRIBUTING](doc/instructions/CONTRIBUTING.md)
+You are encouraged to contribute to the STOQS project! Please see [CONTRIBUTING](CONTRIBUTING.md)
 for how to share your work.  Also, see example 
 [Jupyter Notebooks](http://nbviewer.jupyter.org/github/stoqs/stoqs/blob/master/stoqs/contrib/notebooks)
 that demonstrate specific analyses and visualizations that go beyond the capabilities of the STOQS User Interface.
@@ -81,15 +81,24 @@ git pull
 #### Production Deployment with Docker
 
 First, install [Docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/install/)
- on your system.  Then clone the repository and execute `docker-compose up` from the docker directory:
+on your system.  Then clone the repository; in the docker directory copy the `template.env` file to `.env` 
+and edit it for your specific installation, then execute `docker-compose up`:
 
 ```bash
 git clone https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit/docker
+cp template.env .env    # Edit .env to customize
 docker-compose up
 ```
 
-After the production uwsgi/nginx services start (about an hour) visit https://localhost/default.
+The default settings in template.env will run a production nginx/uwsgi/stoqs server configured
+for https://localhost/default.  To configure a server for intranet or public serving of
+your data follow the instructions provided in the comments for the settings in your .env file.
+After editing your .env file you will need to rebuild your stoqs image:
+
+```bash
+docker-compose build stoqs
+```
 
 To load some existing MBARI campaign data:
 

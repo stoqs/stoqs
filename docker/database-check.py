@@ -18,7 +18,7 @@ def database_check():
     user = os.environ.get('STOQSADM_USER')
     password = os.environ.get('STOQSADM_PASSWORD')
     host = os.environ.get('STOQS_PGHOST')
-    port = os.environ.get('STOQS_HOST_POSTGRES_PORT')
+    port = os.environ.get('STOQS_PGHOST_PORT')
 
     print("HOST: {host}:{port}, DB: {dbname}, USER: {user}".format(
         dbname=dbname,
@@ -33,7 +33,8 @@ def database_check():
             password=password,
             host=host,
             port=port)
-    except:
+    except Exception as e:
+        print(str(e))
         sys.exit(1)
 
     sys.exit(0)

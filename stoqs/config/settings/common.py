@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/dev/ref/settings/
 
 
 import environ
+from email.utils import getaddresses
 
 ROOT_DIR = environ.Path(__file__) - 3  # (/a/b/myfile.py - 3 = /)
 APPS_DIR = ROOT_DIR.path('stoqs')
@@ -86,18 +87,8 @@ DEBUG = env.bool("DJANGO_DEBUG", default=True)
 # ALLOWED_HOSTS
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-default_allowed_hosts = ['localhost', '127.0.0.1', '[::1]', '0.0.0.0']
-try:
-    import netifaces as ni
-    #ni.ifaddresses('eth0')
-    #default_allowed_hosts.append(ni.ifaddresses('eth0')[2][0]['addr'])
-except ImportError:
-    # Likely because 'netifaces' has not been installed
-    pass
-except ValueError:
-    # Likely because 'eth0' is not a network interface on this system
-    pass
-
+docker_stoqs_host = env('STOQS_HOST', default='localhost')
+default_allowed_hosts = [docker_stoqs_host, '127.0.0.1', '[::1]', '0.0.0.0']
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=default_allowed_hosts)
 
 # FIXTURE CONFIGURATION
@@ -110,13 +101,18 @@ FIXTURE_DIRS = (
 # EMAIL CONFIGURATION
 # ------------------------------------------------------------------------------
 EMAIL_BACKEND = env('DJANGO_EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_USE_TLS = env('EMAIL_USE_TLS', default=True)
+EMAIL_HOST = env('EMAIL_HOST', default='mbarimail.mbari.org')
+EMAIL_PORT = env('EMAIL_PORT', default=587)
+EMAIL_HOST_USER = env('EMAIL_HOST_USE', default='stoqsadm')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 
 # MANAGER CONFIGURATION
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#admins
-ADMINS = (
-    ("""Mike McCann""", 'MBARIMike@gmail.com'),
-)
+# In the format 'Full Name <email@example.com>, Full Name <anotheremail@example.com>'
+# e.g. DJANGO_ADMINS=Full Name <email-with-name@example.com>,anotheremailwithoutname@example.com
+ADMINS = getaddresses([env('DJANGO_ADMINS')])
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
