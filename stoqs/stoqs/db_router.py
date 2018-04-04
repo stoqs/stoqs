@@ -23,7 +23,6 @@ class RouterMiddleware(object):
 
         if 'dbAlias' in kwargs:
             if kwargs['dbAlias'] not in settings.DATABASES.keys():
-                import pdb; pdb.set_trace()
                 return HttpResponseBadRequest('Bad request: Database "' + kwargs['dbAlias'] + '" Does Not Exist')
 
             # Add a thread local variable, and remove the dbAlias, since it's handled by the middleware.
