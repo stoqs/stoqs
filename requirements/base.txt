@@ -15,7 +15,7 @@ django-extensions==1.9.9
 django-model-utils==3.1.1
 django-picklefield==1.0.0
 django-secure==1.0.1
-djangorestframework==3.8.0
+djangorestframework==3.8.1
 euclid==0.1
 GitPython==2.1.9
 httplib2==0.11.3
