@@ -8,7 +8,9 @@ MBARI Jan 3, 2012
 
 import logging
 import threading
+from django.conf import settings
 from django.db.utils import ConnectionDoesNotExist
+from django.http import HttpResponseBadRequest
 
 logger = logging.getLogger(__name__)
 _thread_local_vars = threading.local()
@@ -16,19 +18,14 @@ _thread_local_vars = threading.local()
 
 class RouterMiddleware(object):
     def process_view(self, request, view_func, pargs, kwargs):
-        logger.debug("pargs =")
-        logger.debug(pargs)
-        logger.debug("kwargs =")
-        logger.debug(kwargs)
-        try:
-            logger.debug("request.session.keys() = %s", request.session.keys())
-        except ConnectionDoesNotExist as e:
-            logger.error(str(e))
-            logger.info('If new campaign has been added to campaigns.py then'
-                        ' a restart of uwsgi may be needed on a production server.')
-            return view_func(request, *pargs, **kwargs)
+        logger.debug(f'pargs = {pargs}')
+        logger.debug(f'kwargs = {kwargs}')
 
         if 'dbAlias' in kwargs:
+            if kwargs['dbAlias'] not in settings.DATABASES.keys():
+                import pdb; pdb.set_trace()
+                return HttpResponseBadRequest('Bad request: Database "' + kwargs['dbAlias'] + '" Does Not Exist')
+
             # Add a thread local variable, and remove the dbAlias, since it's handled by the middleware.
             _thread_local_vars.dbAlias = kwargs.pop('dbAlias')
             # If 'stoqs' is used make it 'default', for every other dbAlias the convention is that
