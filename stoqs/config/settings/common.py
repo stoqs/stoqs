@@ -112,7 +112,7 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#admins
 # In the format 'Full Name <email@example.com>, Full Name <anotheremail@example.com>'
 # e.g. DJANGO_ADMINS=Full Name <email-with-name@example.com>,anotheremailwithoutname@example.com
-ADMINS = getaddresses([env('DJANGO_ADMINS')])
+ADMINS = getaddresses([env('DJANGO_ADMINS', default='Super User <root@localhost>')])
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
