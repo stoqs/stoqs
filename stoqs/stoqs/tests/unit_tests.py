@@ -220,11 +220,11 @@ class BaseAndMeasurementViewsTestCase(TestCase):
 
     # Management tests 
     def test_manage(self):
-        req = '/test_stoqs/mgmt'
+        req = reverse('stoqs:show-database', kwargs={'dbAlias': 'default'})
         response = self.client.get(req)
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s, instead got %s' % (req, response.status_code))
         
-        req = '/test_stoqs/activitiesMBARICustom'
+        req = reverse('stoqs:show-activities', kwargs={'dbAlias': 'default'})
         response = self.client.get(req)
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
         # Number of Dorado MeasuredParameters will be on a line in the content
