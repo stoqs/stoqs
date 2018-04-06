@@ -43,3 +43,8 @@ docker/tmp/
 # Log files from data loading
 stoqs/stoqs/media/loadlogs/
 
+# Private docker files that never go into version control
+docker/.env
+docker/*.key
+docker/*.crt
+
