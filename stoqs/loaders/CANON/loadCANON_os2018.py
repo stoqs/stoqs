@@ -74,6 +74,7 @@ cl.dorado_files = [
                    'Dorado389_2018_030_00_030_00_decim.nc',
                    'Dorado389_2018_059_00_059_00_decim.nc', 
                    'Dorado389_2018_079_00_079_00_decim.nc',
+                   'Dorado389_2018_099_00_099_00_decim.nc',
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
