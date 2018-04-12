@@ -15,7 +15,7 @@ django-extensions==1.9.9
 django-model-utils==3.1.1
 django-picklefield==1.0.0
 django-secure==1.0.1
-djangorestframework==3.8.1
+djangorestframework==3.8.2
 euclid==0.1
 GitPython==2.1.9
 httplib2==0.11.3
@@ -39,7 +39,7 @@ Pydap==3.2.2
 python-dateutil==2.7.2
 python3-memcached==1.51
 python-openid==2.2.5
-pytz==2018.3
+pytz==2018.4
 PyYAML==3.12
 pyzmq==17.0.0
 readline==6.2.4.1
@@ -52,5 +52,5 @@ simplejson==3.13.2
 six==1.11.0
 slacker==0.9.65
 Sphinx==1.7.2
-sphinx-rtd-theme==0.2.4
+sphinx-rtd-theme==0.3.0
 sqlparse==0.2.4
