@@ -39,7 +39,7 @@ Pydap==3.2.2
 python-dateutil==2.7.2
 python3-memcached==1.51
 python-openid==2.2.5
-pytz==2018.3
+pytz==2018.4
 PyYAML==3.12
 pyzmq==17.0.0
 readline==6.2.4.1
