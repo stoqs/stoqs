@@ -70,6 +70,7 @@ services:
     volumes:
       - static-files:/srv/static-files
       - media-files:/srv/media-files
+      - ${STOQS_VOLS_DIR}/html:/srv/html
     container_name: stoqs-nginx
     ports:
       - "80:80"
