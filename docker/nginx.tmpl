@@ -43,6 +43,10 @@ http {
             include /etc/nginx/mime.types;
         }
 
+        location /cgi-bin/mapserv {
+            proxy_pass      http://stoqs-mapserver;
+        }
+
         location / {
             uwsgi_pass      django;
             include         uwsgi_params;
@@ -71,6 +75,10 @@ http {
        location /media {
             alias /srv/media-files;
             include /etc/nginx/mime.types;
+        }
+
+        location /cgi-bin/mapserv {
+            proxy_pass      http://stoqs-mapserver;
         }
 
         location = /robots.txt { return 200 "User-agent: *\nAllow: /"; }
