@@ -52,6 +52,7 @@ services:
       - MEDIA_ROOT=/srv/media-files
       - NGINX_SERVER_NAME=${NGINX_SERVER_NAME}
       - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - USER=${USER}
     container_name: stoqs
     depends_on:
       - mapserver
