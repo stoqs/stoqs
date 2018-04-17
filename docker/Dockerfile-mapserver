@@ -1,6 +1,0 @@
-FROM geodata/mapserver:7.0.1
-
-# At this point, this image only needed to
-# proxy /cgi-bin/mapserv to /.
-ADD cgibinmap /etc/nginx/sites-available/
-RUN ln -s /etc/nginx/sites-available/cgibinmap /etc/nginx/sites-enabled/

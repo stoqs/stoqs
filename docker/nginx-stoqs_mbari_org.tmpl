@@ -47,6 +47,17 @@ http {
             proxy_pass      http://stoqs-mapserver;
         }
 
+	# /x3d and /terrain are needed on the stoqs.mbari.org server
+        location /x3d {
+            alias /srv/html/x3d;
+            include /etc/nginx/mime.types;
+        }
+
+        location /terrain {
+            alias /srv/html/terrain;
+            include /etc/nginx/mime.types;
+        }
+
         location / {
             uwsgi_pass      django;
             include         uwsgi_params;
@@ -79,6 +90,17 @@ http {
 
         location /cgi-bin/mapserv {
             proxy_pass      http://stoqs-mapserver;
+        }
+
+	# /x3d and /terrain are needed on the stoqs.mbari.org server
+        location /x3d {
+            alias /srv/html/x3d;
+            include /etc/nginx/mime.types;
+        }
+
+        location /terrain {
+            alias /srv/html/terrain;
+            include /etc/nginx/mime.types;
         }
 
         location = /robots.txt { return 200 "User-agent: *\nAllow: /"; }

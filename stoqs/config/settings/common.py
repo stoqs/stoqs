@@ -87,7 +87,7 @@ DEBUG = env.bool("DJANGO_DEBUG", default=True)
 # ALLOWED_HOSTS
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-docker_stoqs_host = env('STOQS_HOST', default='localhost')
+docker_stoqs_host = env('NGINX_SERVER_NAME', default='localhost')
 default_allowed_hosts = [docker_stoqs_host, '127.0.0.1', '[::1]', '0.0.0.0']
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=default_allowed_hosts)
 

@@ -1,4 +1,4 @@
 #! /bin/bash
-envsubst < nginx.tmpl > /etc/nginx/nginx.conf
+DOLLAR='$' envsubst < ${NGINX_TMPL} > /etc/nginx/nginx.conf
 
 nginx -g "daemon off;"
