@@ -12,6 +12,7 @@ RUN apt-get update && \
     git \
     libncurses-dev \
     postgresql-9.6 \
+    time \
     wget
 
 # Set the locale
