@@ -34,7 +34,7 @@ logger = logging.getLogger('__main__')
 il = IOOSLoader('stoqs_ioos_gliders', 'IOOS Gliders',
                         description = 'Glider data from the Integrated Ocean Observing System Glider DAC',
                         x3dTerrains = {
-                            'http://dods.mbari.org/terrain/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
+                            'http://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
                                 'position': '14051448.48336 -15407886.51486 6184041.22775',
                                 'orientation': '0.83940 0.33030 0.43164 1.44880',
                                 'centerOfRotation': '0 0 0',
