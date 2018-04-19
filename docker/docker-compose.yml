@@ -31,7 +31,7 @@ services:
 
   stoqs:
     build:
-        context: ..
+        context: .
         dockerfile: Dockerfile-stoqs
     volumes:
       - ${STOQS_VOLS_DIR}/maps:/dev/shm

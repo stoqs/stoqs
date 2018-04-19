@@ -26,7 +26,7 @@ RUN cd /usr/bin/ &&\
 WORKDIR /srv
 
 # Symlink to requirements from docker directory used to minimize context
-COPY docker/requirements /requirements
+COPY requirements /requirements
 RUN /bin/bash -c 'pip install -r /requirements/production.txt'
 
 # NCAR's natgrid needed for contour plotting - several warnings/errors on compiling that can be ignored
@@ -35,7 +35,7 @@ RUN tar -xzf natgrid-0.2.1.tar.gz
 RUN cd natgrid-0.2.1 && python setup.py install && cd ..
 
 # Connection to uwsgi/nginx
-COPY docker/docker-stoqs-uwsgi.ini /etc/uwsgi/django-uwsgi.ini
+COPY docker-stoqs-uwsgi.ini /etc/uwsgi/django-uwsgi.ini
 
 CMD ["docker/stoqs-start.sh"]
 
