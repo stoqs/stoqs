@@ -87,7 +87,7 @@ and edit it for your specific installation, then execute `docker-compose up`:
 ```bash
 git clone https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit/docker
-cp template.env .env    # Edit .env to customize
+cp template.env .env    # Edit .env to customize (Ensure that STOQS_HOME is set to the full path of stoqsgit)
 docker-compose up
 ```
 
