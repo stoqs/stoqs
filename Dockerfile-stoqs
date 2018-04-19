@@ -10,6 +10,7 @@ RUN apt-get update && \
     apt-get -qq -y install \
     freetds-dev \
     git \
+    gmt \
     libncurses-dev \
     postgresql-9.6 \
     time \
@@ -36,11 +37,7 @@ RUN wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/na
 RUN tar -xzf natgrid-0.2.1.tar.gz
 RUN cd natgrid-0.2.1 && python setup.py install && cd ..
 
-COPY stoqs $STOQS_SRVPROJ
-COPY test.sh $STOQS_SRVHOME
-COPY docker/database-check.py $STOQS_SRVHOME
 COPY docker/docker-stoqs-uwsgi.ini /etc/uwsgi/django-uwsgi.ini
-COPY docker/stoqs-start.sh /
 
-CMD ["/stoqs-start.sh"]
+CMD ["docker/stoqs-start.sh"]
 
