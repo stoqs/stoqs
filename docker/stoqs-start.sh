@@ -1,5 +1,8 @@
 #!/bin/bash
 
+STOQS_SRVHOME=/srv
+STOQS_SRVPROJ=/srv/stoqs
+
 # Ensure that stoqs-postgis container is serving databases before continuing
 POSTGRES_DB=postgres python ${STOQS_SRVHOME}/docker/database-check.py > /dev/null 2>&1
 while [[ $? != 0 ]] ; do
