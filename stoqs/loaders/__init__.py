@@ -827,7 +827,7 @@ class STOQS_Loader(object):
         known_dup_time_problem = False
         for string in known_dup_time_sources:
             if string in self.url:
-                logger.debug(f'Setting known_dup_time_problem for known_dup_time_source: {string}')
+                self.logger.debug(f'Setting known_dup_time_problem for known_dup_time_source: {string}')
                 known_dup_time_problem = True
         
         dup_time = False
