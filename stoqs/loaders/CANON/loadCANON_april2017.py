@@ -37,7 +37,7 @@ from thredds_crawler.etree import etree
 cl = CANONLoader('stoqs_canon_april2017', 'KISS CANON Spring 2017',
                  description='KISS CANON Spring 2017 Experiment in Monterey Bay',
                  x3dTerrains={
-                   'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                   'http://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
                      'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                      'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',

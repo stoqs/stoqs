@@ -1,10 +1,13 @@
 #!/bin/bash
 
+STOQS_SRVHOME=/srv
+STOQS_SRVPROJ=/srv/stoqs
+
 # Ensure that stoqs-postgis container is serving databases before continuing
-POSTGRES_DB=postgres python ${STOQS_SRVHOME}/database-check.py > /dev/null 2>&1
+POSTGRES_DB=postgres python ${STOQS_SRVHOME}/docker/database-check.py > /dev/null 2>&1
 while [[ $? != 0 ]] ; do
     sleep 5; echo "*** Waiting for postgres container ..."
-    POSTGRES_DB=postgres python ${STOQS_SRVHOME}/database-check.py > /dev/null 2>&1
+    POSTGRES_DB=postgres python ${STOQS_SRVHOME}/docker/database-check.py > /dev/null 2>&1
 done
 
 # Allow for psql execution (used for database creation) without a password
@@ -32,7 +35,7 @@ fi
 
 # If default stoqs database doesn't exist then load it - also running the unit and functional tests
 echo "Checking for presence of stoqs database..."
-POSTGRES_DB=stoqs python ${STOQS_SRVHOME}/database-check.py
+POSTGRES_DB=stoqs python ${STOQS_SRVHOME}/docker/database-check.py
 if [[ $? != 0 ]]; then
     echo "Creating default stoqs database and running tests..."
     ./test.sh changeme

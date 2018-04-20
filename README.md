@@ -87,7 +87,7 @@ and edit it for your specific installation, then execute `docker-compose up`:
 ```bash
 git clone https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit/docker
-cp template.env .env    # Edit .env to customize
+cp template.env .env    # Edit .env to customize (Ensure that STOQS_HOME is set to the full path of stoqsgit)
 docker-compose up
 ```
 
@@ -100,10 +100,18 @@ After editing your .env file you will need to rebuild your stoqs image:
 docker-compose build stoqs
 ```
 
-To load some existing MBARI campaign data:
+To load some existing MBARI campaign data edit your .env file to uncomment the line
+`CAMPAIGNS_MODULE=stoqs/mbari_campaigns.py` restart `docker-compose up`, then from the
+docker directory execute the load script for a campaign:
 
 ```bash
-docker-compose exec stoqs stoqs/loaders/load.py --db stoqs_cce2015
+docker-compose exec stoqs stoqs/loaders/load.py --db stoqs_simz_aug2013
+```
+
+In another window monitor its output:
+
+```bash
+docker-compose exec stoqs tail -f /srv/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
 ```
 
 If you use STOQS for your research please cite this publication:
