@@ -5517,7 +5517,7 @@ function enable_cardboard(){
             ]
         };
         map = new OpenLayers.Map('map',options);
-
+        //OLD BASELAYERS OL CODE
         var bathyEsri = new OpenLayers.Layer.XYZ(
             ' ESRI Ocean'
             ,'https://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/${z}/${y}/${x}.jpg'
@@ -5548,10 +5548,26 @@ function enable_cardboard(){
             }
         );
         var osm=new OpenLayers.Layer.OSM(" OpenStreetMap");
-        map.addLayers([bathyEsri,gebco_noaa,osm]);
+        //NEW LEAFLET BASELAYERS CODE
+        var bathyEsri = L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}.jpg',{
+          opacity: 1
+        });
+
+        var gebco_noaa = L.tileLayer('http://{{ mapserver_host }}/gebco_noaa/tiles/${z}/${y}/${x}.png',{
+              attribution: "Sources: General Bathymetric Chart of the Oceans &amp; NOAA National Geophysical Data Center",
+              keepBuffer: 1,
+              maxZoom: 16
+        });
+
+        var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        });
         //ctrlGraticule.activate();
         //NEW LEAFLET METHOD TO ADD BASELAYERS TO MAP
         var baseLayer = {
+          "ESRIOcean": bathyEsri,
+          "GEBCO & NOAA Tiles": gebco_noaa,
+          "OpenStreetMap": osm
         };
         /*
          * Maptrack layers selected by UI
