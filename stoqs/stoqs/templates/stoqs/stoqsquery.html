@@ -2149,9 +2149,13 @@
 
     function clearMap() {
         // Clear the map of all WMS layers
-        track_lines.clearGrid();
-        stations.clearGrid();
-        sample_points.clearGrid();
+        //OLD OPENLAYERS CODE
+        // track_lines.clearGrid();
+        // stations.clearGrid();
+        // sample_points.clearGrid();
+        //NEW LEAFLET CODE
+        map.removeLayer(stations);
+
     }
     function refreshMap(e) {
         if ( $.isEmptyObject(e) ) {
@@ -2165,11 +2169,20 @@
             track_lines.setVisibility(false);
         }
         if (hasTimeSeries || hasTimeSeriesProfile || hasTrajectoryProfile) {
-            stations.setVisibility(true);
-            stations.redraw(true);
+            //OLD OPENLAYERS CODE
+            // stations.setVisibility(true);
+            // stations.redraw(true);
+            //NEW LEAFLET CODE
+            stations.setOpacity(1)
+            stations.redraw();
+            map.addLayer(stations);
+
         }
         else {
-            stations.setVisibility(false);
+            //OLD OL CODE
+            //stations.setVisibility(false);
+            //NEW LEAFLET CODE
+            stations.setOpacity(0)
         }
         sample_points.redraw(true);
 
@@ -5522,7 +5535,9 @@ function enable_cardboard(){
         var osm=new OpenLayers.Layer.OSM(" OpenStreetMap");
         map.addLayers([bathyEsri,gebco_noaa,osm]);
         //ctrlGraticule.activate();
-
+        //NEW LEAFLET METHOD TO ADD BASELAYERS TO MAP
+        var baseLayer = {
+        };
         /*
          * Maptrack layers selected by UI
          */
@@ -5539,21 +5554,26 @@ function enable_cardboard(){
               visibility: true,
               singleTile: true, ratio: 1,
               displayOutsideMaxExtent: true } );
-
-        stations = new OpenLayers.Layer.WMS(
-            " stations",
-            "https://{{ mapserver_host }}/cgi-bin/mapserv",
-            { layers: 'timeSeries',
-              map: '{{ mappath }}',
-              transparent: 'True' },
-            { units: 'degrees',
-              displayInLayerSwitcher: true,
-              projection: "EPSG:3857",
-              reproject: false,
-              visibility: true,
-              singleTile: true, ratio: 1,
-              displayOutsideMaxExtent: true } );
-
+        //OLD STATIONS OL WMS LAYER CODE
+        // stations = new OpenLayers.Layer.WMS(
+        //     " stations",
+        //     "https://{{ mapserver_host }}/cgi-bin/mapserv",
+        //     { layers: 'timeSeries',
+        //       map: '{{ mappath }}',
+        //       transparent: 'True' },
+        //     { units: 'degrees',
+        //       displayInLayerSwitcher: true,
+        //       projection: "EPSG:3857",
+        //       reproject: false,
+        //       visibility: true,
+        //       singleTile: true, ratio: 1,
+        //       displayOutsideMaxExtent: true } );
+        //NEW STATIONS LEAFLET WMS LAYER CODE
+        stations = L.tileLayer.wms("http://{{ mapserver_host }}/cgi-bin/mapserv",{
+            layers: 'timeSeries',
+            format: 'image/png',
+            transparent: true,
+            map: "{{ mappath }}"} );
         sample_points = new OpenLayers.Layer.WMS(
             " Sample points",
             "https://{{ mapserver_host }}/cgi-bin/mapserv",
@@ -5610,19 +5630,22 @@ function enable_cardboard(){
             })
         });
         //map.addLayer(samplewfs);
-
-
+        //OLD OL METHOD TO ADD OVERLAYS TO MAP
         map.addLayer(sensortrackskml);
         map.addLayer(track_lines);
         map.addLayer(stations);
         map.addLayer(sample_points);
-
+        //NEW LEAFLET METHODS TO ADD OVERLAYS TO MAP
+        var overlays = {
+          "Stations": stations
+        };
         map.addControl(new OpenLayers.Control.LoadingPanel());
         map.addControl(new OpenLayers.Control.LayerSwitcher());
         map.addControl(new OpenLayers.Control.MousePosition());
         map.addControl(new OpenLayers.Control.PanZoom());
-
-
+        //NEW LEAFLET METHOD TO SET DEAFULT LAYERS TO MAP AND ADD OVERLAYS AND BASELAYERS ARRAY
+        L.control.layers(baseLayer,overlays).addTo(map);
+        baseLayer.OpenStreetMap.addTo(map);
         // Add polygon drawing tool and capture WKT of polygon as WGS84
         map.addLayer(polyLayer);
         var panelControls = [
