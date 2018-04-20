@@ -2155,18 +2155,27 @@
         // sample_points.clearGrid();
         //NEW LEAFLET CODE
         map.removeLayer(stations);
-
+        map.removeLayer(track_lines);
+        map.removeLayer(sample_points);
     }
     function refreshMap(e) {
         if ( $.isEmptyObject(e) ) {
             return;
         }
         if (hasTrajectory) {
-            track_lines.setVisibility(true);
-            track_lines.redraw(true);
+            //OLD OL CODE
+            // track_lines.setVisibility(true);
+            // track_lines.redraw(true);
+            //NEW LEAFLET CODE
+            track_lines.setOpacity(1);
+            track_lines.redraw();
+            map.addLayer(track_lines);
         }
         else {
-            track_lines.setVisibility(false);
+            //OLD OL CODE
+            //track_lines.setVisibility(false);
+            //NEW LEAFLET CODE
+            track_lines.setOpacity(0);
         }
         if (hasTimeSeries || hasTimeSeriesProfile || hasTrajectoryProfile) {
             //OLD OPENLAYERS CODE
@@ -2185,9 +2194,15 @@
             stations.setOpacity(0)
         }
         sample_points.redraw(true);
-
+        //NEW LEAFLET CODE
+        map.addLayer(sample_points);
         if ($('#zoomtoextentonupdate').is(':checked')) {
-            map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
+            //OLD OL CODE
+            // map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
+              var corner1 = L.latLng(e[1][1],e[0][0]);
+              var corner2 = L.latLng(e[0][1],e[1][0]);
+              var bounds = L.latLngBounds(corner1, corner2);
+              map.flyToBounds(bounds);
         }
     }
 
@@ -5541,19 +5556,27 @@ function enable_cardboard(){
         /*
          * Maptrack layers selected by UI
          */
-        track_lines = new OpenLayers.Layer.WMS(
-            " trajectories",
-            "https://{{ mapserver_host }}/cgi-bin/mapserv",
-            { layers: 'trajectories',
-              map: '{{ mappath }}',
-              transparent: 'True' },
-            { units: 'degrees',
-              displayInLayerSwitcher: true,
-              projection: "EPSG:3857",
-              reproject: false,
-              visibility: true,
-              singleTile: true, ratio: 1,
-              displayOutsideMaxExtent: true } );
+         //OLD OL CODE
+        // track_lines = new OpenLayers.Layer.WMS(
+        //     " trajectories",
+        //     "https://{{ mapserver_host }}/cgi-bin/mapserv",
+        //     { layers: 'trajectories',
+        //       map: '{{ mappath }}',
+        //       transparent: 'True' },
+        //     { units: 'degrees',
+        //       displayInLayerSwitcher: true,
+        //       projection: "EPSG:3857",
+        //       reproject: false,
+        //       visibility: true,
+        //       singleTile: true, ratio: 1,
+        //       displayOutsideMaxExtent: true } );
+        //NEW LEAFLET TRACKLINES WMS LAYER
+        track_lines = L.tileLayer.wms("http://{{ mapserver_host }}/cgi-bin/mapserv",{
+          layers: 'trajectories',
+          format: 'image/png',
+          map: '{{ mappath }}',
+          transparent: true
+        });
         //OLD STATIONS OL WMS LAYER CODE
         // stations = new OpenLayers.Layer.WMS(
         //     " stations",
@@ -5574,20 +5597,26 @@ function enable_cardboard(){
             format: 'image/png',
             transparent: true,
             map: "{{ mappath }}"} );
-        sample_points = new OpenLayers.Layer.WMS(
-            " Sample points",
-            "https://{{ mapserver_host }}/cgi-bin/mapserv",
-            { layers: 'sample_points',
-              map: '{{ mappath }}',
-              transparent: 'True' },
-            { units: 'degrees',
-              displayInLayerSwitcher: true,
-              projection: "EPSG:3857",
-              reproject: false,
-              visibility: true,
-              singleTile: true, ratio: 1,
-              displayOutsideMaxExtent: true } );
-
+        //OLD OL SAMPLEPOINTS CODE
+        // sample_points = new OpenLayers.Layer.WMS(
+        //     " Sample points",
+        //     "https://{{ mapserver_host }}/cgi-bin/mapserv",
+        //     { layers: 'sample_points',
+        //       map: '{{ mappath }}',
+        //       transparent: 'True' },
+        //     { units: 'degrees',
+        //       displayInLayerSwitcher: true,
+        //       projection: "EPSG:3857",
+        //       reproject: false,
+        //       visibility: true,
+        //       singleTile: true, ratio: 1,
+        //       displayOutsideMaxExtent: true } );
+        //NEW SAMPLE POINTS CODE
+        sample_points = L.tileLayer.wms("http://{{ mapserver_host }}/cgi-bin/mapserv",{
+            layers: 'sample_points',
+            format: 'image/png',
+            transparent: true,
+            map: "{{ mappath }}"} );
         sensortrackskml = new OpenLayers.Layer.Vector(" Sensor tracks", {
             projection: map.displayProjection,
             strategies: [new OpenLayers.Strategy.Fixed()],
@@ -5632,12 +5661,14 @@ function enable_cardboard(){
         //map.addLayer(samplewfs);
         //OLD OL METHOD TO ADD OVERLAYS TO MAP
         map.addLayer(sensortrackskml);
-        map.addLayer(track_lines);
-        map.addLayer(stations);
-        map.addLayer(sample_points);
+        //map.addLayer(track_lines);
+        //map.addLayer(stations);
+        //map.addLayer(sample_points);
         //NEW LEAFLET METHODS TO ADD OVERLAYS TO MAP
         var overlays = {
-          "Stations": stations
+          "Stations": stations,
+          "Trajectories": track_lines,
+          "SamplePoints": sample_points
         };
         map.addControl(new OpenLayers.Control.LoadingPanel());
         map.addControl(new OpenLayers.Control.LayerSwitcher());
