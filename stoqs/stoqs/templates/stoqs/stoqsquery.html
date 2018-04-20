@@ -5393,16 +5393,27 @@ function enable_cardboard(){
             switch(key) {
                 case 'map-center':
                     if (lonlat && zoom) {
-                         var lonlat=new OpenLayers.LonLat(value.lonlat.lon, value.lonlat.lat);
-                   		 map.setCenter(lonlat,value.zoom);
+                          //OLD OL CODE
+                          var lonlat=new OpenLayers.LonLat(value.lonlat.lon, value.lonlat.lat);
+                   		    map.setCenter(lonlat,value.zoom);
+                          //NEW LEAFLET CODE
+                          var latlon = L.latLng(value.lonlat.lat, value.lonlat.lon);
+                          map.setView(latlon,value.zoom)
                     }
                     break;
                 case 'map-layers':
                     $.each(map.layers, function (pos, layer) {
                         if ($.inArray(layer.name, value) > -1) {
-                            layer.setVisibility(true);
+                            //OLD OL CODE
+                            //layer.setVisibility(true);
+                            //NEW LEAFLET CODE
+                            map.addLayer(layer)
+
                         } else {
-                            layer.setVisibility(false);
+                            //OLD OL CODE
+                            //layer.setVisibility(false);
+                            //NEW LEAFLET CODE
+                            map.removeLayer(layer)
                         }
                     });
                     break;
@@ -5643,50 +5654,51 @@ function enable_cardboard(){
             format: 'image/png',
             transparent: true,
             map: "{{ mappath }}"} );
-        sensortrackskml = new OpenLayers.Layer.Vector(" Sensor tracks", {
-            projection: map.displayProjection,
-            strategies: [new OpenLayers.Strategy.Fixed()],
-            // protocol is Dynamically set in update_sensortrackskml(), need placeholder url here for IE8
-            protocol: new OpenLayers.Protocol.HTTP({
-                url: 'measuredparameter.kmln',
-                format: new OpenLayers.Format.KML({
-                    extractStyles: true,
-                    extractAttributes: true,
-                    maxDepth: 2
-                })
-            })
-        });
-
-        sensortrackskml.events.register("loadend", sensortrackskml, function (e) {
-            if( sensortrackskml.getDataExtent() ) {
-                if ( $('#zoomtoextentonupdate').is(':checked') ) {
-                    map.zoomToExtent(sensortrackskml.getDataExtent());
-                }
-            }
-        });
+        //TODO: IMPLEMENT KML FILES IN LEAFLET
+        // sensortrackskml = new OpenLayers.Layer.Vector(" Sensor tracks", {
+        //     projection: map.displayProjection,
+        //     strategies: [new OpenLayers.Strategy.Fixed()],
+        //     // protocol is Dynamically set in update_sensortrackskml(), need placeholder url here for IE8
+        //     protocol: new OpenLayers.Protocol.HTTP({
+        //         url: 'measuredparameter.kmln',
+        //         format: new OpenLayers.Format.KML({
+        //             extractStyles: true,
+        //             extractAttributes: true,
+        //             maxDepth: 2
+        //         })
+        //     })
+        // });
+        //
+        // sensortrackskml.events.register("loadend", sensortrackskml, function (e) {
+        //     if( sensortrackskml.getDataExtent() ) {
+        //         if ( $('#zoomtoextentonupdate').is(':checked') ) {
+        //             map.zoomToExtent(sensortrackskml.getDataExtent());
+        //         }
+        //     }
+        // });
 
 
 
         // Test of WFS using ga_wfs
         // As of 11 Feb 2013 this request returns a MissingParameterValue Exception, but does not crash
         // Note the prerequisite software listed as a comment in urls.py before the url match for 'wfs'
-        var csrf_token = $.cookie('csrftoken');
-        samplewfs = new OpenLayers.Layer.Vector("Sample WFS", {
-            projection: map.displayProjection,
-            strategies: [new OpenLayers.Strategy.BBOX()],
-            protocol: new OpenLayers.Protocol.WFS({
-                url: "{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}wfs",
-                headers: {'X-CSRFToken': csrf_token},
-                featureType: 'Sample'
-            }),
-            styleMap: new OpenLayers.StyleMap({
-                    strokeWidth: 3,
-                    strokeColor: "#333333"
-            })
-        });
+        // var csrf_token = $.cookie('csrftoken');
+        // samplewfs = new OpenLayers.Layer.Vector("Sample WFS", {
+        //     projection: map.displayProjection,
+        //     strategies: [new OpenLayers.Strategy.BBOX()],
+        //     protocol: new OpenLayers.Protocol.WFS({
+        //         url: "{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}wfs",
+        //         headers: {'X-CSRFToken': csrf_token},
+        //         featureType: 'Sample'
+        //     }),
+        //     styleMap: new OpenLayers.StyleMap({
+        //             strokeWidth: 3,
+        //             strokeColor: "#333333"
+        //     })
+        // });
         //map.addLayer(samplewfs);
         //OLD OL METHOD TO ADD OVERLAYS TO MAP
-        map.addLayer(sensortrackskml);
+        //map.addLayer(sensortrackskml);
         //map.addLayer(track_lines);
         //map.addLayer(stations);
         //map.addLayer(sample_points);
@@ -5705,28 +5717,28 @@ function enable_cardboard(){
         L.control.layers(baseLayer,overlays).addTo(map);
         baseLayer.OpenStreetMap.addTo(map);
         // Add polygon drawing tool and capture WKT of polygon as WGS84
-        map.addLayer(polyLayer);
-        var panelControls = [
-            new OpenLayers.Control.Navigation(),
-            new OpenLayers.Control.DrawFeature(polyLayer,
-                OpenLayers.Handler.Polygon,
-                {   'displayClass': 'olControlDrawFeaturePolygon',
-                    featureAdded: function() {
-                        var projWGS84 = new OpenLayers.Projection("EPSG:4326");
-                        var proj3857 = new OpenLayers.Projection("EPSG:3857");
-                        var polyWGS84 = polyLayer.features[0].geometry;
-                        polyWGS84.transform(proj3857, projWGS84);
-                        console.log(polyWGS84);
-                        OpenLayers.Console.userError(polyWGS84);
-                        rebuildFilters();
-                    }
-                }
-            )
-        ];
-        var toolbar = new OpenLayers.Control.Panel({
-            displayClass: 'olControlEditingToolbar',
-            defaultControl: panelControls[0]
-        });
+        // map.addLayer(polyLayer);
+        // var panelControls = [
+        //     new OpenLayers.Control.Navigation(),
+        //     new OpenLayers.Control.DrawFeature(polyLayer,
+        //         OpenLayers.Handler.Polygon,
+        //         {   'displayClass': 'olControlDrawFeaturePolygon',
+        //             featureAdded: function() {
+        //                 var projWGS84 = new OpenLayers.Projection("EPSG:4326");
+        //                 var proj3857 = new OpenLayers.Projection("EPSG:3857");
+        //                 var polyWGS84 = polyLayer.features[0].geometry;
+        //                 polyWGS84.transform(proj3857, projWGS84);
+        //                 console.log(polyWGS84);
+        //                 OpenLayers.Console.userError(polyWGS84);
+        //                 rebuildFilters();
+        //             }
+        //         }
+        //     )
+        // ];
+        // var toolbar = new OpenLayers.Control.Panel({
+        //     displayClass: 'olControlEditingToolbar',
+        //     defaultControl: panelControls[0]
+        // });
         // Commented out until it's fully implemented
         //toolbar.addControls(panelControls);
         //map.addControl(toolbar);
