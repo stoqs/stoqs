@@ -37,7 +37,7 @@ from thredds_crawler.etree import etree
 cl = CANONLoader('stoqs_os2018', 'CANON - Off Season 2018',
                  description='Off Season 2018 observations in Monterey Bay',
                  x3dTerrains={
-                   'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                   'http://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
                      'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                      'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
@@ -74,6 +74,7 @@ cl.dorado_files = [
                    'Dorado389_2018_030_00_030_00_decim.nc',
                    'Dorado389_2018_059_00_059_00_decim.nc', 
                    'Dorado389_2018_079_00_079_00_decim.nc',
+                   'Dorado389_2018_099_00_099_00_decim.nc',
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
