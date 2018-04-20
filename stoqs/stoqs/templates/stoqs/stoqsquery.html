@@ -5500,54 +5500,64 @@ function enable_cardboard(){
         /*
          * Setup OpenLayers with some default background layers.
          */
-        OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
-        OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
+        //TODO: FIGURE THESE DEAFAULTS IN LEAFLETS
+        // OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
+        // OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
         //ctrlGraticule = new OpenLayers.Control.Graticule({autoActivate : false});
-        var options = {
-            projection: new OpenLayers.Projection("EPSG:3857"),
-            displayProjection: new OpenLayers.Projection("EPSG:4326"),
-            units: "m",
-            maxResolution: 156543.0339,
-            maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34,
-                                              20037508.34, 20037508.34),
-            controls: [
-                new OpenLayers.Control.Navigation(
-                    {dragPanOptions: {enableKinetic: true}}
-                )
-            ]
+        //OLD OPENLAYERS MAP VARIABLES
+        // var options = {
+        //     projection: new OpenLayers.Projection("EPSG:3857"),
+        //     displayProjection: new OpenLayers.Projection("EPSG:4326"),
+        //     units: "m",
+        //     maxResolution: 156543.0339,
+        //     maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34,
+        //                                       20037508.34, 20037508.34),
+        //     controls: [
+        //         new OpenLayers.Control.Navigation(
+        //             {dragPanOptions: {enableKinetic: true}}
+        //         )
+        //     ]
+        // };
+        //map = new OpenLayers.Map('map',options);
+        //NEW LEAFLET MAP VARIABLE
+        var options  = {
+          worldCopyJump: true,
+          maxBounds: L.LatLngBounds([-20037508.34,-20037508.34],[20037508.34,20037508.34]),
+          center: [36.87513, -121.93641],
+          zoom: 0
         };
-        map = new OpenLayers.Map('map',options);
+        map = L.map('map',options);
         //OLD BASELAYERS OL CODE
-        var bathyEsri = new OpenLayers.Layer.XYZ(
-            ' ESRI Ocean'
-            ,'https://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/${z}/${y}/${x}.jpg'
-            ,{
-               sphericalMercator : true
-              ,isBaseLayer       : true
-              ,wrapDateLine      : true
-              ,opacity           : 1
-              ,visibility        : true
-             }
-        );
-
-        var gebco_noaa = new OpenLayers.Layer.XYZ(
-            " GEBCO & NOAA Tiles",
-            [
-                "https://{{ mapserver_host }}/gebco_noaa/tiles/${z}/${x}/${y}.png"
-            ],
-            {
-                attribution: "Sources: General Bathymetric Chart of the Oceans "
-                + "(<a href='http://www.gebco.net/'>GEBCO</a>)"
-                + " &amp; NOAA National Geophysical Data Center"
-                + " (<a href='http://www.ngdc.noaa.gov/mgg/dem/demportal.html'>NGDC</a>)",
-                sphericalMercator: true,
-                wrapDateLine: true,
-                transitionEffect: "resize",
-                buffer: 1,
-                numZoomLevels: 16
-            }
-        );
-        var osm=new OpenLayers.Layer.OSM(" OpenStreetMap");
+        // var bathyEsri = new OpenLayers.Layer.XYZ(
+        //     ' ESRI Ocean'
+        //     ,'https://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/${z}/${y}/${x}.jpg'
+        //     ,{
+        //        sphericalMercator : true
+        //       ,isBaseLayer       : true
+        //       ,wrapDateLine      : true
+        //       ,opacity           : 1
+        //       ,visibility        : true
+        //      }
+        // );
+        //
+        // var gebco_noaa = new OpenLayers.Layer.XYZ(
+        //     " GEBCO & NOAA Tiles",
+        //     [
+        //         "https://{{ mapserver_host }}/gebco_noaa/tiles/${z}/${x}/${y}.png"
+        //     ],
+        //     {
+        //         attribution: "Sources: General Bathymetric Chart of the Oceans "
+        //         + "(<a href='http://www.gebco.net/'>GEBCO</a>)"
+        //         + " &amp; NOAA National Geophysical Data Center"
+        //         + " (<a href='http://www.ngdc.noaa.gov/mgg/dem/demportal.html'>NGDC</a>)",
+        //         sphericalMercator: true,
+        //         wrapDateLine: true,
+        //         transitionEffect: "resize",
+        //         buffer: 1,
+        //         numZoomLevels: 16
+        //     }
+        // );
+        // var osm=new OpenLayers.Layer.OSM(" OpenStreetMap");
         //NEW LEAFLET BASELAYERS CODE
         var bathyEsri = L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}.jpg',{
           opacity: 1
@@ -5686,10 +5696,11 @@ function enable_cardboard(){
           "Trajectories": track_lines,
           "SamplePoints": sample_points
         };
-        map.addControl(new OpenLayers.Control.LoadingPanel());
-        map.addControl(new OpenLayers.Control.LayerSwitcher());
-        map.addControl(new OpenLayers.Control.MousePosition());
-        map.addControl(new OpenLayers.Control.PanZoom());
+        //OLD OPTIONS IN OL ARE DEFAULT IN LEAFLET
+        // map.addControl(new OpenLayers.Control.LoadingPanel());
+        // map.addControl(new OpenLayers.Control.LayerSwitcher());
+        // map.addControl(new OpenLayers.Control.MousePosition());
+        // map.addControl(new OpenLayers.Control.PanZoom());
         //NEW LEAFLET METHOD TO SET DEAFULT LAYERS TO MAP AND ADD OVERLAYS AND BASELAYERS ARRAY
         L.control.layers(baseLayer,overlays).addTo(map);
         baseLayer.OpenStreetMap.addTo(map);
