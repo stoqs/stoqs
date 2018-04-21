@@ -5400,8 +5400,8 @@ function enable_cardboard(){
                 case 'map-center':
                     if (lonlat && zoom) {
                           //OLD OL CODE
-                          var lonlat=new OpenLayers.LonLat(value.lonlat.lon, value.lonlat.lat);
-                   		    map.setCenter(lonlat,value.zoom);
+                          //var lonlat=new OpenLayers.LonLat(value.lonlat.lon, value.lonlat.lat);
+                   		    //map.setCenter(lonlat,value.zoom);
                           //NEW LEAFLET CODE
                           var latlon = L.latLng(value.lonlat.lat, value.lonlat.lon);
                           map.setView(latlon,value.zoom)
