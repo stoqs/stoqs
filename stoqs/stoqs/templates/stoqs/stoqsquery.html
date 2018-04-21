@@ -1556,13 +1556,13 @@
                         strided_kmlurl = orig_kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('#cm-cmin').val() +
                                                                            '&cmax=' + $('#cm-cmax').val() + '&stride=' + strideVal +
                                                                            '&cm=' + cm + '&num_colors=' + $('#num_colors').val();
-                        sensortrackskml.refresh({url: strided_kmlurl});
+                        //sensortrackskml.refresh({url: strided_kmlurl});
                     }
                 }).
                 fail( function (data, response, jqXHR) {
                     if (jqXHR.toUpperCase() == 'INTERNAL SERVER ERROR') {
                         $('#showsensortracks').attr({checked: false});
-                        sensortrackskml.removeAllFeatures();
+                        //sensortrackskml.removeAllFeatures();
                     }
                     else {
                         alert('Could not get count of sensor track data: ' + jqXHR);
@@ -1570,11 +1570,11 @@
                 });
             }
             else {
-                sensortrackskml.removeAllFeatures();
+                //sensortrackskml.removeAllFeatures();
             }
         }
         else {
-            sensortrackskml.removeAllFeatures();
+            //sensortrackskml.removeAllFeatures();
         }
     }
 
