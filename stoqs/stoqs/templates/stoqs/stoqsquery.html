@@ -3619,10 +3619,16 @@ function enable_cardboard(){
             dataset.push(sample);
         });
         if (data['sampledepthtime'].length == 0) {
-            sample_points.setVisibility(false);         // Turn off sample view openlayers
+	    //OLD OL CODE
+            //sample_points.setVisibility(false);
+	    //NEW LEAFLET CODE
+	    sample_points.setOpacity(0); // Turn off sample view openlayers
         }
         else {
-            sample_points.setVisibility(true);         // Turn on sample view openlayers
+	    //OLD OL CODE
+            //sample_points.setVisibility(true);
+	    //NEW LEAFLET CODE
+	    sample_points.setOpacity(1); // Turn on sample view openlayers
         }
 
         // Add the sampledurations lines, each with a label
