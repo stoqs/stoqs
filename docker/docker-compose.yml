@@ -11,12 +11,15 @@ services:
         context: .
         dockerfile: Dockerfile-postgis
     volumes:
-      - ${STOQS_VOLS_DIR}/pgdata:/var/lib/postgresql/data
+      - ${POSTGRES_DATA}:/var/lib/postgresql/data
+      - ${POSTGRES_WALDIR}:/var/lib/postgresql/waldir
     ports:
       - "5432:5432"
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - STOQSADM_PASSWORD=${STOQSADM_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data
+      - POSTGRES_INITDB_WALDIR=/var/lib/postgresql/waldir
     container_name: stoqs-postgis
     env_file:
       - ./.env
