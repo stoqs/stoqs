@@ -1,4 +1,4 @@
-FROM mdillon/postgis:9.6
+FROM mdillon/postgis:10
 
 # The base image already has 'postgis.sh' under /docker-entrypoint-initdb.d/.
 # Since the initialization files will be executed in sorted name order,
