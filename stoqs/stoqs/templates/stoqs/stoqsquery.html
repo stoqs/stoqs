@@ -7,7 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Spatial Temporal Oceanographic Query System - User Interface" />
     <meta name="author" content="Mike McCann, MBARI" />
-
+    <!-- Leaflet Installation -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"></script>
     <!-- The styles -->
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet"></link>
     <link href="{{STATIC_URL}}media/font/orbitron.css" rel="stylesheet"></link>
@@ -55,16 +57,16 @@
             left:10em;
             top:10em;
         }
-        .nav-tabs li.active a { 
+        .nav-tabs li.active a {
             color: black;
         }
-        .nav-tabs li.disabled a { 
+        .nav-tabs li.disabled a {
             color: grey;
             cursor: no-drop;
         }
-        .nav-tabs li.disabled a:hover { 
-            border-color: transparent; 
-            background-color: transparent; 
+        .nav-tabs li.disabled a:hover {
+            border-color: transparent;
+            background-color: transparent;
         }
         .stoqs-color-limit-input {
             width: 40px;
@@ -81,7 +83,7 @@
             margin-bottom: 4px;
             text-align: right;
         }
-        .fail-text { 
+        .fail-text {
             color: red;
         };
         x3d { margin-right:10px; margin-bottom:10px; }
@@ -103,7 +105,7 @@
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet"></link>
     <link type="text/css" href="{{ STATIC_URL }}x3dom-1.7.1/x3dom.css" rel="stylesheet"></link>
     <!--<link type="text/css" href="http://www.x3dom.org/x3dom/dist/x3dom.css" rel="stylesheet">-->
-    
+
 
     <!-- The HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
@@ -329,7 +331,7 @@
                                         </div> <!-- geo-3dplot-control -->
                                         <div style="height:100%;">
 <!-- Elements for Google Cardboard -->
-    <X3D id="spatial-3d-x3d" style="width:100%;height:100%;margin:0px auto;display:block;border:none;" ondownloadsfinished="downloadsFinished(event)"> 
+    <X3D id="spatial-3d-x3d" style="width:100%;height:100%;margin:0px auto;display:block;border:none;" ondownloadsfinished="downloadsFinished(event)">
       <scene>
         <Environment frustumCulling="false"></Environment>
         <NavigationInfo id="spatial-3d-navinfo"></NavigationInfo>
@@ -453,7 +455,7 @@
                     </div>
                     <div id="collapseMetadata" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                                
+
                             <label class="checkbox">
                                 <input type="checkbox" id="getactualcount" /> Get actual count
                             </label>
@@ -522,7 +524,7 @@
                                         </div>
                                         <div style="height:100%;">
                                         <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
-                                        <X3D id='pp_x3d' style="width:100%;height:100%;margin:0px auto;display:block;border:none;"> 
+                                        <X3D id='pp_x3d' style="width:100%;height:100%;margin:0px auto;display:block;border:none;">
                                             <scene id='pp-3d-scene'>
                                                 <Viewpoint id='x3d-viewpoint' position="-4907.13027 2788.82661 19473.28714" orientation="0.23484 -0.97195 0.01297 0.42414" centerofrotation='5000 5000 5000'></viewpoint>
 
@@ -681,7 +683,7 @@
                                     {% else %}
                                         <li><a href="#sp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                     {% endif %}
-                                {% endfor %}            
+                                {% endfor %}
                             </ul>
 
                             <div class="tab-content">
@@ -689,7 +691,7 @@
                                     <span id="sample-instructions">Click on Sample locations in time-depth plot to get information here</span>
                                     <table id="sample-table" class="table table-striped table-bordered">
                                         <thead>
-                                        </thead> 
+                                        </thead>
                                         <tbody>
                                         </tbody>
                                     </table>
@@ -699,7 +701,7 @@
                                 <div class="tab-pane active" id="sp-{{format.0}}">
                                     {% else %}
                                 <div class="tab-pane" id="sp-{{format.0}}">
-                                    {% endif %} 
+                                    {% endif %}
                                     <table>
                                         <tr>
                                             <th><a target="_blank" id="sp-{{format.0}}-link" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format.0}}-icon.png" alt="sp-{{format.0}}"/></a></th>
@@ -726,7 +728,7 @@
                                         {% endif %}
                                     {% endif %}
                                 </div>
-                                {% endfor %}            
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
@@ -754,7 +756,7 @@
                                             <li><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                         {% endif %}
                                     {% endif %}
-                                {% endfor %}            
+                                {% endfor %}
                             </ul>
                             <div class="tab-content">
                                 {% for format in formats %}
@@ -762,7 +764,7 @@
                                         <div class="tab-pane active" id="mp-{{format.0}}">
                                     {% else %}
                                         <div class="tab-pane" id="mp-{{format.0}}">
-                                    {% endif %} 
+                                    {% endif %}
                                     <table>
                                         <tr>
                                             <th><a target="_blank" id="mp-{{format.0}}-link" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format.0}}-icon.png" alt="mp-{{format.0}}"/></a></th>
@@ -789,9 +791,9 @@
                                         {% endif %}
                                     {% endif %}
                                 </div>
-                                {% endfor %}            
+                                {% endfor %}
                             </div>
-                            
+
                         </div>
                     </div>
                 </div><!-- accordian-group -->
@@ -799,7 +801,7 @@
             </div><!-- accordian well -->
 
         </div><!-- span6 -->
-        
+
         <div id="right-column" class="span6 stoqs-zoom-width">
             <div class="accordion well" id="accordion2" style="border:none;">
 
@@ -860,7 +862,7 @@
                                         <div id="time-parameter-flot" style="width:100%;height:90%;" class="disabled"></div>
                                         <div class="row-fluid">
                                             <div class="span5">
-                                                Color by: 
+                                                Color by:
                                                 <input type="radio" name="pt-colors" value="platform" /> Platform color
                                                 <input type="radio" name="pt-colors" value="activity" checked /> Activity
                                             </div>
@@ -888,8 +890,8 @@
                             </td><td>
                                 <input id="cm-cmax" type="text" class="stoqs-color-limit-input cm-activate" title="Initial max value is 97.5 percentile" />
                                 <label class="stoqs-color-limit-input" for="cmincmax_lock" style="display:inline;"> Lock: </label>
-                                <input type="checkbox" id="cmincmax_lock"/> 
-                                <div class="input-group"> 
+                                <input type="checkbox" id="cmincmax_lock"/>
+                                <div class="input-group">
                                     <span class="input-group-addon stoqs-color-limit-input" style="font-weight:normal;"> Colors: </span>
                                     <select id="num_colors" class="selectpicker form-control cm-activate" style="height:20px;width:50px;margin-bottom:0px;" title="Number of colors">
                                         <option>256</option>
@@ -917,7 +919,7 @@
                                     {% else %}
                                         <li><a href="#{{category.0}}" data-toggle="tab">{{category.0}}</a></li>
                                     {% endif %}
-                                {% endfor %}            
+                                {% endfor %}
                             </ul>
                             <div class="tab-content">
                                 {% for category in colormaps %}
@@ -942,11 +944,11 @@
                                             </td>
                                             <td style="border-top:0px;"><label for="{{cm}}_r"><img src="{{STATIC_URL}}images/colormaps/{{cm}}_r.png"/></label></td>
                                         </tr>
-                                    {% endfor %}            
+                                    {% endfor %}
                                     </table>
                                     </fieldset>
                                     </div>
-                                {% endfor %}            
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
@@ -984,11 +986,11 @@
                                         <th style="text-align:center;display:none;" class="pp-header">C</th>
                                         <th style="text-align:center;" class="plot-data-lines">Lines</th>
                                         <th style="text-align:center;" class="pd-depth-header-color">Color</th>
-                                        <th style="text-align:center;"></th>                                      
+                                        <th style="text-align:center;"></th>
                                         <th style="text-align:center;"></th>
                                         <th style="text-align:center;"></th>
                                     </tr>
-                                </thead> 
+                                </thead>
                                 <tbody>
                                     <tr>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
@@ -1077,7 +1079,7 @@
                                         <th style="text-align:center;"></th>
                                         <th style="text-align:center;"></th>
                                     </tr>
-                                </thead>                             
+                                </thead>
                                 <tbody>
                                     <tr>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
@@ -1088,7 +1090,7 @@
                                             <input colspan="5" type="radio" name="parameters_contour_plot" value="" class="parameter-plot-radio parameter-contour-plot-radio" />
                                         </td>
                                         <td style="text-align:center;">
-                                            <input colspan="5" type="radio" id="mp_parameters_plot_clear" name="parameters_plot" value="" class="parameter-plot-radio" />                
+                                            <input colspan="5" type="radio" id="mp_parameters_plot_clear" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="mp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall_parametertime" style="display:none;"/>
                                         </td>
                                         <td colspan="5" class="all-plot-instruction">Clear Selection</td>
@@ -1136,7 +1138,7 @@
                     <div class="accordian-heading">
                         <h3><a id="parameter-values-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseParameterValues">
                         Parameter Values</a>
-                        <button id="resetparametervaluesselections" class="btn btn-mini disabled">Clear Selection</button> 
+                        <button id="resetparametervaluesselections" class="btn btn-mini disabled">Clear Selection</button>
                         </h3>
                         <input type="hidden" id="parametervalues-data" name="parametervalues-data" />
                     </div>
@@ -1144,7 +1146,7 @@
                         <div class="accordion-inner">
                             <div id="histogram-instruction">Show distribution of parameter values</div>
                             <div class="span6">
-                                Histogram display: 
+                                Histogram display:
                                 <input type="checkbox" class="pv-histogram-checkbox" id="showstandardnameparametervalues" /> Standard Names
                                 <input type="checkbox" class="pv-histogram-checkbox" id="showallparametervalues" /> All Parameters
                             </div>
@@ -1165,7 +1167,7 @@
                     <div id="collapseAttributes" class="accordion-body collapse in">
                         <div class="accordion-inner">
 
-                            <ul id=attributesTabs" class="nav nav-tabs">
+                            <ul id="attributesTabs" class="nav nav-tabs">
                                 <li class="active"><a href="#amp" data-toggle="tab">Measurement</a></li>
                                 <li><a href="#asp" data-toggle="tab">Sample</a></li>
                                 <li><a href="#ac" data-toggle="tab">Campaign</a></li>
@@ -1260,18 +1262,18 @@
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-collapse.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-carousel.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-typeahead.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/OpenLayers.js"></script> 
-    <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/LoadingPanel.js"></script> 
-    <script type="text/javascript" src="{{STATIC_URL}}permalink/json2.js"></script> 
-    <script type="text/javascript" src="{{STATIC_URL}}permalink/purl.js"></script> 
-    <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string.js"></script> 
+    <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/OpenLayers.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/LoadingPanel.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}permalink/json2.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}permalink/purl.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}x3dom-1.7.1/x3dom-full.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/GeoOriginTransform.js"></script>
     <!--<script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom-full.js"></script>-->
     <script type="text/javascript" src="https://js.leapmotion.com/leap-0.6.3.min.js"></script>
 
     <script type="text/javascript"><!--
-    
+
     var summaryQuery='{{site_uri}}{% url 'stoqs:stoqs-query-summary' dbAlias=request.META.dbAlias %}';
     var mapQuery='{{site_uri}}{% url 'stoqs:stoqs-query-map' dbAlias=request.META.dbAlias %}';
     var params={}
@@ -1281,8 +1283,8 @@
     var rifted = false;
     var cardboarded = false;
     var request=''
-    var map = null; 
-    var parametervalues={};     
+    var map = null;
+    var parametervalues={};
     var client_side_permalink = true;
     var permalink_bypass=false;
     var rebuild_from_permalink = false;
@@ -1314,7 +1316,7 @@
     var vrHMD = null, vrSensor = null;
     var pyr = new x3dom.fields.SFVec3f(0, 0, 0);        // For the Leap Motion
 
-    // Callback from X3DOM TimeSensor added to scene with 'showplatforms' checkbox 
+    // Callback from X3DOM TimeSensor added to scene with 'showplatforms' checkbox
     function setSlider(eventObject) {
         if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
             return;
@@ -1343,7 +1345,7 @@
 
         if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
             // Set scale attribute and distance text for all platforms in the scene
-            $.each($('body').data()['platformAnimation'].concat( 
+            $.each($('body').data()['platformAnimation'].concat(
                     $.map($('body').data()['platformModels'], function(v, k) {return k})), function(index, plat) {
                 $('#' + plat + '_SCALE').attr('scale', scale);
                 // Axes are 10m long in the axes_enu.x3d inlined file
@@ -1397,13 +1399,13 @@
         var doc = document
             , text = doc.getElementById(element)
             , range, selection
-        ;    
+        ;
         if (doc.body.createTextRange) {
             range = document.body.createTextRange();
             range.moveToElementText(text);
             range.select();
         } else if (window.getSelection) {
-            selection = window.getSelection();        
+            selection = window.getSelection();
             range = document.createRange();
             range.selectNodeContents(text);
             selection.removeAllRanges();
@@ -1431,7 +1433,7 @@
             }
         }
     }
-    
+
     function recolorParameterTime(type) {
 
         var timeparameterplot = $('#time-parameter-flot').data()['plot'];
@@ -1516,7 +1518,7 @@
                 var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
                 if (param != '') {
                     param = '?' + param;
-                } 
+                }
 
                 // Override any parameter__name or parameter__standard_name with parameter__id from radio button selection
                 var orig_kmlurl;
@@ -1551,16 +1553,16 @@
                         if ( ! $.isEmptyObject($('input:radio[name=colormap_choice]:checked').val()) ) {
                             var cm = $('input:radio[name=colormap_choice]:checked').val();
                         }
-                        strided_kmlurl = orig_kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('#cm-cmin').val() + 
+                        strided_kmlurl = orig_kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('#cm-cmin').val() +
                                                                            '&cmax=' + $('#cm-cmax').val() + '&stride=' + strideVal +
                                                                            '&cm=' + cm + '&num_colors=' + $('#num_colors').val();
-                        sensortrackskml.refresh({url: strided_kmlurl});
+                        //sensortrackskml.refresh({url: strided_kmlurl});
                     }
                 }).
                 fail( function (data, response, jqXHR) {
                     if (jqXHR.toUpperCase() == 'INTERNAL SERVER ERROR') {
                         $('#showsensortracks').attr({checked: false});
-                        sensortrackskml.removeAllFeatures();
+                        //sensortrackskml.removeAllFeatures();
                     }
                     else {
                         alert('Could not get count of sensor track data: ' + jqXHR);
@@ -1568,11 +1570,11 @@
                 });
             }
             else {
-                sensortrackskml.removeAllFeatures();
+                //sensortrackskml.removeAllFeatures();
             }
         }
         else {
-            sensortrackskml.removeAllFeatures();
+            //sensortrackskml.removeAllFeatures();
         }
     }
 
@@ -1605,7 +1607,7 @@
             group_name1 = 'sampled';
             group_name2 = 'sample';
         }
-        
+
         var mp_param = '?';
         if (typeof params[group_name1 + 'parametersgroup'] != 'undefined') {
             if ( group == 'mp' ) {
@@ -1661,7 +1663,7 @@
 
         return mp_param
     }
-    
+
     // Set the URL fields and buttons to use the current queried URL, group is either 'mp' or 'sp'
     function setDataAccess(group, data) {
         var group_name;
@@ -1678,7 +1680,7 @@
         var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
         if (param != '') {
             param = '?' + param;
-        } 
+        }
         mp_param = getMPparms(group, params);
 
         var formats=[{% for format in formats %}'{{format.0}}'{% if not forloop.last %},{% endif %}{%endfor%}]
@@ -1726,7 +1728,7 @@
                 $('#'+group+'-'+value+'-field').text(st_text);
                 $('#'+group+'-'+value+'-link').attr('href', 'https://raw.githubusercontent.com/stoqs/stoqs/master/stoqs/contrib/analysis/dbconn_jdbc_stoqs.m');
             }
-            // Queries made using measuredparameter or sampledparamter REST requests - use mp_parm for Django queries 
+            // Queries made using measuredparameter or sampledparamter REST requests - use mp_parm for Django queries
             else if (value == 'json') {
                 var url = base_url + 'json' + mp_param;
                 url = url.replace(/ /g, '%20');
@@ -1816,7 +1818,7 @@
             }
         }
     } // toggleField()
-    
+
     function getUTCDateString(date) {
         // $.format.date(date,'yyyy-MM-dd hh:mm:ss') is broken in Safari, construct SQL friendly date string this way
         var mon = new String(date.getUTCMonth() + 1);
@@ -1847,7 +1849,7 @@
     }
 
     function getValueOrdinal(value) {
-        // Add a suffix (st, nd, th) to a number 
+        // Add a suffix (st, nd, th) to a number
         if (value == 1) {
             ordinal = 'single';
         }
@@ -1866,7 +1868,7 @@
         else {
             ordinal = value + 'th';
         }
-                                
+
         return ordinal
     }
 
@@ -1882,7 +1884,7 @@
             var max=Math.ceil(data[1]*10000);
         }
         if (type == 'time') {
-            var formatter=function (value) { 
+            var formatter=function (value) {
                 var start=new Date(data[0]);
                 var cur=new Date(start.getTime() + value);
                 return getUTCDateString(cur);
@@ -1907,7 +1909,7 @@
                      values: [min, max],
                      range: true
         };
-        
+
         var div=$('#' + divid);
         div.bind({
             //slide : function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, false); },
@@ -1916,7 +1918,7 @@
             slidechange:function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, true); }
         })
         div.slider(options);
-        
+
         div.data("reverseformatter", reverseformatter);
         if (typeof postaddfunc != "undefined") {
            //div.data("postaddfunction", postaddfunc);
@@ -1934,16 +1936,16 @@
             rebuildFilters();
         }
     }
-    
+
     function rebuildFilters(only) {
         if ((typeof permalink_bypass !== 'undefined') &&
             (permalink_bypass == true)) {
             return ;
-        } 
+        }
         params = {};
         // To tell the backend to process for the list of options in the only list
         // Useful for radio button and checkbox events that do not change the selection
-        // and for not updating data for panels not visible in the UI.  Items in the 
+        // and for not updating data for panels not visible in the UI.  Items in the
         // only list are the keys of options_functions in utils/STOQSQManager.py.
         if ( ! $.isEmptyObject(only) ) {
             params['only'] = only
@@ -2060,7 +2062,7 @@
                     $('#resetparametervaluesselections').addClass('btn-primary');
                 }
             };
-            valueText = valueText.substring(0, valueText.length - 2); 
+            valueText = valueText.substring(0, valueText.length - 2);
             $('#parameter-values-anchor').html('Parameter Values' + valueText);
         }
 
@@ -2136,43 +2138,73 @@
 
         // Since the old link (if there was one) for the permalink is no longer valid, hide it
         $('#permalink-box').hide();
-        
+
         //updateShowDataInfo();
         updateSummaryData();
 
         polyLayer.removeAllFeatures();
 
     } // rebuildFilters()
-    
+
 
     function clearMap() {
         // Clear the map of all WMS layers
-        track_lines.clearGrid();
-        stations.clearGrid();
-        sample_points.clearGrid();
+        //OLD OPENLAYERS CODE
+        // track_lines.clearGrid();
+        // stations.clearGrid();
+        // sample_points.clearGrid();
+        //NEW LEAFLET CODE
+        map.removeLayer(stations);
+        map.removeLayer(track_lines);
+        map.removeLayer(sample_points);
     }
     function refreshMap(e) {
         if ( $.isEmptyObject(e) ) {
             return;
         }
         if (hasTrajectory) {
-            track_lines.setVisibility(true);
-            track_lines.redraw(true);
+            //OLD OL CODE
+            // track_lines.setVisibility(true);
+            // track_lines.redraw(true);
+            //NEW LEAFLET CODE
+            track_lines.setOpacity(1);
+            track_lines.redraw();
+            map.addLayer(track_lines);
         }
         else {
-            track_lines.setVisibility(false);
+            //OLD OL CODE
+            //track_lines.setVisibility(false);
+            //NEW LEAFLET CODE
+            track_lines.setOpacity(0);
         }
         if (hasTimeSeries || hasTimeSeriesProfile || hasTrajectoryProfile) {
-            stations.setVisibility(true);
-            stations.redraw(true);
+            //OLD OPENLAYERS CODE
+            // stations.setVisibility(true);
+            // stations.redraw(true);
+            //NEW LEAFLET CODE
+            stations.setOpacity(1)
+            stations.redraw();
+            map.addLayer(stations);
+
         }
         else {
-            stations.setVisibility(false);
+            //OLD OL CODE
+            //stations.setVisibility(false);
+            //NEW LEAFLET CODE
+            stations.setOpacity(0)
         }
         sample_points.redraw(true);
-
+        //NEW LEAFLET CODE
+        map.addLayer(sample_points);
         if ($('#zoomtoextentonupdate').is(':checked')) {
-            map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
+            //OLD OL CODE
+            // map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
+              var point1 = L.point(e[0][0],e[0][1]);
+              var point2 = L.point(e[1][0],e[1][1]);
+              var corner1 = L.Projection.SphericalMercator.unproject(point1);
+              var corner2 = L.Projection.SphericalMercator.unproject(point2);
+              var bounds = L.latLngBounds(corner1, corner2);
+              map.flyToBounds(bounds);
         }
     }
 
@@ -2542,7 +2574,7 @@
         if ( $('input:radio[name=parameters_plot]:checked').val() ) {
             $('#contour-scatter-buttons').css({'visibility': 'visible'});
             $('#sensor-tracks-checkbox').show();
-            $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
+            $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[6]).text() + ' from ' +
                                                          $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
             $('#temporalparameterplotinfo').text('Plotting ' + $('#temporalparameterplotinfo').data()['info'] + '...');
             $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info']);
@@ -2564,7 +2596,7 @@
             $('#temporalparameterstrideinfo').text('');
         }
         if ( $('input:radio[name=parameters_contour_plot]:checked').val() ) {
-            $('#temporalparameterplotinfo_lines').data('info', $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
+            $('#temporalparameterplotinfo_lines').data('info', $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[6]).text() + ' from ' +
                                                          $('body').data()['parameterplatforms'][$('input:radio[name=parameters_contour_plot]:checked').val()]);
             $('#temporalparameterplotinfo_lines').text('Plotting ' + $('#temporalparameterplotinfo_lines').data()['info'] + '...');
             rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
@@ -2664,23 +2696,23 @@
         //}
     });
 
-    $('#parameter-parameter-sql').click( function() { 
-        SelectText('parameter-parameter-sql') 
+    $('#parameter-parameter-sql').click( function() {
+        SelectText('parameter-parameter-sql')
     });
 
     var formats=[{% for format in formats %}'{{format.0}}'{% if not forloop.last %},{% endif %}{%endfor%}]
     $.each(formats, function (index, value) {
         if (value != 'matlab') {
-            $('#mp-' + value + '-field').click( function() { 
-                SelectText('mp-' + value + '-field') 
+            $('#mp-' + value + '-field').click( function() {
+                SelectText('mp-' + value + '-field')
             });
-            $('#sp-' + value + '-field').click( function() { 
-                SelectText('sp-' + value + '-field') 
+            $('#sp-' + value + '-field').click( function() {
+                SelectText('sp-' + value + '-field')
             });
         }
     });
-    
-    
+
+
     $(".zoom-lc-button, .cardboard-button").click(function(element) {
         if (lcZoomed) {
             if ($('.stoqs-zoom-width').hasClass('span12')) {
@@ -2886,7 +2918,7 @@ function enable_cardboard(){
         var old_vp = runtime.getActiveBindable('geoviewpoint');
         var vp_ori_matrix = viewpoint.getFieldValue('orientation').toMatrix(); // as matrix
         var vp_pos = viewpoint.getFieldValue('position');
-        
+
 
         runtime.enterFrame = function () {
             if (!vrSensor)
@@ -2978,21 +3010,21 @@ function enable_cardboard(){
                 return;
             }
 
-            var leftEyeParams, 
-                rightEyeParams, 
-                leftFOV, 
-                rightFOV, 
-                leftTranslation, 
+            var leftEyeParams,
+                rightEyeParams,
+                leftFOV,
+                rightFOV,
+                leftTranslation,
                 rightTranslation;
-            
-            
+
+
             if (vrHMD.getEyeParameters !== undefined) {
                 leftEyeParams = vrHMD.getEyeParameters("left");
                 rightEyeParams = vrHMD.getEyeParameters("right");
-                
+
                 console.log(leftEyeParams);
                 console.log(rightEyeParams);
-                        
+
                 leftFOV = leftEyeParams.currentFieldOfView;
                 rightFOV = rightEyeParams.currentFieldOfView;
 
@@ -3021,7 +3053,7 @@ function enable_cardboard(){
         /* ----------------------------------------------------------- */
 
 
-        // Modeled after Andreas's LeapFistThumb.txt sent to me from Mike Aratow and 
+        // Modeled after Andreas's LeapFistThumb.txt sent to me from Mike Aratow and
         // http://examples.x3dom.org/Demos/ClassroomVR/classroom-rift-leap-webvr-2.html
 
         var hand = document.getElementById("hand");
@@ -3070,7 +3102,7 @@ function enable_cardboard(){
             if (frame.hands.length && state.position !== null)
             {
                 hand_frame = frame.hands[0];
-                
+               
                 var hand = document.getElementById("hand");
 
                 var yaw = hand.children[0];
@@ -3110,7 +3142,7 @@ function enable_cardboard(){
 
                 console.log("ll", d);
             }
-        
+       
         for (var i = 0; i < Math.min(frame.fingers.length, 5); i++)
         {
             for (var j = 0; j < Math.min(frame.fingers[j].bones.length, 4); ++j)
@@ -3166,7 +3198,7 @@ function enable_cardboard(){
         if (navigator.getVRDevices)
             navigator.getVRDevices().then(vrDeviceCallback);
 
-       init(); 
+       init();
 
         // End of using template from http://examples.x3dom.org/Demos/ClassroomVR/classroom-rift-leap-webvr-2.html
     }
@@ -3183,7 +3215,7 @@ function enable_cardboard(){
             // Reset padding to its initial padding
             $('#left-column').parent().parent().css( { 'padding': '0px 20px' } );
             $('#accordion1').css( { 'padding': '19px' } );
-            $('#collapseSpatial > div').css( { 'padding': '9px 15px' } ); 
+            $('#collapseSpatial > div').css( { 'padding': '9px 15px' } );
      	}
         else {
 	    $('#spatial-3d-x3d #spatial-3d-root').attr('render', 'true');
@@ -3208,7 +3240,7 @@ function enable_cardboard(){
         cardboarded =! cardboarded;
      });
     $(".rift-button").click(function(element) {
-        
+
         var vrHMD = null, vrSensor = null;
 
 
@@ -3244,7 +3276,7 @@ function enable_cardboard(){
             $('#mp-x3d-viewpoint1').attr('zFar', '300000');
             $('#mp-x3d-geoviewpoint1').attr('zNear', '100');
             $('#mp-x3d-geoviewpoint1').attr('zFar', '30000');
-            // put this viewpoint in the center of the horizontal extent and 100 units above sea level 
+            // put this viewpoint in the center of the horizontal extent and 100 units above sea level
             $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 100');
             $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
             $('#left-column').parent().parent().css( { 'padding-left': '0px' } );
@@ -3275,8 +3307,8 @@ function enable_cardboard(){
     $('.temporal-tab > li').on('click', function (event) {
         // Show the tab then plot the data so that axes are properly drawn
         $('a', event.delegateTarget).tab('show');
-       
-        if ( event.delegateTarget.id == 'temporal-parameter-li' ) { 
+
+        if ( event.delegateTarget.id == 'temporal-parameter-li' ) {
             $('.parameter-plot-radio').hide();
             $('.parameter-contour-plot-radio').hide();
             $('.parameter-plot-checkbox').show();
@@ -3346,10 +3378,10 @@ function enable_cardboard(){
     });
 
 
-    simpledepthtime_options = { grid: { 
+    simpledepthtime_options = { grid: {
                                         backgroundColor: "rgb(192, 211, 228)",      // c0d3e4
-                                        hoverable: true, 
-                                        clickable: true 
+                                        hoverable: true,
+                                        clickable: true
                                     },
                                     xaxis: { mode: "time" },
                                     yaxis: {
@@ -3439,11 +3471,11 @@ function enable_cardboard(){
             if (typeof previousPoint != 'undefined') {
                 if (previousPoint != item.dataIndex) {
                     previousPoint = item.dataIndex;
-                    
+
                     $("#tooltip").remove();
                     var x = item.datapoint[0].toFixed(2),
                         y = item.datapoint[1].toFixed(2);
-               
+
                     showTooltip(item.pageX, item.pageY,
                                 item.series.label);
                 }
@@ -3451,7 +3483,7 @@ function enable_cardboard(){
         }
         else {
             $("#tooltip").remove();
-            previousPoint = null;            
+            previousPoint = null;
         }
     });
 
@@ -3460,11 +3492,11 @@ function enable_cardboard(){
             if (typeof previousPoint != 'undefined') {
                 if (previousPoint != item.dataIndex) {
                     previousPoint = item.dataIndex;
-                    
+
                     $("#tooltip").remove();
                     var x = item.datapoint[0].toFixed(2),
                         y = item.datapoint[1].toFixed(2);
-               
+
                     showTooltip(item.pageX, item.pageY,
                                 y + ' ' + item.series.label);
                 }
@@ -3472,7 +3504,7 @@ function enable_cardboard(){
         }
         else {
             $("#tooltip").remove();
-            previousPoint = null;            
+            previousPoint = null;
         }
     });
 
@@ -3512,7 +3544,7 @@ function enable_cardboard(){
                 //nwin.focus();
             //}
     }
-                
+
     $("#time-depth-flot").bind("plotclick", function (event, pos, item) {
         // This method of providing quick look plots is annoying as click-n-drag operations will sometimes trigger a plotclick
         if (item) {
@@ -3589,10 +3621,16 @@ function enable_cardboard(){
             dataset.push(sample);
         });
         if (data['sampledepthtime'].length == 0) {
-            sample_points.setVisibility(false);         // Turn off sample view openlayers
+	    //OLD OL CODE
+            //sample_points.setVisibility(false);
+	    //NEW LEAFLET CODE
+	    sample_points.setOpacity(0); // Turn off sample view openlayers
         }
         else {
-            sample_points.setVisibility(true);         // Turn on sample view openlayers
+	    //OLD OL CODE
+            //sample_points.setVisibility(true);
+	    //NEW LEAFLET CODE
+	    sample_points.setOpacity(1); // Turn on sample view openlayers
         }
 
         // Add the sampledurations lines, each with a label
@@ -3655,7 +3693,7 @@ function enable_cardboard(){
             });
         });
 
-        return { 
+        return {
             'dataset': dataset,
             'yaxesOptions': yaxesOptions
         };
@@ -3685,7 +3723,7 @@ function enable_cardboard(){
         histdata.push(rec);
         return histdata;
     }
-    
+
     function plotHistData(parameter, histdata, parameterunits) {
         var units = parameterunits[parameter];
         histogram_options_labels = $.extend(true, {}, histogram_options, {
@@ -3723,7 +3761,7 @@ function enable_cardboard(){
             updateFromZoomFlag = true;
         }
 
-        $('body').data()['start-time'] = getUTCDateString(ds); 
+        $('body').data()['start-time'] = getUTCDateString(ds);
         $('body').data()['end-time'] = getUTCDateString(de);
 
         var tLabel = 'Temporal: ' + $('body').data()['start-time'] + ' to ' + $('body').data()['end-time'];
@@ -3747,7 +3785,7 @@ function enable_cardboard(){
 
         simpledepthtime_options_zoom = $.extend(true, {}, simpledepthtime_options, {
                                                               xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
-                                                              yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to } 
+                                                              yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to }
                                                           });
 
         zoom_simpledepthtime_stack.push([ $('body').data()['start-ems'], $('body').data()['end-ems'],
@@ -3755,7 +3793,7 @@ function enable_cardboard(){
                                           simpledepthtime_options_zoom ]);
 
         // Apply new depth & time ranges to the query and redraw the plot in rebuildFilters()
-        $('#zoomed-button').removeClass('disabled'); 
+        $('#zoomed-button').removeClass('disabled');
         $('#zoomed-button').addClass('btn-primary');
         //$('#zoomed-button').attr('title', 'Click to unzoom to original extent. Right-click on plot to unzoom to last zoom level.').tooltip('fixTitle').tooltip('hide');
 
@@ -3772,7 +3810,7 @@ function enable_cardboard(){
             if (zoom_simpledepthtime_stack.length > 1 ) {
                 var zoom_sdt = zoom_simpledepthtime_stack.pop();
                 // Test for first ZoomOut by comparing existing zoom parameters
-                if ( zoom_sdt[0] == $('body').data()['start-ems'] && zoom_sdt[1] == $('body').data()['end-ems'] && 
+                if ( zoom_sdt[0] == $('body').data()['start-ems'] && zoom_sdt[1] == $('body').data()['end-ems'] &&
                      zoom_sdt[2] == $('body').data()['start-depth'] && zoom_sdt[3] == $('body').data()['end-depth'] ){
                     if (zoom_simpledepthtime_stack.length == 1) {
                         zoom_sdt = zoom_simpledepthtime_stack[0];
@@ -3789,7 +3827,7 @@ function enable_cardboard(){
 
                 updateTemporal(false);
                 rebuildFilters();
-            } 
+            }
             else {
                 $('#time-depth-instr').html('Click and drag to zoom');
                 // zoom_parametertime_stack gets a push on a tab click, unzoom if length is 0 or 1
@@ -3825,7 +3863,7 @@ function enable_cardboard(){
             }
         }
 
-        // return false to suppress the right-mouse context menu from appearing 
+        // return false to suppress the right-mouse context menu from appearing
         return false;
     }
 
@@ -3836,7 +3874,7 @@ function enable_cardboard(){
         $('body').data()['start-ems'] = ranges.xaxis.from;
         $('body').data()['end-ems'] = ranges.xaxis.to;
 
-        $('#zoomed-button').removeClass('disabled'); 
+        $('#zoomed-button').removeClass('disabled');
         $('#zoomed-button').addClass('btn-primary');
 
         parametertime_options_zoom = $.extend(true, {}, parametertime_options, {
@@ -3977,16 +4015,16 @@ function enable_cardboard(){
                 var platforms = $.map(data.resources.netcdf, function(activities, plat) {return plat}).sort();
                 var platformActivitiesHtml = '<fieldset>';
                 platformActivitiesHtml += '<input type="checkbox" name="all_activity_select_cb" value="" class="activity-select-checkbox checkall_activity" />' +
-                                          ' Check/Uncheck all for Spatial Temporal plotting (leave this section open for selections to apply)'; 
+                                          ' Check/Uncheck all for Spatial Temporal plotting (leave this section open for selections to apply)';
                 $.each(platforms, function (index, plat) {
                     var activities = $.map(data.resources.netcdf[plat], function(activities, a) {return a}).sort();
                     platformActivitiesHtml += '<div id="' + plat + '-group" class="accordian-group">' +
-                    '<div class="accordian-heading">' + 
-                       '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
-                        plat + 
-                        '</a></h5>' + 
-                    '</div>' + 
-                    '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
+                    '<div class="accordian-heading">' +
+                       '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' +
+                        plat +
+                        '</a></h5>' +
+                    '</div>' +
+                    '<div id="collapse-' + plat + '" class="accordion-body collapse in">' +
                         '<div class="accordion-inner" style="padding:0;">';
 
                     for (var i = 0; i < activities.length; i++) {
@@ -4049,12 +4087,12 @@ function enable_cardboard(){
                 $.each(platforms, function (index, plat) {
                     activities = $.map(data.resources.quick_look[plat], function(activities, a) {return a}).sort();
                     platformActivitiesHtml += '<div id="' + plat + '-group" class="accordian-group">' +
-                    '<div class="accordian-heading">' + 
-                       '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
-                        plat + 
-                        '</a></h5>' + 
-                    '</div>' + 
-                    '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
+                    '<div class="accordian-heading">' +
+                       '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' +
+                        plat +
+                        '</a></h5>' +
+                    '</div>' +
+                    '<div id="collapse-' + plat + '" class="accordion-body collapse in">' +
                         '<div class="accordion-inner" style="padding:0;">';
                     platformActivitiesHtml += '<table class="table table-condensed"><tbody>';
 
@@ -4137,19 +4175,19 @@ function enable_cardboard(){
                 $.each(platformTypes, function (index, ptype) {
                     platforms = data[key][ptype];
                     platformTypeHtml += '<div id="' + ptype + '-group" class="accordian-group">' +
-                    '<div class="accordian-heading">' + 
-                       '<h5><a id="' + ptype + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + ptype + '">' + 
-                        ptype + 
-                        '</a></h5>' + 
-                    '</div>' + 
-                    '<div id="collapse-' + ptype + '" class="accordion-body collapse in">' + 
+                    '<div class="accordian-heading">' +
+                       '<h5><a id="' + ptype + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + ptype + '">' +
+                        ptype +
+                        '</a></h5>' +
+                    '</div>' +
+                    '<div id="collapse-' + ptype + '" class="accordion-body collapse in">' +
                         '<div class="accordion-inner" style="padding:0;">';
                     platformTypeHtml += '<table class="table table-condensed stoqs-platform"><tbody>';
 
                     $.each(platforms, function (index, value) {
                         platformTypeHtml += '<tr id="' + value[1] +'"><td style="text-align:center;width:15%;border-top-width:0;">' +
                                 '<div id="' + value[1] + '_icon" style="text-align: center;float:left;width:90%;height:20px;background-color: rgb(192, 211, 228)">' +
-                                    '<div id="' + value[1] + '_color" style="border-bottom:2px solid;width:90%;height:9px;margin-left:auto;margin-right:auto;border-bottom-color:#' + 
+                                    '<div id="' + value[1] + '_color" style="border-bottom:2px solid;width:90%;height:9px;margin-left:auto;margin-right:auto;border-bottom-color:#' +
                                         data['simpledepthtime']['colors'][value[1]] + ';">' +
                                 '</div></div></td>' +
                                 '<td style="text-align:center;width:5%;border-top-width:0;">' +
@@ -4196,7 +4234,7 @@ function enable_cardboard(){
                 var pi_url_base = "{% url 'stoqs:parameterinfo' dbAlias=request.META.dbAlias pid='REPLACE' %}";
                 $.each(data[key], function (index, value) {
                     // Save ids in list for assigning as a data item on Sampled Parameters for easy lookup
-                    sp_ids.push(value[2].toString()); 
+                    sp_ids.push(value[2].toString());
                     pi_url = pi_url_base.replace('REPLACE', value[2]);
                     // Use [2], the id for sampledparameters to allow wierd characters in [0], the name
                     parameterButtonText = parameterButtonText + '<tr>' +
@@ -4214,7 +4252,7 @@ function enable_cardboard(){
                             '</td>' +
                             '<td style="text-align:center;" class="plot-data-lines">'+
                                 '<input type="radio" name="parameters_contour_plot" value=" ' + value[2] + '" class="parameter-plot-radio parameter-contour-plot-radio" />' +
-                            '</td>' + 
+                            '</td>' +
                             '<td style="text-align:center;">' +
                                 '<input type="radio" name="parameters_plot" value="' + value[2] + '" class="parameter-plot-radio" />' +
                                 '<input type="checkbox" name="parameters_plot_cb" value="' + value[2] + '" class="parameter-plot-checkbox" style="display:none;" />' +
@@ -4225,15 +4263,15 @@ function enable_cardboard(){
                                 '</span>' +
                             '</td>' +
                             '<td id="' + value[2] +'" style="text-align:center;">' +
-                                '<button class="btn btn-mini stoqs-toggle sampledparametersgroup">'+ value[0] +'</button>' + 
+                                '<button class="btn btn-mini stoqs-toggle sampledparametersgroup">'+ value[0] +'</button>' +
                             '</td>' +
                             '<td style="width:1%">' +
-                                '<span id="' + value[0] + '_plats" style="background-color:rgb(192, 211, 228);"></span>' + 
+                                '<span id="' + value[0] + '_plats" style="background-color:rgb(192, 211, 228);"></span>' +
                             '</td>';
-                           
-                           
-                           
-                           
+
+
+
+
                     if (value[1].length != 0) {
                         // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
                         // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
@@ -4243,7 +4281,7 @@ function enable_cardboard(){
                             '<td colspan="2" style="text-align:center;border-color:transparent;" class="sn-leader"></td>' +
                             '<td style="border-color:transparent;"></td>' +
                             '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color: transparent;">' +
-                                '<button class="btn btn-mini stoqs-toggle sampledparameterstandardname">'+ value[1] +'</button>' + 
+                                '<button class="btn btn-mini stoqs-toggle sampledparameterstandardname">'+ value[1] +'</button>' +
                             '</td>' +
                         '</tr>';
                     }
@@ -4263,7 +4301,7 @@ function enable_cardboard(){
                 var pi_url_base = "{% url 'stoqs:parameterinfo' dbAlias=request.META.dbAlias pid='REPLACE' %}";
                 $.each(data[key], function (index, value) {
                     // Save ids in list for assigning as a data item on Sampled Parameters for easy lookup
-                    mp_ids.push(value[2].toString()); 
+                    mp_ids.push(value[2].toString());
                     pi_url = pi_url_base.replace('REPLACE', value[2]);
                     parameterButtonText = parameterButtonText + '<tr>' +
                             '<td style="text-align:center;display:none;">' +
@@ -4296,10 +4334,10 @@ function enable_cardboard(){
                                 '</span>' +
                             '</td>' +
                             '<td id="' + value[0] +'">' +
-                                '<button class="btn btn-mini stoqs-toggle measuredparametersgroup">'+ value[0] +'</button>' + 
-                            '</td>' + 
+                                '<button class="btn btn-mini stoqs-toggle measuredparametersgroup">'+ value[0] +'</button>' +
+                            '</td>' +
                             '<td style="width:1%">' +
-                                '<span id="' + value[0] + '_plats" style="background-color:rgb(192, 211, 228);"></span>' + 
+                                '<span id="' + value[0] + '_plats" style="background-color:rgb(192, 211, 228);"></span>' +
                             '</td>';
                     if (value[1].length != 0) {
                         // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
@@ -4310,7 +4348,7 @@ function enable_cardboard(){
                             '<td colspan="2" style="text-align:center;border-color:transparent;" class="sn-leader"></td>' +
                             '<td style="border-color:transparent;"></td>' +
                             '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color:transparent;text-align:center;">' +
-                                '<button class="btn btn-mini stoqs-toggle parameterstandardname" style="width:75%;">'+ value[1] +'</button>' + 
+                                '<button class="btn btn-mini stoqs-toggle parameterstandardname" style="width:75%;">'+ value[1] +'</button>' +
                             '</td>' +
                         '</tr>';
                     }
@@ -4328,7 +4366,7 @@ function enable_cardboard(){
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
                 simpledepthtime_options_zoom = simpledepthtime_options;
-                timedepthplot = $.plot($("#time-depth-flot"), getDepthDataset(initData, start.getTime(), end.getTime()), 
+                timedepthplot = $.plot($("#time-depth-flot"), getDepthDataset(initData, start.getTime(), end.getTime()),
                                                               simpledepthtime_options_zoom);
             }
             else if (key == 'parametertime') {
@@ -4358,13 +4396,13 @@ function enable_cardboard(){
                         var tname = get_tname(terrain, item);
                         $('#terrain3D-choices').append('<input type="radio" name="terrain_view" class="terrain-view" style="margin:3px;" value="' + terrain + '"/>' +
                                             '<label class="checkbox" style="padding:0px;">' +
-                                            '<input type="checkbox" style="margin:3px;" name="terrain_choice" class="terrain-choice"' + 
+                                            '<input type="checkbox" style="margin:3px;" name="terrain_choice" class="terrain-choice"' +
                                             ' value="' + terrain + '"/>' + tname + '</label><br>');
                         $('#mp-x3d-terrain').append('<Inline id="terrain-' + tname + '"></Inline>');
                         $('#terrain-' + tname).attr('url', terrain);
                     });
                     $('#terrain3D-choices').append('<label class="checkbox" style="padding:0px;">' +
-                                            '<input type="checkbox" style="margin:3px;" name="use_viewpoint"' + 
+                                            '<input type="checkbox" style="margin:3px;" name="use_viewpoint"' +
                                             ' value="' + terrain + '" checked />Use viewpoint for selected terrain</label>');
                     $('#spatial-3d-li').show();
 
@@ -4390,7 +4428,7 @@ function enable_cardboard(){
                             $('#mp-x3d-viewpoint1').attr('zNear', item.zNear);
                             $('#mp-x3d-viewpoint1').attr('zFar', item.zFar);
                         }
-                        if ( ! $.isEmptyObject(item.geoOrigin) ) { 
+                        if ( ! $.isEmptyObject(item.geoOrigin) ) {
                             var geoOrigin_def = '<GeoOrigin def="GO" geoSystem=\'"GD" "WE"\' geoCoords="' + item.geoOrigin + '" ';
                             geoOrigin_def += ' rotateYUp="true" elevationScaling="true"></GeoOrigin>' ;
                             $('#mp-x3d-geoviewpoint1').append(geoOrigin_def);
@@ -4466,15 +4504,15 @@ function enable_cardboard(){
                                 labels = data[key]['measurement'][labelType];
                                 labelTypeID = labelType.replace(/ /g, '-');
                                 labelTypeHtml += '<div id="' + labelType + '-group" class="accordian-group">' +
-                                '<div class="accordian-heading">' + 
-                                '<h5><a id="' + labelType + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#attributes-anchor" href="#collapse-' + 
-                                    labelTypeID + '">' + labelType + 
-                                    '</a></h5>' + 
-                                '</div>' + 
-                                '<div id="collapse-' + labelTypeID + '" class="accordion-body collapse in">' + 
+                                '<div class="accordian-heading">' +
+                                '<h5><a id="' + labelType + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#attributes-anchor" href="#collapse-' +
+                                    labelTypeID + '">' + labelType +
+                                    '</a></h5>' +
+                                '</div>' +
+                                '<div id="collapse-' + labelTypeID + '" class="accordion-body collapse in">' +
                                     '<div class="accordion-inner" style="padding:0;">';
                                 labelTypeHtml += '<table class="table table-condensed"><tbody>';
-                                labelTypeHtml += '<tr><td>Source</td><td style="font-family:monospace;font-size:xx-small;">' + 
+                                labelTypeHtml += '<tr><td>Source</td><td style="font-family:monospace;font-size:xx-small;">' +
                                                         data[key]['measurement']['commandlines'][labelType] + '</td></tr>';
                                 $.each(labels, function (index, label) {
                                     labelTypeHtml += '<tr id="' + label[0] +'" class="stoqs-attributes">' +
@@ -4489,7 +4527,7 @@ function enable_cardboard(){
                     }
                 }
             }
-        
+
         } // onInit()
 
         function redrawSimpleDepthTime(data) {
@@ -4497,7 +4535,7 @@ function enable_cardboard(){
                 // Redraw the plot given the saved values
                 if ( $.isEmptyObject(data.simpledepthtime.sdt) ) {
                     if (! $.isEmptyObject(data.parametertime.pt) ) {
-                        // Show parameter-time data if no trajectory data shown 
+                        // Show parameter-time data if no trajectory data shown
                         // TODO: perhaps better to do with an event listener on presence of data in the flot object
                         $('#temporal-parameter-li').show();
                     }
@@ -4581,14 +4619,14 @@ function enable_cardboard(){
                 var sd = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamin));
                 var ed = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamax));
                 $('#temporal-anchor').html('Temporal: ' + sd + ' to ' + ed);
-                
+
                 // Add initial view to zoom stack
                 if (zoom_parametertime_stack.length == 0) {
                     parametertime_options_zoom = $.extend(true, {}, parametertime_options, {
-                                                            xaxis: { min: timeparameterplot.getXAxes()[0].datamin, 
+                                                            xaxis: { min: timeparameterplot.getXAxes()[0].datamin,
                                                                      max: timeparameterplot.getXAxes()[0].datamax }
                                                           });
-                    zoom_parametertime_stack.push([ timeparameterplot.getXAxes()[0].datamin, timeparameterplot.getXAxes()[0].datamax, 
+                    zoom_parametertime_stack.push([ timeparameterplot.getXAxes()[0].datamin, timeparameterplot.getXAxes()[0].datamax,
                                                     $('body').data()['start-depth'], $('body').data()['end-depth'],
                                                     parametertime_options_zoom ]);
                 }
@@ -4665,10 +4703,10 @@ function enable_cardboard(){
                         }
                     });
                 });
-                $('.stoqs-platform > tbody > tr').each(function (index, elem) {     
-                    if ($.inArray((elem.id).toString(), ids) == -1) {       
-                        disableButton($('button', $(elem)));        // disable the button in the table row      
-                    }       
+                $('.stoqs-platform > tbody > tr').each(function (index, elem) {
+                    if ($.inArray((elem.id).toString(), ids) == -1) {
+                        disableButton($('button', $(elem)));        // disable the button in the table row
+                    }
                 });
             }
             else if (key == 'sampledparametersgroup') {
@@ -4679,12 +4717,12 @@ function enable_cardboard(){
                     enableButton($('button', '#' + value[2]));                                                  // enable the button in the table row
                     enableXYZColorPlot($('input:radio', $('button', '#' + value[2]).parent().parent()));        // enable the X, Y, Z, Color, Plot radio buttons in the row
                     enableXYZColorPlot($('input:checkbox', $('button', '#' + value[2]).parent().parent()));     // enable the Plot checkbox in the row
-                    enableParameterRow($('button', '#' + value[2]).parent().parent());                          // enable and show the whole row 
+                    enableParameterRow($('button', '#' + value[2]).parent().parent());                          // enable and show the whole row
                     addPlatformSymbols($('#' + value[0] + '_plats'), value[2]);                                 // show which platforms have this parameter
                     $('button', '#' + value[1] + '--' + value[0] + '-sn').parent().parent().addClass('sp-standardname-row-enabled');
                     ids.push(value[2].toString());
                 });
-                $('#sampledparameter-table > tbody > tr > td > button').each(function (index, elem) { 
+                $('#sampledparameter-table > tbody > tr > td > button').each(function (index, elem) {
                     if (elem.parentNode.id.length != 0) {
                         if ($.inArray(elem.parentNode.id.toString(), ids) == -1) {
                             disableButton($(elem));                                                         // disable the button in the table row
@@ -4703,17 +4741,17 @@ function enable_cardboard(){
                     enableButton($('button', '#' + value[0]));      // enable the name button in the table row
                     enableXYZColorPlot($('input:radio', $('button', '#' + value[0]).parent().parent()));        // enable the X, Y, Z, Color radio buttons in the row
                     enableXYZColorPlot($('input:checkbox', $('button', '#' + value[0]).parent().parent()));     // enable the Plot checkbox in the row
-                    enableParameterRow($('button', '#' + value[0]).parent().parent());                          // enable and show the whole row 
+                    enableParameterRow($('button', '#' + value[0]).parent().parent());                          // enable and show the whole row
                     addPlatformSymbols($('#' + value[0] + '_plats'), value[2]);                                 // show which platforms have this parameter
                     $('button', '#' + value[1] + '--' + value[0] + '-sn').parent().parent().addClass('mp-standardname-row-enabled');
                     ids.push(value[0]);
                     if (value[1].length != 0 && $('#show-standardnames-mp-checkbox').is(':checked')) {
                         enableButton($('button', '#' + value[1] + '--' + value[0] + '-sn'));                                // Enable the standard_name button in the table row
-                        enableParameterRow($('button', '#' + value[1] + '--' + value[0] + '-sn').parent().parent());        // enable and show the whole row 
+                        enableParameterRow($('button', '#' + value[1] + '--' + value[0] + '-sn').parent().parent());        // enable and show the whole row
                         ids.push(value[1] + '--' + value[0] + '-sn');
                     }
                 });
-                $('#measuredparameter-table > tbody > tr > td > button').each(function (index, elem) { 
+                $('#measuredparameter-table > tbody > tr > td > button').each(function (index, elem) {
                     if (elem.parentNode.id.length != 0) {
                         if ($.inArray(elem.parentNode.id.toString(), ids) == -1) {
                             disableButton($(elem));                                                         // disable the button in the table row
@@ -4726,7 +4764,7 @@ function enable_cardboard(){
             }
 
             // Do not assign time or depth to $('#start-ems'), $('#start-depth'), etc. on update - it breaks parameterplatformdatavaluepng display
-            //else if (key == 'time') { 
+            //else if (key == 'time') {
             //    var start = new Date(data[key][0]);
             //    $('#start-ems').val(start.getTime());
             //    $('#start-time').val(getUTCDateString(start));
@@ -4752,7 +4790,7 @@ function enable_cardboard(){
                             var options = simpledepthtime_options_zoom;
                             if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
                                 // Zoomed
-                                flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
+                                flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0],
                                     $('body').data()['start-ems'], $('body').data()['start-depth'], $('body').data()['end-ems'], $('body').data()['end-depth'] ] ] ];
                                 options = $.extend(true, {}, options, {
                                     series: { images: { show: true } }
@@ -4760,12 +4798,12 @@ function enable_cardboard(){
                             }
                             else {
                                 // Not Zooomed
-                                flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
+                                flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0],
                                     timedepthplot.getAxes().xaxis.min, timedepthplot.getAxes().yaxis.min, timedepthplot.getAxes().xaxis.max, timedepthplot.getAxes().yaxis.max] ] ];
                                 options = $.extend(true, {}, options, {
                                     series: { images: { show: true } },
                                     xaxis: { min: timedepthplot.getAxes().xaxis.min, max: timedepthplot.getAxes().xaxis.max },
-                                    yaxis: { min: timedepthplot.getAxes().yaxis.min, max: timedepthplot.getAxes().yaxis.max } 
+                                    yaxis: { min: timedepthplot.getAxes().yaxis.min, max: timedepthplot.getAxes().yaxis.max }
                                 });
                             }
                             if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
@@ -4778,7 +4816,7 @@ function enable_cardboard(){
                             // Construct text for Plot Data results - more verbose if Lines and Color selected
                             var plot_data_color, plot_data_lines;
                             if ( $('input:radio[name=parameters_plot]:checked').val() ) {
-                                plot_data_color = 'Color: ' + $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
+                                plot_data_color = 'Color: ' + $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[6]).text() + ' from ' +
                                                   $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()];
                                 // Show colorbar
                                 $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
@@ -4789,7 +4827,7 @@ function enable_cardboard(){
                                 plot_data_color = '';
                             }
                             if ( $('input:radio[name=parameters_contour_plot]:checked').val() ) {
-                                plot_data_lines = 'Lines: ' + $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
+                                plot_data_lines = 'Lines: ' + $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[6]).text() + ' from ' +
                                                   $('body').data()['parameterplatforms'][$('input:radio[name=parameters_contour_plot]:checked').val()];
                             }
                             else {
@@ -4917,7 +4955,7 @@ function enable_cardboard(){
                             $('#parameter-parameter-3dplot > div > div > a > img').removeAttr('src');
                         }
                         //$('#pp_x3d').css( {
-                        //        'background-image': 'url({{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + ')', 
+                        //        'background-image': 'url({{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + ')',
                         //        'background-repeat': 'no-repeat',
                         //        'position': 'relative' } );
                         if ( ! $('#collapseParameterParameter').hasClass('in') ) {
@@ -4970,10 +5008,10 @@ function enable_cardboard(){
                             ids.push(label[0]);
                         });
                     });
-                    $('.stoqs-attributes').each(function (index, elem) {     
-                        if ($.inArray(parseInt(elem.id), ids) == -1) {       
-                            disableButton($('button', $(elem)));            // disable the button in the table row      
-                        }       
+                    $('.stoqs-attributes').each(function (index, elem) {
+                        if ($.inArray(parseInt(elem.id), ids) == -1) {
+                            disableButton($('button', $(elem)));            // disable the button in the table row
+                        }
                     });
                 }
             }
@@ -5034,7 +5072,7 @@ function enable_cardboard(){
                         var timeElapsed = fraction * currentInterval;
                         var currentTime = (new Date()).getTime()/1000;
                         var newStartTime = currentTime - timeElapsed;
-                        
+
                         $('#PLATFORMS_TS').attr('enabled','false');
                         $('#PLATFORMS_TS').attr('startTime', String(newStartTime));
                         $('#PLATFORMS_TS').attr('enabled', 'true');
@@ -5067,7 +5105,7 @@ function enable_cardboard(){
                     if ( $('#temporal-parameter-li').hasClass('active') ) {
                         //$('a', '#temporal-depth-li').tab('show');
                         $("#temporal-parameter-li").hide();
-                    } 
+                    }
                 }
             }
 
@@ -5107,7 +5145,7 @@ function enable_cardboard(){
                         $('#spatial-anchor').click();
                     }
                     // Push initial temporal/depth bounds to the stack
-                    zoom_simpledepthtime_stack.push([ timedepthplot.getXAxes()[0].datamin, timedepthplot.getXAxes()[0].datamax, 
+                    zoom_simpledepthtime_stack.push([ timedepthplot.getXAxes()[0].datamin, timedepthplot.getXAxes()[0].datamax,
                                                       timedepthplot.getYAxes()[0].datamin, timedepthplot.getYAxes()[0].datamax,
                                                       simpledepthtime_options_zoom ]);
                     // Perform saved clicks embedded in $.url().param('permalink_id')
@@ -5133,7 +5171,7 @@ function enable_cardboard(){
             dataType: "json"
         }))
         .then(function( data, textStatus, jqXHR ) {
-            // If Update was the result of clearing the Temporal selection and a Plot Data radio button is checked 
+            // If Update was the result of clearing the Temporal selection and a Plot Data radio button is checked
             // then call rebuildFilters() again to re-Update the presentation with a new parameterplatformdatavaluepng
             if (clearingTemporalFlag) {
                 clearingTemporalFlag = false;
@@ -5184,13 +5222,13 @@ function enable_cardboard(){
         });
 
     } // updateSummaryData()
-   
+
     function setCrosshair(eventObject) {
         // Handle events from PlatformOrientation TimeSensor to update crosshair on Temporal flot plot
         // See: http://doc.x3dom.org/tutorials/animationInteraction/onoutputchange/example.html
         if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
             return;
-        
+
         var t = $('body').data()['po_start_time'] + eventObject.value * ($('body').data()['po_end_time'] - $('body').data()['po_start_time']);
 
         timedepthplot.lockCrosshair({x: t, y:0});
@@ -5210,7 +5248,7 @@ function enable_cardboard(){
                 'tabs': []}
         // Need to do the right column stuff before the left column stuff, since
         // checkboxes might appear depending on selections on the right.
-        
+
         var columns=['#right-column','#left-column'];
         $.each(columns, function(pos, divcol) {
             // Grab all the checked radio buttons on the page and save their information.
@@ -5223,9 +5261,9 @@ function enable_cardboard(){
             $('input:checked[type="checkbox"]', divcol).each(function(key, item) {
                 if ( ! $.isEmptyObject(item.id) && item.id != '' ) {
                     if ( $(item).parent().css('display') != 'none' ) {
-                        pl_params['clicks'].push('input[type="checkbox"][id="' + item.id + '"]'); 
+                        pl_params['clicks'].push('input[type="checkbox"][id="' + item.id + '"]');
                     }
-                } 
+                }
                 else if ( ! $.isEmptyObject(item.name) && item.name != '' ) {
                     if (item.name == 'activity_select_cb') {
                         if ( $('#collapseMetadata').hasClass('in') && $('#metadata-netcdf-li').hasClass('active') ) {
@@ -5269,7 +5307,7 @@ function enable_cardboard(){
                 pl_params['accordion_shown'].push('colormap-anchor');
             }
         });
-        
+
         $('.nav-tabs').each(function (pos, item) {
             $elements=$('li', item);
             $.each($('li', item), function (pos2, item2) {
@@ -5285,16 +5323,16 @@ function enable_cardboard(){
         pl_params['end-depth'] = $('body').data()['end-depth'];
 
         // Grab the center of the map so we can restore the center and lon/lat data.
-        pl_params['map-center']={ 'lonlat': map.getCenter(), 
+        pl_params['map-center']={ 'lonlat': map.getCenter(),
                                 'zoom': map.getZoom() };
         pl_params['map-layers']=[];
-        $.each(map.layers, function (pos, layer) { 
-            if (layer.visibility) { 
-                pl_params['map-layers'].push(layer.name); 
+        $.each(map.layers, function (pos, layer) {
+            if (layer.visibility) {
+                pl_params['map-layers'].push(layer.name);
             }
         });
-       
-        if ( $('#parametervalues-data').val() ) { 
+
+        if ( $('#parametervalues-data').val() ) {
             // Grab any parametervalues selections that have been put into the hidden element
             pl_params['histograms'] = $('#parametervalues-data').val();
             $.each(JSON.parse($('#parametervalues-data').val()), function(parameter, data) {
@@ -5306,7 +5344,7 @@ function enable_cardboard(){
         }
 
         return JSON.stringify(pl_params);
-        
+
     } // function collect_parameters_for_permalink()
 
     function save_zoom_from_permalink() {
@@ -5363,16 +5401,27 @@ function enable_cardboard(){
             switch(key) {
                 case 'map-center':
                     if (lonlat && zoom) {
-                         var lonlat=new OpenLayers.LonLat(value.lonlat.lon, value.lonlat.lat);
-                   		 map.setCenter(lonlat,value.zoom);
-                    } 
+                          //OLD OL CODE
+                          //var lonlat=new OpenLayers.LonLat(value.lonlat.lon, value.lonlat.lat);
+                   		    //map.setCenter(lonlat,value.zoom);
+                          //NEW LEAFLET CODE
+                          var latlon = L.latLng(value.lonlat.lat, value.lonlat.lon);
+                          map.setView(latlon,value.zoom)
+                    }
                     break;
                 case 'map-layers':
                     $.each(map.layers, function (pos, layer) {
                         if ($.inArray(layer.name, value) > -1) {
-                            layer.setVisibility(true);
+                            //OLD OL CODE
+                            //layer.setVisibility(true);
+                            //NEW LEAFLET CODE
+                            map.addLayer(layer)
+
                         } else {
-                            layer.setVisibility(false);
+                            //OLD OL CODE
+                            //layer.setVisibility(false);
+                            //NEW LEAFLET CODE
+                            map.removeLayer(layer)
                         }
                     });
                     break;
@@ -5385,7 +5434,7 @@ function enable_cardboard(){
                         }
                     });
                     break;
-                case 'tabs': 
+                case 'tabs':
                     $.each(value, function (pos, item) {
                         if ( item[0] != '#parameterParameterTabs' ) {
                             // ParameterParameter tab clicks happen on ajax success - don't do them here
@@ -5402,10 +5451,10 @@ function enable_cardboard(){
             }
         });
 
-        permalink_bypass=false;        
-        rebuild_from_permalink = true; 
+        permalink_bypass=false;
+        rebuild_from_permalink = true;
         rebuildFilters();
-        rebuild_from_permalink = false; 
+        rebuild_from_permalink = false;
 
         // Redraw selections on the histograms - do this after calling rebuildFilters()
         if ( ! $.isEmptyObject(parametervalues) ) {
@@ -5418,7 +5467,7 @@ function enable_cardboard(){
             }
         }
     }
-    
+
     function load_permalink() {
         var permalink_id=$.url().param('permalink_id');
         if (typeof permalink_id !== 'undefined') {
@@ -5447,17 +5496,17 @@ function enable_cardboard(){
 
     function hexToX3D(hex) {
         var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? 
+        return result ?
          (parseInt(result[1], 16) / 256).toString() + ' ' + (parseInt(result[2], 16) / 256).toString() + ' ' + (parseInt(result[3], 16) / 256).toString()
          : null;
     }
 
 
-    $(function () { 
+    $(function () {
         // Initialize the accordion fields.
         $(".collapse").collapse(); // Collapse all the accordion fields, click the Spatial and Temporal ones below
-        
-        // Add this behavior to all text fields, so when someone clicks on a field it highlights 
+
+        // Add this behavior to all text fields, so when someone clicks on a field it highlights
         // all the data so it's easy to copy to the clipboard.
         $(document).on('focus', 'input[type=text]', function(e) {
             // Select field contents
@@ -5466,184 +5515,238 @@ function enable_cardboard(){
             setTimeout(function() { t.select()}, 100);
         });
 
-                
-        /* 
-         * Setup OpenLayers with some default background layers.
-         */
-        OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
-        OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
-        //ctrlGraticule = new OpenLayers.Control.Graticule({autoActivate : false});
-        var options = {
-            projection: new OpenLayers.Projection("EPSG:3857"),
-            displayProjection: new OpenLayers.Projection("EPSG:4326"),
-            units: "m",
-            maxResolution: 156543.0339,
-            maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34,
-                                              20037508.34, 20037508.34),
-            controls: [
-                new OpenLayers.Control.Navigation(
-                    {dragPanOptions: {enableKinetic: true}}
-                )
-            ]
-        };
-        map = new OpenLayers.Map('map',options);
-
-        var bathyEsri = new OpenLayers.Layer.XYZ(
-            ' ESRI Ocean'
-            ,'https://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/${z}/${y}/${x}.jpg'
-            ,{
-               sphericalMercator : true
-              ,isBaseLayer       : true
-              ,wrapDateLine      : true
-              ,opacity           : 1
-              ,visibility        : true
-             }
-        );
-
-        var gebco_noaa = new OpenLayers.Layer.XYZ(
-            " GEBCO & NOAA Tiles",
-            [
-                "https://{{ mapserver_host }}/gebco_noaa/tiles/${z}/${x}/${y}.png"
-            ], 
-            {
-                attribution: "Sources: General Bathymetric Chart of the Oceans "
-                + "(<a href='http://www.gebco.net/'>GEBCO</a>)"
-                + " &amp; NOAA National Geophysical Data Center"
-                + " (<a href='http://www.ngdc.noaa.gov/mgg/dem/demportal.html'>NGDC</a>)",
-                sphericalMercator: true,
-                wrapDateLine: true,
-                transitionEffect: "resize",
-                buffer: 1,
-                numZoomLevels: 16
-            }
-        );
-        var osm=new OpenLayers.Layer.OSM(" OpenStreetMap");
-        map.addLayers([bathyEsri,gebco_noaa,osm]);
-        //ctrlGraticule.activate();
 
         /*
-         * Maptrack layers selected by UI 
+         * Setup OpenLayers with some default background layers.
          */
-        track_lines = new OpenLayers.Layer.WMS(
-            " trajectories",
-            "https://{{ mapserver_host }}/cgi-bin/mapserv",
-            { layers: 'trajectories',
-              map: '{{ mappath }}',
-              transparent: 'True' },
-            { units: 'degrees',
-              displayInLayerSwitcher: true,
-              projection: "EPSG:3857",
-              reproject: false,
-              visibility: true,
-              singleTile: true, ratio: 1,
-              displayOutsideMaxExtent: true } );
-
-        stations = new OpenLayers.Layer.WMS(
-            " stations",
-            "https://{{ mapserver_host }}/cgi-bin/mapserv",
-            { layers: 'timeSeries',
-              map: '{{ mappath }}',
-              transparent: 'True' },
-            { units: 'degrees',
-              displayInLayerSwitcher: true,
-              projection: "EPSG:3857",
-              reproject: false,
-              visibility: true,
-              singleTile: true, ratio: 1,
-              displayOutsideMaxExtent: true } );
-
-        sample_points = new OpenLayers.Layer.WMS(
-            " Sample points",
-            "https://{{ mapserver_host }}/cgi-bin/mapserv",
-            { layers: 'sample_points',
-              map: '{{ mappath }}',
-              transparent: 'True' },
-            { units: 'degrees',
-              displayInLayerSwitcher: true,
-              projection: "EPSG:3857",
-              reproject: false,
-              visibility: true,
-              singleTile: true, ratio: 1,
-              displayOutsideMaxExtent: true } );
-
-        sensortrackskml = new OpenLayers.Layer.Vector(" Sensor tracks", {
-            projection: map.displayProjection,
-            strategies: [new OpenLayers.Strategy.Fixed()],
-            // protocol is Dynamically set in update_sensortrackskml(), need placeholder url here for IE8
-            protocol: new OpenLayers.Protocol.HTTP({
-                url: 'measuredparameter.kmln',
-                format: new OpenLayers.Format.KML({
-                    extractStyles: true,
-                    extractAttributes: true,
-                    maxDepth: 2
-                })
-            })
+        //TODO: FIGURE THESE DEAFAULTS IN LEAFLETS
+        // OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
+        // OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
+        //ctrlGraticule = new OpenLayers.Control.Graticule({autoActivate : false});
+        //OLD OPENLAYERS MAP VARIABLES
+        // var options = {
+        //     projection: new OpenLayers.Projection("EPSG:3857"),
+        //     displayProjection: new OpenLayers.Projection("EPSG:4326"),
+        //     units: "m",
+        //     maxResolution: 156543.0339,
+        //     maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34,
+        //                                       20037508.34, 20037508.34),
+        //     controls: [
+        //         new OpenLayers.Control.Navigation(
+        //             {dragPanOptions: {enableKinetic: true}}
+        //         )
+        //     ]
+        // };
+        //map = new OpenLayers.Map('map',options);
+        //NEW LEAFLET MAP VARIABLE
+        var options  = {
+          worldCopyJump: true,
+          maxBounds: L.LatLngBounds([-20037508.34,-20037508.34],[20037508.34,20037508.34]),
+          center: [36.87513, -121.93641],
+          zoom: 0
+        };
+        map = L.map('map',options);
+        //OLD BASELAYERS OL CODE
+        // var bathyEsri = new OpenLayers.Layer.XYZ(
+        //     ' ESRI Ocean'
+        //     ,'https://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/${z}/${y}/${x}.jpg'
+        //     ,{
+        //        sphericalMercator : true
+        //       ,isBaseLayer       : true
+        //       ,wrapDateLine      : true
+        //       ,opacity           : 1
+        //       ,visibility        : true
+        //      }
+        // );
+        //
+        // var gebco_noaa = new OpenLayers.Layer.XYZ(
+        //     " GEBCO & NOAA Tiles",
+        //     [
+        //         "https://{{ mapserver_host }}/gebco_noaa/tiles/${z}/${x}/${y}.png"
+        //     ],
+        //     {
+        //         attribution: "Sources: General Bathymetric Chart of the Oceans "
+        //         + "(<a href='http://www.gebco.net/'>GEBCO</a>)"
+        //         + " &amp; NOAA National Geophysical Data Center"
+        //         + " (<a href='http://www.ngdc.noaa.gov/mgg/dem/demportal.html'>NGDC</a>)",
+        //         sphericalMercator: true,
+        //         wrapDateLine: true,
+        //         transitionEffect: "resize",
+        //         buffer: 1,
+        //         numZoomLevels: 16
+        //     }
+        // );
+        // var osm=new OpenLayers.Layer.OSM(" OpenStreetMap");
+        //NEW LEAFLET BASELAYERS CODE
+        var bathyEsri = L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}.jpg',{
+          opacity: 1
         });
 
-        sensortrackskml.events.register("loadend", sensortrackskml, function (e) {
-            if( sensortrackskml.getDataExtent() ) {
-                if ( $('#zoomtoextentonupdate').is(':checked') ) {
-                    map.zoomToExtent(sensortrackskml.getDataExtent());
-                }
-            }
+        var gebco_noaa = L.tileLayer('http://{{ mapserver_host }}/gebco_noaa/tiles/${z}/${y}/${x}.png',{
+              attribution: "Sources: General Bathymetric Chart of the Oceans &amp; NOAA National Geophysical Data Center",
+              keepBuffer: 1,
+              maxZoom: 16
         });
 
+        var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        });
+        //ctrlGraticule.activate();
+        //NEW LEAFLET METHOD TO ADD BASELAYERS TO MAP
+        var baseLayer = {
+          "ESRIOcean": bathyEsri,
+          "GEBCO & NOAA Tiles": gebco_noaa,
+          "OpenStreetMap": osm
+        };
+        /*
+         * Maptrack layers selected by UI
+         */
+         //OLD OL CODE
+        // track_lines = new OpenLayers.Layer.WMS(
+        //     " trajectories",
+        //     "https://{{ mapserver_host }}/cgi-bin/mapserv",
+        //     { layers: 'trajectories',
+        //       map: '{{ mappath }}',
+        //       transparent: 'True' },
+        //     { units: 'degrees',
+        //       displayInLayerSwitcher: true,
+        //       projection: "EPSG:3857",
+        //       reproject: false,
+        //       visibility: true,
+        //       singleTile: true, ratio: 1,
+        //       displayOutsideMaxExtent: true } );
+        //NEW LEAFLET TRACKLINES WMS LAYER
+        track_lines = L.tileLayer.wms("http://{{ mapserver_host }}/cgi-bin/mapserv",{
+          layers: 'trajectories',
+          format: 'image/png',
+          map: '{{ mappath }}',
+          transparent: true
+        });
+        //OLD STATIONS OL WMS LAYER CODE
+        // stations = new OpenLayers.Layer.WMS(
+        //     " stations",
+        //     "https://{{ mapserver_host }}/cgi-bin/mapserv",
+        //     { layers: 'timeSeries',
+        //       map: '{{ mappath }}',
+        //       transparent: 'True' },
+        //     { units: 'degrees',
+        //       displayInLayerSwitcher: true,
+        //       projection: "EPSG:3857",
+        //       reproject: false,
+        //       visibility: true,
+        //       singleTile: true, ratio: 1,
+        //       displayOutsideMaxExtent: true } );
+        //NEW STATIONS LEAFLET WMS LAYER CODE
+        stations = L.tileLayer.wms("http://{{ mapserver_host }}/cgi-bin/mapserv",{
+            layers: 'timeSeries',
+            format: 'image/png',
+            transparent: true,
+            map: "{{ mappath }}"} );
+        //OLD OL SAMPLEPOINTS CODE
+        // sample_points = new OpenLayers.Layer.WMS(
+        //     " Sample points",
+        //     "https://{{ mapserver_host }}/cgi-bin/mapserv",
+        //     { layers: 'sample_points',
+        //       map: '{{ mappath }}',
+        //       transparent: 'True' },
+        //     { units: 'degrees',
+        //       displayInLayerSwitcher: true,
+        //       projection: "EPSG:3857",
+        //       reproject: false,
+        //       visibility: true,
+        //       singleTile: true, ratio: 1,
+        //       displayOutsideMaxExtent: true } );
+        //NEW SAMPLE POINTS CODE
+        sample_points = L.tileLayer.wms("http://{{ mapserver_host }}/cgi-bin/mapserv",{
+            layers: 'sample_points',
+            format: 'image/png',
+            transparent: true,
+            map: "{{ mappath }}"} );
+        //TODO: IMPLEMENT KML FILES IN LEAFLET
+        // sensortrackskml = new OpenLayers.Layer.Vector(" Sensor tracks", {
+        //     projection: map.displayProjection,
+        //     strategies: [new OpenLayers.Strategy.Fixed()],
+        //     // protocol is Dynamically set in update_sensortrackskml(), need placeholder url here for IE8
+        //     protocol: new OpenLayers.Protocol.HTTP({
+        //         url: 'measuredparameter.kmln',
+        //         format: new OpenLayers.Format.KML({
+        //             extractStyles: true,
+        //             extractAttributes: true,
+        //             maxDepth: 2
+        //         })
+        //     })
+        // });
+        //
+        // sensortrackskml.events.register("loadend", sensortrackskml, function (e) {
+        //     if( sensortrackskml.getDataExtent() ) {
+        //         if ( $('#zoomtoextentonupdate').is(':checked') ) {
+        //             map.zoomToExtent(sensortrackskml.getDataExtent());
+        //         }
+        //     }
+        // });
 
 
-        // Test of WFS using ga_wfs 
+
+        // Test of WFS using ga_wfs
         // As of 11 Feb 2013 this request returns a MissingParameterValue Exception, but does not crash
         // Note the prerequisite software listed as a comment in urls.py before the url match for 'wfs'
-        var csrf_token = $.cookie('csrftoken');
-        samplewfs = new OpenLayers.Layer.Vector("Sample WFS", {
-            projection: map.displayProjection,
-            strategies: [new OpenLayers.Strategy.BBOX()],
-            protocol: new OpenLayers.Protocol.WFS({
-                url: "{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}wfs",
-                headers: {'X-CSRFToken': csrf_token},
-                featureType: 'Sample'
-            }),
-            styleMap: new OpenLayers.StyleMap({
-                    strokeWidth: 3,
-                    strokeColor: "#333333"
-            })
-        });
+        // var csrf_token = $.cookie('csrftoken');
+        // samplewfs = new OpenLayers.Layer.Vector("Sample WFS", {
+        //     projection: map.displayProjection,
+        //     strategies: [new OpenLayers.Strategy.BBOX()],
+        //     protocol: new OpenLayers.Protocol.WFS({
+        //         url: "{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}wfs",
+        //         headers: {'X-CSRFToken': csrf_token},
+        //         featureType: 'Sample'
+        //     }),
+        //     styleMap: new OpenLayers.StyleMap({
+        //             strokeWidth: 3,
+        //             strokeColor: "#333333"
+        //     })
+        // });
         //map.addLayer(samplewfs);
-
-
-        map.addLayer(sensortrackskml);
-        map.addLayer(track_lines); 
-        map.addLayer(stations); 
-        map.addLayer(sample_points); 
-
-        map.addControl(new OpenLayers.Control.LoadingPanel());
-        map.addControl(new OpenLayers.Control.LayerSwitcher());
-        map.addControl(new OpenLayers.Control.MousePosition());
-        map.addControl(new OpenLayers.Control.PanZoom());
-
-
+        //OLD OL METHOD TO ADD OVERLAYS TO MAP
+        //map.addLayer(sensortrackskml);
+        //map.addLayer(track_lines);
+        //map.addLayer(stations);
+        //map.addLayer(sample_points);
+        //NEW LEAFLET METHODS TO ADD OVERLAYS TO MAP
+        var overlays = {
+          "Stations": stations,
+          "Trajectories": track_lines,
+          "SamplePoints": sample_points
+        };
+        //OLD OPTIONS IN OL ARE DEFAULT IN LEAFLET
+        // map.addControl(new OpenLayers.Control.LoadingPanel());
+        // map.addControl(new OpenLayers.Control.LayerSwitcher());
+        // map.addControl(new OpenLayers.Control.MousePosition());
+        // map.addControl(new OpenLayers.Control.PanZoom());
+        //NEW LEAFLET METHOD TO SET DEAFULT LAYERS TO MAP AND ADD OVERLAYS AND BASELAYERS ARRAY
+        L.control.layers(baseLayer,overlays).addTo(map);
+        baseLayer.OpenStreetMap.addTo(map);
         // Add polygon drawing tool and capture WKT of polygon as WGS84
-        map.addLayer(polyLayer);
-        var panelControls = [
-            new OpenLayers.Control.Navigation(),
-            new OpenLayers.Control.DrawFeature(polyLayer,
-                OpenLayers.Handler.Polygon,
-                {   'displayClass': 'olControlDrawFeaturePolygon',
-                    featureAdded: function() {
-                        var projWGS84 = new OpenLayers.Projection("EPSG:4326");
-                        var proj3857 = new OpenLayers.Projection("EPSG:3857");
-                        var polyWGS84 = polyLayer.features[0].geometry;
-                        polyWGS84.transform(proj3857, projWGS84);
-                        console.log(polyWGS84);
-                        OpenLayers.Console.userError(polyWGS84);
-                        rebuildFilters();
-                    }
-                }
-            )
-        ];
-        var toolbar = new OpenLayers.Control.Panel({
-            displayClass: 'olControlEditingToolbar',
-            defaultControl: panelControls[0]
-        });
+        // map.addLayer(polyLayer);
+        // var panelControls = [
+        //     new OpenLayers.Control.Navigation(),
+        //     new OpenLayers.Control.DrawFeature(polyLayer,
+        //         OpenLayers.Handler.Polygon,
+        //         {   'displayClass': 'olControlDrawFeaturePolygon',
+        //             featureAdded: function() {
+        //                 var projWGS84 = new OpenLayers.Projection("EPSG:4326");
+        //                 var proj3857 = new OpenLayers.Projection("EPSG:3857");
+        //                 var polyWGS84 = polyLayer.features[0].geometry;
+        //                 polyWGS84.transform(proj3857, projWGS84);
+        //                 console.log(polyWGS84);
+        //                 OpenLayers.Console.userError(polyWGS84);
+        //                 rebuildFilters();
+        //             }
+        //         }
+        //     )
+        // ];
+        // var toolbar = new OpenLayers.Control.Panel({
+        //     displayClass: 'olControlEditingToolbar',
+        //     defaultControl: panelControls[0]
+        // });
         // Commented out until it's fully implemented
         //toolbar.addControls(panelControls);
         //map.addControl(toolbar);
@@ -5664,7 +5767,7 @@ function enable_cardboard(){
         //                            QUERY_LAYERS: sample_points.params.LAYERS,
         //                            WIDTH: sample_points.map.size.w,
         //                            HEIGHT: sample_points.map.size.h});
-        //    
+        //
         //    OpenLayers.loadURL(sample_point_url, '', this, setHTML);
         //    OpenLayers.Event.stop(e);
         //});
@@ -5716,7 +5819,7 @@ function enable_cardboard(){
         params['except'] = ['mpsql', 'spsql'];
         updateSummaryData(true);
 
-          
+
         $('body').on('change', '.slider-values', function (e) {
             var $slider=$('#slider-' + this.id.split('-').reverse()[0])
             var setting=$slider.data().reverseformatter($(this).val());
@@ -5734,7 +5837,7 @@ function enable_cardboard(){
                 $slider.slider("values",pos,[oldvalue])
             }
         });
-        
+
 
         // Tootips that are disabled after first use - don't want to annoy users too much
         //$('#showsensortracks').parent().tooltip({title: 'Select a Measured Parameter to enable'});
