@@ -3,7 +3,7 @@ dist: precise
 python:
   - "3.6"
 addons:
-  postgresql: "9.4"
+  postgresql: "10.3"
   firefox: "49.0"
 services:
   - rabbitmq 
