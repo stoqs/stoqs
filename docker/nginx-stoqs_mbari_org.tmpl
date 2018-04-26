@@ -96,6 +96,7 @@ http {
         location /x3d {
             alias /srv/html/x3d;
             include /etc/nginx/mime.types;
+            add_header Access-Control-Allow-Origin *;
         }
 
         location /terrain {
