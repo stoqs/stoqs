@@ -123,7 +123,7 @@ class CCELoader(LoadScript):
                     runTimeSeriesLoader(url, self.campaignName, self.campaignDescription,
                                         aName, pName, self.colors[pName.lower()], 'bed', 
                                         'deployment', self.bed_parms, self.dbAlias, stride)
-                self.addPlatformResources('http://stoqs.mbari.org/x3d/beds/beds_housing_with_axes_src_scene.x3d',
+                self.addPlatformResources('https://stoqs.mbari.org/x3d/beds/beds_housing_with_axes_src_scene.x3d',
                                           pName, scalefactor=10)
             except (OpendapError, InvalidSliceRequest, webob.exc.HTTPError):
                 pass
@@ -181,10 +181,10 @@ class CCELoader(LoadScript):
             # For timeseriesProfile data we need to pass the nominaldepth of the plaform
             # so that the model is put at the correct depth in the Spatial -> 3D view.
             try:
-                self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
+                self.addPlatformResources('https://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
                                           platformName, nominaldepth=self.ccebin_nominaldepth)
             except AttributeError:
-                self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
+                self.addPlatformResources('https://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
                                           platformName)
 
 # Dynamic method creation for any number of 'ccems' moorings

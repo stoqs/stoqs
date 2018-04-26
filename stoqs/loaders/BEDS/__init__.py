@@ -78,7 +78,7 @@ class BEDSLoader(LoadScript):
                     DAPloaders.runTimeSeriesLoader(url, self.campaignName, self.campaignDescription,
                                                    aName, pName, self.colors[pName.lower()], 'bed', 
                                                    'deployment', self.bed_parms, self.dbAlias, stride)
-                self.addPlatformResources('http://stoqs.mbari.org/x3d/beds/beds_housing_with_axes_src_scene.x3d',
+                self.addPlatformResources('https://stoqs.mbari.org/x3d/beds/beds_housing_with_axes_src_scene.x3d',
                                           pName, scalefactor=10)
             except (DAPloaders.OpendapError, DAPloaders.InvalidSliceRequest):
                 pass

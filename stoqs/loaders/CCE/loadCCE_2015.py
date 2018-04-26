@@ -36,7 +36,7 @@ class CCE_2015_Campaign:
         self.cl = CCELoader(db_alias, campaign_name,
                 description = 'Coordinated Canyon Experiment - Measuring turbidity flows in Monterey Submarine Canyon',
                 x3dTerrains = { 
-                    'http://stoqs.mbari.org/x3d/MontereyCanyonBeds_1m+5m_1x_src/MontereyCanyonBeds_1m+5m_1x_src_scene.x3d': {
+                    'https://stoqs.mbari.org/x3d/MontereyCanyonBeds_1m+5m_1x_src/MontereyCanyonBeds_1m+5m_1x_src_scene.x3d': {
                         'name': 'MontereyCanyonBeds_1m+5m_1x',
                         'position': '2232.80938 10346.25515 3543.76722',
                         'orientation': '-0.98394 0.16804 -0.06017 1.25033',
@@ -48,7 +48,7 @@ class CCE_2015_Campaign:
                         'zFar': '30000.0',
                         'selected': '1'
                     },
-                    'http://stoqs.mbari.org/x3d/Monterey25_1x/Monterey25_1x_src_scene.x3d': {
+                    'https://stoqs.mbari.org/x3d/Monterey25_1x/Monterey25_1x_src_scene.x3d': {
                         'name': 'Monterey25_1x',
                         'position': '-32985.28634 88026.90417 22334.02600',
                         'orientation': '-0.99875 -0.04772 0.01482 1.31683',

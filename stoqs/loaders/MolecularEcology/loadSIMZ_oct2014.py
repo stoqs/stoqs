@@ -32,7 +32,7 @@ cl = CANONLoader('stoqs_simz_oct2014', 'Sampling and Identification of Marine Zo
                         # location for rotateYUp, making fly navigation work well. All other GCC
                         # positions are in the GeoOrigin with rotateYUp='true' coordinate system
                         x3dTerrains = {
-                            'http://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                            'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                 'position': '-5334.11754 77527.85269 57495.84643',
                                 'orientation': '-0.99840 0.05415 0.01651 0.88794',
                                 'centerOfRotation': '1973.702 -553.761 -10885.8333',

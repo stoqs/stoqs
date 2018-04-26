@@ -37,7 +37,7 @@ from thredds_crawler.etree import etree
 cl = LakeMILoader('stoqs_michigan2016', 'Lake Michigan LRAUV Experiment 2016',
                     description = 'LRAUV 2016 Experiment in Lake Michigan',
                     x3dTerrains = {
-                                    'http://stoqs.mbari.org/x3d/michigan_lld_10x/michigan_lld_10x_src_scene.x3d': {
+                                    'https://stoqs.mbari.org/x3d/michigan_lld_10x/michigan_lld_10x_src_scene.x3d': {
                                         'position': '277414.36721 -5207201.16684 4373105.96194',
                                         'orientation': '0.99821 -0.05662 0.01901 1.48579',
                                         'centerOfRotation': '281401.0288298179 -4639090.577582279 4354217.4974804',
