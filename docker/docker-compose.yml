@@ -14,7 +14,7 @@ services:
       - ${POSTGRES_DATA}:/var/lib/postgresql/data
       - ${POSTGRES_WALDIR}:/var/lib/postgresql/waldir
     ports:
-      - "5432:5432"
+      - "${STOQS_PGHOST_PORT}:5432"
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - STOQSADM_PASSWORD=${STOQSADM_PASSWORD}
@@ -78,7 +78,6 @@ services:
     container_name: stoqs-nginx
     ports:
       - "80:80"
-      - "8000:8000"
       - "443:443"
     depends_on:
       - stoqs
