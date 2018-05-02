@@ -31,7 +31,7 @@ import logging
 
 from django.conf import settings
 from django.test import TestCase
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from stoqs.models import Activity, Parameter, Resource, MeasuredParameter
 
 logger = logging.getLogger('stoqs.tests')

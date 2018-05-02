@@ -21,7 +21,6 @@ a Sample or a Measurement.
 '''
 from django.conf import settings
 from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet, QuerySet
-from django.contrib.gis.db.models.query import GeoQuerySet
 from django.db import DatabaseError
 from datetime import datetime
 from stoqs.models import MeasuredParameter, Parameter, SampledParameter, ParameterGroupParameter, MeasuredParameterResource
@@ -44,9 +43,9 @@ ITER_HARD_LIMIT = 1000000
 
 class MPQuerySet(object):
     '''
-    A class to simulate a GeoQuerySet that's suitable for use everywhere a GeoQuerySet may be used.
+    A class to simulate a QuerySet that's suitable for use everywhere a QuerySet may be used.
     This special class supports adapting MeasuredParameter RawQuerySets to make them look like regular
-    GeoQuerySets.  See: http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  (I looked at Google
+    QuerySets.  See: http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  (I looked at Google
     again to see if self-joins are possible in Django, and confirmed that they are probably not.  
     See: http://stackoverflow.com/questions/1578362/self-join-with-django-orm.)
     '''
@@ -106,7 +105,7 @@ class MPQuerySet(object):
     def __iter__(self):
         '''
         Main way to access data that is used by interators in templates, etc.
-        Simulate behavior of regular GeoQuerySets.  Modify & format output as needed.
+        Simulate behavior of regular QuerySets.  Modify & format output as needed.
         '''
         minimal_values_list = False
         for item in self.rest_columns:
@@ -252,9 +251,9 @@ class MPQuerySet(object):
 
 class SPQuerySet(object):
     '''
-    A class to simulate a GeoQuerySet that's suitable for use everywhere a GeoQuerySet may be used.
+    A class to simulate a QuerySet that's suitable for use everywhere a QuerySet may be used.
     This special class supports adapting SampledParameter RawQuerySets to make them look like regular
-    GeoQuerySets.  See: http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  (I looked at Google
+    QuerySets.  See: http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  (I looked at Google
     again to see if self-joins are possible in Django, and confirmed that they are probably not.  
     See: http://stackoverflow.com/questions/1578362/self-join-with-django-orm.)
     '''
@@ -318,7 +317,7 @@ class SPQuerySet(object):
     def __iter__(self):
         '''
         Main way to access data that is used by interators in templates, etc.
-        Simulate behavior of regular GeoQuerySets.  Modify & format output as needed.
+        Simulate behavior of regular QuerySets.  Modify & format output as needed.
         '''
         minimal_values_list = False
         for item in self.rest_columns:
@@ -332,8 +331,6 @@ class SPQuerySet(object):
 
         if isinstance(self.sp_query, QuerySet):
             logger.debug('self.sp_query is QuerySet')
-        if isinstance(self.sp_query, GeoQuerySet):
-            logger.debug('self.sp_query is GeoQuerySet')
         if isinstance(self.sp_query, RawQuerySet):
             logger.debug('self.sp_query is RawQuerySet')
 
@@ -464,7 +461,7 @@ class MPQuery(object):
     This class is designed to handle building and managing queries against the MeasuredParameter table of the STOQS database.
     Special tooling is needed to perform parameter value queries which require building raw sql statements in order to
     execute the self joins needed on the measuredparameter table.  The structure of RawQuerySet returned is harmonized
-    with the normal GeoQuerySet returned through regular .filter() operations by using the MPQuerySet "adapter".
+    with the normal QuerySet returned through regular .filter() operations by using the MPQuerySet "adapter".
     '''
     rest_select_items = '''stoqs_parameter.id as parameter__id,
                          stoqs_parameter.name as parameter__name,
@@ -659,7 +656,7 @@ class MPQuery(object):
             logger.debug('Adding parameter__id=%d filter to qs_mp', int(self.parameterID))
             qs_mp = qs_mp.filter(parameter__id=int(self.parameterID))
 
-        # Wrap MPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
+        # Wrap MPQuerySet around either RawQuerySet or QuerySet to control the __iter__() items for lat/lon etc.
         if 'parametervalues' in self.kwargs:
             if self.kwargs['parametervalues']:
                 # Start with fresh qs_mp without .values()
@@ -722,7 +719,7 @@ class MPQuery(object):
         if orderedFlag:
             qs_sp = qs_sp.order_by('sample__instantpoint__activity__name', 'sample__instantpoint__timevalue')
 
-        # Wrap SPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
+        # Wrap SPQuerySet around either RawQuerySet or QuerySet to control the __iter__() items for lat/lon etc.
         if 'parametervalues' in self.kwargs:
             if self.kwargs['parametervalues']:
                 # A depth of 4 is needed in order to see Platform
