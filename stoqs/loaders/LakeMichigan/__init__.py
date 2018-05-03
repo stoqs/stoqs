@@ -86,7 +86,7 @@ class LakeMILoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_tethys.x3d', pName)
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_tethys.x3d', pName)
 
 
     def loadAll(self, stride=None):

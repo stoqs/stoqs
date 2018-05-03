@@ -5503,7 +5503,7 @@ function enable_cardboard(){
         var gebco_noaa = new OpenLayers.Layer.XYZ(
             " GEBCO & NOAA Tiles",
             [
-                "https://{{ mapserver_host }}/gebco_noaa/tiles/${z}/${x}/${y}.png"
+                "{{ mapserver_scheme }}://{{ mapserver_host }}/gebco_noaa/tiles/${z}/${x}/${y}.png"
             ], 
             {
                 attribution: "Sources: General Bathymetric Chart of the Oceans "
@@ -5526,7 +5526,7 @@ function enable_cardboard(){
          */
         track_lines = new OpenLayers.Layer.WMS(
             " trajectories",
-            "https://{{ mapserver_host }}/cgi-bin/mapserv",
+            "{{ mapserver_scheme }}://{{ mapserver_host }}/cgi-bin/mapserv",
             { layers: 'trajectories',
               map: '{{ mappath }}',
               transparent: 'True' },
@@ -5540,7 +5540,7 @@ function enable_cardboard(){
 
         stations = new OpenLayers.Layer.WMS(
             " stations",
-            "https://{{ mapserver_host }}/cgi-bin/mapserv",
+            "{{ mapserver_scheme }}://{{ mapserver_host }}/cgi-bin/mapserv",
             { layers: 'timeSeries',
               map: '{{ mappath }}',
               transparent: 'True' },
@@ -5554,7 +5554,7 @@ function enable_cardboard(){
 
         sample_points = new OpenLayers.Layer.WMS(
             " Sample points",
-            "https://{{ mapserver_host }}/cgi-bin/mapserv",
+            "{{ mapserver_scheme }}://{{ mapserver_host }}/cgi-bin/mapserv",
             { layers: 'sample_points',
               map: '{{ mappath }}',
               transparent: 'True' },
@@ -5673,7 +5673,7 @@ function enable_cardboard(){
         //}
         // - Create a popup window
         //var sample_points_info = new OpenLayers.Control.WMSGetFeatureInfo({
-        //        url: "http://{{ mapserver_host }}/cgi-bin/mapserv",
+        //        url: "{{ mapserver_scheme }}://{{ mapserver_host }}/cgi-bin/mapserv",
         //        maxFeatures: 3,
         //        title: 'Identify features by clicking',
         //        queryVisible: true,

@@ -14,7 +14,7 @@ services:
       - ${POSTGRES_DATA}:/var/lib/postgresql/data
       - ${POSTGRES_WALDIR}:/var/lib/postgresql/waldir
     ports:
-      - "5432:5432"
+      - "${STOQS_PGHOST_PORT}:5432"
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - STOQSADM_PASSWORD=${STOQSADM_PASSWORD}
@@ -48,6 +48,7 @@ services:
       - DATABASE_SUPERUSER_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:${STOQS_PGHOST_PORT}/stoqs
       - PGHOST=${STOQS_PGHOST}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - MAPSERVER_SCHEME=https
       - MAPSERVER_HOST=${MAPSERV_SERVER_NAME}
       - URL_MAPFILE_DIR=/maps
       - STATIC_URL=/static/
@@ -77,7 +78,6 @@ services:
     container_name: stoqs-nginx
     ports:
       - "80:80"
-      - "8000:8000"
       - "443:443"
     depends_on:
       - stoqs

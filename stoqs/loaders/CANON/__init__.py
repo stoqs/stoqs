@@ -144,7 +144,7 @@ class CANONLoader(LoadScript):
                                        plotTimeSeriesDepth=0.0)
             load_gulps(aName, f, self.dbAlias)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName,
                                   scalefactor=2)
 
     def loadTethys(self, stride=None):
@@ -166,7 +166,7 @@ class CANONLoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_tethys.x3d', pName,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_tethys.x3d', pName,
                                   scalefactor=2)
 
     def loadDaphne(self, stride=None):
@@ -189,7 +189,7 @@ class CANONLoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_daphne.x3d', pName,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_daphne.x3d', pName,
                                   scalefactor=2)
 
     def loadMakai(self, stride=None):
@@ -211,7 +211,7 @@ class CANONLoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_makai.x3d', pName,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_makai.x3d', pName,
                                   scalefactor=2)
 
     def loadAku(self, stride=None):
@@ -233,7 +233,7 @@ class CANONLoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_aku.x3d', pName,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_aku.x3d', pName,
                                   scalefactor=2)
 
     def loadAhi(self, stride=None):
@@ -255,7 +255,7 @@ class CANONLoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_ahi.x3d', pName,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_ahi.x3d', pName,
                                   scalefactor=2)
 
     def loadOpah(self, stride=None):
@@ -277,7 +277,7 @@ class CANONLoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_opah.x3d', pName,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_opah.x3d', pName,
                                   scalefactor=2)
 
     def loadMartin(self, stride=None):
@@ -834,10 +834,10 @@ class CANONLoader(LoadScript):
         # For timeseriesProfile data we need to pass the nominaldepth of the plaform
         # so that the model is put at the correct depth in the Spatial -> 3D view.
         try:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+            self.addPlatformResources('https://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName, nominaldepth=self.m1_nominaldepth)
         except AttributeError:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+            self.addPlatformResources('https://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName)
 
     def loadM2(self, stride=None):
@@ -857,10 +857,10 @@ class CANONLoader(LoadScript):
         # For timeseriesProfile data we need to pass the nominaldepth of the plaform
         # so that the model is put at the correct depth in the Spatial -> 3D view.
         try:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+            self.addPlatformResources('https://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName, nominaldepth=self.m2_nominaldepth)
         except AttributeError:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+            self.addPlatformResources('https://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName)
 
     def loadM1ts(self, stride=None):
@@ -990,7 +990,7 @@ class CANONLoader(LoadScript):
                                            platformName, self.colors['flyer'], 'ship', activitytypeName,
                                            self.wfuctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/flyer/flyer.x3d', platformName)
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/flyer/flyer.x3d', platformName)
 
     def loadWFpctd(self, stride=None, platformName='WesternFlyer_PCTD', activitytypeName='Western Flyer Profile CTD Data'):
         '''

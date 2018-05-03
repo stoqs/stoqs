@@ -285,6 +285,7 @@ def queryUI(request):
     config_settings = {'site_uri': request.build_absolute_uri('/')[:-1],
                        'formats': formats,
                        'colormaps': cmaps,
+                       'mapserver_scheme': settings.MAPSERVER_SCHEME,
                        'mapserver_host': settings.MAPSERVER_HOST,
                        'mappath': path.join(settings.URL_MAPFILE_DIR, request.session['mappath']),
                        'home_page_link': settings.HOME_PAGE_LINK,

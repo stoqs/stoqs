@@ -24,7 +24,7 @@ from CANON import CANONLoader
 cl = CANONLoader('stoqs_dorado2009', 'Dorado - All 2009 missions',
                     description = 'In Monterey Bay and Santa Monica Basin - includes processed Gulper Samples',
                     x3dTerrains = {
-                            'http://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                            'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                 'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                 'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                 'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
