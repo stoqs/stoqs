@@ -23,7 +23,7 @@ env:
   - DJANGO=1.10
 install:
   - conda install --yes --verbose python=3.6 hdf4 hdf5 netcdf4 atlas numpy scipy matplotlib nose python-dateutil statsmodels
-  - conda install --yes -c omnia python-coveralls=2.9.0
+  - conda install --yes -c omnia python-coveralls=2.9.1
   - pip install --upgrade pip
   - pip install -r requirements/travis-ci.txt
 before_script:
@@ -43,7 +43,7 @@ before_script:
 script:  
   - ./test.sh CHANGEME load noextraload
 after_script:
-  - COVERALLS_REPO_TOKEN=W1wSPd6A9HGyoPWXGlyZ6mxkGsZR7BybT coveralls --base_dir stoqs
+  - travis_wait 5 COVERALLS_REPO_TOKEN=W1wSPd6A9HGyoPWXGlyZ6mxkGsZR7BybT coveralls --base_dir stoqs
 notifications:
   email:
     on_success: change
