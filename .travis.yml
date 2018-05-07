@@ -1,5 +1,5 @@
 language: python
-dist: precise
+##dist: precise
 python:
   - "3.6"
 addons:
@@ -39,9 +39,9 @@ before_script:
   - export PATH=$PWD/firefox:$PATH:$PWD/geckodriver
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
-  - sudo rabbitmqctl add_user stoqs stoqs
-  - sudo rabbitmqctl add_vhost stoqs
-  - sudo rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
+  ##- sudo rabbitmqctl add_user stoqs stoqs
+  ##- sudo rabbitmqctl add_vhost stoqs
+  ##- sudo rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
 script:  
   - ./test.sh CHANGEME load noextraload
 after_script:
