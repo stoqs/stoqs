@@ -24,7 +24,7 @@ env:
 install:
   - conda install --yes --verbose python=3.6 hdf4 hdf5 netcdf4 atlas numpy scipy matplotlib nose python-dateutil statsmodels
   - conda install --yes -c omnia python-coveralls=2.9.0
-  - pip install --upgrade pip
+  ##- pip install --upgrade pip
   - pip install -r requirements/travis-ci.txt
 before_script:
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
