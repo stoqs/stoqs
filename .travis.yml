@@ -1,5 +1,5 @@
 language: python
-dist: precise
+##dist: precise
 python:
   - "3.6"
 addons:
@@ -14,7 +14,7 @@ before_install:
   - export PATH=/home/travis/miniconda3/bin:$PATH
   - export HDF5_DIR=/home/travis/miniconda3/
   - export NETCDF4_DIR=/home/travis/miniconda3/
-  - export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libgfortran.so.3
+##  - export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libgfortran.so.3
   - export TERM=xterm
   - conda update --yes conda
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.11.1/geckodriver-v0.11.1-linux64.tar.gz
@@ -43,7 +43,7 @@ before_script:
 script:  
   - ./test.sh CHANGEME load noextraload
 after_script:
-  - COVERALLS_REPO_TOKEN=W1wSPd6A9HGyoPWXGlyZ6mxkGsZR7BybT coveralls --base_dir stoqs
+  - COVERALLS_REPO_TOKEN=M0efdsS1QPctzjdEicrNy1LXIJbI5WAMt coveralls --base_dir stoqs
   - ./test.sh CHANGEME load noextraload
 notifications:
   email:
