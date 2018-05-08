@@ -38,6 +38,9 @@ before_script:
   - export PATH=$PWD/firefox:$PATH:$PWD/geckodriver
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
+  - wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/natgrid-0.2/natgrid-0.2.1.tar.gz
+  - tar -xzf natgrid-0.2.1.tar.gz
+  - cd natgrid-0.2.1 && python setup.py install && cd ..
   ##- sudo rabbitmqctl add_user stoqs stoqs
   ##- sudo rabbitmqctl add_vhost stoqs
   ##- sudo rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
@@ -45,7 +48,6 @@ script:
   - ./test.sh CHANGEME load noextraload
 after_script:
   - COVERALLS_REPO_TOKEN=M0efdsS1QPctzjdEicrNy1LXIJbI5WAMt coveralls --base_dir stoqs
-  - ./test.sh CHANGEME load noextraload
 notifications:
   email:
     on_success: change
