@@ -16,13 +16,12 @@ before_install:
   - export NETCDF4_DIR=/home/travis/miniconda3/
   - export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libgfortran.so.3
   - export TERM=xterm
+  - export COVERALLS_REPO_TOKEN=W1wSPd6A9HGyoPWXGlyZ6mxkGsZR7BybT
   - conda update --yes conda
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.11.1/geckodriver-v0.11.1-linux64.tar.gz
   - tar -xzf geckodriver-v0.11.1-linux64.tar.gz --directory /home/travis/miniconda3/bin
 env:
   - DJANGO=1.10
-  global:
-    - COVERALLS_REPO_TOKEN=W1wSPd6A9HGyoPWXGlyZ6mxkGsZR7BybT
 install:
   - conda install --yes --verbose python=3.6 hdf4 hdf5 netcdf4 atlas numpy scipy matplotlib nose python-dateutil statsmodels
   - conda install --yes -c omnia python-coveralls=2.9.0
