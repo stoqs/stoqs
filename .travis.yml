@@ -1,5 +1,5 @@
 language: python
-##dist: precise
+dist: precise
 python:
   - "3.6"
 addons:
