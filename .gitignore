@@ -48,3 +48,5 @@ docker/.env
 docker/*.key
 docker/*.crt
 
+# Jupyter Notebook checkpoints
+stoqs/contrib/notebooks/.ipynb_checkpoints/
