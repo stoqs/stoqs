@@ -40,7 +40,7 @@ before_script:
 script:  
   - ./test.sh CHANGEME load noextraload
 after_script:
-  - coveralls --base_dir stoqs --rcfile=stoqs/.coveragerc
+  - coveralls --base_dir stoqs
 notifications:
   email:
     on_success: change
