@@ -40,7 +40,7 @@ before_script:
 script:  
   - ./test.sh CHANGEME load noextraload
 after_script:
-  - COVERALLS_REPO_TOKEN=M0efdsS1QPctzjdEicrNy1LXIJbI5WAMt coveralls --base_dir stoqs
+  - coveralls --base_dir stoqs --rcfile=stoqs/.coveragerc
 notifications:
   email:
     on_success: change
