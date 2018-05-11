@@ -9,5 +9,3 @@
 #
 # Do not factor these out into base.txt!
 
-# python-coveralls 2.9.0 has requirement coverage==4.0.3
-coverage==4.0.3
