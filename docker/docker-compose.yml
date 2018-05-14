@@ -29,6 +29,9 @@ services:
     volumes:
       - ${STOQS_VOLS_DIR}/maps:/maps:ro
     container_name: stoqs-mapserver
+    # Expose port 80 if PRODUCTION=false
+    ##ports:
+    ##  - "80:80"
     env_file:
       - ./.env
 
@@ -48,7 +51,6 @@ services:
       - DATABASE_SUPERUSER_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:${STOQS_PGHOST_PORT}/stoqs
       - PGHOST=${STOQS_PGHOST}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - MAPSERVER_SCHEME=https
       - MAPSERVER_HOST=${MAPSERV_SERVER_NAME}
       - URL_MAPFILE_DIR=/maps
       - STATIC_URL=/static/
@@ -62,9 +64,13 @@ services:
     depends_on:
       - mapserver
       - postgis
+    # Expose port 8000 if PRODUCTION=false
+    ##ports:
+    ##  - "8000:8000"
     env_file:
       - ./.env
 
+  # Disable nginx service if PRODUCTION=false
   nginx:
     build:
         context: .
