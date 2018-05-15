@@ -99,10 +99,10 @@ you can visit the site at https://localhost &mdash; it uses a self-signed certif
 browser will complain. (The nginx service also delivers the same app at http://localhost:8000
 without the cerificate issue.)
 
-The default settings in template.env will run a production nginx/uwsgi/stoqs server configured
+The default settings in `template.env` will run a production nginx/uwsgi/stoqs server configured
 for https://localhost.  To configure a server for intranet or public serving of
-your data follow the instructions provided in the comments for the settings in your .env file.
-After editing your .env file you will need to rebuild your stoqs image and restart the Docker 
+your data follow the instructions provided in the comments for the settings in your `.env` file.
+After editing your `.env` file you will need to rebuild your stoqs image and restart the Docker 
 services, this time with the `-d` option to run the containers in the background:
 
 ```bash
@@ -112,7 +112,7 @@ docker-compose up -d
 
 See https://docs.docker.com/compose/production/ for more information about running in production.
 
-To load some existing MBARI campaign data edit your .env file to uncomment the line:
+To load some existing MBARI campaign data edit your `.env` file to uncomment the line:
 
 ```
 CAMPAIGNS_MODULE=stoqs/mbari_campaigns.py
