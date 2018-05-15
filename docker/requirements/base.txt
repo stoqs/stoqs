@@ -47,7 +47,7 @@ requests-oauthlib==0.8.0
 scikit-learn==0.19.1
 scipy==1.1.0
 seawater==3.3.4
-selenium==3.11.0
+selenium==3.12.0
 simplejson==3.15.0
 six==1.11.0
 slacker==0.9.65
