@@ -21,7 +21,7 @@ jupyter==1.0.0
 MarkupSafe==1.0
 netCDF4==1.4.0
 numpy==1.14.3
-pandas==0.22.0
+pandas==0.23.0
 requests==2.18.4
 Pygments==2.2.0
 pygraphviz==1.3.1
