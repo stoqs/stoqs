@@ -14,12 +14,14 @@ To use:
 # http://mahugh.com/2017/05/23/http-requests-asyncio-aiohttp-vs-requests/
 
 import asyncio
+import concurrent
 import django
 import os
 import psycopg2
 import sys
 
 from aiohttp import ClientSession
+from aiohttp.client_exceptions import ClientConnectorError
 from timeit import default_timer
 
 # Insert Django App directory (parent of config) into python path
@@ -56,30 +58,35 @@ def iter_opendap_urls_batch(db, batch=4):
         yield (Resource.objects.using(db).filter(name='opendap_url')
                 .order_by('name').values_list('uristring', flat=True)[i:i + batch])
 
-async def check_opendap_dds(url, session):
-    check_opendap_dds.start_time[url] = default_timer()
-    async with session.get(url) as response:
-        if response.status == 404:
-            symb = 'x'
-        elif response.status == 301:
-            symb = ','
-        else:
-            symb = '.'
+async def check_opendap(url, session):
+    check_opendap.start_time[url] = default_timer()
 
-        elapsed = default_timer() - check_opendap_dds.start_time[url]
-        ##print('{0:30}{1:5.2f} {2}'.format(url, elapsed, asterisks(elapsed)))
+    try:
+        async with session.get(url, timeout=5) as response:
+            if response.status == 404:
+                symb = 'x'
+            elif response.status == 301:
+                symb = ','
+            else:
+                symb = '.'
+            elapsed = default_timer() - check_opendap.start_time[url]
+            ##print('{0:30}{1:5.2f} {2}'.format(url, elapsed, asterisks(elapsed)))
+            print(symb, end='', flush=True)
+            if symb == 'x':
+                return url
 
+    except (ClientConnectorError, concurrent.futures._base.TimeoutError):
+        symb = 'x'
         print(symb, end='', flush=True)
+        return url
 
-        if symb == 'x':
-            return url
 
 async def check_urls(urls):
     tasks = []
     async with ClientSession() as session:
         for url in urls:
-            check_opendap_dds.start_time = dict()
-            task = asyncio.ensure_future(check_opendap_dds(url, session))
+            check_opendap.start_time = dict()
+            task = asyncio.ensure_future(check_opendap(url, session))
             tasks.append(task)
 
         bad_urls = await asyncio.gather(*tasks)
@@ -98,7 +105,7 @@ if __name__ == '__main__':
         print(f'{db:25s}: {c.description}\n  ', end='')
         all_bad_urls = []
         loop = asyncio.get_event_loop()
-        for urls in iter_opendap_urls_batch(db, batch=20):
+        for urls in iter_opendap_urls_batch(db, batch=30):
             future = asyncio.ensure_future(check_urls(urls))
             loop.run_until_complete(future)
 
