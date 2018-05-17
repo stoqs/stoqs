@@ -11,12 +11,16 @@ To use:
 # Borrowed some techniques from:
 # https://jakevdp.github.io/blog/2017/11/09/exploring-line-lengths-in-python-packages/
 # http://nbviewer.jupyter.org/github/stoqs/stoqs/blob/master/stoqs/contrib/notebooks/pull_from_all_databases.ipynb
+# http://mahugh.com/2017/05/23/http-requests-asyncio-aiohttp-vs-requests/
 
+import asyncio
 import django
 import os
 import psycopg2
-import requests
 import sys
+
+from aiohttp import ClientSession
+from timeit import default_timer
 
 # Insert Django App directory (parent of config) into python path
 sys.path.insert(0, os.path.abspath(os.path.join(
@@ -33,6 +37,8 @@ except ModuleNotFoundError:
 from stoqs.models import Campaign, Resource
 
 
+all_bad_urls = []
+
 def iter_db_campaigns():
     for db in campaigns:
         try:
@@ -42,45 +48,63 @@ def iter_db_campaigns():
                 psycopg2.OperationalError, Campaign.DoesNotExist) as e:
             print(f'{db:25s}: *** {str(e).strip()} ***')
 
-def iter_opendap_urls(db):
-    for r in Resource.objects.using(db).filter(name='opendap_url'):
-        yield r.uristring
+def iter_opendap_urls_batch(db, batch=4):
+    '''Iterator to return a batch of urls in a list each time it's called
+    '''
+    count = Resource.objects.using(db).filter(name='opendap_url').count()
+    for i in range(0, count, batch):
+        yield (Resource.objects.using(db).filter(name='opendap_url')
+                .order_by('name').values_list('uristring', flat=True)[i:i + batch])
 
-def check_opendap_dds(url):
-    try:
-        req = requests.head(url + '.dds', timeout=5)
-    except requests.exceptions.ConnectionError as e:
-        return url
+async def check_opendap_dds(url, session):
+    check_opendap_dds.start_time[url] = default_timer()
+    async with session.get(url) as response:
+        if response.status == 404:
+            symb = 'x'
+        elif response.status == 301:
+            symb = ','
+        else:
+            symb = '.'
 
-    if req.status_code == 200:
-        symb = '.'
-    elif req.status_code == 301:
-        symb = ','
-    else:
-        symb = 'x'
+        elapsed = default_timer() - check_opendap_dds.start_time[url]
+        ##print('{0:30}{1:5.2f} {2}'.format(url, elapsed, asterisks(elapsed)))
 
-    print(symb, end='', flush=True)
+        print(symb, end='', flush=True)
 
-    if symb == 'x':
-        return url
-    else:
-        return None
+        if symb == 'x':
+            return url
+
+async def check_urls(urls):
+    tasks = []
+    async with ClientSession() as session:
+        for url in urls:
+            check_opendap_dds.start_time = dict()
+            task = asyncio.ensure_future(check_opendap_dds(url, session))
+            tasks.append(task)
+
+        bad_urls = await asyncio.gather(*tasks)
+        bad_urls = [x for x in bad_urls if x is not None]
+
+    all_bad_urls.extend(x for x in bad_urls if x is not None)
+
+def asterisks(num):
+    """Returns a string of asterisks reflecting the magnitude of a number."""
+    return int(num*10)*'*'
 
 
 if __name__ == '__main__':
     print('Checking OPeNDAP URLs in campaigns... (key: . good(200)  , redirect(301)  x bad(404)')
     for db, c in iter_db_campaigns():
         print(f'{db:25s}: {c.description}\n  ', end='')
-        bad_urls = []
-        for url in iter_opendap_urls(db):
-            ##print(f'  {url}')
-            bad_url = check_opendap_dds(url)
-            if bad_url:
-                bad_urls.append(bad_url)
+        all_bad_urls = []
+        loop = asyncio.get_event_loop()
+        for urls in iter_opendap_urls_batch(db, batch=20):
+            future = asyncio.ensure_future(check_urls(urls))
+            loop.run_until_complete(future)
 
-        if bad_urls:
-            bad_urls_str = '\n             '.join(bad_urls)
-            print(f'\n  bad_urls = {bad_urls_str}')
+        if all_bad_urls:
+            bad_urls_str = '\n             '.join(all_bad_urls)
+            print(f'\n  bad_urls = {bad_urls_str}\n')
         else:
-            print('')
+            print('\n')
 
