@@ -56,7 +56,7 @@ cl.m1_files = [ '201010/OS_M1_20101027hourly_CMSTV.nc',
                 '201010/m1_hs2_20101027.nc',
               ]
 cl.m1_parms = [ 'northward_sea_water_velocity_HR', 'SEA_WATER_SALINITY_HR', 
-                'AIR_TEMPERATURE_HR', 'bb470', 'fl676'
+                'SEA_WATER_TEMPERATURE_HR', 'AIR_TEMPERATURE_HR', 'bb470', 'fl676'
               ]
 cl.m1_startDatetime = datetime.datetime(2010, 10, 27)
 cl.m1_endDatetime = datetime.datetime(2010, 10, 29)
