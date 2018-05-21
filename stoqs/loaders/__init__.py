@@ -1280,17 +1280,15 @@ class STOQS_Loader(object):
                 except Exception as e:
                     self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
-    def _generate_sigmat_and_spice_mps(self, meass, p_sigmat, p_spice, salinity_standard_name):
+    def _generate_sigmat_and_spice_mps(self, p_sigmat, p_spice, salinity_standard_name):
         '''Yield calculated sigmat and spice from data already in the database, use raw query to get t & s
-        with one query
+        with one query for all measurements in the Activity
         '''
 
         sql = f'''
-SELECT DISTINCT mp_x.id, stoqs_measurement.depth as depth, mp_x.datavalue AS t, mp_y.datavalue AS s, 
-ST_Y(stoqs_measurement.geom) AS lat, m_x.id AS m_id
-FROM stoqs_measuredparameter
-INNER JOIN stoqs_measurement ON (stoqs_measuredparameter.measurement_id = stoqs_measurement.id)
-INNER JOIN stoqs_instantpoint ON (stoqs_measurement.instantpoint_id = stoqs_instantpoint.id)
+SELECT DISTINCT mp_x.id, m_x.depth as depth, mp_x.datavalue AS t, mp_y.datavalue AS s, 
+ST_Y(m_x.geom) AS lat, m_x.id AS m_id
+FROM stoqs_instantpoint
 INNER JOIN stoqs_activity ON (stoqs_instantpoint.activity_id = stoqs_activity.id)
 INNER JOIN stoqs_platform ON (stoqs_activity.platform_id = stoqs_platform.id)
 INNER JOIN stoqs_measurement m_x ON m_x.instantpoint_id = stoqs_instantpoint.id
@@ -1302,6 +1300,7 @@ INNER JOIN stoqs_parameter p_y ON mp_y.parameter_id = p_y.id
 WHERE (p_x.standard_name = 'sea_water_temperature')
   AND (p_y.standard_name = '{salinity_standard_name}')
   AND (stoqs_activity.name = '{self.activity}')
+  AND (m_x.id = m_y.id)
 '''
         sql = sql.replace('\n', ' ').strip()
         for meas in m.MeasuredParameter.objects.using(self.dbAlias).raw(sql):
@@ -1378,7 +1377,7 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
         sigmat_mps = []
         spice_mps = []
         self.logger.info(f'Calculating {self.parameter_counts[p_sigmat]} sigmat & spice MeasuredParameters')
-        for sigmat_mp, spice_mp in self._generate_sigmat_and_spice_mps(ms, p_sigmat, p_spice, salinity_standard_name):
+        for sigmat_mp, spice_mp in self._generate_sigmat_and_spice_mps(p_sigmat, p_spice, salinity_standard_name):
             sigmat_mps.append(sigmat_mp)
             spice_mps.append(spice_mp)
 
