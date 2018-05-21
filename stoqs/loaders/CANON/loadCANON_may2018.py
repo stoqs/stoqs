@@ -35,7 +35,7 @@ from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
 
 cl = CANONLoader('stoqs_canon_may2018', 'CANON - May June 2018',
-                 description='MAY June 2018 campaign observations in Monterey Bay',
+                 description='May June 2018 campaign observations in Monterey Bay',
                  x3dTerrains={
                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -199,20 +199,59 @@ cl.nps34a_endDatetime = enddate
 ##   from cencoos directory, single non-aggregated files
 cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201805/'
 cl.slocum_nemesis_files = [
-         'nemesis_20180516T151154_rt0.nc',
-         'nemesis_20180516T122932_rt0.nc',
-         'nemesis_20180516T092727_rt0.nc',
-         'nemesis_20180516T073726_rt0.nc',
-         'nemesis_20180516T062621_rt0.nc',
-         'nemesis_20180516T045411_rt0.nc',
-         'nemesis_20180516T043058_rt0.nc',
-         'nemesis_20180516T030956_rt0.nc',
-         'nemesis_20180516T014746_rt0.nc',
-         'nemesis_20180516T005405_rt0.nc',
-         'nemesis_20180515T231601_rt0.nc',
-         'nemesis_20180515T223800_rt0.nc',
-         'nemesis_20180515T211255_rt0.nc',
-         'nemesis_20180515T202553_rt0.nc',
+        'nemesis_20180521T165515_rt0.nc',
+        'nemesis_20180521T130842_rt0.nc',
+        'nemesis_20180521T092215_rt0.nc',
+        'nemesis_20180521T070845_rt0.nc',
+        'nemesis_20180521T032301_rt0.nc',
+        'nemesis_20180520T234041_rt0.nc',
+        'nemesis_20180520T195820_rt0.nc',
+        'nemesis_20180520T161902_rt0.nc',
+        'nemesis_20180520T123557_rt0.nc',
+        'nemesis_20180520T085329_rt0.nc',
+        'nemesis_20180520T051403_rt0.nc',
+        'nemesis_20180520T015451_rt0.nc',
+        'nemesis_20180519T225042_rt0.nc',
+        'nemesis_20180519T190448_rt0.nc',
+        'nemesis_20180519T152606_rt0.nc',
+        'nemesis_20180519T114451_rt0.nc',
+        'nemesis_20180519T075753_rt0.nc',
+        'nemesis_20180519T041218_rt0.nc',
+        'nemesis_20180519T002744_rt0.nc',
+        'nemesis_20180518T163902_rt0.nc',
+        'nemesis_20180518T125641_rt0.nc',
+        'nemesis_20180518T085931_rt0.nc',
+        'nemesis_20180518T051145_rt0.nc',
+        'nemesis_20180518T014253_rt0.nc',
+        'nemesis_20180517T202400_rt0.nc',
+        'nemesis_20180517T200241_rt0.nc',
+        'nemesis_20180517T194759_rt0.nc',
+        'nemesis_20180517T190408_rt0.nc',
+        'nemesis_20180517T184216_rt0.nc',
+        'nemesis_20180517T182705_rt0.nc',
+        'nemesis_20180517T172155_rt0.nc',
+        'nemesis_20180517T165640_rt0.nc',
+        'nemesis_20180517T164435_rt0.nc',
+        'nemesis_20180517T125058_rt0.nc',
+        'nemesis_20180517T094903_rt0.nc',
+        'nemesis_20180517T055003_rt0.nc',
+        'nemesis_20180517T020552_rt0.nc',
+        'nemesis_20180516T221356_rt0.nc',
+        'nemesis_20180516T185907_rt0.nc',
+        'nemesis_20180516T151154_rt0.nc',
+        'nemesis_20180516T122932_rt0.nc',
+        'nemesis_20180516T092727_rt0.nc',
+        'nemesis_20180516T073726_rt0.nc',
+        'nemesis_20180516T062621_rt0.nc',
+        'nemesis_20180516T045411_rt0.nc',
+        'nemesis_20180516T043058_rt0.nc',
+        'nemesis_20180516T030956_rt0.nc',
+        'nemesis_20180516T014746_rt0.nc',
+        'nemesis_20180516T005405_rt0.nc',
+        'nemesis_20180515T231601_rt0.nc',
+        'nemesis_20180515T223800_rt0.nc',
+        'nemesis_20180515T211255_rt0.nc',
+        'nemesis_20180515T202553_rt0.nc',
                           ]
 cl.slocum_nemesis_parms = [ 'temperature', 'salinity', 'u', 'v' ] #'oxygen', 'cdom', 'opbs', 'fluorescence' not populated
 cl.slocum_nemesis_startDatetime = startdate
@@ -232,7 +271,8 @@ cl.slocum_nemesis_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20180323/realTime/20180323.nc',
+                      'wgTiny/20180516/realTime/20180516.nc',
+
                    ]
 
 
