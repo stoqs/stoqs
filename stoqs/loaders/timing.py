@@ -4,6 +4,8 @@ import atexit
 from time import time, strftime, localtime
 from datetime import datetime, timedelta
 
+MINUTES = 'Minutes to load:'
+
 def secondsToStr(elapsed=None):
     if elapsed is None:
         return strftime("%Y-%m-%d %H:%M:%S", localtime())
@@ -16,7 +18,7 @@ def log(s, elapsed=None):
     print(secondsToStr(), '-', s, flush=True)
     if elapsed:
         print("Elapsed time:", secondsToStr(elapsed), flush=True)
-        print(f"Minutes: {elapsed / 60.0:.1f}", flush=True)
+        print(f"{MINUTES} {elapsed / 60.0:.1f}", flush=True)
     print(line, flush=True)
 
 def endlog():
