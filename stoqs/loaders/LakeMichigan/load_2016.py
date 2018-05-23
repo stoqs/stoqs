@@ -33,6 +33,7 @@ from LakeMichigan import LakeMILoader
 from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
+import timing
 
 cl = LakeMILoader('stoqs_michigan2016', 'Lake Michigan LRAUV Experiment 2016',
                     description = 'LRAUV 2016 Experiment in Lake Michigan',
