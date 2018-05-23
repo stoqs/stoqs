@@ -316,7 +316,9 @@ local   all             all                                     peer
                         raise DatabaseLoadError(('No campaign created after {:d} seconds. '
                             'Check log_file for errors: {}').format(sec_wait * max_iter, log_file))
                 else:
-                    raise
+                    self.logger.error(f'Could not find Campaign record for {db} in the database.')
+                    self.logger.error(f'Look for error messages in: {log_file}')
+                    sys.exit(-1)
 
         self.logger.info('Database %s', db)
         for name,value in list(self._provenance_dict(db, load_command, log_file).items()):
