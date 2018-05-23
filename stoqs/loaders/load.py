@@ -463,7 +463,7 @@ local   all             all                                     peer
             if script.endswith('.sh'):
                 script = ('(cd {} && {})').format(os.path.dirname(script), script)
 
-            cmd = ('(export STOQS_CAMPAIGNS={}; time {}) > {} 2>&1;').format(db, script, log_file)
+            cmd = ('(STOQS_CAMPAIGNS={} time {}) > {} 2>&1;').format(db, script, log_file)
 
             if self.args.email:
                 # Send email on success or failure
