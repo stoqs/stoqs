@@ -878,9 +878,9 @@ class STOQS_Loader(object):
 
         # No good data found in initial records, test the entire dataset
         try:
-            values = dap_type.array[:].flatten()
+            values = dap_type.array[:].data.flatten()
         except AttributeError:
-            values = dap_type[:].flatten()
+            values = dap_type.data[:].flatten()
 
         for value in values:
             if not np.isnan(value).all():
@@ -1452,7 +1452,7 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
         self.logger.info('Executing %s' % cmd)
         os.system(cmd)
         if self.totalRecords > 1e6:
-            self.logger.info('Sleeping 60 seconds to give time for system call to finish writing to %s', bdepthFileName)
+            self.logger.info('This is lame... Sleeping 60 seconds to give time for system call to finish writing to %s', bdepthFileName)
             time.sleep(60)
         if self.totalRecords > 1e7:
             self.logger.info('Sleeping another 300 seconds to give time for system call to'
