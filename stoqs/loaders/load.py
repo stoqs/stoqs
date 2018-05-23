@@ -33,6 +33,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import ConnectionDoesNotExist, OperationalError, ProgrammingError
 from stoqs.models import ResourceType, Resource, Campaign, CampaignResource, MeasuredParameter, \
                          SampledParameter, Activity, Parameter, Platform
+from timing import MINUTES
 
 def tail(f, n):
     return subprocess.getoutput(f"tail -{n} {f}")
@@ -120,6 +121,10 @@ class Loader(object):
             if not os.path.isfile(log_file):
                 self.logger.warn('Load log file not found: %s', log_file)
             else:
+                # Look for line printed by timing module
+                for line in tail(log_file, 50).split('\n'):
+                    if line.startswith(MINUTES):
+                        prov['minutes_to_load'] =line.split(':')[1]
                 try:
                     # Inserted after the log_file has been written with --updateprovenance
                     prov['real_exection_time'] = tail(log_file, 3).split('\n')[0].split('\t')[1]

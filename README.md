@@ -118,7 +118,7 @@ To load some existing MBARI campaign data edit your `.env` file to uncomment the
 CAMPAIGNS_MODULE=stoqs/mbari_campaigns.py
 ```
 
-and restart the stoqs service, then from the docker directory execute the load script for a campaign:
+and restart the stoqs service, then from the docker directory execute the load script for a campaign, e.g.:
 
 ```bash
 docker-compose exec stoqs stoqs/loaders/load.py --db stoqs_simz_aug2013

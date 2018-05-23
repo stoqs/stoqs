@@ -24,6 +24,7 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)      # So that CANON is found
 
 from CANON import CANONLoader
+import timing
 
 cl = CANONLoader('stoqs_simz_spring2014', 'Sampling and Identification of Marine Zooplankton - Spring 2014',
                                 description = 'Month-long investigation of water in northern Monterey Bay',
