@@ -33,6 +33,7 @@ from CANON import CANONLoader
 from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
 from lxml import etree
+import timing
 
 cl = CANONLoader('stoqs_os2017', 'CANON - Off Season 2017',
                  description='CANON Off Season 2017 Experiment in Monterey Bay',

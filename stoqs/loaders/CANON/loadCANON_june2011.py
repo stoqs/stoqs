@@ -23,6 +23,7 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+import timing
 
 # Assign input data sources
 cl = CANONLoader('stoqs_june2011', 'CANON - June 2011',

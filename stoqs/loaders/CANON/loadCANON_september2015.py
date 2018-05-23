@@ -31,6 +31,7 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+import timing
 
 from thredds_crawler.etree import etree
 from thredds_crawler.crawl import Crawl

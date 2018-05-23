@@ -25,6 +25,7 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 
 
 from CANON import CANONLoader
+import timing
 
 cl = CANONLoader('stoqs_canon_april2014', 'CANON-ECOHAB - April 2014',
                     description = 'Spring 2014 ECOHAB in San Pedro Bay',

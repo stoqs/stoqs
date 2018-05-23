@@ -28,6 +28,7 @@ project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # this makes it possible to find CANON, one directory up
 
 from CANON import CANONLoader
+import timing
        
 # building input data sources object
 cl = CANONLoader('stoqs_september2013', 'CANON - September 2013')
