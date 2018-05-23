@@ -483,7 +483,11 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
                 cmd = '({}) &'.format(cmd)
 
             self.logger.info('Executing: %s', cmd)
-            os.system(cmd)
+            ret = os.system(cmd)
+            self.logger.debug(f'ret = {ret}')
+
+            if ret != 0:
+                self.logger.error(f'Non-zero return code from load script. Check {log_file}')
 
             if self.args.drop_indexes:
                 self.logger.info('Creating indexes...')
