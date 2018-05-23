@@ -26,6 +26,7 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
 from SampleLoaders import SubSamplesLoader
+import timing
 
 cl = CANONLoader('stoqs_february2012', 'GOC - February 2012',
                         description = 'Western Flyer profile and underway CTD data from Monterey to Gulf of California with Sample data from BOG',

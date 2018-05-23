@@ -24,6 +24,7 @@ MBARI Dec 28, 2011
 import os
 import datetime
 from CANON import CANONLoader
+import timing
 
 # Assign input data sources - use locally served x3d terrain data
 cl = CANONLoader('default', 'Initial Test Database',
