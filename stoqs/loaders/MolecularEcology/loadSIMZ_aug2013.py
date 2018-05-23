@@ -26,6 +26,7 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 
 
 from CANON import CANONLoader
+import timing
 
 cl = CANONLoader('stoqs_simz_aug2013', 'Sampling and Identification of Marine Zooplankton - August 2013',
                     description = 'Rachel Carson and Dorado surveys in Northern Monterey Bay',

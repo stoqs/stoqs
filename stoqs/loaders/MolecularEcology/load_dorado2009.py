@@ -20,6 +20,7 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+import timing
 
 cl = CANONLoader('stoqs_dorado2009', 'Dorado - All 2009 missions',
                     description = 'In Monterey Bay and Santa Monica Basin - includes processed Gulper Samples',
