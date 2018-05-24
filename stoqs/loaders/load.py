@@ -338,8 +338,15 @@ local   all             all                                     peer
             if self.args.test:
                 if self._has_no_t_option(db, load_command):
                     continue
-                
+
                 db += '_t'
+
+                # Borrowed from stoqs/config/settings/common.py
+                campaign = db
+                settings.DATABASES[campaign] = settings.DATABASES.get('default').copy()
+                settings.DATABASES[campaign]['NAME'] = campaign
+                settings.MAPSERVER_DATABASES[campaign] = settings.MAPSERVER_DATABASES.get('default').copy()
+                settings.MAPSERVER_DATABASES[campaign]['NAME'] = campaign
 
             script = os.path.join(app_dir, 'loaders', load_command)
             log_file = self._log_file(script, db, load_command)
