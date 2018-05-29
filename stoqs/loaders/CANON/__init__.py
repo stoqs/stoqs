@@ -157,6 +157,8 @@ class CANONLoader(LoadScript):
             url = self.tethys_base + f
             # shorten the activity names
             aName = aName.rsplit('/', 1)[-1]
+            if not hasattr(self, 'tethys_aux_coords'):
+                self.tethys_aux_coords = None
             try:
                 # Early tethys data had time coord of 'Time', override with auxCoords setting from load script
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
