@@ -801,8 +801,12 @@ class STOQS_Loader(object):
                 return True
 
         # NaN value rejections - Ideally a Trajectory file won't have any NaN-valued coordinates, but sometimes people write them
-        if np.isnan(lat) or np.isnan(lon):
-            return True
+        try:
+            if np.isnan(lat) or np.isnan(lon):
+                return True
+        except TypeError:
+            # Likely TypeError: ufunc 'isnan' not supported for the input types, and the inputs could not be safely coerced to any supported types
+            pass
 
         return False
 
