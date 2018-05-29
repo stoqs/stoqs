@@ -158,11 +158,12 @@ class CANONLoader(LoadScript):
             # shorten the activity names
             aName = aName.rsplit('/', 1)[-1]
             try:
+                # Early tethys data had time coord of 'Time', override with auxCoords setting from load script
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
                                           pName, self.colors[pName], 'auv', 'AUV mission',
                                           self.tethys_parms, self.dbAlias, stride, 
                                           grdTerrain=self.grdTerrain, command_line_args=self.args,
-                                          plotTimeSeriesDepth=0.0)
+                                          plotTimeSeriesDepth=0.0, auxCoords=self.tethys_aux_coords)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 

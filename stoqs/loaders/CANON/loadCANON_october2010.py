@@ -82,6 +82,9 @@ cl.tethys_r_files = [ '20101018T143308/shore.nc',
                     '20101020T113957/shore.nc',
                   ]
 cl.tethys_r_parms = ['mass_concentration_of_chlorophyll_in_sea_water']
+cl.tethys_aux_coords = {}
+for v in cl.tethys_r_parms:
+    cl.tethys_aux_coords[v] = {'time': 'Time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
 cl.martin_base = 'http://odss.mbari.org/thredds/dodsC/jhm_underway'
 cl.martin_files = [ '27710_jhmudas_v1.nc',
