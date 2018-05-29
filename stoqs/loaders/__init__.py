@@ -800,6 +800,10 @@ class STOQS_Loader(object):
             if lon < min_lon or lon > max_lon:
                 return True
 
+        # NaN value rejections - Ideally a Trajectory file won't have any NaN-valued coordinates, but sometimes people write them
+        if np.isnan(lat) or np.isnan(lon):
+            return True
+
         return False
 
     def is_value_bad(self, key, value):
