@@ -66,7 +66,7 @@ cl.tethys_files = [ '20110610_20110616/20110610T212639/slate.nc',
                     '20110618_20110623/20110620T190006/slate.nc',
                     '20110618_20110623/20110621T185433/slate.nc'
                   ]
-cl.tethys_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
+cl.tethys_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm',
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
 
