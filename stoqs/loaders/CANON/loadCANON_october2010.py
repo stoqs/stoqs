@@ -24,6 +24,7 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+import timing
 
 cl = CANONLoader('stoqs_october2010', 'CANON - October 2010',
                     description = 'Bloomex observing campaign in Monterey Bay',
@@ -81,6 +82,9 @@ cl.tethys_r_files = [ '20101018T143308/shore.nc',
                     '20101020T113957/shore.nc',
                   ]
 cl.tethys_r_parms = ['mass_concentration_of_chlorophyll_in_sea_water']
+cl.tethys_aux_coords = {}
+for v in cl.tethys_r_parms:
+    cl.tethys_aux_coords[v] = {'time': 'Time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
 cl.martin_base = 'http://odss.mbari.org/thredds/dodsC/jhm_underway'
 cl.martin_files = [ '27710_jhmudas_v1.nc',
@@ -109,7 +113,7 @@ cl.martin_parms = [ 'conductivity', 'temperature', 'salinity', 'fluorescence', '
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadDorado(stride=100)
+    cl.loadDorado(stride=50)
     cl.loadTethys(stride=1000)
     cl.loadMartin(stride=1000)
 

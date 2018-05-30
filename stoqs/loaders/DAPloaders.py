@@ -754,7 +754,12 @@ class Base_Loader(STOQS_Loader):
         lookup matching Measurment (containing depth, latitude, and longitude) and bulk create 
         Instantpoints and Measurements in the database.
         '''
-        times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
+        try:
+            times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
+        except ValueError:
+            self.logger.error(f'stride value {self.stride} likely bigger than length of array: {len(self.ds[ac[TIME]][:])}')
+            raise
+    
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
             timeUnits = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format

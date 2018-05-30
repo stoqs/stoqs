@@ -21,6 +21,8 @@ from thredds_crawler.crawl import Crawl
 # Monkey-patch coards functions to accept non-standard time units
 import coards
 from coards import parse_units, parse_date
+import timing
+
 coards.parse_units = lambda units: parse_units(units.lower())
 coards.parse_date = lambda date: parse_date(date.upper())
 

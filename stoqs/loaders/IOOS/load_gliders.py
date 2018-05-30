@@ -28,6 +28,7 @@ import datetime
 from IOOS import IOOSLoader
 from DAPloaders import runGliderLoader
 from thredds_crawler.crawl import Crawl
+import timing
 
 logger = logging.getLogger('__main__')
 

@@ -29,6 +29,7 @@ project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 
 from BEDS import BEDSLoader
+import timing
 
 bl = BEDSLoader('stoqs_beds2013', 'BEDS - 2013', 
                                 x3dTerrains= { 

@@ -47,6 +47,8 @@ stoqs/stoqs/media/loadlogs/
 docker/.env
 docker/*.key
 docker/*.crt
+docker/*.csr
+docker/*.rar
 
 # Jupyter Notebook checkpoints
 stoqs/contrib/notebooks/.ipynb_checkpoints/

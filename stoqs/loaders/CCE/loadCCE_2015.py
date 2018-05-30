@@ -18,6 +18,7 @@ from collections import namedtuple
 from DAPloaders import NoValidData
 from datetime import datetime
 import numpy as np
+import timing
 
 # CCE event start and end times for loading mooring data
 Event = namedtuple('Event', ['start', 'end'])

@@ -29,6 +29,7 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
 from thredds_crawler.crawl import Crawl
+import timing
 
 cl = CANONLoader('stoqs_canon_may2015', 'CANON-ECOHAB - May 2015',
                     description = 'Spring 2015 Experiment in Monterey Bay',

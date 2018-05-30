@@ -24,6 +24,7 @@ project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 
 from MarMenor import MarMenorLoader
+import timing
 
 try:
     stride = int(sys.argv[1])

@@ -23,6 +23,7 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+import timing
 
 # Assign input data sources
 cl = CANONLoader('stoqs_april2011', 'CANON - April 2011',
@@ -51,7 +52,7 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 
                     'sepCountList', 'mepCountList']
 
-cl.tethys_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/tethys/2011/'
+cl.tethys_base = 'http://dods.mbari.org/thredds/dodsC/LRAUV/tethys/missionlogs/2011/'
 cl.tethys_files = [ '20110415_20110418/20110415T163108/slate.nc',
                     '20110415_20110418/20110416T074851/slate.nc',
                     '20110415_20110418/20110417T064753/slate.nc',

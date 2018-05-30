@@ -156,13 +156,19 @@ class CANONLoader(LoadScript):
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
             url = self.tethys_base + f
             # shorten the activity names
-            aName = aName.rsplit('/', 1)[-1]
+            if 'slate.nc' in aName:
+                aName = '_'.join(aName.split('/')[-2:])
+            else:
+                aName = aName.rsplit('/', 1)[-1]
+            if not hasattr(self, 'tethys_aux_coords'):
+                self.tethys_aux_coords = None
             try:
+                # Early tethys data had time coord of 'Time', override with auxCoords setting from load script
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
                                           pName, self.colors[pName], 'auv', 'AUV mission',
                                           self.tethys_parms, self.dbAlias, stride, 
                                           grdTerrain=self.grdTerrain, command_line_args=self.args,
-                                          plotTimeSeriesDepth=0.0)
+                                          plotTimeSeriesDepth=0.0, auxCoords=self.tethys_aux_coords)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 

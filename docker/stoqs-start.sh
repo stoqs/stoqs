@@ -55,6 +55,7 @@ if [ "$PRODUCTION" == "false" ]; then
     ${STOQS_SRVPROJ}/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
 else
     echo "Starting production server with DATABASE_URL=${DATABASE_URL}..."
+    # For testing on port 8000 before certificate is in place make a security exception in your browser
     export MAPSERVER_SCHEME=https
     python stoqs/manage.py collectstatic --noinput  # Collect static files
     /usr/local/bin/uwsgi --emperor /etc/uwsgi/django-uwsgi.ini

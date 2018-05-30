@@ -23,6 +23,7 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+import timing
 
 # Assign input data sources
 cl = CANONLoader('stoqs_june2011', 'CANON - June 2011',
@@ -49,7 +50,7 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
                     'sepCountList', 'mepCountList']
 
-cl.tethys_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/tethys/2011/'
+cl.tethys_base = 'http://dods.mbari.org/thredds/dodsC/LRAUV/tethys/missionlogs/2011/'
 cl.tethys_files = [ '20110610_20110616/20110610T212639/slate.nc',
                     '20110610_20110616/20110611T232740/slate.nc',
                     '20110610_20110616/20110612T191007/slate.nc',
@@ -65,7 +66,7 @@ cl.tethys_files = [ '20110610_20110616/20110610T212639/slate.nc',
                     '20110618_20110623/20110620T190006/slate.nc',
                     '20110618_20110623/20110621T185433/slate.nc'
                   ]
-cl.tethys_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
+cl.tethys_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm',
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
 

@@ -800,6 +800,14 @@ class STOQS_Loader(object):
             if lon < min_lon or lon > max_lon:
                 return True
 
+        # NaN value rejections - Ideally a Trajectory file won't have any NaN-valued coordinates, but sometimes people write them
+        try:
+            if np.isnan(lat) or np.isnan(lon):
+                return True
+        except TypeError:
+            # Likely TypeError: ufunc 'isnan' not supported for the input types, and the inputs could not be safely coerced to any supported types
+            pass
+
         return False
 
     def is_value_bad(self, key, value):
@@ -878,9 +886,9 @@ class STOQS_Loader(object):
 
         # No good data found in initial records, test the entire dataset
         try:
-            values = dap_type.array[:].flatten()
+            values = dap_type.array[:].data.flatten()
         except AttributeError:
-            values = dap_type[:].flatten()
+            values = dap_type.data[:].flatten()
 
         for value in values:
             if not np.isnan(value).all():
@@ -1280,10 +1288,12 @@ class STOQS_Loader(object):
                 except Exception as e:
                     self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
-    def _generate_sigmat_and_spice_mps(self, p_sigmat, p_spice, salinity_standard_name):
+    def _generate_sigmat_and_spice_mps_raw_sql(self, p_sigmat, p_spice, salinity_standard_name):
         '''Yield calculated sigmat and spice from data already in the database, use raw query to get t & s
         with one query for all measurements in the Activity
         '''
+        # When testing with tethys load this failed. Replaced with method below.
+        # (Destined to be removed after more testing.)
 
         sql = f'''
 SELECT DISTINCT mp_x.id, m_x.depth as depth, mp_x.datavalue AS t, mp_y.datavalue AS s, 
@@ -1311,6 +1321,23 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
             sigmat_mp = m.MeasuredParameter(measurement=measurement, parameter=p_sigmat, datavalue=sigmat)
             spice_mp = m.MeasuredParameter(measurement=measurement, parameter=p_spice, datavalue=spice)
 
+            yield sigmat_mp, spice_mp
+
+    def _generate_sigmat_and_spice_mps(self, p_sigmat, p_spice, ms, salinity_standard_name):
+        '''Yield calculated sigmat and spice from ms QuerySet
+        '''
+        for measurement in ms:
+            mps = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=measurement)
+
+            temp = mps.filter(parameter__standard_name='sea_water_temperature').values_list('datavalue', flat=True)[0]
+            sal = mps.filter(parameter__standard_name=salinity_standard_name).values_list('datavalue', flat=True)[0]
+
+            sigmat = sw.pden(sal, temp, sw.pres(measurement.depth, measurement.geom.y)) - 1000.0
+            spice = spiciness(temp, sal)
+
+            sigmat_mp = m.MeasuredParameter(measurement=measurement, parameter=p_sigmat, datavalue=sigmat)
+            spice_mp = m.MeasuredParameter(measurement=measurement, parameter=p_spice, datavalue=spice)
+            
             yield sigmat_mp, spice_mp
 
     def addSigmaTandSpice(self, activity=None):
@@ -1377,7 +1404,7 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
         sigmat_mps = []
         spice_mps = []
         self.logger.info(f'Calculating {self.parameter_counts[p_sigmat]} sigmat & spice MeasuredParameters')
-        for sigmat_mp, spice_mp in self._generate_sigmat_and_spice_mps(p_sigmat, p_spice, salinity_standard_name):
+        for sigmat_mp, spice_mp in self._generate_sigmat_and_spice_mps(p_sigmat, p_spice, ms, salinity_standard_name):
             sigmat_mps.append(sigmat_mp)
             spice_mps.append(spice_mp)
 
@@ -1452,7 +1479,7 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
         self.logger.info('Executing %s' % cmd)
         os.system(cmd)
         if self.totalRecords > 1e6:
-            self.logger.info('Sleeping 60 seconds to give time for system call to finish writing to %s', bdepthFileName)
+            self.logger.info('This is lame... Sleeping 60 seconds to give time for system call to finish writing to %s', bdepthFileName)
             time.sleep(60)
         if self.totalRecords > 1e7:
             self.logger.info('Sleeping another 300 seconds to give time for system call to'

@@ -26,6 +26,7 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # settings.py is one dir up
 
 from CCE import CCELoader
+import timing
 
 cl = CCELoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events',
                                 description = 'Benthic Event Detector data for significant events in Monterey Canyon',
