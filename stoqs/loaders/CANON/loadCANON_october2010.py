@@ -113,7 +113,7 @@ cl.martin_parms = [ 'conductivity', 'temperature', 'salinity', 'fluorescence', '
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadDorado(stride=100)
+    cl.loadDorado(stride=50)
     cl.loadTethys(stride=1000)
     cl.loadMartin(stride=1000)
 
