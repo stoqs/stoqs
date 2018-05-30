@@ -31,6 +31,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import ConnectionDoesNotExist, OperationalError, ProgrammingError
+from slacker import Slacker
 from stoqs.models import ResourceType, Resource, Campaign, CampaignResource, MeasuredParameter, \
                          SampledParameter, Activity, Parameter, Platform
 from timing import MINUTES
@@ -493,6 +494,13 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
             ret = os.system(cmd)
             self.logger.debug(f'ret = {ret}')
 
+            if self.args.slack:
+                if ret == 0:
+                    message = f"{db} load into {settings.DATABASES[db]['HOST']} succeeded."
+                else:
+                    message = f"{db} load into {settings.DATABASES[db]['HOST']} failed."
+                self.slack.chat.post_message('#stoqs-loads', message)
+                
             if ret != 0:
                 self.logger.error(f'Non-zero return code from load script. Check {log_file}')
 
@@ -575,7 +583,8 @@ To get any stdout/stderr output you must use -v, the default is no output.
         parser.add_argument('--background', action='store_true', help='Execute each load in the background to parallel process multiple loads')
         parser.add_argument('--removetest', action='store_true', help='Drop all test databases; the --db option limits the dropping to those in the list')
         parser.add_argument('--list', action='store_true', help='List the databases that are in --campaigns')
-        parser.add_argument('--email', action='store', help='Address to send mail to when the load finishes')
+        parser.add_argument('--email', action='store', help='Address to send mail to when the load finishes. Does not work from Docker, use --slack instead.')
+        parser.add_argument('--slack', action='store_true', help='Post message to stoqs-loads channel on Slack using SLACKTOKEN env variable')
         parser.add_argument('--updateprovenance', action='store_true', help=('Use after background jobs finish to copy'
                                                                             ' loadlogs and update provenance information'))
         parser.add_argument('--grant_everyone_select', action='store_true', help='Grant everyone role select privileges on all relations')
@@ -585,6 +594,13 @@ To get any stdout/stderr output you must use -v, the default is no output.
     
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
+
+        if self.args.slack:
+            try:
+                self.slack = Slacker(os.environ['SLACKTOKEN'])
+            except KeyError:
+                print('If using --slack must set SLACKTOKEN environment variable. [Never share your token!]')
+                sys.exit(-1)
 
         if self.args.verbose > 1:
             self.logger.setLevel(logging.DEBUG)
