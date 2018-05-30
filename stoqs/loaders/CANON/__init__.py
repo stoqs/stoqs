@@ -156,7 +156,10 @@ class CANONLoader(LoadScript):
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
             url = self.tethys_base + f
             # shorten the activity names
-            aName = aName.rsplit('/', 1)[-1]
+            if 'slate.nc' in aName:
+                aName = '_'.join(aName.split('/')[-2:])
+            else:
+                aName = aName.rsplit('/', 1)[-1]
             if not hasattr(self, 'tethys_aux_coords'):
                 self.tethys_aux_coords = None
             try:
