@@ -42,10 +42,10 @@ from stoqs.models import Campaign, Resource
 all_bad_urls = []
 
 def iter_db_campaigns():
-    for db in campaigns:
+    for db, load_script in campaigns.items():
         try:
             c = Campaign.objects.using(db).get(id=1)
-            yield db, c
+            yield db, c, load_script
         except (django.db.utils.ConnectionDoesNotExist, django.db.utils.OperationalError,
                 psycopg2.OperationalError, Campaign.DoesNotExist) as e:
             print(f'{db:25s}: *** {str(e).strip()} ***')
@@ -101,8 +101,9 @@ def asterisks(num):
 
 if __name__ == '__main__':
     print('Checking OPeNDAP URLs in campaigns... (key: . good(200)  , redirect(301)  x bad(404)')
-    for db, c in iter_db_campaigns():
-        print(f'{db:25s}: {c.description}\n  ', end='')
+    for db, c, load_script in iter_db_campaigns():
+        print(f'{db:25s}: {c.description}')
+        print(f'{load_script}\n  ', end='')
         all_bad_urls = []
         loop = asyncio.get_event_loop()
         for urls in iter_opendap_urls_batch(db, batch=30):
