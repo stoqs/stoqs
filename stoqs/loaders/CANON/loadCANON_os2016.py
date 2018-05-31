@@ -291,11 +291,11 @@ cl.rcpctd_files = [
 #  MOORINGS May 2015
 ######################################################################
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
-# M1 had a turnaround on July 29, 2015
-# http://dods.mbari.org/opendap/hyrax/data/ssdsdata/deployments/m1/201507/OS_M1_20150729hourly_CMSTV.nc
+# M1 had a turnaround on July 29, 2015, but file starts on 0730
+# http://dods.mbari.org/opendap/hyrax/data/ssdsdata/deployments/m1/201507/OS_M1_20150730hourly_CMSTV.nc
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201507/'
 cl.m1_files = [
-                'OS_M1_20150729hourly_CMSTV.nc'
+                'OS_M1_20150730hourly_CMSTV.nc'
               ]
 cl.m1_parms = [
                 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
@@ -321,7 +321,7 @@ cl.oa1_endDatetime = enddate
 
 # Mooring 0A2
 # note the new location. Location and data by deployment, instead of by campaign
-cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201505/'  ## May 2015 to end of May 2016
+cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201505/realTime'  ## May 2015 to end of May 2016
 cl.oa2_files = [
                'OA2_201505.nc'
                ]
