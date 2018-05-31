@@ -24,6 +24,7 @@ import fileinput
 import glob
 import importlib
 import platform
+import socket
 import subprocess
 from git import Repo
 from shutil import copyfile
@@ -342,13 +343,6 @@ local   all             all                                     peer
 
                 db += '_t'
 
-                # Borrowed from stoqs/config/settings/common.py
-                campaign = db
-                settings.DATABASES[campaign] = settings.DATABASES.get('default').copy()
-                settings.DATABASES[campaign]['NAME'] = campaign
-                settings.MAPSERVER_DATABASES[campaign] = settings.MAPSERVER_DATABASES.get('default').copy()
-                settings.MAPSERVER_DATABASES[campaign]['NAME'] = campaign
-
             script = os.path.join(app_dir, 'loaders', load_command)
             log_file = self._log_file(script, db, load_command)
 
@@ -437,6 +431,13 @@ local   all             all                                     peer
                 load_command += ' -t'
                 db += '_t'
 
+                # Borrowed from stoqs/config/settings/common.py
+                campaign = db
+                settings.DATABASES[campaign] = settings.DATABASES.get('default').copy()
+                settings.DATABASES[campaign]['NAME'] = campaign
+                settings.MAPSERVER_DATABASES[campaign] = settings.MAPSERVER_DATABASES.get('default').copy()
+                settings.MAPSERVER_DATABASES[campaign]['NAME'] = campaign
+
             if hasattr(self.args, 'verbose'):
                 if self.args.verbose > 2:
                     load_command += ' -v'
@@ -452,7 +453,11 @@ local   all             all                                     peer
             except DatabaseCreationError as e:
                 self.logger.warn(e)
                 self.logger.warn('Use the --clobber option, or fix the problem indicated.')
-                raise Exception('Maybe use the --clobber option to recreate the database...')
+                if self.args.db and not self.args.test:
+                    raise Exception('Maybe use the --clobber option to recreate the database...')
+                else:
+                    # If running test for all databases just go on to next database
+                    continue
 
             if self.args.drop_indexes:
                 self.logger.info('Dropping indexes...')
@@ -495,10 +500,11 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
             self.logger.debug(f'ret = {ret}')
 
             if self.args.slack:
+                message = f"{db} load into {settings.DATABASES[db]['HOST']} on {socket.gethostname()}"
                 if ret == 0:
-                    message = f"{db} load into {settings.DATABASES[db]['HOST']} succeeded."
+                    message += ' succeded.'
                 else:
-                    message = f"{db} load into {settings.DATABASES[db]['HOST']} failed."
+                    message += ' failed.'
                 self.slack.chat.post_message('#stoqs-loads', message)
                 
             if ret != 0:
@@ -590,7 +596,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
         parser.add_argument('--grant_everyone_select', action='store_true', help='Grant everyone role select privileges on all relations')
         parser.add_argument('--drop_indexes', action='store_true', help='Before load drop indexes and create them following the load')
 
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1, default=0)
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
     
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
