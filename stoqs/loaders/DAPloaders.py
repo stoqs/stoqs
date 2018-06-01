@@ -615,7 +615,7 @@ class Base_Loader(STOQS_Loader):
             self.logger.debug("For endDatetime = %s, the udnits value is %f", self.endDatetime, e)
         else:
             e = timeAxis[-1]
-            self.logger.debug("requested_endDatetime not given, using the last value of timeAxis = %f", e)
+            self.logger.debug("requested_endDatetime not given, using the last value of timeAxis = %f", e.data[0])
 
         tf = (s <= timeAxis) & (timeAxis <= e)
         self.logger.debug('tf = %s', tf)
@@ -808,8 +808,14 @@ class Base_Loader(STOQS_Loader):
                 if i == 0:
                     # First time through, bulk load the coordinates: instant_points and measurements
                     if ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
-                        # Expect CF Discrete Sampling Geometry or EPIC dataset
-                        meass, dup_times = self._load_coords_from_dsg_ds(tindx, ac, pnames)
+                        try:
+                            # Expect CF Discrete Sampling Geometry or EPIC dataset
+                            meass, dup_times = self._load_coords_from_dsg_ds(tindx, ac, pnames)
+                        except ValueError as e:
+                            # Likely ValueError: not enough values to unpack (expected 5, got 0) from good_coords()
+                            self.logger.debug(str(e))
+                            self.logger.warn(f'No good coordinates for {pname} - skipping it')
+                            continue
                     else:
                         # Expect instrument (time-coordinate-only) dataset
                         meass = self._load_coords_from_instr_ds(tindx, ac)
