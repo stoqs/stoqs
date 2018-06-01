@@ -384,10 +384,10 @@ cl.process_command_line()
 
 if cl.args.test:
 
-    #cl.loadM1(stride=10)  
+    cl.loadM1(stride=10)  
     ##cl.loadTethys()i ## not in this campaign
-    #cl.loadL_662a(stride=10)
-    #cl.load_NPS34a(stride=10) 
+    cl.loadL_662a(stride=10)
+    cl.load_NPS34a(stride=10) 
     cl.load_slocum_nemesis(stride=10) 
     cl.load_wg_Tiny(stride=10)
     cl.load_oa1(stride=10)
