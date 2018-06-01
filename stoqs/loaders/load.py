@@ -415,6 +415,25 @@ local   all             all                                     peer
         print(('\n'.join(stoqs_campaigns)))
         print(('export STOQS_CAMPAIGNS="' + ','.join(stoqs_campaigns) + '"'))
 
+    def lines_with_string(self, file_name, string, max_lines=20):
+        matching_lines = ''
+        with open(file_name) as f:
+            i = 0
+            for line in f:
+                if string in line:
+                    i += 1
+                    matching_lines += line
+                if i > max_lines:
+                    break
+
+        if i >= max_lines:
+            matching_lines += f'\n(... truncated after {string} seen {max_lines} times ...)'
+
+        if not matching_lines:
+            matching_lines = f'Good news! No lines containing string {string}!'
+
+        return matching_lines
+
     def load(self, campaigns=None, create_only=False):
         if not campaigns:
             campaigns = importlib.import_module(self.args.campaigns)
@@ -500,15 +519,23 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
             self.logger.debug(f'ret = {ret}')
 
             if self.args.slack:
-                message = f"{db} load into {settings.DATABASES[db]['HOST']} on {socket.gethostname()}"
+                server = os.environ.get('NGINX_SERVER_NAME', socket.gethostname())
+                message = f"{db} load into {settings.DATABASES[db]['HOST']} on {server}"
                 if ret == 0:
-                    message += ' succeded.'
+                    message += ' *succeded*.\n'
                 else:
-                    num_lines = 20
-                    message += ' failed.\n'
-                    message += f'Last {num_lines} lines of {log_file}:\n'
-                    message += f"```{tail(log_file, num_lines)}```"
+                    message += ' *failed*.\n'
+
+                message += f'All WARNING messages from {log_file}:'
+                message += f"```{self.lines_with_string(log_file, 'WARNING')}```\n"
+                message += f'All ERROR messages from {log_file}:'
+                message += f"```{self.lines_with_string(log_file, 'ERROR')}```\n"
+                num_lines = 20
+                message += f'Last {num_lines} lines of {log_file}:'
+                message += f"```{tail(log_file, num_lines)}```"
+
                 self.slack.chat.post_message('#stoqs-loads', message)
+                self.logger.info('Message sent to Slack channel #stoqs-loads')
                 
             if ret != 0:
                 self.logger.error(f'Non-zero return code from load script. Check {log_file}')
