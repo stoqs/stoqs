@@ -126,7 +126,7 @@ cl.process_command_line()
 
 if cl.args.test:
     ##cl.loadL_662(stride=1)
-    cl.loadDorado(stride=100)
+    cl.loadDorado(stride=30)
     cl.loadRCuctd(stride=100)
     cl.loadRCpctd(stride=1)
     cl.loadM1(stride=10)
