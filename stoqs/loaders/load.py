@@ -504,7 +504,10 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
                 if ret == 0:
                     message += ' succeded.'
                 else:
-                    message += ' failed.'
+                    num_lines = 20
+                    message += ' failed.\n'
+                    message += f'Last {num_lines} lines of {log_file}:\n'
+                    message += f"```{tail(log_file, num_lines)}```"
                 self.slack.chat.post_message('#stoqs-loads', message)
                 
             if ret != 0:
