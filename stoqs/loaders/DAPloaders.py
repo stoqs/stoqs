@@ -703,7 +703,6 @@ class Base_Loader(STOQS_Loader):
                 self.logger.debug(f'Number likely in auxCoords rather than a coordinate name, convert to string for group_name')
                 group_name = ''
                 for v in ac[pname].values():
-                    print(v)
                     group_name += str(v)
 
                 self.logger.debug(f'group_name = {group_name}')
@@ -720,7 +719,7 @@ class Base_Loader(STOQS_Loader):
         times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
-            timeUnits = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
+            time_units = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
         mtimes = (from_udunits(mt, time_units) for mt in times)
 
         try:
@@ -816,7 +815,12 @@ class Base_Loader(STOQS_Loader):
             ac = coor_groups[k]
             total_loaded = 0   
             for i, pname in enumerate(pnames):
-                tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
+                try:
+                    tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
+                except InvalidSliceRequest:
+                    self.logger.warn(f'Failed to getTimeBegEndIndices() for {pname} from {self.url}')
+                    continue
+
                 if i == 0:
                     # First time through, bulk load the coordinates: instant_points and measurements
                     if ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
