@@ -695,8 +695,20 @@ class Base_Loader(STOQS_Loader):
                 self.logger.debug('include_name %s not in dataset %s', pname, self.url)
                 continue
             ac[pname] = self.coord_dicts[pname]
-            load_groups[''.join(sorted(list(ac[pname].values())))].append(pname)
-            coor_groups[''.join(sorted(list(ac[pname].values())))] = ac[pname]
+            try:
+                load_groups[''.join(sorted(list(ac[pname].values())))].append(pname)
+                coor_groups[''.join(sorted(list(ac[pname].values())))] = ac[pname]
+            except TypeError:
+                # Likely "TypeError: '<' not supported between instances of 'float' and 'str'" because depth = 0.0 in auxCoords
+                self.logger.debug(f'Number likely in auxCoords rather than a coordinate name, convert to string for group_name')
+                group_name = ''
+                for v in ac[pname].values():
+                    print(v)
+                    group_name += str(v)
+
+                self.logger.debug(f'group_name = {group_name}')
+                load_groups[group_name].append(pname)
+                coor_groups[group_name] = ac[pname]
 
         return load_groups, coor_groups
 
