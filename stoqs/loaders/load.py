@@ -430,7 +430,7 @@ local   all             all                                     peer
             matching_lines += f'\n(... truncated after {string} seen {max_lines} times ...)'
 
         if not matching_lines:
-            matching_lines = f'Good news! No lines containing string {string}!'
+            matching_lines = f'No lines containing string {string}.'
 
         return matching_lines
 
@@ -527,12 +527,12 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
                     message += ' *failed*.\n'
 
                 message += f'All WARNING messages from {log_file}:'
-                message += f"```{self.lines_with_string(log_file, 'WARNING')}```\n"
+                message += f"\n```\n{self.lines_with_string(log_file, 'WARNING')}\n```\n"
                 message += f'All ERROR messages from {log_file}:'
-                message += f"```{self.lines_with_string(log_file, 'ERROR')}```\n"
+                message += f"\n```\n{self.lines_with_string(log_file, 'ERROR')}\n```\n"
                 num_lines = 20
                 message += f'Last {num_lines} lines of {log_file}:'
-                message += f"```{tail(log_file, num_lines)}```"
+                message += f"```{tail(log_file, num_lines)}\n```"
 
                 self.slack.chat.post_message('#stoqs-loads', message)
                 self.logger.info('Message sent to Slack channel #stoqs-loads')
