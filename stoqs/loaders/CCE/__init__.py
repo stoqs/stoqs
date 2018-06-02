@@ -73,8 +73,8 @@ class CCELoader(LoadScript):
     colors['bed11'] = 'A4A4A4'
     colors['bed11t'] = 'A4A4A4'
 
-    # color for BIN
-    colors['ccebin'] = 'ff0000'
+    # color for SIN
+    colors['ccesin'] = 'ff0000'
 
     # Colors for MS* moorings
     num_ms = 8
@@ -128,14 +128,14 @@ class CCELoader(LoadScript):
             except (OpendapError, InvalidSliceRequest, webob.exc.HTTPError):
                 pass
 
-    def loadCCEBIN(self, stride=None):
+    def loadCCESIN(self, stride=None):
         '''
-        Mooring CCEBIN specific load functions
+        Mooring CCESIN specific load functions
         '''
-        platformName = 'CCEBIN'
+        platformName = 'CCESIN'
         stride = stride or self.stride
-        for (aName, f) in zip([ a + getStrideText(stride) for a in self.ccebin_files], self.ccebin_files):
-            url = os.path.join(self.ccebin_base, f)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.ccesin_files], self.ccesin_files):
+            url = os.path.join(self.ccesin_base, f)
 
             dataStartDatetime = None
             if self.args.append:
@@ -158,11 +158,11 @@ class CCELoader(LoadScript):
                                     platformColor = self.colors[platformName.lower()],
                                     platformTypeName = 'mooring',
                                     stride = stride,
-                                    startDatetime = self.ccebin_start_datetime,
-                                    endDatetime = self.ccebin_end_datetime,
+                                    startDatetime = self.ccesin_start_datetime,
+                                    endDatetime = self.ccesin_end_datetime,
                                     dataStartDatetime = dataStartDatetime)
 
-            loader.include_names = self.ccebin_parms
+            loader.include_names = self.ccesin_parms
             loader.auxCoords = {}
             if 'adcp' in f.lower():
                 Mooring_Loader.getFeatureType = lambda self: 'timeseriesprofile'
@@ -182,7 +182,7 @@ class CCELoader(LoadScript):
             # so that the model is put at the correct depth in the Spatial -> 3D view.
             try:
                 self.addPlatformResources('https://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
-                                          platformName, nominaldepth=self.ccebin_nominaldepth)
+                                          platformName, nominaldepth=self.ccesin_nominaldepth)
             except AttributeError:
                 self.addPlatformResources('https://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
                                           platformName)
