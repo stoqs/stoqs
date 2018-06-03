@@ -146,7 +146,7 @@ class Loader(object):
                     self.prov['user_exection_time'] = tail(log_file, 3).split('\n')[1].split('\t')[1]
                     self.prov['sys_exection_time'] = tail(log_file, 3).split('\n')[2].split('\t')[1]
                 except IndexError:
-                    self.logger.warn('No execution time information in %s', log_file)
+                    self.logger.debug('No execution_time information in %s', log_file)
 
                 # Counts
                 self.prov['MeasuredParameter_count'] = MeasuredParameter.objects.using(db).count()
@@ -318,7 +318,7 @@ local   all             all                                     peer
                 else:
                     self.logger.error(f'Could not find Campaign record for {db} in the database.')
                     self.logger.error(f'Look for error messages in: {log_file}')
-                    sys.exit(-1)
+                    return
 
         self.logger.info('Database %s', db)
         self._provenance_dict(db, load_command, log_file)
