@@ -45,7 +45,7 @@ cl.tdsBase = 'http://odss.mbari.org/thredds/'       # Use this on shore
 cl.dodsBase = cl.tdsBase + 'dodsC/'       
 
 # 2-second decimated dorado data
-cl.dorado_base = cl.dodsBase + 'CANON_march2013/dorado/'
+cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2013/netcdf/'
 cl.dorado_files = [ 
                     'Dorado389_2013_074_02_074_02_decim.nc',
                     'Dorado389_2013_075_05_075_06_decim.nc',
