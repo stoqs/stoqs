@@ -22,8 +22,6 @@ import sys
 import datetime  # needed for glider data
 import time  # for startdate, enddate args
 import csv
-import urllib2
-import urlparse
 import requests
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
@@ -32,7 +30,8 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 from CANON import CANONLoader
 from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
-from thredds_crawler.etree import etree
+from lxml import etree
+from urllib.parse import urlsplit
 import timing
 
 cl = CANONLoader('stoqs_os2018', 'CANON - Off Season 2018',
@@ -87,12 +86,12 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 def find_urls(base, search_str):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
-    print "Crawling: %s" % url
+    print("Crawling: %s" % url)
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
-    u = urlparse.urlsplit(url)
+    u = urlsplit(url)
     name, ext = os.path.splitext(u.path)
     if ext == ".html":
-        u = urlparse.urlsplit(url.replace(".html", ".xml"))
+        u = urlsplit(url.replace(".html", ".xml"))
     url = u.geturl()
     urls = []
     # Get an etree object
@@ -113,18 +112,18 @@ def find_urls(base, search_str):
                 # if within a valid range, grab the valid urls
                 if dir_start >= startdate and dir_end <= enddate:
 
-                    print 'Found mission directory ' + dts[0]
-                    print 'Searching if within range %s and %s  %s %s' % (startdate, enddate, dir_start, dir_end)
+                    print('Found mission directory ' + dts[0])
+                    print('Searching if within range %s and %s  %s %s' % (startdate, enddate, dir_start, dir_end))
                     catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                     c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
                     d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
                     for url in d:
                         urls.append(url)
             except Exception as ex:
-                print "Error reading mission directory name %s" % ex
+                print("Error reading mission directory name %s" % ex)
 
     except BaseException:
-        print "Skipping %s (error parsing the XML)" % url
+        print("Skipping %s (error parsing the XML)" % url)
 
     if not urls:
         raise FileNotFound('No urls matching "{}" found in {}'.format(search_str, os.path.join(base, 'catalog.html')))
@@ -427,5 +426,5 @@ else:
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
-print "All Done."
+print("All Done.")
 

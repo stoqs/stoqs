@@ -46,7 +46,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 
 # 2-second decimated dorado data
 # http://192.168.111.177:8080/thredds/dodsC/CANON_september2012/dorado/Dorado389_2012_258_00_258_00_decim.nc
-cl.dorado_base = cl.dodsBase + 'CANON_september2012/dorado/'
+cl.dorado_base = 'http://dods.mbari.org/opendap/hyrax/data/auvctd/surveys/2012/netcdf/'
 cl.dorado_files = [ 
                     'Dorado389_2012_256_00_256_00_decim.nc',
                     'Dorado389_2012_257_01_257_01_decim.nc',

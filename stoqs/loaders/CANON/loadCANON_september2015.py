@@ -33,7 +33,7 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 from CANON import CANONLoader
 import timing
 
-from thredds_crawler.etree import etree
+from lxml import etree
 from thredds_crawler.crawl import Crawl
  
 cl = CANONLoader('stoqs_canon_september2015', 'CANON - September-October 2015',

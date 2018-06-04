@@ -53,6 +53,7 @@ class Loader(object):
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
+    prov = {}
 
     def _create_db(self, db):
         '''Create database. Invoking user should have privileges to connect to 
@@ -102,6 +103,20 @@ class Loader(object):
         ret = os.system(create_ext)
         self.logger.debug('ret = %s', ret)
 
+    def _copy_log_file(self, log_file):
+        loadlogs_dir = os.path.join(settings.MEDIA_ROOT, 'loadlogs')
+        try: 
+            os.makedirs(loadlogs_dir)
+        except OSError:
+            if not os.path.isdir(loadlogs_dir):
+                raise
+        log_file_url = os.path.basename(log_file) + '.txt'
+        try:
+            copyfile(log_file , os.path.join(loadlogs_dir, log_file_url))
+            self.prov['load_logfile'] = os.path.join(settings.MEDIA_URL, 'loadlogs', log_file_url)
+        except IOError as e:
+            self.logger.warn(e)
+
     def _provenance_dict(self, db, load_command, log_file):
         '''Return a dictionary of provenance Resource items. Special handling 
         for --background operation: don't tail log file, instead add those
@@ -109,15 +124,13 @@ class Loader(object):
         '''
         repo = Repo(app_dir, search_parent_directories=True)
 
-        prov = {}
-
         if not self.args.updateprovenance:
             # Inserted when load executed with or without --background
-            prov['load_command'] = load_command
-            prov['gitorigin'] = repo.remotes.origin.url
-            prov['gitcommit'] = repo.head.commit.hexsha
-            prov['environment'] = platform.platform() + " python " + sys.version.split('\n')[0]
-            prov['load_date_gmt'] = datetime.datetime.utcnow()
+            self.prov['load_command'] = load_command
+            self.prov['gitorigin'] = repo.remotes.origin.url
+            self.prov['gitcommit'] = repo.head.commit.hexsha
+            self.prov['environment'] = platform.platform() + " python " + sys.version.split('\n')[0]
+            self.prov['load_date_gmt'] = datetime.datetime.utcnow()
 
         if not self.args.background and self.args.updateprovenance:
             if not os.path.isfile(log_file):
@@ -126,36 +139,21 @@ class Loader(object):
                 # Look for line printed by timing module
                 for line in tail(log_file, 50).split('\n'):
                     if line.startswith(MINUTES):
-                        prov['minutes_to_load'] =line.split(':')[1]
+                        self.prov['minutes_to_load'] =line.split(':')[1]
                 try:
                     # Inserted after the log_file has been written with --updateprovenance
-                    prov['real_exection_time'] = tail(log_file, 3).split('\n')[0].split('\t')[1]
-                    prov['user_exection_time'] = tail(log_file, 3).split('\n')[1].split('\t')[1]
-                    prov['sys_exection_time'] = tail(log_file, 3).split('\n')[2].split('\t')[1]
+                    self.prov['real_exection_time'] = tail(log_file, 3).split('\n')[0].split('\t')[1]
+                    self.prov['user_exection_time'] = tail(log_file, 3).split('\n')[1].split('\t')[1]
+                    self.prov['sys_exection_time'] = tail(log_file, 3).split('\n')[2].split('\t')[1]
                 except IndexError:
-                    self.logger.warn('No execution time information in %s', log_file)
-
-                loadlogs_dir = os.path.join(settings.MEDIA_ROOT, 'loadlogs')
-                try: 
-                    os.makedirs(loadlogs_dir)
-                except OSError:
-                    if not os.path.isdir(loadlogs_dir):
-                        raise
-                log_file_url = os.path.basename(log_file) + '.txt'
-                try:
-                    copyfile(log_file , os.path.join(loadlogs_dir, log_file_url))
-                    prov['load_logfile'] = os.path.join(settings.MEDIA_URL, 'loadlogs', log_file_url)
-                except IOError as e:
-                    self.logger.warn(e)
+                    self.logger.debug('No execution_time information in %s', log_file)
 
                 # Counts
-                prov['MeasuredParameter_count'] = MeasuredParameter.objects.using(db).count()
-                prov['SampledParameter_count'] = SampledParameter.objects.using(db).count()
-                prov['Parameter_count'] = Parameter.objects.using(db).count()
-                prov['Activity_count'] = Activity.objects.using(db).count()
-                prov['Platform_count'] = Platform.objects.using(db).count()
-
-        return prov
+                self.prov['MeasuredParameter_count'] = MeasuredParameter.objects.using(db).count()
+                self.prov['SampledParameter_count'] = SampledParameter.objects.using(db).count()
+                self.prov['Parameter_count'] = Parameter.objects.using(db).count()
+                self.prov['Activity_count'] = Activity.objects.using(db).count()
+                self.prov['Platform_count'] = Platform.objects.using(db).count()
 
     def _log_file(self, script, db, load_command):
         if self._has_no_t_option(db, load_command):
@@ -320,10 +318,11 @@ local   all             all                                     peer
                 else:
                     self.logger.error(f'Could not find Campaign record for {db} in the database.')
                     self.logger.error(f'Look for error messages in: {log_file}')
-                    sys.exit(-1)
+                    return
 
         self.logger.info('Database %s', db)
-        for name,value in list(self._provenance_dict(db, load_command, log_file).items()):
+        self._provenance_dict(db, load_command, log_file)
+        for name,value in list(self.prov.items()):
             r, _ = Resource.objects.using(db).get_or_create(
                             uristring='', name=name, value=value, resourcetype=rt)
             CampaignResource.objects.using(db).get_or_create(
@@ -415,6 +414,25 @@ local   all             all                                     peer
         print(('\n'.join(stoqs_campaigns)))
         print(('export STOQS_CAMPAIGNS="' + ','.join(stoqs_campaigns) + '"'))
 
+    def lines_with_string(self, file_name, string, max_lines=10):
+        matching_lines = ''
+        with open(file_name) as f:
+            i = 0
+            for line in f:
+                if string in line:
+                    i += 1
+                    matching_lines += line
+                if i > max_lines:
+                    break
+
+        if i >= max_lines:
+            matching_lines += f'\n(... truncated after {string} seen {max_lines} times ...)'
+
+        if not matching_lines:
+            matching_lines = f'No lines containing string {string}.'
+
+        return matching_lines
+
     def load(self, campaigns=None, create_only=False):
         if not campaigns:
             campaigns = importlib.import_module(self.args.campaigns)
@@ -499,13 +517,34 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
             ret = os.system(cmd)
             self.logger.debug(f'ret = {ret}')
 
+            self._copy_log_file(log_file)
+
             if self.args.slack:
-                message = f"{db} load into {settings.DATABASES[db]['HOST']} on {socket.gethostname()}"
+                server = os.environ.get('NGINX_SERVER_NAME', socket.gethostname())
+                message = f"{db} load into {settings.DATABASES[db]['HOST']} on {server}"
                 if ret == 0:
-                    message += ' succeded.'
+                    message += ' *succeded*.\n'
                 else:
-                    message += ' failed.'
-                self.slack.chat.post_message('#stoqs-loads', message)
+                    message += ' *failed*.\n'
+
+                stoqs_icon_url = 'http://www.stoqs.org/wp-content/uploads/2017/07/STOQS_favicon_logo3_512.png'
+                self.slack.chat.post_message('#stoqs-loads', text=message, username='stoqsadm', icon_url=stoqs_icon_url)
+
+                message = f'All WARNING messages from {log_file}:'
+                message += f"```{self.lines_with_string(log_file, 'WARNING')}```"
+                self.slack.chat.post_message('#stoqs-loads', text=message, username='stoqsadm', icon_url=stoqs_icon_url)
+
+                message = f'All ERROR messages from {log_file}:'
+                message += f"```{self.lines_with_string(log_file, 'ERROR')}```"
+                self.slack.chat.post_message('#stoqs-loads', text=message, username='stoqsadm', icon_url=stoqs_icon_url)
+
+                num_lines = 20
+                message = f'Last {num_lines} lines of {log_file}:'
+                message += f"```{tail(log_file, num_lines)}```"
+                log_url = 'http://localhost:8008/media/loadlogs/' + os.path.basename(log_file) + '.txt'
+                self.slack.chat.post_message('#stoqs-loads', text=message, username='stoqsadm', icon_url=stoqs_icon_url, attachments=log_url)
+
+                self.logger.info('Message sent to Slack channel #stoqs-loads')
                 
             if ret != 0:
                 self.logger.error(f'Non-zero return code from load script. Check {log_file}')

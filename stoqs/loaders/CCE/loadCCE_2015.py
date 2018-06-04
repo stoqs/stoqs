@@ -203,18 +203,18 @@ class CCE_2015_Campaign:
         self.lores_event_times = lores_event_times
         self.hires_event_times = hires_event_times
 
-        # CCE BIN data
-        self.cl.ccebin_nominaldepth = 1836
-        self.cl.ccebin_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/BIN/20151013/netcdf/'
-        self.cl.ccebin_files = [
-                            'MBCCE_BIN_CTD_20151013_timecorrected.nc',
-                            'MBCCE_BIN_OXY_20151013_timecorrected.nc',
-                            'MBCCE_BIN_ECO_20151013_timecorrected.nc',
-                            'MBCCE_BIN_ADCP300_20151013.nc',
-                            'MBCCE_BIN_ADCP1200_20151013.nc',
-                            'MBCCE_BIN_ADCP1200_20151013.nc'
+        # CCE SIN (Seafloor Instrument Node) data
+        self.cl.ccesin_nominaldepth = 1836
+        self.cl.ccesin_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/SIN/20151013/netcdf/'
+        self.cl.ccesin_files = [
+                            'MBCCE_SIN_CTD_20151013_timecorrected.nc',
+                            'MBCCE_SIN_OXY_20151013_timecorrected.nc',
+                            'MBCCE_SIN_ECO_20151013_timecorrected.nc',
+                            'MBCCE_SIN_ADCP300_20151013.nc',
+                            'MBCCE_SIN_ADCP1200_20151013.nc',
+                            'MBCCE_SIN_ADCP1200_20151013.nc'
                           ]
-        self.cl.ccebin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'optical_backscatter',
+        self.cl.ccesin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'optical_backscatter',
                             'oxygen', 'saturation', 'optode_temperature',
                             'chlor', 'ntu1', 'ntu2',
                             'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
@@ -285,25 +285,25 @@ class CCE_2015_Campaign:
 
 
         # Full-deployment files, exatracted from SSDS with stride of 60
-        ##self.cl.ccebin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccebin2015/201510/'
-        ##self.cl.ccebin_files = [
-        ##                'ccebin2015_aanderaaoxy_20151013.nc',
-        ##                'ccebin2015_adcp1825_20151013.nc',
-        ##                'ccebin2015_adcp1827_20151013.nc',
-        ##                'ccebin2015_adcp1828_20151013.nc',
-        ##                'ccebin2015_ecotriplet_20151013.nc',
-        ##                'ccebin2015_sbe16_20151013.nc',
+        ##self.cl.ccesin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccesin2015/201510/'
+        ##self.cl.ccesin_files = [
+        ##                'ccesin2015_aanderaaoxy_20151013.nc',
+        ##                'ccesin2015_adcp1825_20151013.nc',
+        ##                'ccesin2015_adcp1827_20151013.nc',
+        ##                'ccesin2015_adcp1828_20151013.nc',
+        ##                'ccesin2015_ecotriplet_20151013.nc',
+        ##                'ccesin2015_sbe16_20151013.nc',
         ##               ]
-        ##self.cl.ccebin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccebin20160115/201601/'
-        ##self.cl.ccebin_files = [
-        ##                ##'ccebin20160115_aanderaaoxy_20160115.nc',
-        ##                'ccebin20160115_adcp1825_20160115.nc',
-        ##                'ccebin20160115_adcp1827_20160115.nc',
-        ##                'ccebin20160115_adcp1828_20160115.nc',
-        ##                ##'ccebin20160115_ecotriplet_20160115.nc',
-        ##                ##'ccebin20160115_sbe16_20160115.nc',
+        ##self.cl.ccesin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccesin20160115/201601/'
+        ##self.cl.ccesin_files = [
+        ##                ##'ccesin20160115_aanderaaoxy_20160115.nc',
+        ##                'ccesin20160115_adcp1825_20160115.nc',
+        ##                'ccesin20160115_adcp1827_20160115.nc',
+        ##                'ccesin20160115_adcp1828_20160115.nc',
+        ##                ##'ccesin20160115_ecotriplet_20160115.nc',
+        ##                ##'ccesin20160115_sbe16_20160115.nc',
         ##               ]
-        ##self.cl.ccebin_parms = [
+        ##self.cl.ccesin_parms = [
         ##                'u_component_uncorrected', 'v_component_uncorrected',
         ##                'echo_intensity_beam1', 
         ##                #'echo_intensity_beam2', 'echo_intensity_beam3', 'echo_intensity_beam4',
@@ -338,22 +338,22 @@ class CCE_2015_Campaign:
                     except NoValidData as e:
                         self.cl.logger.warn(str(e))
 
-    def load_cce_bin(self, low_res_stride=300, high_res_stride=1):
-        # BIN: Low-res (10 minute) 
+    def load_cce_sin(self, low_res_stride=300, high_res_stride=1):
+        # SIN (nee BIN): Low-res (10 minute) 
         for event in lores_event_times:
-            setattr(self.cl, 'ccebin_start_datetime', event.start)
-            setattr(self.cl, 'ccebin_end_datetime', event.end)
+            setattr(self.cl, 'ccesin_start_datetime', event.start)
+            setattr(self.cl, 'ccesin_end_datetime', event.end)
             try:
-                getattr(self.cl, 'loadCCEBIN')(stride=low_res_stride)
+                getattr(self.cl, 'loadCCESIN')(stride=low_res_stride)
             except NoValidData as e:
                 self.cl.logger.warn(str(e))
 
-        # BIN: High-res (2 second)
+        # SIN (nee BIN): High-res (2 second)
         for event in hires_event_times:
-            setattr(self.cl, 'ccebin_start_datetime', event.start)
-            setattr(self.cl, 'ccebin_end_datetime', event.end)
+            setattr(self.cl, 'ccesin_start_datetime', event.start)
+            setattr(self.cl, 'ccesin_end_datetime', event.end)
             try:
-                getattr(self.cl, 'loadCCEBIN')(stride=high_res_stride)
+                getattr(self.cl, 'loadCCESIN')(stride=high_res_stride)
             except NoValidData as e:
                 self.cl.logger.warn(str(e))
 
@@ -362,20 +362,20 @@ if __name__ == '__main__':
     campaign = CCE_2015_Campaign()
     if campaign.cl.args.test:
         campaign.load_cce_moorings(low_res_stride=1000, high_res_stride=100)
-        campaign.load_cce_bin(low_res_stride=1000, high_res_stride=100)
+        campaign.load_cce_sin(low_res_stride=1000, high_res_stride=100)
         campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
         campaign.cl.loadBEDS(stride=5, featureType='trajectory')
 
     elif campaign.cl.args.optimal_stride:
         campaign.load_cce_moorings(low_res_stride=300, high_res_stride=10)
-        campaign.load_cce_bin(low_res_stride=300, high_res_stride=10)
+        campaign.load_cce_sin(low_res_stride=300, high_res_stride=10)
         campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
         campaign.cl.loadBEDS(stride=1, featureType='trajectory')
 
     else:
         campaign.cl.stride = campaign.cl.args.stride
         campaign.load_cce_moorings()
-        campaign.load_cce_bin()
+        campaign.load_cce_sin()
         campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
         campaign.cl.loadBEDS(featureType='trajectory')
 
