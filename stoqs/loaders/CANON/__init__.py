@@ -121,6 +121,7 @@ class CANONLoader(LoadScript):
                 'wg_oa':        '0f9cd4',
                 'wg_tex':       '9626ff',
                 'wg_Tiny':      '960000',
+                'wg_Sparky':    'FCDD00',
              }
 
     # Colors for roms_* "platforms"
@@ -613,6 +614,19 @@ class CANONLoader(LoadScript):
                                        'wg_Tiny_Glider', self.colors['wg_Tiny'], 'waveglider', 'Glider Mission',
                                        self.wg_Tiny_parms, self.dbAlias, stride, self.wg_Tiny_startDatetime, 
                                        self.wg_Tiny_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+
+    def load_wg_Sparky(self, stride=None):
+        '''
+        Glider specific load functions, sets plotTimeSeriesDepth=0 to get Parameter tab in UI
+        '''
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_Tiny_files], self.wg_Sparky_files):
+            url = self.wg_Sparky_base + f
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+                                       'wg_Sparky_Glider', self.colors['wg_Sparky'], 'waveglider', 'Glider Mission',
+                                       self.wg_Sparky_parms, self.dbAlias, stride, self.wg_Sparky_startDatetime,
+                                       self.wg_Sparky_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+
     def load_wg_oa(self, stride=None):
         '''
         Glider specific load functions
