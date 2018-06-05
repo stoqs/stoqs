@@ -82,7 +82,7 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 def find_urls(base, search_str):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
-    print(f'Crawling: {url}')
+    print("Crawling: %s" % url)
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
     u = urlsplit(url)
     name, ext = os.path.splitext(u.path)
@@ -198,6 +198,108 @@ cl.nps34a_endDatetime = enddate
 ##   from cencoos directory, single non-aggregated files
 cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201805/'
 cl.slocum_nemesis_files = [
+        'nemesis_20180605T085233_rt0.nc',
+        'nemesis_20180605T070154_rt0.nc',
+        'nemesis_20180605T031744_rt0.nc',
+        'nemesis_20180604T233637_rt0.nc',
+        'nemesis_20180604T181842_rt0.nc',
+        'nemesis_20180604T163244_rt0.nc',
+        'nemesis_20180604T092308_rt0.nc',
+        'nemesis_20180604T040607_rt0.nc',
+        'nemesis_20180604T022123_rt0.nc',
+        'nemesis_20180603T210413_rt0.nc',
+        'nemesis_20180603T191831_rt0.nc',
+        'nemesis_20180603T140517_rt0.nc',
+        'nemesis_20180603T121929_rt0.nc',
+        'nemesis_20180603T071759_rt0.nc',
+        'nemesis_20180603T052610_rt0.nc',
+        'nemesis_20180603T031009_rt0.nc',
+        'nemesis_20180603T022738_rt0.nc',
+        'nemesis_20180602T233110_rt0.nc',
+        'nemesis_20180602T204803_rt0.nc',
+        'nemesis_20180602T183615_rt0.nc',
+        'nemesis_20180602T175305_rt0.nc',
+        'nemesis_20180602T150336_rt0.nc',
+        'nemesis_20180602T140859_rt0.nc',
+        'nemesis_20180602T090410_rt0.nc',
+        'nemesis_20180602T071934_rt0.nc',
+        'nemesis_20180602T015811_rt0.nc',
+        'nemesis_20180602T001228_rt0.nc',
+        'nemesis_20180601T185917_rt0.nc',
+        'nemesis_20180601T171007_rt0.nc',
+        'nemesis_20180601T115021_rt0.nc',
+        'nemesis_20180601T100739_rt0.nc',
+        'nemesis_20180601T044606_rt0.nc',
+        'nemesis_20180601T025827_rt0.nc',
+        'nemesis_20180601T003121_rt0.nc',
+        'nemesis_20180531T224240_rt0.nc',
+        'nemesis_20180531T172008_rt0.nc',
+        'nemesis_20180531T153237_rt0.nc',
+        'nemesis_20180531T101932_rt0.nc',
+        'nemesis_20180531T082452_rt0.nc',
+        'nemesis_20180531T045057_rt0.nc',
+        'nemesis_20180530T231216_rt0.nc',
+        'nemesis_20180530T212637_rt0.nc',
+        'nemesis_20180530T153412_rt0.nc',
+        'nemesis_20180530T134513_rt0.nc',
+        'nemesis_20180530T081406_rt0.nc',
+        'nemesis_20180530T062523_rt0.nc',
+        'nemesis_20180530T004850_rt0.nc',
+        'nemesis_20180529T225710_rt0.nc',
+        'nemesis_20180529T152223_rt0.nc',
+        'nemesis_20180529T172607_rt0.nc',
+        'nemesis_20180529T092011_rt0.nc',  
+        'nemesis_20180529T073732_rt0.nc',      
+        'nemesis_20180529T035307_rt0.nc',
+        'nemesis_20180529T002221_rt0.nc',
+        'nemesis_20180528T223642_rt0.nc',
+        'nemesis_20180528T172045_rt0.nc',
+        'nemesis_20180528T153313_rt0.nc',
+        'nemesis_20180528T101737_rt0.nc',
+        'nemesis_20180528T083156_rt0.nc',
+        'nemesis_20180528T031438_rt0.nc',
+        'nemesis_20180528T012900_rt0.nc',
+        'nemesis_20180527T200926_rt0.nc',
+        'nemesis_20180527T182323_rt0.nc',
+        'nemesis_20180527T130348_rt0.nc',
+        'nemesis_20180527T111807_rt0.nc',
+        'nemesis_20180527T060038_rt0.nc',
+        'nemesis_20180527T041500_rt0.nc',
+        'nemesis_20180526T225705_rt0.nc',
+        'nemesis_20180526T211127_rt0.nc',
+        'nemesis_20180526T155125_rt0.nc',
+        'nemesis_20180526T140052_rt0.nc',
+        'nemesis_20180526T083551_rt0.nc',
+        'nemesis_20180526T065013_rt0.nc',
+        'nemesis_20180526T013514_rt0.nc',
+        'nemesis_20180525T234931_rt0.nc',
+        'nemesis_20180525T182645_rt0.nc',
+        'nemesis_20180525T163804_rt0.nc',
+        'nemesis_20180525T111958_rt0.nc',
+        'nemesis_20180525T093117_rt0.nc',
+        'nemesis_20180525T054532_rt0.nc',
+        'nemesis_20180525T020511_rt0.nc',
+        'nemesis_20180524T204810_rt0.nc',
+        'nemesis_20180524T185653_rt0.nc',
+        'nemesis_20180524T132921_rt0.nc',
+        'nemesis_20180524T114042_rt0.nc',
+        'nemesis_20180524T075617_rt0.nc',
+        'nemesis_20180524T041131_rt0.nc',
+        'nemesis_20180523T223811_rt0.nc',
+        'nemesis_20180523T204655_rt0.nc',
+        'nemesis_20180523T170354_rt0.nc',
+        'nemesis_20180523T132421_rt0.nc',  
+        'nemesis_20180523T094436_rt0.nc',  
+        'nemesis_20180523T060002_rt0.nc',   
+        'nemesis_20180523T022234_rt0.nc',   
+        'nemesis_20180522T223930_rt0.nc',   
+        'nemesis_20180522T185629_rt0.nc',   
+        'nemesis_20180522T151002_rt0.nc',   
+        'nemesis_20180522T112729_rt0.nc',   
+        'nemesis_20180522T074822_rt0.nc',   
+        'nemesis_20180522T040721_rt0.nc',   
+        'nemesis_20180522T002128_rt0.nc',   
+        'nemesis_20180521T203710_rt0.nc',   
         'nemesis_20180521T165515_rt0.nc',
         'nemesis_20180521T130842_rt0.nc',
         'nemesis_20180521T092215_rt0.nc',
@@ -256,6 +358,7 @@ cl.slocum_nemesis_parms = [ 'temperature', 'salinity', 'u', 'v' ] #'oxygen', 'cd
 cl.slocum_nemesis_startDatetime = startdate
 cl.slocum_nemesis_endDatetime = enddate
 
+
 ######################################################################
 # Wavegliders
 ######################################################################
@@ -266,11 +369,22 @@ cl.slocum_nemesis_endDatetime = enddate
 ##cl.wg_tex_startDatetime = startdate
 ##cl.wg_tex_endDatetime = enddate
 
+# WG Sparky - All instruments combined into one file - one time coordinate
+cl.wg_Sparky_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
+cl.wg_Sparky_files = [
+                      'wgSparky/20180531/realTime/20180531.nc',
+                     ]
+
+cl.wg_Sparky_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  'water_temp_sub', 
+                     'sal_sub', 'bb_470', 'bb_650', 'chl', 'beta_470', 'beta_650', 'pH', 'O2_conc' ] # two ctds (_float, _sub), no CO2)
+cl.wg_Sparky_depths = [ 0 ]
+cl.wg_Sparky_startDatetime = startdate
+cl.wg_Sparky_endDatetime = enddate
+
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
                       'wgTiny/20180516/realTime/20180516.nc',
-
                    ]
 
 
@@ -384,23 +498,24 @@ cl.process_command_line()
 
 if cl.args.test:
 
-    cl.loadM1(stride=10)  
+    cl.loadM1()  
     ##cl.loadTethys()i ## not in this campaign
-    cl.loadL_662a(stride=10)
-    cl.load_NPS34a(stride=10) 
-    cl.load_slocum_nemesis(stride=10) 
-    cl.load_wg_Tiny(stride=10)
-    cl.load_oa1(stride=10)
-    cl.load_oa2(stride=10)
-    cl.loadDorado(stride=10)
-    cl.loadDaphne(stride=10)
-    cl.loadMakai(stride=10)
+    cl.loadL_662a()
+    cl.load_NPS34a() 
+    cl.load_slocum_nemesis() 
+    cl.load_wg_Tiny()
+    cl.load_wg_Sparky()
+    cl.load_oa1()
+    cl.load_oa2()
+    cl.loadDorado()
+    cl.loadDaphne()
+    cl.loadMakai()
     ##cl.loadRCuctd()  ## not in this campaign
     ##cl.loadRCpctd()  ## not in this campaign
-    cl.loadWFuctd(stride=10)
-    cl.loadWFpctd(stride=10)
+    cl.loadWFuctd()
+    cl.loadWFpctd()
 
-    cl.loadSubSamples()
+    #cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
 
@@ -426,6 +541,7 @@ else:
     cl.load_NPS34a() 
     cl.load_slocum_nemesis() 
     cl.load_wg_Tiny()
+    cl.load_wg_Sparky()
     cl.load_oa1()
     cl.load_oa2()
     cl.loadDorado()
