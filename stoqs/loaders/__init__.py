@@ -271,7 +271,7 @@ class LoadScript(object):
         try:
             platform = m.Platform.objects.using(self.dbAlias).get(name=pName)
         except ObjectDoesNotExist:
-            self.logger.warn("Platform {} not found. Can't add Resources.".format(pName))
+            self.logger.warn(f"Platform {pName} not found in database {self.dbAlias}. Can't add Resources.")
             return
         
         r, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
