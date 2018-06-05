@@ -112,10 +112,10 @@ def find_urls(base, search_str):
                 # if within a valid range, grab the valid urls
                 if dir_start >= startdate and dir_end <= enddate:
 
-                    print('Found mission directory ' + dts[0])
+                    print('Found mission directory ' + mission_dir_name)
                     print('Searching if within range %s and %s  %s %s' % (startdate, enddate, dir_start, dir_end))
                     catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
-                    c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
+                    c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips, debug=cl.args.verbose)
                     d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
                     for url in d:
                         urls.append(url)
@@ -355,29 +355,27 @@ cl.process_command_line()
 
 if cl.args.test:
 
-    cl.loadM1(stride=100)
+    cl.loadM1(stride=100)  
     cl.loadTethys(stride=100)
-    cl.loadL_662(stride=100)
-    cl.loadAhi(stride=100)
     cl.loadAku(stride=100)
+    cl.loadAhi(stride=100)
     cl.loadOpah(stride=100)
-    cl.loadL_662(stride=100)
     cl.loadL_662a(stride=100)
-    cl.load_NPS34(stride=100)
-    cl.load_NPS34a(stride=100)
-    cl.load_slocum_nemesis(stride=100)
-    cl.load_SG621(stride=100) ## KISS glider
-    cl.load_SG539(stride=100) ## KISS glider
+    ##cl.load_NPS34()  ## not in this campaign
+    ##cl.load_NPS34a() ## not in this campaign
+    ##cl.load_slocum_nemesis()  ## not in this campaign
+    ##cl.load_SG621(stride=2) ## KISS glider
+    ##cl.load_SG539(stride=2) ## KISS glider
     cl.load_wg_Tiny(stride=100)
     cl.load_oa1(stride=100)
     cl.load_oa2(stride=100)
     cl.loadDorado(stride=100)
-    ##cl.loadDaphne(stride=100)
-    ##cl.loadMakai(stride=100)
-    cl.loadRCuctd(stride=100)
-    cl.loadRCpctd(stride=100)
-    cl.loadWFuctd(stride=100)
-    cl.loadWFpctd(stride=100)
+    cl.loadDaphne(stride=100)
+    ##cl.loadMakai()  ## not in this campaign
+    ##cl.loadRCuctd()  ## not in this campaign
+    ##cl.loadRCpctd()  ## not in this campaign
+    ##cl.loadWFuctd()  ## not in this campaign
+    ##cl.loadWFpctd()  ## not in this campaign
 
     cl.loadSubSamples()
 

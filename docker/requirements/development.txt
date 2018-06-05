@@ -15,7 +15,7 @@ docutils==0.14
 ephem==3.7.6.0
 GDAL==2.3.0
 Genshi==0.7
-h5py==2.7.1
+h5py==2.8.0
 ipython==6.4.0
 jupyter==1.0.0
 MarkupSafe==1.0
