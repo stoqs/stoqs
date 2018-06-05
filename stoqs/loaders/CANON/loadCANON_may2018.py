@@ -372,11 +372,22 @@ cl.slocum_nemesis_endDatetime = enddate
 ##cl.wg_tex_startDatetime = startdate
 ##cl.wg_tex_endDatetime = enddate
 
+# WG Sparky - All instruments combined into one file - one time coordinate
+cl.wg_Sparky_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
+cl.wg_Sparky_files = [
+                      'wgSparky/20180531/realTime/20180531.nc',
+                     ]
+
+cl.wg_Sparky_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  "water_temp_sub', 
+                     'sal_sub', 'bb_470', 'bb_650', 'chl', 'beta_470', 'beta_650', 'pH', 'O2_conc' ]i # two ctds (_float, _sub), no CO2)
+cl.wg_Sparky_depths = [ 0 ]
+cl.wg_Sparky_startDatetime = startdate
+cl.wg_Sparky_endDatetime = enddate
+
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
                       'wgTiny/20180516/realTime/20180516.nc',
-
                    ]
 
 
@@ -540,6 +551,7 @@ else:
     cl.load_NPS34a() 
     cl.load_slocum_nemesis() 
     cl.load_wg_Tiny()
+    cl.load_wg_Sparky()
     cl.load_oa1()
     cl.load_oa2()
     cl.loadDorado()
