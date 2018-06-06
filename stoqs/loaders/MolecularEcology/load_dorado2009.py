@@ -92,7 +92,7 @@ cl.m1met_endDatetime = datetime.datetime(2009, 12, 31)
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadDorado(stride=100)
+    cl.loadDorado(stride=50)
     ##cl.loadM1ts(stride=10)
     ##cl.loadM1met(stride=10)
 
