@@ -198,9 +198,16 @@ cl.nps34a_endDatetime = enddate
 ## cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
 ##   from cencoos directory, single non-aggregated files
 cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201805/'
-cl.slocum_nemesis_files = [
 
 cl.slocum_nemesis_files = [
+        'nemesis_20180606T132359_rt0.nc',
+        'nemesis_20180606T113615_rt0.nc',
+        'nemesis_20180606T061921_rt0.nc',
+        'nemesis_20180606T043043_rt0.nc',
+        'nemesis_20180605T231000_rt0.nc',
+        'nemesis_20180605T212118_rt0.nc',
+        'nemesis_20180605T155935_rt0.nc',
+        'nemesis_20180605T141014_rt0.nc',
         'nemesis_20180605T085233_rt0.nc',
         'nemesis_20180605T070154_rt0.nc',
         'nemesis_20180605T031744_rt0.nc',
