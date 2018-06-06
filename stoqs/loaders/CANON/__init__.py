@@ -620,7 +620,7 @@ class CANONLoader(LoadScript):
         Glider specific load functions, sets plotTimeSeriesDepth=0 to get Parameter tab in UI
         '''
         stride = stride or self.stride
-        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_Tiny_files], self.wg_Sparky_files):
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_Sparky_files], self.wg_Sparky_files):
             url = self.wg_Sparky_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
                                        'wg_Sparky_Glider', self.colors['wg_Sparky'], 'waveglider', 'Glider Mission',
