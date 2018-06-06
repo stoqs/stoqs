@@ -1123,85 +1123,7 @@ class Base_Loader(STOQS_Loader):
             mp.measurement = meas
             yield mp
 
-    def process_data(self, featureType=''): 
-        '''Iterate over the data source and load the data in by creating new objects
-        for each measurement.
-
-        Note that due to the use of large-precision numerics, we'll convert all numbers to
-        strings prior to performing the import.  Django uses the Decimal type (arbitrary precision
-        numeric type), so we won't lose any precision.
-
-        Return the number of MeasuredParameters loaded.
-        '''
-
-        self.coord_dicts = {}
-        for v in self.include_names:
-            try:
-                self.coord_dicts[v] = self.getAuxCoordinates(v)
-            except ParameterNotFound as e:
-                self.logger.debug(str(e))
-
-        self.initDB()
-
-        path = None
-        parmCount = {}
-        self.parameter_counts = {}
-        for key in self.include_names:
-            parmCount[key] = 0
-
-        if self.appendFlag: # pragma: no cover
-            self.dataStartDatetime = (InstantPoint.objects.using(self.dbAlias)
-                                        .filter(activity__name=self.getActivityName())
-                                        .aggregate(Max('timevalue'))['timevalue__max'])
-            if hasattr(self, 'backfill_timedelta') and self.dataStartDatetime:
-                if self.backfill_timedelta:
-                    self.dataStartDatetime = self.dataStartDatetime - self.backfill_timedelta
-
-        self.param_by_key = {}
-        self.mv_by_key = {}
-        self.fv_by_key = {}
-
-        for key in (set(self.include_names) & set(self.ds.keys())):
-            self.param_by_key[key] = self.getParameterByName(key)
-            self.parameter_counts[self.param_by_key[key]] = 0
-
-        for key in self.ds.keys():
-            self.mv_by_key[key] = self.getmissing_value(key)
-            self.fv_by_key[key] = self.get_FillValue(key)
-
-        self.totalRecords = self.getTotalRecords()
-
-        self.logger.info("From: %s", self.url)
-        if featureType:
-            featureType = featureType.lower()
-        else:
-            featureType = self.getFeatureType()
-
-        mps_loaded = 0
-        try:
-            if featureType== TRAJECTORY:
-                mps_loaded = self.load_trajectory()
-            elif featureType == TIMESERIES:
-                mps_loaded = self.load_timeseriesprofile()
-            elif featureType == TIMESERIESPROFILE:
-                mps_loaded = self.load_timeseriesprofile()
-            elif featureType == TRAJECTORYPROFILE:
-                pass
-            else:
-                raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
-                        " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
-                        " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
-        except IntegrityError as e:
-            # Likely duplicate key value violates unique constraint "stoqs_measuredparameter_measurement_id_parameter_1328c3fb_uniq"
-            # Can't append data from source with bulk_create(), give appropriate warning
-            self.logger.exception(str(e))
-            self.logger.error(f'Failed to bulk_create() data from URL: {self.url}')
-            self.logger.error(f'If you need to load data that has been appended to the URL then delete its Activity before loading.')
-
-            return mps_loaded, path, parmCount
-
-        # Bulk loading may introduce None values, get rid of them
-        MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
+    def _post_process_updates(self, mps_loaded, featureType=''):
 
         #
         # Query database to a path for trajectory or stationPoint for timeSeriesProfile and timeSeries
@@ -1286,6 +1208,83 @@ class Base_Loader(STOQS_Loader):
         elif featureType == TRAJECTORYPROFILE:
             self.insertSimpleDepthTimeSeriesByNominalDepth(trajectoryProfileDepths=self.timeDepthProfiles)
         self.logger.info("Data load complete, %d records loaded.", mps_loaded)
+
+        return path
+
+    def process_data(self, featureType=''): 
+        '''Bulk copy measutement data into database
+        '''
+
+        self.coord_dicts = {}
+        for v in self.include_names:
+            try:
+                self.coord_dicts[v] = self.getAuxCoordinates(v)
+            except ParameterNotFound as e:
+                self.logger.debug(str(e))
+
+        self.initDB()
+
+        path = None
+        parmCount = {}
+        self.parameter_counts = {}
+        for key in self.include_names:
+            parmCount[key] = 0
+
+        if self.appendFlag: # pragma: no cover
+            self.dataStartDatetime = (InstantPoint.objects.using(self.dbAlias)
+                                        .filter(activity__name=self.getActivityName())
+                                        .aggregate(Max('timevalue'))['timevalue__max'])
+            if hasattr(self, 'backfill_timedelta') and self.dataStartDatetime:
+                if self.backfill_timedelta:
+                    self.dataStartDatetime = self.dataStartDatetime - self.backfill_timedelta
+
+        self.param_by_key = {}
+        self.mv_by_key = {}
+        self.fv_by_key = {}
+
+        for key in (set(self.include_names) & set(self.ds.keys())):
+            self.param_by_key[key] = self.getParameterByName(key)
+            self.parameter_counts[self.param_by_key[key]] = 0
+
+        for key in self.ds.keys():
+            self.mv_by_key[key] = self.getmissing_value(key)
+            self.fv_by_key[key] = self.get_FillValue(key)
+
+        self.totalRecords = self.getTotalRecords()
+
+        self.logger.info("From: %s", self.url)
+        if featureType:
+            featureType = featureType.lower()
+        else:
+            featureType = self.getFeatureType()
+
+        mps_loaded = 0
+        try:
+            if featureType== TRAJECTORY:
+                mps_loaded = self.load_trajectory()
+            elif featureType == TIMESERIES:
+                mps_loaded = self.load_timeseriesprofile()
+            elif featureType == TIMESERIESPROFILE:
+                mps_loaded = self.load_timeseriesprofile()
+            elif featureType == TRAJECTORYPROFILE:
+                pass
+            else:
+                raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
+                        " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
+                        " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
+        except IntegrityError as e:
+            # Likely duplicate key value violates unique constraint "stoqs_measuredparameter_measurement_id_parameter_1328c3fb_uniq"
+            # Can't append data from source with bulk_create(), give appropriate warning
+            self.logger.exception(str(e))
+            self.logger.error(f'Failed to bulk_create() data from URL: {self.url}')
+            self.logger.error(f'If you need to load data that has been appended to the URL then delete its Activity before loading.')
+
+            return mps_loaded, path, parmCount
+
+        # Bulk loading may introduce None values, get rid of them
+        MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
+
+        path = self._post_process_updates(mps_loaded, featureType)
 
         return mps_loaded, path, parmCount
 

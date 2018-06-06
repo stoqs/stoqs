@@ -587,31 +587,46 @@ Script to load or reload STOQS databases using the dictionary in stoqs/campaigns
                               
 A typical workflow to build up a production server is:
 1. Construct a stoqs/campaigns.py file (use mbari_campaigns.py as model)
-2. Load test (_t) databases to test all your load scripts:
+2. Uncompress Sample data files included in the stoqs repository:
+    find stoqs/loaders -name "*.gz" | xargs gunzip
+3. Copy terrain data files that are not included or copied during test.sh execution:
+    cd stoqs/loaders
+    wget https://stoqs.mbari.org/terrain/Monterey25.grd  
+    wget https://stoqs.mbari.org/terrain/Globe_1m_bath.grd
+    wget https://stoqs.mbari.org/terrain/MontereyCanyonBeds_1m+5m.grd
+    wget https://stoqs.mbari.org/terrain/SanPedroBasin50.grd
+    wget https://stoqs.mbari.org/terrain/michigan_lld.grd
+4. Get the STOQS_CAMPAIGNS setting for running your server:
+    {load} --test --list
+5. Load test (_t) databases to test all your load scripts:
     {load} --test --clobber --background --email {user} -v > load.out 2>&1
     (Check your email for load finished messages)
-3. Get the STOQS_CAMPAIGNS setting for running your server:
-    {load} --test --list
-4. Set your environment variables and run your server:
+    Email is not configured for a Docker installation, instead use Slack:
+    cd docker
+    docker exec -e SLACKTOKEN=<your_private_token> -e STOQS_CAMPAIGNS=<results_from_previous_step> stoqs {load} --test --slack
+    (The --clobber, --db <database>, and --verbose <num> options can be used to reload and debug problems.)
+6. Add metadata to the database with links to the log files:
+    {load} --test --updateprovenance
+7. Set your environment variables and run your server:
     export DATABASE_URL=postgis://<dbuser>:<pw>@<host>:<port>/stoqs
     export STOQS_CAMPAIGNS=<output_from_previous_step>
     export MAPSERVER_HOST=<mapserver_ip_address>
     stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
     - or, however you start your uWSGI app, e.g.:
     uwsgi --socket :8001 --module wsgi:application
-5. Visit your server and see that your test databases are indeed loaded
-6. Check all your output files for ERROR and WARNING messages
-7. Fix any problems so that ALL the test database loads succeed
-8. Remove the test databases:
+8. Visit your server and see that your test databases are indeed loaded
+9. Check all your output files for ERROR and WARNING messages
+10. Fix any problems so that ALL the test database loads succeed
+11. Remove the test databases:
     {load} --removetest -v
-9. Load your production databases:
+12. Load your production databases:
     {load} --background --email {user} -v > load.out 2>&1
-10. Add provenance information to the database, with setting for non-default MEDIA_ROOT:
+13. Add provenance information to the database, with setting for non-default MEDIA_ROOT:
     export MEDIA_ROOT=/usr/share/nginx/media
     {load} --updateprovenance -v 
-11. Give the 'everyone' role SELECT privileges on all databases:
+14. Give the 'everyone' role SELECT privileges on all databases:
     {load} --grant_everyone_select -v 
-12. After a final check announce the availability of these databases
+15. After a final check announce the availability of these databases
 
 To get any stdout/stderr output you must use -v, the default is no output.
 ''').format(**{'load': sys.argv[0], 'user': os.environ['USER']}),

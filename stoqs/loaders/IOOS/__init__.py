@@ -19,11 +19,15 @@ MBARI 22 April 2012
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-project_dir = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
-import re
 
+# Insert Django App directory (parent of config) into python path
+sys.path.insert(0, os.path.abspath(os.path.join(
+                os.path.dirname(__file__), "../../")))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
+import django
+django.setup()
+
+import re
 import DAPloaders
 from SampleLoaders import SeabirdLoader, load_gulps, SubSamplesLoader 
 from loaders import LoadScript
