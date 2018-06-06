@@ -379,7 +379,7 @@ cl.wg_Sparky_files = [
                      ]
 
 cl.wg_Sparky_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  "water_temp_sub', 
-                     'sal_sub', 'bb_470', 'bb_650', 'chl', 'beta_470', 'beta_650', 'pH', 'O2_conc' ]i # two ctds (_float, _sub), no CO2)
+                     'sal_sub', 'bb_470', 'bb_650', 'chl', 'beta_470', 'beta_650', 'pH', 'O2_conc' ] # two ctds (_float, _sub), no CO2
 cl.wg_Sparky_depths = [ 0 ]
 cl.wg_Sparky_startDatetime = startdate
 cl.wg_Sparky_endDatetime = enddate
