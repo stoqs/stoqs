@@ -1142,6 +1142,7 @@ class Base_Loader(STOQS_Loader):
         # Query database to a path for trajectory or stationPoint for timeSeriesProfile and timeSeries
         #
         stationPoint = None
+        path = None
         linestringPoints = Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=self.activity
                                                        ).order_by('instantpoint__timevalue').values_list('geom')
         try:
