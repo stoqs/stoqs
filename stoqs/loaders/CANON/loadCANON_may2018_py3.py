@@ -385,7 +385,7 @@ cl.wg_Sparky_files = [
                       'wgSparky/20180531/realTime/20180531.nc',
                      ]
 
-cl.wg_Sparky_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  "water_temp_sub', 
+cl.wg_Sparky_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  'water_temp_sub', 
                      'sal_sub', 'bb_470', 'bb_650', 'chl', 'beta_470', 'beta_650', 'pH', 'O2_conc' ] # two ctds (_float, _sub), no CO2
 cl.wg_Sparky_depths = [ 0 ]
 cl.wg_Sparky_startDatetime = startdate
@@ -508,29 +508,22 @@ cl.process_command_line()
 
 if cl.args.test:
 
-    cl.loadM1(stride=100)
-    cl.loadTethys(stride=100)
-    cl.loadL_662(stride=100)
-    cl.loadAhi(stride=100)
-    cl.loadAku(stride=100)
-    cl.loadOpah(stride=100)
-    cl.loadL_662(stride=100)
-    cl.loadL_662a(stride=100)
-    cl.load_NPS34(stride=100)
-    cl.load_NPS34a(stride=100)
-    cl.load_slocum_nemesis(stride=100)
-    cl.load_SG621(stride=100) ## KISS glider
-    cl.load_SG539(stride=100) ## KISS glider
-    cl.load_wg_Tiny(stride=100)
-    cl.load_oa1(stride=100)
-    cl.load_oa2(stride=100)
-    cl.loadDorado(stride=100)
-    ##cl.loadDaphne(stride=100)
-    ##cl.loadMakai(stride=100)
-    cl.loadRCuctd(stride=100)
-    cl.loadRCpctd(stride=100)
-    cl.loadWFuctd(stride=100)
-    cl.loadWFpctd(stride=100)
+    cl.loadM1(stride=10)  
+    ##cl.loadTethys()i ## not in this campaign
+    cl.loadL_662a(stride=10)
+    cl.load_NPS34a(stride=10) 
+    cl.load_slocum_nemesis(stride=10) 
+    cl.load_wg_Tiny(stride=10)
+    cl.load_wg_Sparky(stride=10)
+    cl.load_oa1(stride=10)
+    cl.load_oa2(stride=10)
+    cl.loadDorado(stride=10)
+    cl.loadDaphne(stride=10)
+    cl.loadMakai(stride=10)
+    ##cl.loadRCuctd()  ## not in this campaign
+    ##cl.loadRCpctd()  ## not in this campaign
+    cl.loadWFuctd(stride=10)
+    cl.loadWFpctd(stride=10)
 
     cl.loadSubSamples()
 
