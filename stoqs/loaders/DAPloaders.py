@@ -344,14 +344,15 @@ class Base_Loader(STOQS_Loader):
         # Modify Activity name if temporal subset extracted from NetCDF file
         newName = self.activityName
         if not ' starting at ' in newName:
-            if self.requested_startDatetime and self.requested_endDatetime:
-                if '(stride' in self.activityName:
-                    first_part = self.activityName[:self.activityName.find('(stride')]
-                    last_part = self.activityName[self.activityName.find('(stride'):]
-                else:
-                    first_part = self.activityName
-                    last_part = ''
-                newName = '{} starting at {} {}'.format(first_part.strip(), self.requested_startDatetime, last_part)
+            if hasattr(self, 'requested_startDatetime') and hasattr(self, 'requested_endDatetime'):
+                if self.requested_startDatetime and self.requested_endDatetime:
+                    if '(stride' in self.activityName:
+                        first_part = self.activityName[:self.activityName.find('(stride')]
+                        last_part = self.activityName[self.activityName.find('(stride'):]
+                    else:
+                        first_part = self.activityName
+                        last_part = ''
+                    newName = '{} starting at {} {}'.format(first_part.strip(), self.requested_startDatetime, last_part)
 
         return newName
 
@@ -1178,9 +1179,10 @@ class Base_Loader(STOQS_Loader):
         # Construct a meaningful comment that looks good in the UI Metadata->NetCDF area
         fmt_comment = 'Loaded variables {} from {}'
         comment_vars = [varList, self.url.split('/')[-1]]
-        if self.requested_startDatetime and self.requested_endDatetime:
-            fmt_comment += ' between {} and {}'
-            comment_vars.extend([self.requested_startDatetime, self.requested_endDatetime])
+        if hasattr(self, 'requested_startDatetime') and hasattr(self, 'requested_endDatetime'):
+            if self.requested_startDatetime and self.requested_endDatetime:
+                fmt_comment += ' between {} and {}'
+                comment_vars.extend([self.requested_startDatetime, self.requested_endDatetime])
         fmt_comment += ' with a stride of {} on {}Z'
         comment_vars.extend([self.stride, str(datetime.utcnow()).split('.')[0]])
         newComment = fmt_comment.format(*comment_vars)
@@ -1232,8 +1234,12 @@ class Base_Loader(STOQS_Loader):
         self.initDB()
 
         path = None
-
-        for row in data_generator:
+        last_key = None
+        self.param_by_key = {}
+        self.parameter_counts = defaultdict(lambda: 0)
+        featureType='trajectory'
+        mps_loaded = 0
+        for row in data_generator():
             row = self.preProcessParams(row)
             (longitude, latitude, mtime, depth) = (
                             row.pop('longitude'),
@@ -1250,24 +1256,23 @@ class Base_Loader(STOQS_Loader):
 
             point = f'POINT({repr(longitude)} {repr(latitude)})'
 
-            if self.is_coordinate_bad(point, mtime, depth):
-                continue
+            self.param_by_key[key] = self.getParameterByName(key)
+            self.parameter_counts[self.param_by_key[key]] += 1
 
-            if self.is_value_bad(key, value):
-                continue
-
-            ip, _ = InstantPoint.objects.using(self.dbAlias).get_or_create(
+            ip,_ = InstantPoint.objects.using(self.dbAlias).get_or_create(
                                         activity=self.activity, timevalue=mtime)
-
+            meas,_ = Measurement.objects.using(self.dbAlias).get_or_create(
+                                        instantpoint=ip, geom=point, depth=depth)
             mp = MeasuredParameter(measurement=meas, 
-                                        parameter=param_by_key[key], datavalue=value)
+                                        parameter=self.param_by_key[key], datavalue=value)
 
             mp.save(using=self.dbAlias)
+            mps_loaded += 1
 
+        self.totalRecords = self.getTotalRecords()
         path = self._post_process_updates(mps_loaded, featureType)
 
-        return mps_loaded, path, parmCount
-
+        return mps_loaded, path, self.parameter_counts
 
     def process_data(self, featureType=''): 
         '''Bulk copy measurement data into database
