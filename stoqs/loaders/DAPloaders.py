@@ -100,6 +100,10 @@ class VariableMissingCoordinatesAttribute(Exception):
     pass
 
 
+class VariableHasBadCoordinatesAttribute(Exception):
+    pass
+
+
 class InvalidSliceRequest(Exception):
     pass
 
@@ -340,14 +344,15 @@ class Base_Loader(STOQS_Loader):
         # Modify Activity name if temporal subset extracted from NetCDF file
         newName = self.activityName
         if not ' starting at ' in newName:
-            if self.requested_startDatetime and self.requested_endDatetime:
-                if '(stride' in self.activityName:
-                    first_part = self.activityName[:self.activityName.find('(stride')]
-                    last_part = self.activityName[self.activityName.find('(stride'):]
-                else:
-                    first_part = self.activityName
-                    last_part = ''
-                newName = '{} starting at {} {}'.format(first_part.strip(), self.requested_startDatetime, last_part)
+            if hasattr(self, 'requested_startDatetime') and hasattr(self, 'requested_endDatetime'):
+                if self.requested_startDatetime and self.requested_endDatetime:
+                    if '(stride' in self.activityName:
+                        first_part = self.activityName[:self.activityName.find('(stride')]
+                        last_part = self.activityName[self.activityName.find('(stride'):]
+                    else:
+                        first_part = self.activityName
+                        last_part = ''
+                    newName = '{} starting at {} {}'.format(first_part.strip(), self.requested_startDatetime, last_part)
 
         return newName
 
@@ -411,10 +416,14 @@ class Base_Loader(STOQS_Loader):
         coordSN = {}
         snCoord = {}
         for k in from_variables:
-            if 'standard_name' in self.ds[k].attributes:
-                if self.ds[k].attributes['standard_name'] in ('time', 'latitude', 'longitude', 'depth'):
-                    coordSN[k] = self.ds[k].attributes['standard_name']
-                    snCoord[self.ds[k].attributes['standard_name']] = k
+            try:
+                if 'standard_name' in self.ds[k].attributes:
+                    if self.ds[k].attributes['standard_name'] in ('time', 'latitude', 'longitude', 'depth'):
+                        coordSN[k] = self.ds[k].attributes['standard_name']
+                        snCoord[self.ds[k].attributes['standard_name']] = k
+            except KeyError:
+                self.logger.error(f"Could not find variable {k} in the file. Perhaps there's a problem with the coordinates attribute?")
+                raise
 
         return coordSN, snCoord
 
@@ -437,7 +446,11 @@ class Base_Loader(STOQS_Loader):
         coord_dict = {}
         if 'coordinates' in self.ds[variable].attributes:
             coords = self.ds[variable].attributes['coordinates'].split()
-            coordSN, snCoord = self._getCoordinates(coords)
+            try:
+                coordSN, snCoord = self._getCoordinates(coords)
+            except KeyError as e:
+                self.logger.error(f"Could not get coordinates for {variable}. Check its coordinates attribute.")
+                raise VariableHasBadCoordinatesAttribute(e)
             for coord in coords:
                 self.logger.debug(coord)
                 try:
@@ -1129,6 +1142,7 @@ class Base_Loader(STOQS_Loader):
         # Query database to a path for trajectory or stationPoint for timeSeriesProfile and timeSeries
         #
         stationPoint = None
+        path = None
         linestringPoints = Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=self.activity
                                                        ).order_by('instantpoint__timevalue').values_list('geom')
         try:
@@ -1166,9 +1180,10 @@ class Base_Loader(STOQS_Loader):
         # Construct a meaningful comment that looks good in the UI Metadata->NetCDF area
         fmt_comment = 'Loaded variables {} from {}'
         comment_vars = [varList, self.url.split('/')[-1]]
-        if self.requested_startDatetime and self.requested_endDatetime:
-            fmt_comment += ' between {} and {}'
-            comment_vars.extend([self.requested_startDatetime, self.requested_endDatetime])
+        if hasattr(self, 'requested_startDatetime') and hasattr(self, 'requested_endDatetime'):
+            if self.requested_startDatetime and self.requested_endDatetime:
+                fmt_comment += ' between {} and {}'
+                comment_vars.extend([self.requested_startDatetime, self.requested_endDatetime])
         fmt_comment += ' with a stride of {} on {}Z'
         comment_vars.extend([self.stride, str(datetime.utcnow()).split('.')[0]])
         newComment = fmt_comment.format(*comment_vars)
@@ -1211,8 +1226,57 @@ class Base_Loader(STOQS_Loader):
 
         return path
 
+
+    def process_trajectory_values_from_generator(self, data_generator): 
+        '''Use original method to load a MeasuredParameter datavalue a value
+        at a time into the database. Works only for featureType='trajectory'.
+        '''
+
+        self.initDB()
+
+        path = None
+        last_key = None
+        self.param_by_key = {}
+        self.parameter_counts = defaultdict(lambda: 0)
+        featureType='trajectory'
+        mps_loaded = 0
+        for row in data_generator():
+            row = self.preProcessParams(row)
+            (longitude, latitude, mtime, depth) = (
+                            row.pop('longitude'),
+                            row.pop('latitude'),
+                            from_udunits(row.pop('time'), row.pop('timeUnits')),
+                            row.pop('depth'))
+
+
+            key, value = list(row.items()).pop()
+            value = float(value)
+            if key != last_key:
+                logger.info(f'Loading values for Parameter {key}')
+            last_key = key
+
+            point = f'POINT({repr(longitude)} {repr(latitude)})'
+
+            self.param_by_key[key] = self.getParameterByName(key)
+            self.parameter_counts[self.param_by_key[key]] += 1
+
+            ip,_ = InstantPoint.objects.using(self.dbAlias).get_or_create(
+                                        activity=self.activity, timevalue=mtime)
+            meas,_ = Measurement.objects.using(self.dbAlias).get_or_create(
+                                        instantpoint=ip, geom=point, depth=depth)
+            mp = MeasuredParameter(measurement=meas, 
+                                        parameter=self.param_by_key[key], datavalue=value)
+
+            mp.save(using=self.dbAlias)
+            mps_loaded += 1
+
+        self.totalRecords = self.getTotalRecords()
+        path = self._post_process_updates(mps_loaded, featureType)
+
+        return mps_loaded, path, self.parameter_counts
+
     def process_data(self, featureType=''): 
-        '''Bulk copy measutement data into database
+        '''Bulk copy measurement data into database
         '''
 
         self.coord_dicts = {}
@@ -1221,6 +1285,8 @@ class Base_Loader(STOQS_Loader):
                 self.coord_dicts[v] = self.getAuxCoordinates(v)
             except ParameterNotFound as e:
                 self.logger.debug(str(e))
+            except VariableHasBadCoordinatesAttribute as e:
+                self.logger.error(str(e))
 
         self.initDB()
 
@@ -1280,6 +1346,12 @@ class Base_Loader(STOQS_Loader):
             self.logger.error(f'If you need to load data that has been appended to the URL then delete its Activity before loading.')
 
             return mps_loaded, path, parmCount
+        except KeyError as e:
+            # Likely an include_name variable has a bad coordiantes attribute, give a better error message than just KeyError
+            self.logger.exception(str(e))
+            self.logger.error(f'Failed to bulk_create() data from URL: {self.url}')
+
+            return mps_loaded, path, parmCount
 
         # Bulk loading may introduce None values, get rid of them
         MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
@@ -1287,6 +1359,8 @@ class Base_Loader(STOQS_Loader):
         path = self._post_process_updates(mps_loaded, featureType)
 
         return mps_loaded, path, parmCount
+
+
 
 
 class Trajectory_Loader(Base_Loader):

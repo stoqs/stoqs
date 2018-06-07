@@ -197,7 +197,16 @@ cl.nps34a_endDatetime = enddate
 ## cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
 ##   from cencoos directory, single non-aggregated files
 cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201805/'
+
 cl.slocum_nemesis_files = [
+        'nemesis_20180606T132359_rt0.nc',
+        'nemesis_20180606T113615_rt0.nc',
+        'nemesis_20180606T061921_rt0.nc',
+        'nemesis_20180606T043043_rt0.nc',
+        'nemesis_20180605T231000_rt0.nc',
+        'nemesis_20180605T212118_rt0.nc',
+        'nemesis_20180605T155935_rt0.nc',
+        'nemesis_20180605T141014_rt0.nc',
         'nemesis_20180605T085233_rt0.nc',
         'nemesis_20180605T070154_rt0.nc',
         'nemesis_20180605T031744_rt0.nc',
@@ -376,7 +385,7 @@ cl.wg_Sparky_files = [
                      ]
 
 cl.wg_Sparky_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  'water_temp_sub', 
-                     'sal_sub', 'bb_470', 'bb_650', 'chl', 'beta_470', 'beta_650', 'pH', 'O2_conc' ] # two ctds (_float, _sub), no CO2)
+                     'sal_sub', 'bb_470', 'bb_650', 'chl', 'beta_470', 'beta_650', 'pH', 'O2_conc' ] # two ctds (_float, _sub), no CO2
 cl.wg_Sparky_depths = [ 0 ]
 cl.wg_Sparky_startDatetime = startdate
 cl.wg_Sparky_endDatetime = enddate
@@ -498,24 +507,24 @@ cl.process_command_line()
 
 if cl.args.test:
 
-    cl.loadM1()  
+    cl.loadM1(stride=10)  
     ##cl.loadTethys()i ## not in this campaign
-    cl.loadL_662a()
-    cl.load_NPS34a() 
-    cl.load_slocum_nemesis() 
-    cl.load_wg_Tiny()
-    cl.load_wg_Sparky()
-    cl.load_oa1()
-    cl.load_oa2()
-    cl.loadDorado()
-    cl.loadDaphne()
-    cl.loadMakai()
+    cl.loadL_662a(stride=10)
+    cl.load_NPS34a(stride=10) 
+    cl.load_slocum_nemesis(stride=10) 
+    cl.load_wg_Tiny(stride=10)
+    cl.load_wg_Sparky(stride=10)
+    cl.load_oa1(stride=10)
+    cl.load_oa2(stride=10)
+    cl.loadDorado(stride=10)
+    cl.loadDaphne(stride=10)
+    cl.loadMakai(stride=10)
     ##cl.loadRCuctd()  ## not in this campaign
     ##cl.loadRCpctd()  ## not in this campaign
-    cl.loadWFuctd()
-    cl.loadWFpctd()
+    cl.loadWFuctd(stride=10)
+    cl.loadWFpctd(stride=10)
 
-    #cl.loadSubSamples()
+    cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
 

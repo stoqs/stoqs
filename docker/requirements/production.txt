@@ -2,9 +2,9 @@
 
 ephem==3.7.6.0
 netCDF4==1.4.0
-numpy==1.14.3
+numpy==1.14.4
 pandas==0.23.0
 pymssql==2.1.3
 requests==2.18.4
-thredds-crawler==1.5.3
+thredds-crawler==1.5.4
 uWSGI==2.0.17

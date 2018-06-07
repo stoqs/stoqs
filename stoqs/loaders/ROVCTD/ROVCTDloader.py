@@ -60,7 +60,6 @@ from loaders.DAPloaders import Base_Loader
 import numpy as np
 from collections import defaultdict
 import pymssql
-import timing
 
 
 # Set up logging
@@ -360,7 +359,8 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
         return cur
 
     def _buildValuesByParm(self):
-        '''Reads entire response to fill a dictionary so that we can yield by Parameter rather than by Measurement - as process_data expects
+        '''Reads entire response to fill a dictionary so that we can yield by Parameter rather than by 
+        Measurement - as process_trajectory_values_from_generator() expects.
         Node query example:
         http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?platform=docr&dive=671&&domain=epochsecs&r1=p&r2=t&r3=s&r4=o2sbeml&r5=light&r6=beac
         '''
@@ -378,7 +378,7 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
             records = self._nodeServletLines()
         else:
             # Fudge a url string for the SQL query - string after '/' displayed in INFO when loading
-            self.url = 'SQL://solstice/rov=%s&dive=%d' % (self.platformName, self.diveNumber)
+            self.url = 'SQL://solstice.shore.mbari.org/rov=%s&dive=%d' % (self.platformName, self.diveNumber)
             records = self._pymssqlLines()
 
         try:
@@ -411,17 +411,21 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
                     else:
                         try:
                             if v in ('p', 't', 's'):
-                                if int(r['ptsflag']) < self.args.qcFlag:
-                                    continue
+                                if r['ptsflag']:
+                                    if int(r['ptsflag']) < self.args.qcFlag:
+                                        continue
                             elif v == 'o2':
-                                if int(r['o2flag']) < self.args.qcFlag:
-                                    continue
+                                if r['o2flag']:
+                                    if int(r['o2flag']) < self.args.qcFlag:
+                                        continue
                             elif v == 'o2alt':
-                                if int(r['o2altflag']) < self.args.qcFlag:
-                                    continue
+                                if r['o2altflag']:
+                                    if int(r['o2altflag']) < self.args.qcFlag:
+                                        continue
                             elif v == 'light':
-                                if int(r['lightflag']) < self.args.qcFlag:
-                                    continue
+                                if r['lightflag']:
+                                    if int(r['lightflag']) < self.args.qcFlag:
+                                        continue
                         except ValueError:
                             # Some flag values are not set - assume that they would be the default value: 2
                             logger.warn('QC flag value not set for v = %s in row %d for %s' % (v, i, self.activityName))
@@ -531,7 +535,7 @@ def processDiveList(args):
         # Load the data
         loader._buildValuesByParm()
         try:
-            (nMP, path, parmCountHash) = loader.process_data(loader._genROVCTD, 'trajectory')
+            (nMP, path, parmCountHash) = loader.process_trajectory_values_from_generator(loader._genROVCTD)
         except DiveInfoServletException as e:
             logger.warn(e)
 
@@ -558,7 +562,7 @@ def processDiveRange(args):
         # Load the data
         loader._buildValuesByParm()
         try:
-            (nMP, path, parmCountHash) = loader.process_data(loader._genROVCTD, 'trajectory')
+            (nMP, path, parmCountHash) = loader.process_trajectory_values_from_generator(loader._genROVCTD)
         except DiveInfoServletException as e:
             logger.warn(e)
 
