@@ -22,6 +22,8 @@ import sys
 import datetime  # needed for glider data
 import time  # for startdate, enddate args
 import csv
+import urllib2
+import urlparse
 import requests
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
@@ -30,8 +32,7 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 from CANON import CANONLoader
 from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
-from lxml import etree
-from urllib.parse import urlsplit
+from thredds_crawler.etree import etree
 
 cl = CANONLoader('stoqs_canon_may2018', 'CANON - May June 2018',
                  description='May June 2018 campaign observations in Monterey Bay',
@@ -82,12 +83,12 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 def find_urls(base, search_str):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
-    print("Crawling: %s" % url)
+    print "Crawling: %s" % url
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
-    u = urlsplit(url)
+    u = urlparse.urlsplit(url)
     name, ext = os.path.splitext(u.path)
     if ext == ".html":
-        u = urlsplit(url.replace(".html", ".xml"))
+        u = urlparse.urlsplit(url.replace(".html", ".xml"))
     url = u.geturl()
     urls = []
     # Get an etree object
@@ -108,18 +109,18 @@ def find_urls(base, search_str):
                 # if within a valid range, grab the valid urls
                 if dir_start >= startdate and dir_end <= enddate:
 
-                    print('Found mission directory ' + dts[0])
-                    print('Searching if within range %s and %s  %s %s' % (startdate, enddate, dir_start, dir_end))
+                    print 'Found mission directory ' + dts[0]
+                    print 'Searching if within range %s and %s  %s %s' % (startdate, enddate, dir_start, dir_end)
                     catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                     c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
                     d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
                     for url in d:
                         urls.append(url)
             except Exception as ex:
-                print("Error reading mission directory name %s" % ex)
+                print "Error reading mission directory name %s" % ex
 
     except BaseException:
-        print("Skipping %s (error parsing the XML)" % url)
+        print "Skipping %s (error parsing the XML)" % url
 
     if not urls:
         raise FileNotFound('No urls matching "{}" found in {}'.format(search_str, os.path.join(base, 'catalog.html')))
@@ -197,7 +198,16 @@ cl.nps34a_endDatetime = enddate
 ## cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
 ##   from cencoos directory, single non-aggregated files
 cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201805/'
+
 cl.slocum_nemesis_files = [
+        'nemesis_20180606T132359_rt0.nc',
+        'nemesis_20180606T113615_rt0.nc',
+        'nemesis_20180606T061921_rt0.nc',
+        'nemesis_20180606T043043_rt0.nc',
+        'nemesis_20180605T231000_rt0.nc',
+        'nemesis_20180605T212118_rt0.nc',
+        'nemesis_20180605T155935_rt0.nc',
+        'nemesis_20180605T141014_rt0.nc',
         'nemesis_20180605T085233_rt0.nc',
         'nemesis_20180605T070154_rt0.nc',
         'nemesis_20180605T031744_rt0.nc',
@@ -375,8 +385,8 @@ cl.wg_Sparky_files = [
                       'wgSparky/20180531/realTime/20180531.nc',
                      ]
 
-cl.wg_Sparky_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  'water_temp_sub', 
-                     'sal_sub', 'bb_470', 'bb_650', 'chl', 'beta_470', 'beta_650', 'pH', 'O2_conc' ] # two ctds (_float, _sub), no CO2)
+cl.wg_Sparky_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  "water_temp_sub', 
+                     'sal_sub', 'bb_470', 'bb_650', 'chl', 'beta_470', 'beta_650', 'pH', 'O2_conc' ] # two ctds (_float, _sub), no CO2
 cl.wg_Sparky_depths = [ 0 ]
 cl.wg_Sparky_startDatetime = startdate
 cl.wg_Sparky_endDatetime = enddate
@@ -498,24 +508,31 @@ cl.process_command_line()
 
 if cl.args.test:
 
-    cl.loadM1()  
-    ##cl.loadTethys()i ## not in this campaign
-    cl.loadL_662a()
-    cl.load_NPS34a() 
-    cl.load_slocum_nemesis() 
-    cl.load_wg_Tiny()
-    cl.load_wg_Sparky()
-    cl.load_oa1()
-    cl.load_oa2()
-    cl.loadDorado()
-    cl.loadDaphne()
-    cl.loadMakai()
-    ##cl.loadRCuctd()  ## not in this campaign
-    ##cl.loadRCpctd()  ## not in this campaign
-    cl.loadWFuctd()
-    cl.loadWFpctd()
+    cl.loadM1(stride=100)
+    cl.loadTethys(stride=100)
+    cl.loadL_662(stride=100)
+    cl.loadAhi(stride=100)
+    cl.loadAku(stride=100)
+    cl.loadOpah(stride=100)
+    cl.loadL_662(stride=100)
+    cl.loadL_662a(stride=100)
+    cl.load_NPS34(stride=100)
+    cl.load_NPS34a(stride=100)
+    cl.load_slocum_nemesis(stride=100)
+    cl.load_SG621(stride=100) ## KISS glider
+    cl.load_SG539(stride=100) ## KISS glider
+    cl.load_wg_Tiny(stride=100)
+    cl.load_oa1(stride=100)
+    cl.load_oa2(stride=100)
+    cl.loadDorado(stride=100)
+    ##cl.loadDaphne(stride=100)
+    ##cl.loadMakai(stride=100)
+    cl.loadRCuctd(stride=100)
+    cl.loadRCpctd(stride=100)
+    cl.loadWFuctd(stride=100)
+    cl.loadWFpctd(stride=100)
 
-    #cl.loadSubSamples()
+    cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
 
@@ -557,5 +574,5 @@ else:
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
-print("All Done.")
+print "All Done."
 
