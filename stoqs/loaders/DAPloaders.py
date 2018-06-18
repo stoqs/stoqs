@@ -724,10 +724,24 @@ class Base_Loader(STOQS_Loader):
 
         return load_groups, coor_groups
 
+    def _ips(self, mtimes):
+        for mt in mtimes:
+            if mt:
+                yield InstantPoint(activity=self.activity, timevalue=mt)
+            else:
+                yield None
+
+    def _meass(self, depths, longitudes, latitudes):
+        for de, lo, la in zip(depths, longitudes, latitudes):
+            if de and lo and la:
+                yield Measurement(depth=repr(de), geom=f'POINT({repr(lo)} {repr(la)})')
+            else:
+                yield None
+
     def _load_coords_from_dsg_ds(self, tindx, ac, pnames):
         '''Pull coordinates from Discrete Sampling Geometry NetCDF dataset,
         (with accomodations made so that it works as well for EPIC conventions)
-        and bulk create in the database.
+        and bulk create in the database. Retain None values for bad coordinates.
         '''
         times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
@@ -762,16 +776,11 @@ class Base_Loader(STOQS_Loader):
         mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
                                             pnames, mtimes, depths, latitudes, longitudes))
 
-        self.logger.debug(f'Making points generator...')
-        points = (f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes))
-
-        ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
-        meass = (Measurement(depth=repr(de), geom=po) for de, po in zip(depths, points))
-
         # Reassign meass with Measurement objects that have their id set
-        meass = self._bulk_load_coordinates(ips, meass, dup_times)
+        meass, mask = self._bulk_load_coordinates(self._ips(mtimes), self._meass(
+                                            depths, longitudes, latitudes), dup_times)
 
-        return meass, dup_times
+        return meass, dup_times, mask
 
     def _load_coords_from_instr_ds(self, tindx, ac):
         '''Pull itime coordinate from Instrument (time-coordinate-only) NetCDF dataset (e.g. LOPC),
@@ -839,7 +848,7 @@ class Base_Loader(STOQS_Loader):
                     if ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
                         try:
                             # Expect CF Discrete Sampling Geometry or EPIC dataset
-                            meass, dup_times = self._load_coords_from_dsg_ds(tindx, ac, pnames)
+                            meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames)
                         except ValueError as e:
                             # Likely ValueError: not enough values to unpack (expected 5, got 0) from good_coords()
                             self.logger.debug(str(e))
@@ -864,9 +873,10 @@ class Base_Loader(STOQS_Loader):
                     # Need to bulk_create() all values, set bad ones to None and remove them after insert
                     values = self._good_value_generator(pname, values)
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
-                                                datavalue=va) for me, va, dt in zip(meass, values, dup_times) if not dt)
+                                                datavalue=va) for me, va, dt, mk in zip(
+                                                meass, values, dup_times, mask) if not dt and not mk)
 
-                # All items but mess are generators, so we can call len() on it
+                # All items but meass are generators, so we can call len() on it
                 self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
                 mps = self._measuredparameter_with_measurement(meass, mps)
                 mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
@@ -1118,18 +1128,29 @@ class Base_Loader(STOQS_Loader):
         for ip, meas in zip(ips, meass):
             meas.instantpoint = ip
             yield meas
-        
+       
     def _bulk_load_coordinates(self, ips, meass, dup_times):
 
         self.logger.info(f'Calling bulk_create() for InstantPoints in ips generator')
-        ips = InstantPoint.objects.using(self.dbAlias).bulk_create((ip for ip, dt in zip(ips, dup_times) if not dt))
-
-        meass = self._measurement_with_instantpoint(ips, meass)
+        # Create mask array in case any coordinate is None, so that we can know which MPs to bulk_create()
+        mask = []
+        ips_to_load = []
+        meas_to_load = []
+        for ip, meas, dt in zip(ips, meass, dup_times):
+            if not ip or not meas or dt:
+                mask.append(True)
+            else:
+                mask.append(False)
+                ips_to_load.append(ip)
+                meas_to_load.append(meas)
+        
+        ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips_to_load)
+        meass = self._measurement_with_instantpoint(ips, meas_to_load)
 
         self.logger.info(f'Calling bulk_create() for Measurements in meass generator')
         meass = Measurement.objects.using(self.dbAlias).bulk_create(meass)
 
-        return meass
+        return meass, mask
 
     def _measuredparameter_with_measurement(self, meass, mps):
         for meas, mp in zip(meass, mps):

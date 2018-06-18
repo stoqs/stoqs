@@ -15,6 +15,7 @@ os.environ['DJANGO_SETTINGS_MODULE']='config.settings.local'
 import django
 django.setup()
 
+from collections import defaultdict
 from django.conf import settings
 from django.contrib.gis.geos import Polygon
 from django.db.utils import IntegrityError
@@ -754,7 +755,7 @@ class STOQS_Loader(object):
    
     def is_coordinate_bad(self, key, mtime, depth, lat=None, lon=None, min_depth=-1000, max_depth=5000,
                                          min_lat=-90, max_lat=90, min_lon=-720, max_lon=720):
-        '''Return True if coordinate if missing or fill_value, or falls outside of reasonable bounds
+        '''Return True if coordinate is missing or fill_value, or falls outside of reasonable bounds
         '''
         # Missing value rejections
         ac = self.getAuxCoordinates(key)
@@ -825,8 +826,9 @@ class STOQS_Loader(object):
         return False
 
     def good_coords(self, pnames, mtimes, depths, latitudes, longitudes):
-        '''Generate good coordinate if any of the parameters has good coordinate data.
-        Appropriate for trajectory data where there is one-to-one match of coorcinates.
+        '''Use attributes to determine if coordinate values are good.  Yield None
+        values for all coordinates if any are bad (e.g. _FillValue).
+        Appropriate for trajectory data where there is one-to-one match of coordinates.
         '''
         # Checking for duplicate times is time consuming, do it for only known
         # problematic sources of data
@@ -838,24 +840,33 @@ class STOQS_Loader(object):
                 self.logger.debug(f'Setting known_dup_time_problem for known_dup_time_source: {string}')
                 known_dup_time_problem = True
         
-        dup_time = False
-        previous_times = []
-        for mt, de, la, lo in zip(mtimes, depths, latitudes, longitudes):
-            all_bad = True
-            for pname in pnames:
-                if not self.is_coordinate_bad(pname, mt, de, la, lo):
-                    all_bad = False
-            if all_bad:
-                continue
+        previous_coords = []
+        for pname_count, pname in enumerate(pnames):
+            for i, (mt, de, la, lo) in enumerate(zip(mtimes, depths, latitudes, longitudes)):
+                if self.is_coordinate_bad(pname, mt, de, la, lo):
+                    mt = None
+                    de = None
+                    la = None
+                    lo = None
 
-            if known_dup_time_problem:
                 dup_time = False
-                previous_times.append(mt)
-                if mt in previous_times[:-1]:
-                    self.logger.warn(f'Will not load data from duplicate time coordinate: {mt}')
-                    dup_time = True
+                previous_times = []
+                if known_dup_time_problem:
+                    dup_time = False
+                    previous_times.append(mt)
+                    if mt in previous_times[:-1]:
+                        self.logger.warn(f'Will not load data from duplicate time coordinate: {mt}')
+                        dup_time = True
 
-            yield mt, de, la, lo, dup_time
+                if pname_count > 0:
+                    if set(previous_coords[i]) != set((mt, de, la, lo, dup_time)):
+                        self.logger.warn(f'coords for {pname} are not the same as for {previous_pname}')
+
+                previous_pname = pname
+                previous_coords.append((mt, de, la, lo, dup_time))
+
+        for mt, de, la, lo, dup_time in previous_coords:
+                yield mt, de, la, lo, dup_time
 
     def preProcessParams(self, row):
         '''
