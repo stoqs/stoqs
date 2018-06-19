@@ -36,13 +36,13 @@ from urllib.parse import urlsplit
 cl = CANONLoader('stoqs_canon_may2018', 'CANON - May June 2018',
                  description='May June 2018 campaign observations in Monterey Bay',
                  x3dTerrains={
-                   'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                   'https://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
                      'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                      'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                      'VerticalExaggeration': '10',
                    },
-                   'http://stoqs.mbari.org/x3d/Monterey25_1x/Monterey25_1x_src_scene.x3d': {
+                   'https://stoqs.mbari.org/x3d/Monterey25_1x/Monterey25_1x_src_scene.x3d': {
                      'name': 'Monterey25_1x',
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
                      'orientation': '0.89575 -0.31076 -0.31791 1.63772',
@@ -556,14 +556,14 @@ cl.rcpctd_files = [
 cl.wfuctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
-                  'canon17sm01.nc',
+                  ##'canon17sm01.nc',
                   ]
 
 # PCTD
 cl.wfpctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.wfpctd_files = [
-                  'canon17sc01.nc',
+                  ##'canon17sc01.nc',
                   ]
 
 ###################################################################################################

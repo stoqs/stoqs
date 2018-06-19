@@ -866,7 +866,7 @@ class STOQS_Loader(object):
                 previous_coords.append((mt, de, la, lo, dup_time))
 
         for mt, de, la, lo, dup_time in previous_coords:
-                yield mt, de, la, lo, dup_time
+            yield mt, de, la, lo, dup_time
 
     def preProcessParams(self, row):
         '''

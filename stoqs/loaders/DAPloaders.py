@@ -738,7 +738,7 @@ class Base_Loader(STOQS_Loader):
             else:
                 yield None
 
-    def _load_coords_from_dsg_ds(self, tindx, ac, pnames):
+    def _load_coords_from_dsg_ds(self, tindx, ac, pnames, axes):
         '''Pull coordinates from Discrete Sampling Geometry NetCDF dataset,
         (with accomodations made so that it works as well for EPIC conventions)
         and bulk create in the database. Retain None values for bad coordinates.
@@ -778,7 +778,7 @@ class Base_Loader(STOQS_Loader):
 
         # Reassign meass with Measurement objects that have their id set
         meass, mask = self._bulk_load_coordinates(self._ips(mtimes), self._meass(
-                                            depths, longitudes, latitudes), dup_times)
+                                            depths, longitudes, latitudes), dup_times, ac, axes)
 
         return meass, dup_times, mask
 
@@ -848,7 +848,8 @@ class Base_Loader(STOQS_Loader):
                     if ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
                         try:
                             # Expect CF Discrete Sampling Geometry or EPIC dataset
-                            meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames)
+                            self.logger.info(f'Loading coordinates for axes {k}')
+                            meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k)
                         except ValueError as e:
                             # Likely ValueError: not enough values to unpack (expected 5, got 0) from good_coords()
                             self.logger.debug(str(e))
@@ -1129,7 +1130,7 @@ class Base_Loader(STOQS_Loader):
             meas.instantpoint = ip
             yield meas
        
-    def _bulk_load_coordinates(self, ips, meass, dup_times):
+    def _bulk_load_coordinates(self, ips, meass, dup_times, ac, axes):
 
         self.logger.info(f'Calling bulk_create() for InstantPoints in ips generator')
         # Create mask array in case any coordinate is None, so that we can know which MPs to bulk_create()
@@ -1143,9 +1144,15 @@ class Base_Loader(STOQS_Loader):
                 mask.append(False)
                 ips_to_load.append(ip)
                 meas_to_load.append(meas)
-        
-        ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips_to_load)
-        meass = self._measurement_with_instantpoint(ips, meas_to_load)
+       
+        try:
+            self.ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips_to_load)
+        except IntegrityError:
+            # Some data sets (e.g. Waveglider) share time coordinates with different depths
+            # Report the reuse of previous self.ips values
+            self.logger.info(f"Duplicate time values for axes {axes}. Reusing previously loaded time values for {ac['time']}")
+
+        meass = self._measurement_with_instantpoint(self.ips, meas_to_load)
 
         self.logger.info(f'Calling bulk_create() for Measurements in meass generator')
         meass = Measurement.objects.using(self.dbAlias).bulk_create(meass)
@@ -1337,8 +1344,6 @@ class Base_Loader(STOQS_Loader):
             self.mv_by_key[key] = self.getmissing_value(key)
             self.fv_by_key[key] = self.get_FillValue(key)
 
-        self.totalRecords = self.getTotalRecords()
-
         self.logger.info("From: %s", self.url)
         if featureType:
             featureType = featureType.lower()
@@ -1359,6 +1364,7 @@ class Base_Loader(STOQS_Loader):
                 raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
                         " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
                         " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
+            self.totalRecords = mps_loaded
         except IntegrityError as e:
             # Likely duplicate key value violates unique constraint "stoqs_measuredparameter_measurement_id_parameter_1328c3fb_uniq"
             # Can't append data from source with bulk_create(), give appropriate warning
