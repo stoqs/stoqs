@@ -447,7 +447,8 @@ class CANONLoader(LoadScript):
                                         self.nps34a_parms, self.dbAlias, stride, self.nps34a_startDatetime,
                                         self.nps34a_endDatetime, grdTerrain=self.grdTerrain,
                                         command_line_args=self.args)
-            except webob.exc.HTTPError as e:
+            except (webob.exc.HTTPError, DAPloaders.NoValidData) as e:
+                self.logger.warn(str(e))
                 self.logger.warn(f'{e}')
 
     def load_glider_ctd(self, stride=None):

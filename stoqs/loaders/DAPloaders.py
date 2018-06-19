@@ -1147,10 +1147,15 @@ class Base_Loader(STOQS_Loader):
        
         try:
             self.ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips_to_load)
-        except IntegrityError:
+        except IntegrityError as e:
             # Some data sets (e.g. Waveglider) share time coordinates with different depths
             # Report the reuse of previous self.ips values
-            self.logger.info(f"Duplicate time values for axes {axes}. Reusing previously loaded time values for {ac['time']}")
+            if hasattr(self, 'ips'):
+                self.logger.info(f"Duplicate time values for axes {axes}. Reusing previously loaded time values for {ac['time']}")
+            else:
+                self.logger.error(f"{e}")
+                self.logger.error(f"It's likely that the {ac['time']} variable in {self.url} has a duplicate value")
+                raise NoValidData(e)
 
         meass = self._measurement_with_instantpoint(self.ips, meas_to_load)
 
