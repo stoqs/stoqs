@@ -1344,8 +1344,6 @@ class Base_Loader(STOQS_Loader):
             self.mv_by_key[key] = self.getmissing_value(key)
             self.fv_by_key[key] = self.get_FillValue(key)
 
-        self.totalRecords = self.getTotalRecords()
-
         self.logger.info("From: %s", self.url)
         if featureType:
             featureType = featureType.lower()
@@ -1366,6 +1364,7 @@ class Base_Loader(STOQS_Loader):
                 raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
                         " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
                         " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
+            self.totalRecords = mps_loaded
         except IntegrityError as e:
             # Likely duplicate key value violates unique constraint "stoqs_measuredparameter_measurement_id_parameter_1328c3fb_uniq"
             # Can't append data from source with bulk_create(), give appropriate warning
