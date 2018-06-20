@@ -1334,22 +1334,33 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
 
             yield sigmat_mp, spice_mp
 
-    def _generate_sigmat_and_spice_mps(self, p_sigmat, p_spice, ms, salinity_standard_name):
-        '''Yield calculated sigmat and spice from ms QuerySet
+    def _generate_sigmat_mps(self, p_sigmat, ms, salinity_standard_name):
+        '''Yield calculated sigmat from ms QuerySet
         '''
         for measurement in ms:
             mps = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=measurement)
 
-            temp = mps.filter(parameter__standard_name='sea_water_temperature').values_list('datavalue', flat=True)[0]
-            sal = mps.filter(parameter__standard_name=salinity_standard_name).values_list('datavalue', flat=True)[0]
+            temp_mp = mps.filter(parameter__standard_name='sea_water_temperature')
+            sal_mp = mps.filter(parameter__standard_name=salinity_standard_name)
 
-            sigmat = sw.pden(sal, temp, sw.pres(measurement.depth, measurement.geom.y)) - 1000.0
-            spice = spiciness(temp, sal)
-
+            sigmat = sw.pden(sal_mp[0].datavalue, temp_mp[0].datavalue, sw.pres(measurement.depth, measurement.geom.y)) - 1000.0
             sigmat_mp = m.MeasuredParameter(measurement=measurement, parameter=p_sigmat, datavalue=sigmat)
+            
+            yield sigmat_mp
+
+    def _generate_spice_mps(self, p_spice, ms, salinity_standard_name):
+        '''Yield calculated spice from ms QuerySet
+        '''
+        for measurement in ms:
+            mps = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=measurement)
+
+            temp_mp = mps.filter(parameter__standard_name='sea_water_temperature')
+            sal_mp = mps.filter(parameter__standard_name=salinity_standard_name)
+
+            spice = spiciness(temp_mp[0].datavalue, sal_mp[0].datavalue)
             spice_mp = m.MeasuredParameter(measurement=measurement, parameter=p_spice, datavalue=spice)
             
-            yield sigmat_mp, spice_mp
+            yield spice_mp
 
     def addSigmaTandSpice(self, activity=None):
         ''' 
@@ -1415,9 +1426,8 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
         sigmat_mps = []
         spice_mps = []
         self.logger.info(f'Calculating {self.parameter_counts[p_sigmat]} sigmat & spice MeasuredParameters')
-        for sigmat_mp, spice_mp in self._generate_sigmat_and_spice_mps(p_sigmat, p_spice, ms, salinity_standard_name):
-            sigmat_mps.append(sigmat_mp)
-            spice_mps.append(spice_mp)
+        sigmat_mps = self._generate_sigmat_mps(p_sigmat, ms, salinity_standard_name)
+        spice_mps = self._generate_spice_mps(p_spice, ms, salinity_standard_name)
 
         self.logger.info(f'Bulk loading {self.parameter_counts[p_sigmat]} sigmat MeasuredParameters')
         m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(sigmat_mps)
