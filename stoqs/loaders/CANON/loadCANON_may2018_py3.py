@@ -32,6 +32,7 @@ from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
 from lxml import etree
 from urllib.parse import urlsplit
+import timing
 
 cl = CANONLoader('stoqs_canon_may2018', 'CANON - May June 2018',
                  description='May June 2018 campaign observations in Monterey Bay',
