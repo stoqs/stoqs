@@ -20,6 +20,7 @@ import logging
 import re
 import pydap
 import json
+import netCDF4
 from . import lrauvNc4ToNetcdf
 import urllib.parse
 import requests
@@ -124,14 +125,16 @@ def find_urls(base, select, startdate, enddate):
 
     return urls
 
-def getNcStartEnd(urlNcDap, timeAxisName):
+def getNcStartEnd(inDir, urlNcDap, timeAxisName):
     '''Find the lines in the html with the .nc file, then open it and read the start/end times
     return url to the .nc  and start/end as datetime objects.
     '''
     logger.debug('open_url on urlNcDap = %s', urlNcDap)
 
     try:
-        df = pydap.client.open_url(urlNcDap)
+        base_in =  '/'.join(urlNcDap.split('/')[-3:])
+        in_file = os.path.join(inDir, base_in) 
+        df = netCDF4.Dataset(in_file, mode='r')
     except pydap.exceptions.ServerError as e:
         logger.warn(e)
         raise ServerError("Can't read %s time axis from %s" % (timeAxisName, urlNcDap))
@@ -142,11 +145,12 @@ def getNcStartEnd(urlNcDap, timeAxisName):
         logger.warn(e)
         raise ServerError("Can't read %s time axis from %s" % (timeAxisName, urlNcDap))
 
-    timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
+    if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
+        timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
 
     try:
-        startDatetime = from_udunits(df[timeAxisName][0][0], timeAxisUnits)
-        endDatetime = from_udunits(df[timeAxisName][-1][0], timeAxisUnits)
+        startDatetime = from_udunits(df[timeAxisName][0], timeAxisUnits)
+        endDatetime = from_udunits(df[timeAxisName][-1], timeAxisUnits)
     except pydap.exceptions.ServerError as e:
         logger.warn(e)
         raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
@@ -258,7 +262,7 @@ if __name__ == '__main__':
 
     for u in all_urls:
         try:
-            startDatetime, endDatetime = getNcStartEnd(u, 'time')
+            startDatetime, endDatetime = getNcStartEnd(args.inDir, u, 'time_time')
         except Exception as e:
             continue
 
