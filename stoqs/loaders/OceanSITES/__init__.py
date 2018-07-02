@@ -97,20 +97,25 @@ class OSLoader(LoadScript):
             ptName = url.split('/')[-2]
    
             logger.debug("Instantiating Mooring_Loader for url = %s", url)
-            ml = Mooring_Loader(
-                url = url,
-                campaignName = self.campaignName,
-                campaignDescription = self.campaignDescription,
-                dbAlias = self.dbAlias,
-                activityName = aName,
-                activitytypeName = 'Mooring Deployment',
-                platformName = pName,
-                platformColor = pColors[ptName],
-                platformTypeName = ptName,
-                stride = stride,
-                startDatetime = self.startDatetime,
-                dataStartDatetime = None,
-                endDatetime = self.endDatetime)
+            try:
+                ml = Mooring_Loader(
+                    url = url,
+                    campaignName = self.campaignName,
+                    campaignDescription = self.campaignDescription,
+                    dbAlias = self.dbAlias,
+                    activityName = aName,
+                    activitytypeName = 'Mooring Deployment',
+                    platformName = pName,
+                    platformColor = pColors[ptName],
+                    platformTypeName = ptName,
+                    stride = stride,
+                    startDatetime = self.startDatetime,
+                    dataStartDatetime = None,
+                    endDatetime = self.endDatetime)
+            except UnicodeDecodeError as e:
+                logger.warn(str(e))
+                logger.warn(f'Cannot read data from {url}')
+                continue
 
             # Special fixes for non standard metadata and if files don't contain the standard TEMP and PSAL parameters
             if url.find('MBARI-') != -1:
