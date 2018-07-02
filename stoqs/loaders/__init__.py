@@ -383,16 +383,20 @@ class STOQS_Loader(object):
         self.logger.debug("Opening %s to read platform names for matching to the MBARI tracking database", paURL)
 
         platformName = ''
-        with closing(requests.get(paURL, stream=True)) as r:
-            if r.status_code == 200:
-                r_decoded = (line.decode('utf-8') for line in r.iter_lines())
-                tpHandle = csv.DictReader(r_decoded)
-                for rec in tpHandle:
-                    ##self.logger.info("rec = %s" % rec)
-                    if rec['PlatformName'].lower() == name.lower():
-                        platformName = rec['PlatformName']
-                        tdb_platformTypeName = rec['PlatformType']
-                        break
+        try:
+            with closing(requests.get(paURL, stream=True)) as r:
+                if r.status_code == 200:
+                    r_decoded = (line.decode('utf-8') for line in r.iter_lines())
+                    tpHandle = csv.DictReader(r_decoded)
+                    for rec in tpHandle:
+                        ##self.logger.info("rec = %s" % rec)
+                        if rec['PlatformName'].lower() == name.lower():
+                            platformName = rec['PlatformName']
+                            tdb_platformTypeName = rec['PlatformType']
+                            break
+        except requests.exceptions.ConnectionError as e:
+            self.logger.warn(f'{e}')
+            self.logger.warn(f'Unable to read platform names from the MBARI tracking database: {paURL}')
 
         if not platformName:
             platformName = name
