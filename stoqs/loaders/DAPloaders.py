@@ -379,7 +379,11 @@ class Base_Loader(STOQS_Loader):
             conventions = ''
 
         if 'cf-1.6' in conventions.lower():
-            featureType = self.ds.attributes['NC_GLOBAL']['featureType']
+            try:
+                featureType = self.ds.attributes['NC_GLOBAL']['featureType']
+            except KeyError:
+                # For https://dods.ndbc.noaa.gov/thredds/dodsC/oceansites/DATA/MBARI/OS_MBARI-M1_20160829_R_TS.nc.das
+                featureType = self.ds.attributes['NC_GLOBAL']['cdm_data_type']
         else:
             # Accept earlier versions of the concept of this attribute that may be in legacy data sets
             if 'cdm_data_type' in nc_global_keys:
