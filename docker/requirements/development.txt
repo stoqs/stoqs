@@ -10,7 +10,7 @@ billiard==3.5.0.3
 binaryornot==0.4.4
 certifi==2018.4.16
 cookiecutter==1.6.0
-Cython==0.28.3
+Cython==0.28.4
 docutils==0.14
 ephem==3.7.6.0
 GDAL==2.3.1
