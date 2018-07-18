@@ -1,6 +1,6 @@
 aiohttp==3.3.2
 beautifulsoup4==4.6.0
-celery==4.2.0
+celery==4.2.1
 cmocean==1.2
 coards==1.0.5
 coverage==4.5.1
