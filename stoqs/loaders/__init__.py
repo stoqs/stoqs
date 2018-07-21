@@ -841,11 +841,12 @@ class STOQS_Loader(object):
         known_dup_time_problem = False
         for string in known_dup_time_sources:
             if string in self.url:
-                self.logger.debug(f'Setting known_dup_time_problem for known_dup_time_source: {string}')
+                self.logger.info(f'Setting known_dup_time_problem for known_dup_time_source: {string}')
                 known_dup_time_problem = True
         
         previous_coords = []
         for pname_count, pname in enumerate(pnames):
+            previous_times = []
             for i, (mt, de, la, lo) in enumerate(zip(mtimes, depths, latitudes, longitudes)):
                 if self.is_coordinate_bad(pname, mt, de, la, lo):
                     mt = None
@@ -854,7 +855,6 @@ class STOQS_Loader(object):
                     lo = None
 
                 dup_time = False
-                previous_times = []
                 if known_dup_time_problem:
                     dup_time = False
                     previous_times.append(mt)
