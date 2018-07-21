@@ -12,6 +12,11 @@ gunzip *.csv.gz
 ../../nettow.py --database stoqs_simz_aug2013 --subsampleFile 2013_SIMZ_TowNets_STOQS.csv --csvFile 2013_SIMZ_TowNet_ParentSamples.csv -v
 ../../planktonpump.py --database stoqs_simz_aug2013 --subsampleFile SIMZ_2013_PPump_STOQS_tidy_v2.csv --csv_file 2013_SIMZ_PlanktonPump_ParentSamples.csv -v
 
+# In Docker container
+
+docker exec stoqs stoqs/loaders/nettow.py --database stoqs_simz_aug2013 --subsampleFile /srv/stoqs/loaders/MolecularEcology/SIMZAug2013/2013_SIMZ_TowNets_STOQS.csv --csvFile /srv/stoqs/loaders/MolecularEcology/SIMZAug2013/2013_SIMZ_TowNet_ParentSamples.csv -v
+
+docker exec stoqs stoqs/loaders/planktonpump.py --database stoqs_simz_aug2013 --subsampleFile /srv/stoqs/loaders/MolecularEcology/SIMZAug2013/SIMZ_2013_PPump_STOQS_tidy_v2.csv --csv_file /srv/stoqs/loaders/MolecularEcology/SIMZAug2013/2013_SIMZ_PlanktonPump_ParentSamples.csv -v
 
 # Clean up directory after data load so that 'git status' is clean
 

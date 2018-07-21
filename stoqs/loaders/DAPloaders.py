@@ -847,6 +847,10 @@ class Base_Loader(STOQS_Loader):
                     self.logger.warn(f'Failed to getTimeBegEndIndices() for {pname} from {self.url}')
                     continue
 
+                if DEPTH not in ac:
+                    self.logger.warn(f'{self.param_by_key[pname]} does not have {DEPTH} in {ac}. Skipping.')
+                    continue
+
                 if i == 0:
                     # First time through, bulk load the coordinates: instant_points and measurements
                     if ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
