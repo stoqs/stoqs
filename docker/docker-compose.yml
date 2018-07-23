@@ -13,6 +13,8 @@ services:
     volumes:
       - ${POSTGRES_DATA}:/var/lib/postgresql/data
       - ${POSTGRES_WALDIR}:/var/lib/postgresql/waldir
+      - ./postgres-stoqs.conf:/etc/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql.conf
     ports:
       - "${STOQS_PGHOST_PORT}:5432"
     environment:
