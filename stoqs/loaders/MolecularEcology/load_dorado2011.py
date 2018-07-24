@@ -74,7 +74,8 @@ cl.dorado_files = [
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
                     'fl700_uncorr', 'salinity', 'biolume',
-                    'sepCountList', 'mepCountList' ]
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw']
 
 # Mooring M1ts
 cl.m1ts_base = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/'

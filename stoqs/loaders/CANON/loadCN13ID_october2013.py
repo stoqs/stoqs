@@ -67,7 +67,9 @@ cl.dorado_files = [
 				   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
                     'fl700_uncorr', 'salinity', 'biolume',
-                    'sepCountList', 'mepCountList']
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
+                  ]
 
 
 ######################################################################

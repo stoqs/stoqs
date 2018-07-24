@@ -55,7 +55,9 @@ cl.dorado_files = [
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
-                    'sepCountList', 'mepCountList']
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
+                  ]
 
 # Rachel Carson Underway CTD
 cl.rcuctd_base = cl.dodsBase + 'CANON/2014_Apr/Platforms/Ships/Rachel_Carson/uctd/'
