@@ -62,8 +62,8 @@ cl.dorado_files = [ 'Dorado389_2010_277_01_277_01_decim.nc',
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
                     'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
                   ]
-
 # These are full resolution (_d_) data files with Chl only from the first Tethys data used for CANON
 # Offical long-term archive location is: http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2010/
 cl.tethys_base = 'http://dods.mbari.org/opendap/data/auvctd/tethys/2010/netcdf/'

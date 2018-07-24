@@ -50,7 +50,9 @@ cl.dorado_files = [ 'Dorado389_2011_110_12_110_12_decim.nc',
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
                     'fl700_uncorr', 'salinity', 'biolume', 
-                    'sepCountList', 'mepCountList']
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
+                  ]
 
 cl.tethys_base = 'http://dods.mbari.org/thredds/dodsC/LRAUV/tethys/missionlogs/2011/'
 cl.tethys_files = [ '20110415_20110418/20110415T163108/slate.nc',
