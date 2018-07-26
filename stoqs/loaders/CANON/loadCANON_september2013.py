@@ -482,7 +482,8 @@ else:
     cl.load_NPS34()
 
     cl.load_slocum_260()
-    cl.load_slocum_294()
+    # Full resolution causes 'django.db.utils.InternalError: invalid memory alloc request size 1073741824' with bulk_create() on new kraken
+    cl.load_slocum_294(stride=2)
     cl.load_slocum_nemesis()
 
     cl.load_wg_tex()
