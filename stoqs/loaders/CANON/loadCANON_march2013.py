@@ -74,7 +74,7 @@ daphne_r_files = [
 cl.daphne_r_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water']
 
 # Postrecovery full-resolution (_d_) daphne data - insert '_d_' for delayed-mode to not load the data
-daphne_d_base = 'http://dods.mbari.org/opendap/hyrax/data/lrauv/daphne/missionlogs/2013/'
+daphne_d_base = 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2013/'
 daphne_d_files = [ 
                     '20130313_20130318/20130313T195025/201303131950_201303132226.nc',
                     '20130313_20130318/20130313T222616/201303132226_201303140321.nc',
@@ -193,7 +193,7 @@ tethys_r_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_i
                     'platform_x_velocity_current', 'platform_y_velocity_current', 'platform_z_velocity_current']
 
 # Postrecovery full-resolution tethys data - insert '_d_' for delayed-mode to not load the data
-tethys_d_base = 'http://dods.mbari.org/opendap/hyrax/data/lrauv/tethys/missionlogs/2013/'
+tethys_d_base = 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2013/'
 tethys_d_files = [ 
                     '20130313_20130320/20130313T203723/201303132037_201303132240.nc',
                     '20130313_20130320/20130313T224020/201303132240_201303140239.nc',

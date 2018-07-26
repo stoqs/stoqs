@@ -284,7 +284,7 @@ cl.rcpctd_files = [
 ######################################################################
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
 # M1 had a turnaround on July 29, 2015
-# http://dods.mbari.org/opendap/hyrax/data/ssdsdata/deployments/m1/201507/OS_M1_20150729hourly_CMSTV.nc
+# http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201507/OS_M1_20150729hourly_CMSTV.nc
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201507/'
 cl.m1_files = [
 #                'OS_M1_20150729hourly_CMSTV.nc'
