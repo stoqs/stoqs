@@ -587,8 +587,11 @@ Script to load or reload STOQS databases using the dictionary in stoqs/campaigns
                               
 A typical workflow to build up a production server is:
 1. Construct a stoqs/campaigns.py file (use mbari_campaigns.py as model)
-2. Uncompress Sample data files included in the stoqs repository:
-    find stoqs/loaders -name "*.gz" | xargs gunzip
+2. Make *ex situ* Sampled Parameter data available:
+   a. Uncompress Sample data files included in the stoqs repository:
+      find stoqs/loaders -name "*.gz" | xargs gunzip
+   b. Copy BOG database extraction files to CANON/BOG_Data
+   c. (A Big TODO: Change these loads to a web-accessable method...)
 3. Copy terrain data files that are not included or copied during test.sh execution:
     cd stoqs/loaders
     wget https://stoqs.mbari.org/terrain/Monterey25.grd  
