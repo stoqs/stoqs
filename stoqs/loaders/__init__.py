@@ -1013,7 +1013,20 @@ class STOQS_Loader(object):
             if sampledFlag:
                 (counts, bins) = np.histogram(np_data,10)
             else:
-                (counts, bins) = np.histogram(np_data,100)
+                try:
+                    (counts, bins) = np.histogram(np_data,100)
+                except IndexError:
+                    # Likely something like 'index -9223372036854775808 is out of bounds for axis 1 with size 101' 
+                    # from numpy/lib/function_base.py.  Encoutered in really wild LRAUV data, e.g.:
+                    # http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2015/20150824_20150825/20150825T055243/201508250552_201508250553_2S_eng.nc.ascii?control_inputs_mass_position[0:1:13]
+                    # These kind of messages will appear in the log:
+                    # /vagrant/dev/stoqsgit/venv-stoqs/lib64/python3.6/site-packages/numpy/lib/function_base.py:766: RuntimeWarning: overflow encountered in double_scalars
+                    #  norm = n_equal_bins / (last_edge - first_edge)
+                    #/vagrant/dev/stoqsgit/venv-stoqs/lib64/python3.6/site-packages/numpy/lib/function_base.py:788: RuntimeWarning: invalid value encountered in multiply
+                    # tmp_a *= norm
+                    # Contunue silently (as this is a static method), with the above errors given as a warning.
+                    continue
+
             for i,count in enumerate(counts):
                 m.ActivityParameterHistogram.objects.using(dbAlias).get_or_create(
                         activityparameter=ap, bincount=count, 
