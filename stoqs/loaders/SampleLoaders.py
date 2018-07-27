@@ -265,31 +265,31 @@ class SeabirdLoader(STOQS_Loader):
 
         # Sanity check to prevent accidental switching of lat & lon
         if lat < -90 or lat > 90:
-            logger.exception("lat = %f.  Can't load this!", lat)
+            self.logger.exception("lat = %f.  Can't load this!", lat)
             sys.exit(-1)
 
         try:
             measurement = self.createMeasurement(mtime=mtime, depth=depth, lat=lat, lon=lon)
         except SkipRecord as e:
-            logger.info(e)
+            self.logger.info(e)
         except Exception as e:
-            logger.error(e)
+            self.logger.error(e)
             sys.exit(-1)
         else:
-            logger.debug("longitude = %s, latitude = %s, mtime = %s, depth = %s", lon, lat, mtime, depth)
+            self.logger.debug("longitude = %s, latitude = %s, mtime = %s, depth = %s", lon, lat, mtime, depth)
 
         loaded = 0
         for pn,value in parmNameValues:
-            logger.debug("pn = %s", pn)
+            self.logger.debug("pn = %s", pn)
             try:
                 mp, _ = MeasuredParameter.objects.using(self.dbAlias).get_or_create(measurement = measurement,
                                                   parameter = self.getParameterByName(pn), datavalue = value)
             except Exception as e:
-                logger.error(e)
-                logger.exception("Bad value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
+                self.logger.error(e)
+                self.logger.exception("Bad value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
             else:
                 loaded += 1
-                logger.debug("Inserted value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
+                self.logger.debug("Inserted value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
 
     def load_btl(self, lat, lon, depth, timevalue, bottleName):
         '''
@@ -299,20 +299,20 @@ class SeabirdLoader(STOQS_Loader):
         # Get the Activity from the Database
         try:
             activity = Activity.objects.using(self.dbAlias).get(name__contains=self.activityName)
-            logger.debug('Got activity = %s', activity)
+            self.logger.debug('Got activity = %s', activity)
         except ObjectDoesNotExist:
-            logger.warn('Failed to find Activity with name like %s.  Skipping GulperLoad.', self.activityName)
+            self.logger.warn('Failed to find Activity with name like %s.  Skipping GulperLoad.', self.activityName)
             return
         except MultipleObjectsReturned:
-            logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', self.activityName)
+            self.logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', self.activityName)
             activity = Activity.objects.using(self.dbAlias).filter(name__contains=self.activityName)[0]
         
         # Get or create SampleType for Niskin
         (sample_type, created) = SampleType.objects.using(self.dbAlias).get_or_create(name=NISKIN)
-        logger.debug('sampletype %s, created = %s', sample_type, created)
+        self.logger.debug('sampletype %s, created = %s', sample_type, created)
         # Get or create SamplePurpose for Niskin
         (sample_purpose, created) = SamplePurpose.objects.using(self.dbAlias).get_or_create(name = 'StandardDepth')
-        logger.debug('samplepurpose %s, created = %s', sample_purpose, created)
+        self.logger.debug('samplepurpose %s, created = %s', sample_purpose, created)
         try:
             ip, _ = get_closest_instantpoint(self.activityName, timevalue, self.dbAlias)
             point = 'POINT(%s %s)' % (lon, lat)
@@ -325,9 +325,9 @@ class SeabirdLoader(STOQS_Loader):
                                                                     volume = 20000.0
                                                                 )
         except ClosestTimeNotFoundException:
-            logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
+            self.logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
         else:
-            logger.info('Loaded Bottle name = %s', bottleName)
+            self.logger.info('Loaded Bottle name = %s', bottleName)
 
     def process_btl_file(self, fh, year, lat, lon):
         '''
@@ -335,7 +335,7 @@ class SeabirdLoader(STOQS_Loader):
         '''
         _debug = False
         tmpFile = NamedTemporaryFile(dir='/dev/shm', suffix='.btl').name
-        logger.debug('tmpFile = %s', tmpFile)
+        self.logger.debug('tmpFile = %s', tmpFile)
         tmpFH = open(tmpFile, 'w')
         lastLine = ''
         for line in fh:
@@ -346,22 +346,22 @@ class SeabirdLoader(STOQS_Loader):
                 m = re.match('.+(Sbeox0PS)(Sbeox0Mm)', line.strip())
                 if m:
                     line = re.sub('(?<=)(Sbeox0PS)(Sbeox0Mm)(?=)', lambda m: "%s %s" % (m.group(1), m.group(2)), line)
-                    if _debug: logger.debug('Fixed header: line = %s', line)
+                    if _debug: self.logger.debug('Fixed header: line = %s', line)
                 if line.strip() == 'Position        Time':
                     # Append 2nd line of header to first line & write to tmpFile
-                    if _debug: logger.debug('Writing ' + lastLine + line)
+                    if _debug: self.logger.debug('Writing ' + lastLine + line)
                     tmpFH.write(lastLine + line + '\n')
                 m = re.match('\d\d:\d\d:\d\d', line.strip())
                 if m:
                     # Append Time string to last line & write to tmpFile
-                    if _debug: logger.debug('m.group(0) = %s', m.group(0))
-                    if _debug: logger.debug('Writing ' + lastLine + m.group(0) + '\n')
+                    if _debug: self.logger.debug('m.group(0) = %s', m.group(0))
+                    if _debug: self.logger.debug('Writing ' + lastLine + m.group(0) + '\n')
                     tmpFH.write(lastLine + ' ' + m.group(0) + '\n')
                 m = re.match('.+[A-Z][a-z][a-z] \d\d \d\d\d\d', line.strip())
                 if m:
                     # Replace spaces with dashes in the date field
                     line = re.sub('(?<= )([A-Z][a-z][a-z]) (\d\d) (\d\d\d\d)(?= )', lambda m: "%s-%s-%s" % (m.group(1), m.group(2), m.group(3)), line)
-                    if _debug: logger.debug('Spaces to dashes: line = %s', line)
+                    if _debug: self.logger.debug('Spaces to dashes: line = %s', line)
 
                 lastLine = line.rstrip()      # Save line without terminating linefeed
 
@@ -381,28 +381,33 @@ class SeabirdLoader(STOQS_Loader):
             dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
             if not self.startDatetime:
                 self.startDatetime = dt
-        self.endDatetime = dt
+        try:
+            self.endDatetime = dt
+        except UnboundLocalError:
+            self.logger.warn(f'Not able to read time from bottle file for {self.activityName}')
+            return
+
         self.platform = self.getPlatform(self.platformName, self.platformTypeName)
         self.activitytypeName = 'CTD upcast'
 
         # Bottle samples are to be loaded after downcast data are loaded so that we can use the same activity
         try:
             activity = Activity.objects.using(self.dbAlias).get(name__contains=self.activityName)
-            logger.debug('Got activity = %s', activity)
+            self.logger.debug('Got activity = %s', activity)
             self.activity = activity
         except ObjectDoesNotExist:
-            logger.warn('Failed to find Activity with name like %s.  Expected that downcast was data before loading bottles.', self.activityName)
-            logger.info('Creating Activity for these bottles')
+            self.logger.warn('Failed to find Activity with name like %s.  Expected that downcast was data before loading bottles.', self.activityName)
+            self.logger.info('Creating Activity for these bottles')
             self.createActivity()
             ##raise SingleActivityNotFound('Failed to find Activity with name like %s' % self.activityName)
         except MultipleObjectsReturned:
-            logger.error('Multiple objects returned for name__contains = %s.'
+            self.logger.error('Multiple objects returned for name__contains = %s.'
                          'This should not happen.  Fix the database and the reason for this.',
                          self.activityName)
             raise SingleActivityNotFound('Multiple objects returned for name__contains = %s' % self.activityName)
 
         parmDict = self.buildParmDict()
-        logger.debug('Calling addParameters for parmDict = %s', parmDict)
+        self.logger.debug('Calling addParameters for parmDict = %s', parmDict)
         self.include_names = list(parmDict.keys())
         self.addParameters(parmDict)
 
@@ -412,11 +417,11 @@ class SeabirdLoader(STOQS_Loader):
             ##es = 86400 * esDiff.days + esDiff.seconds
             bName = r['Bottle']
 
-            logger.debug('r = %s', r)
+            self.logger.debug('r = %s', r)
             # Load data 
             parmNameValues = []
             for name in list(parmDict.keys()):
-                logger.debug('name = %s, parmDict[name].attributes = %s', name, parmDict[name].attributes)
+                self.logger.debug('name = %s, parmDict[name].attributes = %s', name, parmDict[name].attributes)
                 try:
                     parmNameValues.append((name, float(r[parmDict[name].attributes['colname']])))
                 except KeyError as e:
@@ -436,7 +441,7 @@ class SeabirdLoader(STOQS_Loader):
 
             # Load Bottle sample
             if _debug:
-                logger.info('Calling load_btl(%s,%s,%s,%s,%s)', lat, lon, float(r['DepSM']), dt, bName)
+                self.logger.info('Calling load_btl(%s,%s,%s,%s,%s)', lat, lon, float(r['DepSM']), dt, bName)
             self.load_btl(lat, lon, float(r['DepSM']), dt, bName)
 
         os.remove(tmpFile)
@@ -477,22 +482,22 @@ class SeabirdLoader(STOQS_Loader):
         else:
             # Read files from the network - use BeautifulSoup to parse TDS's html response
             webBtlDir = self.tdsBase + 'catalog/' + self.pctdDir + 'catalog.html'
-            logger.debug('Opening url to %s', webBtlDir)
+            self.logger.debug('Opening url to %s', webBtlDir)
             soup = BeautifulSoup(urlopen(webBtlDir).read(), 'lxml')
             linkList = soup.find_all('a')
             sorted(linkList, key=lambda elem: elem.text)
             for link in linkList:
                 bfile = link.get('href')
                 if bfile.endswith('.btl'):
-                    logger.debug("bfile = %s", bfile)
+                    self.logger.debug("bfile = %s", bfile)
                     if bfile.split('/')[-1].split('.')[0] + '.nc' not in seabirdFileList:
-                        logger.warn('Skipping %s as it is in not in seabirdFileList = %s', bfile, seabirdFileList)
+                        self.logger.warn('Skipping %s as it is in not in seabirdFileList = %s', bfile, seabirdFileList)
                         continue
 
                     # btlUrl looks something like: http://odss.mbari.org/thredds/fileServer/CANON_september2012/wf/pctd/c0912c53.btl
                     btlUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + bfile.split('/')[-1]
                     hdrUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + ''.join(bfile.split('/')[-1].split('.')[:-1]) + '.hdr'
-                    logger.info('btlUrl = %s', btlUrl)
+                    self.logger.info('btlUrl = %s', btlUrl)
     
                     self.activityName = bfile.split('/')[-1].split('.')[-2] 
                     year, lat, lon = get_year_lat_lon(hdrUrl = hdrUrl)
@@ -551,7 +556,7 @@ class SubSamplesLoader(STOQS_Loader):
             if row.get('Sample Volume [m^3]'):
                 vol = float(row.get('Sample Volume [m^3]')) * 1.e6     # A million ml per cubic meter
         if not vol:
-            logger.warn('Sample Volume [mL] or Sample Volume [m^3] is not specified.'
+            self.logger.warn('Sample Volume [mL] or Sample Volume [m^3] is not specified.'
                         ' Assigning default value of 280.'
                         ' PLEASE SPECIFY THE VOLUME IN THE SPREADSHEET.')
             vol = 280           # Default volume is 280 ml - this is a required field so display a warning
@@ -577,20 +582,20 @@ class SubSamplesLoader(STOQS_Loader):
         if parameter_name.find(' ') != -1:
             spaceRemoveMsg = ("row['Parameter Name'] = %s contains a space. Replacing"
                               " with '_' before adding to STOQS." % parameter_name)
-            logger.debug(spaceRemoveMsg)
+            self.logger.debug(spaceRemoveMsg)
             parameter_name = parameter_name.replace(' ', '_')
 
         if '(' in parameter_name or ')' in parameter_name:
             parenRemoveMsg = ("row['Parameter Name'] = %s contains ( or ). Removing"
                               " them before adding to STOQS." % parameter_name)
-            logger.debug(parenRemoveMsg)
+            self.logger.debug(parenRemoveMsg)
             parameter_name = parameter_name.replace('(', '').replace(')', '')
 
         parameter_units = row.get('Parameter Units')
         (parameter, created) = Parameter.objects.using(self.dbAlias).get_or_create(name=parameter_name, units=parameter_units)
-        logger.debug('parameter, created = %s, %s', parameter, created)
+        self.logger.debug('parameter, created = %s, %s', parameter, created)
         if created and spaceRemoveMsg:
-            logger.info(spaceRemoveMsg)
+            self.logger.info(spaceRemoveMsg)
     
         analysisMethod = None
         if row['Analysis Method']:
@@ -602,7 +607,7 @@ class SubSamplesLoader(STOQS_Loader):
         try:
             sp.save(using=self.dbAlias)
         except ValidationError as e:
-            logger.warn(str(e))
+            self.logger.warn(str(e))
 
         return parameter
                                 
@@ -632,18 +637,18 @@ class SubSamplesLoader(STOQS_Loader):
                             researcher=row['Researcher'],
                             )
         if not samples:
-            logger.debug('No samples returned from query of parentSample = %s and row = %s', parentSample, row)
+            self.logger.debug('No samples returned from query of parentSample = %s and row = %s', parentSample, row)
             return
 
         if len(samples) == 1:
-            logger.debug('Deleting subsample %s from database %s', samples[0], self.dbAlais)
+            self.logger.debug('Deleting subsample %s from database %s', samples[0], self.dbAlais)
             samples[0].delete(using=self.dbAlias)
         else:
-            logger.warn('More than one subsample returned for query of parentSample = %s and row = %s', parentSample, row)
-            logger.debug('samples.query = %s', str(samples.query))
-            logger.warn('Removing them all...')
+            self.logger.warn('More than one subsample returned for query of parentSample = %s and row = %s', parentSample, row)
+            self.logger.debug('samples.query = %s', str(samples.query))
+            self.logger.warn('Removing them all...')
             for s in samples:
-                logger.debug('s.id = %s', s.id)
+                self.logger.debug('s.id = %s', s.id)
                 s.delete(using=self.dbAlias)
 
     def process_subsample_file(self, fileName, unloadFlag=False):
@@ -662,7 +667,7 @@ class SubSamplesLoader(STOQS_Loader):
         loadedParentSamples = []
         self.parameter_counts = {}
         for r in csv.DictReader(open(fileName, encoding='latin-1')):
-            logger.debug(r)
+            self.logger.debug(r)
             aName = r['Cruise']
 
             if aName == '2011_257_00_257_01':
@@ -682,20 +687,20 @@ class SubSamplesLoader(STOQS_Loader):
                             instantpoint__activity__name__icontains=aName, 
                             name=sample_name)[0]
                 except IndexError:
-                    logger.error('Parent Sample not found for Cruise (Activity Name) = %s, Bottle Number = %s', aName, r['Bottle Number'])
+                    self.logger.error('Parent Sample not found for Cruise (Activity Name) = %s, Bottle Number = %s', aName, r['Bottle Number'])
                     continue
                     ##sys.exit(-1)
             except KeyError:
                 # Special for Plankton Pump, Comment Value is 'Relative Depth'
                 sample_name = r.get('Comment Value')
-                logger.debug('aName=%s, name=%s', aName, sample_name)
+                self.logger.debug('aName=%s, name=%s', aName, sample_name)
                 try:
                     parentSample = Sample.objects.using(self.dbAlias).get(
                         sampletype__name=PLANKTONPUMP,
                         instantpoint__activity__name__icontains=aName, 
                         name=sample_name)
                 except ObjectDoesNotExist:
-                    logger.warn('Parent Sample not found for Activity %s, name %s. Skipping.', 
+                    self.logger.warn('Parent Sample not found for Activity %s, name %s. Skipping.', 
                             aName, sample_name)
 
             except ValueError as e:
@@ -708,7 +713,7 @@ class SubSamplesLoader(STOQS_Loader):
                                 'instantpoint__activity').filter(
                                 instantpoint__activity__name__icontains=aName + '_NetTow1', )[0]
                     except IndexError as e:
-                        logger.warn('Parent Sample not found for Activity %s. Skipping.', aName)
+                        self.logger.warn('Parent Sample not found for Activity %s. Skipping.', aName)
                         continue
                 else:
                     raise e
@@ -719,16 +724,16 @@ class SubSamplesLoader(STOQS_Loader):
             else:
                 if p and subCount and parentSample not in loadedParentSamples:
                     # Useful logger output when parentSample changes - more useful when spreadsheet is sorted by parentSample
-                    logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
+                    self.logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
 
-                    logger.info('Loading subsamples of parentSample (activity, bottle/name) = (%s, %s)', aName, sample_name)
+                    self.logger.info('Loading subsamples of parentSample (activity, bottle/name) = (%s, %s)', aName, sample_name)
                     subCount = 0
 
                 try:
                     # Load subsample
                     p = self.load_subsample(parentSample, r)
                 except SubSampleLoadError as e:
-                    logger.warn(e)
+                    self.logger.warn(e)
                     continue
                 else:
                     subCount = subCount + 1
@@ -741,7 +746,7 @@ class SubSamplesLoader(STOQS_Loader):
    
         if not unloadFlag: 
             # Last logger info message and finish up the loading for this file
-            logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
+            self.logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
 
             self.assignParameterGroup(groupName=SAMPLED)
             self.postProcess()
@@ -754,7 +759,7 @@ class SubSamplesLoader(STOQS_Loader):
         '''
         for row in SampledParameter.objects.using(self.dbAlias).values('sample__instantpoint__activity__pk').distinct():
             a_id = row['sample__instantpoint__activity__pk']
-            logger.debug('a_id = %d', a_id)
+            self.logger.debug('a_id = %d', a_id)
             self.activity = Activity.objects.using(self.dbAlias).get(pk=a_id)
             self.updateActivityParameterStats(sampledFlag=True)
 
