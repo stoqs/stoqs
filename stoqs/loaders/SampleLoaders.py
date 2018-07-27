@@ -381,7 +381,12 @@ class SeabirdLoader(STOQS_Loader):
             dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
             if not self.startDatetime:
                 self.startDatetime = dt
-        self.endDatetime = dt
+        try:
+            self.endDatetime = dt
+        except UnboundLocalError:
+            self.logger.warn(f'Not able to read time from bottle file for {self.activityName}')
+            return
+
         self.platform = self.getPlatform(self.platformName, self.platformTypeName)
         self.activitytypeName = 'CTD upcast'
 
@@ -492,7 +497,7 @@ class SeabirdLoader(STOQS_Loader):
                     # btlUrl looks something like: http://odss.mbari.org/thredds/fileServer/CANON_september2012/wf/pctd/c0912c53.btl
                     btlUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + bfile.split('/')[-1]
                     hdrUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + ''.join(bfile.split('/')[-1].split('.')[:-1]) + '.hdr'
-                    logger.info('btlUrl = %s', btlUrl)
+                    self.logger.info('btlUrl = %s', btlUrl)
     
                     self.activityName = bfile.split('/')[-1].split('.')[-2] 
                     year, lat, lon = get_year_lat_lon(hdrUrl = hdrUrl)
