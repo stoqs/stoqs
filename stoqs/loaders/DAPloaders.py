@@ -51,7 +51,8 @@ import logging
 import socket
 import seawater.eos80 as sw
 from utils.utils import mode, simplify_points
-from loaders import STOQS_Loader, SkipRecord, HasMeasurement, MEASUREDINSITU, FileNotFound
+from loaders import (STOQS_Loader, SkipRecord, HasMeasurement, MEASUREDINSITU, FileNotFound,
+                     SIGMAT, SPICE, SPICINESS, ALTITUDE)
 from loaders.SampleLoaders import get_closest_instantpoint, ClosestTimeNotFoundException
 import numpy as np
 import psycopg2
@@ -1177,6 +1178,12 @@ class Base_Loader(STOQS_Loader):
             mp.measurement = meas
             yield mp
 
+    def _delete_nan_datavalues(self, pname):
+        num, _ = (MeasuredParameter.objects.using(self.dbAlias)
+                    .filter(parameter__name=pname, datavalue=np.nan).delete())
+        if num:
+            self.logger.info(f'Deleted {num} NaN {pname} MeasuredParameters')
+
     def _post_process_updates(self, mps_loaded, featureType=''):
 
         #
@@ -1204,12 +1211,17 @@ class Base_Loader(STOQS_Loader):
         # Add additional Parameters for all appropriate Measurements
         self.logger.info("Adding SigmaT and Spiciness to the Measurements...")
         self.addSigmaTandSpice(self.activity)
+
         if self.grdTerrain:
             self.logger.info("Adding altitude to the Measurements...")
             try:
                 self.addAltitude(self.activity)
             except FileNotFound as e:
                 self.logger.warn(str(e))
+
+        # Bulk loading of stoqs calculated values may introduce NaNs, remove them
+        for pname in (SIGMAT, SPICE, ALTITUDE):
+            self._delete_nan_datavalues(pname)
 
         # Update the Activity with information we now have following the load
         try:
@@ -1393,7 +1405,7 @@ class Base_Loader(STOQS_Loader):
 
             return mps_loaded, path, parmCount
 
-        # Bulk loading may introduce None values, get rid of them
+        # Bulk loading may introduce None values, remove them
         MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
 
         path = self._post_process_updates(mps_loaded, featureType)

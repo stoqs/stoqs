@@ -56,6 +56,12 @@ X3D_MODEL_NOMINALDEPTH = 'X3D_MODEL_nominaldepth'
 X3D_MODEL_SCALEFACTOR = 'X3D_MODEL_scalefactor'
 X3DPLATFORMMODEL = 'x3dplatformmodel'
 
+# Parameter names created by STOQS Loads, shared with at least DAPloaders
+SIGMAT = 'sigmat'
+SPICE = 'spice'
+SPICINESS = 'Spiciness'
+ALTITUDE = 'altitude'
+
 if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
 
@@ -611,7 +617,7 @@ class STOQS_Loader(object):
             self.logger.warn("No NC_GLOBAL attribute in %s", self.url)
 
         self.logger.info('Adding attributes of all the variables from the original NetCDF file')
-        for v in self.include_names + ['altitude']:
+        for v in self.include_names + [ALTITUDE]:
             self.logger.debug('v = %s', v)
             try:
                 for rn, value in list(self.ds[v].attributes.items()):
@@ -625,7 +631,7 @@ class STOQS_Loader(object):
                     
             except KeyError as e:
                 # Just skip derived parameters that may have been added for a sub-classed Loader
-                if v != 'altitude':
+                if v != ALTITUDE:
                     self.logger.debug('include_name %s is not in %s - skipping', v, self.url)
             except AttributeError as e:
                 # Just skip over loaders that don't have the plotTimeSeriesDepth attribute
@@ -634,7 +640,7 @@ class STOQS_Loader(object):
                 self.logger.warn('Could not get Parameter for v = %s: %s', v, e)
 
         self.logger.info('Adding plotTimeSeriesDepth Resource for Parameters we want plotted in Parameter tab')
-        for v in self.include_names + ['altitude']:
+        for v in self.include_names + [ALTITUDE]:
             if hasattr(self, 'plotTimeSeriesDepth'):
                 if self.plotTimeSeriesDepth.get(v, None) is not None:
                     self.logger.debug('v = %s', v)
@@ -1327,7 +1333,7 @@ class STOQS_Loader(object):
 
             sigmat = sw.pden(sal_mp[0].datavalue, temp_mp[0].datavalue, sw.pres(measurement.depth, measurement.geom.y)) - 1000.0
             sigmat_mp = m.MeasuredParameter(measurement=measurement, parameter=p_sigmat, datavalue=sigmat)
-            
+
             yield sigmat_mp
 
     def _generate_spice_mps(self, p_spice, ms, salinity_standard_name):
@@ -1378,17 +1384,17 @@ class STOQS_Loader(object):
                 standard_name='sea_water_sigma_t',
                 long_name='Sigma-T',
                 units='kg m-3',
-                name='sigmat',
+                name=SIGMAT,
         )
         if 'spice' in self.include_names:
             p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
                     name='stoqs_spice',
-                    defaults={'long_name': 'Spiciness'}
+                    defaults={'long_name': SPICINESS}
             )
         else:
             p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
-                    name='spice',
-                    defaults={'long_name': 'Spiciness'}
+                    name=SPICE,
+                    defaults={'long_name': SPICINESS}
             )
         # Update with descriptions, being kind to legacy databases
         p_sigmat.description = ("Calculated in STOQS loader from Measured Parameters having standard_names"
@@ -1430,7 +1436,7 @@ class STOQS_Loader(object):
                 xmin, xmax = fh.variables['x_range'][:]
                 ymin, ymax = fh.variables['y_range'][:]
             except IOError as e:
-                self.logger.error('Cannot add altitude. Make sure file %s is present.', self.grdTerrain)
+                self.logger.error(f'Cannot add {ALTITUDE}. Make sure file {self.grdTerrain} is present.')
             except KeyError as e:
                 try:
                     # New GMT format
@@ -1442,8 +1448,8 @@ class STOQS_Loader(object):
                         xmin, xmax = fh.variables['x'].actual_range
                         ymin, ymax = fh.variables['y'].actual_range
                     except Exception as e:
-                        self.logger.error('Cannot read range metadata from %s. Not able to load'
-                                          ' altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
+                        self.logger.error(f'Cannot read range metadata from {self.grdTerrain}. Not able to load'
+                                          ' {ALTITUDE}, bottomdepth or simplebottomdepthtime')
                         return
             except Exception as e:
                 self.logger.exception(e)
@@ -1499,13 +1505,13 @@ class STOQS_Loader(object):
                                  " latitude, longitude values and differencing the Platform's depth with the"
                                  " bottom depth data in file %s." % self.grdTerrain.split('/')[-1]),
                     units='m',
-                    name='altitude',
+                    name=ALTITUDE,
                     origin='https://github.com/stoqs/stoqs/blob/45f53d134d336fdbdb38f73959a2ce3be4148227/stoqs/loaders/__init__.py#L1216-L1322'
             )
         except IntegrityError:
             # A bit of a mystery why sometimes this Exception happens (simply get p_alt if it happens):
             # IntegrityError: duplicate key value violates unique constraint "stoqs_parameter_name_key"
-            p_alt = m.Parameter.objects.using(self.dbAlias).get(name='altitude')
+            p_alt = m.Parameter.objects.using(self.dbAlias).get(name=ALTITUDE)
 
         self.parameter_counts[p_alt] = ms.count()
         self.assignParameterGroup(groupName=MEASUREDINSITU)
