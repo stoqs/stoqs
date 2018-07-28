@@ -1316,41 +1316,6 @@ class STOQS_Loader(object):
                 except Exception as e:
                     self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
-    def _generate_sigmat_and_spice_mps_raw_sql(self, p_sigmat, p_spice, salinity_standard_name):
-        '''Yield calculated sigmat and spice from data already in the database, use raw query to get t & s
-        with one query for all measurements in the Activity
-        '''
-        # When testing with tethys load this failed. Replaced with method below.
-        # (Destined to be removed after more testing.)
-
-        sql = f'''
-SELECT DISTINCT mp_x.id, m_x.depth as depth, mp_x.datavalue AS t, mp_y.datavalue AS s, 
-ST_Y(m_x.geom) AS lat, m_x.id AS m_id
-FROM stoqs_instantpoint
-INNER JOIN stoqs_activity ON (stoqs_instantpoint.activity_id = stoqs_activity.id)
-INNER JOIN stoqs_platform ON (stoqs_activity.platform_id = stoqs_platform.id)
-INNER JOIN stoqs_measurement m_x ON m_x.instantpoint_id = stoqs_instantpoint.id
-INNER JOIN stoqs_measuredparameter mp_x ON mp_x.measurement_id = m_x.id
-INNER JOIN stoqs_parameter p_x ON mp_x.parameter_id = p_x.id
-INNER JOIN stoqs_measurement m_y ON m_y.instantpoint_id = stoqs_instantpoint.id
-INNER JOIN stoqs_measuredparameter mp_y ON mp_y.measurement_id = m_y.id
-INNER JOIN stoqs_parameter p_y ON mp_y.parameter_id = p_y.id
-WHERE (p_x.standard_name = 'sea_water_temperature')
-  AND (p_y.standard_name = '{salinity_standard_name}')
-  AND (stoqs_activity.name = '{self.activity}')
-  AND (m_x.id = m_y.id)
-'''
-        sql = sql.replace('\n', ' ').strip()
-        for meas in m.MeasuredParameter.objects.using(self.dbAlias).raw(sql):
-            measurement = m.Measurement.objects.using(self.dbAlias).get(id=meas.m_id)
-            sigmat = sw.pden(meas.s, meas.t, sw.pres(meas.depth, meas.lat)) - 1000.0
-            spice = spiciness(meas.t, meas.s)
-
-            sigmat_mp = m.MeasuredParameter(measurement=measurement, parameter=p_sigmat, datavalue=sigmat)
-            spice_mp = m.MeasuredParameter(measurement=measurement, parameter=p_spice, datavalue=spice)
-
-            yield sigmat_mp, spice_mp
-
     def _generate_sigmat_mps(self, p_sigmat, ms, salinity_standard_name):
         '''Yield calculated sigmat from ms QuerySet
         '''
