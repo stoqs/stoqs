@@ -616,8 +616,13 @@ class STOQS_Loader(object):
         else:
             self.logger.warn("No NC_GLOBAL attribute in %s", self.url)
 
+        # Add stoqs calculated Parameters to the names we add resources to
+        all_names = self.include_names + [ALTITUDE]
+        if m.Parameter.objects.using(self.dbAlias).filter(activity=self.activity, name=SIGMAT):
+            all_names = all_names + [SIGMAT, SPICE]
+
         self.logger.info('Adding attributes of all the variables from the original NetCDF file')
-        for v in self.include_names + [ALTITUDE]:
+        for v in all_names:
             self.logger.debug('v = %s', v)
             try:
                 for rn, value in list(self.ds[v].attributes.items()):
@@ -640,7 +645,7 @@ class STOQS_Loader(object):
                 self.logger.warn('Could not get Parameter for v = %s: %s', v, e)
 
         self.logger.info('Adding plotTimeSeriesDepth Resource for Parameters we want plotted in Parameter tab')
-        for v in self.include_names + [ALTITUDE]:
+        for v in all_names:
             if hasattr(self, 'plotTimeSeriesDepth'):
                 if self.plotTimeSeriesDepth.get(v, None) is not None:
                     self.logger.debug('v = %s', v)
