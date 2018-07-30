@@ -773,7 +773,7 @@ class STOQS_Loader(object):
         '''Return True if coordinate is missing or fill_value, or falls outside of reasonable bounds
         '''
         # Missing value rejections
-        ac = self.getAuxCoordinates(key)
+        ac = self.coord_dicts[key]
         if 'depth' in ac:   # Tolerate EPIC 'sensor_depth' type data
             if self.mv_by_key[ac['depth']]:
                 if np.isclose(depth, self.mv_by_key[ac['depth']]):
