@@ -3392,6 +3392,16 @@ function enable_cardboard(){
                                     xaxes: [{
                                                 axisLabel: 'Time (gmt)'
                                             }],
+                                    yaxis: {
+                                                tickFormatter: function(val, axis) {
+                                                    if (val.toString().indexOf('e') !== -1) {
+                                                        return val.toExponential(1);
+                                                    }
+                                                    else {
+                                                        return Math.round(val);
+                                                    }
+                                                }
+                                           },
                                     series: {
                                         lines: { show: true, fill: false, lineWidth: 1 },
                                         points: { show: false, fill: false },

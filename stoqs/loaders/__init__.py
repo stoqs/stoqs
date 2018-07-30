@@ -56,6 +56,12 @@ X3D_MODEL_NOMINALDEPTH = 'X3D_MODEL_nominaldepth'
 X3D_MODEL_SCALEFACTOR = 'X3D_MODEL_scalefactor'
 X3DPLATFORMMODEL = 'x3dplatformmodel'
 
+# Parameter names created by STOQS Loads, shared with at least DAPloaders
+SIGMAT = 'sigmat'
+SPICE = 'spice'
+SPICINESS = 'Spiciness'
+ALTITUDE = 'altitude'
+
 if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
 
@@ -610,8 +616,13 @@ class STOQS_Loader(object):
         else:
             self.logger.warn("No NC_GLOBAL attribute in %s", self.url)
 
+        # Add stoqs calculated Parameters to the names we add resources to
+        all_names = self.include_names + [ALTITUDE]
+        if m.Parameter.objects.using(self.dbAlias).filter(activityparameter__activity=self.activity, name=SIGMAT):
+            all_names = all_names + [SIGMAT, SPICE]
+
         self.logger.info('Adding attributes of all the variables from the original NetCDF file')
-        for v in self.include_names + ['altitude']:
+        for v in all_names:
             self.logger.debug('v = %s', v)
             try:
                 for rn, value in list(self.ds[v].attributes.items()):
@@ -625,7 +636,7 @@ class STOQS_Loader(object):
                     
             except KeyError as e:
                 # Just skip derived parameters that may have been added for a sub-classed Loader
-                if v != 'altitude':
+                if v != ALTITUDE:
                     self.logger.debug('include_name %s is not in %s - skipping', v, self.url)
             except AttributeError as e:
                 # Just skip over loaders that don't have the plotTimeSeriesDepth attribute
@@ -634,7 +645,7 @@ class STOQS_Loader(object):
                 self.logger.warn('Could not get Parameter for v = %s: %s', v, e)
 
         self.logger.info('Adding plotTimeSeriesDepth Resource for Parameters we want plotted in Parameter tab')
-        for v in self.include_names + ['altitude']:
+        for v in all_names:
             if hasattr(self, 'plotTimeSeriesDepth'):
                 if self.plotTimeSeriesDepth.get(v, None) is not None:
                     self.logger.debug('v = %s', v)
@@ -1316,41 +1327,6 @@ class STOQS_Loader(object):
                 except Exception as e:
                     self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
-    def _generate_sigmat_and_spice_mps_raw_sql(self, p_sigmat, p_spice, salinity_standard_name):
-        '''Yield calculated sigmat and spice from data already in the database, use raw query to get t & s
-        with one query for all measurements in the Activity
-        '''
-        # When testing with tethys load this failed. Replaced with method below.
-        # (Destined to be removed after more testing.)
-
-        sql = f'''
-SELECT DISTINCT mp_x.id, m_x.depth as depth, mp_x.datavalue AS t, mp_y.datavalue AS s, 
-ST_Y(m_x.geom) AS lat, m_x.id AS m_id
-FROM stoqs_instantpoint
-INNER JOIN stoqs_activity ON (stoqs_instantpoint.activity_id = stoqs_activity.id)
-INNER JOIN stoqs_platform ON (stoqs_activity.platform_id = stoqs_platform.id)
-INNER JOIN stoqs_measurement m_x ON m_x.instantpoint_id = stoqs_instantpoint.id
-INNER JOIN stoqs_measuredparameter mp_x ON mp_x.measurement_id = m_x.id
-INNER JOIN stoqs_parameter p_x ON mp_x.parameter_id = p_x.id
-INNER JOIN stoqs_measurement m_y ON m_y.instantpoint_id = stoqs_instantpoint.id
-INNER JOIN stoqs_measuredparameter mp_y ON mp_y.measurement_id = m_y.id
-INNER JOIN stoqs_parameter p_y ON mp_y.parameter_id = p_y.id
-WHERE (p_x.standard_name = 'sea_water_temperature')
-  AND (p_y.standard_name = '{salinity_standard_name}')
-  AND (stoqs_activity.name = '{self.activity}')
-  AND (m_x.id = m_y.id)
-'''
-        sql = sql.replace('\n', ' ').strip()
-        for meas in m.MeasuredParameter.objects.using(self.dbAlias).raw(sql):
-            measurement = m.Measurement.objects.using(self.dbAlias).get(id=meas.m_id)
-            sigmat = sw.pden(meas.s, meas.t, sw.pres(meas.depth, meas.lat)) - 1000.0
-            spice = spiciness(meas.t, meas.s)
-
-            sigmat_mp = m.MeasuredParameter(measurement=measurement, parameter=p_sigmat, datavalue=sigmat)
-            spice_mp = m.MeasuredParameter(measurement=measurement, parameter=p_spice, datavalue=spice)
-
-            yield sigmat_mp, spice_mp
-
     def _generate_sigmat_mps(self, p_sigmat, ms, salinity_standard_name):
         '''Yield calculated sigmat from ms QuerySet
         '''
@@ -1362,7 +1338,7 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
 
             sigmat = sw.pden(sal_mp[0].datavalue, temp_mp[0].datavalue, sw.pres(measurement.depth, measurement.geom.y)) - 1000.0
             sigmat_mp = m.MeasuredParameter(measurement=measurement, parameter=p_sigmat, datavalue=sigmat)
-            
+
             yield sigmat_mp
 
     def _generate_spice_mps(self, p_spice, ms, salinity_standard_name):
@@ -1413,17 +1389,17 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
                 standard_name='sea_water_sigma_t',
                 long_name='Sigma-T',
                 units='kg m-3',
-                name='sigmat',
+                name=SIGMAT,
         )
         if 'spice' in self.include_names:
             p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
                     name='stoqs_spice',
-                    defaults={'long_name': 'Spiciness'}
+                    defaults={'long_name': SPICINESS}
             )
         else:
             p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
-                    name='spice',
-                    defaults={'long_name': 'Spiciness'}
+                    name=SPICE,
+                    defaults={'long_name': SPICINESS}
             )
         # Update with descriptions, being kind to legacy databases
         p_sigmat.description = ("Calculated in STOQS loader from Measured Parameters having standard_names"
@@ -1465,7 +1441,7 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
                 xmin, xmax = fh.variables['x_range'][:]
                 ymin, ymax = fh.variables['y_range'][:]
             except IOError as e:
-                self.logger.error('Cannot add altitude. Make sure file %s is present.', self.grdTerrain)
+                self.logger.error(f'Cannot add {ALTITUDE}. Make sure file {self.grdTerrain} is present.')
             except KeyError as e:
                 try:
                     # New GMT format
@@ -1477,8 +1453,8 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
                         xmin, xmax = fh.variables['x'].actual_range
                         ymin, ymax = fh.variables['y'].actual_range
                     except Exception as e:
-                        self.logger.error('Cannot read range metadata from %s. Not able to load'
-                                          ' altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
+                        self.logger.error(f'Cannot read range metadata from {self.grdTerrain}. Not able to load'
+                                          ' {ALTITUDE}, bottomdepth or simplebottomdepthtime')
                         return
             except Exception as e:
                 self.logger.exception(e)
@@ -1534,13 +1510,13 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
                                  " latitude, longitude values and differencing the Platform's depth with the"
                                  " bottom depth data in file %s." % self.grdTerrain.split('/')[-1]),
                     units='m',
-                    name='altitude',
+                    name=ALTITUDE,
                     origin='https://github.com/stoqs/stoqs/blob/45f53d134d336fdbdb38f73959a2ce3be4148227/stoqs/loaders/__init__.py#L1216-L1322'
             )
         except IntegrityError:
             # A bit of a mystery why sometimes this Exception happens (simply get p_alt if it happens):
             # IntegrityError: duplicate key value violates unique constraint "stoqs_parameter_name_key"
-            p_alt = m.Parameter.objects.using(self.dbAlias).get(name='altitude')
+            p_alt = m.Parameter.objects.using(self.dbAlias).get(name=ALTITUDE)
 
         self.parameter_counts[p_alt] = ms.count()
         self.assignParameterGroup(groupName=MEASUREDINSITU)

@@ -18,7 +18,7 @@ from django.db.models import Q, Max, Min, Sum, Avg
 from django.db.models.sql import query
 from django.contrib.gis.db.models import Extent, Union
 from django.contrib.gis.geos import fromstr, MultiPoint
-from django.db.utils import DatabaseError
+from django.db.utils import DatabaseError, DataError
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from stoqs import models
@@ -498,6 +498,11 @@ class STOQSQManager(object):
                     logger.error('%s, but pid text = %s is not a coordinate', e, pid)
 
                 return {'plot': plot_results, 'dataaccess': []}
+            except DataError as e:
+                # Likely "value out of range: overflow", clamp to limits of single-precision floats
+                logger.warn(f'{e}')
+                logger.warn(f'Setting pid = {pid} in plot_results to min/max to limits of single-precision floats')
+                plot_results = [pid, round_to_n(np.finfo('f').min, 4), round_to_n(np.finfo('f').max, 4)]
 
         elif 'parameterplot' in self.kwargs:
             if self.kwargs['parameterplot'][0]:
@@ -512,6 +517,10 @@ class STOQSQManager(object):
                 except TypeError as e:
                     # Likely 'Cannot plot Parameter' that is not in selection, ignore for cleaner functional tests
                     logger.debug(f'parameterID = {parameterID}: {str(e)}')
+                except DataError as e:
+                    logger.warn(f'{e}')
+                    logger.warn(f'Setting pid = {pid} in plot_results to min/max to limits of single-precision floats')
+                    plot_results = [pid, round_to_n(np.finfo('f').min, 4), round_to_n(np.finfo('f').max, 4)]
 
         if 'measuredparametersgroup' in self.kwargs:
             if len(self.kwargs['measuredparametersgroup']) == 1:
@@ -527,6 +536,10 @@ class STOQSQManager(object):
                         da_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError as e:
                     logger.exception(e)
+                except DataError as e:
+                    logger.warn(f'{e}')
+                    logger.warn(f'Setting pid = {pid} in da_results to min/max to limits of single-precision floats')
+                    da_results = [pid, round_to_n(np.finfo('f').min, 4), round_to_n(np.finfo('f').max, 4)]
 
         if 'sampledparametersgroup' in self.kwargs:
             if len(self.kwargs['sampledparametersgroup']) == 1:
