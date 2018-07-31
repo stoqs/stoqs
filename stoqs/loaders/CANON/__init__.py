@@ -155,10 +155,25 @@ class CANONLoader(LoadScript):
         self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName,
                                   scalefactor=2)
 
-    def loadLRAUV(self, pname, parameters, startdate, enddate, stride=None):
-        '''Loader for tethys, daphne, makai, ahi, aku, 
+    def loadLRAUV(self, pname, startdate, enddate, 
+                  parameters=['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
+                    'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
+                    'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
+                    'health_platform_battery_charge', 'health_platform_average_voltage',
+                    'health_platform_average_current','fix_latitude', 'fix_longitude',
+                    'fix_residual_percent_distance_traveled_DeadReckonUsingSpeedCalculator',
+                    'pose_longitude_DeadReckonUsingSpeedCalculator',
+                    'pose_latitude_DeadReckonUsingSpeedCalculator',
+                    'pose_depth_DeadReckonUsingSpeedCalculator',
+                    'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources',
+                    'pose_longitude_DeadReckonUsingMultipleVelocitySources',
+                    'pose_latitude_DeadReckonUsingMultipleVelocitySources',
+                    'pose_depth_DeadReckonUsingMultipleVelocitySources',],
+                  stride=None, file_patterns=('.*2S_eng.nc$|.*10S_sci.nc$')):
         '''
-        self.build_lrauv_attrs(startdate.year, pname, parameters, startdate, enddate)
+        Loader for tethys, daphne, makai, ahi, aku, 
+        '''
+        self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
 
         stride = stride or self.stride
         files = getattr(self, f'{pname}_files')
@@ -1252,8 +1267,7 @@ class CANONLoader(LoadScript):
 
         return urls
 
-    def build_lrauv_attrs(self, mission_year, platform, parameters, startdate, enddate, 
-                          file_patterns=('.*2S_eng.nc$|.*10S_sci.nc$')):
+    def build_lrauv_attrs(self, mission_year, platform, startdate, enddate, parameters, file_patterns):
         '''Set loader attributes for each LRAUV platform
         '''
         base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{mission_year}/'
@@ -1277,8 +1291,6 @@ class CANONLoader(LoadScript):
 
         except FileNotFound as e:
             self.logger.debug(f'{e}')
-
-
 
 
     def loadAll(self, stride=None):
