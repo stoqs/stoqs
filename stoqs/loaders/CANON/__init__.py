@@ -31,14 +31,20 @@ except AttributeError:
     pass
 
 import DAPloaders
+import datetime
+import requests
+import urllib
+
 from SampleLoaders import SeabirdLoader, load_gulps, SubSamplesLoader 
-from loaders import LoadScript
+from loaders import LoadScript, FileNotFound
 from stoqs.models import InstantPoint
 from django.db.models import Max
 from datetime import timedelta
 from argparse import Namespace
+from lxml import etree
 from nettow import NetTow
 from planktonpump import PlanktonPump
+from thredds_crawler.crawl import Crawl
 import logging
 import matplotlib as mpl
 mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
@@ -148,6 +154,40 @@ class CANONLoader(LoadScript):
 
         self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName,
                                   scalefactor=2)
+
+    def loadLRAUV(self, pname, parameters, startdate, enddate, stride=None):
+        '''Loader for tethys, daphne, makai, ahi, aku, 
+        '''
+        self.build_lrauv_attrs(startdate.year, pname, parameters, startdate, enddate)
+
+        stride = stride or self.stride
+        files = getattr(self, f'{pname}_files')
+        base = getattr(self, f'{pname}_base')
+        for (aname, f) in zip([ a + getStrideText(stride) for a in files], files):
+            url = os.path.join(base, f)
+            # shorten the activity names
+            if 'slate.nc' in aname:
+                aname = '_'.join(aname.split('/')[-2:])
+            else:
+                aname = aname.rsplit('/', 1)[-1]
+            if hasattr(self, f'{pname}_aux_coords'):
+                aux_coords = getattr(self, f'{pname}_aux_coords')
+            else:
+                setattr(self, f'{pname}s_aux_coords', None)
+                aux_coords = None
+            try:
+                # Early LRAUV data had time coord of 'Time', override with auxCoords setting from load script
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aname, 
+                                          pname, self.colors[pname], 'auv', 'AUV mission',
+                                          parameters, self.dbAlias, stride, 
+                                          grdTerrain=self.grdTerrain, command_line_args=self.args,
+                                          plotTimeSeriesDepth=0, auxCoords=aux_coords)
+            except DAPloaders.NoValidData:
+                self.logger.info("No valid data in %s" % url)
+
+        self.addPlatformResources(f'https://stoqs.mbari.org/x3d/lrauv/lrauv_{pname}.x3d', pname,
+                                  scalefactor=2)
+
 
     def loadTethys(self, stride=None):
         '''
@@ -1168,6 +1208,79 @@ class CANONLoader(LoadScript):
             pp.load_samples()
         except IOError as e:
             self.logger.error(str(e))
+
+    def find_lrauv_urls(self, base, search_str, startdate, enddate):
+        '''Use Thredds Crawler to return a list of DAP urls.  Initially written for LRAUV data, for
+        which we don't initially know the urls.
+        '''
+        INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
+        url = os.path.join(base, 'catalog.xml')
+        self.logger.info(f"Crawling: {url}")
+        skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
+        u = urllib.parse.urlsplit(url)
+        name, ext = os.path.splitext(u.path)
+        if ext == ".html":
+            u = urllib.parse.urlsplit(url.replace(".html", ".xml"))
+        url = u.geturl()
+        urls = []
+        # Get an etree object
+        r = requests.get(url)
+        tree = etree.XML(r.text.encode('utf-8'))
+
+        # Crawl the catalogRefs:
+        for ref in tree.findall('.//{%s}catalogRef' % INV_NS):
+
+            # get the mission directory name and extract the start and ending dates
+            mission_dir_name = ref.attrib['{http://www.w3.org/1999/xlink}title']
+            if '_' in mission_dir_name:
+                dts = mission_dir_name.split('_')
+                dir_start =  datetime.datetime.strptime(dts[0], '%Y%m%d')
+                dir_end =  datetime.datetime.strptime(dts[1], '%Y%m%d')
+
+                # if within a valid range, grab the valid urls
+                self.logger.debug(f'{mission_dir_name}: Looking for opendap links between {startdate} and {enddate}')
+                if dir_start >= startdate and dir_end <= enddate:
+                    catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
+                    c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
+                    d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+                    for url in d:
+                        self.logger.debug(f'{url}')
+                        urls.append(url)
+
+        if not urls:
+            raise FileNotFound('No urls matching "{}" found in {}'.format(search_str, os.path.join(base, 'catalog.html')))
+
+        return urls
+
+    def build_lrauv_attrs(self, mission_year, platform, parameters, startdate, enddate, 
+                          file_patterns=('.*2S_eng.nc$', '.*10S_sci.nc$')):
+        '''Set loader attributes for each LRAUV platform
+        '''
+        base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{mission_year}/'
+        dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{mission_year}/'
+        setattr(self, platform + '_files', [])
+        setattr(self, platform + '_base', dods_base)
+        setattr(self, platform + '_parms' , parameters)
+
+        urls = []
+        try:
+            for pattern in file_patterns:
+                urls += self.find_lrauv_urls(base, pattern, startdate, enddate)
+            files = []
+            if len(urls) > 0 :
+                for url in sorted(urls):
+                    file = '/'.join(url.split('/')[-3:])
+                    files.append(file)
+                setattr(self, platform + '_files', files)
+
+            setattr(self, platform  + '_startDatetime', startdate)
+            setattr(self, platform + '_endDatetime', enddate)
+
+        except FileNotFound as e:
+            self.logger.debug(f'{e}')
+
+
+
 
     def loadAll(self, stride=None):
         '''
