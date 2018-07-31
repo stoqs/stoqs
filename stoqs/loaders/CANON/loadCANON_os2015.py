@@ -318,9 +318,9 @@ if cl.args.test:
     cl.load_wg_Tiny(stride=10)
 
     ##cl.loadDorado(stride=100)
-    #cl.loadDaphne(stride=100)
-    #cl.loadTethys(stride=100)
-    #cl.loadMakai(stride=100)
+    ##cl.loadLRAUV('daphne', lrauv_parameters, startdate, enddate, stride=100)
+    ##cl.loadLRAUV('tethys', lrauv_parameters, startdate, enddate, stride=100)
+    ##cl.loadLRAUV('makai', lrauv_parameters, startdate, enddate, stride=100)
 
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
