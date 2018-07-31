@@ -184,7 +184,8 @@ cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = [
                    'OS_Glider_L_662_20161214_TS.nc',
                    'OS_Glider_L_662_20170328_TS.nc'  ] 
-cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
+# Begining with OS_Glider_L_662_20170328_TS variable names became: 'temperature', 'salinity', 'fluorescence'
+cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2', 'temperature', 'salinity', 'fluorescence']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
 
@@ -201,9 +202,8 @@ cl.l_662_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                     'wgTiny/20161212/realTime/20161212.nc', 
-                     'wgTiny/20170109/realTime/20170109.nc',
-                     'wgTiny/20170307/realTime/20170307.nc',
+                     'wgTiny/20170109/QC/20170109_QC.nc',
+                     'wgTiny/20170307/QC/20170307_QC.nc',
                    ]
 cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
                     'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
