@@ -54,3 +54,4 @@ slacker==0.9.65
 Sphinx==1.7.6
 sphinx-rtd-theme==0.4.1
 sqlparse==0.2.4
+thredds-crawler==1.5.4
