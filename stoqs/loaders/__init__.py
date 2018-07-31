@@ -616,9 +616,9 @@ class STOQS_Loader(object):
         else:
             self.logger.warn("No NC_GLOBAL attribute in %s", self.url)
 
-        # Add stoqs calculated Parameters to the names we add resources to
+        # Add stoqs calculated Parameters to the names we add resources to - crude test for presence of SIGMAT in database
         all_names = self.include_names + [ALTITUDE]
-        if m.Parameter.objects.using(self.dbAlias).filter(activityparameter__activity=self.activity, name=SIGMAT):
+        if m.Parameter.objects.using(self.dbAlias).filter(name=SIGMAT):
             all_names = all_names + [SIGMAT, SPICE]
 
         self.logger.info('Adding attributes of all the variables from the original NetCDF file')
