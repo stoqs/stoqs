@@ -1238,7 +1238,7 @@ class CANONLoader(LoadScript):
                 dir_end =  datetime.datetime.strptime(dts[1], '%Y%m%d')
 
                 # if within a valid range, grab the valid urls
-                self.logger.debug(f'{mission_dir_name}: Looking for opendap links between {startdate} and {enddate}')
+                self.logger.debug(f'{mission_dir_name}: Looking {search_str} files between {startdate} and {enddate}')
                 if dir_start >= startdate and dir_end <= enddate:
                     catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                     c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
@@ -1253,7 +1253,7 @@ class CANONLoader(LoadScript):
         return urls
 
     def build_lrauv_attrs(self, mission_year, platform, parameters, startdate, enddate, 
-                          file_patterns=('.*2S_eng.nc$', '.*10S_sci.nc$')):
+                          file_patterns=('.*2S_eng.nc$|.*10S_sci.nc$')):
         '''Set loader attributes for each LRAUV platform
         '''
         base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{mission_year}/'
@@ -1264,8 +1264,7 @@ class CANONLoader(LoadScript):
 
         urls = []
         try:
-            for pattern in file_patterns:
-                urls += self.find_lrauv_urls(base, pattern, startdate, enddate)
+            urls += self.find_lrauv_urls(base, file_patterns, startdate, enddate)
             files = []
             if len(urls) > 0 :
                 for url in sorted(urls):
