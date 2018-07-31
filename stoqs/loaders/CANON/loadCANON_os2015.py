@@ -88,20 +88,6 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 
 # TDS server is crawled and attributes are set in the loadLRAUV() calls below
 
-lrauv_parameters =  [  'temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
-                        'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
-                        'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
-                        'health_platform_battery_charge', 'health_platform_average_voltage',
-                        'health_platform_average_current','fix_latitude', 'fix_longitude',
-                        'fix_residual_percent_distance_traveled_DeadReckonUsingSpeedCalculator',
-                        'pose_longitude_DeadReckonUsingSpeedCalculator',
-                        'pose_latitude_DeadReckonUsingSpeedCalculator',
-                        'pose_depth_DeadReckonUsingSpeedCalculator',
-                        'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources',
-                        'pose_longitude_DeadReckonUsingMultipleVelocitySources',
-                        'pose_latitude_DeadReckonUsingMultipleVelocitySources',
-                        'pose_depth_DeadReckonUsingMultipleVelocitySources',
-                    ]
 
 ######################################################################
 #  GLIDERS
@@ -318,9 +304,9 @@ if cl.args.test:
     cl.load_wg_Tiny(stride=10)
 
     ##cl.loadDorado(stride=100)
-    ##cl.loadLRAUV('daphne', lrauv_parameters, startdate, enddate, stride=100)
-    ##cl.loadLRAUV('tethys', lrauv_parameters, startdate, enddate, stride=100)
-    ##cl.loadLRAUV('makai', lrauv_parameters, startdate, enddate, stride=100)
+    ##cl.loadLRAUV('daphne', startdate, enddate, stride=100)
+    ##cl.loadLRAUV('tethys', startdate, enddate, stride=100)
+    ##cl.loadLRAUV('makai', startdate, enddate, stride=100)
 
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
@@ -360,9 +346,9 @@ else:
     cl.load_oa1()
     cl.load_oa2()
     ##cl.loadDorado()
-    cl.loadLRAUV('daphne', lrauv_parameters, startdate, enddate)
-    cl.loadLRAUV('tethys', lrauv_parameters, startdate, enddate)
-    cl.loadLRAUV('makai', lrauv_parameters, startdate, enddate)
+    cl.loadLRAUV('daphne', startdate, enddate)
+    cl.loadLRAUV('tethys', startdate, enddate)
+    cl.loadLRAUV('makai', startdate, enddate)
     cl.loadDaphne()
     cl.loadTethys()
     cl.loadMakai()
