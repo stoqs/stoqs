@@ -441,76 +441,70 @@ class STOQS_Loader(object):
 
     def addParameters(self, parmDict):
         '''
-        Wrapper so as to apply self.dbAlias in the decorator
+        This method is a get_or_create() equivalent, but on steroids.  It first tries to find the
+        parameter in a local cache (a python hash), first by standard_name, then by name.  Then it
+        checks to see if it's in the database.  If it's not in the database it will then add it
+        populating the fields from the attributes of the parameter dictionary that is passed.  The
+        dictionary is patterned after the pydap.model.BaseType variable from the NetCDF file (OPeNDAP URL).
         '''
-        def innerAddParameters(self, parmDict):
-            '''
-            This method is a get_or_create() equivalent, but on steroids.  It first tries to find the
-            parameter in a local cache (a python hash), first by standard_name, then by name.  Then it
-            checks to see if it's in the database.  If it's not in the database it will then add it
-            populating the fields from the attributes of the parameter dictionary that is passed.  The
-            dictionary is patterned after the pydap.model.BaseType variable from the NetCDF file (OPeNDAP URL).
-            '''
 
-            # Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
-            for key in list(parmDict.keys()):
-                self.logger.debug("key = %s", key)
-                if (key in self.ignored_names) or (key not in self.include_names): # skip adding parameters that are ignored
-                    continue
-                v = parmDict[key].attributes
-                self.logger.debug("v = %s", v)
+        # Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
+        for key in list(parmDict.keys()):
+            self.logger.debug("key = %s", key)
+            if (key in self.ignored_names) or (key not in self.include_names): # skip adding parameters that are ignored
+                continue
+            v = parmDict[key].attributes
+            self.logger.debug("v = %s", v)
+            try:
+                self.getParameterByName(key)
+            except ParameterNotFound as e:
+                self.logger.debug("Parameter not found. Assigning parms from ds variable.")
+                # Bug in pydap returns a gobbledegook list of things if the attribute value has not been
+                # set.  Check for this on units and override what pydap returns.
+                if isinstance(v.get('units'), list):
+                    unitStr = ''
+                else:
+                    unitStr = v.get('units')
+                
+                parms = {'units': unitStr,
+                    'standard_name': v.get('standard_name'),
+                    'long_name': v.get('long_name'),
+                    'type': v.get('type'),
+                    'description': v.get('description'),
+                    'origin': self.activityName,
+                    'name': key}
+
+                self.parameter_dict[key] = m.Parameter(**parms)
                 try:
-                    self.getParameterByName(key)
-                except ParameterNotFound as e:
-                    self.logger.debug("Parameter not found. Assigning parms from ds variable.")
-                    # Bug in pydap returns a gobbledegook list of things if the attribute value has not been
-                    # set.  Check for this on units and override what pydap returns.
-                    if isinstance(v.get('units'), list):
-                        unitStr = ''
+                    sid = transaction.savepoint(using=self.dbAlias)
+                    self.parameter_dict[key].save(using=self.dbAlias)
+                    self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
+                except IntegrityError as e:
+                    self.logger.warn('%s', e)
+                    transaction.savepoint_rollback(sid)
+                    if str(e).startswith('duplicate key value violates unique constraint "stoqs_parameter_pkey"'):
+                        self.resetParameterAutoSequenceId()
+                        try:
+                            sid2 = transaction.savepoint(using=self.dbAlias)
+                            self.parameter_dict[key].save(using=self.dbAlias)
+                            self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
+                        except Exception as e:
+                            self.logger.error('%s', e)
+                            transaction.savepoint_rollback(sid2,using=self.dbAlias)
+                            raise Exception('''Failed reset auto sequence id on the stoqs_parameter table''')
                     else:
-                        unitStr = v.get('units')
-                    
-                    parms = {'units': unitStr,
-                        'standard_name': v.get('standard_name'),
-                        'long_name': v.get('long_name'),
-                        'type': v.get('type'),
-                        'description': v.get('description'),
-                        'origin': self.activityName,
-                        'name': key}
-
-                    self.parameter_dict[key] = m.Parameter(**parms)
-                    try:
-                        sid = transaction.savepoint(using=self.dbAlias)
-                        self.parameter_dict[key].save(using=self.dbAlias)
-                        self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                    except IntegrityError as e:
-                        self.logger.warn('%s', e)
-                        transaction.savepoint_rollback(sid)
-                        if str(e).startswith('duplicate key value violates unique constraint "stoqs_parameter_pkey"'):
-                            self.resetParameterAutoSequenceId()
-                            try:
-                                sid2 = transaction.savepoint(using=self.dbAlias)
-                                self.parameter_dict[key].save(using=self.dbAlias)
-                                self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                            except Exception as e:
-                                self.logger.error('%s', e)
-                                transaction.savepoint_rollback(sid2,using=self.dbAlias)
-                                raise Exception('''Failed reset auto sequence id on the stoqs_parameter table''')
-                        else:
-                            self.logger.error('Exception %s', e)
-                            raise Exception('''Failed to add parameter for %s
-                                %s\nEither add parameter manually, or add to ignored_names''' % (key,
-                                '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in list(parms.items())])))
-                        
-                    except Exception as e:
-                        self.logger.error('%s', e)
-                        transaction.savepoint_rollback(sid,using=self.dbAlias)
+                        self.logger.error('Exception %s', e)
                         raise Exception('''Failed to add parameter for %s
                             %s\nEither add parameter manually, or add to ignored_names''' % (key,
                             '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in list(parms.items())])))
-                    self.logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
-
-        return innerAddParameters(self, parmDict)
+                    
+                except Exception as e:
+                    self.logger.error('%s', e)
+                    transaction.savepoint_rollback(sid,using=self.dbAlias)
+                    raise Exception('''Failed to add parameter for %s
+                        %s\nEither add parameter manually, or add to ignored_names''' % (key,
+                        '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in list(parms.items())])))
+                self.logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
 
     def createCampaign(self):
         '''Create Campaign in the database ensuring that there is only one Campaign
