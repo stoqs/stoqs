@@ -60,7 +60,7 @@ for name in ['load_{}'.format(s) for s in cl.roms_platforms]:
     setattr(CANONLoader, name, _method)
 
 cl.roms_sg621_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/ROMS/'
-cl.roms_sg621_files = ['roms_sg621_{:04d}.nc'.format(i) for i in range(248,400)]
+cl.roms_sg621_files = ['roms_sg621_{:04d}.nc'.format(i) for i in range(271,420)]
 cl.roms_sg621_parms = ['roms_temperature', 'roms_salinity', 'roms_spice', 'temperature', 'salinity', 'spice']
 cl.roms_sg621_start_datetime = startdate
 cl.roms_sg621_end_datetime = enddate
