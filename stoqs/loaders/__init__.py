@@ -1356,7 +1356,10 @@ class STOQS_Loader(object):
         used for sea_water_salinity - either sea_water_salinity or sea_water_practical_salinity
         '''
         sea_water_temperature_parms = [p for p in self.parameter_dict.values() if p.standard_name=='sea_water_temperature']
-        sea_water_temperature_parm = sea_water_temperature_parms[0]
+        try:
+            sea_water_temperature_parm = sea_water_temperature_parms[0]
+        except IndexError:
+            raise NameError('No Parameter with standard_name of sea_water_temperature')
         if len(sea_water_temperature_parms) > 1:
             self.logger.info(f"Found more than one Parameter in {self.url} with standard_name == 'sea_water_temperature'")
             self.logger.info(f'{sea_water_temperature_parms}')
@@ -1377,7 +1380,10 @@ class STOQS_Loader(object):
             salinity_standard_name = 'sea_water_practical_salinity'
             sea_water_salinity_parms = [p for p in self.parameter_dict.values() if p.standard_name==salinity_standard_name]
 
-        sea_water_salinity_parm = sea_water_salinity_parms[0]
+        try:
+            sea_water_salinity_parm = sea_water_salinity_parms[0]
+        except IndexError:
+            raise NameError('No Parameter with standard_name of sea_water_temperature')
         if len(sea_water_salinity_parms) > 1:
             self.logger.info(f"Found more than one Parameter in {self.url} with standard_name == 'sea_water_salinity'")
             self.logger.info(f'{sea_water_salinity_parms}')
@@ -1403,9 +1409,11 @@ class STOQS_Loader(object):
             self.logger.info(f'activity = {activity}')
             ms = ms.filter(instantpoint__activity=activity)
 
-        sea_water_temperature_parm, sea_water_salinity_parm, salinity_standard_name = self._get_sea_water_parameters()
-        if not sea_water_temperature_parm or not sea_water_salinity_parm:
-            self.logger.info("No sea_water_temperature and sea_water_salinity Paremeters. Not adding SigmaT and Spice.")
+        try:
+            sea_water_temperature_parm, sea_water_salinity_parm, salinity_standard_name = self._get_sea_water_parameters()
+        except NameError as e:
+            self.logger.info(f'{e}')
+            self.logger.info("No sea_water_temperature and sea_water_salinity Parameters. Not adding SigmaT and Spice.")
             return
 
         ms = ms.filter(measuredparameter__parameter=sea_water_temperature_parm)
