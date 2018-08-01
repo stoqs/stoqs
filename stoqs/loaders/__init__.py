@@ -311,7 +311,6 @@ class STOQS_Loader(object):
     MBARI 26 May 2012
     '''
 
-    parameter_dict={} # used to cache parameter objects 
     standard_names = {} # should be defined for each child class
     include_names=[] # names to include, if set it is used in conjunction with ignored_names
     # Note: if a name is both in include_names and ignored_names it is ignored.
@@ -447,6 +446,8 @@ class STOQS_Loader(object):
         populating the fields from the attributes of the parameter dictionary that is passed.  The
         dictionary is patterned after the pydap.model.BaseType variable from the NetCDF file (OPeNDAP URL).
         '''
+        # Initialize cache for each url/ds/activity
+        self.parameter_dict = {} 
 
         # Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
         for key in list(parmDict.keys()):
