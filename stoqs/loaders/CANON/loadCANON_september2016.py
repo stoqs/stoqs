@@ -252,7 +252,7 @@ cl.rcpctd_files = [
 # mooring turn August 29 2016
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
 cl.m1_files = [ 
-                '201507/OS_M1_20150729hourly_CMSTV.nc',
+                '201507/OS_M1_20150730hourly_CMSTV.nc',
                 '201507/m1_hs2_20150730.nc',
                 '201608/OS_M1_20160829hourly_CMSTV.nc',
                 '201608/m1_hs2_20160829.nc',
@@ -343,24 +343,25 @@ if cl.args.test:
     cl.loadL_662(stride=100) 
     ##cl.load_NPS29(stride=10)
     cl.load_NPS34(stride=10)
-    #cl.load_UCSC294(stride=10) 
-    #cl.load_UCSC260(stride=10)
+    ##cl.load_UCSC294(stride=10) 
+    ##cl.load_UCSC260(stride=10)
 
     ##cl.load_wg_tex(stride=10)
     ##cl.load_wg_oa(stride=10)
     cl.load_wg_Tiny(stride=10)
 
     cl.loadDorado(stride=10)
-    #cl.loadLRAUV('daphne', startdate, enddate, stride=100)
-    cl.loadLRAUV('tethys', datetime.datetime(2016, 8, 30), enddate, stride=10)
+    cl.loadLRAUV('daphne', startdate, enddate, stride=100)
+    # Lake Michigan tethys ended on 2016-08-20 13:52:00
+    cl.loadLRAUV('tethys', datetime.datetime(2016, 8, 21), enddate, stride=10)
     cl.loadLRAUV('makai', startdate, enddate, stride=10)
 
-    #cl.loadRCuctd(stride=10)
-    #cl.loadRCpctd(stride=10)
+    ##cl.loadRCuctd(stride=10)
+    ##cl.loadRCpctd(stride=10)
     ##cl.loadJMuctd(stride=10)
     ##cl.loadJMpctd(stride=10)
-    ##cl.loadWFuctd(stride=10)   
-    ##cl.loadWFpctd(stride=10)
+    cl.loadWFuctd(stride=10)   
+    cl.loadWFpctd(stride=10)
 
     cl.loadM1(stride=5)
     cl.load_oa1(stride=10)
@@ -403,7 +404,8 @@ else:
     cl.load_oa2()
     cl.loadDorado()
     cl.loadLRAUV('daphne', startdate, enddate)
-    cl.loadLRAUV('tethys', datetime.datetime(2016, 8, 30), enddate)
+    # Lake Michigan tethys ended on 2016-08-20 13:52:00
+    cl.loadLRAUV('tethys', datetime.datetime(2016, 8, 21), enddate)
     cl.loadLRAUV('makai', startdate, enddate)
     #cl.loadRCuctd()
     #cl.loadRCpctd() 
