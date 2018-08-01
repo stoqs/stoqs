@@ -1355,6 +1355,49 @@ class STOQS_Loader(object):
             
             yield spice_mp
 
+    def _get_sea_water_parameters(self):
+        '''Check for more than one set of sea_water_temperature nand sea_water_salinity standard names as in
+        http://odss.mbari.org/thredds/dodsC/CANON/2016_Sep/Platforms/ROMS/roms_spray_0313.nc.html.
+        Return tuple of single Paremeters for sea_water_temperature and sea_water_salinity, and standard_name
+        used for sea_water_salinity - either sea_water_salinity or sea_water_practical_salinity
+        '''
+        sea_water_temperature_parms = [p for p in self.parameter_dict.values() if p.standard_name=='sea_water_temperature']
+        sea_water_temperature_parm = sea_water_temperature_parms[0]
+        if len(sea_water_temperature_parms) > 1:
+            self.logger.info(f"Found more than one Parameter in {self.url} with standard_name == 'sea_water_temperature'")
+            self.logger.info(f'{sea_water_temperature_parms}')
+        
+            # Default is first in list, to be overridden by 
+            # a more simply-named Parameter as determined by no ammendments to the name, such as 'roms_'
+            for p in sea_water_temperature_parms:
+                if '_' not in p.name:
+                    sea_water_temperature_parm = p
+                    break
+            self.logger.info(f"Using {sea_water_temperature_parm} for sea_water_temperature")
+
+
+        # Test whether our measurements use 'sea_water_salinity' or 'sea_water_practical_salinity'
+        salinity_standard_name = 'sea_water_salinity'
+        sea_water_salinity_parms = [p for p in self.parameter_dict.values() if p.standard_name==salinity_standard_name]
+        if not sea_water_salinity_parms:
+            salinity_standard_name = 'sea_water_practical_salinity'
+            sea_water_salinity_parms = [p for p in self.parameter_dict.values() if p.standard_name==salinity_standard_name]
+
+        sea_water_salinity_parm = sea_water_salinity_parms[0]
+        if len(sea_water_salinity_parms) > 1:
+            self.logger.info(f"Found more than one Parameter in {self.url} with standard_name == 'sea_water_salinity'")
+            self.logger.info(f'{sea_water_salinity_parms}')
+        
+            # Default is first in list, to be overridden by 
+            # a more simply-named Parameter as determined by no ammendments to the name, such as 'roms_'
+            for p in sea_water_salinity_parms:
+                if '_' not in p.name:
+                    sea_water_salinity_parm = p
+                    break
+            self.logger.info(f"Using {sea_water_salinity_parm} for sea_water_salinity")
+
+        return sea_water_temperature_parm, sea_water_salinity_parm, salinity_standard_name
+
     def addSigmaTandSpice(self, activity=None):
         ''' 
         For all measurements that have standard_name parameters of (sea_water_salinity or sea_water_practical_salinity) and sea_water_temperature 
@@ -1366,19 +1409,16 @@ class STOQS_Loader(object):
             self.logger.info(f'activity = {activity}')
             ms = ms.filter(instantpoint__activity=activity)
 
-        ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_temperature')
+        sea_water_temperature_parm, sea_water_salinity_parm, salinity_standard_name = self._get_sea_water_parameters()
+        if not sea_water_temperature_parm or not sea_water_salinity_parm:
+            self.logger.info("No sea_water_temperature and sea_water_salinity Paremeters. Not adding SigmaT and Spice.")
+            return
 
-        # Test whether our measurements use 'sea_water_salinity' or 'sea_water_practical_salinity'
-        salinity_standard_name = 'sea_water_salinity'
-        if ms.filter(measuredparameter__parameter__standard_name='sea_water_practical_salinity'):
-            salinity_standard_name = 'sea_water_practical_salinity'
-        elif ms.filter(measuredparameter__parameter__standard_name='sea_water_salinity'):
-            salinity_standard_name = 'sea_water_salinity'
-
-        ms = ms.filter(measuredparameter__parameter__standard_name=salinity_standard_name)
+        ms = ms.filter(measuredparameter__parameter=sea_water_temperature_parm)
+        ms = ms.filter(measuredparameter__parameter=sea_water_salinity_parm)
 
         if not ms:
-            self.logger.info("No sea_water_temperature and sea_water_salinity. Not adding SigmaT and Spice.")
+            self.logger.info("No sea_water_temperature and sea_water_salinity measurements. Not adding SigmaT and Spice.")
             return
 
         if self.dataStartDatetime:
