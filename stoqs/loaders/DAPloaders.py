@@ -636,13 +636,13 @@ class Base_Loader(STOQS_Loader):
             self.logger.debug("requested_endDatetime not given, using the last value of timeAxis = %f", e.data[0])
 
         tf = (s <= timeAxis) & (timeAxis <= e)
-        self.logger.debug('tf = %s', tf)
+        ##self.logger.debug('tf = %s', tf)
         tIndx = np.nonzero(tf == True)[0]
         if tIndx.size == 0:
             raise NoValidData('No data from %s for time values between %s and %s.  Skipping.' % (self.url, s, e))
 
         # For python slicing add 1 to the end index
-        self.logger.debug('tIndx = %s', tIndx)
+        ##self.logger.debug('tIndx = %s', tIndx)
         try:
             indices = (tIndx[0], tIndx[-1] + 1)
         except IndexError:
