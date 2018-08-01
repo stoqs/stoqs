@@ -62,30 +62,18 @@ enddate = datetime.datetime(2016, 8, 24)        # Fixed end
 # toNetCDF directory. You must first edit and run that script once to produce
 # the binned files before this will work
 
-lrauv_parameters = [    'temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
-                        'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
-                        'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
-                        'health_platform_battery_charge', 'health_platform_average_voltage',
-                        'health_platform_average_current','fix_latitude', 'fix_longitude',
-                        'fix_residual_percent_distance_traveled_DeadReckonUsingSpeedCalculator',
-                        'pose_longitude_DeadReckonUsingSpeedCalculator',
-                        'pose_latitude_DeadReckonUsingSpeedCalculator',
-                        'pose_depth_DeadReckonUsingSpeedCalculator',
-                        'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources',
-                        'pose_longitude_DeadReckonUsingMultipleVelocitySources',
-                        'pose_latitude_DeadReckonUsingMultipleVelocitySources',
-                        'pose_depth_DeadReckonUsingMultipleVelocitySources',
-                   ]
+# Use defaults in loadLRAUV() calls below
+
 
 # Execute the load
 cl.process_command_line()
 
 if cl.args.test:
 
-    cl.loadLRAUV('tethys', lrauv_parameters, startdate, enddate, stride=100)
+    cl.loadLRAUV('tethys', startdate, enddate, stride=100)
 
 else:
-    cl.loadLRAUV('tethys', lrauv_parameters, startdate, enddate)
+    cl.loadLRAUV('tethys', startdate, enddate)
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()

@@ -79,22 +79,8 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 # toNetCDF directory. You must first edit and run that script once to produce
 # the binned files before this will work
 
-platforms = ['tethys', 'daphne', 'makai']
-platforms = ['tethys']
-lrauv_parameters =  [  'temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
-                        'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
-                        'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
-                        'health_platform_battery_charge', 'health_platform_average_voltage',
-                        'health_platform_average_current','fix_latitude', 'fix_longitude',
-                        'fix_residual_percent_distance_traveled_DeadReckonUsingSpeedCalculator',
-                        'pose_longitude_DeadReckonUsingSpeedCalculator',
-                        'pose_latitude_DeadReckonUsingSpeedCalculator',
-                        'pose_depth_DeadReckonUsingSpeedCalculator',
-                        'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources',
-                        'pose_longitude_DeadReckonUsingMultipleVelocitySources',
-                        'pose_latitude_DeadReckonUsingMultipleVelocitySources',
-                        'pose_depth_DeadReckonUsingMultipleVelocitySources',
-                    ]
+# Use defaults in loadLRAUV() calls below
+
 
 ######################################################################
 #  GLIDERS
