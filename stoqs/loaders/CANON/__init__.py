@@ -1253,7 +1253,7 @@ class CANONLoader(LoadScript):
                 dir_end =  datetime.datetime.strptime(dts[1], '%Y%m%d')
 
                 # if within a valid range, grab the valid urls
-                self.logger.debug(f'{mission_dir_name}: Looking {search_str} files between {startdate} and {enddate}')
+                self.logger.debug(f'{mission_dir_name}: Looking for {search_str} files between {startdate} and {enddate}')
                 if dir_start >= startdate and dir_end <= enddate:
                     catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                     c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
