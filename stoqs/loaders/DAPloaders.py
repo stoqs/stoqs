@@ -868,12 +868,17 @@ class Base_Loader(STOQS_Loader):
                         # Expect instrument (time-coordinate-only) dataset
                         meass = self._load_coords_from_instr_ds(tindx, ac)
 
-                if isinstance(self.ds[pname], pydap.model.GridType):
-                    constraint_string = f"Using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
-                    values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
-                else:
-                    constraint_string = f"Using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
-                    values = self.ds[pname].data[tindx[0]:tindx[-1]:self.stride]
+                try:
+                    if isinstance(self.ds[pname], pydap.model.GridType):
+                        constraint_string = f"Using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
+                    else:
+                        constraint_string = f"Using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        values = self.ds[pname].data[tindx[0]:tindx[-1]:self.stride]
+                except ValueError:
+                    self.logger.warn(f'Stride of {self.stride} likely greater than range of data: {tindx[0]}:{tindx[-1]}')
+                    self.logger.warn(f'Skipping load of {self.url}')
+                    return total_loaded
 
                 if hasattr(values[0], '__iter__'):
                     # For data like LOPC data - expect all values to be non-nan
@@ -1409,14 +1414,12 @@ class Base_Loader(STOQS_Loader):
 
             return mps_loaded, path, parmCount
 
-        # Bulk loading may introduce None values, remove them
-        MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
-
-        path = self._post_process_updates(mps_loaded, featureType)
+        if mps_loaded:
+            # Bulk loading may introduce None values, remove them
+            MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
+            path = self._post_process_updates(mps_loaded, featureType)
 
         return mps_loaded, path, parmCount
-
-
 
 
 class Trajectory_Loader(Base_Loader):
