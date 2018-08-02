@@ -23,7 +23,11 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+import datetime
 import timing
+
+startdate = datetime.datetime(2011, 4, 15)
+enddate = datetime.datetime(2011, 5, 3)
 
 # Assign input data sources
 cl = CANONLoader('stoqs_april2011', 'CANON - April 2011',
@@ -78,16 +82,17 @@ cl.tethys_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_de
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadDorado(stride=100)
-    cl.loadTethys(stride=1000)
+    cl.loadLRAUV('tethys', startdate, enddate, stride=100, build_attrs=False)
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
-    cl.loadTethys(stride=20)
+    cl.loadLRAUV('tethys', startdate, enddate, stride=20, build_attrs=False)
 
 else:
-    cl.loadDorado(stride=cl.args.stride)
-    cl.loadTethys(stride=cl.args.stride)
+    cl.stride = cl.args.stride
+
+    cl.loadDorado()
+    cl.loadLRAUV('tethys', startdate, enddate, stride=100, build_attrs=False)
    
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
