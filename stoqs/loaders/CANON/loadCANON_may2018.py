@@ -499,68 +499,27 @@ cl.subsample_csv_files = [
 cl.process_command_line()
 
 if cl.args.test:
-
-    cl.loadM1(stride=100)
-    cl.loadTethys(stride=100)
-    cl.loadL_662(stride=100)
-    cl.loadAhi(stride=100)
-    cl.loadAku(stride=100)
-    cl.loadOpah(stride=100)
-    cl.loadL_662(stride=100)
-    cl.loadL_662a(stride=100)
-    cl.load_NPS34(stride=100)
-    cl.load_NPS34a(stride=100)
-    cl.load_slocum_nemesis(stride=100)
-    cl.load_SG621(stride=100) ## KISS glider
-    cl.load_SG539(stride=100) ## KISS glider
-    cl.load_wg_Tiny(stride=100)
-    cl.load_oa1(stride=100)
-    cl.load_oa2(stride=100)
-    cl.loadDorado(stride=100)
-    ##cl.loadDaphne(stride=100)
-    ##cl.loadMakai(stride=100)
-    cl.loadRCuctd(stride=100)
-    cl.loadRCpctd(stride=100)
-    cl.loadWFuctd(stride=100)
-    cl.loadWFpctd(stride=100)
-
-    cl.loadSubSamples()
-
-elif cl.args.optimal_stride:
-
-    cl.loadL_662(stride=2)
-    ##cl.load_NPS29(stride=2)
-    #cl.load_NPS34(stride=2)
-    cl.load_wg_Tiny(stride=2)
-    cl.load_oa1(stride=2)
-    cl.load_oa2(stride=2)
-    cl.loadM1(stride=2)
-    ##cl.loadDorado(stride=2)
-    cl.loadRCuctd(stride=2)
-    cl.loadRCpctd(stride=2)
-
-    cl.loadSubSamples()
-
-else:
+    cl.stride = 100
+elif cl.args.stride:
     cl.stride = cl.args.stride
 
-    cl.loadM1()  
-    cl.loadL_662a()
-    cl.load_NPS34a() 
-    cl.load_slocum_nemesis() 
-    cl.load_wg_Tiny()
-    cl.load_wg_Sparky()
-    cl.load_oa1()
-    cl.load_oa2()
-    cl.loadDorado()
-    cl.loadLRAUV('daphne', startdate, enddate)
-    cl.loadLRAUV('makai', startdate, enddate)
-    ##cl.loadRCuctd()  ## not in this campaign
-    ##cl.loadRCpctd()  ## not in this campaign
-    cl.loadWFuctd()
-    cl.loadWFpctd()
+cl.loadM1()  
+cl.loadL_662a()
+cl.load_NPS34a() 
+cl.load_slocum_nemesis() 
+cl.load_wg_Tiny()
+cl.load_wg_Sparky()
+cl.load_oa1()
+cl.load_oa2()
+cl.loadDorado()
+cl.loadLRAUV('daphne', startdate, enddate)
+cl.loadLRAUV('makai', startdate, enddate)
+##cl.loadRCuctd()  ## not in this campaign
+##cl.loadRCpctd()  ## not in this campaign
+cl.loadWFuctd()
+cl.loadWFpctd()
 
-    #cl.loadSubSamples() ## no subSamples yet...
+#cl.loadSubSamples() ## no subSamples yet...
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
