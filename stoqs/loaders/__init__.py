@@ -311,7 +311,6 @@ class STOQS_Loader(object):
     MBARI 26 May 2012
     '''
 
-    parameter_dict={} # used to cache parameter objects 
     standard_names = {} # should be defined for each child class
     include_names=[] # names to include, if set it is used in conjunction with ignored_names
     # Note: if a name is both in include_names and ignored_names it is ignored.
@@ -441,76 +440,72 @@ class STOQS_Loader(object):
 
     def addParameters(self, parmDict):
         '''
-        Wrapper so as to apply self.dbAlias in the decorator
+        This method is a get_or_create() equivalent, but on steroids.  It first tries to find the
+        parameter in a local cache (a python hash), first by standard_name, then by name.  Then it
+        checks to see if it's in the database.  If it's not in the database it will then add it
+        populating the fields from the attributes of the parameter dictionary that is passed.  The
+        dictionary is patterned after the pydap.model.BaseType variable from the NetCDF file (OPeNDAP URL).
         '''
-        def innerAddParameters(self, parmDict):
-            '''
-            This method is a get_or_create() equivalent, but on steroids.  It first tries to find the
-            parameter in a local cache (a python hash), first by standard_name, then by name.  Then it
-            checks to see if it's in the database.  If it's not in the database it will then add it
-            populating the fields from the attributes of the parameter dictionary that is passed.  The
-            dictionary is patterned after the pydap.model.BaseType variable from the NetCDF file (OPeNDAP URL).
-            '''
+        # Initialize cache for each url/ds/activity
+        self.parameter_dict = {} 
 
-            # Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
-            for key in list(parmDict.keys()):
-                self.logger.debug("key = %s", key)
-                if (key in self.ignored_names) or (key not in self.include_names): # skip adding parameters that are ignored
-                    continue
-                v = parmDict[key].attributes
-                self.logger.debug("v = %s", v)
+        # Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
+        for key in list(parmDict.keys()):
+            self.logger.debug("key = %s", key)
+            if (key in self.ignored_names) or (key not in self.include_names): # skip adding parameters that are ignored
+                continue
+            v = parmDict[key].attributes
+            self.logger.debug("v = %s", v)
+            try:
+                self.getParameterByName(key)
+            except ParameterNotFound as e:
+                self.logger.debug("Parameter not found. Assigning parms from ds variable.")
+                # Bug in pydap returns a gobbledegook list of things if the attribute value has not been
+                # set.  Check for this on units and override what pydap returns.
+                if isinstance(v.get('units'), list):
+                    unitStr = ''
+                else:
+                    unitStr = v.get('units')
+                
+                parms = {'units': unitStr,
+                    'standard_name': v.get('standard_name'),
+                    'long_name': v.get('long_name'),
+                    'type': v.get('type'),
+                    'description': v.get('description'),
+                    'origin': self.activityName,
+                    'name': key}
+
+                self.parameter_dict[key] = m.Parameter(**parms)
                 try:
-                    self.getParameterByName(key)
-                except ParameterNotFound as e:
-                    self.logger.debug("Parameter not found. Assigning parms from ds variable.")
-                    # Bug in pydap returns a gobbledegook list of things if the attribute value has not been
-                    # set.  Check for this on units and override what pydap returns.
-                    if isinstance(v.get('units'), list):
-                        unitStr = ''
+                    sid = transaction.savepoint(using=self.dbAlias)
+                    self.parameter_dict[key].save(using=self.dbAlias)
+                    self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
+                except IntegrityError as e:
+                    self.logger.warn('%s', e)
+                    transaction.savepoint_rollback(sid)
+                    if str(e).startswith('duplicate key value violates unique constraint "stoqs_parameter_pkey"'):
+                        self.resetParameterAutoSequenceId()
+                        try:
+                            sid2 = transaction.savepoint(using=self.dbAlias)
+                            self.parameter_dict[key].save(using=self.dbAlias)
+                            self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
+                        except Exception as e:
+                            self.logger.error('%s', e)
+                            transaction.savepoint_rollback(sid2,using=self.dbAlias)
+                            raise Exception('''Failed reset auto sequence id on the stoqs_parameter table''')
                     else:
-                        unitStr = v.get('units')
-                    
-                    parms = {'units': unitStr,
-                        'standard_name': v.get('standard_name'),
-                        'long_name': v.get('long_name'),
-                        'type': v.get('type'),
-                        'description': v.get('description'),
-                        'origin': self.activityName,
-                        'name': key}
-
-                    self.parameter_dict[key] = m.Parameter(**parms)
-                    try:
-                        sid = transaction.savepoint(using=self.dbAlias)
-                        self.parameter_dict[key].save(using=self.dbAlias)
-                        self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                    except IntegrityError as e:
-                        self.logger.warn('%s', e)
-                        transaction.savepoint_rollback(sid)
-                        if str(e).startswith('duplicate key value violates unique constraint "stoqs_parameter_pkey"'):
-                            self.resetParameterAutoSequenceId()
-                            try:
-                                sid2 = transaction.savepoint(using=self.dbAlias)
-                                self.parameter_dict[key].save(using=self.dbAlias)
-                                self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                            except Exception as e:
-                                self.logger.error('%s', e)
-                                transaction.savepoint_rollback(sid2,using=self.dbAlias)
-                                raise Exception('''Failed reset auto sequence id on the stoqs_parameter table''')
-                        else:
-                            self.logger.error('Exception %s', e)
-                            raise Exception('''Failed to add parameter for %s
-                                %s\nEither add parameter manually, or add to ignored_names''' % (key,
-                                '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in list(parms.items())])))
-                        
-                    except Exception as e:
-                        self.logger.error('%s', e)
-                        transaction.savepoint_rollback(sid,using=self.dbAlias)
+                        self.logger.error('Exception %s', e)
                         raise Exception('''Failed to add parameter for %s
                             %s\nEither add parameter manually, or add to ignored_names''' % (key,
                             '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in list(parms.items())])))
-                    self.logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
-
-        return innerAddParameters(self, parmDict)
+                    
+                except Exception as e:
+                    self.logger.error('%s', e)
+                    transaction.savepoint_rollback(sid,using=self.dbAlias)
+                    raise Exception('''Failed to add parameter for %s
+                        %s\nEither add parameter manually, or add to ignored_names''' % (key,
+                        '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in list(parms.items())])))
+                self.logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
 
     def createCampaign(self):
         '''Create Campaign in the database ensuring that there is only one Campaign
@@ -1362,7 +1357,10 @@ class STOQS_Loader(object):
         used for sea_water_salinity - either sea_water_salinity or sea_water_practical_salinity
         '''
         sea_water_temperature_parms = [p for p in self.parameter_dict.values() if p.standard_name=='sea_water_temperature']
-        sea_water_temperature_parm = sea_water_temperature_parms[0]
+        try:
+            sea_water_temperature_parm = sea_water_temperature_parms[0]
+        except IndexError:
+            raise NameError('No Parameter with standard_name of sea_water_temperature')
         if len(sea_water_temperature_parms) > 1:
             self.logger.info(f"Found more than one Parameter in {self.url} with standard_name == 'sea_water_temperature'")
             self.logger.info(f'{sea_water_temperature_parms}')
@@ -1383,7 +1381,10 @@ class STOQS_Loader(object):
             salinity_standard_name = 'sea_water_practical_salinity'
             sea_water_salinity_parms = [p for p in self.parameter_dict.values() if p.standard_name==salinity_standard_name]
 
-        sea_water_salinity_parm = sea_water_salinity_parms[0]
+        try:
+            sea_water_salinity_parm = sea_water_salinity_parms[0]
+        except IndexError:
+            raise NameError('No Parameter with standard_name of sea_water_temperature')
         if len(sea_water_salinity_parms) > 1:
             self.logger.info(f"Found more than one Parameter in {self.url} with standard_name == 'sea_water_salinity'")
             self.logger.info(f'{sea_water_salinity_parms}')
@@ -1409,9 +1410,11 @@ class STOQS_Loader(object):
             self.logger.info(f'activity = {activity}')
             ms = ms.filter(instantpoint__activity=activity)
 
-        sea_water_temperature_parm, sea_water_salinity_parm, salinity_standard_name = self._get_sea_water_parameters()
-        if not sea_water_temperature_parm or not sea_water_salinity_parm:
-            self.logger.info("No sea_water_temperature and sea_water_salinity Paremeters. Not adding SigmaT and Spice.")
+        try:
+            sea_water_temperature_parm, sea_water_salinity_parm, salinity_standard_name = self._get_sea_water_parameters()
+        except NameError as e:
+            self.logger.info(f'{e}')
+            self.logger.info("No sea_water_temperature and sea_water_salinity Parameters. Not adding SigmaT and Spice.")
             return
 
         ms = ms.filter(measuredparameter__parameter=sea_water_temperature_parm)
