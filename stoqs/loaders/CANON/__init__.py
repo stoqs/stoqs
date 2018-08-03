@@ -169,11 +169,16 @@ class CANONLoader(LoadScript):
                     'pose_longitude_DeadReckonUsingMultipleVelocitySources',
                     'pose_latitude_DeadReckonUsingMultipleVelocitySources',
                     'pose_depth_DeadReckonUsingMultipleVelocitySources',],
-                  stride=None, file_patterns=('.*2S_eng.nc$|.*10S_sci.nc$')):
+                  stride=None, file_patterns=('.*2S_eng.nc$|.*10S_sci.nc$'), build_attrs=True):
         '''
         Loader for tethys, daphne, makai, ahi, aku, 
         '''
-        self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
+        if build_attrs:
+            self.logger.info(f'Building load parameter attributes from crawling TDS')
+            self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
+        else:
+            self.logger.info(f'Using load {pname} attributes set in load script')
+            parameters = getattr(self, f'{pname}_parms')
 
         stride = stride or self.stride
         files = getattr(self, f'{pname}_files')
