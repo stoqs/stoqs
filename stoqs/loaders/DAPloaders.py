@@ -864,6 +864,13 @@ class Base_Loader(STOQS_Loader):
                             self.logger.debug(str(e))
                             self.logger.warn(f'No good coordinates for {pname} - skipping it')
                             continue
+                        except OverflowError as e:
+                            # Likely unable to convert a udunit to a value as in time from:
+                            # http://legacy.cencoos.org:8080/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201705/nemesis_20170518T203246_rt0.nc.ascii?time[149:1:149]
+                            # = -4.31865376e+107  (should be a value like 1.495143822559231E9)
+                            self.logger.debug(str(e))
+                            self.logger.warn(f'OverflowError when converting coordinates for {pname} - skipping it')
+                            return total_loaded
                     else:
                         # Expect instrument (time-coordinate-only) dataset
                         meass = self._load_coords_from_instr_ds(tindx, ac)
