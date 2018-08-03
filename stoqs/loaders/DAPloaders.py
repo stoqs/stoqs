@@ -792,11 +792,13 @@ class Base_Loader(STOQS_Loader):
         lookup matching Measurment (containing depth, latitude, and longitude) and bulk create 
         Instantpoints and Measurements in the database.
         '''
+        meass_set = set([])
         try:
             times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
         except ValueError:
-            self.logger.error(f'stride value {self.stride} likely bigger than length of array: {len(self.ds[ac[TIME]][:])}')
-            raise
+            self.logger.warn(f'Stride of {self.stride} likely greater than range of data: {tindx[0]}:{tindx[-1]}')
+            self.logger.warn(f'Skipping load of {self.url}')
+            return meass_set
     
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':

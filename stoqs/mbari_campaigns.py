@@ -33,6 +33,7 @@ campaigns = OrderedDict([
     ('stoqs_dorado2011',     'MolecularEcology/load_dorado2011.py'),
     ('stoqs_april2011',      'CANON/loadCANON_april2011.py'),
     ('stoqs_june2011',       'CANON/loadCANON_june2011.py'),
+    ('stoqs_september2011',  'CANON/loadCANON_september2011.py'),
     ('stoqs_february2012',   'MolecularEcology/loadGOC_february2012.py'),
     ('stoqs_may2012',        'CANON/loadCANON_may2012.py'),
     ('stoqs_september2012',  'CANON/loadCANON_september2012.py'),
