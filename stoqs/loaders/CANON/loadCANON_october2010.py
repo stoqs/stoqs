@@ -24,6 +24,7 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+import datetime
 import timing
 
 cl = CANONLoader('stoqs_october2010', 'CANON - October 2010',
@@ -39,6 +40,8 @@ cl = CANONLoader('stoqs_october2010', 'CANON - October 2010',
                     },
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                   )
+startdate = datetime.datetime(2017, 4, 7)
+enddate = datetime.datetime(2017, 4, 7)
 
 # Dorado data - 2 second gridded 
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
@@ -114,18 +117,18 @@ cl.process_command_line()
 
 if cl.args.test:
     cl.loadDorado(stride=50)
-    cl.loadTethys(stride=1000)
+    cl.loadLRAUV('tethys', startdate, enddate, stride=1000, build_attrs=False)
     cl.loadMartin(stride=1000)
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
-    cl.loadTethys(stride=2)
+    cl.loadLRAUV('tethys', startdate, enddate, stride=2, build_attrs=False)
     cl.loadMartin(stride=1)
 
 else:
     cl.stride = cl.args.stride
     cl.loadDorado()
-    cl.loadTethys()
+    cl.loadLRAUV('tethys', startdate, enddate, build_attrs=False)
     cl.loadMartin()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
