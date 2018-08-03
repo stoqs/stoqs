@@ -72,12 +72,11 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 # Spray glider - for just the duration of the campaign
 cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = ['OS_Glider_L_662_20110915_TS.nc',
-                                                    ]
+                 ]
 
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
-
 
 
 ######################################################################
@@ -107,17 +106,6 @@ cl.wfpctd_files = [
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 
 
-
-# Liquid Robotics Waveglider
-# added to test functionality
-cl.waveglider_base = cl.dodsBase + 'CANON_september2012/waveglider/'
-cl.waveglider_files = [ 'waveglider_gpctd_WG.nc' ]
-cl.waveglider_parms = [ 'TEMP', 'PSAL', 'oxygen' ]
-cl.waveglider_startDatetime = datetime.datetime(2012, 8, 31, 18, 47, 0)
-cl.waveglider_endDatetime = datetime.datetime(2012, 9, 25, 16, 0, 0)
-
-
-
 # Execute the load
 cl.process_command_line()
 
@@ -131,13 +119,6 @@ cl.loadL_662()
 cl.loadWFuctd()
 cl.loadWFpctd()
 
-#    cl.loadWaveglider(stride=100)
-    ##cl.loadDaphne(stride=10)
-    ##cl.loadTethys(stride=10)
-    ##cl.loadESPdrift(stride=10)
-#    cl.loadWFpctd(stride=1)
-    ##cl.loadM1ts(stride=1)
-    ##cl.loadM1met(stride=1)
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
