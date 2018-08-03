@@ -40,8 +40,9 @@ cl = CANONLoader('stoqs_october2010', 'CANON - October 2010',
                     },
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                   )
-startdate = datetime.datetime(2017, 4, 7)
-enddate = datetime.datetime(2017, 4, 7)
+
+startdate = datetime.datetime(2010, 10, 4)
+enddate = datetime.datetime(2010, 10, 29)
 
 # Dorado data - 2 second gridded 
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
@@ -111,6 +112,37 @@ cl.martin_files = [ '27710_jhmudas_v1.nc',
                   ]
 cl.martin_parms = [ 'conductivity', 'temperature', 'salinity', 'fluorescence', 'turbidity']
 
+# Moorings
+cl.m1_startDatetime = startdate
+cl.m1_endDatetime = enddate
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
+cl.m1_files = [
+                '200910/OS_M1_20091020hourly_CMSTV.nc',
+                '200910/m1_hs2_20091020.nc',
+                '201010/OS_M1_20101027hourly_CMSTV.nc',
+                '201010/m1_hs2_20101027.nc'
+                ]
+cl.m1_parms = [
+                'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
+                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR',
+                'bb470', 'bb676', 'fl676'
+              ]
+
+cl.m2_startDatetime = startdate
+cl.m2_endDatetime = enddate
+cl.m2_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m2/201004/'
+cl.m2_files = [
+                'OS_M2_20100402hourly_CMSTV.nc',
+                'm2_hs2_20100402.nc',
+                ]
+
+cl.m2_parms = [ # No ADCP data from M2 in September 2010
+                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR',
+                'bb470', 'bb676', 'fl676'
+              ]
+
 
 # Execute the load
 cl.process_command_line()
@@ -119,17 +151,23 @@ if cl.args.test:
     cl.loadDorado(stride=50)
     cl.loadLRAUV('tethys', startdate, enddate, stride=1000, build_attrs=False)
     cl.loadMartin(stride=1000)
+    cl.loadM1(stride=10)
+    cl.loadM2(stride=10)
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
     cl.loadLRAUV('tethys', startdate, enddate, stride=2, build_attrs=False)
     cl.loadMartin(stride=1)
+    cl.loadM1(stride=1)
+    cl.loadM2(stride=1)
 
 else:
     cl.stride = cl.args.stride
     cl.loadDorado()
     cl.loadLRAUV('tethys', startdate, enddate, build_attrs=False)
     cl.loadMartin()
+    cl.loadM1()
+    cl.loadM2()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
