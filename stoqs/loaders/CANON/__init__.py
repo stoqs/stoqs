@@ -155,7 +155,7 @@ class CANONLoader(LoadScript):
         self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName,
                                   scalefactor=2)
 
-    def loadLRAUV(self, pname, startdate, enddate, 
+    def loadLRAUV(self, pname, startdate=None, enddate=None, 
                   parameters=['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
                     'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
                     'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
