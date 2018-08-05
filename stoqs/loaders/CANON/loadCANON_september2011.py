@@ -41,8 +41,8 @@ cl = CANONLoader('stoqs_september2011', 'CANON - September 2011',
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                   )
 
-startdate = datetime.datetime(2011, 9, 15)
-enddate = datetime.datetime(2011, 9, 30)
+startdate = datetime.datetime(2011, 9, 6)
+enddate = datetime.datetime(2011, 10, 14)
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -105,6 +105,34 @@ cl.wfpctd_files = [
     'canon11c75.nc', 'canon11c76.nc', 'canon11c77.nc', 'canon11c78.nc', 'canon11c79.nc', 'canon11c80.nc', 'canon11c81.nc', 'canon11c82.nc' ]
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 
+# Moorings
+cl.m1_startDatetime = startdate
+cl.m1_endDatetime = enddate
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
+cl.m1_files = [
+                '201010/OS_M1_20101027hourly_CMSTV.nc',
+                '201010/m1_hs2_20101027.nc'
+                ]
+cl.m1_parms = [
+                'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
+                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR',
+                'bb470', 'bb676', 'fl676'
+              ]
+
+cl.m2_startDatetime = startdate
+cl.m2_endDatetime = enddate
+cl.m2_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m2/201004/'
+cl.m2_files = [
+                'OS_M2_20100402hourly_CMSTV.nc',
+                'm2_hs2_20100402.nc',
+                ]
+
+cl.m2_parms = [
+                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR',
+                'bb470', 'bb676', 'fl676'
+              ]
 
 # Execute the load
 cl.process_command_line()
@@ -118,6 +146,8 @@ cl.loadDorado()
 cl.loadL_662()
 cl.loadWFuctd()
 cl.loadWFpctd()
+cl.loadM1()
+cl.loadM2()
 
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed

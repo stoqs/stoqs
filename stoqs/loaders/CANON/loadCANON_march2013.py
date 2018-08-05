@@ -378,8 +378,8 @@ cl.process_command_line()
 
 if cl.args.test:
     cl.loadDorado(stride=10)
-    cl.loadDaphne(stride=10)
-    cl.loadTethys(stride=10)
+    cl.loadLRAUV('daphne', stride=10, build_attrs=False)
+    cl.loadLRAUV('tethys', stride=10, build_attrs=False)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     cl.loadRCuctd(stride=2)
@@ -390,8 +390,8 @@ if cl.args.test:
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
-    cl.loadDaphne(stride=2)
-    cl.loadTethys(stride=2)
+    cl.loadLRAUV('daphne', stride=2, build_attrs=False)
+    cl.loadLRAUV('tethys', stride=2, build_attrs=False)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     cl.loadRCuctd(stride=1)
@@ -403,8 +403,8 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
     cl.loadDorado()
-    cl.loadDaphne()
-    cl.loadTethys()
+    cl.loadLRAUV('daphne', build_attrs=False)
+    cl.loadLRAUV('tethys', build_attrs=False)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     cl.loadRCuctd()
