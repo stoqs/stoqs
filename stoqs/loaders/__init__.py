@@ -837,46 +837,50 @@ class STOQS_Loader(object):
 
     def good_coords(self, pnames, mtimes, depths, latitudes, longitudes):
         '''Use attributes to determine if coordinate values are good.  Yield None
-        values for all coordinates if any are bad (e.g. _FillValue).
+        values for all coordinates if any are bad (e.g. _FillValue, time decreasing).
         Appropriate for trajectory data where there is one-to-one match of coordinates.
         '''
-        # Checking for duplicate times is time consuming, do it for only known
+        # Checking for duplicate or decreasing times is time consuming, do it for only known
         # problematic sources of data
-        known_dup_time_sources = ('pctd',)
+        known_dup_or_decr_time_sources = ('pctd', 'Daphne_ECOHAB_March2013')
 
-        known_dup_time_problem = False
-        for string in known_dup_time_sources:
+        known_dup_or_decr_time_problem = False
+        for string in known_dup_or_decr_time_sources:
             if string in self.url:
-                self.logger.info(f'Setting known_dup_time_problem for known_dup_time_source: {string}')
-                known_dup_time_problem = True
-        
-        previous_coords = []
-        for pname_count, pname in enumerate(pnames):
-            previous_times = []
-            for i, (mt, de, la, lo) in enumerate(zip(mtimes, depths, latitudes, longitudes)):
-                if self.is_coordinate_bad(pname, mt, de, la, lo):
-                    mt = None
-                    de = None
-                    la = None
-                    lo = None
+                self.logger.info(f'Setting known_dup_or_decr_time_problem for known_dup_or_decr_time_source: {string}')
+                known_dup_or_decr_time_problem = True
 
+        # Coordinates (mtimes, depths, latitudes, longitudes) are generators read from the DAP URL as
+        # identified in CF metadata as associated with all variables in pnames - use just the first one 
+        # for .is_coordinate_bad() check
+        previous_times = []
+        for i, (mt, de, la, lo) in enumerate(zip(mtimes, depths, latitudes, longitudes)):
+            if self.is_coordinate_bad(pnames[0], mt, de, la, lo):
+                mt = None
+                de = None
+                la = None
+                lo = None
+
+            bad_time = False
+            if known_dup_or_decr_time_problem:
                 dup_time = False
-                if known_dup_time_problem:
-                    dup_time = False
+                decr_time = False
+                if mt in previous_times:
+                    self.logger.warn(f'Will not load data from duplicate time coordinate: {mt} at index {i}')
+                    dup_time = True
+                elif mt and i > 0 and previous_times:
+                    if mt <= previous_times[-1]:
+                        self.logger.warn(f'Will not load data from decreasing time coordinate: {mt} at index {i}')
+                        decr_time = True
+               
+                bad_time = dup_time or not mt or decr_time
+                self.logger.debug(f'{mt} at index {i}: bad_time = {bad_time}')
+
+                if not bad_time: 
+                    # Save only not None, non-duplicate, and non-decreasing times
                     previous_times.append(mt)
-                    if mt in previous_times[:-1]:
-                        self.logger.warn(f'Will not load data from duplicate time coordinate: {mt}')
-                        dup_time = True
 
-                if pname_count > 0:
-                    if set(previous_coords[i]) != set((mt, de, la, lo, dup_time)):
-                        self.logger.warn(f'coords for {pname} are not the same as for {previous_pname}')
-
-                previous_pname = pname
-                previous_coords.append((mt, de, la, lo, dup_time))
-
-        for mt, de, la, lo, dup_time in previous_coords:
-            yield mt, de, la, lo, dup_time
+            yield mt, de, la, lo, bad_time
 
     def preProcessParams(self, row):
         '''
