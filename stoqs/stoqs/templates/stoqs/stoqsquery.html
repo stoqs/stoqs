@@ -1109,7 +1109,10 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;" class="plot-data-lines">&nbsp;</td>
-                                        <td style="text-align:center;">&nbsp;</td>
+
+                                        <td style="text-align:center;">
+                                            <input type="checkbox" name="parameters_plot_coord_cb" value="Longitude" class="parameter-plot-checkbox" style="display:none;" />
+                                        </td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="1">Longitude</td>
                                     </tr>
@@ -1119,7 +1122,9 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;" class="plot-data-lines">&nbsp;</td>
-                                        <td style="text-align:center;">&nbsp;</td>
+                                        <td style="text-align:center;">
+                                            <input type="checkbox" name="parameters_plot_coord_cb" value="Latitude" class="parameter-plot-checkbox" style="display:none;" />
+                                        </td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="1">Latitude</td>
                                     </tr>
@@ -1129,7 +1134,9 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;" class="plot-data-lines">&nbsp;</td>
-                                        <td style="text-align:center;">&nbsp;</td>
+                                        <td style="text-align:center;">
+                                            <input type="checkbox" name="parameters_plot_coord_cb" value="Depth" class="parameter-plot-checkbox" style="display:none;" />
+                                        </td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="1">Depth</td>
                                     </tr>
@@ -1139,7 +1146,9 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;" class="plot-data-lines">&nbsp;</td>
-                                        <td style="text-align:center;">&nbsp;</td>
+                                        <td style="text-align:center;">
+                                            <input type="checkbox" name="parameters_plot_coord_cb" value="Time" class="parameter-plot-checkbox" style="display:none;" />
+                                        </td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="1">Time</td>
                                     </tr>
@@ -3945,6 +3954,9 @@ function enable_cardboard(){
             if ($('#temporal-parameter-li').hasClass('active')) {
                 $('input:checked[name=parameters_plot_cb]').each(function (index, elem) {
                     qstring = qstring + '&parametertimeplotid=' + elem.value;
+                });
+                $('input:checked[name=parameters_plot_coord_cb]').each(function (index, elem) {
+                    qstring = qstring + '&parametertimeplotcoord=' + elem.value;
                 });
                 if ( $('input:radio[name=parameters_plot]:checked').val() ) {
                     // Send parameterplotid if on Parameter tab so that Spatial pane updates

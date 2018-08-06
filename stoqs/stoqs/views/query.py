@@ -71,8 +71,9 @@ query_parms = {
                    'parametercontourplot': ('parametercontourplotid',                              # Plot contour radio button selection 
                                              'platformcontourplotname'), 
                    'parametertimeplotid': 'parametertimeplotid',                            # Plot checkbox id values
-                   'showgeox3dmeasurement': 'showgeox3dmeasurement',                          # Flag value from checkbox
-                   'showgeox3dsample': 'showgeox3dsample',                                 # Flag value from checkbox
+                   'parametertimeplotcoord': 'parametertimeplotcoord',                      # Plot checkbox coordinate names
+                   'showgeox3dmeasurement': 'showgeox3dmeasurement',                        # Flag value from checkbox
+                   'showgeox3dsample': 'showgeox3dsample',                                  # Flag value from checkbox
                    'showplatforms': 'showplatforms',                    # Flag value from checkbox
                    'showdataas': 'showdataas',              # Value from radio button, either 'contour' or 'scatter'
                    'cm': 'cm',                              # Value from colormap picker

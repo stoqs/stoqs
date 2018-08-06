@@ -53,6 +53,13 @@ DESCRIPTION = 'description'
 COMMANDLINE = 'commandline'
 spherical_mercator_srid = 3857
 
+# Constants for parametertime coordinates
+LONGITUDE_UNITS = 'degrees_east'
+LATITUDE_UNITS = 'degrees_north'
+DEPTH_UNITS = 'm'
+TIME_UNITS = 'seconds since 1970-01-01'
+
+
 class STOQSQManager(object):
     '''
     This class is designed to handle building and managing queries against the STOQS database.
@@ -949,9 +956,11 @@ class STOQSQManager(object):
         # Get parameters for this platform and collect units in a parameter name hash, use standard_name if set and repair bad names
         p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
         logger.debug("self.kwargs['parametertimeplotid'] = %s", self.kwargs['parametertimeplotid'])
+
         if self.kwargs['parametertimeplotid']:
             p_qs = p_qs.filter(Q(id__in=self.kwargs['parametertimeplotid']))
         p_qs = p_qs.filter(activityparameter__activity__platform__name=platform[0]).distinct()
+
         for parameter in p_qs:
             unit = parameter.units
 
@@ -991,6 +1000,21 @@ class STOQSQManager(object):
                 logger.debug('Initializing pt[%s] = {}', unit)
                 pt[unit] = {}
 
+            # Add coordinates keys if asked for from the UI
+            if self.kwargs['parametertimeplotcoord']:
+                if 'Longitude' in self.kwargs['parametertimeplotcoord']:
+                    pt[LONGITUDE_UNITS] = {}
+                    strides['Longitude'] = {}
+                if 'Latitude' in self.kwargs['parametertimeplotcoord']:
+                    pt[LATITUDE_UNITS] = {}
+                    strides['Latitude'] = {}
+                if 'Depth' in self.kwargs['parametertimeplotcoord']:
+                    pt[DEPTH_UNITS] = {}
+                    strides['Depth'] = {}
+                if 'Time' in self.kwargs['parametertimeplotcoord']:
+                    pt[TIME_UNITS] = {}
+                    strides['Time'] = {}
+
         return (pa_units, is_standard_name, ndCounts, pt, colors, strides)
 
     def _get_activity_nominaldepths(self, p):
@@ -1023,7 +1047,7 @@ class STOQSQManager(object):
         return plotTimeSeriesActivityDepths
 
 
-    def _getParameterTimeFromMP(self, qs_mp, pt, pa_units, a, p, is_standard_name, stride, a_nds):
+    def _getParameterTimeFromMP(self, qs_mp, pt, pa_units, a, p, is_standard_name, stride, a_nds, units_dict, strides):
         '''
         Return hash of time series measuredparameter data with specified stride
         '''
@@ -1053,7 +1077,50 @@ class STOQSQManager(object):
                 pt[pa_units[p]][an_nd] = []
                 pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))
 
-        return pt
+            # Add coordinates that may be checked in the UI
+            if self.kwargs['parametertimeplotcoord']:
+                if 'Longitude' in self.kwargs['parametertimeplotcoord']:
+                    units = LONGITUDE_UNITS
+                    an_nd = f"{units} - Longitude - {a.name} @ {nd}"
+                    units_dict[units] = 'Longitude'
+                    strides['Longitude'][a.name] = stride
+                    try:
+                        pt[units][an_nd].append((ems, mp['measurement__geom'].x))
+                    except KeyError:
+                        pt[units][an_nd] = []
+                        pt[units][an_nd].append((ems, mp['measurement__geom'].x))
+                if 'Latitude' in self.kwargs['parametertimeplotcoord']:
+                    units = LATITUDE_UNITS
+                    an_nd = f"{units} - Latitude - {a.name} @ {nd}"
+                    units_dict[units] = 'Latitude'
+                    strides['Latitude'][a.name] = stride
+                    try:
+                        pt[units][an_nd].append((ems, mp['measurement__geom'].y))
+                    except KeyError:
+                        pt[units][an_nd] = []
+                        pt[units][an_nd].append((ems, mp['measurement__geom'].y))
+                if 'Depth' in self.kwargs['parametertimeplotcoord']:
+                    units = DEPTH_UNITS
+                    an_nd = f"{units} - Depth - {a.name} @ {nd}"
+                    units_dict[units] = 'Depth'
+                    strides['Depth'][a.name] = stride
+                    try:
+                        pt[units][an_nd].append((ems, mp['measurement__depth']))
+                    except KeyError:
+                        pt[units][an_nd] = []
+                        pt[units][an_nd].append((ems, mp['measurement__depth']))
+                if 'Time' in self.kwargs['parametertimeplotcoord']:
+                    units = TIME_UNITS
+                    an_nd = f"{units} - Time - {a.name} @ {nd}"
+                    units_dict[units] = 'Time'
+                    strides['Time'][a.name] = stride
+                    try:
+                        pt[units][an_nd].append((ems, ems))
+                    except KeyError:
+                        pt[units][an_nd] = []
+                        pt[units][an_nd].append((ems, ems))
+
+        return pt, units_dict, strides
         
     def _getParameterTimeFromAP(self, pt, pa_units, a, p):
         '''
@@ -1157,7 +1224,7 @@ class STOQSQManager(object):
                     logger.debug('Getting timeseries from MeasuredParameter table with stride = %s', stride)
                     strides[p][a.name] = stride
                     logger.debug('Adding timeseries for p = %s, a = %s', p, a)
-                    pt = self._getParameterTimeFromMP(qs_mp_a, pt, pa_units, a, p, is_standard_name, stride, a_nds)
+                    pt, units, strides = self._getParameterTimeFromMP(qs_mp_a, pt, pa_units, a, p, is_standard_name, stride, a_nds, units, strides)
                 else:
                     # Construct just two points for this activity-parameter using the min & max from the AP table
                     pt = self._getParameterTimeFromAP(pt, pa_units, a, p)
