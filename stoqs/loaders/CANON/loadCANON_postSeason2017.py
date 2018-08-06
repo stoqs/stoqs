@@ -975,7 +975,6 @@ else:
     cl.load_oa1()
     cl.load_oa2()
     cl.loadDorado()
-    ##cl.loadMakai()  ## not in this campaign
     ##cl.loadRCuctd()  ## not in this campaign
     ##cl.loadRCpctd()  ## not in this campaign
     #cl.loadWFuctd()

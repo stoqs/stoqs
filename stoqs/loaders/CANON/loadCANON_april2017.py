@@ -460,7 +460,6 @@ if cl.args.test:
     cl.load_oa1(stride=100)
     cl.load_oa2(stride=100)
     cl.loadDorado(stride=100)
-    ##cl.loadMakai(stride=100)
     cl.loadRCuctd(stride=100)
     cl.loadRCpctd(stride=100)
     cl.loadWFuctd(stride=100)
@@ -504,7 +503,6 @@ else:
     cl.load_oa1()
     cl.load_oa2()
     cl.loadDorado()
-    ##cl.loadMakai()  ## not in this campaign
     ##cl.loadRCuctd()  ## not in this campaign
     ##cl.loadRCpctd()  ## not in this campaign
     cl.loadWFuctd()

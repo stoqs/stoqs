@@ -293,71 +293,28 @@ cl.subsample_csv_files = [
 cl.process_command_line()
 
 if cl.args.test:
-
-    cl.loadL_662(stride=100) 
-    ##cl.load_NPS29(stride=10)
-    #cl.load_UCSC294(stride=10) 
-    #cl.load_UCSC260(stride=10)
-
-    ##cl.load_wg_tex(stride=10)
-    ##cl.load_wg_oa(stride=10)
-    cl.load_wg_Tiny(stride=10)
-
-    ##cl.loadDorado(stride=100)
-    ##cl.loadLRAUV('daphne', startdate, enddate, stride=100)
-    ##cl.loadLRAUV('tethys', startdate, enddate, stride=100)
-    ##cl.loadLRAUV('makai', startdate, enddate, stride=100)
-
-    cl.loadRCuctd(stride=10)
-    cl.loadRCpctd(stride=10)
-    ##cl.loadJMuctd(stride=10)
-    ##cl.loadJMpctd(stride=10)
-    ##cl.loadWFuctd(stride=10)   
-    ##cl.loadWFpctd(stride=10)
-
-    cl.loadM1(stride=5)
-
-    ##cl.loadBruceMoor(stride=10)
-    ##cl.loadMackMoor(stride=10)
-
-    cl.loadSubSamples()
-
-elif cl.args.optimal_stride:
-
-    cl.loadL_662(stride=2) 
-    ##cl.load_NPS29(stride=2) 
-    cl.load_wg_Tiny(stride=2)
-    cl.loadM1(stride=1)
-    ##cl.loadDorado(stride=2)
-    cl.loadRCuctd(stride=2)
-    cl.loadRCpctd(stride=2)
-
-    cl.loadSubSamples()
-
+    cl.stride = 100
 else:
     cl.stride = cl.args.stride
 
-    cl.loadL_662()
-    ##cl.load_NPS29()
-    ##cl.load_UCSC294() 
-    ##cl.load_UCSC260()
-    cl.load_wg_Tiny()
-    cl.loadM1()
-    cl.load_oa1()
-    cl.load_oa2()
-    ##cl.loadDorado()
-    cl.loadLRAUV('daphne', startdate, enddate)
-    cl.loadLRAUV('tethys', startdate, enddate)
-    cl.loadLRAUV('makai', startdate, enddate)
-    cl.loadDaphne()
-    cl.loadTethys()
-    cl.loadMakai()
-    cl.loadRCuctd()
-    cl.loadRCpctd()
-    ##cl.loadWFuctd()   
-    ##cl.loadWFpctd()
+cl.loadL_662()
+##cl.load_NPS29()
+##cl.load_UCSC294() 
+##cl.load_UCSC260()
+cl.load_wg_Tiny()
+cl.loadM1()
+cl.load_oa1()
+cl.load_oa2()
+##cl.loadDorado()
+cl.loadLRAUV('daphne', startdate, enddate)
+cl.loadLRAUV('tethys', startdate, enddate)
+cl.loadLRAUV('makai', startdate, enddate)
+cl.loadRCuctd()
+cl.loadRCpctd()
+##cl.loadWFuctd()   
+##cl.loadWFpctd()
 
-    cl.loadSubSamples()
+cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()

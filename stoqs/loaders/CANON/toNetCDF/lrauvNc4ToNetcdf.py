@@ -412,7 +412,7 @@ class InterpolatorWriter(BaseWriter):
             parm_valid.append(key)
             self.all_sub_ts[key] = ts
             self.logger.info('Found parameter ' + key)
-          except Exception, e:
+          except Exception as e:
             self.logger.error(e)
             continue
 
@@ -434,7 +434,7 @@ class InterpolatorWriter(BaseWriter):
                 subgroup = self.df.groups[g]
                 pkeys = group_parms[g]
 
-            except Exception, e:
+            except Exception as e:
                 self.logger.error(e)
                 continue
 
@@ -473,10 +473,10 @@ class InterpolatorWriter(BaseWriter):
 
                         self.logger.info('Found in group ' + group + ' parameter ' + var + ' renaming to ' + key)
                         parm_valid.append(key)
-                    except KeyError, e:
+                    except KeyError as e:
                         self.logger.error(e)
                         continue
-                    except Exception,e:
+                    except Exception as e:
                         self.logger.error(e)
                         continue
 
