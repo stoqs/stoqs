@@ -177,40 +177,21 @@ cl.process_command_line()
 
 if cl.args.test:
     cl.loadDorado(stride=100)
-    ##cl.loadDaphne(stride=10)
-    ##cl.loadTethys(stride=10)
-    ##cl.loadESPmack()
-    ##cl.loadESPbruce()
     cl.loadRCuctd(stride=100)
     cl.loadRCpctd()
-    ##cl.loadHeHaPe()
-    ##cl.loadRusalka(stride=10)
-    ##cl.loadYellowfin()
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
-    ##cl.loadDaphne(stride=2)
-    ##cl.loadTethys(stride=2)
-    ##cl.loadESPmack()
-    ##cl.loadESPbruce()
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
-    ##cl.loadHeHaPe(stride=10)      
     cl.loadRusalka()    
-    ##cl.loadYellowfin()
 
 else:
     cl.stride = cl.args.stride
     cl.loadDorado()
-    ##cl.loadDaphne()
-    ##cl.loadTethys()
-    ##cl.loadESPmack()
-    ##cl.loadESPbruce()
     cl.loadRCuctd()
     cl.loadRCpctd()
-    ##cl.loadHeHaPe()
     cl.loadRusalka()
-    ##cl.loadYellowfin()
 
 # Add any X3D Terrain information specified in the constructor to the database
 cl.addTerrainResources()
