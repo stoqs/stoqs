@@ -75,18 +75,6 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'roll', 'pitch', 'yaw',
                   ]
 
-#####################################################################
-#  LRAUV 
-#####################################################################
-# NetCDF files produced (binned, etc.) by John Ryan
-##cl.tethys_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Tethys/NetCDF/'
-##cl.tethys_files = ['Tethys_CANON_Fall2013.nc']
-##cl.tethys_parms = ['temperature', 'salinity', 'chlorophyll', 'bb470', 'bb650']
-
-##cl.daphne_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Daphne/NetCDF/'
-##cl.daphne_files = ['Daphne_CANON_Fall2013.nc']
-##cl.daphne_parms = ['temperature', 'chlorophyll', 'bb470', 'bb650']
-
 
 ######################################################################
 #  GLIDERS
@@ -281,8 +269,6 @@ if cl.args.test:
     ##cl.load_wg_oa(stride=10) 
 
     cl.loadDorado(stride=100)
-    ##cl.loadDaphne(stride=100)
-    ##cl.loadTethys(stride=100)
 
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
