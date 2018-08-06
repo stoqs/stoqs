@@ -26,7 +26,7 @@ import re
 import pydap
 import pytz
 
-from LakeMichigan import LakeMILoader
+from CANON import CANONLoader
 from .Contour import Contour
 from thredds_crawler.crawl import Crawl
 from coards import from_udunits
@@ -253,7 +253,7 @@ if __name__ == '__main__':
         slack = Slacker(token)
 
     # Assume that the database has already been created with description and terrain information, so use minimal arguments in constructor
-    lm = LakeMILoader(args.database, args.campaign)
+    lm = CANONLoader(args.database, args.campaign)
     lm.dbAlias = args.database
     lm.campaignName = args.campaign
    
