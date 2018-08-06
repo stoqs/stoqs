@@ -3415,11 +3415,15 @@ function enable_cardboard(){
                                             }],
                                     yaxis: {
                                                 tickFormatter: function(val, axis) {
+                                                    // Format to minimize width, yet show the precision needed
                                                     if (val.toString().indexOf('e') !== -1) {
                                                         return val.toExponential(1);
                                                     }
                                                     else if (Math.abs(val) < 1) {
                                                         return val.toPrecision(1);
+                                                    }
+                                                    else if (axis.datamax > 1.e7) {
+                                                        return val.toExponential(1);
                                                     }
                                                     else if (Math.round(axis.datamax) - Math.round(axis.datamax) < 2.0) {
                                                         return val.toFixed(1);
