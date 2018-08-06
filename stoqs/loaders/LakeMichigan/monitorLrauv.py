@@ -27,7 +27,7 @@ import pydap
 import pytz
 
 from CANON import CANONLoader
-from .Contour import Contour
+from Contour import Contour
 from thredds_crawler.crawl import Crawl
 from coards import from_udunits
 from stoqs.models import InstantPoint
