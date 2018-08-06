@@ -274,63 +274,27 @@ cl.oa2_endDatetime = enddate
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadL_662(stride=100) 
-
-    ##cl.load_wg_tex(stride=10)
-    ##cl.load_wg_oa(stride=10) 
-
-    cl.loadDorado(stride=100)
-    ##cl.loadLRAUV('tethys', startdate, enddate, stride=100)
-    ##cl.loadLRAUV('daphne', startdate, enddate, stride=100)
-    ##cl.loadLRAUV('makai', startdate, enddate, stride=100)
-
-    ##cl.loadRCuctd(stride=10)
-    ##cl.loadRCpctd(stride=10)
-    ##cl.loadJMuctd(stride=10)
-    ##cl.loadJMpctd(stride=10)
-    ##cl.loadWFuctd(stride=10)   
-    ##cl.loadWFpctd(stride=10)
-
-    cl.loadM1(stride=10)
-
-    ##cl.loadSubSamples()
-
-elif cl.args.optimal_stride:
-
-    cl.loadL_662(stride=2)
-
-    ##cl.load_wg_tex(stride=2)
-    ##cl.load_wg_oa(stride=2)
-
-    cl.loadM1(stride=1)
-    #cl.loadDorado(stride=2)
-    ##cl.loadDaphne(stride=100)
-    ##cl.loadTethys(stride=100)
-    #cl.loadRCuctd(stride=2)
-    #cl.loadRCpctd(stride=2)
-
-    ##cl.loadSubSamples()
-
+    cl.stride = 100
 else:
     cl.stride = cl.args.stride
 
-    cl.loadL_662()
-    cl.load_wg_Tiny() 
-    ##cl.load_wg_tex()  ## no waveglider Tex in this campaign
-    cl.load_wg_oa()
-    cl.loadM1()
-    cl.load_oa1()   
-    cl.load_oa2()  
-    cl.loadDorado()
-    cl.loadLRAUV('tethys', startdate, enddate)
-    cl.loadLRAUV('daphne', startdate, enddate)
-    cl.loadLRAUV('makai', startdate, enddate)
-    cl.loadRCuctd()
-    cl.loadRCpctd() 
-    cl.loadWFuctd()   
-    cl.loadWFpctd()
+cl.loadL_662()
+cl.load_wg_Tiny() 
+##cl.load_wg_tex()  ## no waveglider Tex in this campaign
+cl.load_wg_oa()
+cl.loadM1()
+cl.load_oa1()   
+cl.load_oa2()  
+cl.loadDorado()
+cl.loadLRAUV('tethys', startdate, enddate)
+cl.loadLRAUV('daphne', startdate, enddate)
+cl.loadLRAUV('makai', startdate, enddate)
+cl.loadRCuctd()
+cl.loadRCpctd() 
+cl.loadWFuctd()   
+cl.loadWFpctd()
 
-    ##cl.loadSubSamples()
+##cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
