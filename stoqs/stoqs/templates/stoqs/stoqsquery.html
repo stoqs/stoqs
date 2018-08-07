@@ -5198,7 +5198,7 @@ function enable_cardboard(){
             var map_params = params;
             if ( ! $.isEmptyObject(map_params.only) ) {
                 $.each(map_params.only, function(index, v) {
-                    if ( $.inArray(v, ['parameterparameterpng', 'parameterparameterx3d']) > -1 ) {
+                    if ( $.inArray(v, ['parameterparameterpng', 'parameterparameterx3d', 'parametertime']) > -1 ) {
                         delete map_params.only[index];
                     }
                 });
