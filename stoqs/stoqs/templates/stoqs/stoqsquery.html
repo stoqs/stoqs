@@ -3432,7 +3432,8 @@ function enable_cardboard(){
                                                         return val.toPrecision(1);
                                                     }
                                                     else if (axis.datamax > 1.e7) {
-                                                        return val.toExponential(1);
+                                                        digits = Math.round(Math.log10(axis.datamax / (axis.datamax - axis.datamin)));
+                                                        return val.toExponential(digits);
                                                     }
                                                     else if (Math.round(axis.datamax) - Math.round(axis.datamax) < 2.0) {
                                                         return val.toFixed(1);
@@ -3950,7 +3951,7 @@ function enable_cardboard(){
             qstring = qstring + '&platformplotname=' + $('body').data()['parameterplatforms'][$('input:radio[name=parameters_contour_plot]:checked').val()];
         }
 
-        if ( $('input:checkbox[name=parameters_plot_cb]').is(':checked') ) {
+        if ( $('input:checkbox[name=parameters_plot_cb]').is(':checked') || $('input:checkbox[name=parameters_plot_coord_cb]').is(':checked') ) {
             if ($('#temporal-parameter-li').hasClass('active')) {
                 $('input:checked[name=parameters_plot_cb]').each(function (index, elem) {
                     qstring = qstring + '&parametertimeplotid=' + elem.value;
