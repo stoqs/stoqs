@@ -1132,16 +1132,17 @@ class STOQSQManager(object):
             tv = mp['measurement__instantpoint__timevalue']
             ems = int(1000 * to_udunits(tv, 'seconds since 1970-01-01'))
 
-            nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
-                                                # mooring microcat actual depths are put into mp['measurement__depth']
-            if a_nds:
+            nd = mp['measurement__nominallocation__depth']
+            if nd:
+                an_nd = "%s - %s - %s @ %s" % (pa_units[p], p, a.name, nd,)
+            elif a in a_nds:
                 try:
                     an_nd = "%s - %s - %s starting @ %s m" % (pa_units[p], p, a.name, a_nds[a],)
                 except KeyError:
                     # Likely data from a load before plotTimeSeriesDepth was added to ActivityResource
                     an_nd = "%s - %s - %s starting @ ? m" % (pa_units[p], p, a.name)
             else:
-                an_nd = "%s - %s - %s @ %s" % (pa_units[p], p, a.name, nd,)
+                an_nd = "%s - %s - %s" % (pa_units[p], p, a.name)
    
             if save_mp_for_plot: 
                 try:
