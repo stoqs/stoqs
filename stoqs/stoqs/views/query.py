@@ -243,7 +243,7 @@ def queryMap(request):
         else:
             params[key] = request.GET.getlist(key)
 
-    # The Javascript the constructs the request items must remove any items that will make the 
+    # The Javascript that constructs the request items must remove any items that will make the 
     # server busy with requests that have nothing to do with making a map; for example, removing
     # 'parameterparameterpng' and 'parameterparameterx3d' removed from 'only' helps speed things up.
 
