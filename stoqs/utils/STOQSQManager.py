@@ -1193,7 +1193,6 @@ class STOQSQManager(object):
         # Check if only coord(s) in pa_units 
         only_coords_flag = False
         save_mp_for_plot = True
-        import pdb; pdb.set_trace()
         if not set(pa_units.keys()) - set(('Longitude', 'Latitude', 'Depth', 'Time')):
             only_coords_flag = True
 
