@@ -453,10 +453,17 @@
                     </div>
                     <div id="collapseMetadata" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                                
-                            <label class="checkbox">
-                                <input type="checkbox" id="getactualcount" /> Get actual count
-                            </label>
+
+                            <div class="row-fluid" style="padding:0;">
+                                <div class="span6">                                
+                                    <label class="checkbox">
+                                        <input type="checkbox" id="getactualcount" /> Get actual count
+                                    </label>
+                                </div>
+                                <div class="span6" style="text-align:right;">                                
+                                    <span id="campaigninfo"></span>
+                                </div>
+                            </div>
 
                             <ul id="resourceTabs" class="nav nav-tabs">
                                 <li id="metadata-netcdf-li" class="active"><a href="#metadatanetcdf" data-toggle="tab">NetCDF sources</a></li>
@@ -834,8 +841,14 @@
                                                 <span id="temporalparameterplotinfo">&nbsp;</span>
                                                 <br>
                                                 <span id="contour-scatter-buttons" style="visibility:hidden;">
-                                                    <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
-                                                    <input type="radio" name="showdataas" value="scatter" checked /> scatter
+                                                    <form class="form-inline">
+                                                        <label>
+                                                            <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
+                                                        </label>
+                                                        <label>
+                                                            <input type="radio" name="showdataas" value="scatter" checked /> scatter
+                                                        </label>
+                                                    </form>
                                                 </span>
                                                 <br>
                                                 <span id="temporalparameterplotinfo_lines">&nbsp;</span>
@@ -964,10 +977,20 @@
                     </div>
                     <div id="collapseSampledParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <input type="checkbox" id="show-parameter-parameter-sp-checkbox" /> Show Parameter-Parameter
-                            <input type="checkbox" id="show-coordinates-sp-checkbox" /> Show coordinates
-                            <input type="checkbox" id="show-filtered-sp-checkbox" /> Filtered out parameters
-                            <input type="checkbox" id="show-standardnames-sp-checkbox" /> Standard Names
+                            <form class="form-inline">
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-parameter-parameter-sp-checkbox" /> Show Parameter-Parameter
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-coordinates-sp-checkbox" /> Show coordinates
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-filtered-sp-checkbox" /> Filtered out parameters
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-standardnames-sp-checkbox" /> Standard Names
+                                </label>
+                            </form>
                             <fieldset>
                             <table id="sampledparameter-table" class="table table-condensed">
                                 <thead>
@@ -1062,10 +1085,20 @@
                     </div>
                     <div id="collapseMeasuredParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <input type="checkbox" id="show-parameter-parameter-mp-checkbox" /> Show Parameter-Parameter
-                            <input type="checkbox" id="show-coordinates-mp-checkbox" /> Show coordinates
-                            <input type="checkbox" id="show-filtered-mp-checkbox" /> Filtered out parameters
-                            <input type="checkbox" id="show-standardnames-mp-checkbox" /> Standard Names
+                            <form class="form-inline">
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-parameter-parameter-mp-checkbox" /> Show Parameter-Parameter
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-coordinates-mp-checkbox" /> Show coordinates
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-filtered-mp-checkbox" /> Filtered out parameters
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-standardnames-mp-checkbox" /> Standard Names
+                                </label>
+                            </form>
                             <fieldset>
                             <table id="measuredparameter-table" class="table table-condensed">
                                 <thead>
@@ -1171,9 +1204,11 @@
                         <div class="accordion-inner">
                             <div id="histogram-instruction">Show distribution of parameter values</div>
                             <div class="span6">
-                                Histogram display: 
-                                <input type="checkbox" class="pv-histogram-checkbox" id="showstandardnameparametervalues" /> Standard Names
-                                <input type="checkbox" class="pv-histogram-checkbox" id="showallparametervalues" /> All Parameters
+                                <form class="form-inline">
+                                    Histogram display: 
+                                    <label><input type="checkbox" class="pv-histogram-checkbox" id="showstandardnameparametervalues" /> Standard Names</label>
+                                    <label><input type="checkbox" class="pv-histogram-checkbox" id="showallparametervalues" /> All Parameters</label>
+                                </form>
                             </div>
                             <table id="parameter-value-table" class="table table-condensed">
                             </table>
@@ -4507,6 +4542,14 @@ function enable_cardboard(){
                 }
             }
             else if (key == 'resources') {
+                if ( ! $.isEmptyObject(data.resources.campaign.load_date_gmt) ) {
+                    var info_text = 'Loaded on ' + data.resources.campaign.load_date_gmt.split('.')[0] + ' GMT';
+                    if ( ! $.isEmptyObject(data.resources.campaign.minutes_to_load) ) {
+                        info_text += ' in ' + data.resources.campaign.minutes_to_load + ' minutes';
+                    }
+                    info_text += ' &mdash; <a href="' + data.resources.campaign.load_logfile + '" target="_blank">View log file</a>';
+                    $('#campaigninfo').html(info_text);
+                }
                 buildMetadataHtml(data, true);
             }
             else if (key == 'attributes') {
