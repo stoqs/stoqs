@@ -841,8 +841,14 @@
                                                 <span id="temporalparameterplotinfo">&nbsp;</span>
                                                 <br>
                                                 <span id="contour-scatter-buttons" style="visibility:hidden;">
-                                                    <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
-                                                    <input type="radio" name="showdataas" value="scatter" checked /> scatter
+                                                    <form class="form-inline">
+                                                        <label>
+                                                            <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
+                                                        </label>
+                                                        <label>
+                                                            <input type="radio" name="showdataas" value="scatter" checked /> scatter
+                                                        </label>
+                                                    </form>
                                                 </span>
                                                 <br>
                                                 <span id="temporalparameterplotinfo_lines">&nbsp;</span>
@@ -981,8 +987,8 @@
                                 <label class="checkbox">
                                     <input type="checkbox" id="show-filtered-sp-checkbox" /> Filtered out parameters
                                 </label>
-                                    <label class="checkbox">
-                                <input type="checkbox" id="show-standardnames-sp-checkbox" /> Standard Names
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-standardnames-sp-checkbox" /> Standard Names
                                 </label>
                             </form>
                             <fieldset>
@@ -1198,9 +1204,11 @@
                         <div class="accordion-inner">
                             <div id="histogram-instruction">Show distribution of parameter values</div>
                             <div class="span6">
-                                Histogram display: 
-                                <input type="checkbox" class="pv-histogram-checkbox" id="showstandardnameparametervalues" /> Standard Names
-                                <input type="checkbox" class="pv-histogram-checkbox" id="showallparametervalues" /> All Parameters
+                                <form class="form-inline">
+                                    Histogram display: 
+                                    <label><input type="checkbox" class="pv-histogram-checkbox" id="showstandardnameparametervalues" /> Standard Names</label>
+                                    <label><input type="checkbox" class="pv-histogram-checkbox" id="showallparametervalues" /> All Parameters</label>
+                                </form>
                             </div>
                             <table id="parameter-value-table" class="table table-condensed">
                             </table>
