@@ -1820,7 +1820,12 @@ class STOQSQManager(object):
 
                 qlHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__uristring']
 
-        return {'netcdf': netcdfHash, 'quick_look': qlHash}
+        # Campaign information
+        c_hash = {}
+        for cr in models.CampaignResource.objects.using(self.dbname).filter(campaign__activity__in=self.qs):
+            c_hash[cr.resource.name] = cr.resource.value
+
+        return {'netcdf': netcdfHash, 'quick_look': qlHash, 'campaign': c_hash}
 
     def getAttributes(self):
         '''
