@@ -1158,25 +1158,6 @@ class CANONLoader(LoadScript):
             self.logger.debug(f'{e}')
 
 
-    def loadAll(self, stride=None):
-        '''
-        Execute all the load functions - this method is being deprecated as optimal strides vary for each platform
-        '''
-        stride = stride or self.stride
-        # TODO: Deprecate this method. This module has grown too big with lots of 
-        #       different (but similar) platform data load methods
-        loaders = [ 'loadDorado', 'loadTethys', 'loadDaphne', 'loadMartin', 'loadFulmar', 'loadNps_g29', 'loadWaveglider', 'loadL_662', 'loadESPdrift',
-                    'loadWFuctd', 'loadWFpctd']
-        for loader in loaders:
-            if hasattr(self, loader):
-                # Call the loader if it exists
-                try:
-                    getattr(self, loader)()
-                except AttributeError as e:
-                    self.logger.warn("WARNING: No data from %s for dbAlias = %s, campaignName = %s", loader, self.dbAlias, self.campaignName)
-                    self.logger.error(str(e))
-                    pass
-
 if __name__ == '__main__':
     '''
     Test operation of this class
