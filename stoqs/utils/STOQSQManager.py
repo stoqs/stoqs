@@ -1212,7 +1212,7 @@ class STOQSQManager(object):
             only_coords_flag = True
 
         # Build units hash of parameter names for labeling axes in flot
-        for p, u in list(pa_units.items()):
+        for pcount, (p, u) in enumerate(list(pa_units.items())):
             logger.debug('is_standard_name = %s.  p, u = %s, %s', is_standard_name, p, u)
             if not self._parameterInSelection(p, is_standard_name):
                 logger.debug('Parameter is not in selection')
@@ -1260,7 +1260,7 @@ class STOQSQManager(object):
             if not ndCounts[p]:
                 ndCounts[p] = 1         # Trajectories with plotTimeSeriesDepth will not have a nominal depth, set to 1 for calculation below
             a_nds = self._get_activity_nominaldepths(p)
-            for icount, a in enumerate(qs_awp.distinct('name')):
+            for acount, a in enumerate(qs_awp.distinct('name')):
                 qs_mp_a = qs_mp.filter(measurement__instantpoint__activity__name=a.name)
                 ad = (a.enddate-a.startdate)
                 aseconds = ad.days * 86400 + ad.seconds
@@ -1276,7 +1276,7 @@ class STOQSQManager(object):
                     strides[p][a.name] = stride
                     logger.debug('Adding timeseries for p = %s, a = %s', p, a)
                     pt, units, strides = self._getParameterTimeFromMP(qs_mp_a, pt, pa_units, a, p, is_standard_name, stride, a_nds, units, strides, save_mp_for_plot)
-                    if self.kwargs['parametertimeplotcoord'] and icount == 0:
+                    if self.kwargs['parametertimeplotcoord'] and acount == 0 and pcount == 0:
                         pt, units, strides = self._append_coords_to_pt(qs_mp, pt, pa_units, a, stride, units, strides)
 
                 else:
