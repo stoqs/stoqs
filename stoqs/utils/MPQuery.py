@@ -57,6 +57,7 @@ class MPQuerySet(object):
                      'measurement__instantpoint__timevalue', 
                      'measurement__instantpoint__activity__name',
                      'measurement__instantpoint__activity__platform__name',
+                     'measurement__nominallocation__depth', 
                      'datavalue',
                      'parameter__units'
                    ]

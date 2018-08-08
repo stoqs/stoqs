@@ -53,6 +53,13 @@ DESCRIPTION = 'description'
 COMMANDLINE = 'commandline'
 spherical_mercator_srid = 3857
 
+# Constants for parametertime coordinates
+LONGITUDE_UNITS = 'degrees_east'
+LATITUDE_UNITS = 'degrees_north'
+DEPTH_UNITS = 'm'
+TIME_UNITS = 'seconds since 1970-01-01'
+
+
 class STOQSQManager(object):
     '''
     This class is designed to handle building and managing queries against the STOQS database.
@@ -949,9 +956,13 @@ class STOQSQManager(object):
         # Get parameters for this platform and collect units in a parameter name hash, use standard_name if set and repair bad names
         p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
         logger.debug("self.kwargs['parametertimeplotid'] = %s", self.kwargs['parametertimeplotid'])
+
         if self.kwargs['parametertimeplotid']:
             p_qs = p_qs.filter(Q(id__in=self.kwargs['parametertimeplotid']))
-        p_qs = p_qs.filter(activityparameter__activity__platform__name=platform[0]).distinct()
+            p_qs = p_qs.filter(activityparameter__activity__platform__name=platform[0]).distinct()
+        else:
+            p_qs = []
+
         for parameter in p_qs:
             unit = parameter.units
 
@@ -991,6 +1002,33 @@ class STOQSQManager(object):
                 logger.debug('Initializing pt[%s] = {}', unit)
                 pt[unit] = {}
 
+        # Add coordinates keys if asked for from the UI
+        if self.kwargs['parametertimeplotcoord']:
+            if 'Longitude' in self.kwargs['parametertimeplotcoord']:
+                pt[LONGITUDE_UNITS] = {}
+                pa_units['Longitude'] = LONGITUDE_UNITS
+                strides['Longitude'] = {}
+                is_standard_name['Longitude'] = False
+                ndCounts['Longitude'] = 1
+            if 'Latitude' in self.kwargs['parametertimeplotcoord']:
+                pt[LATITUDE_UNITS] = {}
+                pa_units['Latitude'] = LATITUDE_UNITS
+                strides['Latitude'] = {}
+                is_standard_name['Latitude'] = False
+                ndCounts['Latitude'] = 1
+            if 'Depth' in self.kwargs['parametertimeplotcoord']:
+                pt[DEPTH_UNITS] = {}
+                pa_units['Depth'] = DEPTH_UNITS
+                strides['Depth'] = {}
+                is_standard_name['Depth'] = False
+                ndCounts['Depth'] = 1
+            if 'Time' in self.kwargs['parametertimeplotcoord']:
+                pt[TIME_UNITS] = {}
+                pa_units['Time'] = TIME_UNITS
+                strides['Time'] = {}
+                is_standard_name['Time'] = False
+                ndCounts['Time'] = 1
+
         return (pa_units, is_standard_name, ndCounts, pt, colors, strides)
 
     def _get_activity_nominaldepths(self, p):
@@ -1022,8 +1060,65 @@ class STOQSQManager(object):
 
         return plotTimeSeriesActivityDepths
 
+    def _append_coords_to_pt(self, qs_mp, pt, pa_units, a, stride, units_dict, strides):
+        '''
+        Add coordinates to pt dictionary of dictionaries, making sure to append only once.
+        Only called if self.kwargs['parametertimeplotcoord'], and needs to be called once per request
+        '''
+        # Order by nominal depth first so that strided access collects data correctly from each depth
+        pt_qs_mp = qs_mp.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')[::stride]
+        logger.debug(f'Adding coordinates for a.name = {a.name}')
+        for mp in pt_qs_mp:
+            if mp['datavalue'] is None:
+                continue
 
-    def _getParameterTimeFromMP(self, qs_mp, pt, pa_units, a, p, is_standard_name, stride, a_nds):
+            tv = mp['measurement__instantpoint__timevalue']
+            ems = int(1000 * to_udunits(tv, 'seconds since 1970-01-01'))
+
+            if 'Longitude' in self.kwargs['parametertimeplotcoord']:
+                units = LONGITUDE_UNITS
+                an_nd = f"{units} - Longitude - {a.name}"
+                units_dict[units] = 'Longitude'
+                strides['Longitude'][a.name] = stride
+                try:
+                    pt[units][an_nd].append((ems, mp['measurement__geom'].x))
+                except KeyError:
+                    pt[units][an_nd] = []
+                    pt[units][an_nd].append((ems, mp['measurement__geom'].x))
+            if 'Latitude' in self.kwargs['parametertimeplotcoord']:
+                units = LATITUDE_UNITS
+                an_nd = f"{units} - Latitude - {a.name}"
+                units_dict[units] = 'Latitude'
+                strides['Latitude'][a.name] = stride
+                try:
+                    pt[units][an_nd].append((ems, mp['measurement__geom'].y))
+                except KeyError:
+                    pt[units][an_nd] = []
+                    pt[units][an_nd].append((ems, mp['measurement__geom'].y))
+            if 'Depth' in self.kwargs['parametertimeplotcoord']:
+                units = DEPTH_UNITS
+                an_nd = f"{units} - Depth - {a.name}"
+                units_dict[units] = 'Depth'
+                strides['Depth'][a.name] = stride
+                try:
+                    pt[units][an_nd].append((ems, mp['measurement__depth']))
+                except KeyError:
+                    pt[units][an_nd] = []
+                    pt[units][an_nd].append((ems, mp['measurement__depth']))
+            if 'Time' in self.kwargs['parametertimeplotcoord']:
+                units = TIME_UNITS
+                an_nd = f"{units} - Time - {a.name}"
+                units_dict[units] = 'Time'
+                strides['Time'][a.name] = stride
+                try:
+                    pt[units][an_nd].append((ems, ems))
+                except KeyError:
+                    pt[units][an_nd] = []
+                    pt[units][an_nd].append((ems, ems))
+
+        return pt, units_dict, strides
+
+    def _getParameterTimeFromMP(self, qs_mp, pt, pa_units, a, p, is_standard_name, stride, a_nds, units_dict, strides, save_mp_for_plot=True):
         '''
         Return hash of time series measuredparameter data with specified stride
         '''
@@ -1036,24 +1131,27 @@ class STOQSQManager(object):
 
             tv = mp['measurement__instantpoint__timevalue']
             ems = int(1000 * to_udunits(tv, 'seconds since 1970-01-01'))
-            nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
-                                                # mooring microcat actual depths are put into mp['measurement__depth']
-            if a_nds:
+
+            nd = mp['measurement__nominallocation__depth']
+            if nd:
+                an_nd = "%s - %s - %s @ %s" % (pa_units[p], p, a.name, nd,)
+            elif a in a_nds:
                 try:
                     an_nd = "%s - %s - %s starting @ %s m" % (pa_units[p], p, a.name, a_nds[a],)
                 except KeyError:
                     # Likely data from a load before plotTimeSeriesDepth was added to ActivityResource
                     an_nd = "%s - %s - %s starting @ ? m" % (pa_units[p], p, a.name)
             else:
-                an_nd = "%s - %s - %s @ %s" % (pa_units[p], p, a.name, nd,)
-    
-            try:
-                pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))
-            except KeyError:
-                pt[pa_units[p]][an_nd] = []
-                pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))
+                an_nd = "%s - %s - %s" % (pa_units[p], p, a.name)
+   
+            if save_mp_for_plot: 
+                try:
+                    pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))
+                except KeyError:
+                    pt[pa_units[p]][an_nd] = []
+                    pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))
 
-        return pt
+        return pt, units_dict, strides
         
     def _getParameterTimeFromAP(self, pt, pa_units, a, p):
         '''
@@ -1079,6 +1177,10 @@ class STOQSQManager(object):
         Return True if parameter name is in the UI selection, either from constraints other than
         direct selection or if specifically selected in the UI.  
         '''
+        # Coordinates are always in the selection
+        if p in ('Longitude', 'Latitude', 'Depth', 'Time'):
+            return True
+
         isInSelection = False
         if is_standard_name[p]:
             if p in [parms[1] for parms in self.getParameters(parameterType)]:
@@ -1103,22 +1205,38 @@ class STOQSQManager(object):
         PIXELS_WIDE = 800                   # Approximate pixel width of parameter-time-flot window
         units = {}
 
+        # Check if only coord(s) in pa_units 
+        only_coords_flag = False
+        save_mp_for_plot = True
+        if not set(pa_units.keys()) - set(('Longitude', 'Latitude', 'Depth', 'Time')):
+            only_coords_flag = True
+
         # Build units hash of parameter names for labeling axes in flot
-        for p,u in list(pa_units.items()):
+        for pcount, (p, u) in enumerate(list(pa_units.items())):
             logger.debug('is_standard_name = %s.  p, u = %s, %s', is_standard_name, p, u)
             if not self._parameterInSelection(p, is_standard_name):
                 logger.debug('Parameter is not in selection')
                 continue
 
-            try:
-                units[u] = units[u] + ' ' + p
-            except KeyError:
+            if p in ('Longitude', 'Latitude', 'Depth', 'Time'):
                 units[u] = p
+            else:
+                try:
+                    units[u] = units[u] + ' ' + p
+                except KeyError:
+                    units[u] = p
 
             # Apply either parameter name or standard_name to MeasuredParameter and Activity query sets
             if is_standard_name[p]:
                 qs_mp = pt_qs_mp.filter(parameter__standard_name=p)
                 qs_awp = self.qs.filter(activityparameter__parameter__standard_name=p)
+            elif only_coords_flag:
+                # Choose a dummy Parameter and mark for not plotting so that we can collect coordinates
+                dummy_parm = self.getParameters()[0][0]
+                logger.info(f"Only coords selected, using {dummy_parm} to go through MPs to get coords")
+                qs_mp = pt_qs_mp.filter(parameter__name=dummy_parm)
+                qs_awp = self.qs.filter(activityparameter__parameter__name=dummy_parm)
+                save_mp_for_plot = False
             else:
                 qs_mp = pt_qs_mp.filter(parameter__name=p)
                 qs_awp = self.qs.filter(activityparameter__parameter__name=p)
@@ -1142,7 +1260,7 @@ class STOQSQManager(object):
             if not ndCounts[p]:
                 ndCounts[p] = 1         # Trajectories with plotTimeSeriesDepth will not have a nominal depth, set to 1 for calculation below
             a_nds = self._get_activity_nominaldepths(p)
-            for a in qs_awp.distinct('name'):
+            for acount, a in enumerate(qs_awp.distinct('name')):
                 qs_mp_a = qs_mp.filter(measurement__instantpoint__activity__name=a.name)
                 ad = (a.enddate-a.startdate)
                 aseconds = ad.days * 86400 + ad.seconds
@@ -1157,7 +1275,10 @@ class STOQSQManager(object):
                     logger.debug('Getting timeseries from MeasuredParameter table with stride = %s', stride)
                     strides[p][a.name] = stride
                     logger.debug('Adding timeseries for p = %s, a = %s', p, a)
-                    pt = self._getParameterTimeFromMP(qs_mp_a, pt, pa_units, a, p, is_standard_name, stride, a_nds)
+                    pt, units, strides = self._getParameterTimeFromMP(qs_mp_a, pt, pa_units, a, p, is_standard_name, stride, a_nds, units, strides, save_mp_for_plot)
+                    if self.kwargs['parametertimeplotcoord'] and acount == 0 and pcount == 0:
+                        pt, units, strides = self._append_coords_to_pt(qs_mp, pt, pa_units, a, stride, units, strides)
+
                 else:
                     # Construct just two points for this activity-parameter using the min & max from the AP table
                     pt = self._getParameterTimeFromAP(pt, pa_units, a, p)
@@ -1208,7 +1329,7 @@ class STOQSQManager(object):
                                         activityparameter__activity__platform__name=platform[0],
                                         ).count()
                 counts += timeSeriesParmCount + trajectoryParmCount
-                if counts and self.kwargs.get('parametertimeplotid'):
+                if counts and (self.kwargs.get('parametertimeplotid') or 'parametertimeplotcoord' in self.kwargs):
                     if 'parametertime' in self.kwargs['only'] or self.kwargs['parametertab']:
                         # Initialize structure organized by units for parameters left in the selection 
                         logger.debug('Calling self._collectParameters() with platform = %s', platform)
@@ -1224,7 +1345,7 @@ class STOQSQManager(object):
 
             # Perform more expensive query: start with qs_mp_no_parm version of the MeasuredParameter query set
             pt_qs_mp = self.mpq.qs_mp_no_parm
-            
+
             logger.debug('Before self._buildParameterTime: pt = %s', list(pt.keys())) 
             pt, units, strides = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, strides, pt_qs_mp)
             logger.debug('After self._buildParameterTime: pt = %s', list(pt.keys())) 

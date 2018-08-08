@@ -71,8 +71,9 @@ query_parms = {
                    'parametercontourplot': ('parametercontourplotid',                              # Plot contour radio button selection 
                                              'platformcontourplotname'), 
                    'parametertimeplotid': 'parametertimeplotid',                            # Plot checkbox id values
-                   'showgeox3dmeasurement': 'showgeox3dmeasurement',                          # Flag value from checkbox
-                   'showgeox3dsample': 'showgeox3dsample',                                 # Flag value from checkbox
+                   'parametertimeplotcoord': 'parametertimeplotcoord',                      # Plot checkbox coordinate names
+                   'showgeox3dmeasurement': 'showgeox3dmeasurement',                        # Flag value from checkbox
+                   'showgeox3dsample': 'showgeox3dsample',                                  # Flag value from checkbox
                    'showplatforms': 'showplatforms',                    # Flag value from checkbox
                    'showdataas': 'showdataas',              # Value from radio button, either 'contour' or 'scatter'
                    'cm': 'cm',                              # Value from colormap picker
@@ -242,7 +243,7 @@ def queryMap(request):
         else:
             params[key] = request.GET.getlist(key)
 
-    # The Javascript the constructs the request items must remove any items that will make the 
+    # The Javascript that constructs the request items must remove any items that will make the 
     # server busy with requests that have nothing to do with making a map; for example, removing
     # 'parameterparameterpng' and 'parameterparameterx3d' removed from 'only' helps speed things up.
 
