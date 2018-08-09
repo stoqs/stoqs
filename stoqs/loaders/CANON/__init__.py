@@ -156,11 +156,15 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.dorado_files], self.dorado_files):
             url = self.dorado_base + f
-            DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                       pname, self.colors[pname], 'auv', 'AUV mission', 
-                                       self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                       plotTimeSeriesDepth=0.0)
-            load_gulps(aName, f, self.dbAlias)
+            try:
+                DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aName, 
+                                           pname, self.colors[pname], 'auv', 'AUV mission', 
+                                           self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
+                                           plotTimeSeriesDepth=0.0)
+                load_gulps(aName, f, self.dbAlias)
+            except DAPloaders.DuplicateData as e:
+                self.logger.warn(str(e))
+                self.logger.info(f"Skipping load of {url}")
 
         self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pname,
                                   scalefactor=2)
