@@ -61,18 +61,9 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 #####################################################################
 #  DORADO
 #####################################################################
-# special location for dorado data
-cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2018/netcdf/'
-cl.dorado_files = [
-                   'Dorado389_2018_156_00_156_00_decim.nc',
-                   'Dorado389_2018_164_00_164_00_decim.nc',
 
-                  ]
-cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
-                    'fl700_uncorr', 'salinity', 'biolume',
-                    'sepCountList', 'mepCountList',
-                    'roll', 'pitch', 'yaw',
-                  ]
+# Use the attributes built by loadDorad() using startdate and enddate
+
 
 #####################################################################
 #  LRAUV
@@ -512,7 +503,7 @@ cl.load_wg_Tiny()
 cl.load_wg_Sparky()
 cl.load_oa1()
 cl.load_oa2()
-cl.loadDorado()
+cl.loadDorado(startdate, enddate, build_attrs=True)
 cl.loadLRAUV('daphne', startdate, enddate)
 cl.loadLRAUV('makai', startdate, enddate)
 ##cl.loadRCuctd()  ## not in this campaign
@@ -525,5 +516,5 @@ cl.loadWFpctd()
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
-print( "All Done.")
+print("All Done.")
 
