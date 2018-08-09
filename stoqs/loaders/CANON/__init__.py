@@ -143,7 +143,7 @@ class CANONLoader(LoadScript):
                     'sepCountList', 'mepCountList', 'roll', 'pitch', 'yaw', ], stride=None,
                     file_patterns=('.*_decim.nc$'), build_attrs=False):
         '''
-        Support legacy use of loadDorad() and permit use by simply specifying startdate and endate
+        Support legacy use of loadDorad() and permit wider use by specifying startdate and endate
         '''
         pname = 'dorado'
         if build_attrs:
@@ -154,14 +154,20 @@ class CANONLoader(LoadScript):
             parameters = getattr(self, f'{pname}_parms')
 
         stride = stride or self.stride
-        for (aName, f) in zip([ a + getStrideText(stride) for a in self.dorado_files], self.dorado_files):
-            url = self.dorado_base + f
+        if hasattr(self, 'dorado_base'):
+            urls = [os.path.join(self.dorado_base, f) for f in self.dorado_files]
+        else:
+            urls = self.dorado_urls
+
+        for url in urls:
+            dfile = url.split('/')[-1]
+            aname = dfile + getStrideText(stride)
             try:
-                DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aName, 
+                DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aname, 
                                            pname, self.colors[pname], 'auv', 'AUV mission', 
                                            self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
                                            plotTimeSeriesDepth=0.0)
-                load_gulps(aName, f, self.dbAlias)
+                load_gulps(aname, dfile, self.dbAlias)
             except DAPloaders.DuplicateData as e:
                 self.logger.warn(str(e))
                 self.logger.info(f"Skipping load of {url}")
@@ -1202,19 +1208,23 @@ class CANONLoader(LoadScript):
         for year in range(startdate.year, enddate.year+1):
             base = f'http://dods.mbari.org/thredds/catalog/auv/{platform}/{year}/netcdf/'
             dods_base = f'http://dods.mbari.org/opendap/data/auvctd/surveys/{year}/netcdf/'
-            setattr(self, platform + '_base', dods_base)
             try:
                 urls += self.find_dorado_urls(base, file_patterns, startdate, enddate)
                 files = []
                 for url in sorted(urls):
                     files.append(url.split('/')[-1])
-
-                setattr(self, platform + '_files', files)
-                setattr(self, platform  + '_startDatetime', startdate)
-                setattr(self, platform + '_endDatetime', enddate)
-
             except FileNotFound as e:
                 self.logger.debug(f'{e}')
+
+        # Send signal that urls span years by not setting dorado_base so that dorado_urls is used instead
+        if startdate.year == enddate.year:
+            setattr(self, platform + '_base', dods_base)
+        else:
+            setattr(self, platform + '_urls', urls)
+
+        setattr(self, platform + '_files', files)
+        setattr(self, platform  + '_startDatetime', startdate)
+        setattr(self, platform + '_endDatetime', enddate)
 
 
 if __name__ == '__main__':
