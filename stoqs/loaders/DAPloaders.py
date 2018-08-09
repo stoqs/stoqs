@@ -113,6 +113,10 @@ class OpendapError(Exception):
     pass
 
 
+class DuplicateData(Exception):
+    pass
+
+
 class Base_Loader(STOQS_Loader):
     '''
     A base class for data load operations.  This shouldn't be instantiated directly,
@@ -1178,7 +1182,7 @@ class Base_Loader(STOQS_Loader):
             else:
                 self.logger.error(f"{e}")
                 self.logger.error(f"It's likely that the {ac['time']} variable in {self.url} has a duplicate value")
-                raise NoValidData(e)
+                raise DuplicateData(f"Duplicate data from {self.url} in {self.dbAlias}")
 
         meass = self._measurement_with_instantpoint(self.ips, meas_to_load)
 

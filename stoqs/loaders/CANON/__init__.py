@@ -31,7 +31,6 @@ except AttributeError:
     pass
 
 import DAPloaders
-import datetime
 import requests
 import urllib
 
@@ -39,7 +38,7 @@ from SampleLoaders import SeabirdLoader, load_gulps, SubSamplesLoader
 from loaders import LoadScript, FileNotFound
 from stoqs.models import InstantPoint
 from django.db.models import Max
-from datetime import timedelta
+from datetime import datetime, timedelta
 from argparse import Namespace
 from lxml import etree
 from nettow import NetTow
@@ -138,21 +137,42 @@ class CANONLoader(LoadScript):
     for b, c in zip(roms_platforms, oranges(np.arange(0, oranges.N, oranges.N/num_roms))):
         colors[b] = rgb2hex(c)[1:]
 
-    def loadDorado(self, stride=None):
+    def loadDorado(self, startdate=None, enddate=None,
+                   parameters=[ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
+                    'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
+                    'sepCountList', 'mepCountList', 'roll', 'pitch', 'yaw', ], stride=None,
+                    file_patterns=('.*_decim.nc$'), build_attrs=False):
         '''
-        Dorado specific load functions
+        Support legacy use of loadDorad() and permit wider use by specifying startdate and endate
         '''
-        pName = 'dorado'
-        stride = stride or self.stride
-        for (aName, f) in zip([ a + getStrideText(stride) for a in self.dorado_files], self.dorado_files):
-            url = self.dorado_base + f
-            DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                       pName, self.colors[pName], 'auv', 'AUV mission', 
-                                       self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                       plotTimeSeriesDepth=0.0)
-            load_gulps(aName, f, self.dbAlias)
+        pname = 'dorado'
+        if build_attrs:
+            self.logger.info(f'Building load parameter attributes from crawling TDS')
+            self.build_dorado_attrs(pname, startdate, enddate, parameters, file_patterns)
+        else:
+            self.logger.info(f'Using load {pname} attributes set in load script')
+            parameters = getattr(self, f'{pname}_parms')
 
-        self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName,
+        stride = stride or self.stride
+        if hasattr(self, 'dorado_base'):
+            urls = [os.path.join(self.dorado_base, f) for f in self.dorado_files]
+        else:
+            urls = self.dorado_urls
+
+        for url in urls:
+            dfile = url.split('/')[-1]
+            aname = dfile + getStrideText(stride)
+            try:
+                DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aname, 
+                                           pname, self.colors[pname], 'auv', 'AUV mission', 
+                                           self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
+                                           plotTimeSeriesDepth=0.0)
+                load_gulps(aname, dfile, self.dbAlias)
+            except DAPloaders.DuplicateData as e:
+                self.logger.warn(str(e))
+                self.logger.info(f"Skipping load of {url}")
+
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pname,
                                   scalefactor=2)
 
     def loadLRAUV(self, pname, startdate=None, enddate=None, 
@@ -1114,8 +1134,8 @@ class CANONLoader(LoadScript):
             mission_dir_name = ref.attrib['{http://www.w3.org/1999/xlink}title']
             if '_' in mission_dir_name:
                 dts = mission_dir_name.split('_')
-                dir_start =  datetime.datetime.strptime(dts[0], '%Y%m%d')
-                dir_end =  datetime.datetime.strptime(dts[1], '%Y%m%d')
+                dir_start =  datetime.strptime(dts[0], '%Y%m%d')
+                dir_end =  datetime.strptime(dts[1], '%Y%m%d')
 
                 # if within a valid range, grab the valid urls
                 self.logger.debug(f'{mission_dir_name}: Looking for {search_str} files between {startdate} and {enddate}')
@@ -1157,25 +1177,55 @@ class CANONLoader(LoadScript):
         except FileNotFound as e:
             self.logger.debug(f'{e}')
 
+    def find_dorado_urls(self, base, search_str, startdate, enddate):
+        '''Use Thredds Crawler to return a list of DAP urls.  Initially written for LRAUV data, for
+        which we don't initially know the urls.
+        '''
+        urls = []
+        catalog_url = os.path.join(base, 'catalog.xml')
+        c = Crawl(catalog_url, select=[search_str])
+        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+        for url in d:
+            yyyy_yd = '_'.join(url.split('/')[-1].split('_')[1:3])
+            file_dt = datetime.strptime(yyyy_yd, '%Y_%j')
+            if startdate < file_dt and file_dt < enddate:
+                urls.append(url)
+                self.logger.debug(f'* {url}')
+            else:
+                self.logger.debug(f'{url}')
 
-    def loadAll(self, stride=None):
+        if not urls:
+            raise FileNotFound('No urls matching "{search_str}" found in {catalog_url}')
+
+        return urls
+
+    def build_dorado_attrs(self, platform, startdate, enddate, parameters, file_patterns):
+        '''Set loader attributes for each Dorado vehicle
         '''
-        Execute all the load functions - this method is being deprecated as optimal strides vary for each platform
-        '''
-        stride = stride or self.stride
-        # TODO: Deprecate this method. This module has grown too big with lots of 
-        #       different (but similar) platform data load methods
-        loaders = [ 'loadDorado', 'loadTethys', 'loadDaphne', 'loadMartin', 'loadFulmar', 'loadNps_g29', 'loadWaveglider', 'loadL_662', 'loadESPdrift',
-                    'loadWFuctd', 'loadWFpctd']
-        for loader in loaders:
-            if hasattr(self, loader):
-                # Call the loader if it exists
-                try:
-                    getattr(self, loader)()
-                except AttributeError as e:
-                    self.logger.warn("WARNING: No data from %s for dbAlias = %s, campaignName = %s", loader, self.dbAlias, self.campaignName)
-                    self.logger.error(str(e))
-                    pass
+        setattr(self, platform + '_parms' , parameters)
+
+        urls = []
+        for year in range(startdate.year, enddate.year+1):
+            base = f'http://dods.mbari.org/thredds/catalog/auv/{platform}/{year}/netcdf/'
+            dods_base = f'http://dods.mbari.org/opendap/data/auvctd/surveys/{year}/netcdf/'
+            try:
+                urls += self.find_dorado_urls(base, file_patterns, startdate, enddate)
+                files = []
+                for url in sorted(urls):
+                    files.append(url.split('/')[-1])
+            except FileNotFound as e:
+                self.logger.debug(f'{e}')
+
+        # Send signal that urls span years by not setting dorado_base so that dorado_urls is used instead
+        if startdate.year == enddate.year:
+            setattr(self, platform + '_base', dods_base)
+        else:
+            setattr(self, platform + '_urls', urls)
+
+        setattr(self, platform + '_files', files)
+        setattr(self, platform  + '_startDatetime', startdate)
+        setattr(self, platform + '_endDatetime', enddate)
+
 
 if __name__ == '__main__':
     '''
