@@ -26,7 +26,7 @@ import numpy as np
 
 cmaps = [('Ocean',          cmocean.cm.cmapnames),
          ('Uniform',
-                            ['viridis', 'inferno', 'plasma', 'magma']),
+                            ['viridis', 'inferno', 'plasma', 'magma', 'cividis']),
          ('Sequential',     ['Blues', 'BuGn', 'BuPu',
                              'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd',
                              'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu',
