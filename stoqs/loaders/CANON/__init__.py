@@ -1220,7 +1220,7 @@ class CANONLoader(LoadScript):
         if startdate.year == enddate.year:
             setattr(self, platform + '_base', dods_base)
         else:
-            setattr(self, platform + '_urls', urls)
+            setattr(self, platform + '_urls', sorted(urls))
 
         setattr(self, platform + '_files', files)
         setattr(self, platform  + '_startDatetime', startdate)
