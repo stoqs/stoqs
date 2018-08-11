@@ -41,7 +41,7 @@ python-dateutil==2.7.3
 python3-memcached==1.51
 python-openid==2.2.5
 pytz==2018.5
-pyzmq==17.1.0
+pyzmq==17.1.2
 readline==6.2.4.1
 requests-oauthlib==1.0.0
 scikit-learn==0.19.2
