@@ -36,8 +36,8 @@ cl = CANONLoader('stoqs_all_dorado', 'Plankton Proxies - All Dorado Data',
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
 
-startdate = datetime.datetime(2003, 1, 1)  # Fixed start. May 15, 2018
-enddate = datetime.datetime(2019, 12, 31)  # Fixed end. June 15, 2018.
+startdate = datetime.datetime(2003, 1, 1)
+enddate = datetime.datetime(2019, 12, 31)
 
 # Execute the load
 cl.process_command_line()
@@ -48,8 +48,6 @@ elif cl.args.stride:
     cl.stride = cl.args.stride
 
 cl.loadDorado(startdate, enddate, build_attrs=True)
-
-cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
