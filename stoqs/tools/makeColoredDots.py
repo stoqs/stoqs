@@ -22,6 +22,9 @@ try:
 except AttributeError:
     pass
 
+import matplotlib as mpl
+mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
+
 import cmocean
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
