@@ -32,6 +32,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import ConnectionDoesNotExist, OperationalError, ProgrammingError
+from django.db import transaction, connections
 from slacker import Slacker
 from stoqs.models import ResourceType, Resource, Campaign, CampaignResource, MeasuredParameter, \
                          SampledParameter, Activity, Parameter, Platform
@@ -265,12 +266,20 @@ local   all             all                                     peer
 
                 script = os.path.join(app_dir, 'loaders', load_command)
                 try:
-                    minutes_to_load = CampaignResource.objects.using(db).get(
-                                        resource__name='minutes_to_load').resource.value
+                    with transaction.atomic(using=db):
+                        minutes_to_load = CampaignResource.objects.using(db).get(
+                                            resource__name='minutes_to_load').resource.value
                     print(f"{db:30s} {minutes_to_load:>20}")
                     nothing_printed = False
-                except (CampaignResource.DoesNotExist, CampaignResource.MultipleObjectsReturned):
-                    pass
+                except (CampaignResource.DoesNotExist, CampaignResource.MultipleObjectsReturned,
+                        OperationalError, ProgrammingError) as e:
+                    self.logger.debug(str(e))
+                    self.logger.debug('Closing all connections:')
+                    for conn in connections.all():
+                        if conn.settings_dict['NAME'] not in self.args.db:
+                            continue
+                        self.logger.debug(f"    {conn.settings_dict['NAME']}")
+                        conn.close()
 
                 if nothing_printed:
                     print(f"{db:30s} {'--- ':>20}")
