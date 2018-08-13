@@ -255,8 +255,9 @@ local   all             all                                     peer
         if self.args.clobber and not self.args.test:
             print(("On the server running on port =", settings.DATABASES['default']['PORT']))
             print("You are about to drop all database(s) in the list below and reload them:")
-            print((('{:30s} {:>15s}').format('Database', 'Last Load time')))
-            print((('{:30s} {:>15s}').format('-'*25, '-'*15)))
+            print((('{:30s} {:>15s}').format('Database', 'Last Load time (min)')))
+            print((('{:30s} {:>15s}').format('-'*25, '-'*20)))
+            nothing_printed = True
             for db,load_command in list(campaigns.campaigns.items()):
                 if self.args.db:
                     if db not in self.args.db:
@@ -264,12 +265,15 @@ local   all             all                                     peer
 
                 script = os.path.join(app_dir, 'loaders', load_command)
                 try:
-                    print((('{:30s} {:>15s}').format(db, (
-                            tail(self._log_file(script, db, load_command), 3)
-                            .split('\n')[0]
-                            .split('\t')[1]))))
-                except IndexError:
+                    minutes_to_load = CampaignResource.objects.using(db).get(
+                                        resource__name='minutes_to_load').resource.value
+                    print(f"{db:30s} {minutes_to_load:>20}")
+                    nothing_printed = False
+                except (CampaignResource.DoesNotExist, CampaignResource.MultipleObjectsReturned):
                     pass
+
+                if nothing_printed:
+                    print(f"{db:30s} {'--- ':>20}")
 
             ans = input('\nAre you sure you want to drop these database(s) and reload them? [y/N] ')
             if ans.lower() != 'y':
@@ -286,6 +290,12 @@ local   all             all                                     peer
                 print('Exiting')
                 sys.exit()
 
+        # That script support the --test option
+        if self.args.db and self.args.test:
+            for db in self.args.db:
+                if self._has_no_t_option(db, campaigns.campaigns[db]):
+                    print(f'{campaigns.campaigns[db]} does not support the --test argument')
+                    sys.exit(-1)
 
     def recordprovenance(self, db, load_command, log_file):
         '''Add Resources to the Campaign that describe what loaded it
