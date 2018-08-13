@@ -146,7 +146,7 @@ class ROVCTD_Loader(Base_Loader):
         self.grdTerrain = grdTerrain
         self.args = args
 
-        self.conn = pymssql.connect(host='solstice.shore.mbari.org:1433', user='everyone', password='guest', database='expd', as_dict=True)
+        self.conn = pymssql.connect(host='perseus.shore.mbari.org:1433', user='everyone', password='guest', database='expd', as_dict=True)
         if self.platformName == 'vnta':
             self.rovDataView = 'VentanaRovCtdBinData'
         elif self.platformName == 'tibr':
@@ -267,8 +267,8 @@ class ROVCTD_Loader(Base_Loader):
         '''Returns start and end Python datetimes for the dive
         '''
         sql = '''SELECT expdid, diveid, shipname, rovname, divenumber,
- dbo.iso8601Format(divestartdtg) as divestartdtg,
- dbo.iso8601Format(diveenddtg) as diveenddtg,
+ CONVERT(VARCHAR(33), divestartdtg, 127) as divestartdtg,
+ CONVERT(VARCHAR(33), diveenddtg, 127) as diveenddtg,
  chiefscientist, maxpressure, ctdpcount,
  minshiplat,maxshiplat,minshiplon,maxshiplon,avgshiplat,avgshiplon
 FROM divesummary
@@ -280,8 +280,8 @@ ORDER BY divenumber''' % (self.platformName, self.diveNumber)
         cur.execute(sql)
         r = cur.fetchone()
         try:
-            sdt = datetime.strptime(r['divestartdtg'].strip(), '%Y-%m-%dT%H:%M:%SZ')
-            edt = datetime.strptime(r['diveenddtg'].strip(), '%Y-%m-%dT%H:%M:%SZ')
+            sdt = datetime.strptime(r['divestartdtg'].strip(), '%Y-%m-%dT%H:%M:%S')
+            edt = datetime.strptime(r['diveenddtg'].strip(), '%Y-%m-%dT%H:%M:%S')
         except TypeError:
             raise DiveInfoServletException('Cannot get start and end times for %s%d' % (self.platformName[0].upper(), self.diveNumber))
 
@@ -378,7 +378,7 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
             records = self._nodeServletLines()
         else:
             # Fudge a url string for the SQL query - string after '/' displayed in INFO when loading
-            self.url = 'SQL://solstice.shore.mbari.org/rov=%s&dive=%d' % (self.platformName, self.diveNumber)
+            self.url = 'SQL://perseus.shore.mbari.org/rov=%s&dive=%d' % (self.platformName, self.diveNumber)
             records = self._pymssqlLines()
 
         try:
