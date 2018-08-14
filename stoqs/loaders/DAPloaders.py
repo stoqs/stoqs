@@ -368,10 +368,14 @@ class Base_Loader(STOQS_Loader):
         Possible return values: TRAJECTORY, TIMESERIES, TIMESERIESPROFILE, lowercase versions.
         '''
         conventions = ''
-        try:
-            nc_global_keys = self.ds.attributes['NC_GLOBAL']
-        except KeyError:
-            self.logger.warn('Dataset does not have an NC_GLOBAL attribute! Setting featureType to "trajectory" assuming that this is an old Tethys file')
+        if hasattr(self, 'ds'):
+            try:
+                nc_global_keys = self.ds.attributes['NC_GLOBAL']
+            except KeyError:
+                self.logger.warn('Dataset does not have an NC_GLOBAL attribute! Setting featureType to "trajectory" assuming that this is an old Tethys file')
+                return TRAJECTORY
+        else:
+            self.logger.warn('Loader has no ds attribute. Setting featureType to "trajectory" assuming that this is an ROVCTD Loader.')
             return TRAJECTORY
 
         if 'Conventions' in nc_global_keys:
