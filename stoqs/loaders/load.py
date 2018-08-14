@@ -475,10 +475,6 @@ local   all             all                                     peer
                 settings.MAPSERVER_DATABASES[campaign] = settings.MAPSERVER_DATABASES.get('default').copy()
                 settings.MAPSERVER_DATABASES[campaign]['NAME'] = campaign
 
-            if hasattr(self.args, 'verbose'):
-                if self.args.verbose > 2:
-                    load_command += ' -v'
-
             if db not in settings.DATABASES:
                 # Django docs say not to do this, but I can't seem to force a settings reload.
                 # Note that databases in campaigns.py are put in settings by settings.local.
@@ -506,6 +502,10 @@ local   all             all                                     peer
 
             if create_only:
                 return
+
+            if hasattr(self.args, 'verbose') and not load_command.endswith('.sh'):
+                if self.args.verbose > 2:
+                    load_command += ' -v'
 
             # === Execute the load
             script = os.path.join(app_dir, 'loaders', load_command)
