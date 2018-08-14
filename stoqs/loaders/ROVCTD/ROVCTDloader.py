@@ -55,7 +55,8 @@ import logging
 import socket
 import seawater.eos80 as sw
 from utils.utils import percentile, median, mode, simplify_points
-from loaders import STOQS_Loader, LoadScript, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound
+from loaders import (STOQS_Loader, LoadScript, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound,
+                     SIGMAT, SPICE, SPICINESS, ALTITUDE)
 from loaders.DAPloaders import Base_Loader
 import numpy as np
 from collections import defaultdict
@@ -146,7 +147,8 @@ class ROVCTD_Loader(Base_Loader):
         self.grdTerrain = grdTerrain
         self.args = args
 
-        self.conn = pymssql.connect(host='solstice.shore.mbari.org:1433', user='everyone', password='guest', database='expd', as_dict=True)
+        logger.info(f'Connecting to perseus.shore.mbari.org...')
+        self.conn = pymssql.connect(host='perseus.shore.mbari.org:1433', user='everyone', password='guest', database='expd', as_dict=True)
         if self.platformName == 'vnta':
             self.rovDataView = 'VentanaRovCtdBinData'
         elif self.platformName == 'tibr':
@@ -267,8 +269,8 @@ class ROVCTD_Loader(Base_Loader):
         '''Returns start and end Python datetimes for the dive
         '''
         sql = '''SELECT expdid, diveid, shipname, rovname, divenumber,
- dbo.iso8601Format(divestartdtg) as divestartdtg,
- dbo.iso8601Format(diveenddtg) as diveenddtg,
+ CONVERT(VARCHAR(33), divestartdtg, 127) as divestartdtg,
+ CONVERT(VARCHAR(33), diveenddtg, 127) as diveenddtg,
  chiefscientist, maxpressure, ctdpcount,
  minshiplat,maxshiplat,minshiplon,maxshiplon,avgshiplat,avgshiplon
 FROM divesummary
@@ -280,8 +282,8 @@ ORDER BY divenumber''' % (self.platformName, self.diveNumber)
         cur.execute(sql)
         r = cur.fetchone()
         try:
-            sdt = datetime.strptime(r['divestartdtg'].strip(), '%Y-%m-%dT%H:%M:%SZ')
-            edt = datetime.strptime(r['diveenddtg'].strip(), '%Y-%m-%dT%H:%M:%SZ')
+            sdt = datetime.strptime(r['divestartdtg'].strip(), '%Y-%m-%dT%H:%M:%S')
+            edt = datetime.strptime(r['diveenddtg'].strip(), '%Y-%m-%dT%H:%M:%S')
         except TypeError:
             raise DiveInfoServletException('Cannot get start and end times for %s%d' % (self.platformName[0].upper(), self.diveNumber))
 
@@ -293,6 +295,9 @@ ORDER BY divenumber''' % (self.platformName, self.diveNumber)
         # Create Platform and add Parameters
         self.platform = self.getPlatform(self.platformName, self.platformTypeName)
         self.makeParmDict()
+        parmList = list(self.parmDict.keys())
+        # Allow time series plotting of all Parameters with psedo-depth of 0 m
+        self.plotTimeSeriesDepth = dict.fromkeys(parmList + [ALTITUDE, SIGMAT, SPICE], 0)
         self.addParameters(self.parmDict)
 
         # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
@@ -378,7 +383,7 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
             records = self._nodeServletLines()
         else:
             # Fudge a url string for the SQL query - string after '/' displayed in INFO when loading
-            self.url = 'SQL://solstice.shore.mbari.org/rov=%s&dive=%d' % (self.platformName, self.diveNumber)
+            self.url = 'SQL://perseus.shore.mbari.org/rov=%s&dive=%d' % (self.platformName, self.diveNumber)
             records = self._pymssqlLines()
 
         try:
@@ -492,8 +497,7 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
         Add Resources for this activity, namely standard links provided in the 
         Expedition Database.
         '''
-        # For now just override the base class method which expects an OPeNDAP data source
-        pass
+        return super(ROVCTD_Loader, self).addResources()
 
 def get_grdTerrain(file='Monterey25.grd'):
     '''GMT .grd file(s) are expected in the stoqs/loaders directory
@@ -507,6 +511,7 @@ def get_grdTerrain(file='Monterey25.grd'):
 def processDiveList(args):
     '''Given a list of dives to load
     '''
+    logger.info(f'Loading dives in list: {args.dives[:5]}...')
     for diveName in args.dives:
         if diveName[0].lower() == 'v':
             pName = 'vnta'
@@ -542,6 +547,7 @@ def processDiveList(args):
 def processDiveRange(args):
     '''Given an ROV Name and start and end dive number
     '''
+    logger.info(f'Loading {args.rov} dives in range({args.start}, {args.end + 1}) into database {args.database}')
     for dNumber in range(args.start, args.end + 1):
         # Instantiate Loader for this dive
         loader = ROVCTD_Loader( 
