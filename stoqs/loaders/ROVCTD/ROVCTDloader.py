@@ -55,7 +55,8 @@ import logging
 import socket
 import seawater.eos80 as sw
 from utils.utils import percentile, median, mode, simplify_points
-from loaders import STOQS_Loader, LoadScript, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound
+from loaders import (STOQS_Loader, LoadScript, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound,
+                     SIGMAT, SPICE, SPICINESS, ALTITUDE)
 from loaders.DAPloaders import Base_Loader
 import numpy as np
 from collections import defaultdict
@@ -146,6 +147,7 @@ class ROVCTD_Loader(Base_Loader):
         self.grdTerrain = grdTerrain
         self.args = args
 
+        logger.info(f'Connecting to perseus.shore.mbari.org...')
         self.conn = pymssql.connect(host='perseus.shore.mbari.org:1433', user='everyone', password='guest', database='expd', as_dict=True)
         if self.platformName == 'vnta':
             self.rovDataView = 'VentanaRovCtdBinData'
@@ -293,6 +295,9 @@ ORDER BY divenumber''' % (self.platformName, self.diveNumber)
         # Create Platform and add Parameters
         self.platform = self.getPlatform(self.platformName, self.platformTypeName)
         self.makeParmDict()
+        parmList = list(self.parmDict.keys())
+        # Allow time series plotting of all Parameters with psedo-depth of 0 m
+        self.plotTimeSeriesDepth = dict.fromkeys(parmList + [ALTITUDE, SIGMAT, SPICE], 0)
         self.addParameters(self.parmDict)
 
         # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
@@ -492,8 +497,7 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
         Add Resources for this activity, namely standard links provided in the 
         Expedition Database.
         '''
-        # For now just override the base class method which expects an OPeNDAP data source
-        pass
+        return super(ROVCTD_Loader, self).addResources()
 
 def get_grdTerrain(file='Monterey25.grd'):
     '''GMT .grd file(s) are expected in the stoqs/loaders directory
@@ -507,6 +511,7 @@ def get_grdTerrain(file='Monterey25.grd'):
 def processDiveList(args):
     '''Given a list of dives to load
     '''
+    logger.info(f'Loading dives in list: {args.dives[:5]}...')
     for diveName in args.dives:
         if diveName[0].lower() == 'v':
             pName = 'vnta'
@@ -542,6 +547,7 @@ def processDiveList(args):
 def processDiveRange(args):
     '''Given an ROV Name and start and end dive number
     '''
+    logger.info(f'Loading {args.rov} dives in range({args.start}, {args.end + 1}) into database {args.database}')
     for dNumber in range(args.start, args.end + 1):
         # Instantiate Loader for this dive
         loader = ROVCTD_Loader( 
