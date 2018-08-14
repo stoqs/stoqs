@@ -56,7 +56,7 @@ import socket
 import seawater.eos80 as sw
 from utils.utils import percentile, median, mode, simplify_points
 from loaders import (STOQS_Loader, LoadScript, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound,
-                     SIGMAT, SPICE, SPICINESS, ALTITUDE)
+                     SIGMAT, SPICE, SPICINESS, ALTITUDE, timing)
 from loaders.DAPloaders import Base_Loader
 import numpy as np
 from collections import defaultdict
