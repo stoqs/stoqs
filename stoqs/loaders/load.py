@@ -511,9 +511,9 @@ local   all             all                                     peer
             script = os.path.join(app_dir, 'loaders', load_command)
             log_file = self._log_file(script, db, load_command)
             if script.endswith('.sh'):
-                script = ('(cd {} && {})').format(os.path.dirname(script), script)
-
-            cmd = ('(STOQS_CAMPAIGNS={} time {}) > {} 2>&1;').format(db, script, log_file)
+                cmd = (f'cd {os.path.dirname(script)} && (STOQS_CAMPAIGNS={db} time {script}) > {log_file} 2>&1;')
+            else:
+                cmd = (f'(STOQS_CAMPAIGNS={db} time {script}) > {log_file} 2>&1;')
 
             if self.args.email:
                 # Send email on success or failure
