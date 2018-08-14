@@ -579,65 +579,75 @@ class STOQS_Loader(object):
         ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
                     activity=self.activity, resource=resource)
 
-        # The NC_GLOBAL attributes from the OPeNDAP URL.  Save them all.
-        self.logger.debug("Getting or Creating ResourceType nc_global...")
-        self.logger.debug("ds.attributes.keys() = %s", list(self.ds.attributes.keys()) )
-        if 'NC_GLOBAL' in self.ds.attributes:
-            resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'nc_global')
-            for rn, value in list(self.ds.attributes['NC_GLOBAL'].items()):
-                self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
-                resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
-                            name=rn, value=value, resourcetype=resourceType)
-                ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
-                            activity=self.activity, resource=resource)
+        mp_ft_res = None
+        if hasattr(self, 'ds'):
+            # The NC_GLOBAL attributes from the OPeNDAP URL.  Save them all.
+            self.logger.debug("Getting or Creating ResourceType nc_global...")
+            self.logger.debug("ds.attributes.keys() = %s", list(self.ds.attributes.keys()) )
+            if 'NC_GLOBAL' in self.ds.attributes:
+                resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'nc_global')
+                for rn, value in list(self.ds.attributes['NC_GLOBAL'].items()):
+                    self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
+                    resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                                name=rn, value=value, resourcetype=resourceType)
+                    ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+                                activity=self.activity, resource=resource)
 
+                # Use potentially monkey-patched self.getFeatureType() method to write a correct value - as the UI depends on it
+                mp_ft_res, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                            name='featureType', value=self.getFeatureType(), resourcetype=resourceType)
+                ars = m.ActivityResource.objects.using(self.dbAlias).filter(activity=self.activity,
+                                resource__resourcetype=resourceType, resource__name='featureType').select_related('resource')
+
+                if not ars:
+                    # There was no featureType NC_GLOBAL in the dataset - associate to the one from self.getFeatureType()
+                    ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+                                activity=self.activity, resource=mp_ft_res)
+                for ar in ars:
+                    if ar.resource.value != mp_ft_res.value:
+                        # Update (override NC_GLOBAL's) with monkey-patched self.getFeatureType()'s value
+                        ars = m.ActivityResource.objects.using(self.dbAlias).filter(activity=self.activity,
+                                resource__resourcetype=resourceType, resource__name='featureType').update(resource=mp_ft_res)
+                        self.logger.warn('Over-riding featureType from NC_GLOBAL (%s) with monkey-patched value = %s', 
+                                ar.resource.value, mp_ft_res.value)
+            else:
+                self.logger.warn("No NC_GLOBAL attribute in %s", self.url)
+
+        # Make sure Activity has a featureType Resource - as in ROVCTD data loads, where there is no self.ds
+        if not mp_ft_res:
             # Use potentially monkey-patched self.getFeatureType() method to write a correct value - as the UI depends on it
-            mp_resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
-                        name='featureType', value=self.getFeatureType(), resourcetype=resourceType)
-            ars = m.ActivityResource.objects.using(self.dbAlias).filter(activity=self.activity,
-                            resource__resourcetype=resourceType, resource__name='featureType').select_related('resource')
-
-            if not ars:
-                # There was no featureType NC_GLOBAL in the dataset - associate to the one from self.getFeatureType()
-                ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
-                            activity=self.activity, resource=mp_resource)
-            for ar in ars:
-                if ar.resource.value != mp_resource.value:
-                    # Update (override NC_GLOBAL's) with monkey-patched self.getFeatureType()'s value
-                    ars = m.ActivityResource.objects.using(self.dbAlias).filter(activity=self.activity,
-                            resource__resourcetype=resourceType, resource__name='featureType').update(resource=mp_resource)
-                    self.logger.warn('Over-riding featureType from NC_GLOBAL (%s) with monkey-patched value = %s', 
-                            ar.resource.value, mp_resource.value)
-        else:
-            self.logger.warn("No NC_GLOBAL attribute in %s", self.url)
+            mp_ft_res, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                            name='featureType', value=self.getFeatureType(), resourcetype=resourceType)
+            m.ActivityResource.objects.using(self.dbAlias).get_or_create(activity=self.activity, resource=mp_ft_res)
 
         # Add stoqs calculated Parameters to the names we add resources to - crude test for presence of SIGMAT in database
         all_names = self.include_names + [ALTITUDE]
         if m.Parameter.objects.using(self.dbAlias).filter(name=SIGMAT):
             all_names = all_names + [SIGMAT, SPICE]
 
-        self.logger.info('Adding attributes of all the variables from the original NetCDF file')
-        for v in all_names:
-            self.logger.debug('v = %s', v)
-            try:
-                for rn, value in list(self.ds[v].attributes.items()):
-                    self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
-                    resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
-                                          name=rn, value=value, resourcetype=resourceType)
-                    m.ParameterResource.objects.using(self.dbAlias).get_or_create(
-                                    parameter=self.getParameterByName(v), resource=resource)
-                    m.ActivityResource.objects.using(self.dbAlias).get_or_create(
-                                    activity=self.activity, resource=resource)
-                    
-            except KeyError as e:
-                # Just skip derived parameters that may have been added for a sub-classed Loader
-                if v != ALTITUDE:
-                    self.logger.debug('include_name %s is not in %s - skipping', v, self.url)
-            except AttributeError as e:
-                # Just skip over loaders that don't have the plotTimeSeriesDepth attribute
-                self.logger.warn('%s for include_name %s in %s. Skipping', e, v, self.url)
-            except ParameterNotFound as e:
-                self.logger.warn('Could not get Parameter for v = %s: %s', v, e)
+        if hasattr(self, 'ds'):
+            self.logger.info('Adding attributes of all the variables from the original NetCDF file')
+            for v in all_names:
+                self.logger.debug('v = %s', v)
+                try:
+                    for rn, value in list(self.ds[v].attributes.items()):
+                        self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
+                        resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                                              name=rn, value=value, resourcetype=resourceType)
+                        m.ParameterResource.objects.using(self.dbAlias).get_or_create(
+                                        parameter=self.getParameterByName(v), resource=resource)
+                        m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+                                        activity=self.activity, resource=resource)
+                        
+                except KeyError as e:
+                    # Just skip derived parameters that may have been added for a sub-classed Loader
+                    if v != ALTITUDE:
+                        self.logger.debug('include_name %s is not in %s - skipping', v, self.url)
+                except AttributeError as e:
+                    # Just skip over loaders that don't have the plotTimeSeriesDepth attribute
+                    self.logger.warn('%s for include_name %s in %s. Skipping', e, v, self.url)
+                except ParameterNotFound as e:
+                    self.logger.warn('Could not get Parameter for v = %s: %s', v, e)
 
         self.logger.info('Adding plotTimeSeriesDepth Resource for Parameters we want plotted in Parameter tab')
         for v in all_names:
