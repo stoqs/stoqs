@@ -1,14 +1,12 @@
 #!/bin/bash
 if [ -z "$STOQS_HOME" ]; then
-  echo "Set STOQS_HOME variable first, e.g. STOQS_HOME=/opt/stoqsgit_dj1.8" 
+  echo "Set STOQS_HOME variable first, e.g. STOQS_HOME=/src/stoqsgit"
   exit 1
 fi
 if [ -z "$DATABASE_URL" ]; then
   echo "Set DATABASE_URL variable first"
   exit 1
 fi
-cd "$STOQS_HOME/venv-stoqs/bin"
-source activate
 cd "$STOQS_HOME/stoqs/loaders/CANON/toNetCDF"
 start_datetime='20170101T000000'
 end_datetime='20171231T000000'
@@ -122,6 +120,6 @@ parms_eng="{
 for platform in "${platforms[@]}"
 do
         python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_sci}" --resampleFreq '10S' -a 'sci' --start "${start_datetime}" --end "${end_datetime}"
-        #python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start "${start_datetime}" --end "${end_datetime}"
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start "${start_datetime}" --end "${end_datetime}"
 done
 

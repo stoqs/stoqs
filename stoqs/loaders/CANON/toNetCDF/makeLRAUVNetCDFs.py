@@ -21,8 +21,8 @@ import re
 import pydap
 import json
 import netCDF4
-from . import lrauvNc4ToNetcdf
-import urllib.parse
+import lrauvNc4ToNetcdf
+import urlparse
 import requests
 
 from coards import to_udunits, from_udunits
@@ -87,12 +87,12 @@ def process_command_line():
 def find_urls(base, select, startdate, enddate):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
-    print(("Crawling: %s" % url))
+    print "Crawling: %s" % url
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
-    u = urllib.parse.urlsplit(url)
+    u = urlparse.urlsplit(url)
     name, ext = os.path.splitext(u.path)
     if ext == ".html":
-        u = urllib.parse.urlsplit(url.replace(".html", ".xml"))
+        u = urlparse.urlsplit(url.replace(".html", ".xml"))
     url = u.geturl()
     urls = []
     # Get an etree object
@@ -118,10 +118,10 @@ def find_urls(base, select, startdate, enddate):
                     for url in d:
                         urls.append(url)
             except Exception as ex:
-                print(("Error reading mission directory name %s" % ex))
+                print "Error reading mission directory name %s" % ex
 
     except BaseException:
-        print(("Skipping %s (error parsing the XML XML)" % url))
+        print "Skipping %s (error parsing the XML XML)" % url
 
     return urls
 
