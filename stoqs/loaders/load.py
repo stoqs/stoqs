@@ -20,8 +20,11 @@ django.setup()
 import time
 import logging
 import datetime
+import fileinput
+import glob
 import importlib
 import platform
+import socket
 import subprocess
 from git import Repo
 from shutil import copyfile
@@ -29,14 +32,13 @@ from django.conf import settings
 from django.core.management import call_command
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import ConnectionDoesNotExist, OperationalError, ProgrammingError
+from slacker import Slacker
 from stoqs.models import ResourceType, Resource, Campaign, CampaignResource, MeasuredParameter, \
                          SampledParameter, Activity, Parameter, Platform
+from timing import MINUTES
 
 def tail(f, n):
-    process = subprocess.Popen(['tail', '-' + str(n), f], stdout=subprocess.PIPE)
-    lines, _ = process.communicate()
-    
-    return lines
+    return subprocess.getoutput(f"tail -{n} {f}")
 
 
 class DatabaseCreationError(Exception):
@@ -60,7 +62,7 @@ class Loader(object):
         '''
 
         commands = ' && '.join((
-            'psql -p {port} -c \"CREATE DATABASE {db} owner=stoqsadm template=template_postgis;\" -U postgres',
+            'psql -p {port} -c \"CREATE DATABASE {db} owner=stoqsadm;\" -U postgres',
             'psql -p {port} -c \"ALTER DATABASE {db} set timezone=\'GMT\';\" -U postgres',
             'psql -p {port} -c \"GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;\" -d {db} -U postgres'))
 
@@ -89,6 +91,17 @@ class Loader(object):
 
             raise DatabaseCreationError(('Failed to create {}').format(db))
 
+        # Create postgis extensions as superuser
+        create_ext = ('psql -p {port} -c \"CREATE EXTENSION postgis;\" -d {db} -U postgres && '
+                    ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
+        create_ext += ('psql -p {port} -c \"CREATE EXTENSION postgis_topology;\" -d {db} -U postgres'
+                    ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
+
+        self.logger.info('Creating postgis extensions for database %s', db)
+        self.logger.debug('create_ext = %s', create_ext)
+        ret = os.system(create_ext)
+        self.logger.debug('ret = %s', ret)
+
     def _provenance_dict(self, db, load_command, log_file):
         '''Return a dictionary of provenance Resource items. Special handling 
         for --background operation: don't tail log file, instead add those
@@ -110,6 +123,10 @@ class Loader(object):
             if not os.path.isfile(log_file):
                 self.logger.warn('Load log file not found: %s', log_file)
             else:
+                # Look for line printed by timing module
+                for line in tail(log_file, 50).split('\n'):
+                    if line.startswith(MINUTES):
+                        prov['minutes_to_load'] =line.split(':')[1]
                 try:
                     # Inserted after the log_file has been written with --updateprovenance
                     prov['real_exection_time'] = tail(log_file, 3).split('\n')[0].split('\t')[1]
@@ -157,6 +174,46 @@ class Loader(object):
                 load_command.endswith('.sh') or 
                 '&&' in load_command)
 
+    def _drop_indexes(self):
+        # As of 2017 the STOQS project does not commit migration files.
+        # If significant schema changes are made the SOP is to reload databases;
+        # this also helps ensure that the archived NetCDF files are still accessible.
+        # To try loading data with more efficiency in the database this method
+        # removes migrations and modifies the models.py file to remove indexes.
+        # The migration files need to be removed because of this Django patch:
+        # https://code.djangoproject.com/ticket/28052
+        migration_files = glob.glob(os.path.join(app_dir, 'stoqs/migrations', '00*.py'))
+        for m_f in migration_files:
+            if '0001_initial.py' not in m_f:
+                self.logger.info('Removing migration file: %s', m_f)
+                os.remove(m_f)
+
+        model_files = (os.path.join(app_dir, 'stoqs/migrations/0001_initial.py'),
+                       os.path.join(app_dir, 'stoqs/models.py'))
+        with fileinput.input(files=model_files, inplace=True, backup='.bak') as f:
+            for line in f:
+                if '_index=True' in line:
+                    print(line.replace('_index=True', '_index=False'), end='')
+                else:
+                    print(line, end='')
+
+    def _create_indexes(self):
+        # Add indexes back to models.py
+        ##migration_files = glob.glob(os.path.join(app_dir, 'stoqs/migrations', '00*.py'))
+        ##for m_f in migration_files:
+        ##    if '0001_initial.py' not in m_f:
+        ##        self.logger.info('Removing migration file: %s', m_f)
+        ##        os.remove(m_f)
+
+        model_file = os.path.join(app_dir, 'stoqs/models.py')
+        ##model_file = os.path.join(app_dir, 'stoqs/migrations/0001_initial.py')
+        with fileinput.input(files=(model_file,), inplace=True) as f:
+            for line in f:
+                if '_index=False' in line:
+                    print(line.replace('_index=False', '_index=True'), end='')
+                else:
+                    print(line, end='')
+
     def checks(self):
         # That stoqs/campaigns.py file can be loaded
         try:
@@ -170,7 +227,7 @@ class Loader(object):
 
         if self.args.db:
             for d in self.args.db:
-                if d not in campaigns.campaigns.keys():
+                if d not in list(campaigns.campaigns.keys()):
                     self.logger.warn('%s not in %s', d, self.args.campaigns)
 
         # That can connect as user postgres for creating and dropping databases
@@ -198,37 +255,37 @@ local   all             all                                     peer
 
         # That the user really wants to reload all production databases
         if self.args.clobber and not self.args.test:
-            print "On the server running on port =", settings.DATABASES['default']['PORT']
-            print "You are about to drop all database(s) in the list below and reload them:"
-            print ('{:30s} {:>15s}').format('Database', 'Last Load time')
-            print ('{:30s} {:>15s}').format('-'*25, '-'*15)
-            for db,load_command in campaigns.campaigns.iteritems():
+            print(("On the server running on port =", settings.DATABASES['default']['PORT']))
+            print("You are about to drop all database(s) in the list below and reload them:")
+            print((('{:30s} {:>15s}').format('Database', 'Last Load time')))
+            print((('{:30s} {:>15s}').format('-'*25, '-'*15)))
+            for db,load_command in list(campaigns.campaigns.items()):
                 if self.args.db:
                     if db not in self.args.db:
                         continue
 
                 script = os.path.join(app_dir, 'loaders', load_command)
                 try:
-                    print ('{:30s} {:>15s}').format(db, (
+                    print((('{:30s} {:>15s}').format(db, (
                             tail(self._log_file(script, db, load_command), 3)
                             .split('\n')[0]
-                            .split('\t')[1]))
+                            .split('\t')[1]))))
                 except IndexError:
                     pass
 
-            ans = raw_input('\nAre you sure you want to drop these database(s) and reload them? [y/N] ')
+            ans = input('\nAre you sure you want to drop these database(s) and reload them? [y/N] ')
             if ans.lower() != 'y':
-                print 'Exiting'
+                print('Exiting')
                 sys.exit()
 
         # That user wants to load all the production databases (no command line arguments)
         if not sys.argv[1:]:
-            print "On the server running on port =", settings.DATABASES['default']['PORT']
-            print "You are about to load all these databases:"
-            print ' '.join(campaigns.campaigns.keys())
-            ans = raw_input('\nAre you sure you want load all these databases? [y/N] ')
+            print(("On the server running on port =", settings.DATABASES['default']['PORT']))
+            print("You are about to load all these databases:")
+            print((' '.join(list(campaigns.campaigns.keys()))))
+            ans = eval(input('\nAre you sure you want load all these databases? [y/N] '))
             if ans.lower() != 'y':
-                print 'Exiting'
+                print('Exiting')
                 sys.exit()
 
 
@@ -261,10 +318,12 @@ local   all             all                                     peer
                         raise DatabaseLoadError(('No campaign created after {:d} seconds. '
                             'Check log_file for errors: {}').format(sec_wait * max_iter, log_file))
                 else:
-                    raise
+                    self.logger.error(f'Could not find Campaign record for {db} in the database.')
+                    self.logger.error(f'Look for error messages in: {log_file}')
+                    sys.exit(-1)
 
         self.logger.info('Database %s', db)
-        for name,value in self._provenance_dict(db, load_command, log_file).iteritems():
+        for name,value in list(self._provenance_dict(db, load_command, log_file).items()):
             r, _ = Resource.objects.using(db).get_or_create(
                             uristring='', name=name, value=value, resourcetype=rt)
             CampaignResource.objects.using(db).get_or_create(
@@ -273,7 +332,7 @@ local   all             all                                     peer
 
     def updateprovenance(self):
         campaigns = importlib.import_module(self.args.campaigns)
-        for db,load_command in campaigns.campaigns.iteritems():
+        for db,load_command in list(campaigns.campaigns.items()):
             if self.args.db:
                 if db not in self.args.db:
                     continue
@@ -281,7 +340,7 @@ local   all             all                                     peer
             if self.args.test:
                 if self._has_no_t_option(db, load_command):
                     continue
-                
+
                 db += '_t'
 
             script = os.path.join(app_dir, 'loaders', load_command)
@@ -295,7 +354,7 @@ local   all             all                                     peer
 
     def grant_everyone_select(self):
         campaigns = importlib.import_module(self.args.campaigns)
-        for db,load_command in campaigns.campaigns.iteritems():
+        for db,load_command in list(campaigns.campaigns.items()):
             if self.args.db:
                 if db not in self.args.db:
                     continue
@@ -318,7 +377,7 @@ local   all             all                                     peer
         self.logger.info('Removing test databases from sever running on port %s', 
                 settings.DATABASES['default']['PORT'])
         campaigns = importlib.import_module(self.args.campaigns)
-        for db,load_command in campaigns.campaigns.iteritems():
+        for db,load_command in list(campaigns.campaigns.items()):
             if self.args.db:
                 if db not in self.args.db:
                     continue
@@ -340,7 +399,7 @@ local   all             all                                     peer
     def list(self):
         stoqs_campaigns = []
         campaigns = importlib.import_module(self.args.campaigns)
-        for db,load_command in campaigns.campaigns.iteritems():
+        for db,load_command in list(campaigns.campaigns.items()):
             if self.args.db:
                 if db not in self.args.db:
                     continue
@@ -353,12 +412,14 @@ local   all             all                                     peer
 
             stoqs_campaigns.append(db)
 
-        print '\n'.join(stoqs_campaigns)
-        print 'export STOQS_CAMPAIGNS="' + ','.join(stoqs_campaigns) + '"'
+        print(('\n'.join(stoqs_campaigns)))
+        print(('export STOQS_CAMPAIGNS="' + ','.join(stoqs_campaigns) + '"'))
 
-    def load(self):
-        campaigns = importlib.import_module(self.args.campaigns)
-        for db,load_command in campaigns.campaigns.iteritems():
+    def load(self, campaigns=None, create_only=False):
+        if not campaigns:
+            campaigns = importlib.import_module(self.args.campaigns)
+
+        for db,load_command in list(campaigns.campaigns.items()):
             if self.args.db:
                 if db not in self.args.db:
                     continue
@@ -370,6 +431,18 @@ local   all             all                                     peer
                 load_command += ' -t'
                 db += '_t'
 
+                # Borrowed from stoqs/config/settings/common.py
+                campaign = db
+                settings.DATABASES[campaign] = settings.DATABASES.get('default').copy()
+                settings.DATABASES[campaign]['NAME'] = campaign
+                settings.MAPSERVER_DATABASES[campaign] = settings.MAPSERVER_DATABASES.get('default').copy()
+                settings.MAPSERVER_DATABASES[campaign]['NAME'] = campaign
+
+            if hasattr(self.args, 'verbose'):
+                if self.args.verbose > 2:
+                    load_command += ' -v'
+
+            if db not in settings.DATABASES:
                 # Django docs say not to do this, but I can't seem to force a settings reload.
                 # Note that databases in campaigns.py are put in settings by settings.local.
                 settings.DATABASES[db] = settings.DATABASES.get('default').copy()
@@ -380,10 +453,22 @@ local   all             all                                     peer
             except DatabaseCreationError as e:
                 self.logger.warn(e)
                 self.logger.warn('Use the --clobber option, or fix the problem indicated.')
-                raise Exception('Maybe use the --clobber option to recreate the database...')
+                if self.args.db and not self.args.test:
+                    raise Exception('Maybe use the --clobber option to recreate the database...')
+                else:
+                    # If running test for all databases just go on to next database
+                    continue
 
-            call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
+            if self.args.drop_indexes:
+                self.logger.info('Dropping indexes...')
+                self._drop_indexes()
+            else:
+                call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
+
             call_command('migrate', settings='config.settings.local', noinput=True, database=db)
+
+            if create_only:
+                return
 
             # === Execute the load
             script = os.path.join(app_dir, 'loaders', load_command)
@@ -391,7 +476,7 @@ local   all             all                                     peer
             if script.endswith('.sh'):
                 script = ('(cd {} && {})').format(os.path.dirname(script), script)
 
-            cmd = ('(export STOQS_CAMPAIGNS={}; time {}) > {} 2>&1;').format(db, script, log_file)
+            cmd = ('(STOQS_CAMPAIGNS={} time {}) > {} 2>&1;').format(db, script, log_file)
 
             if self.args.email:
                 # Send email on success or failure
@@ -411,7 +496,25 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
                 cmd = '({}) &'.format(cmd)
 
             self.logger.info('Executing: %s', cmd)
-            os.system(cmd)
+            ret = os.system(cmd)
+            self.logger.debug(f'ret = {ret}')
+
+            if self.args.slack:
+                message = f"{db} load into {settings.DATABASES[db]['HOST']} on {socket.gethostname()}"
+                if ret == 0:
+                    message += ' succeded.'
+                else:
+                    message += ' failed.'
+                self.slack.chat.post_message('#stoqs-loads', message)
+                
+            if ret != 0:
+                self.logger.error(f'Non-zero return code from load script. Check {log_file}')
+
+            if self.args.drop_indexes:
+                self.logger.info('Creating indexes...')
+                self._create_indexes()
+                call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
+                call_command('migrate', settings='config.settings.local', noinput=True, database=db)
 
             # Record details of the database load to the database
             try:
@@ -486,15 +589,24 @@ To get any stdout/stderr output you must use -v, the default is no output.
         parser.add_argument('--background', action='store_true', help='Execute each load in the background to parallel process multiple loads')
         parser.add_argument('--removetest', action='store_true', help='Drop all test databases; the --db option limits the dropping to those in the list')
         parser.add_argument('--list', action='store_true', help='List the databases that are in --campaigns')
-        parser.add_argument('--email', action='store', help='Address to send mail to when the load finishes')
+        parser.add_argument('--email', action='store', help='Address to send mail to when the load finishes. Does not work from Docker, use --slack instead.')
+        parser.add_argument('--slack', action='store_true', help='Post message to stoqs-loads channel on Slack using SLACKTOKEN env variable')
         parser.add_argument('--updateprovenance', action='store_true', help=('Use after background jobs finish to copy'
                                                                             ' loadlogs and update provenance information'))
         parser.add_argument('--grant_everyone_select', action='store_true', help='Grant everyone role select privileges on all relations')
+        parser.add_argument('--drop_indexes', action='store_true', help='Before load drop indexes and create them following the load')
 
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
     
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
+
+        if self.args.slack:
+            try:
+                self.slack = Slacker(os.environ['SLACKTOKEN'])
+            except KeyError:
+                print('If using --slack must set SLACKTOKEN environment variable. [Never share your token!]')
+                sys.exit(-1)
 
         if self.args.verbose > 1:
             self.logger.setLevel(logging.DEBUG)

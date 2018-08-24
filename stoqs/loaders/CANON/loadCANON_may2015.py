@@ -22,18 +22,19 @@ import sys
 import datetime  # needed for glider data
 import time      # for startdate, enddate args
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
 from thredds_crawler.crawl import Crawl
+import timing
 
 cl = CANONLoader('stoqs_canon_may2015', 'CANON-ECOHAB - May 2015',
                     description = 'Spring 2015 Experiment in Monterey Bay',
                     x3dTerrains = {
-                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                         'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                         'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                         'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
@@ -435,6 +436,6 @@ else:
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
-print "All Done."
+print("All Done.")
 
 

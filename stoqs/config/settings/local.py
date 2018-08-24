@@ -22,13 +22,6 @@ TEMPLATES[0]['OPTIONS']['debug'] = DEBUG
 # Note: This key only used for development and testing.
 SECRET_KEY = env("DJANGO_SECRET_KEY", default='KJAHKHDADHSDKHA_JASDKHASKJH_CHANGEME!!!')
 
-# Mail settings
-# ------------------------------------------------------------------------------
-EMAIL_HOST = 'localhost'
-EMAIL_PORT = 1025
-EMAIL_BACKEND = env('DJANGO_EMAIL_BACKEND',
-                    default='django.core.mail.backends.console.EmailBackend')
-
 # CACHING
 # ------------------------------------------------------------------------------
 CACHES = {
@@ -74,9 +67,11 @@ HOME_PAGE_ALT = env('HOME_PAGE_LOGO', default='MBARI')
 # which can be a symbolic link to a file configured for a specific installation.
 try:
     from campaigns import campaigns
-    for campaign in campaigns.keys():
+    for campaign in list(campaigns.keys()):
         DATABASES[campaign] = DATABASES.get('default').copy()
         DATABASES[campaign]['NAME'] = campaign
+        MAPSERVER_DATABASES[campaign] = MAPSERVER_DATABASES.get('default').copy()
+        MAPSERVER_DATABASES[campaign]['NAME'] = campaign
 except Exception:
     pass
 

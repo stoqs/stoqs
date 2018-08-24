@@ -244,7 +244,7 @@ class Contour(object):
             self.data, data_start, data_end = self.getTimeSeriesData(start_datetime, end_datetime)
             return data_start, data_end
 
-        except Exception, e:
+        except Exception as e:
             logger.warn(e)
             raise e
 
@@ -297,10 +297,10 @@ class Contour(object):
         mint=min(datetimes)
         maxt=max(datetimes)
         numdays = (maxt - mint).days
-        d = [mint + timedelta(days=dt2) for dt2 in xrange(numdays+1)]
+        d = [mint + timedelta(days=dt2) for dt2 in range(numdays+1)]
         d.sort()
-        sunrise = map(lambda x:dates.date2num(loc.next_rising(sun,start=x).datetime()),d)
-        sunset = map(lambda x:dates.date2num(loc.next_setting(sun,start=x).datetime()),d)
+        sunrise = [dates.date2num(loc.next_rising(sun,start=x).datetime()) for x in d]
+        sunset = [dates.date2num(loc.next_setting(sun,start=x).datetime()) for x in d]
 
         result = []
         for st in datetimes:
@@ -548,7 +548,7 @@ class Contour(object):
                 mp.arcgisimage(server='http://services.arcgisonline.com/ArcGIS', service='Ocean_Basemap')
                 mp.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False], fontsize=8, linewidth=0)
                 mp.drawmeridians(np.linspace(e[0],e[2],num=3), labels=[False,False,False,True], fontsize=8, linewidth=0)
-            except Exception, e:
+            except Exception as e:
                 logger.error('Could not download ocean basemap ')
                 mp = None
 
@@ -565,14 +565,14 @@ class Contour(object):
                 try:
                     track = LineString(points).simplify(tolerance=.001)
                     if track is not None:
-                        ln,lt = zip(*track)
+                        ln,lt = list(zip(*track))
                         mp.plot(ln,lt,'-',c='k',alpha=0.5,linewidth=2, zorder=1)
-                except TypeError, e:
+                except TypeError as e:
                     logger.warn("%s\nCannot plot map track path to None", e)
             else:
                 for track in maptracks:
                     if track is not None:
-                        ln,lt = zip(*track)
+                        ln,lt = list(zip(*track))
                         mp.plot(ln,lt,'-',c='k',alpha=0.5,linewidth=2, zorder=1)
 
             # if have a valid series, then plot the dots
@@ -619,7 +619,7 @@ class Contour(object):
             l = ax.legend(loc='upper left', bbox_to_anchor=(1,1), prop={'size':8}, scatterpoints=1)# only plot legend symbol once
             l.set_zorder(4) # put the legend on top
 
-        except Exception, e:
+        except Exception as e:
             logger.warn(e)
 
         if self.animate:
@@ -648,7 +648,7 @@ class Contour(object):
             logger.debug('Gridding')
             zi = griddata((x, y), np.array(z), (xi[None,:], yi[:,None]), method='nearest')
             logger.debug('Done gridding')
-        except KeyError, e:
+        except KeyError as e:
             logger.warn('Got KeyError. Could not grid the data')
             zi = None
             raise(e)
@@ -663,7 +663,7 @@ class Contour(object):
             # use RBF
             rbf = Rbf(x, y, z, epsilon=2)
             zi = rbf(xi, yi)
-        except Exception, e:
+        except Exception as e:
             logger.warn('Could not grid the data' +  str(e))
             zi = None
         return xi,yi,zi
@@ -700,7 +700,7 @@ class Contour(object):
 
         try:
             scale_factor = float(tmax -tmin) / (dmax - dmin)
-        except ZeroDivisionError, e:
+        except ZeroDivisionError as e:
             logger.warn('Not setting scale_factor.  Scatter plots will still work.')
             contour_flag = False
             scale_factor = 1
@@ -779,12 +779,12 @@ class Contour(object):
             yloc = plt.MaxNLocator(max_yticks)
             ax.yaxis.set_major_locator(yloc)
 
-        except Exception,e:
+        except Exception as e:
             logger.error(e)
             try:
                 logger.debug('Plotting the data')
                 cs = ax.scatter(x,y,c=z,s=20,marker='.',vmin=zmin,vmax=zmax,lw=0,alpha=1.0,cmap=self.cm_jetplus)
-            except Exception,e:
+            except Exception as e:
                 logger.error(e)
 
         return cs, zi, scale_factor
@@ -815,7 +815,7 @@ class Contour(object):
             yloc = plt.MaxNLocator(max_yticks)
             ax.yaxis.set_major_locator(yloc)
 
-        except Exception,e:
+        except Exception as e:
             logger.error(e)
 
         return cs
@@ -850,7 +850,7 @@ class Contour(object):
             yloc = plt.MaxNLocator(max_yticks)
             ax.yaxis.set_major_locator(yloc)
 
-        except Exception,e:
+        except Exception as e:
             logger.error(e)
 
         return cs
@@ -905,11 +905,11 @@ class Contour(object):
                 logger.debug(cmd)
                 os.system(cmd)
 
-            except Exception, e:
+            except Exception as e:
                 logger.error(e)
 
             finally:
-                print 'Done!'
+                print('Done!')
                 shutil.rmtree(self.dirpath)
         else :
             try:
@@ -920,6 +920,6 @@ class Contour(object):
                     self.subtitle1 = '%s  to  %s PDT' % (data_start_local.strftime('%Y-%m-%d %H:%M'), data_end_local.strftime('%Y-%m-%d %H:%M'))
                     self.subtitle2 = '%s  to  %s UTC' % (data_start.strftime('%Y-%m-%d %H:%M'), data_end.strftime('%Y-%m-%d %H:%M'))
                     self.createPlot(data_start, data_end)
-            except Exception, e:
+            except Exception as e:
                 logger.error(e)
 

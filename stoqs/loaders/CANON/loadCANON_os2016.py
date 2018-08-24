@@ -22,8 +22,8 @@ import sys
 import datetime  # needed for glider data
 import time      # for startdate, enddate args
 import csv
-import urllib2
-import urlparse
+import urllib.request, urllib.error, urllib.parse
+import urllib.parse
 import requests
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
@@ -33,11 +33,12 @@ from CANON import CANONLoader
 from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
+import timing
 
 cl = CANONLoader('stoqs_os2016', 'CANON - Off Season 2016',
                     description = 'CANON Off Season 2016 Experiment in Monterey Bay',
                     x3dTerrains = {
-                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                         'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                         'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                         'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
@@ -79,12 +80,12 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 def find_urls(base, search_str):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
-    print "Crawling: %s" % url
+    print(("Crawling: %s" % url))
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
-    u = urlparse.urlsplit(url)
+    u = urllib.parse.urlsplit(url)
     name, ext = os.path.splitext(u.path)
     if ext == ".html":
-        u = urlparse.urlsplit(url.replace(".html", ".xml"))
+        u = urllib.parse.urlsplit(url.replace(".html", ".xml"))
     url = u.geturl()
     urls = []
     # Get an etree object
@@ -110,10 +111,10 @@ def find_urls(base, search_str):
                     for url in d:
                         urls.append(url)
             except Exception as ex:
-                print "Error reading mission directory name %s" % ex
+                print(("Error reading mission directory name %s" % ex))
 
     except BaseException:
-        print "Skipping %s (error parsing the XML)" % url
+        print(("Skipping %s (error parsing the XML)" % url))
 
     if not urls:
         raise FileNotFound('No urls matching "{}" found in {}'.format(search_str, os.path.join(base, 'catalog.html')))
@@ -290,11 +291,11 @@ cl.rcpctd_files = [
 #  MOORINGS May 2015
 ######################################################################
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
-# M1 had a turnaround on July 29, 2015
-# http://dods.mbari.org/opendap/hyrax/data/ssdsdata/deployments/m1/201507/OS_M1_20150729hourly_CMSTV.nc
+# M1 had a turnaround on July 29, 2015, but file starts on 0730
+# http://dods.mbari.org/opendap/hyrax/data/ssdsdata/deployments/m1/201507/OS_M1_20150730hourly_CMSTV.nc
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201507/'
 cl.m1_files = [
-                'OS_M1_20150729hourly_CMSTV.nc'
+                'OS_M1_20150730hourly_CMSTV.nc'
               ]
 cl.m1_parms = [
                 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
@@ -320,7 +321,7 @@ cl.oa1_endDatetime = enddate
 
 # Mooring 0A2
 # note the new location. Location and data by deployment, instead of by campaign
-cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201505/'  ## May 2015 to end of May 2016
+cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201505/realTime'  ## May 2015 to end of May 2016
 cl.oa2_files = [
                'OA2_201505.nc'
                ]
@@ -417,7 +418,7 @@ elif cl.args.optimal_stride:
 
     #cl.loadSubSamples()
 
-    print 'Nothing to load'
+    print('Nothing to load')
 else:
     cl.stride = cl.args.stride
 
@@ -444,6 +445,6 @@ else:
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
-print "All Done."
+print("All Done.")
 
  

@@ -31,8 +31,8 @@ class ParserWriter(object):
             esec_list.append(diff.days * 86400 + diff.seconds)
             #Create the list of all the variable 
             for v in ex:
-                exec '%s_list = []' % (v) 
-                exec "%s_list.append(r['%s'])" % (v,v,)
+                exec('%s_list = []' % (v)) 
+                exec("%s_list.append(r['%s'])" % (v,v,))
 #======================================================================
 #       Create the NetCDF file
         outFile='foo1.nc'
@@ -50,13 +50,13 @@ class ParserWriter(object):
         for v in ex:
             ncVar = v.replace(' ', '_', 42)
             # Only Latitude, Longitude, Depth, and Time variables are upper case to match other Glider data
-            print v
+            print(v)
             if v == 'Latitude' or v == 'Longitude':
-                exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (ncVar.lower(), ncVar.upper(), )
+                exec("self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (ncVar.lower(), ncVar.upper(), ))
             else:
-                exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (ncVar.lower(), ncVar, )
-            exec "self.%s.long_name = '%s'" % (ncVar.lower(), v, )
-            exec "self.%s[:] = %s_list" % (ncVar.lower(), ncVar, )
+                exec("self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (ncVar.lower(), ncVar, ))
+            exec("self.%s.long_name = '%s'" % (ncVar.lower(), v, ))
+            exec("self.%s[:] = %s_list" % (ncVar.lower(), ncVar, ))
 
         # Fudge up a depth variable with a value of zero
         self.depth = self.ncFile.createVariable('DEPTH', 'float64', ('TIME',))

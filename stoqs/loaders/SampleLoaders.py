@@ -24,7 +24,9 @@ from loaders import STOQS_Loader, SkipRecord
 from datetime import datetime, timedelta
 from pydap.model import BaseType
 import csv
-import urllib2
+from urllib.request import urlopen, HTTPError
+import requests
+from contextlib import closing
 import logging
 from glob import glob
 from tempfile import NamedTemporaryFile
@@ -132,41 +134,41 @@ def load_gulps(activityName, auv_file, dbAlias):
     # E.g.: http://dods.mbari.org/data/auvctd/surveys/2010/odv/Dorado389_2010_300_00_300_00_Gulper.txt
     gulperUrl = baseUrl + yyyy + '/odv/' + survey + '_Gulper.txt'
 
-    try:
-        reader = csv.DictReader(urllib2.urlopen(gulperUrl), dialect='excel-tab')
-        logger.debug('Reading gulps from %s', gulperUrl)
-    except urllib2.HTTPError:
-        logger.warn('Failed to find odv-formatted Gulper file: %s.  Skipping GulperLoad.', gulperUrl)
-        return
-
     # Get or create SampleType for Gulper
     (gulper_type, created) = SampleType.objects.using(dbAlias).get_or_create(name=GULPER)
     logger.debug('sampletype %s, created = %s', gulper_type, created)
-    for row in reader:
-        # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
-        try:
-            timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
-        except TypeError as e:
-            logger.error('%s.  Skipping this Sample - you may want to fix the input file', e)
-            continue
-        try:
-            ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
-            point = 'POINT(%s %s)' % (repr(float(row[r'Lon (degrees_east)']) - 360.0), row[r'Lat (degrees_north)'])
-            stuple = Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
-                                                                depth = row[r'DEPTH [m]'],
-                                                                geom = point,
-                                                                instantpoint = ip,
-                                                                sampletype = gulper_type,
-                                                                volume = 1800
-                                                              )
-            rtuple = Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
-                                                                  value = seconds_diff
-                                                                )
+    with closing(requests.get(gulperUrl, stream=True)) as r:
+        if r.status_code != 200:
+            logger.error('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
+            return
 
-            # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
-            logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
-        except ClosestTimeNotFoundException:
-            logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
+        r_decoded = (line.decode('utf-8') for line in r.iter_lines())
+        reader = csv.DictReader(r_decoded, dialect='excel-tab')
+        for row in reader:
+            # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
+            try:
+                timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
+            except TypeError as e:
+                logger.error('%s.  Skipping this Sample - you may want to fix the input file', e)
+                continue
+            try:
+                ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
+                point = 'POINT(%s %s)' % (repr(float(row[r'Lon (degrees_east)']) - 360.0), row[r'Lat (degrees_north)'])
+                stuple = Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
+                                                                    depth = row[r'DEPTH [m]'],
+                                                                    geom = point,
+                                                                    instantpoint = ip,
+                                                                    sampletype = gulper_type,
+                                                                    volume = 1800
+                                                                  )
+                rtuple = Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
+                                                                      value = seconds_diff
+                                                                    )
+
+                # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
+                logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
+            except ClosestTimeNotFoundException:
+                logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
 
 
 class SeabirdLoader(STOQS_Loader):
@@ -339,26 +341,27 @@ class SeabirdLoader(STOQS_Loader):
         for line in fh:
             # Write to tempfile all lines that don't begin with '*' nor '#' then open that with csv.DictReader
             # Concatenate broken lines that begin with 'Position...' and with HH:MM:SS, remove (avg|sdev)
+            line = line.decode('latin-1')
             if not line.startswith('#') and not line.startswith('*'):
                 m = re.match('.+(Sbeox0PS)(Sbeox0Mm)', line.strip())
                 if m:
                     line = re.sub('(?<=)(Sbeox0PS)(Sbeox0Mm)(?=)', lambda m: "%s %s" % (m.group(1), m.group(2)), line)
-                    if _debug: print 'Fixed header: line = ', line
+                    if _debug: logger.debug('Fixed header: line = %s', line)
                 if line.strip() == 'Position        Time':
                     # Append 2nd line of header to first line & write to tmpFile
-                    if _debug: print 'Writing ' + lastLine + line
+                    if _debug: logger.debug('Writing ' + lastLine + line)
                     tmpFH.write(lastLine + line + '\n')
                 m = re.match('\d\d:\d\d:\d\d', line.strip())
                 if m:
                     # Append Time string to last line & write to tmpFile
-                    if _debug: print 'm.group(0) = ', m.group(0)
-                    if _debug: print 'Writing ' + lastLine + m.group(0) + '\n'
+                    if _debug: logger.debug('m.group(0) = %s', m.group(0))
+                    if _debug: logger.debug('Writing ' + lastLine + m.group(0) + '\n')
                     tmpFH.write(lastLine + ' ' + m.group(0) + '\n')
                 m = re.match('.+[A-Z][a-z][a-z] \d\d \d\d\d\d', line.strip())
                 if m:
                     # Replace spaces with dashes in the date field
                     line = re.sub('(?<= )([A-Z][a-z][a-z]) (\d\d) (\d\d\d\d)(?= )', lambda m: "%s-%s-%s" % (m.group(1), m.group(2), m.group(3)), line)
-                    if _debug: print 'Spaces to dashes: line = ', line
+                    if _debug: logger.debug('Spaces to dashes: line = %s', line)
 
                 lastLine = line.rstrip()      # Save line without terminating linefeed
 
@@ -400,7 +403,7 @@ class SeabirdLoader(STOQS_Loader):
 
         parmDict = self.buildParmDict()
         logger.debug('Calling addParameters for parmDict = %s', parmDict)
-        self.include_names = parmDict.keys()
+        self.include_names = list(parmDict.keys())
         self.addParameters(parmDict)
 
         for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
@@ -412,7 +415,7 @@ class SeabirdLoader(STOQS_Loader):
             logger.debug('r = %s', r)
             # Load data 
             parmNameValues = []
-            for name in parmDict.keys():
+            for name in list(parmDict.keys()):
                 logger.debug('name = %s, parmDict[name].attributes = %s', name, parmDict[name].attributes)
                 try:
                     parmNameValues.append((name, float(r[parmDict[name].attributes['colname']])))
@@ -475,9 +478,9 @@ class SeabirdLoader(STOQS_Loader):
             # Read files from the network - use BeautifulSoup to parse TDS's html response
             webBtlDir = self.tdsBase + 'catalog/' + self.pctdDir + 'catalog.html'
             logger.debug('Opening url to %s', webBtlDir)
-            soup = BeautifulSoup(urllib2.urlopen(webBtlDir).read())
+            soup = BeautifulSoup(urlopen(webBtlDir).read(), 'lxml')
             linkList = soup.find_all('a')
-            linkList.sort(reverse=True)
+            sorted(linkList, key=lambda elem: elem.text)
             for link in linkList:
                 bfile = link.get('href')
                 if bfile.endswith('.btl'):
@@ -493,7 +496,7 @@ class SeabirdLoader(STOQS_Loader):
     
                     self.activityName = bfile.split('/')[-1].split('.')[-2] 
                     year, lat, lon = get_year_lat_lon(hdrUrl = hdrUrl)
-                    btlFH = urllib2.urlopen(btlUrl).read().splitlines()
+                    btlFH = urlopen(btlUrl).read().splitlines()
                     try:
                         self.process_btl_file(btlFH, year, lat, lon)
                     except SingleActivityNotFound:
@@ -657,8 +660,8 @@ class SubSamplesLoader(STOQS_Loader):
         subCount = 0
         p = None
         loadedParentSamples = []
-        parameterCount = {}
-        for r in csv.DictReader(open(fileName)):
+        self.parameter_counts = {}
+        for r in csv.DictReader(open(fileName, encoding='latin-1')):
             logger.debug(r)
             aName = r['Cruise']
 
@@ -730,9 +733,9 @@ class SubSamplesLoader(STOQS_Loader):
                 else:
                     subCount = subCount + 1
                     try:
-                        parameterCount[p] += 1
+                        self.parameter_counts[p] += 1
                     except KeyError:
-                        parameterCount[p] = 0
+                        self.parameter_counts[p] = 0
 
                     loadedParentSamples.append(parentSample)
    
@@ -740,10 +743,10 @@ class SubSamplesLoader(STOQS_Loader):
             # Last logger info message and finish up the loading for this file
             logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
 
-            self.assignParameterGroup(parameterCount, groupName=SAMPLED)
-            self.postProcess(parameterCount)
+            self.assignParameterGroup(groupName=SAMPLED)
+            self.postProcess()
 
-    def postProcess(self, parameterCount):
+    def postProcess(self):
         '''
         Perform step(s) following subsample loads, namely inserting/updating records in the ActivityParameter
         table.  The updateActivityParameterStats() method in STOQS_Loader expects a hash of parameters
@@ -753,7 +756,7 @@ class SubSamplesLoader(STOQS_Loader):
             a_id = row['sample__instantpoint__activity__pk']
             logger.debug('a_id = %d', a_id)
             self.activity = Activity.objects.using(self.dbAlias).get(pk=a_id)
-            self.updateActivityParameterStats(parameterCount, sampledFlag=True)
+            self.updateActivityParameterStats(sampledFlag=True)
 
 
 if __name__ == '__main__':

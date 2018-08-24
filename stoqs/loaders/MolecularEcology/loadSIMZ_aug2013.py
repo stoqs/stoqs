@@ -26,11 +26,12 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 
 
 from CANON import CANONLoader
+import timing
 
 cl = CANONLoader('stoqs_simz_aug2013', 'Sampling and Identification of Marine Zooplankton - August 2013',
                     description = 'Rachel Carson and Dorado surveys in Northern Monterey Bay',
                     x3dTerrains = {
-                            '/static/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                            'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                 'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                 'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                 'centerOfRotation': '-2711557.94 -4331414.32 3801353.46',
@@ -110,11 +111,13 @@ cl.subsample_csv_files = [
                             'SIMZ_2013_PPump_STOQS_tidy_v2.csv',
                          ]
 
-# Produce parent samples file with:
-# cd loaders/MolecularEcology/SIMZAug2013
-# ../../../nettow.py --database stoqs_simz_aug2013 --subsampleFile 2013_SIMZ_TowNets_STOQS.csv --csvFile 2013_SIMZ_TowNet_ParentSamples.csv -v
+# Produce parent samples file with (will need to 'mkdir stoqs/loaders/MolecularEcology/SIMZAug2013' on a fresh system):
+# cd stoqs/loaders/MolecularEcology/SIMZAug2013
+# gunzip 2013_SIMZ_TowNets_STOQS.csv.gz
+# ../../nettow.py --database stoqs_simz_aug2013 --subsampleFile 2013_SIMZ_TowNets_STOQS.csv --csvFile 2013_SIMZ_TowNet_ParentSamples.csv -v
 cl.parent_nettow_file = '2013_SIMZ_TowNet_ParentSamples.csv'
-# ../../../planktonpump.py --database stoqs_simz_aug2013 --subsampleFile SIMZ_2013_PPump_STOQS_tidy_v2.csv --csvFile 2013_SIMZ_PlanktonPump_ParentSamples.csv -v
+# gunzip SIMZ_2013_PPump_STOQS_tidy_v2.csv.gz
+# ../../planktonpump.py --database stoqs_simz_aug2013 --subsampleFile SIMZ_2013_PPump_STOQS_tidy_v2.csv --csv_file 2013_SIMZ_PlanktonPump_ParentSamples.csv -v
 cl.parent_planktonpump_file = '2013_SIMZ_PlanktonPump_ParentSamples.csv'
 
 
@@ -155,5 +158,5 @@ else:
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
-print "All Done."
+print("All Done.")
 

@@ -13,7 +13,7 @@ View functions to supoprt the main query web page
 '''
 
 from tools.colormaps import cmaps
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
 from django.conf import settings
@@ -27,11 +27,12 @@ from utils import encoders
 import json
 import pprint
 import csv
-
+import random
+import string
 
 import logging 
-from wms import ActivityView
-from tempfile import NamedTemporaryFile
+from .wms import ActivityView
+from os import path
 from utils.MPQuery import MPQuerySet
 
 logger = logging.getLogger(__name__)
@@ -101,11 +102,11 @@ def _buildMapFile(request, qm, options):
         return
 
     # 'mappath' should be in the session from the call to queryUI() set it here in case it's not set by queryUI() 
-    if request.session.has_key('mappath'):
-        logger.info("Reusing request.session['mappath'] = %s", request.session['mappath'])
+    if 'mappath' in request.session:
+        logger.debug("Reusing request.session['mappath'] = %s", request.session['mappath'])
     else:
-        request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name
-        logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
+        request.session['mappath'] = __name__ + '_' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) + '.map'
+        logger.debug("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
     # A rudimentary class of items for passing a list of them to the activity.map template
     class Item(object):
@@ -116,7 +117,7 @@ def _buildMapFile(request, qm, options):
     item_list = []      # Replicates queryset from an Activity query (needs name & id) with added geo_query & color attrbutes
 
     trajectory_union_layer_string = ''
-    for plats in json.loads(options)['platforms'].values():
+    for plats in list(json.loads(options)['platforms'].values()):
         for p in plats:
             # TODO: Test whether it's a point or track for trajectoryprofile data
             if p[3].lower() != 'trajectory':
@@ -132,7 +133,7 @@ def _buildMapFile(request, qm, options):
             item_list.append(item)
 
     station_union_layer_string = ''
-    for plats in json.loads(options)['platforms'].values():
+    for plats in list(json.loads(options)['platforms'].values()):
         for p in plats:
             # First trajectoryprofile dataset is IMOS-EAC in which the trajectory is just variation in depth, so plot as a station
             # TODO: Test whether it's a point or track for trajectoryprofile data
@@ -176,7 +177,7 @@ def queryData(request, fmt=None):
     '''
     response = HttpResponse()
     params = {}
-    for key, value in query_parms.iteritems():
+    for key, value in list(query_parms.items()):
         if type(value) in (list, tuple):
             params[key] = [request.GET.get(p, None) for p in value]
         else:
@@ -184,7 +185,7 @@ def queryData(request, fmt=None):
 
     # Look for any parameter _MIN & _MAX input from the UI.  After retrieving the above query_parms the
     # only thing left in the request QueryDict should be the parameter _MIN _MAX selections.
-    for key, value in request.GET.iteritems():
+    for key, value in list(request.GET.items()):
         if key.endswith('_MIN'):                    # Just test for _MIN; UI will always provide _MIN & _MAX
             name = key.split('_MIN')[0]
             try:
@@ -209,9 +210,7 @@ def queryData(request, fmt=None):
         logger.error(str(e))
         return HttpResponseBadRequest('Bad request: Database "' + request.META['dbAlias'] + '" Does Not Exist')
     try:
-        options = json.dumps(qm.generateOptions(),
-                                   cls=encoders.STOQSJSONEncoder)
-                                   # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
+        options = json.dumps(qm.generateOptions(), cls=encoders.STOQSJSONEncoder)
     except ConnectionDoesNotExist as e:
         logger.warn(e)
         return HttpResponseNotFound('The database alias <b>%s</b> does not exist on this server.' % dbAlias)
@@ -237,7 +236,7 @@ def queryMap(request):
     '''
     response = HttpResponse()
     params = {}
-    for key, value in query_parms.iteritems():
+    for key, value in list(query_parms.items()):
         if type(value) in (list, tuple):
             params[key] = [request.GET.get(p, None) for p in value]
         else:
@@ -260,17 +259,17 @@ def queryMap(request):
 
     return response
 
-# Do not cache this "view", otherwise the incrorrect mappath is used
+# Do not cache this "view", otherwise the incorrect url_mappath is used
 def queryUI(request):
     '''
     Build and return main query web page
     '''
 
     ##request.session.flush()
-    if request.session.has_key('mappath'):
+    if 'mappath' in request.session:
         logger.debug("Reusing request.session['mappath'] = %s", request.session['mappath'])
     else:
-        request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name
+        request.session['mappath'] = __name__ + '_' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) + '.map'
         logger.debug("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
     # Use list of tuples to preserve order
@@ -282,11 +281,13 @@ def queryUI(request):
              ('tsv', 'Tabbed Separated Values', ),
              ('html', 'Hyper Text Markup Language table', ),
             ]
+
     config_settings = {'site_uri': request.build_absolute_uri('/')[:-1],
                        'formats': formats,
                        'colormaps': cmaps,
+                       'mapserver_scheme': settings.MAPSERVER_SCHEME,
                        'mapserver_host': settings.MAPSERVER_HOST,
-                       'mappath': request.session['mappath'],
+                       'mappath': path.join(settings.URL_MAPFILE_DIR, request.session['mappath']),
                        'home_page_link': settings.HOME_PAGE_LINK,
                        'home_page_logo': settings.HOME_PAGE_LOGO,
                        'home_page_alt': settings.HOME_PAGE_ALT,
@@ -296,5 +297,5 @@ def queryUI(request):
     except AttributeError:
         pass
 
-    return render_to_response('stoqsquery.html', config_settings,
-                              context_instance=RequestContext(request))
+    return render(request, 'stoqsquery.html', context=config_settings)
+

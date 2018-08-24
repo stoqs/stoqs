@@ -12,7 +12,7 @@ Support Classes and methods for mapserver mapfile generation for stoqs views.
 @license: GPL
 '''
 
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.conf import settings 
 from django.http import HttpResponse
@@ -21,9 +21,8 @@ from datetime import datetime
 import stoqs.models as mod
 import logging 
 import os
-from random import randint
+import random
 import tempfile
-from tempfile import NamedTemporaryFile
 from utils.utils import addAttributeToListItems
 
 logger = logging.getLogger(__name__)
@@ -68,7 +67,8 @@ class ActivityView(object):
         self.itemList = itemList 
         self.trajectory_union_layer_string = trajectory_union_layer_string
         self.station_union_layer_string = station_union_layer_string
-        self.mappath = self.request.session['mappath']
+        self.file_mappath = os.path.join(settings.MAPFILE_DIR, self.request.session['mappath'])
+        self.url_mappath = os.path.join(settings.URL_MAPFILE_DIR, self.request.session['mappath'])
     
         if settings.LOGGING['loggers']['stoqs']['level'] == 'DEBUG':
             self.map_debug_level = 5             # Mapserver debug level: [off|on|0|1|2|3|4|5]
@@ -83,12 +83,12 @@ class ActivityView(object):
         '''
         filename, ext = os.path.splitext(template)
         if 'mappath' in self.request.session:
-            logger.info("Reusing request.session['mappath'] = %s", self.request.session['mappath'])
+            logger.debug("Reusing request.session['mappath'] = %s", self.request.session['mappath'])
         else:
-            self.request.session['mappath'] =  tempfile.NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=filename + '_' , suffix=ext).name
-            logger.info("Setting new request.session['mappath'] = %s", self.request.session['mappath'])
+            self.request.session['mappath'] = __name__ + '_' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) + '.map'
+            logger.debug("Setting new request.session['mappath'] = %s", self.request.session['mappath'])
 
-        # mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
+        # mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<url_mappath>' works
         # With Apache RewriteBase rule this pattern also works for cleaner URLs:
         # Allow WMS requests to any file in /dev/shm by providing a URL like /wms/ADFASDFASDF (where /dev/shm/ADFASDFASDF.map is the name of the mapfile)
         # this means that the "?map=" need not be provided as part of the URL
@@ -101,7 +101,7 @@ class ActivityView(object):
 
         ##import pprint
         ##logger.debug(pprint.pformat(settings.DATABASES[self.request.META['dbAlias']]))
-        response = render_to_response(template, {'mapserver_host': settings.MAPSERVER_HOST,
+        response = render(self.request, template, context={'mapserver_host': settings.MAPSERVER_HOST,
                             'list': self.itemList,
                             'trajectory_union_layer_string': self.trajectory_union_layer_string,
                             'station_union_layer_string': self.station_union_layer_string,
@@ -109,23 +109,23 @@ class ActivityView(object):
                             'map_debug_level': self.map_debug_level,
                             'layer_debug_level': self.layer_debug_level,
                             'copyright_string': 'MBARI %d' % datetime.today().year,
-                            'dbconn': settings.DATABASES[self.request.META['dbAlias']],
-                            'mappath': self.mappath,
+                            'dbconn': settings.MAPSERVER_DATABASES[self.request.META['dbAlias']],
+                            'mappath': self.url_mappath,
                             'imagepath': settings.MAPFILE_DIR,
-                            'STATIC_ROOT': settings.STATIC_ROOT},
-                            context_instance = RequestContext(self.request))
+                            'STATIC_ROOT': settings.STATIC_ROOT})
 
         try:
-            fh = open(self.mappath, 'w')    
+            fh = open(self.file_mappath, 'w')    
         except IOError:
             # In case of accessed denied error, create a new mappath and store it in the session, and open that
-            self.request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name
-            self.mappath = self.request.session['mappath']
-            fh = open(self.mappath, 'w')
+            self.request.session['mappath'] = __name__ + '_' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) + '.map'
+            self.file_mappath = os.path.join(settings.MAPFILE_DIR, self.request.session['mappath'])
+            self.url_mappath = os.path.join(settings.URL_MAPFILE_DIR, self.request.session['mappath'])
+            fh = open(self.file_mappath, 'w')
                 
         for line in response:
-            ##logger.debug(line)
-            fh.write(line) 
+            ##logger.info(line.decode("utf-8"))
+            fh.write(line.decode("utf-8"))
 
     def getColorOfItem(self, item):
         '''Return color given name of item.  Returns value saved in class dictionary otherwise create new random color, save, and return it. 
@@ -135,9 +135,9 @@ class ActivityView(object):
         if item.id not in self.itemColor_dict:
             logger.debug("Creating a random color for item with id = %d", item.id)
             c = Color()
-            c.r = randint(100, 255)
-            c.g = randint(100, 255)
-            c.b = randint(50, 150)
+            c.r = random.randint(100, 255)
+            c.g = random.randint(100, 255)
+            c.b = random.randint(50, 150)
             self.itemColor_dict[item.id] = c
         else:
             logger.debug("Returing saved color for item with id = %d", item.id)
@@ -171,11 +171,11 @@ class ActivityView(object):
 
         logger.debug("Building web page from pointing to mapserver at %s", settings.MAPSERVER_HOST)
     
-        return render_to_response(webPageTemplate, {'mapserver_host': settings.MAPSERVER_HOST, 
+        return render(self.request, webPageTemplate, context=
+                                   {'mapserver_host': settings.MAPSERVER_HOST, 
                                     'list': self.itemList,
                                     'dbAlias': self.request.META['dbAlias'],
-                                    'mappath': self.mappath},
-                            context_instance=RequestContext(self.request))
+                                    'mappath': self.url_mappath})
 
 # Addressed pylint issues in December 2015, but realized that the functions
 # below never got fully implemented and are candidates for removal.

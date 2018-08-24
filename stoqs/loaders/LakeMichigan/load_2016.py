@@ -22,8 +22,8 @@ import sys
 import datetime  # needed for glider data
 import time      # for startdate, enddate args
 import csv
-import urllib2
-import urlparse
+import urllib.request, urllib.error, urllib.parse
+import urllib.parse
 import requests
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
@@ -33,11 +33,12 @@ from LakeMichigan import LakeMILoader
 from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
+import timing
 
 cl = LakeMILoader('stoqs_michigan2016', 'Lake Michigan LRAUV Experiment 2016',
                     description = 'LRAUV 2016 Experiment in Lake Michigan',
                     x3dTerrains = {
-                                    'http://stoqs.mbari.org/x3d/michigan_lld_10x/michigan_lld_10x_src_scene.x3d': {
+                                    'https://stoqs.mbari.org/x3d/michigan_lld_10x/michigan_lld_10x_src_scene.x3d': {
                                         'position': '277414.36721 -5207201.16684 4373105.96194',
                                         'orientation': '0.99821 -0.05662 0.01901 1.48579',
                                         'centerOfRotation': '281401.0288298179 -4639090.577582279 4354217.4974804',
@@ -65,12 +66,12 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 def find_urls(base, search_str):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
-    print "Crawling: %s" % url
+    print(("Crawling: %s" % url))
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
-    u = urlparse.urlsplit(url)
+    u = urllib.parse.urlsplit(url)
     name, ext = os.path.splitext(u.path)
     if ext == ".html":
-        u = urlparse.urlsplit(url.replace(".html", ".xml"))
+        u = urllib.parse.urlsplit(url.replace(".html", ".xml"))
     url = u.geturl()
     urls = []
     # Get an etree object
@@ -91,18 +92,18 @@ def find_urls(base, search_str):
                 # if within a valid range, grab the valid urls
                 if dir_start >= startdate and dir_end <= enddate:
 
-                    print 'Found mission directory ' + dts[0]
-                    print 'Searching if within range %s and %s  %s %s' % (startdate, enddate, dir_start, dir_end)
+                    print(('Found mission directory ' + dts[0]))
+                    print(('Searching if within range %s and %s  %s %s' % (startdate, enddate, dir_start, dir_end)))
                     catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                     c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
                     d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
                     for url in d:
                         urls.append(url)
             except Exception as ex:
-                print "Error reading mission directory name %s" % ex
+                print(("Error reading mission directory name %s" % ex))
 
     except BaseException:
-        print "Skipping %s (error parsing the XML)" % url
+        print(("Skipping %s (error parsing the XML)" % url))
 
     if not urls:
         raise FileNotFound('No urls matching "{}" found in {}'.format(search_str, os.path.join(base, 'catalog.html')))
@@ -156,6 +157,6 @@ else:
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
-print "All Done."
+print("All Done.")
 
 

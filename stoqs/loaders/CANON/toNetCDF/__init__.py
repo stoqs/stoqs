@@ -25,7 +25,7 @@ import sys
 import csv
 import time
 import coards
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import datetime
 import numpy as np
 from pupynere import netcdf_file
@@ -134,5 +134,5 @@ if __name__ == '__main__':
 
     bw = BaseWriter()
     bw.process_command_line()
-    print bw.args
+    print((bw.args))
 

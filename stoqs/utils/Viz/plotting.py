@@ -27,7 +27,6 @@ from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL, X3D_MODEL_SCALE
 import seawater.eos80 as sw
 import numpy as np
 from numpy import polyfit
-from itertools import izip
 import logging
 import string
 import random
@@ -169,7 +168,7 @@ class BaseParameter(object):
                                             orientation='horizontal')
             try:
                 cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(parm_info[0]))
-            except ValueError:
+            except (ValueError, models.Parameter.DoesNotExist):
                 # Likely a coordinate variable
                 cp = models.Parameter
                 cp.name = parm_info[0]
@@ -180,35 +179,8 @@ class BaseParameter(object):
             cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
             plt.close()
 
-        elif orientation == 'vertical':
-            # TODO: Harmonize with horizontal version if this is to be used
-            cb_fig = plt.figure(figsize=(0.6, 4))
-            cb_ax = cb_fig.add_axes([0.1, 0.1, 0.15, 0.8])
-            norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
-            cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=colormap,
-                                            norm=norm,
-                                            ticks=list(np.linspace(parm_info[1], parm_info[2], num=4)),
-                                            orientation='vertical')
-            cb.ax.set_yticklabels([str(parm_info[1]), str(parm_info[2])])
-            logger.debug('Getting units for parm_info[0] = %s', parm_info[0])
-            try:
-                cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(parm_info[0]))
-            except ValueError:
-                # Likely a coordinate variable
-                cp = models.Parameter
-                cp.name = parm_info[0]
-                cp.standard_name = parm_info[0]
-                cp.units = _getCoordUnits(parm_info[0])
-
-            cb.set_label('%s (%s)' % (cp.name, cp.units), fontsize=10)
-            for label in cb.ax.get_yticklabels():
-                label.set_fontsize(10)
-                label.set_rotation('vertical')
-            cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
-            plt.close()
-
         else:
-            raise Exception('orientation must be either horizontal or vertical')
+            raise Exception("Only 'horizontal' orientation is supported")
 
 
 class MeasuredParameter(BaseParameter):
@@ -291,7 +263,7 @@ class MeasuredParameter(BaseParameter):
             self.z.append(mp['datavalue'])
             self.value_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(float(mp['datavalue']))
 
-            if 'sample__geom' in mp.keys():
+            if 'sample__geom' in list(mp.keys()):
                 self.lon.append(mp['sample__geom'].x)
                 self.lon_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(mp['sample__geom'].x)
                 self.lat.append(mp['sample__geom'].y)
@@ -320,7 +292,7 @@ class MeasuredParameter(BaseParameter):
                 self.zspan.append(float(mp['datavalue']))
                 self.value_by_act_span.setdefault(mp['sample__instantpoint__activity__name'], []).append(float(mp['datavalue']))
 
-                if 'sample__geom' in mp.keys():
+                if 'sample__geom' in list(mp.keys()):
                     # Implemented for VERTICALNETTOW data where start and end geom are identical
                     self.lonspan.append((mp['sample__geom'].x, mp['sample__geom'].x))
                     self.lon_by_act_span.setdefault(mp['sample__instantpoint__activity__name'], []).append(
@@ -342,7 +314,7 @@ class MeasuredParameter(BaseParameter):
             self.z.append(mp['datavalue'])
             self.value_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
         
-            if 'measurement__geom' in mp.keys():
+            if 'measurement__geom' in list(mp.keys()):
                 self.lon.append(mp['measurement__geom'].x)
                 self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
                 self.lat.append(mp['measurement__geom'].y)
@@ -664,13 +636,13 @@ class MeasuredParameter(BaseParameter):
                     # Sample markers for everything but Net Tows
                     xsamp, ysamp, sname = self._get_samples_for_markers(exclude_act_name=NETTOW)
                     ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
-                    for x,y,sn in izip(xsamp, ysamp, sname):
+                    for x,y,sn in zip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
                     # Annotate NetTow Samples at Sample record location - points
                     xsamp, ysamp, sname = self._get_samples_for_markers(act_name=NETTOW)
                     ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
-                    for x,y,sn in izip(xsamp, ysamp, sname):
+                    for x,y,sn in zip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
                     # Sample markers for Vertical Net Tows (put circle at surface) - lines
@@ -724,9 +696,9 @@ class MeasuredParameter(BaseParameter):
             colors = ''
             indices = ''
             index = 0
-            for act in self.value_by_act.keys():
+            for act in list(self.value_by_act.keys()):
                 self.logger.debug('Reading data from act = %s', act)
-                for lon,lat,depth,value in izip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
+                for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
                     points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
                     try:
                         cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
@@ -752,9 +724,9 @@ class MeasuredParameter(BaseParameter):
                 indices = indices + '-1 ' 
 
             # Make pairs of points for spanned NetTow-like data
-            for act in self.value_by_act_span.keys():
+            for act in list(self.value_by_act_span.keys()):
                 self.logger.debug('Reading data from act = %s', act)
-                for lons, lats, depths, value in izip(self.lon_by_act_span[act], 
+                for lons, lats, depths, value in zip(self.lon_by_act_span[act], 
                                                       self.lat_by_act_span[act], 
                                                       self.depth_by_act_span[act], 
                                                       self.value_by_act_span[act]):
@@ -1052,7 +1024,7 @@ class ParameterParameter(BaseParameter):
             # Make the figure
             fig = plt.figure()
             plt.grid(True)
-            ax = fig.add_subplot(111)
+            ax = plt.gca()
             if not ppfrFlag:
                 ax.set_xlim(self.pMinMax['x'][1], self.pMinMax['x'][2])
                 ax.set_ylim(self.pMinMax['y'][1], self.pMinMax['y'][2])
@@ -1162,7 +1134,7 @@ class ParameterParameter(BaseParameter):
             try:
                 self.logger.debug('Saving to file ppPngFileFullPath = %s', ppPngFileFullPath)
                 fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
-            except Exception, e:
+            except Exception as e:
                 infoText = 'Parameter-Parameter: ' + str(e)
                 self.logger.exception('Cannot make 2D parameterparameter plot: %s', e)
                 plt.close()
@@ -1211,7 +1183,7 @@ class ParameterParameter(BaseParameter):
 
                 points = ''
                 colors = ''
-                for x,y,z in izip(self.x, self.y, self.z):
+                for x,y,z in zip(self.x, self.y, self.z):
                     # Scale to 10000 on each axis, bounded by min/max values - must be 10000 as X3D in stoqs/templates/stoqsquery.html is hard-coded with 10000
                     # This gives us enough resolution for modern displays and eliminates decimal point characters
                     xs = 10000 * (x - float(self.pMinMax['x'][1])) / (float(self.pMinMax['x'][2]) - float(self.pMinMax['x'][1])) 

@@ -9,7 +9,7 @@ Mike McCann
 MBARI 17 March 2012
 '''
 
-from __future__ import unicode_literals
+
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.utils.encoding import python_2_unicode_compatible
@@ -32,7 +32,7 @@ class UUIDField(models.CharField) :
         if add:
             value=getattr(model_instance,self.attname)
             if not value:
-                value = unicode(uuid.uuid4()).replace('-','')
+                value = str(uuid.uuid4()).replace('-','')
             setattr(model_instance, self.attname, value)
             return value
         else:
@@ -47,7 +47,6 @@ class ResourceType(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, db_index=True, unique=True)
     description = models.CharField(max_length=256, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         app_label = 'stoqs'
     def __str__(self):
@@ -65,8 +64,7 @@ class Resource(models.Model):
     name = models.CharField(max_length=128, null=True)
     value = models.TextField(null=True)
     uristring = models.CharField(max_length=256, null=True)
-    resourcetype = models.ForeignKey(ResourceType, blank=True, null=True)
-    objects = models.GeoManager()
+    resourcetype = models.ForeignKey(ResourceType, on_delete=models.CASCADE, blank=True, null=True)
     class Meta(object):
         verbose_name = 'Resource'
         verbose_name_plural = 'Resources'
@@ -86,7 +84,6 @@ class Campaign(models.Model):
     startdate = models.DateTimeField(null=True)
     enddate = models.DateTimeField(null=True)
     description = models.CharField(max_length=4096, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         app_label = 'stoqs'
         verbose_name='Campaign'
@@ -103,14 +100,13 @@ class CampaignLog(models.Model):
     stoqs database the same way measurements are loaded.
     '''
     uuid = UUIDField(editable=False)
-    campaign = models.ForeignKey(Campaign)
-    resource = models.ForeignKey(Resource)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     timevalue = models.DateTimeField(db_index=True)
     message = models.CharField(max_length=2048)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2, blank=True, null=True)
     depth = models.FloatField(blank=True, null=True)
     username = models.CharField(max_length=128, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         app_label = 'stoqs'
         verbose_name='Campaign Log'
@@ -126,7 +122,6 @@ class ActivityType(models.Model):
     '''
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, db_index=True, unique=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Activity Type'
         verbose_name_plural='Activity Types'
@@ -143,7 +138,6 @@ class PlatformType(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, db_index=True, unique=True)
     color = models.CharField(max_length=8, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         app_label = 'stoqs'
     def __str__(self):
@@ -157,9 +151,8 @@ class Platform(models.Model):
     '''
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128)
-    platformtype = models.ForeignKey(PlatformType) 
+    platformtype = models.ForeignKey(PlatformType, on_delete=models.CASCADE) 
     color = models.CharField(max_length=8, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'Platform'
         verbose_name_plural = 'Platforms'
@@ -176,8 +169,8 @@ class Activity(models.Model):
     20110415_20110418/20110418T192351/slate.nc (stride=10), 27710_jhmudas_v1.nc (stride=1).
     '''
     uuid = UUIDField(editable=False)
-    campaign = models.ForeignKey(Campaign, blank=True, null=True) 
-    platform = models.ForeignKey(Platform) 
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, blank=True, null=True) 
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE) 
     name = models.CharField(max_length=256)
     comment = models.TextField(max_length=2048)
     startdate = models.DateTimeField()
@@ -191,8 +184,7 @@ class Activity(models.Model):
     mappoint = models.PointField(srid=4326, spatial_index=True, dim=2, blank=True, null=True)
     mindepth = models.FloatField(null=True)
     maxdepth = models.FloatField(null=True)
-    activitytype = models.ForeignKey(ActivityType, blank=True, null=True, default=None) 
-    objects = models.GeoManager()
+    activitytype = models.ForeignKey(ActivityType, on_delete=models.CASCADE, blank=True, null=True, default=None) 
     class Meta(object):
         verbose_name='Activity'
         verbose_name_plural='Activities'
@@ -211,11 +203,11 @@ class InstantPoint(models.Model):
     times and depths can then be retrieved from fields of the Activity record. If the integrative measurement 
     or sample is from a non-linear longitude/latitude path then that can be stored in the maptrack field.
     '''
-    activity = models.ForeignKey(Activity) 
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE) 
     timevalue = models.DateTimeField(db_index=True)
-    objects = models.GeoManager()
     class Meta(object):
         app_label = 'stoqs'
+        unique_together = ('activity', 'timevalue')
     def __str__(self):
         return "%s" % (self.timevalue,)
 
@@ -228,10 +220,9 @@ class NominalLocation(models.Model):
     for example, a mooring time series with nominal latitude, longitude and nominal depths of subsurface
     instruments.  It has a many to one relationship with Activity.
     '''
-    activity = models.ForeignKey(Activity) 
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE) 
     depth= models.FloatField(db_index=True)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'NominalLocation'
         verbose_name_plural = 'NominalLocations'
@@ -244,12 +235,11 @@ class SimpleDepthTime(models.Model):
     '''
     A simplified time series of depth values for an Activity useful for plotting in the UI
     '''
-    activity = models.ForeignKey(Activity) 
-    nominallocation = models.ForeignKey(NominalLocation, null=True) 
-    instantpoint = models.ForeignKey(InstantPoint)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE) 
+    nominallocation = models.ForeignKey(NominalLocation, on_delete=models.CASCADE, null=True) 
+    instantpoint = models.ForeignKey(InstantPoint, on_delete=models.CASCADE)
     epochmilliseconds = models.FloatField()
     depth= models.FloatField()
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Simple depth time series'
         verbose_name_plural='Simple depth time series'
@@ -260,12 +250,11 @@ class SimpleBottomDepthTime(models.Model):
     '''
     A simplified time series of bottom depth values for an Activity useful for plotting in the UI
     '''
-    activity = models.ForeignKey(Activity) 
-    nominallocation = models.ForeignKey(NominalLocation, null=True) 
-    instantpoint = models.ForeignKey(InstantPoint)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE) 
+    nominallocation = models.ForeignKey(NominalLocation, on_delete=models.CASCADE, null=True) 
+    instantpoint = models.ForeignKey(InstantPoint, on_delete=models.CASCADE)
     epochmilliseconds = models.FloatField()
     bottomdepth= models.FloatField()
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Simple bottom depth time series'
         verbose_name_plural='Simple bottom depth time series'
@@ -276,10 +265,9 @@ class PlannedDepthTime(models.Model):
     '''
     A simplified time series of depth values for an Activity useful for plotting in the UI
     '''
-    activity = models.ForeignKey(Activity) 
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE) 
     epochmilliseconds = models.FloatField()
     depth= models.FloatField()
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Planned depth time series'
         verbose_name_plural='Planned depth time series'
@@ -304,7 +292,6 @@ class Parameter(models.Model):
     units = models.CharField(max_length=128, blank=True, null=True)
     origin = models.CharField(max_length=256, blank=True, null=True)
     domain = ArrayField(models.FloatField(), null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'Parameter'
         verbose_name_plural = 'Parameters'
@@ -323,7 +310,6 @@ class ParameterGroup(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, unique=True)
     description= models.CharField(max_length=128, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'ParameterGroup'
         verbose_name_plural = 'ParameterGroups'
@@ -337,8 +323,8 @@ class ParameterGroupParameter(models.Model):
     Association table pairing ParamterGroup and Parameter
     '''
     uuid = UUIDField(editable=False)
-    parametergroup = models.ForeignKey(ParameterGroup)
-    parameter = models.ForeignKey(Parameter)
+    parametergroup = models.ForeignKey(ParameterGroup, on_delete=models.CASCADE)
+    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE)
     class Meta(object):
         verbose_name = 'ParameterGroup Parameter'
         verbose_name_plural = 'ParameterGroup Parameter'
@@ -348,11 +334,11 @@ class ParameterGroupParameter(models.Model):
 
 class CampaignResource(models.Model):
     '''
-    Association class pairing Campaigns and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing Campaigns and Resources.  Must use explicit many-to-many.
     '''
     uuid = UUIDField(editable=False)
-    campaign = models.ForeignKey(Campaign)
-    resource = models.ForeignKey(Resource)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     class Meta(object):
         verbose_name = 'Campaign Resource'
         verbose_name_plural = 'Campaign Resource'
@@ -364,11 +350,11 @@ class CampaignResource(models.Model):
 
 class ActivityResource(models.Model):
     '''
-    Association class pairing Activities and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing Activities and Resources.  Must use explicit many-to-many.
     '''
     uuid = UUIDField(editable=False)
-    activity = models.ForeignKey(Activity)
-    resource = models.ForeignKey(Resource)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     class Meta(object):
         verbose_name = 'Activity Resource'
         verbose_name_plural = 'Activity Resource'
@@ -378,11 +364,11 @@ class ActivityResource(models.Model):
 
 class ParameterResource(models.Model):
     '''
-    Association class pairing Parameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing Parameters and Resources.  Must use explicit many-to-many.
     '''
     uuid = UUIDField(editable=False)
-    parameter = models.ForeignKey(Parameter)
-    resource = models.ForeignKey(Resource)
+    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     class Meta(object):
         verbose_name = 'Parameter Resource'
         verbose_name_plural = 'Parameter Resource'
@@ -397,18 +383,18 @@ class Measurement(models.Model):
     (represented by the @geom field), it may also have a nominal location with is represented in a related table.
     It is  associated with an InstantPoint and and a MeasuredParameter (where the measured datavalue is stored).
     '''
-    instantpoint = models.ForeignKey(InstantPoint)
-    nominallocation = models.ForeignKey(NominalLocation, null=True)
+    instantpoint = models.ForeignKey(InstantPoint, on_delete=models.CASCADE)
+    nominallocation = models.ForeignKey(NominalLocation, on_delete=models.CASCADE, null=True)
     depth= models.FloatField(db_index=True)
     bottomdepth= models.FloatField(db_index=True, null=True)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'Measurement'
         verbose_name_plural = 'Measurements'
+        unique_together = ('instantpoint', 'depth', 'geom')
         app_label = 'stoqs'
     def __str__(self):
-        return "Measurement at %s" % (self.geom,)
+        return "Measurement at %s, %s" % (self.geom, self.depth)
 
 
 @python_2_unicode_compatible
@@ -418,7 +404,6 @@ class SampleType(models.Model):
     '''
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, db_index=True, unique=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Sample Type'
         verbose_name_plural='Sample Types'
@@ -435,7 +420,6 @@ class SamplePurpose(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, unique=True)
     description = models.CharField(max_length=1024)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Sample Purpose'
         verbose_name_plural='Sample Purposes'
@@ -452,7 +436,6 @@ class AnalysisMethod(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=256, db_index=True, unique=True)
     uristring = models.CharField(max_length=256, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name='Analysis Method'
         verbose_name_plural='Analysis Methods'
@@ -474,18 +457,17 @@ class Sample(models.Model):
         filterporesize: microns
     '''
     uuid = UUIDField(editable=False)
-    instantpoint = models.ForeignKey(InstantPoint)
+    instantpoint = models.ForeignKey(InstantPoint, on_delete=models.CASCADE)
     depth= models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
     name = models.CharField(max_length=128, db_index=True)
-    sampletype = models.ForeignKey(SampleType, blank=True, null=True, default=None) 
-    samplepurpose = models.ForeignKey(SamplePurpose, blank=True, null=True, default=None) 
+    sampletype = models.ForeignKey(SampleType, on_delete=models.CASCADE, blank=True, null=True, default=None) 
+    samplepurpose = models.ForeignKey(SamplePurpose, on_delete=models.CASCADE, blank=True, null=True, default=None) 
     volume = models.FloatField(blank=True, null=True)
     filterdiameter = models.FloatField(blank=True, null=True)
     filterporesize = models.FloatField(blank=True, null=True)
     laboratory = models.CharField(max_length=128, blank=True, null=True)
     researcher = models.CharField(max_length=128, blank=True, null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'Sample'
         verbose_name_plural = 'Samples'
@@ -499,8 +481,8 @@ class SampleRelationship(models.Model):
     Association class pairing Samples and Samples for many-to-many parent/child relationships.
     '''
     uuid = UUIDField(editable=False)
-    parent = models.ForeignKey(Sample, related_name='child')
-    child = models.ForeignKey(Sample, related_name='parent')
+    parent = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='child')
+    child = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='parent')
     class Meta(object):
         verbose_name = 'Sample Relationship'
         verbose_name_plural = 'Sample Relationships'
@@ -510,11 +492,11 @@ class SampleRelationship(models.Model):
 
 class SampleResource(models.Model):
     '''
-    Association class pairing Samples and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing Samples and Resources.  Must use explicit many-to-many.
     '''
     uuid = UUIDField(editable=False)
-    sample = models.ForeignKey(Sample)
-    resource = models.ForeignKey(Resource)
+    sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     class Meta(object):
         verbose_name = 'Sample Resource'
         verbose_name_plural = 'Sample Resource'
@@ -524,11 +506,11 @@ class SampleResource(models.Model):
 
 class PlatformResource(models.Model):
     '''
-    Association class pairing Platforms and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing Platforms and Resources.  Must use explicit many-to-many.
     '''
     uuid = UUIDField(editable=False)
-    platform = models.ForeignKey(Platform)
-    resource = models.ForeignKey(Resource)
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     class Meta(object):
         verbose_name = 'Platform Resource'
         verbose_name_plural = 'Platform Resource'
@@ -541,8 +523,8 @@ class ResourceResource(models.Model):
     Association class pairing Resources and Resources for many-to-many from/to relationships.
     '''
     uuid = UUIDField(editable=False)
-    fromresource = models.ForeignKey(Resource, related_name='toresource')
-    toresource = models.ForeignKey(Resource, related_name='fromresource')
+    fromresource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='toresource')
+    toresource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='fromresource')
     class Meta(object):
         verbose_name = 'Resource Resource'
         verbose_name_plural = 'Resource Resource'
@@ -555,8 +537,8 @@ class ActivityParameter(models.Model):
     Association class pairing Parameters that have been loaded for an Activity
     '''
     uuid = UUIDField(editable=False)
-    activity = models.ForeignKey(Activity)
-    parameter = models.ForeignKey(Parameter)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE)
     # Parameter statistics for the Activity
     number = models.IntegerField(null=True)
     min = models.FloatField(null=True)
@@ -582,7 +564,7 @@ class ActivityParameterHistogram(models.Model):
     Association class pairing Parameters that have been loaded for an Activity
     '''
     uuid = UUIDField(editable=False)
-    activityparameter =  models.ForeignKey(ActivityParameter)
+    activityparameter =  models.ForeignKey(ActivityParameter, on_delete=models.CASCADE)
     binlo = models.FloatField()
     binhi = models.FloatField()
     bincount = models.IntegerField()
@@ -592,11 +574,10 @@ class MeasuredParameter(models.Model):
     '''
     Association class pairing Measurements with Parameters.  This is where the measured values are stored -- in the datavalue field.
     '''
-    measurement = models.ForeignKey(Measurement) 
-    parameter = models.ForeignKey(Parameter) 
+    measurement = models.ForeignKey(Measurement, on_delete=models.CASCADE) 
+    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE) 
     datavalue = models.FloatField(db_index=True, null=True)
     dataarray = ArrayField(models.FloatField(), null=True)
-    objects = models.GeoManager()
     class Meta(object):
         verbose_name = 'Measured Parameter'
         verbose_name_plural = 'Measured Parameter'
@@ -609,11 +590,10 @@ class SampledParameter(models.Model):
     Association class pairing Samples with Parameters.  This is where any digital sampled data values are stored -- in the datavalue field.
     '''
     uuid = UUIDField(editable=False)
-    sample = models.ForeignKey(Sample) 
-    parameter = models.ForeignKey(Parameter) 
+    sample = models.ForeignKey(Sample, on_delete=models.CASCADE) 
+    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE) 
     datavalue = models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
-    analysismethod = models.ForeignKey(AnalysisMethod, null=True)
-    objects = models.GeoManager()
+    analysismethod = models.ForeignKey(AnalysisMethod, on_delete=models.CASCADE, null=True)
     class Meta(object):
         verbose_name = 'Sampled Parameter'
         verbose_name_plural = 'Sampled Parameter'
@@ -623,13 +603,13 @@ class SampledParameter(models.Model):
 
 class MeasuredParameterResource(models.Model):
     '''
-    Association class pairing MeasuredParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing MeasuredParameters and Resources.  Must use explicit many-to-many.
     Class contains activity field for ease of association in the filter set of the UI.
     '''
     uuid = UUIDField(editable=False)
-    measuredparameter = models.ForeignKey(MeasuredParameter)
-    resource = models.ForeignKey(Resource)
-    activity = models.ForeignKey(Activity)
+    measuredparameter = models.ForeignKey(MeasuredParameter, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
     class Meta(object):
         verbose_name = 'MeasuredParameter Resource'
         verbose_name_plural = 'MeasuredParameter Resource'
@@ -639,13 +619,13 @@ class MeasuredParameterResource(models.Model):
 
 class SampledParameterResource(models.Model):
     '''
-    Association class pairing SampledParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing SampledParameters and Resources.  Must use explicit many-to-many.
     Class contains activity field for ease of association in the filter set of the UI.
     '''
     uuid = UUIDField(editable=False)
-    sampledparameter = models.ForeignKey(SampledParameter)
-    resource = models.ForeignKey(Resource)
-    activity = models.ForeignKey(Activity)
+    sampledparameter = models.ForeignKey(SampledParameter, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
     class Meta(object):
         verbose_name = 'SampledParameter Resource'
         verbose_name_plural = 'SampledParameter Resource'

@@ -29,12 +29,13 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+import timing
        
 # building input data sources object
 cl = CANONLoader('stoqs_cn13id_oct2013', 'CN13ID - October 2013',
                         description = 'Warden cruise on Western Flyer into the California Current System off Monterey Bay',
                         x3dTerrains = {
-                            'http://dods.mbari.org/terrain/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
+                            'https://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
                                 'position': '14051448.48336 -15407886.51486 6184041.22775',
                                 'orientation': '0.83940 0.33030 0.43164 1.44880',
                                 'centerOfRotation': '0 0 0',
@@ -294,5 +295,5 @@ else:
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
-print "All Done."
+print("All Done.")
 

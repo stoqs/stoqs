@@ -25,10 +25,11 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 
 
 from CANON import CANONLoader
+import timing
 
 cl = CANONLoader('stoqs_canon_april2014', 'CANON-ECOHAB - April 2014',
                     description = 'Spring 2014 ECOHAB in San Pedro Bay',
-                    x3dTerrains= { '/stoqs/static/x3d/SanPedroBasin50/SanPedroBasin50_10x-pop.x3d': {
+                    x3dTerrains= { 'https://stoqs.mbari.org/x3d/SanPedroBasin50/SanPedroBasin50_10x-pop.x3d': {
                                         'position': '-2523652.5 -4726093.2 3499413.2',
                                         'orientation': '0.96902 -0.20915 -0.13134 1.74597',
                                         'centerOfRotation': '-2505293.6 -4686937.5 3513055.2',
@@ -211,4 +212,4 @@ else:
 
 # Add any X3D Terrain information specified in the constructor to the database
 cl.addTerrainResources()
-print "All done."
+print("All done.")

@@ -22,8 +22,8 @@ import sys
 import datetime  # needed for glider data
 import time      # for startdate, enddate args
 import csv
-import urllib2
-import urlparse
+import urllib.request, urllib.error, urllib.parse
+import urllib.parse
 import requests
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
@@ -33,11 +33,12 @@ from CANON import CANONLoader
 from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
+import timing
 
 cl = CANONLoader('stoqs_canon_september2016', 'CANON - September 2016',
                     description = 'CANON September 2016 Experiment in Monterey Bay',
                     x3dTerrains = {
-                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                         'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                         'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                         'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
@@ -100,12 +101,12 @@ lrauv_enddates = { 'tethys': enddate,
 def find_urls(plat, base, search_str):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
-    print "Crawling: %s" % url
+    print(("Crawling: %s" % url))
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
-    u = urlparse.urlsplit(url)
+    u = urllib.parse.urlsplit(url)
     name, ext = os.path.splitext(u.path)
     if ext == ".html":
-        u = urlparse.urlsplit(url.replace(".html", ".xml"))
+        u = urllib.parse.urlsplit(url.replace(".html", ".xml"))
     url = u.geturl()
     urls = []
     # Get an etree object
@@ -131,10 +132,10 @@ def find_urls(plat, base, search_str):
                     for url in d:
                         urls.append(url)
             except Exception as ex:
-                print "Error reading mission directory name %s" % ex
+                print(("Error reading mission directory name %s" % ex))
 
     except BaseException:
-        print "Skipping %s (error parsing the XML)" % url
+        print(("Skipping %s (error parsing the XML)" % url))
 
     if not urls:
         raise FileNotFound('No urls matching "{}" found in {}'.format(search_str, os.path.join(base, 'catalog.html')))
@@ -271,16 +272,16 @@ cl.wg_Tiny_endDatetime = enddate
 cl.wfuctd_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Ships/Western_Flyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
-                    'canon16m{:02d}.nc'.format(i) for i in range(1,15),
-                    'wfiv16m{:02d}.nc'.format(i) for i in range(1,9)
+                    'canon16m{:02d}.nc'.format(i) for i in (list(range(1,15)),
+                    'wfiv16m{:02d}.nc'.format(i)) for i in range(1,9)
                   ]
 
 # PCTD
 cl.wfpctd_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Ships/Western_Flyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 cl.wfpctd_files = [
-                    'canon16c{:02d}.nc'.format(i) for i in range(1,69),
-                    'wfiv16c{:02d}.nc'.format(i) for i in range(1,34)
+                    'canon16c{:02d}.nc'.format(i) for i in (list(range(1,69)),
+                    'wfiv16c{:02d}.nc'.format(i)) for i in range(1,34)
                   ]
 
 ######################################################################
@@ -464,7 +465,7 @@ elif cl.args.optimal_stride:
 
     #cl.loadSubSamples()
 
-    print 'Nothing to load'
+    print('Nothing to load')
 else:
     cl.stride = cl.args.stride    
 
@@ -494,5 +495,5 @@ else:
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
-print "All Done."
+print("All Done.")
  

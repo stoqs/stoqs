@@ -86,7 +86,7 @@ if __name__ == '__main__':
 		os.mkdir(fixedHeaderDir)
 
 	for file in glob.glob('*.csv'):
-		print file
+		print(file)
 		outFile = open('%s/%s' % (fixedHeaderDir, file), 'w')
 		i = 0
 		for line in open(file, 'r'):

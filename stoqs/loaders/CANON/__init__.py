@@ -139,12 +139,12 @@ class CANONLoader(LoadScript):
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.dorado_files], self.dorado_files):
             url = self.dorado_base + f
             DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                       pName, self.colors['dorado'], 'auv', 'AUV mission', 
+                                       pName, self.colors[pName], 'auv', 'AUV mission', 
                                        self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
                                        plotTimeSeriesDepth=0.0)
             load_gulps(aName, f, self.dbAlias)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName,
                                   scalefactor=2)
 
     def loadTethys(self, stride=None):
@@ -156,17 +156,23 @@ class CANONLoader(LoadScript):
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
             url = self.tethys_base + f
             # shorten the activity names
-            aName = aName.rsplit('/', 1)[-1]
+            if 'slate.nc' in aName:
+                aName = '_'.join(aName.split('/')[-2:])
+            else:
+                aName = aName.rsplit('/', 1)[-1]
+            if not hasattr(self, 'tethys_aux_coords'):
+                self.tethys_aux_coords = None
             try:
+                # Early tethys data had time coord of 'Time', override with auxCoords setting from load script
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                          pName, self.colors['tethys'], 'auv', 'AUV mission',
+                                          pName, self.colors[pName], 'auv', 'AUV mission',
                                           self.tethys_parms, self.dbAlias, stride, 
                                           grdTerrain=self.grdTerrain, command_line_args=self.args,
-                                          plotTimeSeriesDepth=0.0)
+                                          plotTimeSeriesDepth=0.0, auxCoords=self.tethys_aux_coords)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_tethys.x3d', pName,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_tethys.x3d', pName,
                                   scalefactor=2)
 
     def loadDaphne(self, stride=None):
@@ -182,14 +188,14 @@ class CANONLoader(LoadScript):
             try:
                 # Set stride to 1 for telemetered data
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                          pName, self.colors['daphne'], 'auv', 'AUV mission',
+                                          pName, self.colors[pName], 'auv', 'AUV mission',
                                           self.daphne_parms, self.dbAlias, stride, 
                                           grdTerrain=self.grdTerrain, command_line_args=self.args,
                                           plotTimeSeriesDepth=0.0)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_daphne.x3d', pName,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_daphne.x3d', pName,
                                   scalefactor=2)
 
     def loadMakai(self, stride=None):
@@ -205,13 +211,13 @@ class CANONLoader(LoadScript):
             try:
                 # Set stride to 1 for telemetered data
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                          pName, self.colors['makai'], 'auv', 'AUV mission',
+                                          pName, self.colors[pName], 'auv', 'AUV mission',
                                           self.makai_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, 
                                           command_line_args=self.args, plotTimeSeriesDepth=0.0)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_makai.x3d', pName,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_makai.x3d', pName,
                                   scalefactor=2)
 
     def loadAku(self, stride=None):
@@ -227,13 +233,13 @@ class CANONLoader(LoadScript):
             try:
                 # Set stride to 1 for telemetered data
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
-                                          pName, self.colors['aku'], 'auv', 'AUV mission',
+                                          pName, self.colors[pName], 'auv', 'AUV mission',
                                           self.aku_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
                                           command_line_args=self.args, plotTimeSeriesDepth=0.0)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_aku.x3d', pName,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_aku.x3d', pName,
                                   scalefactor=2)
 
     def loadAhi(self, stride=None):
@@ -243,41 +249,41 @@ class CANONLoader(LoadScript):
         pName = 'ahi'
         stride = stride or self.stride
         for (aName, f) in zip([a + getStrideText(stride) for a in self.ahi_files], self.ahi_files):
-          url = self.ahi_base + f
-          # shorten the activity names
-          aName = aName.rsplit('/', 1)[-1]
-          try:
-            # Set stride to 1 for telemetered data
-            DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
-                                      pName, self.colors['ahi'], 'auv', 'AUV mission',
-                                      self.ahi_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                      command_line_args=self.args, plotTimeSeriesDepth=0.0)
-          except DAPloaders.NoValidData:
-            self.logger.info("No valid data in %s" % url)
+            url = self.ahi_base + f
+            # shorten the activity names
+            aName = aName.rsplit('/', 1)[-1]
+            try:
+                # Set stride to 1 for telemetered data
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
+                                        pName, self.colors[pName], 'auv', 'AUV mission',
+                                        self.ahi_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
+                                        command_line_args=self.args, plotTimeSeriesDepth=0.0)
+            except DAPloaders.NoValidData:
+                self.logger.info("No valid data in %s" % url)
 
-          self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_ahi.x3d', pName,
-                                    scalefactor=2)
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_ahi.x3d', pName,
+                                  scalefactor=2)
 
     def loadOpah(self, stride=None):
         '''
-         Opah specific load functions
+        Opah specific load functions
         '''
         pName = 'opah'
         stride = stride or self.stride
         for (aName, f) in zip([a + getStrideText(stride) for a in self.opah_files], self.opah_files):
-          url = self.opah_base + f
-          # shorten the activity names
-          aName = aName.rsplit('/', 1)[-1]
-          try:
-            # Set stride to 1 for telemetered data
-            DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
-                                      pName, self.colors['opah'], 'auv', 'AUV mission',
-                                      self.opah_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                      command_line_args=self.args, plotTimeSeriesDepth=0.0)
-          except DAPloaders.NoValidData:
-            self.logger.info("No valid data in %s" % url)
+            url = self.opah_base + f
+            # shorten the activity names
+            aName = aName.rsplit('/', 1)[-1]
+            try:
+                # Set stride to 1 for telemetered data
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
+                                          pName, self.colors[pName], 'auv', 'AUV mission',
+                                          self.opah_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
+                                          command_line_args=self.args, plotTimeSeriesDepth=0.0)
+            except DAPloaders.NoValidData:
+                self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_opah.x3d', pName,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_opah.x3d', pName,
                                   scalefactor=2)
 
     def loadMartin(self, stride=None):
@@ -834,10 +840,10 @@ class CANONLoader(LoadScript):
         # For timeseriesProfile data we need to pass the nominaldepth of the plaform
         # so that the model is put at the correct depth in the Spatial -> 3D view.
         try:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+            self.addPlatformResources('https://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName, nominaldepth=self.m1_nominaldepth)
         except AttributeError:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+            self.addPlatformResources('https://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName)
 
     def loadM2(self, stride=None):
@@ -857,10 +863,10 @@ class CANONLoader(LoadScript):
         # For timeseriesProfile data we need to pass the nominaldepth of the plaform
         # so that the model is put at the correct depth in the Spatial -> 3D view.
         try:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+            self.addPlatformResources('https://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName, nominaldepth=self.m2_nominaldepth)
         except AttributeError:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+            self.addPlatformResources('https://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName)
 
     def loadM1ts(self, stride=None):
@@ -990,7 +996,7 @@ class CANONLoader(LoadScript):
                                            platformName, self.colors['flyer'], 'ship', activitytypeName,
                                            self.wfuctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/flyer/flyer.x3d', platformName)
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/flyer/flyer.x3d', platformName)
 
     def loadWFpctd(self, stride=None, platformName='WesternFlyer_PCTD', activitytypeName='Western Flyer Profile CTD Data'):
         '''
@@ -1140,7 +1146,7 @@ class CANONLoader(LoadScript):
         try:
             pp.load_samples()
         except IOError as e:
-            self.logger.error(e)
+            self.logger.error(str(e))
 
     def loadAll(self, stride=None):
         '''
@@ -1157,8 +1163,8 @@ class CANONLoader(LoadScript):
                 try:
                     getattr(self, loader)()
                 except AttributeError as e:
-                    print e
-                    print "WARNING: No data from %s for dbAlias = %s, campaignName = %s" % (loader, self.dbAlias, self.campaignName)
+                    self.logger.warn("WARNING: No data from %s for dbAlias = %s, campaignName = %s", loader, self.dbAlias, self.campaignName)
+                    self.logger.error(str(e))
                     pass
 
 if __name__ == '__main__':

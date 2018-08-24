@@ -90,7 +90,7 @@ class InterpolatorWriter(BaseWriter):
 
         # add in time dimensions first
         ts_key = []
-        for key in self.all_sub_ts.keys():
+        for key in list(self.all_sub_ts.keys()):
             if key.find('time') != -1:
                 ts = self.all_sub_ts[key]
 
@@ -110,7 +110,7 @@ class InterpolatorWriter(BaseWriter):
                     logging.debug("Adding in record variable %s", key)
                     v = self.initRecordVariable(key)
                     v[:] = self.all_sub_ts[key].values
-                except Exception, e:
+                except Exception as e:
                     self.logger.error(e)
                     continue
 
@@ -219,7 +219,9 @@ class InterpolatorWriter(BaseWriter):
             elif key in sn_lookup.keys():
                 rc.standard_name = sn_lookup[key]
 
-            rc.coordinates = ' '.join(c.values())
+                rc.standard_name = key
+
+            rc.coordinates = ' '.join(list(c.values()))
 
             if units is None:
                 if 'units' in a:
@@ -285,7 +287,7 @@ class InterpolatorWriter(BaseWriter):
                 parm_valid.append(key)
                 all_ts[key] = ts
                 self.logger.info('Found parameter ' + key)
-            except KeyError, e:
+            except KeyError as e:
                 self.logger.info('Key error on parameter ' + key)
                 continue
 
@@ -294,7 +296,7 @@ class InterpolatorWriter(BaseWriter):
             try:
                 ts = self.createSeriesPydap(key, key + '_time')
                 all_ts[key] = ts
-            except KeyError, e:
+            except KeyError as e:
                 self.logger.info('Key error on coordinate ' + key)
                 raise e
 
@@ -358,7 +360,7 @@ class InterpolatorWriter(BaseWriter):
             self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
 
-        self.logger.info("%s", self.all_sub_ts.keys())
+        self.logger.info("%s", list(self.all_sub_ts.keys()))
 
         # Write data to the file
         self.write_netcdf(out_file, url)
@@ -379,7 +381,7 @@ class InterpolatorWriter(BaseWriter):
                     try:
                         ts = self.createSeries(self.df.variables, c, c+'_'+'time')
                         all_ts[c] = ts
-                    except Exception, e:
+                    except Exception as e:
                         self.logger.error(e)
                         continue
 
@@ -545,7 +547,7 @@ class InterpolatorWriter(BaseWriter):
             g = None
             variables = None
 
-            if any(group in s for s in parm.keys()):
+            if any(group in s for s in list(parm.keys())):
                 g = group
             else:
                 continue
@@ -558,10 +560,10 @@ class InterpolatorWriter(BaseWriter):
             try:
                 for key in subgroup:
                     subgroup = self.df.groups[g].group[key]
-                    pkeys = parm[g][key].keys()
+                    pkeys = list(parm[g][key].keys())
                     break
 
-            except Exception, e:
+            except Exception as e:
                 self.logger.error(e)
                 self.logger.warn('falling back to main group %s' % group)
                 subgroup = self.df.groups[g]
@@ -600,10 +602,10 @@ class InterpolatorWriter(BaseWriter):
                                                               '_latitude', 'longitude':key+'_longitude'}
 
                         self.logger.info('Found parameter ' + key)
-                    except KeyError, e:
+                    except KeyError as e:
                         self.logger.error(e)
                         continue
-                    except Exception,e:
+                    except Exception as e:
                         self.logger.error(e)
                         continue
 
@@ -620,7 +622,7 @@ class InterpolatorWriter(BaseWriter):
             self.all_sub_ts[key] = i
             self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
-        self.logger.info("%s", self.all_sub_ts.keys())
+        self.logger.info("%s", list(self.all_sub_ts.keys()))
 
         # Write data to the file
         self.write_netcdf(out_file, in_file)
@@ -652,7 +654,7 @@ class InterpolatorWriter(BaseWriter):
             g = None
             variables = None
 
-            if group in parm.keys():
+            if group in list(parm.keys()):
                 g = group
             else:
                 continue
@@ -665,7 +667,7 @@ class InterpolatorWriter(BaseWriter):
                 subgroup = self.df.groups[g]
                 pkeys = parm[g]
 
-            except Exception, e:
+            except Exception as e:
                 self.logger.error(e)
                 raise e
 
@@ -718,10 +720,10 @@ class InterpolatorWriter(BaseWriter):
                         plt.show()'''
 
                         self.logger.info('Found in group ' + group + ' parameter ' + var + ' renaming to ' + key)
-                    except KeyError, e:
+                    except KeyError as e:
                         self.logger.error(e)
                         continue
-                    except Exception,e:
+                    except Exception as e:
                         self.logger.error(e)
                         continue
 
@@ -735,11 +737,11 @@ class InterpolatorWriter(BaseWriter):
                 i = self.interpolate(value, t_resample.index)
                 self.all_sub_ts[key] = i
                 self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
-            except Exception,e:
+            except Exception as e:
                 self.logger.error(e)
                 raise e
 
-        self.logger.info("%s", self.all_sub_ts.keys())
+        self.logger.info("%s", list(self.all_sub_ts.keys()))
 
         self.write_netcdf(out_file, in_file)
         self.logger.info('Wrote ' + out_file)
@@ -759,15 +761,15 @@ class InterpolatorWriter(BaseWriter):
         except socket.error as e:
             self.logger.error('Failed in attempt to open_url(%s)', url)
             raise e
-        except ValueError,e:
+        except ValueError as e:
             self.logger.error('Value error when opening open_url(%s)', url)
             raise e
 
         # Create pandas time series and get sampling metric for each
-        for key, value in parm.items():
+        for key, value in list(parm.items()):
             try:
                 p_ts = self.createSeriesPydap(key)
-            except KeyError, e:
+            except KeyError as e:
                 p_ts = pd.Series()
                 self.logger.info('Key error on ' + key)
                 raise e
@@ -790,7 +792,7 @@ class InterpolatorWriter(BaseWriter):
         # convert time to epoch seconds
         esec_list = t.resample(resampleFreq).index.values.astype(dt.datetime)/1E9
 
-        for key, value in all_ts.items():
+        for key, value in list(all_ts.items()):
             if not value.empty :
 
                 # swap byte order and create a new series
@@ -868,4 +870,4 @@ if __name__ == '__main__':
     out_file = outDir + '.'.join(f.split('.')[:-1]) + '_' + resample_freq + '.nc'
     pw.processResampleNc4File(nc4_file, out_file, json.loads(parm),resample_freq, rad_to_deg)
 
-    print 'Done.'
+    print('Done.')

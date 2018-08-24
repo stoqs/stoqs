@@ -1,7 +1,8 @@
 #!/bin/bash
 #
 # Remove all temporary files produced by operating the STOQS UI
-
+#
+HOME=/vagrant
 PD=$HOME/dev/stoqsgit
 
 # Section and ParameterParameter plots
@@ -18,3 +19,6 @@ rm -vf /tmp/functional_tests_server.log
 
 # HTML templates
 rm -v /tmp/*.html
+
+# Loading tests fixture
+rm stoqs/stoqs/fixtures/stoqs_load_test.json

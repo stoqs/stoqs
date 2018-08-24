@@ -28,13 +28,14 @@ import datetime
 from IOOS import IOOSLoader
 from DAPloaders import runGliderLoader
 from thredds_crawler.crawl import Crawl
+import timing
 
 logger = logging.getLogger('__main__')
 
 il = IOOSLoader('stoqs_ioos_gliders', 'IOOS Gliders',
                         description = 'Glider data from the Integrated Ocean Observing System Glider DAC',
                         x3dTerrains = {
-                            'http://dods.mbari.org/terrain/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
+                            'https://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
                                 'position': '14051448.48336 -15407886.51486 6184041.22775',
                                 'orientation': '0.83940 0.33030 0.43164 1.44880',
                                 'centerOfRotation': '0 0 0',
@@ -57,7 +58,7 @@ def loadGliders(loader, stride=1):
 
     c = Crawl("http://tds.gliders.ioos.us/thredds/catalog.xml", select=[".*_Time$"])
     urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
-    colors = loader.colors.values()
+    colors = list(loader.colors.values())
 
     for url in urls:
         aName = url.split('/')[-1].split('.')[0]
@@ -70,7 +71,7 @@ def loadGliders(loader, stride=1):
         try:
             runGliderLoader(url, loader.campaignName, il.campaignDescription, aName, pName, colors.pop(), 'glider', 'Glider Mission', 
                             loader.parms, loader.dbAlias, stride, loader.startDatetime, loader.endDatetime, il.grdTerrain)
-        except Exception, e:
+        except Exception as e:
             logger.error('%s. Skipping this dataset.', e)
 
 
@@ -89,5 +90,5 @@ else:
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 il.addTerrainResources()
 
-print "All Done."
+print("All Done.")
 

@@ -14,15 +14,22 @@ MBARI Dec 6, 2013
 import os
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
+import django
+django.setup()
 
 import re
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import numpy as np
 from matplotlib.dates import DAILY
+from matplotlib.colors import rgb2hex
+from collections import defaultdict
 from datetime import datetime, timedelta
 from django.contrib.gis.geos import LineString
 from utils.utils import round_to_n
+from stoqs.models import MeasuredParameterResource, Resource
 from textwrap import wrap
 from mpl_toolkits.basemap import Basemap
 import matplotlib.gridspec as gridspec
@@ -34,7 +41,7 @@ class PlatformsBiPlot(BiPlot):
     '''
     Make customized BiPlots (Parameter Parameter plots) for platforms from STOQS.
     '''
-    def ppSubPlot(self, x, y, platform, color, xParm, yParm, ax):
+    def ppSubPlot(self, x, y, platform, color, xParm, yParm, ax, point_color='k'):
         '''
         Given names of platform, x & y paramters add a subplot to figure fig.
         '''
@@ -59,18 +66,87 @@ class PlatformsBiPlot(BiPlot):
         else:
             ax.set_ylabel('%s (%s)' % (yParm, yUnits))
 
-        ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=True)
+        ax.scatter(x, y, marker='.', s=10, c=point_color, lw = 0, clip_on=True)
         ax.text(0.0, 1.0, platform, transform=ax.transAxes, color=color, horizontalalignment='left', verticalalignment='top')
 
         return ax
+
+    def ppSubPlotColor(self, x_ids, y_ids, platform, color, xParm, yParm, ax):
+        '''
+        Given names of platform, x & y paramter ids return a categorically colored subplot
+        See: https://gist.github.com/jakevdp/8a992f606899ac24b711
+        and https://stackoverflow.com/questions/28033046/matplotlib-scatter-color-by-categorical-factors?answertab=active#tab-top
+        '''
+        all_labels = (Resource.objects.using(self.args.database)
+                        .filter(resourcetype__name__contains=self.args.groupName)
+                        .order_by('value')
+                        .distinct()
+                        .values_list('value', flat=True))
+        if not all_labels:
+            raise ValueError(f'Found no resources containing --groupName {self.args.groupName}')
+        total_num_colors = len(all_labels)
+
+        colors = {}
+        if total_num_colors < 11:
+            ck = plt.cm.Vega10
+        elif total_num_colors < 21:
+            ck = plt.cm.Vega20
+        else:
+            cl = plt.cm.viridis
+
+        for b, c in zip(all_labels, ck(np.arange(0, ck.N, ck.N/total_num_colors, dtype=int))):
+            colors[b] = c
+
+        mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
+                        resource__resourcetype__name__contains=self.args.groupName,
+                        measuredparameter__id__in=(x_ids + y_ids))
+
+        if self.args.verbose:
+            print(f'{mprs.count()} mprs for {self.args.groupName}')
+
+        for label in all_labels:
+            xy_data = defaultdict(list)
+            for mpr in mprs.filter(resource__value=label):
+                xy_data[mpr.measuredparameter.parameter.name].append(mpr.measuredparameter.datavalue)
+            if xy_data: 
+                if self.args.verbose:
+                    print(f'{len(xy_data[xParm])} points for {label}, color = {colors[label]}')
+                ax.scatter(xy_data[xParm], xy_data[yParm], marker='.', s=15, label=label, 
+                           color=colors[label], clip_on=True)
+
+        ax.legend(loc='upper left', fontsize=7)
+        ax.text(1.0, 1.0, platform, transform=ax.transAxes, color=color, horizontalalignment='right', verticalalignment='top')
+
+        xmin, xmax, xUnits = self._getAxisInfo(platform, xParm)
+        ymin, ymax, yUnits = self._getAxisInfo(platform, yParm)
+
+        ax.set_xlim(round_to_n(xmin, 1), round_to_n(xmax, 1))
+        ax.set_ylim(round_to_n(ymin, 1), round_to_n(ymax, 1))
+
+        if self.args.xLabel == '':
+            ax.set_xticks([])
+        elif self.args.xLabel:
+            ax.set_xlabel(self.args.xLabel)
+        else:
+            ax.set_xlabel('%s (%s)' % (xParm, xUnits))
+
+        if self.args.yLabel == '':
+            ax.set_yticks([])
+        elif self.args.yLabel:
+            ax.set_ylabel(self.args.yLabel)
+        else:
+            ax.set_ylabel('%s (%s)' % (yParm, yUnits))
+
+        return ax
+
 
     def timeSubPlot(self, platformDTHash, ax1, startTime, endTime, swrTS):
         '''
         Make subplot of depth time series for all the platforms and highlight the time range
         '''
-        for pl, ats in platformDTHash.iteritems():
+        for pl, ats in list(platformDTHash.items()):
             color = self._getColor(pl)
-            for _, ts in ats.iteritems():
+            for _, ts in list(ats.items()):
                 datetimeList = []
                 depths = []
                 for ems, d in ts:
@@ -90,16 +166,17 @@ class PlatformsBiPlot(BiPlot):
 
         if swrTS:
             # Plot short wave radiometer data
-            if self.args.verbose: print 'Plotting swrTS...'
+            if self.args.verbose: print('Plotting swrTS...')
             ax2 = ax1.twinx()
             ax2.plot_date(matplotlib.dates.date2num(swrTS[0]), swrTS[1], '-', c='black', alpha=0.5)
             ax2.set_ylabel('SWR (W/m^2)')
             plt.locator_params(axis='y', nbins=3)
         
-        ax1.set_xlabel('Time (GMT)')
         ax1.set_ylabel('Depth (m)')
-        loc = ax1.xaxis.get_major_locator()
-        loc.maxticks[DAILY] = 4
+
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
+        plt.gca().xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO))
+        plt.gca().xaxis.set_minor_locator(mdates.DayLocator())
 
         return ax1
 
@@ -111,8 +188,8 @@ class PlatformsBiPlot(BiPlot):
         ##m.wmsimage('http://www.gebco.net/data_and_products/gebco_web_services/web_map_service/mapserv?', layers=['GEBCO_08_Grid'])    # Works, but coarse
         m.arcgisimage(server='http://services.arcgisonline.com/ArcGIS', service='Ocean_Basemap')
  
-        for pl, LS in platformLineStringHash.iteritems():
-            x,y = zip(*LS)
+        for pl, LS in list(platformLineStringHash.items()):
+            x,y = list(zip(*LS))
             m.plot(x, y, '-', c=self._getColor(pl), linewidth=3)
 
         if self.args.mapLabels:
@@ -201,19 +278,29 @@ class PlatformsBiPlot(BiPlot):
         else:
             timeWindow = allActivityEndTime - allActivityStartTime
             timeStep = timeWindow
-        startTime = allActivityStartTime
+
+        if self.args.start:
+            startTime = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
+        else:
+            startTime = allActivityStartTime
+
         endTime = startTime + timeWindow
 
         # Get overall temporal data for placement in the temporal subplot
         platformDTHash = self._getplatformDTHash()
         try:
             swrTS = self._getTimeSeriesData(allActivityStartTime, allActivityEndTime, parameterStandardName='surface_downwelling_shortwave_flux_in_air')
-        except NoTSDataException, e:
+        except NoTSDataException as e:
             swrTS = None
-            print "WARNING:", e
+            print("WARNING:", e)
+
+        if self.args.end:
+            set_end_time = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
+        else:
+            set_end_time = allActivityEndTime
 
         # Loop through sections of the data with temporal query constraints based on the window and step command line parameters
-        while endTime <= allActivityEndTime:
+        while endTime <= set_end_time:
 
             # Start a new figure - size is in inches
             fig = plt.figure(figsize=(9, 6))
@@ -229,11 +316,10 @@ class PlatformsBiPlot(BiPlot):
             platformLineStringHash = {}
             for i, (pl, xP, yP) in enumerate(zip(self.args.platform, self.args.xParm, self.args.yParm)):
                 try: 
-                    if self.args.verbose: print 'Calling self._getMeasuredPPData...'
-                    x, y, points = self._getMeasuredPPData(startTime, endTime, pl, xP, yP)
+                    x_ids, y_ids, x, y, points = self._getPPData(startTime, endTime, pl, xP, yP, returnIDs=True)
                     platformLineStringHash[pl] = LineString(points).simplify(tolerance=.001)
-                except NoPPDataException, e:
-                    if self.args.verbose: print e
+                except (NoPPDataException, ValueError) as e:
+                    if self.args.verbose: print(e)
                     x, y = ([], [])
 
                 if len(self.args.platform) == 1:
@@ -244,12 +330,14 @@ class PlatformsBiPlot(BiPlot):
                     raise Exception('Cannot handle more than 4 platform Parameter-Parameter plots')
 
                 fig.add_subplot(ax)
-                self.ppSubPlot(x, y, pl, self._getColor(pl), xP, yP, ax)
+                if self.args.groupName:
+                    self.ppSubPlotColor(x_ids, y_ids, pl, self._getColor(pl), xP, yP, ax)
+                else:
+                    self.ppSubPlot(x, y, pl, self._getColor(pl), xP, yP, ax)
 
             # Plot spatial
             ax = plt.Subplot(fig, map_gs[:])
             fig.add_subplot(ax, aspect='equal')
-            if self.args.verbose: print 'Calling self.spatialSubPlot()...'
             self.spatialSubPlot(platformLineStringHash, ax, allExtent)
            
             startTime = startTime + timeStep
@@ -259,17 +347,17 @@ class PlatformsBiPlot(BiPlot):
             plt.figtext(0.0, 0.0, provStr, size=7, horizontalalignment='left', verticalalignment='bottom')
 
             fileName, wcName = self.getFilename(startTime)
-            print 'Saving to file', fileName
+            print('Saving to file', fileName)
             fig.savefig(fileName)
             plt.clf()
             plt.close()
             ##raw_input('P')
 
-        print 'Done.'
-        print 'Make an animated gif with: convert -delay 10 {wcName}.png {baseName}.gif'.format(wcName=wcName, baseName='_'.join(fileName.split('_')[:-1]))
-        print 'Make an MPEG 4 with: ffmpeg -r 10 -i {baseName}.gif -vcodec mpeg4 -qscale 1 -y {baseName}.mp4'.format(
-                baseName='_'.join(fileName.split('_')[:-1]))
-        print 'On a Mac open the .mp4 file in QuickTime Player and export the file for "iPad, iPhone & Apple TV" (.m4v format) for best portability.'
+        print('Done.')
+        print('Make an animated gif with: convert -delay 10 {wcName}.png {baseName}.gif'.format(wcName=wcName, baseName='_'.join(fileName.split('_')[:-1])))
+        print('Make an MPEG 4 with: ffmpeg -r 10 -i {baseName}.gif -vcodec mpeg4 -qscale 1 -y {baseName}.mp4'.format(
+                baseName='_'.join(fileName.split('_')[:-1])))
+        print('On a Mac open the .mp4 file in QuickTime Player and export the file for "iPad, iPhone & Apple TV" (.m4v format) for best portability.')
 
     def process_command_line(self):
         '''
@@ -313,7 +401,10 @@ class PlatformsBiPlot(BiPlot):
         parser.add_argument('--extend', action='store', help='Extend the data extent for the map boundaries by this value in degrees', type=float)
         parser.add_argument('--extent', action='store', help='Space separated specific map boundary in degrees: ll_lon ll_lat ur_lon ur_lat', 
                 nargs=4, default=[])
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
+        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format, otherwise allActivityStartTime is used')
+        parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format, otherwise allActivityEndTime is used')
+        parser.add_argument('--groupName', action='store', help='Color points in scatter plots according to labels or clusters in groupName')
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1, default=0)
     
         self.args = parser.parse_args()
         self.commandline = ""

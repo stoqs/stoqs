@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 Script to execute steps in the classification of measurements including:
 
 1. Labeling specific MeasuredParameters
@@ -7,7 +7,7 @@ Script to execute steps in the classification of measurements including:
 
 Mike McCann
 MBARI 16 June 2014
-'''
+"""
 
 import os
 import sys
@@ -29,17 +29,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import warnings
 from datetime import datetime
-from django.db.models import Q
 from django.db.utils import IntegrityError
-from utils.utils import round_to_n
 from textwrap import wrap
-from stoqs.models import Activity, ResourceType, Resource, Measurement, MeasuredParameter, MeasuredParameterResource, ResourceResource
+from stoqs.models import (Activity, ResourceType, Resource, Measurement, MeasuredParameter,
+                          MeasuredParameterResource, ResourceResource)
 from utils.STOQSQManager import LABEL, DESCRIPTION, COMMANDLINE
 
 from contrib.analysis import BiPlot, NoPPDataException
 
 from sklearn.preprocessing import StandardScaler
-from sklearn.cross_validation import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -72,9 +71,10 @@ class Classifier(BiPlot):
         '''
         Return activity object which MeasuredParameters mpx and mpy belong to
         '''
-        acts = Activity.objects.using(self.args.database).filter(instantpoint__measurement__measuredparameter__id__in=(mpx,mpy)).distinct()
+        acts = Activity.objects.using(self.args.database).filter(
+            instantpoint__measurement__measuredparameter__id__in=(mpx,mpy)).distinct()
         if not acts:
-            print "acts = %s" % acts
+            print("acts = %s" % acts)
             raise Exception('Not exactly 1 activity returned with SQL = \n%s' % str(acts.query))
         else:
             return acts[0]
@@ -108,12 +108,12 @@ class Classifier(BiPlot):
             ResourceResource.objects.using(self.args.database).get_or_create(fromresource=r, toresource=clResource)
 
         except IntegrityError as e:
-            print e
-            print "Ignoring"
+            print(str(e))
+            print("Ignoring")
 
         # Associate MeasuredParameters with Resource
         if self.args.verbose:
-            print "  Saving %d values of '%s' with type '%s'" % (len(x_ids), label, typeName)
+            print("  Saving %d values of '%s' with type '%s'" % (len(x_ids), label, typeName))
         for x_id,y_id in zip(x_ids, y_ids):
             a = self.getActivity(x_id, y_id)
             mp_x = MeasuredParameter.objects.using(self.args.database).get(pk=x_id)
@@ -123,7 +123,7 @@ class Classifier(BiPlot):
             MeasuredParameterResource.objects.using(self.args.database).get_or_create(
                                 activity=a, measuredparameter=mp_y, resource=r)
 
-    def removeLabels(self, labeledGroupName, label=None, description=None, commandline=None):
+    def removeLabels(self, labeledGroupName, label=None, description=None, commandline=None): # pragma: no cover
         '''
         Delete labeled MeasuredParameterResources that have ResourceType.name=labeledGroupName (such as 'Labeled Plankton').  
         Restrict deletion to the other passed in options, if specified: label is like 'diatom', description is like 
@@ -138,7 +138,7 @@ class Classifier(BiPlot):
             mprs = mprs.filter(resource__name=LABEL, resource__value=label)
 
         if self.args.verbose > 1:
-            print "  Removing MeasuredParameterResources with type = '%s' and label = %s" % (labeledGroupName, label)
+            print("  Removing MeasuredParameterResources with type = '%s' and label = %s" % (labeledGroupName, label))
 
         rs = []
         for mpr in mprs:
@@ -148,19 +148,19 @@ class Classifier(BiPlot):
         # Remove Resource associations with Resource (label metadata), make rs list distinct with set() before iterating on the delete()
         if label and description and commandline:
             rrs = ResourceResource.objects.using(self.args.database).filter(
-                                                (Q(fromresource__name=LABEL) & Q(fromresource__value=label)) &
-                                                ((Q(toresource__name=DESCRIPTION) & Q(toresource__value=description)) |
-                                                 (Q(toresource__name=COMMANDLINE) & Q(toresource__value=commandline)) ) )
+                                                (QDA(fromresource__name=LABEL) & QDA(fromresource__value=label)) &
+                                                ((QDA(toresource__name=DESCRIPTION) & QDA(toresource__value=description)) |
+                                                 (QDA(toresource__name=COMMANDLINE) & QDA(toresource__value=commandline)) ) )
                                         
             if self.args.verbose > 1:
-                print "  Removing ResourceResources with fromresource__value = '%s' and toresource__value = '%s'" % (label, description)
+                print("  Removing ResourceResources with fromresource__value = '%s' and toresource__value = '%s'" % (label, description))
 
             for rr in rrs:
                 rr.delete(using=self.args.database)
 
         else:
             if self.args.verbose > 1:
-                print "  Removing Resources associated with labeledGroupName = %s'" % labeledGroupName
+                print("  Removing Resources associated with labeledGroupName = %s'" % labeledGroupName)
 
             for r in set(rs):
                 r.delete(using=self.args.database)
@@ -178,16 +178,16 @@ class Classifier(BiPlot):
             # Multiple discriminators are possible...
             pvDict = {self.args.discriminator: (dmin, dmax)}
             if self.args.verbose:
-                print "Making label '%s' with discriminator %s" % (label, pvDict)
+                print("Making label '%s' with discriminator %s" % (label, pvDict))
 
             try:
                 x_ids, y_ids, _, _, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0], 
                                                         self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
-            except NoPPDataException, e:
-                print e
+            except NoPPDataException as e:
+                print(str(e))
 
             if self.args.verbose:
-                print "  (%d, %d) MeasuredParameters returned from database %s" % (len(x_ids), len(y_ids), self.args.database)
+                print("  (%d, %d) MeasuredParameters returned from database %s" % (len(x_ids), len(y_ids), self.args.database))
 
             description = 'Using Platform %s, Parameter %s from %s to %s' % (self.args.platform, pvDict, self.args.start, self.args.end)
 
@@ -197,7 +197,7 @@ class Classifier(BiPlot):
             self.saveLabelSet(commandlineResource, label, x_ids, y_ids, description, labeledGroupName, 
                                     'Labeled with %s as discriminator' % self.args.discriminator)
 
-    def loadLabeledData(self, labeledGroupName, classes):
+    def loadLabeledData(self, labeledGroupName, classes): # pragma: no cover
         '''
         Retrieve from the database to set of Labeled data and return the standard X, and y arrays that the scikit-learn package uses
         '''
@@ -215,7 +215,7 @@ class Classifier(BiPlot):
                         ).values_list('measuredparameter__datavalue', flat=True)
             count = mprs.filter(measuredparameter__parameter__name=self.args.inputs[0]).count()
             if self.args.verbose:
-                print 'count = {} for label = {}'.format(count, label)
+                print('count = {} for label = {}'.format(count, label))
             if count == 0:
                 warnings.warn('count = 0 for label = {}'.format(label))
             f0 = np.append(f0, mprs.filter(measuredparameter__parameter__name=self.args.inputs[0]))
@@ -236,13 +236,13 @@ class Classifier(BiPlot):
         X = StandardScaler().fit_transform(X)
 
         if X.any() and y.any():
-            for name, clf in self.classifiers.iteritems():
+            for name, clf in list(self.classifiers.items()):
                 scores = cross_val_score(clf, X, y, cv=5)
                 print("%-18s accuracy: %0.2f (+/- %0.2f)" % (name, scores.mean(), scores.std() * 2))
         else:
             raise Exception('No data returned for labeledGroupName = %s' % labeledGroupName)
 
-    def createClassifier(self, labeledGroupName):
+    def createClassifier(self, labeledGroupName): # pragma: no cover
         '''
         Query the database for labeled training data, fit a model to it, and save the pickled 
         model back to the database.  Follow the pattern in the example at 
@@ -264,7 +264,7 @@ class Classifier(BiPlot):
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
         if self.args.verbose:
-            print "  score = %f" % score
+            print("  score = %f" % score)
 
         self._saveModel(labeledGroupName, clf)
 
@@ -283,8 +283,8 @@ class Classifier(BiPlot):
             rr.save(using=self.args.database)
 
             if self.args.verbose:
-                print 'Saved fitted model to the database with name = %s' %self.args.modelBaseName
-                print 'Retrieve with "clf = pickle.loads(r.value.decode("base64").decode("zip"))"'
+                print('Saved fitted model to the database with name = %s' % self.args.modelBaseName)
+                print('Retrieve with "clf = pickle.loads(r.value.decode("base64").decode("zip"))"')
 
     def getFileName(self, figCount):
         '''
@@ -313,7 +313,7 @@ class Classifier(BiPlot):
 
         fileName = self.getFileName(figCount)
         if self.args.verbose:
-            print '  Saving file', fileName
+            print('  Saving file', fileName)
         fig.savefig(fileName)
 
     def process_command_line(self):
@@ -363,12 +363,12 @@ class Classifier(BiPlot):
         parser.add_argument('--maxes', action='store', help='List of labels to create separated by spaces', nargs='*')
         parser.add_argument('--test_size', action='store', help='Proportion of discriminated sample to save as Test set', default=0.4, type=float)
         parser.add_argument('--train_size', action='store', help='Proportion of discriminated sample to save as Train set', default=0.4, type=float)
-        parser.add_argument('--classifier', choices=self.classifiers.keys(), help='Specify classifier to use with --createClassifier option')
+        parser.add_argument('--classifier', choices=list(self.classifiers.keys()), help='Specify classifier to use with --createClassifier option')
         parser.add_argument('--modelBaseName', action='store', help='Base name of the model to store in the database')
         parser.add_argument('--classes', action='store', help='Labels to load from the database for --doModelsScore and --createClassifier', nargs='*')
 
         parser.add_argument('--clobber', action='store_true', help='Remove existing MeasuredParameterResource records before adding new classification')
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1, default=0)
     
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)

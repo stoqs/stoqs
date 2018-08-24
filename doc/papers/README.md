@@ -25,7 +25,7 @@ sudo texhash
 In the paper's directory build the bibliography and the paper, e.g.:
 
 ```bash
-cd ~/dev/stoqsgit/doc/papers/OINA2017
+cd /vagrant/dev/stoqsgit/doc/papers/OINA2017
 export BIBINPUTS=$TEXLIVE_HOME/tex/latex/IEEEtran/bibtex
 export BSTINPUTS=$TEXLIVE_HOME/tex/latex/IEEEtran/bibtex
 pdflatex VisualizingDatawithSTOQS.tex 

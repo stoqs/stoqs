@@ -33,7 +33,7 @@ from CANON import CANONLoader
 # building input data sources object
 from socket import gethostname
 hostname=gethostname()
-print hostname
+print(hostname)
 if hostname=='odss-test.shore.mbari.org':
     cl = CANONLoader('stoqs_september2011', 'CANON - September 2011')
 else:
@@ -96,4 +96,4 @@ if os.path.exists(csvfile):
         cl.loadStella(stride=1)
 
 else:
-    print "ERROR: File list of drifter names to load, stella_load.csv, not found."
+    print("ERROR: File list of drifter names to load, stella_load.csv, not found.")

@@ -32,7 +32,7 @@ from CANON import CANONLoader
 # building input data sources object
 from socket import gethostname
 hostname=gethostname()
-print hostname
+print(hostname)
 if hostname=='odss-test.shore.mbari.org':
     cl = CANONLoader('stoqs_september2011', 'CANON - September 2011')
 else:
@@ -51,7 +51,7 @@ t =time.strptime("2013-09-10 0:01", "%Y-%m-%d %H:%M")
 startdate=t[:6]
 t =time.strptime("2013-10-29 0:01", "%Y-%m-%d %H:%M")
 enddate=t[:6]
-print startdate, enddate
+print((startdate, enddate))
 
 ######################################################################
 #  ESP MOORINGS

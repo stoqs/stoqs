@@ -16,6 +16,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Q, Max, Min, Sum, Avg
 from django.db.models.sql import query
+from django.contrib.gis.db.models import Extent, Union
 from django.contrib.gis.geos import fromstr, MultiPoint
 from django.db.utils import DatabaseError
 from django.core.exceptions import ObjectDoesNotExist
@@ -23,14 +24,14 @@ from django.http import HttpResponse
 from stoqs import models
 from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL
 from loaders.SampleLoaders import SAMPLED, NETTOW, PLANKTONPUMP
-from utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
-from utils import (getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, 
+from .utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
+from .utils import (getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, 
                    getShow_All_Parameter_Values, getShow_Parameter_Platform_Data)
-from utils import simplify_points, getParameterGroups
-from geo import GPS
-from MPQuery import MPQuery
-from PQuery import PQuery
-from Viz import MeasuredParameter, ParameterParameter, PPDatabaseException, PlatformAnimation
+from .utils import simplify_points, getParameterGroups
+from .geo import GPS
+from .MPQuery import MPQuery
+from .PQuery import PQuery
+from .Viz import MeasuredParameter, ParameterParameter, PPDatabaseException, PlatformAnimation
 from coards import to_udunits
 from datetime import datetime
 from django.contrib.gis import gdal
@@ -145,7 +146,7 @@ class STOQSQManager(object):
         and the calls to this method meet the requirements stated above.
         '''
         fromTable = 'Activity'              # Default is Activity
-        if self.kwargs.has_key('fromTable'):
+        if 'fromTable' in self.kwargs:
             fromTable = self.kwargs['fromTable']
 
         if 'qs' in args:
@@ -174,7 +175,7 @@ class STOQSQManager(object):
         self.args = args
 
         # Determine if this is the intial query and set a flag
-        for k, v in self.kwargs.iteritems():
+        for k, v in list(self.kwargs.items()):
             # Test keys that can affect the MeasuredParameter count
             if  k == 'depth' or k == 'time':
                 if v[0] is not None or v[1] is not None:
@@ -187,7 +188,7 @@ class STOQSQManager(object):
         logger.debug('self.initialQuery = %s', self.initialQuery)
 
         # Check to see if there is a "builder" for a Q object using the given parameters and build up the filter from the Q objects
-        for k, v in self.kwargs.iteritems():
+        for k, v in list(self.kwargs.items()):
             if not v:
                 continue
             if k == 'fromTable':
@@ -230,7 +231,7 @@ class STOQSQManager(object):
         '''
         
         results = {}
-        for k, v in self.options_functions.iteritems():
+        for k, v in list(self.options_functions.items()):
             logger.debug('k, v = %s, %s', k, v)
             if self.kwargs['only'] != []:
                 if k not in self.kwargs['only']:
@@ -475,7 +476,7 @@ class STOQSQManager(object):
                             qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p025'), Max('p975'))
                             plot_results = [pid, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
                     except TypeError:
-                        logger.warn('Failed to get plot_results for qs = %s', qs)
+                        logger.debug('Failed to get plot_results for qs = %s', qs)
             except ValueError as e:
                 if pid in ('longitude', 'latitude'):
                     # Get limits from Activity maptrack for which we have our getExtent() method
@@ -509,9 +510,10 @@ class STOQSQManager(object):
                         qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Avg('p025'), Avg('p975'))
                         plot_results = [parameterID, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError as e:
-                    logger.warn(str(e))
+                    # Likely 'Cannot plot Parameter' that is not in selection, ignore for cleaner functional tests
+                    logger.debug(f'parameterID = {parameterID}: {str(e)}')
 
-        if self.kwargs.has_key('measuredparametersgroup'):
+        if 'measuredparametersgroup' in self.kwargs:
             if len(self.kwargs['measuredparametersgroup']) == 1:
                 mpname = self.kwargs['measuredparametersgroup'][0]
                 try:
@@ -526,7 +528,7 @@ class STOQSQManager(object):
                 except TypeError as e:
                     logger.exception(e)
 
-        if self.kwargs.has_key('sampledparametersgroup'):
+        if 'sampledparametersgroup' in self.kwargs:
             if len(self.kwargs['sampledparametersgroup']) == 1:
                 spid = self.kwargs['sampledparametersgroup'][0]
                 try:
@@ -541,7 +543,7 @@ class STOQSQManager(object):
                 except TypeError as e:
                     logger.exception(e)
 
-        if self.kwargs.has_key('parameterstandardname'):
+        if 'parameterstandardname' in self.kwargs:
             if len(self.kwargs['parameterstandardname']) == 1:
                 sname = self.kwargs['parameterstandardname'][0]
                 try:
@@ -569,7 +571,7 @@ class STOQSQManager(object):
                     plot_results = cmincmax
             else:
                 # Likely a selection from the UI that doesn't include the plot parameter
-                logger.warn('plot_results is empty')
+                logger.debug('plot_results is empty')
 
         return {'plot': plot_results, 'dataaccess': da_results, 'cmincmax': cmincmax}
 
@@ -590,9 +592,9 @@ class STOQSQManager(object):
                 # Timeseries and timeseriesProfile data for a single platform
                 # (even if composed of multiple Activities) must have single
                 # unique horizontal position.
-                geom_list = filter(None, self.qs.filter(platform__name=platformName)
+                geom_list = list([_f for _f in self.qs.filter(platform__name=platformName)
                                          .values_list('nominallocation__geom', flat=True)
-                                         .distinct())
+                                         .distinct() if _f])
                 try:
                     geom = geom_list[0]
                 except IndexError:
@@ -602,8 +604,8 @@ class STOQSQManager(object):
                     return modelInfo
 
                 if len(geom_list) > 1:
-                    logger.error('More than one location for %s returned.'
-                                 'Using first one found: %s', platformName, geom)
+                    logger.warn('More than one location for %s returned.'
+                                'Using first one found: %s', platformName, geom)
 
                 # TimeseriesProfile data has multiple nominaldepths - look to 
                 # Resource for nominaldepth of the Platform for these kind of data.
@@ -776,7 +778,7 @@ class STOQSQManager(object):
         timeSeriesProfileQ = self._timeSeriesProfileQ()
         trajectoryProfileQ = self._trajectoryProfileQ()
 
-        for plats in self.getPlatforms().values():
+        for plats in list(self.getPlatforms().values()):
             for p in plats:
                 logger.debug('Platform name: ' + p[0])
                 plq = Q(platform__name = p[0])
@@ -840,7 +842,7 @@ class STOQSQManager(object):
                             except TypeError:
                                 continue                                                 # Likely "float argument required, not NoneType"
     
-                        else:
+                        else: # pragma: no cover
                             s_ems, e_ems = self.getTime()
                             try:
                                 sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
@@ -854,7 +856,7 @@ class STOQSQManager(object):
                                 continue                                                 # Likely "float argument required, not NoneType"
                     logger.debug(' Done filling sdt[].')
 
-                elif p[3].lower() == 'trajectoryprofile':
+                elif p[3].lower() == 'trajectoryprofile': # pragma: no cover
                     iptvq = Q()
                     qs_tp = None
                     if 'time' in self.kwargs:
@@ -900,7 +902,7 @@ class STOQSQManager(object):
 
         trajectoryQ = self._trajectoryQ()
 
-        for plats in self.getPlatforms().values():
+        for plats in list(self.getPlatforms().values()):
             for p in plats:
                 plq = Q(platform__name = p[0])
                 sbdt[p[0]] = {}
@@ -972,7 +974,7 @@ class STOQSQManager(object):
                 strides[parameter.name] = {}
 
             # Initialize pt dictionary of dictionaries with its keys
-            if unit not in pt.keys():
+            if unit not in list(pt.keys()):
                 logger.debug('Initializing pt[%s] = {}', unit)
                 pt[unit] = {}
 
@@ -1089,7 +1091,7 @@ class STOQSQManager(object):
         units = {}
 
         # Build units hash of parameter names for labeling axes in flot
-        for p,u in pa_units.iteritems():
+        for p,u in list(pa_units.items()):
             logger.debug('is_standard_name = %s.  p, u = %s, %s', is_standard_name, p, u)
             if not self._parameterInSelection(p, is_standard_name):
                 logger.debug('Parameter is not in selection')
@@ -1136,7 +1138,7 @@ class STOQSQManager(object):
                 if float(aseconds) > float(secondsperpixel) or len(self.kwargs.get('platforms')) == 1:
                     # Multiple points of this activity can be displayed in the flot, get an appropriate stride
                     logger.debug('PIXELS_WIDE = %s, ndCounts[p] = %s', PIXELS_WIDE, ndCounts[p])
-                    stride = qs_mp_a.count() / PIXELS_WIDE / ndCounts[p]        # Integer factors -> integer result
+                    stride = int(round(qs_mp_a.count() / PIXELS_WIDE / ndCounts[p]))
                     if stride < 1:
                         stride = 1
                     logger.debug('Getting timeseries from MeasuredParameter table with stride = %s', stride)
@@ -1168,7 +1170,7 @@ class STOQSQManager(object):
         counts = 0
 
         # Look for platforms that have featureTypes ammenable for Parameter time series visualization
-        for plats in self.getPlatforms().values():
+        for plats in list(self.getPlatforms().values()):
             for platform in plats:
                 if self.kwargs.get('platforms'):
                     # getPlatforms() includes all Platforms, skip over ones not in the selection
@@ -1210,9 +1212,9 @@ class STOQSQManager(object):
             # Perform more expensive query: start with qs_mp_no_parm version of the MeasuredParameter query set
             pt_qs_mp = self.mpq.qs_mp_no_parm
             
-            logger.debug('Before self._buildParameterTime: pt = %s', pt.keys()) 
+            logger.debug('Before self._buildParameterTime: pt = %s', list(pt.keys())) 
             pt, units, strides = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, strides, pt_qs_mp)
-            logger.debug('After self._buildParameterTime: pt = %s', pt.keys()) 
+            logger.debug('After self._buildParameterTime: pt = %s', list(pt.keys())) 
 
         return({'pt': pt, 'units': units, 'counts': counts, 'colors': colors, 'strides': strides})
 
@@ -1344,7 +1346,7 @@ class STOQSQManager(object):
                     ##logger.debug('pa.name = %s, aname = %s', pa.name, aph['activityparameter__activity__name'])
 
             # Unwind the platformList to get activities by platform name
-            for an, pnList in platformList.iteritems():
+            for an, pnList in list(platformList.items()):
                 ##logger.debug('an = %s, pnList = %s', an, pnList)
                 for pn in pnList:
                     try:
@@ -1355,7 +1357,7 @@ class STOQSQManager(object):
 
             # Build the final data structure organized by platform -> activity
             plHash = {}
-            for plat in activityList.keys():
+            for plat in list(activityList.keys()):
                 ##logger.debug('plat = %s', plat)
                 for an in activityList[plat]:
                     try:
@@ -1371,7 +1373,7 @@ class STOQSQManager(object):
 
         # Make RGBA colors from the hex colors - needed for opacity in flot bars
         rgbas = {}
-        for plats in self.getPlatforms().values():
+        for plats in list(self.getPlatforms().values()):
             for p in plats:
                 r,g,b = (p[2][:2], p[2][2:4], p[2][4:])
                 rgbas[p[0]] = 'rgba(%d, %d, %d, 0.4)' % (int(r,16), int(g,16), int(b,16))
@@ -1445,7 +1447,7 @@ class STOQSQManager(object):
         If at least the X and Y radio buttons are checked produce a scatter plot for delivery back to the client
         '''
         plotResults = None
-        if (self.kwargs.has_key('parameterparameter')):
+        if 'parameterparameter' in self.kwargs:
             px = self.kwargs['parameterparameter'][0]
             py = self.kwargs['parameterparameter'][1]
             pc = self.kwargs['parameterparameter'][3]
@@ -1478,7 +1480,7 @@ class STOQSQManager(object):
         If at least the X, Y, and Z radio buttons are checked produce an X3D response for delivery back to the client
         '''
         x3dDict = None
-        if (self.kwargs.has_key('parameterparameter')):
+        if 'parameterparameter' in self.kwargs:
             px = self.kwargs['parameterparameter'][0]
             py = self.kwargs['parameterparameter'][1]
             pz = self.kwargs['parameterparameter'][2]
@@ -2030,7 +2032,8 @@ class STOQSQManager(object):
         extentList = [] 
         for geom_field in (('maptrack', 'mappoint', 'plannedtrack')):
             try:
-                extentList.append(self.qs.extent(field_name=geom_field))
+                qs_ext = self.qs.aggregate(Extent(geom_field))
+                extentList.append(qs_ext[geom_field + '__extent'])
             except DatabaseError:
                 logger.warn('Database %s does not have field %s', self.dbname, geom_field)
             except TypeError:
@@ -2046,6 +2049,7 @@ class STOQSQManager(object):
 
         # Take the union of all geometry types found in Activities and Samples
         logger.debug("Collected %d geometry extents from Activities and Samples", len(extentList))
+        geom_union = None
         if extentList:
             logger.debug('extentList = %s', extentList)
 
@@ -2066,9 +2070,9 @@ class STOQSQManager(object):
                         geom_union = geom_union.union(fromstr('LINESTRING (%s %s, %s %s)' % extent, srid=srid))
 
             # Aggressive try/excepts done here for better reporting on the production servers
-            try:
+            if geom_union:
                 logger.debug('Final geom_union = %s', geom_union)
-            except UnboundLocalError:
+            else:
                 logger.exception('geom_union could not be set from extentList = %s', extentList)
                 return ([], None, None)
 

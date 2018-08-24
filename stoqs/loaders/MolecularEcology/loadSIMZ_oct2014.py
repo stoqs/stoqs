@@ -25,6 +25,7 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+import timing
 
 cl = CANONLoader('stoqs_simz_oct2014', 'Sampling and Identification of Marine Zooplankton - October 2014',
                         description = 'Rachel Carson and Dorado surveys in Northern Monterey Bay',
@@ -32,7 +33,7 @@ cl = CANONLoader('stoqs_simz_oct2014', 'Sampling and Identification of Marine Zo
                         # location for rotateYUp, making fly navigation work well. All other GCC
                         # positions are in the GeoOrigin with rotateYUp='true' coordinate system
                         x3dTerrains = {
-                            'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                            'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                 'position': '-5334.11754 77527.85269 57495.84643',
                                 'orientation': '-0.99840 0.05415 0.01651 0.88794',
                                 'centerOfRotation': '1973.702 -553.761 -10885.8333',
@@ -137,5 +138,5 @@ else:
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
-print "All Done."
+print("All Done.")
 

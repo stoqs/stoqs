@@ -14,7 +14,7 @@ positions, it also delivers measured_paramaters based on various common query cr
 @license: GPL
 '''
 
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.http import HttpResponse, Http404
 from django.conf import settings
@@ -78,14 +78,13 @@ class BaseOutputer(object):
         '''
         Build template for stoqs_object using generic html template with a column for each attribute
         '''
-        response = render_to_response(self.html_tmpl_file, {'cols': [field.name for field in self.stoqs_object._meta.fields] },
-                                         context_instance = RequestContext(self.request))
+        response = render(self.request, self.html_tmpl_file, context={'cols': [field.name for field in self.stoqs_object._meta.fields]})
 
         logger.debug("Writing template: %s", self.html_tmpl_path)
 
         fh = open(self.html_tmpl_path, 'w')
         for line in response:
-            fh.write(line)
+            fh.write(line.decode("utf-8"))
         fh.close()
 
     def getFields(self):
@@ -145,7 +144,7 @@ class BaseOutputer(object):
         '''
         pmin = {}
         pmax = {}
-        for key, _ in self.request.GET.iteritems():
+        for key, _ in list(self.request.GET.items()):
             if key.endswith('_MIN'):        
                 name = key.split('_MIN')[0]
                 try:
@@ -160,7 +159,7 @@ class BaseOutputer(object):
                     logger.exception('Could not get max parameter value even though ' + key + ' ends with _MAX')
 
         pvDicts = []
-        for name in set(pmin.keys() + pmax.keys()):         # set() uniquifies the keys from each dictionary
+        for name in set(list(pmin.keys()) + list(pmax.keys())):         # set() uniquifies the keys from each dictionary
             if name in mod.Parameter.objects.using(self.request.META['dbAlias']).values_list('name', flat=True):
                 try:
                     pn = pmin[name]
@@ -281,17 +280,15 @@ class BaseOutputer(object):
         else:
             self.build_html_template()
             try:
-                response = render_to_response(self.html_tmpl_file, {'cols': fields, 
-                                                'google_analytics_code': settings.GOOGLE_ANALYTICS_CODE },
-                                                context_instance = RequestContext(self.request))
+                response = render(self.request, self.html_tmpl_file, context={'cols': fields, 
+                                                'google_analytics_code': settings.GOOGLE_ANALYTICS_CODE})
             except AttributeError:
-                response = render_to_response(self.html_tmpl_file, {'cols': fields}, 
-                                                context_instance = RequestContext(self.request))
+                response = render(self.request, self.html_tmpl_file, context={'cols': fields})
             fh = open(self.html_tmpl_path, 'w')
             for line in response:
-                fh.write(line)
+                fh.write(line.decode("utf-8"))
             fh.close()
-            return render_to_response(self.html_tmpl_path, {'list': self.qs})
+            return render(self.request, self.html_tmpl_path, context={'list': self.qs})
 
 
 def showSample(request, fmt='html'):

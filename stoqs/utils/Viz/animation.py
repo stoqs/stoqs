@@ -11,7 +11,7 @@ import time
 import traceback
 from collections import namedtuple
 from datetime import datetime
-from itertools import izip, izip_longest
+from itertools import zip_longest
 from loaders import X3DPLATFORMMODEL, X3D_MODEL, X3D_MODEL_SCALEFACTOR
 from matplotlib.colors import hex2color
 from stoqs import models
@@ -45,7 +45,7 @@ class PlatformAnimation(object):
             <Transform id="{pName}_SCALE" DEF="{pName}_SCALE" scale="{scale} {scale} {scale}">
                 <!-- Cylinder height = 0.410 in axes_enu.x3d, scale to make length = 10 m -->
                 <Transform scale="24.390244 24.390244 24.390244">
-                    <Inline url="http://stoqs.mbari.org/x3d/beds/axes_enu.x3d" nameSpaceName="{pName}_axesENU" mapDEFToID="true"></Inline>
+                    <Inline url="https://stoqs.mbari.org/x3d/beds/axes_enu.x3d" nameSpaceName="{pName}_axesENU" mapDEFToID="true"></Inline>
                 </Transform>
                 <Transform scale="3 3 3" translation="0 1 0">
                     <Billboard axisOfRotation="0,0,0">
@@ -99,7 +99,7 @@ class PlatformAnimation(object):
             <Transform id="{pName}_SCALE" DEF="{pName}_SCALE" scale="{scale} {scale} {scale}">
                 <!-- Cylinder height = 0.410 in axes_enu.x3d, scale to make length = 10 m -->
                 <Transform scale="24.390244 24.390244 24.390244">
-                    <Inline url="http://stoqs.mbari.org/x3d/beds/axes_enu.x3d" nameSpaceName="{pName}_axesENU"></Inline>
+                    <Inline url="https://stoqs.mbari.org/x3d/beds/axes_enu.x3d" nameSpaceName="{pName}_axesENU"></Inline>
                 </Transform>
                 <Transform scale="3 3 3" translation="0 1 0">
                     <Billboard axisOfRotation="0,0,0">
@@ -303,7 +303,7 @@ class PlatformAnimation(object):
         # Find earliest platform animation, time and latest time
         min_start_time = datetime.utcnow()
         max_end_time = datetime.utcfromtimestamp(0)
-        for p, r in time_ranges.iteritems():
+        for p, r in list(time_ranges.items()):
             if r.start < min_start_time:
                 min_start_time = r.start
                 st_ems = int((time.mktime(min_start_time.timetuple()) + 
@@ -315,7 +315,7 @@ class PlatformAnimation(object):
                                 max_end_time.microsecond / 1.e6) * 1000.0)
 
         # Build X3D and assemble
-        for p, r in time_ranges.iteritems():
+        for p, r in list(time_ranges.items()):
             if force_overlap:
                 # Compare earliest platform animation with all the rest, build x3d for only overlapping
                 if self.overlap_time(time_ranges[earliest_platform], r) > 0:
@@ -404,7 +404,7 @@ class PlatformAnimation(object):
 
         else:
             for (lon, lat, depth, t, pitch, yaw, roll, 
-                 axis_x, axis_y, axis_z, angle) in izip_longest(
+                 axis_x, axis_y, axis_z, angle) in zip_longest(
                                                     self.lon_by_plat[pName], 
                                                     self.lat_by_plat[pName], 
                                                     self.depth_by_plat[pName],
@@ -430,7 +430,7 @@ class PlatformAnimation(object):
                     a_z = self.af * self.rot_z_by_plat[pName][0]
                     self.axisValues += self.axisValuesFmt.format(-.5 * a_x, -.5 * a_y, -.5 * a_z, a_x, a_y, a_z)
             else:
-                for a_x, a_y, a_z in izip(self.rot_x_by_plat[pName], self.rot_y_by_plat[pName], 
+                for a_x, a_y, a_z in zip(self.rot_x_by_plat[pName], self.rot_y_by_plat[pName], 
                                           self.rot_z_by_plat[pName]):
                     a_x *= self.af
                     a_y *= self.af

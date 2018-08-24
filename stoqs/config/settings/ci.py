@@ -39,8 +39,8 @@ CACHES = {
 
 # django-debug-toolbar
 # ------------------------------------------------------------------------------
-MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
-INSTALLED_APPS += ('debug_toolbar', )
+##MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware', )
+##INSTALLED_APPS += ('debug_toolbar', )
 
 INTERNAL_IPS = ('127.0.0.1', '10.0.2.2',)
 
@@ -62,7 +62,7 @@ TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 # Your local stuff: Below this line define 3rd party library settings
 
 # Must be address externally accessible if your STOQS server is to be externally accessible
-MAPSERVER_HOST = 'localhost'
+MAPSERVER_HOST = 'localhost:8080'
 
 # Home page link, logo and alt text - HOME_PAGE_LOGO must be in STATIC_URL/images
 HOME_PAGE_LINK = env('HOME_PAGE_LINK', default='http://www.mbari.org')

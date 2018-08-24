@@ -8,9 +8,10 @@ https://docs.djangoproject.com/en/dev/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/dev/ref/settings/
 """
-from __future__ import absolute_import, unicode_literals
+
 
 import environ
+from email.utils import getaddresses
 
 ROOT_DIR = environ.Path(__file__) - 3  # (/a/b/myfile.py - 3 = /)
 APPS_DIR = ROOT_DIR.path('stoqs')
@@ -35,9 +36,9 @@ DJANGO_APPS = (
     'django.contrib.admin',
 )
 THIRD_PARTY_APPS = (
-    'crispy_forms',  # Form layouts
-    'allauth',  # registration
-    'allauth.account',  # registration
+    ##'crispy_forms',  # Form layouts
+    ##'allauth',  # registration
+    ##'allauth.account',  # registration
     # See: https://github.com/pennersr/django-allauth/blob/master/docs/installation.rst
     # and https://github.com/pennersr/django-allauth/commit/b1bce45012a808aef233e7f7b60a956d8a2524ee
     # Expect allauth.socialaccount to work when 0.22 is in pypi
@@ -75,7 +76,7 @@ MIDDLEWARE_CLASSES = (
 # MIGRATIONS CONFIGURATION
 # ------------------------------------------------------------------------------
 MIGRATION_MODULES = {
-    'sites': 'stoqs.contrib.sites.migrations'
+    ##'sites': 'stoqs.contrib.sites.migrations'
 }
 
 # DEBUG
@@ -86,18 +87,8 @@ DEBUG = env.bool("DJANGO_DEBUG", default=True)
 # ALLOWED_HOSTS
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-default_allowed_hosts = ['localhost', '127.0.0.1', '[::1]']
-try:
-    import netifaces as ni
-    #ni.ifaddresses('eth0')
-    #default_allowed_hosts.append(ni.ifaddresses('eth0')[2][0]['addr'])
-except ImportError:
-    # Likely because 'netifaces' has not been installed
-    pass
-except ValueError:
-    # Likely because 'eth0' is not a network interface on this system
-    pass
-
+docker_stoqs_host = env('NGINX_SERVER_NAME', default='localhost')
+default_allowed_hosts = [docker_stoqs_host, '127.0.0.1', '[::1]', '0.0.0.0']
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=default_allowed_hosts)
 
 # FIXTURE CONFIGURATION
@@ -110,13 +101,18 @@ FIXTURE_DIRS = (
 # EMAIL CONFIGURATION
 # ------------------------------------------------------------------------------
 EMAIL_BACKEND = env('DJANGO_EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_USE_TLS = env('EMAIL_USE_TLS', default=True)
+EMAIL_HOST = env('EMAIL_HOST', default='mbarimail.mbari.org')
+EMAIL_PORT = env('EMAIL_PORT', default=587)
+EMAIL_HOST_USER = env('EMAIL_HOST_USE', default='stoqsadm')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 
 # MANAGER CONFIGURATION
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#admins
-ADMINS = (
-    ("""Mike McCann""", 'MBARIMike@gmail.com'),
-)
+# In the format 'Full Name <email@example.com>, Full Name <anotheremail@example.com>'
+# e.g. DJANGO_ADMINS=Full Name <email-with-name@example.com>,anotheremailwithoutname@example.com
+ADMINS = getaddresses([env('DJANGO_ADMINS', default='Super User <root@localhost>')])
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
@@ -132,12 +128,24 @@ DATABASES = {
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
+# Functional tests require a separate MAPSERVER_DATABASE_URL setting
+MAPSERVER_DATABASE_URL = env('MAPSERVER_DATABASE_URL', default=env('DATABASE_URL'))
+if MAPSERVER_DATABASE_URL == env('DATABASE_URL'):
+    MAPSERVER_DATABASES = DATABASES.copy()
+else:
+    MAPSERVER_DATABASES = {
+        'default': env.db("MAPSERVER_DATABASE_URL")
+    }
+    MAPSERVER_DATABASES['default']['ATOMIC_REQUESTS'] = True
+    
 # For running additional databases append entries from STOQS_CAMPAIGNS environment
 # Example: export STOQS_CAMPAIGNS='stoqs_beds_canyon_events_t,stoqs_os2015_t'
 for campaign in env.list('STOQS_CAMPAIGNS', default=[]):
     DATABASES[campaign] = DATABASES.get('default').copy()
     DATABASES[campaign]['NAME'] = campaign
-
+    MAPSERVER_DATABASES[campaign] = MAPSERVER_DATABASES.get('default').copy()
+    MAPSERVER_DATABASES[campaign]['NAME'] = campaign
+    
 # GENERAL CONFIGURATION
 # ------------------------------------------------------------------------------
 # Local time zone for this installation. Choices can be found here:
@@ -299,13 +307,18 @@ LOGGING = {
 # Google Analytics code - get for your web site, if you want to track usage
 # export DJANGO_GOOGLE_ANALYTICS_CODE='SET_YOUR_OWN_GA_CODE_TO_TRACK_USAGE'
 
+# For a development system (Vagrant) we use insecure apache which is http and the default
+# Docker uses a proxy through nginx which provides https (set in docker-compose.yml)
+MAPSERVER_SCHEME = env('MAPSERVER_SCHEME', default='http')
+
 # Must be externally accessible if your STOQS server is to be externally accessible
 # The default of 'localhost:8080' is for a Vagrant install, set MAPSERVER_HOST for
-# other cases, e.g. export MAPSERVER_HOST='172.16.130.204'
+# other cases, e.g. export MAPSERVER_HOST='172.16.130.204:80'
 MAPSERVER_HOST = env('MAPSERVER_HOST', default='localhost:8080')
 
-# For template generated .map files
-MAPFILE_DIR = '/dev/shm'
+# For template generated .map files, the URL_ version is for Docker shared volume setup
+MAPFILE_DIR = env('MAPFILE_DIR', default='/dev/shm')
+URL_MAPFILE_DIR = env('URL_MAPFILE_DIR', default='/dev/shm')
 
 
 # STOQS specific logging
@@ -337,18 +350,6 @@ LOGGING['loggers']['stoqs.db_router'] = {
                             'formatter': 'verbose'
 }
 LOGGING['loggers']['loaders'] = {
-                            'handlers':['console'],
-                            'propagate': True,
-                            'level':'INFO',
-                            'formatter': 'verbose'
-}
-LOGGING['loggers']['DAPloaders'] = {
-                            'handlers':['console'],
-                            'propagate': True,
-                            'level':'INFO',
-                            'formatter': 'verbose'
-}
-LOGGING['loggers']['SampleLoaders'] = {
                             'handlers':['console'],
                             'propagate': True,
                             'level':'INFO',

@@ -27,24 +27,24 @@ Instructions for packaging in CDE so that Python scripts can run without a full 
 
 0. Install CDE on your system from http://www.pgbovine.net/cde.html, e.g.:
 
-    cd ~/dev
+    cd /vagrant/dev
     git clone git://github.com/pgbovine/CDE.git
     cd CDE
     make
 
-This documentation refers to $STOQSHG_DIR, which will be something like ~/dev/stoqshg or /opt/stoqshg.  
+This documentation refers to $STOQS_DIR, which will be something like /vagrant/dev/stoqsgit or /opt/stoqsgit.  
 
-1. Make sure that the privateSettings file in $STOQSHG_DIR contains Database credentials that you don't
+1. Make sure that the privateSettings file in $STOQS_DIR contains Database credentials that you don't
    mind sharing with the whole world.  They should be for a role that has only SELECT-only privileges 
    on your databases, such as 'everyone', 'guest'.  The MY_DATABASES entries sould contain entries for 
    the databases you want people to use.  The DATABASE_HOST needs to be a name accessible to clients of 
    your target audience.  For example:
 
-    export STOQSHG_DIR=~/dev/stoqshg 
+    export STOQS_DIR=/vagrant/dev/stoqsgit 
     -or- 
-    export STOQSHG_DIR=/opt/stoqshg
+    export STOQS_DIR=/opt/stoqsgit
 
-    vi $STOQSHG_DIR/privateSettings
+    vi $STOQS_DIR/privateSettings
 
     ...
     DATABASE_USER = 'everyone'
@@ -61,9 +61,9 @@ This documentation refers to $STOQSHG_DIR, which will be something like ~/dev/st
 
 2. Execute stoqs script(s) on target architecture with 'cde' command, e.g.:
 
-    cd $STOQSHG_DIR/contrib/analysis
-    ~/dev/CDE/cde ./trajectory_biplots.py -d default -p dorado -x salinity -y temperature
-    ~/dev/CDE/cde ./crossproduct_biplots.py -d default 
+    cd $STOQS_DIR/contrib/analysis
+    /vagrant/dev/CDE/cde ./trajectory_biplots.py -d default -p dorado -x salinity -y temperature
+    /vagrant/dev/CDE/cde ./crossproduct_biplots.py -d default 
 
    Note: Execute a real command, not just the --help option.  You can ignore warning messages.
 

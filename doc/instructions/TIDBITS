@@ -8,7 +8,7 @@ or using stoqs.
 Here's an interactive python session that retrieves measurements and plots a histogram:
 ---------------------------------------------------------------------------------------
 
-cd ~/dev/stoqshg
+cd /vagrant/dev/stoqsgit
 ./manage.py shell_plus
 
 from stoqs import models as m
@@ -37,7 +37,7 @@ plt.savefig('sal_hist.png')
 Here's a little script to update the start and end dates for all the Campaigns on a server:
 -----------------------------------------------------------------------------------------
 
-cd ~/dev/stoqshg
+cd /vagrant/dev/stoqsgit
 ./manage.py shell_plus
 
 from stoqs import models as m

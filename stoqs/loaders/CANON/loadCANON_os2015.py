@@ -22,8 +22,8 @@ import sys
 import datetime  # needed for glider data
 import time      # for startdate, enddate args
 import csv
-import urllib2
-import urlparse
+import urllib.request, urllib.error, urllib.parse
+import urllib.parse
 import requests
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
@@ -32,11 +32,12 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 from CANON import CANONLoader
 from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
+import timing
 
 cl = CANONLoader('stoqs_os2015', 'CANON-ECOHAB - Off Season 2015',
                     description = 'CANON Off Season 2015 Experiment in Monterey Bay',
                     x3dTerrains = {
-                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                         'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                         'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                         'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
@@ -79,12 +80,12 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 def find_urls(base, search_str):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
-    print "Crawling: %s" % url
+    print(("Crawling: %s" % url))
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
-    u = urlparse.urlsplit(url)
+    u = urllib.parse.urlsplit(url)
     name, ext = os.path.splitext(u.path)
     if ext == ".html":
-        u = urlparse.urlsplit(url.replace(".html", ".xml"))
+        u = urllib.parse.urlsplit(url.replace(".html", ".xml"))
     url = u.geturl()
     urls = []
     # Get an etree object
@@ -110,10 +111,10 @@ def find_urls(base, search_str):
                     for url in d:
                         urls.append(url)
             except Exception as ex:
-                print "Error reading mission directory name %s" % ex
+                print(("Error reading mission directory name %s" % ex))
 
     except BaseException:
-        print "Skipping %s (error parsing the XML)" % url
+        print(("Skipping %s (error parsing the XML)" % url))
 
     return urls
 
@@ -425,5 +426,5 @@ else:
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
-print "All Done."
+print("All Done.")
 

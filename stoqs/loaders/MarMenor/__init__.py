@@ -77,8 +77,8 @@ class MarMenorLoader(object):
                 try:
                     getattr(self, loader)()
                 except AttributeError as e:
-                    print e
-                    print "WARNING: No data from %s for dbAlias = %s, campaignName = %s" % (loader, self.dbAlias, self.campaignName)
+                    print(e)
+                    print(("WARNING: No data from %s for dbAlias = %s, campaignName = %s" % (loader, self.dbAlias, self.campaignName)))
                     pass
 
 

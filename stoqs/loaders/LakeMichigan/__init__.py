@@ -86,7 +86,7 @@ class LakeMILoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_tethys.x3d', pName)
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/lrauv/lrauv_tethys.x3d', pName)
 
 
     def loadAll(self, stride=None):
@@ -101,8 +101,8 @@ class LakeMILoader(LoadScript):
                 try:
                     getattr(self, loader)()
                 except AttributeError as e:
-                    print e
-                    print "WARNING: No data from %s for dbAlias = %s, campaignName = %s" % (loader, self.dbAlias, self.campaignName)
+                    print(e)
+                    print(("WARNING: No data from %s for dbAlias = %s, campaignName = %s" % (loader, self.dbAlias, self.campaignName)))
                     pass
 
 if __name__ == '__main__':

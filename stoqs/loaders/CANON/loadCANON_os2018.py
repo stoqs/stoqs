@@ -33,17 +33,18 @@ from CANON import CANONLoader
 from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
+import timing
 
 cl = CANONLoader('stoqs_os2018', 'CANON - Off Season 2018',
-                 description='Off Season 2018 campaign observations in Monterey Bay',
+                 description='Off Season 2018 observations in Monterey Bay',
                  x3dTerrains={
-                   'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                   'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
                      'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                      'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                      'VerticalExaggeration': '10',
                    },
-                   'http://stoqs.mbari.org/x3d/Monterey25_1x/Monterey25_1x_src_scene.x3d': {
+                   'https://stoqs.mbari.org/x3d/Monterey25_1x/Monterey25_1x_src_scene.x3d': {
                      'name': 'Monterey25_1x',
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
                      'orientation': '0.89575 -0.31076 -0.31791 1.63772',
@@ -69,8 +70,12 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 #  DORADO
 #####################################################################
 # special location for dorado data
-cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2017/netcdf/'
+cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2018/netcdf/'
 cl.dorado_files = [
+                   'Dorado389_2018_030_00_030_00_decim.nc',
+                   'Dorado389_2018_059_00_059_00_decim.nc', 
+                   'Dorado389_2018_079_00_079_00_decim.nc',
+                   'Dorado389_2018_099_00_099_00_decim.nc',
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
@@ -236,6 +241,8 @@ cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data
 cl.wg_Tiny_files = [
                       'wgTiny/20171212/realTime/20171212.nc',
                       'wgTiny/20180116/realTime/20180116.nc',
+                      'wgTiny/20180208/realTime/20180208.nc',
+                      'wgTiny/20180323/realTime/20180323.nc',
                    ]
 
 

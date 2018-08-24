@@ -39,7 +39,6 @@ campaigns = OrderedDict([
     ('stoqs_ioos_gliders',   'IOOS/load_gliders.py'),
     ('stoqs_march2013',      'CANON/loadCANON_march2013.py'),
     ('stoqs_march2013_o',    'CANON/loadCANON_march2013.py -o'),
-    ('stoqs_beds2013',           'BEDS/loadBEDS_2013.py'),
     ('stoqs_beds_canyon_events', 'BEDS/loadBEDS_CanyonEvents.py'),
     ('stoqs_simz_aug2013',       'MolecularEcology/loadSIMZ_aug2013.py'),
     ('stoqs_september2013',      'CANON/loadCANON_september2013.py'),
@@ -62,5 +61,6 @@ campaigns = OrderedDict([
     ('stoqs_canon_april2017',    'CANON/loadCANON_april2017.py'),      
     ('stoqs_ps2017',             'CANON/loadCANON_postSeason2017.py'),
     ('stoqs_canon_september2017',   'CANON/loadCANON_september2017.py'), 
-    ('stoqs_os2018',             'CANON/loadCANON_os2018.py'),      
+    ('stoqs_os2018',             'CANON/loadCANON_os2018.py'), 
+    ('stoqs_canon_may2018',      'CANON/loadCANON_may2018.py'),     
 ])
