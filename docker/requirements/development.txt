@@ -8,7 +8,7 @@ Babel==2.6.0
 backports.ssl-match-hostname==3.5.0.1
 billiard==3.5.0.4
 binaryornot==0.4.4
-certifi==2018.8.13
+certifi==2018.8.24
 cookiecutter==1.6.0
 Cython==0.28.5
 docutils==0.14
