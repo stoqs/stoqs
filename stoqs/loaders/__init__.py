@@ -15,6 +15,7 @@ os.environ['DJANGO_SETTINGS_MODULE']='config.settings.local'
 import django
 django.setup()
 
+from collections import defaultdict
 from django.conf import settings
 from django.contrib.gis.geos import Polygon
 from django.db.utils import IntegrityError
@@ -271,7 +272,7 @@ class LoadScript(object):
         try:
             platform = m.Platform.objects.using(self.dbAlias).get(name=pName)
         except ObjectDoesNotExist:
-            self.logger.warn("Platform {} not found. Can't add Resources.".format(pName))
+            self.logger.warn(f"Platform {pName} not found in database {self.dbAlias}. Can't add Resources.")
             return
         
         r, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
@@ -754,7 +755,7 @@ class STOQS_Loader(object):
    
     def is_coordinate_bad(self, key, mtime, depth, lat=None, lon=None, min_depth=-1000, max_depth=5000,
                                          min_lat=-90, max_lat=90, min_lon=-720, max_lon=720):
-        '''Return True if coordinate if missing or fill_value, or falls outside of reasonable bounds
+        '''Return True if coordinate is missing or fill_value, or falls outside of reasonable bounds
         '''
         # Missing value rejections
         ac = self.getAuxCoordinates(key)
@@ -825,8 +826,9 @@ class STOQS_Loader(object):
         return False
 
     def good_coords(self, pnames, mtimes, depths, latitudes, longitudes):
-        '''Generate good coordinate if any of the parameters has good coordinate data.
-        Appropriate for trajectory data where there is one-to-one match of coorcinates.
+        '''Use attributes to determine if coordinate values are good.  Yield None
+        values for all coordinates if any are bad (e.g. _FillValue).
+        Appropriate for trajectory data where there is one-to-one match of coordinates.
         '''
         # Checking for duplicate times is time consuming, do it for only known
         # problematic sources of data
@@ -838,23 +840,32 @@ class STOQS_Loader(object):
                 self.logger.debug(f'Setting known_dup_time_problem for known_dup_time_source: {string}')
                 known_dup_time_problem = True
         
-        dup_time = False
-        previous_times = []
-        for mt, de, la, lo in zip(mtimes, depths, latitudes, longitudes):
-            all_bad = True
-            for pname in pnames:
-                if not self.is_coordinate_bad(pname, mt, de, la, lo):
-                    all_bad = False
-            if all_bad:
-                continue
+        previous_coords = []
+        for pname_count, pname in enumerate(pnames):
+            for i, (mt, de, la, lo) in enumerate(zip(mtimes, depths, latitudes, longitudes)):
+                if self.is_coordinate_bad(pname, mt, de, la, lo):
+                    mt = None
+                    de = None
+                    la = None
+                    lo = None
 
-            if known_dup_time_problem:
                 dup_time = False
-                previous_times.append(mt)
-                if mt in previous_times[:-1]:
-                    self.logger.warn(f'Will not load data from duplicate time coordinate: {mt}')
-                    dup_time = True
+                previous_times = []
+                if known_dup_time_problem:
+                    dup_time = False
+                    previous_times.append(mt)
+                    if mt in previous_times[:-1]:
+                        self.logger.warn(f'Will not load data from duplicate time coordinate: {mt}')
+                        dup_time = True
 
+                if pname_count > 0:
+                    if set(previous_coords[i]) != set((mt, de, la, lo, dup_time)):
+                        self.logger.warn(f'coords for {pname} are not the same as for {previous_pname}')
+
+                previous_pname = pname
+                previous_coords.append((mt, de, la, lo, dup_time))
+
+        for mt, de, la, lo, dup_time in previous_coords:
             yield mt, de, la, lo, dup_time
 
     def preProcessParams(self, row):
@@ -1323,22 +1334,33 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
 
             yield sigmat_mp, spice_mp
 
-    def _generate_sigmat_and_spice_mps(self, p_sigmat, p_spice, ms, salinity_standard_name):
-        '''Yield calculated sigmat and spice from ms QuerySet
+    def _generate_sigmat_mps(self, p_sigmat, ms, salinity_standard_name):
+        '''Yield calculated sigmat from ms QuerySet
         '''
         for measurement in ms:
             mps = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=measurement)
 
-            temp = mps.filter(parameter__standard_name='sea_water_temperature').values_list('datavalue', flat=True)[0]
-            sal = mps.filter(parameter__standard_name=salinity_standard_name).values_list('datavalue', flat=True)[0]
+            temp_mp = mps.filter(parameter__standard_name='sea_water_temperature')
+            sal_mp = mps.filter(parameter__standard_name=salinity_standard_name)
 
-            sigmat = sw.pden(sal, temp, sw.pres(measurement.depth, measurement.geom.y)) - 1000.0
-            spice = spiciness(temp, sal)
-
+            sigmat = sw.pden(sal_mp[0].datavalue, temp_mp[0].datavalue, sw.pres(measurement.depth, measurement.geom.y)) - 1000.0
             sigmat_mp = m.MeasuredParameter(measurement=measurement, parameter=p_sigmat, datavalue=sigmat)
+            
+            yield sigmat_mp
+
+    def _generate_spice_mps(self, p_spice, ms, salinity_standard_name):
+        '''Yield calculated spice from ms QuerySet
+        '''
+        for measurement in ms:
+            mps = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=measurement)
+
+            temp_mp = mps.filter(parameter__standard_name='sea_water_temperature')
+            sal_mp = mps.filter(parameter__standard_name=salinity_standard_name)
+
+            spice = spiciness(temp_mp[0].datavalue, sal_mp[0].datavalue)
             spice_mp = m.MeasuredParameter(measurement=measurement, parameter=p_spice, datavalue=spice)
             
-            yield sigmat_mp, spice_mp
+            yield spice_mp
 
     def addSigmaTandSpice(self, activity=None):
         ''' 
@@ -1404,9 +1426,8 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
         sigmat_mps = []
         spice_mps = []
         self.logger.info(f'Calculating {self.parameter_counts[p_sigmat]} sigmat & spice MeasuredParameters')
-        for sigmat_mp, spice_mp in self._generate_sigmat_and_spice_mps(p_sigmat, p_spice, ms, salinity_standard_name):
-            sigmat_mps.append(sigmat_mp)
-            spice_mps.append(spice_mp)
+        sigmat_mps = self._generate_sigmat_mps(p_sigmat, ms, salinity_standard_name)
+        spice_mps = self._generate_spice_mps(p_spice, ms, salinity_standard_name)
 
         self.logger.info(f'Bulk loading {self.parameter_counts[p_sigmat]} sigmat MeasuredParameters')
         m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(sigmat_mps)

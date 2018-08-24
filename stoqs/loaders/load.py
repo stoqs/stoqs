@@ -53,6 +53,7 @@ class Loader(object):
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
+    prov = {}
 
     def _create_db(self, db):
         '''Create database. Invoking user should have privileges to connect to 
@@ -102,6 +103,20 @@ class Loader(object):
         ret = os.system(create_ext)
         self.logger.debug('ret = %s', ret)
 
+    def _copy_log_file(self, log_file):
+        loadlogs_dir = os.path.join(settings.MEDIA_ROOT, 'loadlogs')
+        try: 
+            os.makedirs(loadlogs_dir)
+        except OSError:
+            if not os.path.isdir(loadlogs_dir):
+                raise
+        log_file_url = os.path.basename(log_file) + '.txt'
+        try:
+            copyfile(log_file , os.path.join(loadlogs_dir, log_file_url))
+            self.prov['load_logfile'] = os.path.join(settings.MEDIA_URL, 'loadlogs', log_file_url)
+        except IOError as e:
+            self.logger.warn(e)
+
     def _provenance_dict(self, db, load_command, log_file):
         '''Return a dictionary of provenance Resource items. Special handling 
         for --background operation: don't tail log file, instead add those
@@ -109,15 +124,13 @@ class Loader(object):
         '''
         repo = Repo(app_dir, search_parent_directories=True)
 
-        prov = {}
-
         if not self.args.updateprovenance:
             # Inserted when load executed with or without --background
-            prov['load_command'] = load_command
-            prov['gitorigin'] = repo.remotes.origin.url
-            prov['gitcommit'] = repo.head.commit.hexsha
-            prov['environment'] = platform.platform() + " python " + sys.version.split('\n')[0]
-            prov['load_date_gmt'] = datetime.datetime.utcnow()
+            self.prov['load_command'] = load_command
+            self.prov['gitorigin'] = repo.remotes.origin.url
+            self.prov['gitcommit'] = repo.head.commit.hexsha
+            self.prov['environment'] = platform.platform() + " python " + sys.version.split('\n')[0]
+            self.prov['load_date_gmt'] = datetime.datetime.utcnow()
 
         if not self.args.background and self.args.updateprovenance:
             if not os.path.isfile(log_file):
@@ -126,36 +139,21 @@ class Loader(object):
                 # Look for line printed by timing module
                 for line in tail(log_file, 50).split('\n'):
                     if line.startswith(MINUTES):
-                        prov['minutes_to_load'] =line.split(':')[1]
+                        self.prov['minutes_to_load'] =line.split(':')[1]
                 try:
                     # Inserted after the log_file has been written with --updateprovenance
-                    prov['real_exection_time'] = tail(log_file, 3).split('\n')[0].split('\t')[1]
-                    prov['user_exection_time'] = tail(log_file, 3).split('\n')[1].split('\t')[1]
-                    prov['sys_exection_time'] = tail(log_file, 3).split('\n')[2].split('\t')[1]
+                    self.prov['real_exection_time'] = tail(log_file, 3).split('\n')[0].split('\t')[1]
+                    self.prov['user_exection_time'] = tail(log_file, 3).split('\n')[1].split('\t')[1]
+                    self.prov['sys_exection_time'] = tail(log_file, 3).split('\n')[2].split('\t')[1]
                 except IndexError:
-                    self.logger.warn('No execution time information in %s', log_file)
-
-                loadlogs_dir = os.path.join(settings.MEDIA_ROOT, 'loadlogs')
-                try: 
-                    os.makedirs(loadlogs_dir)
-                except OSError:
-                    if not os.path.isdir(loadlogs_dir):
-                        raise
-                log_file_url = os.path.basename(log_file) + '.txt'
-                try:
-                    copyfile(log_file , os.path.join(loadlogs_dir, log_file_url))
-                    prov['load_logfile'] = os.path.join(settings.MEDIA_URL, 'loadlogs', log_file_url)
-                except IOError as e:
-                    self.logger.warn(e)
+                    self.logger.debug('No execution_time information in %s', log_file)
 
                 # Counts
-                prov['MeasuredParameter_count'] = MeasuredParameter.objects.using(db).count()
-                prov['SampledParameter_count'] = SampledParameter.objects.using(db).count()
-                prov['Parameter_count'] = Parameter.objects.using(db).count()
-                prov['Activity_count'] = Activity.objects.using(db).count()
-                prov['Platform_count'] = Platform.objects.using(db).count()
-
-        return prov
+                self.prov['MeasuredParameter_count'] = MeasuredParameter.objects.using(db).count()
+                self.prov['SampledParameter_count'] = SampledParameter.objects.using(db).count()
+                self.prov['Parameter_count'] = Parameter.objects.using(db).count()
+                self.prov['Activity_count'] = Activity.objects.using(db).count()
+                self.prov['Platform_count'] = Platform.objects.using(db).count()
 
     def _log_file(self, script, db, load_command):
         if self._has_no_t_option(db, load_command):
@@ -320,10 +318,11 @@ local   all             all                                     peer
                 else:
                     self.logger.error(f'Could not find Campaign record for {db} in the database.')
                     self.logger.error(f'Look for error messages in: {log_file}')
-                    sys.exit(-1)
+                    return
 
         self.logger.info('Database %s', db)
-        for name,value in list(self._provenance_dict(db, load_command, log_file).items()):
+        self._provenance_dict(db, load_command, log_file)
+        for name,value in list(self.prov.items()):
             r, _ = Resource.objects.using(db).get_or_create(
                             uristring='', name=name, value=value, resourcetype=rt)
             CampaignResource.objects.using(db).get_or_create(
@@ -415,6 +414,25 @@ local   all             all                                     peer
         print(('\n'.join(stoqs_campaigns)))
         print(('export STOQS_CAMPAIGNS="' + ','.join(stoqs_campaigns) + '"'))
 
+    def lines_with_string(self, file_name, string, max_lines=10):
+        matching_lines = ''
+        with open(file_name) as f:
+            i = 0
+            for line in f:
+                if string in line:
+                    i += 1
+                    matching_lines += line
+                if i > max_lines:
+                    break
+
+        if i >= max_lines:
+            matching_lines += f'\n(... truncated after {string} seen {max_lines} times ...)'
+
+        if not matching_lines:
+            matching_lines = f'No lines containing string {string}.'
+
+        return matching_lines
+
     def load(self, campaigns=None, create_only=False):
         if not campaigns:
             campaigns = importlib.import_module(self.args.campaigns)
@@ -499,13 +517,34 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
             ret = os.system(cmd)
             self.logger.debug(f'ret = {ret}')
 
+            self._copy_log_file(log_file)
+
             if self.args.slack:
-                message = f"{db} load into {settings.DATABASES[db]['HOST']} on {socket.gethostname()}"
+                server = os.environ.get('NGINX_SERVER_NAME', socket.gethostname())
+                message = f"{db} load into {settings.DATABASES[db]['HOST']} on {server}"
                 if ret == 0:
-                    message += ' succeded.'
+                    message += ' *succeded*.\n'
                 else:
-                    message += ' failed.'
-                self.slack.chat.post_message('#stoqs-loads', message)
+                    message += ' *failed*.\n'
+
+                stoqs_icon_url = 'http://www.stoqs.org/wp-content/uploads/2017/07/STOQS_favicon_logo3_512.png'
+                self.slack.chat.post_message('#stoqs-loads', text=message, username='stoqsadm', icon_url=stoqs_icon_url)
+
+                message = f'All WARNING messages from {log_file}:'
+                message += f"```{self.lines_with_string(log_file, 'WARNING')}```"
+                self.slack.chat.post_message('#stoqs-loads', text=message, username='stoqsadm', icon_url=stoqs_icon_url)
+
+                message = f'All ERROR messages from {log_file}:'
+                message += f"```{self.lines_with_string(log_file, 'ERROR')}```"
+                self.slack.chat.post_message('#stoqs-loads', text=message, username='stoqsadm', icon_url=stoqs_icon_url)
+
+                num_lines = 20
+                message = f'Last {num_lines} lines of {log_file}:'
+                message += f"```{tail(log_file, num_lines)}```"
+                log_url = 'http://localhost:8008/media/loadlogs/' + os.path.basename(log_file) + '.txt'
+                self.slack.chat.post_message('#stoqs-loads', text=message, username='stoqsadm', icon_url=stoqs_icon_url, attachments=log_url)
+
+                self.logger.info('Message sent to Slack channel #stoqs-loads')
                 
             if ret != 0:
                 self.logger.error(f'Non-zero return code from load script. Check {log_file}')
@@ -548,31 +587,46 @@ Script to load or reload STOQS databases using the dictionary in stoqs/campaigns
                               
 A typical workflow to build up a production server is:
 1. Construct a stoqs/campaigns.py file (use mbari_campaigns.py as model)
-2. Load test (_t) databases to test all your load scripts:
+2. Uncompress Sample data files included in the stoqs repository:
+    find stoqs/loaders -name "*.gz" | xargs gunzip
+3. Copy terrain data files that are not included or copied during test.sh execution:
+    cd stoqs/loaders
+    wget https://stoqs.mbari.org/terrain/Monterey25.grd  
+    wget https://stoqs.mbari.org/terrain/Globe_1m_bath.grd
+    wget https://stoqs.mbari.org/terrain/MontereyCanyonBeds_1m+5m.grd
+    wget https://stoqs.mbari.org/terrain/SanPedroBasin50.grd
+    wget https://stoqs.mbari.org/terrain/michigan_lld.grd
+4. Get the STOQS_CAMPAIGNS setting for running your server:
+    {load} --test --list
+5. Load test (_t) databases to test all your load scripts:
     {load} --test --clobber --background --email {user} -v > load.out 2>&1
     (Check your email for load finished messages)
-3. Get the STOQS_CAMPAIGNS setting for running your server:
-    {load} --test --list
-4. Set your environment variables and run your server:
+    Email is not configured for a Docker installation, instead use Slack:
+    cd docker
+    docker exec -e SLACKTOKEN=<your_private_token> -e STOQS_CAMPAIGNS=<results_from_previous_step> stoqs {load} --test --slack
+    (The --clobber, --db <database>, and --verbose <num> options can be used to reload and debug problems.)
+6. Add metadata to the database with links to the log files:
+    {load} --test --updateprovenance
+7. Set your environment variables and run your server:
     export DATABASE_URL=postgis://<dbuser>:<pw>@<host>:<port>/stoqs
     export STOQS_CAMPAIGNS=<output_from_previous_step>
     export MAPSERVER_HOST=<mapserver_ip_address>
     stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
     - or, however you start your uWSGI app, e.g.:
     uwsgi --socket :8001 --module wsgi:application
-5. Visit your server and see that your test databases are indeed loaded
-6. Check all your output files for ERROR and WARNING messages
-7. Fix any problems so that ALL the test database loads succeed
-8. Remove the test databases:
+8. Visit your server and see that your test databases are indeed loaded
+9. Check all your output files for ERROR and WARNING messages
+10. Fix any problems so that ALL the test database loads succeed
+11. Remove the test databases:
     {load} --removetest -v
-9. Load your production databases:
+12. Load your production databases:
     {load} --background --email {user} -v > load.out 2>&1
-10. Add provenance information to the database, with setting for non-default MEDIA_ROOT:
+13. Add provenance information to the database, with setting for non-default MEDIA_ROOT:
     export MEDIA_ROOT=/usr/share/nginx/media
     {load} --updateprovenance -v 
-11. Give the 'everyone' role SELECT privileges on all databases:
+14. Give the 'everyone' role SELECT privileges on all databases:
     {load} --grant_everyone_select -v 
-12. After a final check announce the availability of these databases
+15. After a final check announce the availability of these databases
 
 To get any stdout/stderr output you must use -v, the default is no output.
 ''').format(**{'load': sys.argv[0], 'user': os.environ['USER']}),

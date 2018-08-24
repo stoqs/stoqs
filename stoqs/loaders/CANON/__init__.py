@@ -45,6 +45,7 @@ mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import matplotlib.pyplot as plt
 from matplotlib.colors import rgb2hex
 import numpy as np
+import webob
 
 def getStrideText(stride):
     '''
@@ -121,6 +122,7 @@ class CANONLoader(LoadScript):
                 'wg_oa':        '0f9cd4',
                 'wg_tex':       '9626ff',
                 'wg_Tiny':      '960000',
+                'wg_Sparky':    'FCDD00',
              }
 
     # Colors for roms_* "platforms"
@@ -439,12 +441,15 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.nps34a_files], self.nps34a_files):
             url = self.nps34a_base + f
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+            try:
+                DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
                                        'NPS_Glider_34', self.colors['nps34a'], 'glider', 'Glider Mission',
                                         self.nps34a_parms, self.dbAlias, stride, self.nps34a_startDatetime,
                                         self.nps34a_endDatetime, grdTerrain=self.grdTerrain,
                                         command_line_args=self.args)
-
+            except (webob.exc.HTTPError, DAPloaders.NoValidData) as e:
+                self.logger.warn(str(e))
+                self.logger.warn(f'{e}')
 
     def load_glider_ctd(self, stride=None):
         '''
@@ -511,11 +516,14 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.slocum_nemesis_files], self.slocum_nemesis_files):
             url = self.slocum_nemesis_base + f
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
+            try:
+                DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
                                        'Slocum_nemesis', self.colors['slocum_nemesis'], 'glider', 'Glider Mission', 
                                         self.slocum_nemesis_parms, self.dbAlias, stride, 
                                         self.slocum_nemesis_startDatetime, self.slocum_nemesis_endDatetime,
                                         grdTerrain=self.grdTerrain)
+            except DAPloaders.NoValidData as e:
+                self.logger.warn(f'No valid data in {url}')
 
     def load_wg_oa(self, stride=None):
         '''
@@ -613,6 +621,19 @@ class CANONLoader(LoadScript):
                                        'wg_Tiny_Glider', self.colors['wg_Tiny'], 'waveglider', 'Glider Mission',
                                        self.wg_Tiny_parms, self.dbAlias, stride, self.wg_Tiny_startDatetime, 
                                        self.wg_Tiny_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+
+    def load_wg_Sparky(self, stride=None):
+        '''
+        Glider specific load functions, sets plotTimeSeriesDepth=0 to get Parameter tab in UI
+        '''
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_Sparky_files], self.wg_Sparky_files):
+            url = self.wg_Sparky_base + f
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+                                       'wg_Sparky_Glider', self.colors['wg_Sparky'], 'waveglider', 'Glider Mission',
+                                       self.wg_Sparky_parms, self.dbAlias, stride, self.wg_Sparky_startDatetime,
+                                       self.wg_Sparky_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+
     def load_wg_oa(self, stride=None):
         '''
         Glider specific load functions

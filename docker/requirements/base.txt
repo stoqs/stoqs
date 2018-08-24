@@ -1,6 +1,6 @@
-aiohttp==3.2.1
+aiohttp==3.3.2
 beautifulsoup4==4.6.0
-celery==4.1.1
+celery==4.2.0
 cmocean==1.1
 coards==1.0.5
 coverage==4.5.1
@@ -34,7 +34,7 @@ Paste==2.0.3
 PasteDeploy==1.5.2
 PasteScript==2.0.2
 Pillow==5.1.0
-psycopg2-binary==2.7.4
+psycopg2-binary==2.7.5
 pupynere==1.0.15
 Pydap==3.2.2
 python-dateutil==2.7.3
@@ -44,7 +44,7 @@ pytz==2018.4
 PyYAML==3.12
 pyzmq==17.0.0
 readline==6.2.4.1
-requests-oauthlib==0.8.0
+requests-oauthlib==1.0.0
 scikit-learn==0.19.1
 scipy==1.1.0
 seawater==3.3.4
@@ -53,5 +53,5 @@ simplejson==3.15.0
 six==1.11.0
 slacker==0.9.65
 Sphinx==1.7.5
-sphinx-rtd-theme==0.3.1
+sphinx-rtd-theme==0.4.0
 sqlparse==0.2.4

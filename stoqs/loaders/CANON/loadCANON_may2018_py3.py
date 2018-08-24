@@ -6,10 +6,10 @@ __contact__ = 'duane at mbari.org'
 
 __doc__ = '''
 
-Master loader for all CANON off season activities in 2018
+Master loader for all CANON May-June Campaign 2018
 
 Mike McCann, Duane Edgington, Danelle Cline
-MBARI 17 January 2018
+MBARI 15 May 2018
 
 @var __date__: Date of last svn commit
 @undocumented: __doc__ parser
@@ -34,10 +34,10 @@ from lxml import etree
 from urllib.parse import urlsplit
 import timing
 
-cl = CANONLoader('stoqs_os2018', 'CANON - Off Season 2018',
-                 description='Off Season 2018 observations in Monterey Bay',
+cl = CANONLoader('stoqs_canon_may2018', 'CANON - May June 2018',
+                 description='May June 2018 campaign observations in Monterey Bay',
                  x3dTerrains={
-                   'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                   'https://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
                      'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                      'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
@@ -57,8 +57,8 @@ cl = CANONLoader('stoqs_os2018', 'CANON - Off Season 2018',
 # Set start and end dates for all loads from sources that contain data
 # beyond the temporal bounds of the campaign
 #
-startdate = datetime.datetime(2018, 1, 1)  # Fixed start. January 1, 2018
-enddate = datetime.datetime(2018, 12, 31)  # Fixed end. December 31, 2018.
+startdate = datetime.datetime(2018, 5, 15)  # Fixed start. May 15, 2018
+enddate = datetime.datetime(2018, 6, 15)  # Fixed end. June 15, 2018.
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -71,10 +71,8 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2018/netcdf/'
 cl.dorado_files = [
-                   'Dorado389_2018_030_00_030_00_decim.nc',
-                   'Dorado389_2018_059_00_059_00_decim.nc', 
-                   'Dorado389_2018_079_00_079_00_decim.nc',
-                   'Dorado389_2018_099_00_099_00_decim.nc',
+                   'Dorado389_2018_156_00_156_00_decim.nc',
+                   'Dorado389_2018_164_00_164_00_decim.nc',                  
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
@@ -112,10 +110,10 @@ def find_urls(base, search_str):
                 # if within a valid range, grab the valid urls
                 if dir_start >= startdate and dir_end <= enddate:
 
-                    print('Found mission directory ' + mission_dir_name)
+                    print('Found mission directory ' + dts[0])
                     print('Searching if within range %s and %s  %s %s' % (startdate, enddate, dir_start, dir_end))
                     catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
-                    c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips, debug=cl.args.verbose)
+                    c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
                     d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
                     for url in d:
                         urls.append(url)
@@ -181,32 +179,16 @@ for p in platforms:
 # L_662a updated parameter names in netCDF file
 cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662a_files = [
-                   'OS_Glider_L_662_20171012_TS.nc',
-                   'OS_Glider_L_662_20180117_TS.nc',
+                   'OS_Glider_L_662_20180430_TS.nc',
                   ]
 cl.l_662a_parms = ['temperature', 'salinity', 'fluorescence','oxygen']
 cl.l_662a_startDatetime = startdate
 cl.l_662a_endDatetime = enddate
 
-# SG_539 ## KISS glider from Caltech/JPL
-cl.sg539_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG539/'
-cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(1,291)] ## index needs to be 1 higher than terminal file name
-cl.sg539_parms = ['temperature', 'salinity']
-cl.sg539_startDatetime = startdate
-cl.sg539_endDatetime = enddate
-
-# SG_621 ## KISS glider from Caltech/JPL
-cl.sg621_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG621/'
-cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(1,291)] ## index needs to be 1 higher than terminal file name
-cl.sg621_parms = ['temperature', 'salinity'] # 'aanderaa4330_dissolved_oxygen' throws DAPloader KeyError
-cl.sg621_startDatetime = startdate
-cl.sg621_endDatetime = enddate
-
-
 # NPS_34a updated parameter names in netCDF file
 ## The following loads decimated subset of data telemetered during deployment
 cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.nps34a_files = [ 'OS_Glider_NPS_G34_20170405_TS.nc' ]
+cl.nps34a_files = [ 'OS_Glider_NPS_G34_20180514_TS.nc' ]
 cl.nps34a_parms = ['temperature', 'salinity','fluorescence']
 cl.nps34a_startDatetime = startdate
 cl.nps34a_endDatetime = enddate
@@ -216,9 +198,250 @@ cl.nps34a_endDatetime = enddate
 ## cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20170412T0000/'
 ## cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
 ##   from cencoos directory, single non-aggregated files
-cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201705/'
+cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201805/'
+
 cl.slocum_nemesis_files = [
-         'nemesis_20170802T164114_rt0.nc',
+        'nemesis_20180615T125540_rt0.nc',
+        'nemesis_20180615T110755_rt0.nc',
+        'nemesis_20180615T055202_rt0.nc',
+        'nemesis_20180615T040529_rt0.nc',
+        'nemesis_20180614T223834_rt0.nc',
+        'nemesis_20180614T204944_rt0.nc',
+        'nemesis_20180614T152947_rt0.nc',
+        'nemesis_20180614T134039_rt0.nc',
+        'nemesis_20180614T081728_rt0.nc',
+        'nemesis_20180614T063243_rt0.nc',
+        'nemesis_20180614T012635_rt0.nc',
+        'nemesis_20180613T232915_rt0.nc',
+        'nemesis_20180613T221715_rt0.nc',
+        'nemesis_20180613T220144_rt0.nc',
+        'nemesis_20180613T201011_rt0.nc',
+        'nemesis_20180613T185429_rt0.nc',
+        'nemesis_20180613T175426_rt0.nc',
+        'nemesis_20180613T173402_rt0.nc',
+        'nemesis_20180613T163823_rt0.nc',
+        'nemesis_20180613T162255_rt0.nc',
+        'nemesis_20180613T121009_rt0.nc',
+        'nemesis_20180613T103624_rt0.nc',
+        'nemesis_20180613T045607_rt0.nc',
+        'nemesis_20180613T031617_rt0.nc',
+        'nemesis_20180612T215444_rt0.nc',
+        'nemesis_20180612T200659_rt0.nc',
+        'nemesis_20180612T144752_rt0.nc',
+        'nemesis_20180612T130014_rt0.nc',
+        'nemesis_20180612T073153_rt0.nc',
+        'nemesis_20180612T054113_rt0.nc',
+        'nemesis_20180612T002011_rt0.nc',
+        'nemesis_20180611T223126_rt0.nc',
+        'nemesis_20180611T171414_rt0.nc',
+        'nemesis_20180611T152528_rt0.nc',
+        'nemesis_20180611T100045_rt0.nc',
+        'nemesis_20180611T081500_rt0.nc',
+
+        'nemesis_20180611T024956_rt0.nc',
+        'nemesis_20180611T005810_rt0.nc',
+        'nemesis_20180610T211730_rt0.nc',
+        'nemesis_20180610T173357_rt0.nc',
+        'nemesis_20180610T121911_rt0.nc',
+        'nemesis_20180610T103323_rt0.nc',
+        'nemesis_20180610T051627_rt0.nc',
+        'nemesis_20180610T032549_rt0.nc',
+        'nemesis_20180609T221221_rt0.nc',
+        'nemesis_20180609T202615_rt0.nc',
+        'nemesis_20180609T145306_rt0.nc',
+        'nemesis_20180609T130822_rt0.nc',
+        'nemesis_20180609T074007_rt0.nc',
+        'nemesis_20180609T055722_rt0.nc',
+        'nemesis_20180609T003722_rt0.nc',
+        'nemesis_20180608T224831_rt0.nc',
+        'nemesis_20180608T175945_rt0.nc',
+        'nemesis_20180608T164334_rt0.nc',
+        'nemesis_20180608T143658_rt0.nc',
+        'nemesis_20180608T120708_rt0.nc',
+        'nemesis_20180608T110933_rt0.nc',
+        'nemesis_20180608T083441_rt0.nc',
+        'nemesis_20180608T073206_rt0.nc',
+        'nemesis_20180608T051449_rt0.nc',
+        'nemesis_20180608T043216_rt0.nc',
+        'nemesis_20180608T014701_rt0.nc',
+        'nemesis_20180608T005828_rt0.nc',
+        'nemesis_20180607T210404_rt0.nc',
+        'nemesis_20180607T204644_rt0.nc',
+        'nemesis_20180607T184820_rt0.nc',
+        'nemesis_20180607T170239_rt0.nc',
+
+        'nemesis_20180607T141543_rt0.nc',
+        'nemesis_20180607T124757_rt0.nc',
+        'nemesis_20180607T084329_rt0.nc',
+        'nemesis_20180607T072152_rt0.nc',
+        'nemesis_20180607T031016_rt0.nc',
+        'nemesis_20180607T014837_rt0.nc',
+        'nemesis_20180606T202458_rt0.nc',
+        'nemesis_20180606T183115_rt0.nc',
+
+        'nemesis_20180606T132359_rt0.nc',
+        'nemesis_20180606T113615_rt0.nc',
+        'nemesis_20180606T061921_rt0.nc',
+        'nemesis_20180606T043043_rt0.nc',
+        'nemesis_20180605T231000_rt0.nc',
+        'nemesis_20180605T212118_rt0.nc',
+        'nemesis_20180605T155935_rt0.nc',
+        'nemesis_20180605T141014_rt0.nc',
+        'nemesis_20180605T085233_rt0.nc',
+        'nemesis_20180605T070154_rt0.nc',
+        'nemesis_20180605T031744_rt0.nc',
+        'nemesis_20180604T233637_rt0.nc',
+        'nemesis_20180604T181842_rt0.nc',
+        'nemesis_20180604T163244_rt0.nc',
+        'nemesis_20180604T092308_rt0.nc',
+        'nemesis_20180604T040607_rt0.nc',
+        'nemesis_20180604T022123_rt0.nc',
+        'nemesis_20180603T210413_rt0.nc',
+        'nemesis_20180603T191831_rt0.nc',
+        'nemesis_20180603T140517_rt0.nc',
+        'nemesis_20180603T121929_rt0.nc',
+        'nemesis_20180603T071759_rt0.nc',
+        'nemesis_20180603T052610_rt0.nc',
+        'nemesis_20180603T031009_rt0.nc',
+        'nemesis_20180603T022738_rt0.nc',
+        'nemesis_20180602T233110_rt0.nc',
+        'nemesis_20180602T204803_rt0.nc',
+        'nemesis_20180602T183615_rt0.nc',
+        'nemesis_20180602T175305_rt0.nc',
+        'nemesis_20180602T150336_rt0.nc',
+        'nemesis_20180602T140859_rt0.nc',
+        'nemesis_20180602T090410_rt0.nc',
+        'nemesis_20180602T071934_rt0.nc',
+        'nemesis_20180602T015811_rt0.nc',
+        'nemesis_20180602T001228_rt0.nc',
+        'nemesis_20180601T185917_rt0.nc',
+        'nemesis_20180601T171007_rt0.nc',
+        'nemesis_20180601T115021_rt0.nc',
+        'nemesis_20180601T100739_rt0.nc',
+        'nemesis_20180601T044606_rt0.nc',
+        'nemesis_20180601T025827_rt0.nc',
+        'nemesis_20180601T003121_rt0.nc',
+        'nemesis_20180531T224240_rt0.nc',
+        'nemesis_20180531T172008_rt0.nc',
+        'nemesis_20180531T153237_rt0.nc',
+        'nemesis_20180531T101932_rt0.nc',
+        'nemesis_20180531T082452_rt0.nc',
+        'nemesis_20180531T045057_rt0.nc',
+        'nemesis_20180530T231216_rt0.nc',
+        'nemesis_20180530T212637_rt0.nc',
+        'nemesis_20180530T153412_rt0.nc',
+        'nemesis_20180530T134513_rt0.nc',
+        'nemesis_20180530T081406_rt0.nc',
+        'nemesis_20180530T062523_rt0.nc',
+        'nemesis_20180530T004850_rt0.nc',
+        'nemesis_20180529T225710_rt0.nc',
+        'nemesis_20180529T152223_rt0.nc',
+        'nemesis_20180529T172607_rt0.nc',
+        'nemesis_20180529T092011_rt0.nc',  
+        'nemesis_20180529T073732_rt0.nc',      
+        'nemesis_20180529T035307_rt0.nc',
+        'nemesis_20180529T002221_rt0.nc',
+        'nemesis_20180528T223642_rt0.nc',
+        'nemesis_20180528T172045_rt0.nc',
+        'nemesis_20180528T153313_rt0.nc',
+        'nemesis_20180528T101737_rt0.nc',
+        'nemesis_20180528T083156_rt0.nc',
+        'nemesis_20180528T031438_rt0.nc',
+        'nemesis_20180528T012900_rt0.nc',
+        'nemesis_20180527T200926_rt0.nc',
+        'nemesis_20180527T182323_rt0.nc',
+        'nemesis_20180527T130348_rt0.nc',
+        'nemesis_20180527T111807_rt0.nc',
+        'nemesis_20180527T060038_rt0.nc',
+        'nemesis_20180527T041500_rt0.nc',
+        'nemesis_20180526T225705_rt0.nc',
+        'nemesis_20180526T211127_rt0.nc',
+        'nemesis_20180526T155125_rt0.nc',
+        'nemesis_20180526T140052_rt0.nc',
+        'nemesis_20180526T083551_rt0.nc',
+        'nemesis_20180526T065013_rt0.nc',
+        'nemesis_20180526T013514_rt0.nc',
+        'nemesis_20180525T234931_rt0.nc',
+        'nemesis_20180525T182645_rt0.nc',
+        'nemesis_20180525T163804_rt0.nc',
+        'nemesis_20180525T111958_rt0.nc',
+        'nemesis_20180525T093117_rt0.nc',
+        'nemesis_20180525T054532_rt0.nc',
+        'nemesis_20180525T020511_rt0.nc',
+        'nemesis_20180524T204810_rt0.nc',
+        'nemesis_20180524T185653_rt0.nc',
+        'nemesis_20180524T132921_rt0.nc',
+        'nemesis_20180524T114042_rt0.nc',
+        'nemesis_20180524T075617_rt0.nc',
+        'nemesis_20180524T041131_rt0.nc',
+        'nemesis_20180523T223811_rt0.nc',
+        'nemesis_20180523T204655_rt0.nc',
+        'nemesis_20180523T170354_rt0.nc',
+        'nemesis_20180523T132421_rt0.nc',  
+        'nemesis_20180523T094436_rt0.nc',  
+        'nemesis_20180523T060002_rt0.nc',   
+        'nemesis_20180523T022234_rt0.nc',   
+        'nemesis_20180522T223930_rt0.nc',   
+        'nemesis_20180522T185629_rt0.nc',   
+        'nemesis_20180522T151002_rt0.nc',   
+        'nemesis_20180522T112729_rt0.nc',   
+        'nemesis_20180522T074822_rt0.nc',   
+        'nemesis_20180522T040721_rt0.nc',   
+        'nemesis_20180522T002128_rt0.nc',   
+        'nemesis_20180521T203710_rt0.nc',   
+        'nemesis_20180521T165515_rt0.nc',
+        'nemesis_20180521T130842_rt0.nc',
+        'nemesis_20180521T092215_rt0.nc',
+        'nemesis_20180521T070845_rt0.nc',
+        'nemesis_20180521T032301_rt0.nc',
+        'nemesis_20180520T234041_rt0.nc',
+        'nemesis_20180520T195820_rt0.nc',
+        'nemesis_20180520T161902_rt0.nc',
+        'nemesis_20180520T123557_rt0.nc',
+        'nemesis_20180520T085329_rt0.nc',
+        'nemesis_20180520T051403_rt0.nc',
+        'nemesis_20180520T015451_rt0.nc',
+        'nemesis_20180519T225042_rt0.nc',
+        'nemesis_20180519T190448_rt0.nc',
+        'nemesis_20180519T152606_rt0.nc',
+        'nemesis_20180519T114451_rt0.nc',
+        'nemesis_20180519T075753_rt0.nc',
+        'nemesis_20180519T041218_rt0.nc',
+        'nemesis_20180519T002744_rt0.nc',
+        'nemesis_20180518T163902_rt0.nc',
+        'nemesis_20180518T125641_rt0.nc',
+        'nemesis_20180518T085931_rt0.nc',
+        'nemesis_20180518T051145_rt0.nc',
+        'nemesis_20180518T014253_rt0.nc',
+        'nemesis_20180517T202400_rt0.nc',
+        'nemesis_20180517T200241_rt0.nc',
+        'nemesis_20180517T194759_rt0.nc',
+        'nemesis_20180517T190408_rt0.nc',
+        'nemesis_20180517T184216_rt0.nc',
+        'nemesis_20180517T182705_rt0.nc',
+        'nemesis_20180517T172155_rt0.nc',
+        'nemesis_20180517T165640_rt0.nc',
+        'nemesis_20180517T164435_rt0.nc',
+        'nemesis_20180517T125058_rt0.nc',
+        'nemesis_20180517T094903_rt0.nc',
+        'nemesis_20180517T055003_rt0.nc',
+        'nemesis_20180517T020552_rt0.nc',
+        'nemesis_20180516T221356_rt0.nc',
+        'nemesis_20180516T185907_rt0.nc',
+        'nemesis_20180516T151154_rt0.nc',
+        'nemesis_20180516T122932_rt0.nc',
+        'nemesis_20180516T092727_rt0.nc',
+        'nemesis_20180516T073726_rt0.nc',
+        'nemesis_20180516T062621_rt0.nc',
+        'nemesis_20180516T045411_rt0.nc',
+        'nemesis_20180516T043058_rt0.nc',
+        'nemesis_20180516T030956_rt0.nc',
+        'nemesis_20180516T014746_rt0.nc',
+        'nemesis_20180516T005405_rt0.nc',
+        'nemesis_20180515T231601_rt0.nc',
+        'nemesis_20180515T223800_rt0.nc',
+        'nemesis_20180515T211255_rt0.nc',
+        'nemesis_20180515T202553_rt0.nc',
                           ]
 cl.slocum_nemesis_parms = [ 'temperature', 'salinity', 'u', 'v' ] #'oxygen', 'cdom', 'opbs', 'fluorescence' not populated
 cl.slocum_nemesis_startDatetime = startdate
@@ -235,13 +458,22 @@ cl.slocum_nemesis_endDatetime = enddate
 ##cl.wg_tex_startDatetime = startdate
 ##cl.wg_tex_endDatetime = enddate
 
+# WG Sparky - All instruments combined into one file - one time coordinate
+cl.wg_Sparky_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
+cl.wg_Sparky_files = [
+                      'wgSparky/20180531/realTime/20180531.nc',
+                     ]
+
+cl.wg_Sparky_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  'water_temp_sub', 
+                     'sal_sub', 'bb_470', 'bb_650', 'chl', 'beta_470', 'beta_650', 'pH', 'O2_conc' ] # two ctds (_float, _sub), no CO2
+cl.wg_Sparky_depths = [ 0 ]
+cl.wg_Sparky_startDatetime = startdate
+cl.wg_Sparky_endDatetime = enddate
+
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20171212/realTime/20171212.nc',
-                      'wgTiny/20180116/realTime/20180116.nc',
-                      'wgTiny/20180208/realTime/20180208.nc',
-                      'wgTiny/20180323/realTime/20180323.nc',
+                      'wgTiny/20180516/realTime/20180516.nc',
                    ]
 
 
@@ -325,14 +557,14 @@ cl.rcpctd_files = [
 cl.wfuctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
-                  'canon17sm01.nc',
+                  ##'canon17sm01.nc',
                   ]
 
 # PCTD
 cl.wfpctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.wfpctd_files = [
-                  'canon17sc01.nc',
+                  ##'canon17sc01.nc',
                   ]
 
 ###################################################################################################
@@ -355,27 +587,22 @@ cl.process_command_line()
 
 if cl.args.test:
 
-    cl.loadM1(stride=100)  
-    cl.loadTethys(stride=100)
-    cl.loadAku(stride=100)
-    cl.loadAhi(stride=100)
-    cl.loadOpah(stride=100)
-    cl.loadL_662a(stride=100)
-    ##cl.load_NPS34()  ## not in this campaign
-    ##cl.load_NPS34a() ## not in this campaign
-    ##cl.load_slocum_nemesis()  ## not in this campaign
-    ##cl.load_SG621(stride=2) ## KISS glider
-    ##cl.load_SG539(stride=2) ## KISS glider
-    cl.load_wg_Tiny(stride=100)
-    cl.load_oa1(stride=100)
-    cl.load_oa2(stride=100)
-    cl.loadDorado(stride=100)
-    cl.loadDaphne(stride=100)
-    ##cl.loadMakai()  ## not in this campaign
+    cl.loadM1(stride=10)  
+    ##cl.loadTethys()i ## not in this campaign
+    cl.loadL_662a(stride=10)
+    cl.load_NPS34a(stride=10) 
+    cl.load_slocum_nemesis(stride=10) 
+    cl.load_wg_Tiny(stride=10)
+    cl.load_wg_Sparky(stride=10)
+    cl.load_oa1(stride=10)
+    cl.load_oa2(stride=10)
+    cl.loadDorado(stride=10)
+    cl.loadDaphne(stride=10)
+    cl.loadMakai(stride=10)
     ##cl.loadRCuctd()  ## not in this campaign
     ##cl.loadRCpctd()  ## not in this campaign
-    ##cl.loadWFuctd()  ## not in this campaign
-    ##cl.loadWFpctd()  ## not in this campaign
+    cl.loadWFuctd(stride=10)
+    cl.loadWFpctd(stride=10)
 
     cl.loadSubSamples()
 
@@ -398,26 +625,21 @@ else:
     cl.stride = cl.args.stride
 
     cl.loadM1()  
-    cl.loadTethys()
-    cl.loadAku()
-    cl.loadAhi()
-    cl.loadOpah()
+    ##cl.loadTethys()i ## not in this campaign
     cl.loadL_662a()
-    ##cl.load_NPS34()  ## not in this campaign
-    ##cl.load_NPS34a() ## not in this campaign
-    ##cl.load_slocum_nemesis()  ## not in this campaign
-    ##cl.load_SG621(stride=2) ## KISS glider
-    ##cl.load_SG539(stride=2) ## KISS glider
+    cl.load_NPS34a() 
+    cl.load_slocum_nemesis() 
     cl.load_wg_Tiny()
+    cl.load_wg_Sparky()
     cl.load_oa1()
     cl.load_oa2()
     cl.loadDorado()
     cl.loadDaphne()
-    ##cl.loadMakai()  ## not in this campaign
+    cl.loadMakai()
     ##cl.loadRCuctd()  ## not in this campaign
     ##cl.loadRCpctd()  ## not in this campaign
-    ##cl.loadWFuctd()  ## not in this campaign
-    ##cl.loadWFpctd()  ## not in this campaign
+    cl.loadWFuctd()
+    cl.loadWFpctd()
 
     #cl.loadSubSamples() ## no subSamples yet...
 

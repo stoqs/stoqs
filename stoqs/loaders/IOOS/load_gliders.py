@@ -53,10 +53,12 @@ il.endDatetime = None
 
 def loadGliders(loader, stride=1):
     '''
-    Crawl the IOOS Glider TDS for OPeNDAP links of Time aggregated files and load into STOQS
+    Crawl the IOOS Glider TDS for OPeNDAP links of mbari files and load into STOQS
     '''
 
-    c = Crawl("http://tds.gliders.ioos.us/thredds/catalog.xml", select=[".*_Time$"])
+    glider_dac_url = 'https://data.ioos.us/gliders/thredds/catalog/catalog.xml'
+    logger.info(f'Crawling {glider_dac_url}')
+    c = Crawl(glider_dac_url, select=[".*mbari.*"], debug=il.args.verbose)
     urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
     colors = list(loader.colors.values())
 

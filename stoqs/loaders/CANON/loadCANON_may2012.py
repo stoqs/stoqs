@@ -176,7 +176,7 @@ cl.waveglider_endDatetime = enddate
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadDorado(stride=200)
+    cl.loadDorado(stride=100)
     cl.loadTethys(stride=100)
     cl.loadDaphne(stride=100)
     cl.loadNps_g29(stride=100)

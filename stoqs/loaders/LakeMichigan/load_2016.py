@@ -32,7 +32,7 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 from LakeMichigan import LakeMILoader
 from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
-from thredds_crawler.etree import etree
+from lxml import etree
 import timing
 
 cl = LakeMILoader('stoqs_michigan2016', 'Lake Michigan LRAUV Experiment 2016',
@@ -66,7 +66,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 def find_urls(base, search_str):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
-    print(("Crawling: %s" % url))
+    print("Crawling: %s" % url)
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
     u = urllib.parse.urlsplit(url)
     name, ext = os.path.splitext(u.path)
@@ -92,15 +92,15 @@ def find_urls(base, search_str):
                 # if within a valid range, grab the valid urls
                 if dir_start >= startdate and dir_end <= enddate:
 
-                    print(('Found mission directory ' + dts[0]))
-                    print(('Searching if within range %s and %s  %s %s' % (startdate, enddate, dir_start, dir_end)))
+                    print(f'Found mission directory {mission_dir_name}')
+                    print('Searching if within range %s and %s  %s %s' % (startdate, enddate, dir_start, dir_end))
                     catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                     c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
                     d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
                     for url in d:
                         urls.append(url)
             except Exception as ex:
-                print(("Error reading mission directory name %s" % ex))
+                print("Error reading mission directory name %s" % ex)
 
     except BaseException:
         print(("Skipping %s (error parsing the XML)" % url))
@@ -130,19 +130,19 @@ for p in platforms:
     try:
         urls_eng = find_urls(base, '.*2S_eng.nc$')
         urls_sci = find_urls(base, '.*10S_sci.nc$')
-        urls = urls_eng + urls_sci
-        files = []
-        if len(urls) > 0 :
-            for url in sorted(urls):
-                file = '/'.join(url.split('/')[-3:])
-                files.append(file)
-            setattr(cl, p + '_files', files)
-
-        setattr(cl, p  + '_startDatetime', startdate)
-        setattr(cl, p + '_endDatetime', enddate)
-
     except FileNotFound:
-        continue
+        raise
+
+    urls = urls_eng + urls_sci
+    files = []
+    if len(urls) > 0 :
+        for url in sorted(urls):
+            file = '/'.join(url.split('/')[-3:])
+            files.append(file)
+        setattr(cl, p + '_files', files)
+
+    setattr(cl, p  + '_startDatetime', startdate)
+    setattr(cl, p + '_endDatetime', enddate)
 
 # Execute the load
 cl.process_command_line()
