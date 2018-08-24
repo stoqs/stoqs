@@ -51,7 +51,8 @@ import logging
 import socket
 import seawater.eos80 as sw
 from utils.utils import mode, simplify_points
-from loaders import STOQS_Loader, SkipRecord, HasMeasurement, MEASUREDINSITU, FileNotFound
+from loaders import (STOQS_Loader, SkipRecord, HasMeasurement, MEASUREDINSITU, FileNotFound,
+                     SIGMAT, SPICE, SPICINESS, ALTITUDE)
 from loaders.SampleLoaders import get_closest_instantpoint, ClosestTimeNotFoundException
 import numpy as np
 import psycopg2
@@ -109,6 +110,10 @@ class InvalidSliceRequest(Exception):
 
 
 class OpendapError(Exception):
+    pass
+
+
+class DuplicateData(Exception):
     pass
 
 
@@ -363,10 +368,14 @@ class Base_Loader(STOQS_Loader):
         Possible return values: TRAJECTORY, TIMESERIES, TIMESERIESPROFILE, lowercase versions.
         '''
         conventions = ''
-        try:
-            nc_global_keys = self.ds.attributes['NC_GLOBAL']
-        except KeyError:
-            self.logger.warn('Dataset does not have an NC_GLOBAL attribute! Setting featureType to "trajectory" assuming that this is an old Tethys file')
+        if hasattr(self, 'ds'):
+            try:
+                nc_global_keys = self.ds.attributes['NC_GLOBAL']
+            except KeyError:
+                self.logger.warn('Dataset does not have an NC_GLOBAL attribute! Setting featureType to "trajectory" assuming that this is an old Tethys file')
+                return TRAJECTORY
+        else:
+            self.logger.warn('Loader has no ds attribute. Setting featureType to "trajectory" assuming that this is an ROVCTD Loader.')
             return TRAJECTORY
 
         if 'Conventions' in nc_global_keys:
@@ -379,7 +388,11 @@ class Base_Loader(STOQS_Loader):
             conventions = ''
 
         if 'cf-1.6' in conventions.lower():
-            featureType = self.ds.attributes['NC_GLOBAL']['featureType']
+            try:
+                featureType = self.ds.attributes['NC_GLOBAL']['featureType']
+            except KeyError:
+                # For https://dods.ndbc.noaa.gov/thredds/dodsC/oceansites/DATA/MBARI/OS_MBARI-M1_20160829_R_TS.nc.das
+                featureType = self.ds.attributes['NC_GLOBAL']['cdm_data_type']
         else:
             # Accept earlier versions of the concept of this attribute that may be in legacy data sets
             if 'cdm_data_type' in nc_global_keys:
@@ -631,13 +644,13 @@ class Base_Loader(STOQS_Loader):
             self.logger.debug("requested_endDatetime not given, using the last value of timeAxis = %f", e.data[0])
 
         tf = (s <= timeAxis) & (timeAxis <= e)
-        self.logger.debug('tf = %s', tf)
+        ##self.logger.debug('tf = %s', tf)
         tIndx = np.nonzero(tf == True)[0]
         if tIndx.size == 0:
             raise NoValidData('No data from %s for time values between %s and %s.  Skipping.' % (self.url, s, e))
 
         # For python slicing add 1 to the end index
-        self.logger.debug('tIndx = %s', tIndx)
+        ##self.logger.debug('tIndx = %s', tIndx)
         try:
             indices = (tIndx[0], tIndx[-1] + 1)
         except IndexError:
@@ -787,11 +800,13 @@ class Base_Loader(STOQS_Loader):
         lookup matching Measurment (containing depth, latitude, and longitude) and bulk create 
         Instantpoints and Measurements in the database.
         '''
+        meass_set = set([])
         try:
             times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
         except ValueError:
-            self.logger.error(f'stride value {self.stride} likely bigger than length of array: {len(self.ds[ac[TIME]][:])}')
-            raise
+            self.logger.warn(f'Stride of {self.stride} likely greater than range of data: {tindx[0]}:{tindx[-1]}')
+            self.logger.warn(f'Skipping load of {self.url}')
+            return meass_set
     
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
@@ -843,6 +858,10 @@ class Base_Loader(STOQS_Loader):
                     self.logger.warn(f'Failed to getTimeBegEndIndices() for {pname} from {self.url}')
                     continue
 
+                if DEPTH not in ac:
+                    self.logger.warn(f'{self.param_by_key[pname]} does not have {DEPTH} in {ac}. Skipping.')
+                    continue
+
                 if i == 0:
                     # First time through, bulk load the coordinates: instant_points and measurements
                     if ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
@@ -855,16 +874,28 @@ class Base_Loader(STOQS_Loader):
                             self.logger.debug(str(e))
                             self.logger.warn(f'No good coordinates for {pname} - skipping it')
                             continue
+                        except OverflowError as e:
+                            # Likely unable to convert a udunit to a value as in time from:
+                            # http://legacy.cencoos.org:8080/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201705/nemesis_20170518T203246_rt0.nc.ascii?time[149:1:149]
+                            # = -4.31865376e+107  (should be a value like 1.495143822559231E9)
+                            self.logger.debug(str(e))
+                            self.logger.warn(f'OverflowError when converting coordinates for {pname} - skipping it')
+                            return total_loaded
                     else:
                         # Expect instrument (time-coordinate-only) dataset
                         meass = self._load_coords_from_instr_ds(tindx, ac)
 
-                if isinstance(self.ds[pname], pydap.model.GridType):
-                    constraint_string = f"Using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
-                    values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
-                else:
-                    constraint_string = f"Using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
-                    values = self.ds[pname].data[tindx[0]:tindx[-1]:self.stride]
+                try:
+                    if isinstance(self.ds[pname], pydap.model.GridType):
+                        constraint_string = f"Using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
+                    else:
+                        constraint_string = f"Using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        values = self.ds[pname].data[tindx[0]:tindx[-1]:self.stride]
+                except ValueError:
+                    self.logger.warn(f'Stride of {self.stride} likely greater than range of data: {tindx[0]}:{tindx[-1]}')
+                    self.logger.warn(f'Skipping load of {self.url}')
+                    return total_loaded
 
                 if hasattr(values[0], '__iter__'):
                     # For data like LOPC data - expect all values to be non-nan
@@ -1155,7 +1186,7 @@ class Base_Loader(STOQS_Loader):
             else:
                 self.logger.error(f"{e}")
                 self.logger.error(f"It's likely that the {ac['time']} variable in {self.url} has a duplicate value")
-                raise NoValidData(e)
+                raise DuplicateData(f"Duplicate data from {self.url} in {self.dbAlias}")
 
         meass = self._measurement_with_instantpoint(self.ips, meas_to_load)
 
@@ -1168,6 +1199,16 @@ class Base_Loader(STOQS_Loader):
         for meas, mp in zip(meass, mps):
             mp.measurement = meas
             yield mp
+
+    def _delete_bad_datavalues(self, pname):
+        num, _ = (MeasuredParameter.objects.using(self.dbAlias)
+                    .filter(parameter__name=pname, datavalue=np.nan).delete())
+        if num:
+            self.logger.info(f'Deleted {num} nan {pname} MeasuredParameters')
+        num, _ = (MeasuredParameter.objects.using(self.dbAlias)
+                    .filter(parameter__name=pname, datavalue=np.inf).delete())
+        if num:
+            self.logger.info(f'Deleted {num} inf {pname} MeasuredParameters')
 
     def _post_process_updates(self, mps_loaded, featureType=''):
 
@@ -1196,12 +1237,17 @@ class Base_Loader(STOQS_Loader):
         # Add additional Parameters for all appropriate Measurements
         self.logger.info("Adding SigmaT and Spiciness to the Measurements...")
         self.addSigmaTandSpice(self.activity)
+
         if self.grdTerrain:
             self.logger.info("Adding altitude to the Measurements...")
             try:
                 self.addAltitude(self.activity)
             except FileNotFound as e:
                 self.logger.warn(str(e))
+
+        # Bulk loading of stoqs calculated values may introduce NaNs, remove them
+        for pname in (SIGMAT, SPICE, ALTITUDE):
+            self._delete_bad_datavalues(pname)
 
         # Update the Activity with information we now have following the load
         try:
@@ -1385,14 +1431,12 @@ class Base_Loader(STOQS_Loader):
 
             return mps_loaded, path, parmCount
 
-        # Bulk loading may introduce None values, get rid of them
-        MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
-
-        path = self._post_process_updates(mps_loaded, featureType)
+        if mps_loaded:
+            # Bulk loading may introduce None values, remove them
+            MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
+            path = self._post_process_updates(mps_loaded, featureType)
 
         return mps_loaded, path, parmCount
-
-
 
 
 class Trajectory_Loader(Base_Loader):
@@ -1656,8 +1700,8 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
                 loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
     if plotTimeSeriesDepth is not None:
-        # Used first for BEDS where we want both trajectory and timeSeries plots - assumes starting depth of BED
-        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
+        # Used first for BEDS where we want both trajectory and timeSeries plots
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + [ALTITUDE, SIGMAT, SPICE], plotTimeSeriesDepth)
 
     loader.process_data()
     loader.logger.debug("Loaded Activity with name = %s", aName)
@@ -1726,7 +1770,7 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
 
     if plotTimeSeriesDepth is not None:
         # Useful in some situations to have simple time series display of Dorado data
-        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + [ALTITUDE, SIGMAT, SPICE], plotTimeSeriesDepth)
 
     try:
         loader.process_data()
@@ -1846,7 +1890,7 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
 
     if plotTimeSeriesDepth is not None:
         # Useful to plot as time series engineering data for LRAUVs
-        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + [ALTITUDE, SIGMAT, SPICE], plotTimeSeriesDepth)
 
     try:
         loader.process_data()

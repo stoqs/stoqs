@@ -453,10 +453,17 @@
                     </div>
                     <div id="collapseMetadata" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                                
-                            <label class="checkbox">
-                                <input type="checkbox" id="getactualcount" /> Get actual count
-                            </label>
+
+                            <div class="row-fluid" style="padding:0;">
+                                <div class="span3">                                
+                                    <label class="checkbox">
+                                        <input type="checkbox" id="getactualcount" /> Get actual count
+                                    </label>
+                                </div>
+                                <div class="span9" style="text-align:right;">                                
+                                    <span id="campaigninfo"></span>
+                                </div>
+                            </div>
 
                             <ul id="resourceTabs" class="nav nav-tabs">
                                 <li id="metadata-netcdf-li" class="active"><a href="#metadatanetcdf" data-toggle="tab">NetCDF sources</a></li>
@@ -815,7 +822,7 @@
 
                             <ul id="temporalTabs" class="nav nav-tabs temporal-tab">
                                 <li class="active" id="temporal-depth-li"><a href="#temporal-depth" data-toggle="tab" id="temporal-depth-label">Depth</a></li>
-                                <li id="temporal-parameter-li" style="display:none" title="Hint: Plot Measured Parameter in Depth tab first"><a href="#temporal-parameter" data-toggle="tab">Parameter</a></li>
+                                <li id="temporal-parameter-li" style="display:none" title="Hint: Plot a Measured Parameter in Depth tab first"><a href="#temporal-parameter" data-toggle="tab">Parameters</a></li>
                             </ul>
 
                             <div class="tab-content">
@@ -834,8 +841,14 @@
                                                 <span id="temporalparameterplotinfo">&nbsp;</span>
                                                 <br>
                                                 <span id="contour-scatter-buttons" style="visibility:hidden;">
-                                                    <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
-                                                    <input type="radio" name="showdataas" value="scatter" checked /> scatter
+                                                    <form class="form-inline">
+                                                        <label>
+                                                            <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
+                                                        </label>
+                                                        <label>
+                                                            <input type="radio" name="showdataas" value="scatter" checked /> scatter
+                                                        </label>
+                                                    </form>
                                                 </span>
                                                 <br>
                                                 <span id="temporalparameterplotinfo_lines">&nbsp;</span>
@@ -964,10 +977,20 @@
                     </div>
                     <div id="collapseSampledParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <input type="checkbox" id="show-parameter-parameter-sp-checkbox" /> Show Parameter-Parameter
-                            <input type="checkbox" id="show-coordinates-sp-checkbox" /> Show coordinates
-                            <input type="checkbox" id="show-filtered-sp-checkbox" /> Filtered out parameters
-                            <input type="checkbox" id="show-standardnames-sp-checkbox" /> Standard Names
+                            <form class="form-inline">
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-parameter-parameter-sp-checkbox" /> Show Parameter-Parameter
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-coordinates-sp-checkbox" /> Show coordinates
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-filtered-sp-checkbox" /> Filtered out parameters
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-standardnames-sp-checkbox" /> Standard Names
+                                </label>
+                            </form>
                             <fieldset>
                             <table id="sampledparameter-table" class="table table-condensed">
                                 <thead>
@@ -1002,6 +1025,7 @@
                                             <input colspan="5" type="radio" id="sp_parameters_plot_clear" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="sp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall_parametertime" style="display:none;"/>
                                         </td>
+                                        <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="5" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
                                     <tr class="sp-pp-coordinates" style="display:none;">
@@ -1009,6 +1033,8 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="longitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;" class="plot-data-lines">&nbsp;</td>
+                                        <td style="text-align:center;">&nbsp;</td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="5">Longitude</td>
                                     </tr>
@@ -1017,6 +1043,8 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="latitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;" class="plot-data-lines">&nbsp;</td>
+                                        <td style="text-align:center;">&nbsp;</td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="5">Latitude</td>
                                     </tr>
@@ -1025,6 +1053,8 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="depth" class="parameter-radio" /></td>
+                                        <td style="text-align:center;" class="plot-data-lines">&nbsp;</td>
+                                        <td style="text-align:center;">&nbsp;</td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="5">Depth</td>
                                     </tr>
@@ -1033,6 +1063,8 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="time" class="parameter-radio" /></td>
+                                        <td style="text-align:center;" class="plot-data-lines">&nbsp;</td>
+                                        <td style="text-align:center;">&nbsp;</td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="5">Time</td>
                                     </tr>
@@ -1053,10 +1085,20 @@
                     </div>
                     <div id="collapseMeasuredParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <input type="checkbox" id="show-parameter-parameter-mp-checkbox" /> Show Parameter-Parameter
-                            <input type="checkbox" id="show-coordinates-mp-checkbox" /> Show coordinates
-                            <input type="checkbox" id="show-filtered-mp-checkbox" /> Filtered out parameters
-                            <input type="checkbox" id="show-standardnames-mp-checkbox" /> Standard Names
+                            <form class="form-inline">
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-parameter-parameter-mp-checkbox" /> Show Parameter-Parameter
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-coordinates-mp-checkbox" /> Show coordinates
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-filtered-mp-checkbox" /> Filtered out parameters
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" id="show-standardnames-mp-checkbox" /> Standard Names
+                                </label>
+                            </form>
                             <fieldset>
                             <table id="measuredparameter-table" class="table table-condensed">
                                 <thead>
@@ -1091,6 +1133,7 @@
                                             <input colspan="5" type="radio" id="mp_parameters_plot_clear" name="parameters_plot" value="" class="parameter-plot-radio" />                
                                             <input type="checkbox" name="mp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall_parametertime" style="display:none;"/>
                                         </td>
+                                        <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="5" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
                                     <tr class="mp-pp-coordinates" style="display:none;">
@@ -1098,6 +1141,11 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="longitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;" class="plot-data-lines">&nbsp;</td>
+
+                                        <td style="text-align:center;">
+                                            <input type="checkbox" name="parameters_plot_coord_cb" value="Longitude" class="parameter-plot-checkbox" style="display:none;" />
+                                        </td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="1">Longitude</td>
                                     </tr>
@@ -1106,6 +1154,10 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="latitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;" class="plot-data-lines">&nbsp;</td>
+                                        <td style="text-align:center;">
+                                            <input type="checkbox" name="parameters_plot_coord_cb" value="Latitude" class="parameter-plot-checkbox" style="display:none;" />
+                                        </td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="1">Latitude</td>
                                     </tr>
@@ -1114,6 +1166,10 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="depth" class="parameter-radio" /></td>
+                                        <td style="text-align:center;" class="plot-data-lines">&nbsp;</td>
+                                        <td style="text-align:center;">
+                                            <input type="checkbox" name="parameters_plot_coord_cb" value="Depth" class="parameter-plot-checkbox" style="display:none;" />
+                                        </td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="1">Depth</td>
                                     </tr>
@@ -1122,6 +1178,10 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="time" class="parameter-radio" /></td>
+                                        <td style="text-align:center;" class="plot-data-lines">&nbsp;</td>
+                                        <td style="text-align:center;">
+                                            <input type="checkbox" name="parameters_plot_coord_cb" value="Time" class="parameter-plot-checkbox" style="display:none;" />
+                                        </td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="1">Time</td>
                                     </tr>
@@ -1144,9 +1204,11 @@
                         <div class="accordion-inner">
                             <div id="histogram-instruction">Show distribution of parameter values</div>
                             <div class="span6">
-                                Histogram display: 
-                                <input type="checkbox" class="pv-histogram-checkbox" id="showstandardnameparametervalues" /> Standard Names
-                                <input type="checkbox" class="pv-histogram-checkbox" id="showallparametervalues" /> All Parameters
+                                <form class="form-inline">
+                                    Histogram display: 
+                                    <label><input type="checkbox" class="pv-histogram-checkbox" id="showstandardnameparametervalues" /> Standard Names</label>
+                                    <label><input type="checkbox" class="pv-histogram-checkbox" id="showallparametervalues" /> All Parameters</label>
+                                </form>
                             </div>
                             <table id="parameter-value-table" class="table table-condensed">
                             </table>
@@ -2371,13 +2433,13 @@
         if ( $('#show-parameter-parameter-sp-checkbox').is(':checked') ) {
             $('#show-parameter-parameter-mp-checkbox').prop('checked', true);
             $('.parameter-radio').parent().show();
-            $('.sn-leader').attr('colspan', '5');
+            $('.sn-leader').attr('colspan', '6');
             $('.pp-header').show();
         }
         else {
             $('#show-parameter-parameter-mp-checkbox').prop('checked', false);
             $('.parameter-radio').parent().hide();
-            $('.sn-leader').attr('colspan', '1');
+            $('.sn-leader').attr('colspan', '2');
             $('.pp-header').hide();
         }
     });
@@ -2386,13 +2448,13 @@
         if ( $('#show-parameter-parameter-mp-checkbox').is(':checked') ) {
             $('#show-parameter-parameter-sp-checkbox').prop('checked', true);
             $('.parameter-radio').parent().show();
-            $('.sn-leader').attr('colspan', '5');
+            $('.sn-leader').attr('colspan', '6');
             $('.pp-header').show();
         }
         else {
             $('#show-parameter-parameter-sp-checkbox').prop('checked', false);
             $('.parameter-radio').parent().hide();
-            $('.sn-leader').attr('colspan', '1');
+            $('.sn-leader').attr('colspan', '2');
             $('.pp-header').hide();
         }
     });
@@ -3321,6 +3383,9 @@ function enable_cardboard(){
         if ( ! $(this).hasClass('checkall_parametertime') ) {
             rebuildFilters(['parametertime']);
         }
+        else {
+            $('.all-plot-instruction').text('Check all (select or deselect a Parameter to initiate a redraw)');
+        }
     });
 
     $('.checkall_parametertime').on('click', function () {
@@ -3392,6 +3457,27 @@ function enable_cardboard(){
                                     xaxes: [{
                                                 axisLabel: 'Time (gmt)'
                                             }],
+                                    yaxis: {
+                                                tickFormatter: function(val, axis) {
+                                                    // Format to minimize width, yet show the precision needed
+                                                    if (val.toString().indexOf('e') !== -1) {
+                                                        return val.toExponential(1);
+                                                    }
+                                                    else if (Math.abs(val) < 1) {
+                                                        return val.toPrecision(1);
+                                                    }
+                                                    else if (axis.datamax > 1.e7) {
+                                                        digits = Math.round(Math.log10(axis.datamax / (axis.datamax - axis.datamin)));
+                                                        return val.toExponential(digits);
+                                                    }
+                                                    else if (Math.round(axis.datamax) - Math.round(axis.datamax) < 2.0) {
+                                                        return val.toFixed(1);
+                                                    }
+                                                    else {
+                                                        return Math.round(val);
+                                                    }
+                                                }
+                                           },
                                     series: {
                                         lines: { show: true, fill: false, lineWidth: 1 },
                                         points: { show: false, fill: false },
@@ -3900,10 +3986,13 @@ function enable_cardboard(){
             qstring = qstring + '&platformplotname=' + $('body').data()['parameterplatforms'][$('input:radio[name=parameters_contour_plot]:checked').val()];
         }
 
-        if ( $('input:checkbox[name=parameters_plot_cb]').is(':checked') ) {
+        if ( $('input:checkbox[name=parameters_plot_cb]').is(':checked') || $('input:checkbox[name=parameters_plot_coord_cb]').is(':checked') ) {
             if ($('#temporal-parameter-li').hasClass('active')) {
                 $('input:checked[name=parameters_plot_cb]').each(function (index, elem) {
                     qstring = qstring + '&parametertimeplotid=' + elem.value;
+                });
+                $('input:checked[name=parameters_plot_coord_cb]').each(function (index, elem) {
+                    qstring = qstring + '&parametertimeplotcoord=' + elem.value;
                 });
                 if ( $('input:radio[name=parameters_plot]:checked').val() ) {
                     // Send parameterplotid if on Parameter tab so that Spatial pane updates
@@ -4237,11 +4326,11 @@ function enable_cardboard(){
                     if (value[1].length != 0) {
                         // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
                         // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
-                        // Change colspan to 5 when Parameter-Parameter radio buttons are shown
+                        // Change colspan to 6 when Parameter-Parameter radio buttons are shown
                         parameterButtonText = parameterButtonText +
                         '<tr style="display:none;" class="sp-standardname-row sp-standardname-row-enabled">' +
                             '<td colspan="2" style="text-align:center;border-color:transparent;" class="sn-leader"></td>' +
-                            '<td style="border-color:transparent;"></td>' +
+                            '<td style="border-color:transparent;" class="plot-data-lines"></td>' +
                             '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color: transparent;">' +
                                 '<button class="btn btn-mini stoqs-toggle sampledparameterstandardname">'+ value[1] +'</button>' + 
                             '</td>' +
@@ -4304,11 +4393,11 @@ function enable_cardboard(){
                     if (value[1].length != 0) {
                         // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
                         // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
-                        // Change colspan to 5 when Parameter-Parameter radio buttons are shown
+                        // Change colspan to 6 when Parameter-Parameter radio buttons are shown
                         parameterButtonText = parameterButtonText +
                         '<tr style="display:none;" class="mp-standardname-row mp-standardname-row-enabled">' +
                             '<td colspan="2" style="text-align:center;border-color:transparent;" class="sn-leader"></td>' +
-                            '<td style="border-color:transparent;"></td>' +
+                            '<td style="border-color:transparent;" class="plot-data-lines"></td>' +
                             '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color:transparent;text-align:center;">' +
                                 '<button class="btn btn-mini stoqs-toggle parameterstandardname" style="width:75%;">'+ value[1] +'</button>' + 
                             '</td>' +
@@ -4453,6 +4542,14 @@ function enable_cardboard(){
                 }
             }
             else if (key == 'resources') {
+                if ( ! $.isEmptyObject(data.resources.campaign.load_date_gmt) ) {
+                    var info_text = 'Loaded on ' + data.resources.campaign.load_date_gmt.split('.')[0] + ' GMT';
+                    if ( ! $.isEmptyObject(data.resources.campaign.minutes_to_load) ) {
+                        info_text += ' in ' + data.resources.campaign.minutes_to_load + ' minutes';
+                    }
+                    info_text += ' &mdash; <a href="' + data.resources.campaign.load_logfile + '" target="_blank">View log file</a>';
+                    $('#campaigninfo').html(info_text);
+                }
                 buildMetadataHtml(data, true);
             }
             else if (key == 'attributes') {
@@ -5144,7 +5241,7 @@ function enable_cardboard(){
             var map_params = params;
             if ( ! $.isEmptyObject(map_params.only) ) {
                 $.each(map_params.only, function(index, v) {
-                    if ( $.inArray(v, ['parameterparameterpng', 'parameterparameterx3d']) > -1 ) {
+                    if ( $.inArray(v, ['parameterparameterpng', 'parameterparameterx3d', 'parametertime']) > -1 ) {
                         delete map_params.only[index];
                     }
                 });

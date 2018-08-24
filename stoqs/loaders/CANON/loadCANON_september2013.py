@@ -21,8 +21,6 @@ import os
 import sys
 import datetime  # needed for glider data
 import time      # for startdate, enddate args
-import csv
-import urllib.request, urllib.error, urllib.parse
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
@@ -72,7 +70,9 @@ cl.dorado_files = [
 				   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
-                    'sepCountList', 'mepCountList' ]
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
+                  ]
 
 #####################################################################
 #  LRAUV 
@@ -381,53 +381,8 @@ cl.subsample_csv_files = [
 # Execute the load
 cl.process_command_line()
 
-if cl.args.test:
-    cl.loadL_662(stride=100) 
-    cl.load_NPS29(stride=100) 
-    cl.load_NPS34(stride=100) 
 
-    cl.load_slocum_260(stride=10)
-    cl.load_slocum_294(stride=10)
-    cl.load_slocum_nemesis(stride=10)
-
-    cl.load_wg_tex(stride=10)
-    cl.load_wg_oa(stride=10) 
-
-    cl.loadDorado(stride=1000)
-    cl.loadDaphne(stride=100)
-    cl.loadTethys(stride=100)
-
-    cl.loadRCuctd(stride=10)
-    cl.loadRCpctd(stride=10)
-    cl.loadJMuctd(stride=10)
-    cl.loadJMpctd(stride=10)
-    cl.loadWFuctd(stride=10)   
-    cl.loadWFpctd(stride=10)
-
-    cl.loadM1(stride=10)
-
-    cl.loadOA1ctd(stride=10)
-    cl.loadOA1met(stride=10)
-    cl.loadOA1pH(stride=10)
-    cl.loadOA1pco2(stride=10)
-    cl.loadOA1fl(stride=10)
-    cl.loadOA1o2(stride=10)
-
-    cl.loadOA2ctd(stride=10)
-    cl.loadOA2met(stride=10)
-    cl.loadOA2pH(stride=10)
-    ##cl.loadOA2pco2(stride=1)              # No data from http://odss.mbari.org/thredds/dodsC/CANON_september2013/Platforms/Moorings/OA_2/OA2_pco2_2013.nc  between 1378684800.0 and 1380499200.0.
-    cl.loadOA2fl(stride=10)
-    cl.loadOA2o2(stride=10)
-
-    cl.loadBruceMoor(stride=10)
-    cl.loadMackMoor(stride=10)
-
-    cl.loadStella(stride=10)
-
-    cl.loadSubSamples()
-
-elif cl.args.optimal_stride:
+if cl.args.optimal_stride:
     cl.loadL_662(stride=1) 
     cl.load_NPS29(stride=1) 
     cl.load_NPS34(stride=1) 
@@ -440,8 +395,8 @@ elif cl.args.optimal_stride:
     cl.load_wg_oa(stride=1) 
 
     cl.loadDorado(stride=2)
-    cl.loadDaphne(stride=2)
-    cl.loadTethys(stride=2)
+    cl.loadLRAUV('daphne', stride=2, build_attrs=False)
+    cl.loadLRAUV('tethys', stride=2, build_attrs=False)
 
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
@@ -475,20 +430,30 @@ elif cl.args.optimal_stride:
 
 else:
     cl.stride = cl.args.stride
+
+    if cl.args.test:
+        # List too long for separate test section. Use full resolution with a stride override
+        cl.stride = 100
+
     cl.loadL_662()
     cl.load_NPS29()
     cl.load_NPS34()
-
     cl.load_slocum_260()
-    cl.load_slocum_294()
+
+    if cl.args.test:
+        cl.load_slocum_294(stride=200)
+    else:
+        # stride=a causes 'django.db.utils.InternalError: invalid memory alloc request size 1073741824' with bulk_create() on new kraken
+        cl.load_slocum_294(stride=2)
+
     cl.load_slocum_nemesis()
 
     cl.load_wg_tex()
     cl.load_wg_oa()
 
     cl.loadDorado()
-    cl.loadDaphne()
-    cl.loadTethys()
+    cl.loadLRAUV('daphne', build_attrs=False)
+    cl.loadLRAUV('tethys', build_attrs=False)
 
     cl.loadRCuctd()
     cl.loadRCpctd()
@@ -524,3 +489,4 @@ else:
 cl.addTerrainResources()
 
 print("All Done.")
+

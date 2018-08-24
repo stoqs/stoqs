@@ -31,6 +31,7 @@ stoqs/campaigns.py
 stoqs/loaders/*/*.out
 
 # Ex-situ Sample data files
+stoqs/loaders/CANON/BOG_Data
 stoqs/loaders/MolecularEcology/BOG_Data/*.csv
 stoqs/loaders/MolecularEcology/SIMZAug2013/*.csv
 

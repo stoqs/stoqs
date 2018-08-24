@@ -92,9 +92,9 @@ make -j 2 && sudo make install
 cd ..
 
 echo Build and install gdal
-wget -q -N http://download.osgeo.org/gdal/2.2.2/gdal-2.2.2.tar.gz        
-tar -xzf gdal-2.2.2.tar.gz
-cd gdal-2.2.2
+wget -q -N http://download.osgeo.org/gdal/2.3.1/gdal-2.3.1.tar.gz        
+tar -xzf gdal-2.3.1.tar.gz
+cd gdal-2.3.1
 export PATH=$(pwd):$PATH
 ./configure --prefix=/usr/local
 gmake -j 2 && gmake install

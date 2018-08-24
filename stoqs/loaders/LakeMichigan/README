@@ -1,0 +1,3 @@
+Download the GMT bathymetry file for Lake Michigan before executing the load:
+
+wget -O ../michigan_lld.grd https://stoqs.mbari.org/terrain/michigan_lld.grd

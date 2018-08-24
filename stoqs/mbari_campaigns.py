@@ -14,17 +14,7 @@ from collections import OrderedDict
 campaigns = OrderedDict([
     ('stoqs_rovctd_mb',     'ROVCTD/loadMB_Dives.sh'),
     ('stoqs_rovctd_mw93',   'ROVCTD/loadAllTransectDives.sh'),
-    ('stoqs_rovctd_mw97',   ('ROVCTD/ROVCTDloader.py --database stoqs_rovctd_mw97 '
-                            '--dives V1236 V1247 V1321 V1575 V1610 V1668 T257 V1964 '
-                            'V2069 V2329 V2354 V2421 V2636 V2661 V2715 V2983 V3006 '
-                            'V3079 V3334 V3363 V3417 V3607 V3630 V3646 D449 D478 '
-                            'V3736 V3766 V3767 V3774 D646 '
-                            '--bbox -122.1 36.65 -122.0 36.75 '
-                            '--campaignName "Midwater Transect dives 1997 - 2014" '
-                            '--campaignDescription "Midwater Transect dives made with '
-                            'Ventana and Doc Ricketts from 1997 - 2014. Three to four '
-                            'dives/year selected, representing spring, summer and fall '
-                            '(~ beginning upwelling, upwelling and post-upwelling)"')),
+    ('stoqs_rovctd_mw97',   'ROVCTD/loadTransectDives_mw97.sh'),
     ('stoqs_oceansites_o',   'OceanSITES/load_moorings.py -o'),
     ('stoqs_rovctd_goc',    'ROVCTD/loadGoC_Dives.sh'),
     ('stoqs_september2010',  'CANON/loadCANON_september2010.py'),
@@ -33,6 +23,7 @@ campaigns = OrderedDict([
     ('stoqs_dorado2011',     'MolecularEcology/load_dorado2011.py'),
     ('stoqs_april2011',      'CANON/loadCANON_april2011.py'),
     ('stoqs_june2011',       'CANON/loadCANON_june2011.py'),
+    ('stoqs_september2011',  'CANON/loadCANON_september2011.py'),
     ('stoqs_february2012',   'MolecularEcology/loadGOC_february2012.py'),
     ('stoqs_may2012',        'CANON/loadCANON_may2012.py'),
     ('stoqs_september2012',  'CANON/loadCANON_september2012.py'),
@@ -62,5 +53,6 @@ campaigns = OrderedDict([
     ('stoqs_ps2017',             'CANON/loadCANON_postSeason2017.py'),
     ('stoqs_canon_september2017',   'CANON/loadCANON_september2017.py'), 
     ('stoqs_os2018',             'CANON/loadCANON_os2018.py'), 
-    ('stoqs_canon_may2018',      'CANON/loadCANON_may2018_py3.py'),     
+    ('stoqs_canon_may2018',      'CANON/loadCANON_may2018.py'),     
+    ('stoqs_all_dorado',      'PlanktonProxies/load_all_dorado.py'),     
 ])

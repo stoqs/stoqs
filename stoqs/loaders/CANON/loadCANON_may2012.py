@@ -58,7 +58,9 @@ cl.dorado_files = [
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
                     'fl700_uncorr', 'salinity', 'biolume',
-                    'sepCountList', 'mepCountList']
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
+                  ]
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
 cl.daphne_base = 'http://elvis.shore.mbari.org/thredds/dodsC/LRAUV/daphne/realtime/sbdlogs/2012/'
@@ -172,33 +174,47 @@ cl.waveglider_startDatetime = startdate
 cl.waveglider_endDatetime = enddate
 
 
+# Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201202/'
+cl.m1_files = ['OS_M1_20120222hourly_CMSTV.nc']
+cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
+                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
+              ]
+cl.m1_startDatetime = startdate
+cl.m1_endDatetime = enddate
+
+
 # Execute the load
 cl.process_command_line()
 
 if cl.args.test:
     cl.loadDorado(stride=100)
-    cl.loadTethys(stride=100)
-    cl.loadDaphne(stride=100)
+    cl.loadLRAUV('tethys', startdate, enddate, stride=100, build_attrs=False)
+    cl.loadLRAUV('daphne', startdate, enddate, stride=100, build_attrs=False)
     cl.loadNps_g29(stride=100)
     cl.loadL_662(stride=100)
     cl.loadWaveglider(stride=100)
+    cl.loadM1(stride=10)
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
-    cl.loadTethys(stride=1)
-    cl.loadDaphne(stride=1)
+    cl.loadLRAUV('tethys', startdate, enddate, stride=1, build_attrs=False)
+    cl.loadLRAUV('daphne', startdate, enddate, stride=1, build_attrs=False)
     cl.loadNps_g29(stride=1)
     cl.loadL_662(stride=1)
     cl.loadWaveglider(stride=1)
+    cl.loadM1(stride=1)
 
 else:
     cl.stride = cl.args.stride
     cl.loadDorado()
-    cl.loadTethys()
-    cl.loadDaphne()
+    cl.loadLRAUV('tethys', startdate, enddate, build_attrs=False)
+    cl.loadLRAUV('daphne', startdate, enddate, build_attrs=False)
     cl.loadNps_g29()
     cl.loadL_662()
     cl.loadWaveglider()
+    cl.loadM1()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()

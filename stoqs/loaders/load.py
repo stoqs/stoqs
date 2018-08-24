@@ -32,6 +32,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import ConnectionDoesNotExist, OperationalError, ProgrammingError
+from django.db import transaction, connections
 from slacker import Slacker
 from stoqs.models import ResourceType, Resource, Campaign, CampaignResource, MeasuredParameter, \
                          SampledParameter, Activity, Parameter, Platform
@@ -255,8 +256,9 @@ local   all             all                                     peer
         if self.args.clobber and not self.args.test:
             print(("On the server running on port =", settings.DATABASES['default']['PORT']))
             print("You are about to drop all database(s) in the list below and reload them:")
-            print((('{:30s} {:>15s}').format('Database', 'Last Load time')))
-            print((('{:30s} {:>15s}').format('-'*25, '-'*15)))
+            print((('{:30s} {:>15s}').format('Database', 'Last Load time (min)')))
+            print((('{:30s} {:>15s}').format('-'*25, '-'*20)))
+            nothing_printed = True
             for db,load_command in list(campaigns.campaigns.items()):
                 if self.args.db:
                     if db not in self.args.db:
@@ -264,12 +266,23 @@ local   all             all                                     peer
 
                 script = os.path.join(app_dir, 'loaders', load_command)
                 try:
-                    print((('{:30s} {:>15s}').format(db, (
-                            tail(self._log_file(script, db, load_command), 3)
-                            .split('\n')[0]
-                            .split('\t')[1]))))
-                except IndexError:
-                    pass
+                    with transaction.atomic(using=db):
+                        minutes_to_load = CampaignResource.objects.using(db).get(
+                                            resource__name='minutes_to_load').resource.value
+                    print(f"{db:30s} {minutes_to_load:>20}")
+                    nothing_printed = False
+                except (CampaignResource.DoesNotExist, CampaignResource.MultipleObjectsReturned,
+                        OperationalError, ProgrammingError) as e:
+                    self.logger.debug(str(e))
+                    self.logger.debug('Closing all connections:')
+                    for conn in connections.all():
+                        if conn.settings_dict['NAME'] not in self.args.db:
+                            continue
+                        self.logger.debug(f"    {conn.settings_dict['NAME']}")
+                        conn.close()
+
+                if nothing_printed:
+                    print(f"{db:30s} {'--- ':>20}")
 
             ans = input('\nAre you sure you want to drop these database(s) and reload them? [y/N] ')
             if ans.lower() != 'y':
@@ -286,6 +299,12 @@ local   all             all                                     peer
                 print('Exiting')
                 sys.exit()
 
+        # That script support the --test option
+        if self.args.db and self.args.test:
+            for db in self.args.db:
+                if self._has_no_t_option(db, campaigns.campaigns[db]):
+                    print(f'{campaigns.campaigns[db]} does not support the --test argument')
+                    sys.exit(-1)
 
     def recordprovenance(self, db, load_command, log_file):
         '''Add Resources to the Campaign that describe what loaded it
@@ -456,10 +475,6 @@ local   all             all                                     peer
                 settings.MAPSERVER_DATABASES[campaign] = settings.MAPSERVER_DATABASES.get('default').copy()
                 settings.MAPSERVER_DATABASES[campaign]['NAME'] = campaign
 
-            if hasattr(self.args, 'verbose'):
-                if self.args.verbose > 2:
-                    load_command += ' -v'
-
             if db not in settings.DATABASES:
                 # Django docs say not to do this, but I can't seem to force a settings reload.
                 # Note that databases in campaigns.py are put in settings by settings.local.
@@ -488,13 +503,17 @@ local   all             all                                     peer
             if create_only:
                 return
 
+            if hasattr(self.args, 'verbose') and not load_command.endswith('.sh'):
+                if self.args.verbose > 2:
+                    load_command += ' -v'
+
             # === Execute the load
             script = os.path.join(app_dir, 'loaders', load_command)
             log_file = self._log_file(script, db, load_command)
             if script.endswith('.sh'):
-                script = ('(cd {} && {})').format(os.path.dirname(script), script)
-
-            cmd = ('(STOQS_CAMPAIGNS={} time {}) > {} 2>&1;').format(db, script, log_file)
+                cmd = (f'cd {os.path.dirname(script)} && (STOQS_CAMPAIGNS={db} time {script}) > {log_file} 2>&1;')
+            else:
+                cmd = (f'(STOQS_CAMPAIGNS={db} time {script}) > {log_file} 2>&1;')
 
             if self.args.email:
                 # Send email on success or failure
@@ -587,8 +606,11 @@ Script to load or reload STOQS databases using the dictionary in stoqs/campaigns
                               
 A typical workflow to build up a production server is:
 1. Construct a stoqs/campaigns.py file (use mbari_campaigns.py as model)
-2. Uncompress Sample data files included in the stoqs repository:
-    find stoqs/loaders -name "*.gz" | xargs gunzip
+2. Make *ex situ* Sampled Parameter data available:
+   a. Uncompress Sample data files included in the stoqs repository:
+      find stoqs/loaders -name "*.gz" | xargs gunzip
+   b. Copy BOG database extraction files to CANON/BOG_Data
+   c. (A Big TODO: Change these loads to a web-accessable method...)
 3. Copy terrain data files that are not included or copied during test.sh execution:
     cd stoqs/loaders
     wget https://stoqs.mbari.org/terrain/Monterey25.grd  

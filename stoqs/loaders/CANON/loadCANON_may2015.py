@@ -65,46 +65,10 @@ cl.dorado_files = [
                    'Dorado389_2015_156_00_156_00_decim.nc',
                                    ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
-                    'fl700_uncorr', 'salinity', 'biolume', 'rhodamine' ]
-
-#####################################################################
-#  LRAUV 
-#####################################################################
-# NetCDF files produced (binned, etc.) by John Ryan
-##cl.tethys_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Tethys/NetCDF/'
-##cl.tethys_files = ['Tethys_CANON_Fall2013.nc']
-##cl.tethys_parms = ['temperature', 'salinity', 'chlorophyll', 'bb470', 'bb650']
-
-##cl.daphne_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Daphne/NetCDF/'
-##cl.daphne_files = ['Daphne_CANON_Fall2013.nc']
-##cl.daphne_parms = ['temperature', 'chlorophyll', 'bb470', 'bb650']
-# special location for lrauv data
-
-# NetCDF files produced (binned, etc.) by Danelle Cline
-# These binned files are created with the makeLRAUVNetCDFs.sh script in the
-# toNetCDF directory. You must run that script once to produce the binned
-# files before this will work
-  
-# Get directory list from thredds server
-platforms = ['tethys', 'daphne', 'makai']
-
-'''for p in platforms:
-  base =  'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2015/' 
-  dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2015/'
-  setattr(cl, p + '_files', []) 
-  setattr(cl, p + '_base', dods_base)
-  setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR'])
-  c = Crawl(os.path.join(base, 'catalog.xml'), select=['.*10S_sci.nc$'], debug=False) 
-  urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
-  files = []
-
-  if len(urls) > 0 :
-    for url in sorted(urls):
-      file = '/'.join(url.split('/')[-3:])
-      files.append(file)
-  files.append(',')
-  setattr(cl, p + '_files', files)
-'''
+                    'fl700_uncorr', 'salinity', 'biolume', 'rhodamine', 
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
+                  ]
 
 ######################################################################
 #  GLIDERS
@@ -351,9 +315,6 @@ if cl.args.test:
     ##cl.load_wg_oa(stride=10)  ## waiting for data to be formated for loading
 
     cl.loadDorado(stride=100)
-    #cl.loadDaphne(stride=100)
-    #cl.loadTethys(stride=100)
-    #cl.loadMakai(stride=100)
 
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
@@ -381,9 +342,6 @@ elif cl.args.optimal_stride:
     ##cl.load_wg_oa(stride=2)  ## waiting for data to be formated for loading
 
     cl.loadDorado(stride=2)
-    #cl.loadDaphne(stride=2)
-    #cl.loadTethys(stride=2)
-    #cl.loadMakai(stride=2)
 
     cl.loadRCuctd(stride=2)
     cl.loadRCpctd(stride=2)
@@ -412,9 +370,6 @@ else:
     ##cl.load_wg_oa()  ## waiting for data to be formated for loading
 
     cl.loadDorado()
-    #cl.loadDaphne()
-    #cl.loadTethys()
-    #cl.loadMakai()
 
     cl.loadRCuctd()
     cl.loadRCpctd()

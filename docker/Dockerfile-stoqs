@@ -4,13 +4,14 @@ MAINTAINER Mike McCann <mccann@mbari.org>
 # Modeled after http://michal.karzynski.pl/blog/2015/04/19/packaging-django-applications-as-docker-container-images/
 
 # Additional requirements for stoqs not in pcic/geospatial-python
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get -qq -y install \
     freetds-dev \
     git \
     gmt \
     libncurses-dev \
-    postgresql-9.6 \
+    postgresql \
     time \
     wget
 
@@ -27,6 +28,7 @@ WORKDIR /srv
 
 # Symlink to requirements from docker directory used to minimize context
 COPY requirements /requirements
+RUN pip3 install git+https://github.com/pymssql/pymssql
 RUN /bin/bash -c 'pip install -r /requirements/production.txt'
 
 # NCAR's natgrid needed for contour plotting - several warnings/errors on compiling that can be ignored

@@ -67,7 +67,9 @@ cl.dorado_files = [
 				   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
                     'fl700_uncorr', 'salinity', 'biolume',
-                    'sepCountList', 'mepCountList']
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
+                  ]
 
 
 ######################################################################
@@ -90,7 +92,7 @@ cl.wfuctd_base = cl.dodsBase + 'CANON_october2013/Platforms/Ships/Western_Flyer/
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [ 
 'CN13IDm01.nc', 'CN13IDm02.nc', 'CN13IDm03.nc', 'CN13IDm04.nc', 'CN13IDm05.nc', 'CN13IDm06.nc', 'CN13IDm07.nc', 'CN13IDm08.nc', 'CN13IDm09.nc', 'CN13IDm10.nc',
-'CN13IDm11.nc', 'CN13IDm13.nc', 'CN13IDm13.nc', 'CN13IDm14.nc',
+'CN13IDm11.nc', 'CN13IDm12.nc', 'CN13IDm13.nc', 'CN13IDm14.nc',
                       ]
 
 # PCTD

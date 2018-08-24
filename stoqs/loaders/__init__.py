@@ -56,6 +56,12 @@ X3D_MODEL_NOMINALDEPTH = 'X3D_MODEL_nominaldepth'
 X3D_MODEL_SCALEFACTOR = 'X3D_MODEL_scalefactor'
 X3DPLATFORMMODEL = 'x3dplatformmodel'
 
+# Parameter names created by STOQS Loads, shared with at least DAPloaders
+SIGMAT = 'sigmat'
+SPICE = 'spice'
+SPICINESS = 'Spiciness'
+ALTITUDE = 'altitude'
+
 if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
 
@@ -305,7 +311,6 @@ class STOQS_Loader(object):
     MBARI 26 May 2012
     '''
 
-    parameter_dict={} # used to cache parameter objects 
     standard_names = {} # should be defined for each child class
     include_names=[] # names to include, if set it is used in conjunction with ignored_names
     # Note: if a name is both in include_names and ignored_names it is ignored.
@@ -383,16 +388,20 @@ class STOQS_Loader(object):
         self.logger.debug("Opening %s to read platform names for matching to the MBARI tracking database", paURL)
 
         platformName = ''
-        with closing(requests.get(paURL, stream=True)) as r:
-            if r.status_code == 200:
-                r_decoded = (line.decode('utf-8') for line in r.iter_lines())
-                tpHandle = csv.DictReader(r_decoded)
-                for rec in tpHandle:
-                    ##self.logger.info("rec = %s" % rec)
-                    if rec['PlatformName'].lower() == name.lower():
-                        platformName = rec['PlatformName']
-                        tdb_platformTypeName = rec['PlatformType']
-                        break
+        try:
+            with closing(requests.get(paURL, stream=True)) as r:
+                if r.status_code == 200:
+                    r_decoded = (line.decode('utf-8') for line in r.iter_lines())
+                    tpHandle = csv.DictReader(r_decoded)
+                    for rec in tpHandle:
+                        ##self.logger.info("rec = %s" % rec)
+                        if rec['PlatformName'].lower() == name.lower():
+                            platformName = rec['PlatformName']
+                            tdb_platformTypeName = rec['PlatformType']
+                            break
+        except requests.exceptions.ConnectionError as e:
+            self.logger.warn(f'{e}')
+            self.logger.warn(f'Unable to read platform names from the MBARI tracking database: {paURL}')
 
         if not platformName:
             platformName = name
@@ -431,76 +440,72 @@ class STOQS_Loader(object):
 
     def addParameters(self, parmDict):
         '''
-        Wrapper so as to apply self.dbAlias in the decorator
+        This method is a get_or_create() equivalent, but on steroids.  It first tries to find the
+        parameter in a local cache (a python hash), first by standard_name, then by name.  Then it
+        checks to see if it's in the database.  If it's not in the database it will then add it
+        populating the fields from the attributes of the parameter dictionary that is passed.  The
+        dictionary is patterned after the pydap.model.BaseType variable from the NetCDF file (OPeNDAP URL).
         '''
-        def innerAddParameters(self, parmDict):
-            '''
-            This method is a get_or_create() equivalent, but on steroids.  It first tries to find the
-            parameter in a local cache (a python hash), first by standard_name, then by name.  Then it
-            checks to see if it's in the database.  If it's not in the database it will then add it
-            populating the fields from the attributes of the parameter dictionary that is passed.  The
-            dictionary is patterned after the pydap.model.BaseType variable from the NetCDF file (OPeNDAP URL).
-            '''
+        # Initialize cache for each url/ds/activity
+        self.parameter_dict = {} 
 
-            # Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
-            for key in list(parmDict.keys()):
-                self.logger.debug("key = %s", key)
-                if (key in self.ignored_names) or (key not in self.include_names): # skip adding parameters that are ignored
-                    continue
-                v = parmDict[key].attributes
-                self.logger.debug("v = %s", v)
+        # Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
+        for key in list(parmDict.keys()):
+            self.logger.debug("key = %s", key)
+            if (key in self.ignored_names) or (key not in self.include_names): # skip adding parameters that are ignored
+                continue
+            v = parmDict[key].attributes
+            self.logger.debug("v = %s", v)
+            try:
+                self.getParameterByName(key)
+            except ParameterNotFound as e:
+                self.logger.debug("Parameter not found. Assigning parms from ds variable.")
+                # Bug in pydap returns a gobbledegook list of things if the attribute value has not been
+                # set.  Check for this on units and override what pydap returns.
+                if isinstance(v.get('units'), list):
+                    unitStr = ''
+                else:
+                    unitStr = v.get('units')
+                
+                parms = {'units': unitStr,
+                    'standard_name': v.get('standard_name'),
+                    'long_name': v.get('long_name'),
+                    'type': v.get('type'),
+                    'description': v.get('description'),
+                    'origin': self.activityName,
+                    'name': key}
+
+                self.parameter_dict[key] = m.Parameter(**parms)
                 try:
-                    self.getParameterByName(key)
-                except ParameterNotFound as e:
-                    self.logger.debug("Parameter not found. Assigning parms from ds variable.")
-                    # Bug in pydap returns a gobbledegook list of things if the attribute value has not been
-                    # set.  Check for this on units and override what pydap returns.
-                    if isinstance(v.get('units'), list):
-                        unitStr = ''
+                    sid = transaction.savepoint(using=self.dbAlias)
+                    self.parameter_dict[key].save(using=self.dbAlias)
+                    self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
+                except IntegrityError as e:
+                    self.logger.warn('%s', e)
+                    transaction.savepoint_rollback(sid)
+                    if str(e).startswith('duplicate key value violates unique constraint "stoqs_parameter_pkey"'):
+                        self.resetParameterAutoSequenceId()
+                        try:
+                            sid2 = transaction.savepoint(using=self.dbAlias)
+                            self.parameter_dict[key].save(using=self.dbAlias)
+                            self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
+                        except Exception as e:
+                            self.logger.error('%s', e)
+                            transaction.savepoint_rollback(sid2,using=self.dbAlias)
+                            raise Exception('''Failed reset auto sequence id on the stoqs_parameter table''')
                     else:
-                        unitStr = v.get('units')
-                    
-                    parms = {'units': unitStr,
-                        'standard_name': v.get('standard_name'),
-                        'long_name': v.get('long_name'),
-                        'type': v.get('type'),
-                        'description': v.get('description'),
-                        'origin': self.activityName,
-                        'name': key}
-
-                    self.parameter_dict[key] = m.Parameter(**parms)
-                    try:
-                        sid = transaction.savepoint(using=self.dbAlias)
-                        self.parameter_dict[key].save(using=self.dbAlias)
-                        self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                    except IntegrityError as e:
-                        self.logger.warn('%s', e)
-                        transaction.savepoint_rollback(sid)
-                        if str(e).startswith('duplicate key value violates unique constraint "stoqs_parameter_pkey"'):
-                            self.resetParameterAutoSequenceId()
-                            try:
-                                sid2 = transaction.savepoint(using=self.dbAlias)
-                                self.parameter_dict[key].save(using=self.dbAlias)
-                                self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                            except Exception as e:
-                                self.logger.error('%s', e)
-                                transaction.savepoint_rollback(sid2,using=self.dbAlias)
-                                raise Exception('''Failed reset auto sequence id on the stoqs_parameter table''')
-                        else:
-                            self.logger.error('Exception %s', e)
-                            raise Exception('''Failed to add parameter for %s
-                                %s\nEither add parameter manually, or add to ignored_names''' % (key,
-                                '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in list(parms.items())])))
-                        
-                    except Exception as e:
-                        self.logger.error('%s', e)
-                        transaction.savepoint_rollback(sid,using=self.dbAlias)
+                        self.logger.error('Exception %s', e)
                         raise Exception('''Failed to add parameter for %s
                             %s\nEither add parameter manually, or add to ignored_names''' % (key,
                             '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in list(parms.items())])))
-                    self.logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
-
-        return innerAddParameters(self, parmDict)
+                    
+                except Exception as e:
+                    self.logger.error('%s', e)
+                    transaction.savepoint_rollback(sid,using=self.dbAlias)
+                    raise Exception('''Failed to add parameter for %s
+                        %s\nEither add parameter manually, or add to ignored_names''' % (key,
+                        '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in list(parms.items())])))
+                self.logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
 
     def createCampaign(self):
         '''Create Campaign in the database ensuring that there is only one Campaign
@@ -574,63 +579,78 @@ class STOQS_Loader(object):
         ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
                     activity=self.activity, resource=resource)
 
-        # The NC_GLOBAL attributes from the OPeNDAP URL.  Save them all.
-        self.logger.debug("Getting or Creating ResourceType nc_global...")
-        self.logger.debug("ds.attributes.keys() = %s", list(self.ds.attributes.keys()) )
-        if 'NC_GLOBAL' in self.ds.attributes:
-            resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'nc_global')
-            for rn, value in list(self.ds.attributes['NC_GLOBAL'].items()):
-                self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
-                resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
-                            name=rn, value=value, resourcetype=resourceType)
-                ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
-                            activity=self.activity, resource=resource)
-
-            # Use potentially monkey-patched self.getFeatureType() method to write a correct value - as the UI depends on it
-            mp_resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
-                        name='featureType', value=self.getFeatureType(), resourcetype=resourceType)
-            ars = m.ActivityResource.objects.using(self.dbAlias).filter(activity=self.activity,
-                            resource__resourcetype=resourceType, resource__name='featureType').select_related('resource')
-
-            if not ars:
-                # There was no featureType NC_GLOBAL in the dataset - associate to the one from self.getFeatureType()
-                ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
-                            activity=self.activity, resource=mp_resource)
-            for ar in ars:
-                if ar.resource.value != mp_resource.value:
-                    # Update (override NC_GLOBAL's) with monkey-patched self.getFeatureType()'s value
-                    ars = m.ActivityResource.objects.using(self.dbAlias).filter(activity=self.activity,
-                            resource__resourcetype=resourceType, resource__name='featureType').update(resource=mp_resource)
-                    self.logger.warn('Over-riding featureType from NC_GLOBAL (%s) with monkey-patched value = %s', 
-                            ar.resource.value, mp_resource.value)
-        else:
-            self.logger.warn("No NC_GLOBAL attribute in %s", self.url)
-
-        self.logger.info('Adding attributes of all the variables from the original NetCDF file')
-        for v in self.include_names + ['altitude']:
-            self.logger.debug('v = %s', v)
-            try:
-                for rn, value in list(self.ds[v].attributes.items()):
+        mp_ft_res = None
+        if hasattr(self, 'ds'):
+            # The NC_GLOBAL attributes from the OPeNDAP URL.  Save them all.
+            self.logger.debug("Getting or Creating ResourceType nc_global...")
+            self.logger.debug("ds.attributes.keys() = %s", list(self.ds.attributes.keys()) )
+            if 'NC_GLOBAL' in self.ds.attributes:
+                resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'nc_global')
+                for rn, value in list(self.ds.attributes['NC_GLOBAL'].items()):
                     self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
                     resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
-                                          name=rn, value=value, resourcetype=resourceType)
-                    m.ParameterResource.objects.using(self.dbAlias).get_or_create(
-                                    parameter=self.getParameterByName(v), resource=resource)
-                    m.ActivityResource.objects.using(self.dbAlias).get_or_create(
-                                    activity=self.activity, resource=resource)
-                    
-            except KeyError as e:
-                # Just skip derived parameters that may have been added for a sub-classed Loader
-                if v != 'altitude':
-                    self.logger.debug('include_name %s is not in %s - skipping', v, self.url)
-            except AttributeError as e:
-                # Just skip over loaders that don't have the plotTimeSeriesDepth attribute
-                self.logger.warn('%s for include_name %s in %s. Skipping', e, v, self.url)
-            except ParameterNotFound as e:
-                self.logger.warn('Could not get Parameter for v = %s: %s', v, e)
+                                name=rn, value=value, resourcetype=resourceType)
+                    ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+                                activity=self.activity, resource=resource)
+
+                # Use potentially monkey-patched self.getFeatureType() method to write a correct value - as the UI depends on it
+                mp_ft_res, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                            name='featureType', value=self.getFeatureType(), resourcetype=resourceType)
+                ars = m.ActivityResource.objects.using(self.dbAlias).filter(activity=self.activity,
+                                resource__resourcetype=resourceType, resource__name='featureType').select_related('resource')
+
+                if not ars:
+                    # There was no featureType NC_GLOBAL in the dataset - associate to the one from self.getFeatureType()
+                    ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+                                activity=self.activity, resource=mp_ft_res)
+                for ar in ars:
+                    if ar.resource.value != mp_ft_res.value:
+                        # Update (override NC_GLOBAL's) with monkey-patched self.getFeatureType()'s value
+                        ars = m.ActivityResource.objects.using(self.dbAlias).filter(activity=self.activity,
+                                resource__resourcetype=resourceType, resource__name='featureType').update(resource=mp_ft_res)
+                        self.logger.warn('Over-riding featureType from NC_GLOBAL (%s) with monkey-patched value = %s', 
+                                ar.resource.value, mp_ft_res.value)
+            else:
+                self.logger.warn("No NC_GLOBAL attribute in %s", self.url)
+
+        # Make sure Activity has a featureType Resource - as in ROVCTD data loads, where there is no self.ds
+        if not mp_ft_res:
+            # Use potentially monkey-patched self.getFeatureType() method to write a correct value - as the UI depends on it
+            mp_ft_res, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                            name='featureType', value=self.getFeatureType(), resourcetype=resourceType)
+            m.ActivityResource.objects.using(self.dbAlias).get_or_create(activity=self.activity, resource=mp_ft_res)
+
+        # Add stoqs calculated Parameters to the names we add resources to - crude test for presence of SIGMAT in database
+        all_names = self.include_names + [ALTITUDE]
+        if m.Parameter.objects.using(self.dbAlias).filter(name=SIGMAT):
+            all_names = all_names + [SIGMAT, SPICE]
+
+        if hasattr(self, 'ds'):
+            self.logger.info('Adding attributes of all the variables from the original NetCDF file')
+            for v in all_names:
+                self.logger.debug('v = %s', v)
+                try:
+                    for rn, value in list(self.ds[v].attributes.items()):
+                        self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
+                        resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                                              name=rn, value=value, resourcetype=resourceType)
+                        m.ParameterResource.objects.using(self.dbAlias).get_or_create(
+                                        parameter=self.getParameterByName(v), resource=resource)
+                        m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+                                        activity=self.activity, resource=resource)
+                        
+                except KeyError as e:
+                    # Just skip derived parameters that may have been added for a sub-classed Loader
+                    if v != ALTITUDE:
+                        self.logger.debug('include_name %s is not in %s - skipping', v, self.url)
+                except AttributeError as e:
+                    # Just skip over loaders that don't have the plotTimeSeriesDepth attribute
+                    self.logger.warn('%s for include_name %s in %s. Skipping', e, v, self.url)
+                except ParameterNotFound as e:
+                    self.logger.warn('Could not get Parameter for v = %s: %s', v, e)
 
         self.logger.info('Adding plotTimeSeriesDepth Resource for Parameters we want plotted in Parameter tab')
-        for v in self.include_names + ['altitude']:
+        for v in all_names:
             if hasattr(self, 'plotTimeSeriesDepth'):
                 if self.plotTimeSeriesDepth.get(v, None) is not None:
                     self.logger.debug('v = %s', v)
@@ -758,7 +778,7 @@ class STOQS_Loader(object):
         '''Return True if coordinate is missing or fill_value, or falls outside of reasonable bounds
         '''
         # Missing value rejections
-        ac = self.getAuxCoordinates(key)
+        ac = self.coord_dicts[key]
         if 'depth' in ac:   # Tolerate EPIC 'sensor_depth' type data
             if self.mv_by_key[ac['depth']]:
                 if np.isclose(depth, self.mv_by_key[ac['depth']]):
@@ -827,46 +847,50 @@ class STOQS_Loader(object):
 
     def good_coords(self, pnames, mtimes, depths, latitudes, longitudes):
         '''Use attributes to determine if coordinate values are good.  Yield None
-        values for all coordinates if any are bad (e.g. _FillValue).
+        values for all coordinates if any are bad (e.g. _FillValue, time decreasing).
         Appropriate for trajectory data where there is one-to-one match of coordinates.
         '''
-        # Checking for duplicate times is time consuming, do it for only known
+        # Checking for duplicate or decreasing times is time consuming, do it for only known
         # problematic sources of data
-        known_dup_time_sources = ('pctd',)
+        known_dup_or_decr_time_sources = ('pctd', 'Daphne_ECOHAB_March2013')
 
-        known_dup_time_problem = False
-        for string in known_dup_time_sources:
+        known_dup_or_decr_time_problem = False
+        for string in known_dup_or_decr_time_sources:
             if string in self.url:
-                self.logger.debug(f'Setting known_dup_time_problem for known_dup_time_source: {string}')
-                known_dup_time_problem = True
-        
-        previous_coords = []
-        for pname_count, pname in enumerate(pnames):
-            for i, (mt, de, la, lo) in enumerate(zip(mtimes, depths, latitudes, longitudes)):
-                if self.is_coordinate_bad(pname, mt, de, la, lo):
-                    mt = None
-                    de = None
-                    la = None
-                    lo = None
+                self.logger.info(f'Setting known_dup_or_decr_time_problem for known_dup_or_decr_time_source: {string}')
+                known_dup_or_decr_time_problem = True
 
+        # Coordinates (mtimes, depths, latitudes, longitudes) are generators read from the DAP URL as
+        # identified in CF metadata as associated with all variables in pnames - use just the first one 
+        # for .is_coordinate_bad() check
+        previous_times = []
+        for i, (mt, de, la, lo) in enumerate(zip(mtimes, depths, latitudes, longitudes)):
+            if self.is_coordinate_bad(pnames[0], mt, de, la, lo):
+                mt = None
+                de = None
+                la = None
+                lo = None
+
+            bad_time = False
+            if known_dup_or_decr_time_problem:
                 dup_time = False
-                previous_times = []
-                if known_dup_time_problem:
-                    dup_time = False
+                decr_time = False
+                if mt in previous_times:
+                    self.logger.warn(f'Will not load data from duplicate time coordinate: {mt} at index {i}')
+                    dup_time = True
+                elif mt and i > 0 and previous_times:
+                    if mt <= previous_times[-1]:
+                        self.logger.warn(f'Will not load data from decreasing time coordinate: {mt} at index {i}')
+                        decr_time = True
+               
+                bad_time = dup_time or not mt or decr_time
+                self.logger.debug(f'{mt} at index {i}: bad_time = {bad_time}')
+
+                if not bad_time: 
+                    # Save only not None, non-duplicate, and non-decreasing times
                     previous_times.append(mt)
-                    if mt in previous_times[:-1]:
-                        self.logger.warn(f'Will not load data from duplicate time coordinate: {mt}')
-                        dup_time = True
 
-                if pname_count > 0:
-                    if set(previous_coords[i]) != set((mt, de, la, lo, dup_time)):
-                        self.logger.warn(f'coords for {pname} are not the same as for {previous_pname}')
-
-                previous_pname = pname
-                previous_coords.append((mt, de, la, lo, dup_time))
-
-        for mt, de, la, lo, dup_time in previous_coords:
-            yield mt, de, la, lo, dup_time
+            yield mt, de, la, lo, bad_time
 
     def preProcessParams(self, row):
         '''
@@ -1009,7 +1033,20 @@ class STOQS_Loader(object):
             if sampledFlag:
                 (counts, bins) = np.histogram(np_data,10)
             else:
-                (counts, bins) = np.histogram(np_data,100)
+                try:
+                    (counts, bins) = np.histogram(np_data,100)
+                except IndexError:
+                    # Likely something like 'index -9223372036854775808 is out of bounds for axis 1 with size 101' 
+                    # from numpy/lib/function_base.py.  Encoutered in really wild LRAUV data, e.g.:
+                    # http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2015/20150824_20150825/20150825T055243/201508250552_201508250553_2S_eng.nc.ascii?control_inputs_mass_position[0:1:13]
+                    # These kind of messages will appear in the log:
+                    # /vagrant/dev/stoqsgit/venv-stoqs/lib64/python3.6/site-packages/numpy/lib/function_base.py:766: RuntimeWarning: overflow encountered in double_scalars
+                    #  norm = n_equal_bins / (last_edge - first_edge)
+                    #/vagrant/dev/stoqsgit/venv-stoqs/lib64/python3.6/site-packages/numpy/lib/function_base.py:788: RuntimeWarning: invalid value encountered in multiply
+                    # tmp_a *= norm
+                    # Contunue silently (as this is a static method), with the above errors given as a warning.
+                    continue
+
             for i,count in enumerate(counts):
                 m.ActivityParameterHistogram.objects.using(dbAlias).get_or_create(
                         activityparameter=ap, bincount=count, 
@@ -1299,41 +1336,6 @@ class STOQS_Loader(object):
                 except Exception as e:
                     self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
-    def _generate_sigmat_and_spice_mps_raw_sql(self, p_sigmat, p_spice, salinity_standard_name):
-        '''Yield calculated sigmat and spice from data already in the database, use raw query to get t & s
-        with one query for all measurements in the Activity
-        '''
-        # When testing with tethys load this failed. Replaced with method below.
-        # (Destined to be removed after more testing.)
-
-        sql = f'''
-SELECT DISTINCT mp_x.id, m_x.depth as depth, mp_x.datavalue AS t, mp_y.datavalue AS s, 
-ST_Y(m_x.geom) AS lat, m_x.id AS m_id
-FROM stoqs_instantpoint
-INNER JOIN stoqs_activity ON (stoqs_instantpoint.activity_id = stoqs_activity.id)
-INNER JOIN stoqs_platform ON (stoqs_activity.platform_id = stoqs_platform.id)
-INNER JOIN stoqs_measurement m_x ON m_x.instantpoint_id = stoqs_instantpoint.id
-INNER JOIN stoqs_measuredparameter mp_x ON mp_x.measurement_id = m_x.id
-INNER JOIN stoqs_parameter p_x ON mp_x.parameter_id = p_x.id
-INNER JOIN stoqs_measurement m_y ON m_y.instantpoint_id = stoqs_instantpoint.id
-INNER JOIN stoqs_measuredparameter mp_y ON mp_y.measurement_id = m_y.id
-INNER JOIN stoqs_parameter p_y ON mp_y.parameter_id = p_y.id
-WHERE (p_x.standard_name = 'sea_water_temperature')
-  AND (p_y.standard_name = '{salinity_standard_name}')
-  AND (stoqs_activity.name = '{self.activity}')
-  AND (m_x.id = m_y.id)
-'''
-        sql = sql.replace('\n', ' ').strip()
-        for meas in m.MeasuredParameter.objects.using(self.dbAlias).raw(sql):
-            measurement = m.Measurement.objects.using(self.dbAlias).get(id=meas.m_id)
-            sigmat = sw.pden(meas.s, meas.t, sw.pres(meas.depth, meas.lat)) - 1000.0
-            spice = spiciness(meas.t, meas.s)
-
-            sigmat_mp = m.MeasuredParameter(measurement=measurement, parameter=p_sigmat, datavalue=sigmat)
-            spice_mp = m.MeasuredParameter(measurement=measurement, parameter=p_spice, datavalue=spice)
-
-            yield sigmat_mp, spice_mp
-
     def _generate_sigmat_mps(self, p_sigmat, ms, salinity_standard_name):
         '''Yield calculated sigmat from ms QuerySet
         '''
@@ -1345,7 +1347,7 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
 
             sigmat = sw.pden(sal_mp[0].datavalue, temp_mp[0].datavalue, sw.pres(measurement.depth, measurement.geom.y)) - 1000.0
             sigmat_mp = m.MeasuredParameter(measurement=measurement, parameter=p_sigmat, datavalue=sigmat)
-            
+
             yield sigmat_mp
 
     def _generate_spice_mps(self, p_spice, ms, salinity_standard_name):
@@ -1362,6 +1364,55 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
             
             yield spice_mp
 
+    def _get_sea_water_parameters(self):
+        '''Check for more than one set of sea_water_temperature nand sea_water_salinity standard names as in
+        http://odss.mbari.org/thredds/dodsC/CANON/2016_Sep/Platforms/ROMS/roms_spray_0313.nc.html.
+        Return tuple of single Paremeters for sea_water_temperature and sea_water_salinity, and standard_name
+        used for sea_water_salinity - either sea_water_salinity or sea_water_practical_salinity
+        '''
+        sea_water_temperature_parms = [p for p in self.parameter_dict.values() if p.standard_name=='sea_water_temperature']
+        try:
+            sea_water_temperature_parm = sea_water_temperature_parms[0]
+        except IndexError:
+            raise NameError('No Parameter with standard_name of sea_water_temperature')
+        if len(sea_water_temperature_parms) > 1:
+            self.logger.info(f"Found more than one Parameter in {self.url} with standard_name == 'sea_water_temperature'")
+            self.logger.info(f'{sea_water_temperature_parms}')
+        
+            # Default is first in list, to be overridden by 
+            # a more simply-named Parameter as determined by no ammendments to the name, such as 'roms_'
+            for p in sea_water_temperature_parms:
+                if '_' not in p.name:
+                    sea_water_temperature_parm = p
+                    break
+            self.logger.info(f"Using {sea_water_temperature_parm} for sea_water_temperature")
+
+
+        # Test whether our measurements use 'sea_water_salinity' or 'sea_water_practical_salinity'
+        salinity_standard_name = 'sea_water_salinity'
+        sea_water_salinity_parms = [p for p in self.parameter_dict.values() if p.standard_name==salinity_standard_name]
+        if not sea_water_salinity_parms:
+            salinity_standard_name = 'sea_water_practical_salinity'
+            sea_water_salinity_parms = [p for p in self.parameter_dict.values() if p.standard_name==salinity_standard_name]
+
+        try:
+            sea_water_salinity_parm = sea_water_salinity_parms[0]
+        except IndexError:
+            raise NameError('No Parameter with standard_name of sea_water_temperature')
+        if len(sea_water_salinity_parms) > 1:
+            self.logger.info(f"Found more than one Parameter in {self.url} with standard_name == 'sea_water_salinity'")
+            self.logger.info(f'{sea_water_salinity_parms}')
+        
+            # Default is first in list, to be overridden by 
+            # a more simply-named Parameter as determined by no ammendments to the name, such as 'roms_'
+            for p in sea_water_salinity_parms:
+                if '_' not in p.name:
+                    sea_water_salinity_parm = p
+                    break
+            self.logger.info(f"Using {sea_water_salinity_parm} for sea_water_salinity")
+
+        return sea_water_temperature_parm, sea_water_salinity_parm, salinity_standard_name
+
     def addSigmaTandSpice(self, activity=None):
         ''' 
         For all measurements that have standard_name parameters of (sea_water_salinity or sea_water_practical_salinity) and sea_water_temperature 
@@ -1373,19 +1424,18 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
             self.logger.info(f'activity = {activity}')
             ms = ms.filter(instantpoint__activity=activity)
 
-        ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_temperature')
+        try:
+            sea_water_temperature_parm, sea_water_salinity_parm, salinity_standard_name = self._get_sea_water_parameters()
+        except NameError as e:
+            self.logger.info(f'{e}')
+            self.logger.info("No sea_water_temperature and sea_water_salinity Parameters. Not adding SigmaT and Spice.")
+            return
 
-        # Test whether our measurements use 'sea_water_salinity' or 'sea_water_practical_salinity'
-        salinity_standard_name = 'sea_water_salinity'
-        if ms.filter(measuredparameter__parameter__standard_name='sea_water_practical_salinity'):
-            salinity_standard_name = 'sea_water_practical_salinity'
-        elif ms.filter(measuredparameter__parameter__standard_name='sea_water_salinity'):
-            salinity_standard_name = 'sea_water_salinity'
-
-        ms = ms.filter(measuredparameter__parameter__standard_name=salinity_standard_name)
+        ms = ms.filter(measuredparameter__parameter=sea_water_temperature_parm)
+        ms = ms.filter(measuredparameter__parameter=sea_water_salinity_parm)
 
         if not ms:
-            self.logger.info("No sea_water_temperature and sea_water_salinity. Not adding SigmaT and Spice.")
+            self.logger.info("No sea_water_temperature and sea_water_salinity measurements. Not adding SigmaT and Spice.")
             return
 
         if self.dataStartDatetime:
@@ -1396,17 +1446,17 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
                 standard_name='sea_water_sigma_t',
                 long_name='Sigma-T',
                 units='kg m-3',
-                name='sigmat',
+                name=SIGMAT,
         )
         if 'spice' in self.include_names:
             p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
                     name='stoqs_spice',
-                    defaults={'long_name': 'Spiciness'}
+                    defaults={'long_name': SPICINESS}
             )
         else:
             p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
-                    name='spice',
-                    defaults={'long_name': 'Spiciness'}
+                    name=SPICE,
+                    defaults={'long_name': SPICINESS}
             )
         # Update with descriptions, being kind to legacy databases
         p_sigmat.description = ("Calculated in STOQS loader from Measured Parameters having standard_names"
@@ -1448,7 +1498,7 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
                 xmin, xmax = fh.variables['x_range'][:]
                 ymin, ymax = fh.variables['y_range'][:]
             except IOError as e:
-                self.logger.error('Cannot add altitude. Make sure file %s is present.', self.grdTerrain)
+                self.logger.error(f'Cannot add {ALTITUDE}. Make sure file {self.grdTerrain} is present.')
             except KeyError as e:
                 try:
                     # New GMT format
@@ -1460,8 +1510,8 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
                         xmin, xmax = fh.variables['x'].actual_range
                         ymin, ymax = fh.variables['y'].actual_range
                     except Exception as e:
-                        self.logger.error('Cannot read range metadata from %s. Not able to load'
-                                          ' altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
+                        self.logger.error(f'Cannot read range metadata from {self.grdTerrain}. Not able to load'
+                                          ' {ALTITUDE}, bottomdepth or simplebottomdepthtime')
                         return
             except Exception as e:
                 self.logger.exception(e)
@@ -1517,13 +1567,13 @@ WHERE (p_x.standard_name = 'sea_water_temperature')
                                  " latitude, longitude values and differencing the Platform's depth with the"
                                  " bottom depth data in file %s." % self.grdTerrain.split('/')[-1]),
                     units='m',
-                    name='altitude',
+                    name=ALTITUDE,
                     origin='https://github.com/stoqs/stoqs/blob/45f53d134d336fdbdb38f73959a2ce3be4148227/stoqs/loaders/__init__.py#L1216-L1322'
             )
         except IntegrityError:
             # A bit of a mystery why sometimes this Exception happens (simply get p_alt if it happens):
             # IntegrityError: duplicate key value violates unique constraint "stoqs_parameter_name_key"
-            p_alt = m.Parameter.objects.using(self.dbAlias).get(name='altitude')
+            p_alt = m.Parameter.objects.using(self.dbAlias).get(name=ALTITUDE)
 
         self.parameter_counts[p_alt] = ms.count()
         self.assignParameterGroup(groupName=MEASUREDINSITU)

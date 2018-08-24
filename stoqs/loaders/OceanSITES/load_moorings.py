@@ -9,13 +9,12 @@ MBARI 28 October 2014
 import os
 import sys
 
-# Use local thredds-crawler, see: https://github.com/asascience-open/thredds_crawler/issues/16
-sys.path.insert(0, '/home/vagrant/dev/thredds_crawler')
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
+import django
+django.setup()
 
-parentDir = os.path.join(os.path.dirname(__file__), "../")
-sys.path.insert(0, parentDir)  # So that OS and DAPloaders are found
-
-from OceanSITES import OSLoader
+from loaders.OceanSITES import OSLoader
 from thredds_crawler.crawl import Crawl
 
 # Monkey-patch coards functions to accept non-standard time units

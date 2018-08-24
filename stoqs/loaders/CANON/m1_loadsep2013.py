@@ -59,8 +59,8 @@ print((startdate, enddate))
 #  MOORINGS
 ######################################################################
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
-#cl.m1_base = 'http://dods.mbari.org/opendap/hyrax/data/ssdsdata/deployments/m1/201209/' # new deployment 09/18/13
-cl.m1_base = 'http://dods.mbari.org/opendap/hyrax/data/ssdsdata/deployments/m1/201309/'
+#cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201209/' # new deployment 09/18/13
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201309/'
 cl.m1_files = ['OS_M1_20130918hourly_CMSTV.nc']
 cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
                      'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',

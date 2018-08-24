@@ -46,7 +46,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 
 # 2-second decimated dorado data
 # http://192.168.111.177:8080/thredds/dodsC/CANON_september2012/dorado/Dorado389_2012_258_00_258_00_decim.nc
-cl.dorado_base = 'http://dods.mbari.org/opendap/hyrax/data/auvctd/surveys/2012/netcdf/'
+cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2012/netcdf/'
 cl.dorado_files = [ 
                     'Dorado389_2012_256_00_256_00_decim.nc',
                     'Dorado389_2012_257_01_257_01_decim.nc',
@@ -54,7 +54,9 @@ cl.dorado_files = [
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
                     'fl700_uncorr', 'salinity', 'biolume',
-                    'sepCountList', 'mepCountList']
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
+                  ]
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
 ##cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/'
@@ -229,8 +231,8 @@ cl.process_command_line()
 if cl.args.test:
     cl.loadDorado(stride=100)
     cl.loadWaveglider(stride=100)
-    cl.loadDaphne(stride=10)
-    cl.loadTethys(stride=100)
+    cl.loadLRAUV('daphne', stride=10, build_attrs=False)
+    cl.loadLRAUV('tethys', stride=100, build_attrs=False)
     cl.loadESPdrift(stride=10)
     cl.loadWFuctd(stride=10)
     cl.loadWFpctd(stride=10)
@@ -241,8 +243,8 @@ if cl.args.test:
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
     cl.loadWaveglider(stride=1)
-    cl.loadDaphne(stride=1)
-    cl.loadTethys(stride=1)
+    cl.loadLRAUV('daphne', stride=1, build_attrs=False)
+    cl.loadLRAUV('tethys', stride=1, build_attrs=False)
     cl.loadESPdrift(stride=1)
     cl.loadWFuctd(stride=1)
     cl.loadWFpctd(stride=1)
@@ -254,8 +256,8 @@ else:
     cl.stride = cl.args.stride
     cl.loadDorado()
     cl.loadWaveglider()
-    cl.loadDaphne()
-    cl.loadTethys()
+    cl.loadLRAUV('daphne', build_attrs=False)
+    cl.loadLRAUV('tethys', build_attrs=False)
     cl.loadESPdrift()
     cl.loadWFuctd()
     cl.loadWFpctd()
