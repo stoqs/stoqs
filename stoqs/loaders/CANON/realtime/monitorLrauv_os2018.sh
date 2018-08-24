@@ -1,16 +1,21 @@
 #!/bin/bash
-cd /opt/stoqsgit/venv-stoqs/bin
-source activate
-cd /opt/stoqsgit/stoqs/loaders/CANON/realtime
+if [ -z "$STOQS_HOME" ]; then
+  echo "Set STOQS_HOME variable first, e.g. STOQS_HOME=/src/stoqsgit"
+  exit 1
+fi
+if [ -z "$DATABASE_URL" ]; then
+  echo "Set DATABASE_URL variable first"
+  exit 1
+fi
+cd "$STOQS_HOME/stoqs/loaders/CANON/realtime"
 post='--post'
 #post=''
 debug=''
 #debug='--debug'
-export SLACKTOKEN=${SLACKTOCKEN}
 database='stoqs_os2018'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 declare -a searchstr=("/realtime/sbdlogs/2018/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
-declare -a platforms=("daphne" "makai" "ahi" "aku")
+declare -a platforms=("daphne" "makai" "tethys" "ahi" "aku" "opah")
 
 pos=$(( ${#searchstr[*]} - 1 ))
 last=${searchstr[$pos]}
