@@ -36,6 +36,17 @@ RUN wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/na
 RUN tar -xzf natgrid-0.2.1.tar.gz
 RUN cd natgrid-0.2.1 && python setup.py install && cd ..
 
+# Build and install geos - needed for basemap (several warnings/errors on compiling that can be ignored)
+RUN echo '/usr/local/lib' >> /etc/ld.so.conf
+RUN wget -q -N http://download.osgeo.org/geos/geos-3.6.0.tar.bz2
+RUN tar -xjf geos-3.6.0.tar.bz2
+RUN cd geos-3.6.0 && ./configure && make -j 2 && make install && ldconfig && cd ..
+
+# Basemap install - needed for monitorLrauv.py in production (some warnings/errors on compiling that can be ignored)
+RUN wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz
+RUN tar -xzf basemap-1.0.7.tar.gz
+RUN cd basemap-1.0.7 && GEOS_DIR=/usr/local python setup.py install && cd ..
+
 # Connection to uwsgi/nginx
 COPY docker-stoqs-uwsgi.ini /etc/uwsgi/django-uwsgi.ini
 
