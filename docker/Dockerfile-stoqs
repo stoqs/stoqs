@@ -26,21 +26,21 @@ RUN cd /usr/bin/ &&\
 
 WORKDIR /srv
 
-# Symlink to requirements from docker directory used to minimize context
-COPY requirements /requirements
-RUN pip3 install git+https://github.com/pymssql/pymssql
-RUN /bin/bash -c 'pip install -r /requirements/production.txt'
+# Build and install geos - needed for basemap (several warnings/errors on compiling that can be ignored)
+RUN echo '/usr/local/lib' >> /etc/ld.so.conf
+RUN wget -q -N http://download.osgeo.org/geos/geos-3.6.0.tar.bz2
+RUN tar -xjf geos-3.6.0.tar.bz2
+RUN cd geos-3.6.0 && ./configure && make -j 2 && make install && ldconfig && cd ..
 
 # NCAR's natgrid needed for contour plotting - several warnings/errors on compiling that can be ignored
 RUN wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/natgrid-0.2/natgrid-0.2.1.tar.gz
 RUN tar -xzf natgrid-0.2.1.tar.gz
 RUN cd natgrid-0.2.1 && python setup.py install && cd ..
 
-# Build and install geos - needed for basemap (several warnings/errors on compiling that can be ignored)
-RUN echo '/usr/local/lib' >> /etc/ld.so.conf
-RUN wget -q -N http://download.osgeo.org/geos/geos-3.6.0.tar.bz2
-RUN tar -xjf geos-3.6.0.tar.bz2
-RUN cd geos-3.6.0 && ./configure && make -j 2 && make install && ldconfig && cd ..
+# Symlink to requirements from docker directory used to minimize context
+COPY requirements /requirements
+RUN pip3 install git+https://github.com/pymssql/pymssql
+RUN /bin/bash -c 'pip install -r /requirements/production.txt'
 
 # Basemap install - needed for monitorLrauv.py in production (some warnings/errors on compiling that can be ignored)
 RUN wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz
