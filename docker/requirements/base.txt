@@ -1,4 +1,4 @@
-aiohttp==3.3.2
+aiohttp==3.4.0
 beautifulsoup4==4.6.3
 celery==4.2.1
 cmocean==1.2
@@ -9,10 +9,10 @@ dj-database-url==0.5.0
 Django==1.11.15
 django-cache-url==3.0.0
 django-celery==3.2.2
-django-configurations==2.0
+django-configurations==2.1
 django-debug-toolbar==1.9.1
 django-environ==0.4.5
-django-extensions==2.1.0
+django-extensions==2.1.1
 django-model-utils==3.1.2
 django-picklefield==1.0.0
 django-secure==1.0.1
@@ -51,7 +51,7 @@ selenium==3.14.0
 simplejson==3.16.0
 six==1.11.0
 slacker==0.9.65
-Sphinx==1.7.6
+Sphinx==1.7.7
 sphinx-rtd-theme==0.4.1
 sqlparse==0.2.4
 thredds-crawler==1.5.4

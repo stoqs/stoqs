@@ -11,8 +11,11 @@ MBARI 12 March 2014
 import os
 import sys
 os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))           # settings.py is two dirs up
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))              # loaders is two dirs up
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))           # config is three dirs up
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../CANON/toNetCDF/"))            # for lrauvNc4ToNetcdf
+import django
+django.setup()
 
 import DAPloaders
 from CANON import CANONLoader
@@ -24,7 +27,7 @@ import pydap
 import pytz
 import json
 
-from .Contour import Contour
+from Contour import Contour
 from thredds_crawler.crawl import Crawl
 from coards import from_udunits
 from stoqs.models import InstantPoint
