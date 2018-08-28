@@ -20,6 +20,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from django.contrib.gis.geos import LineString, Point
+from django.contrib.gis.db.models import Extent
 import numpy as np
 import time
 import pytz
@@ -88,7 +89,7 @@ class Contour(object):
         seaQS = qs.aggregate(Min('startdate'), Max('enddate'))
         self.activityStartTime = seaQS['startdate__min']
         self.activityEndTime = seaQS['enddate__max']
-        dataExtent = qs.extent(field_name='maptrack')
+        dataExtent = qs.aggregate(Extent('maptrack'))
         return dataExtent
 
     def getAxisInfo(self, parm):
