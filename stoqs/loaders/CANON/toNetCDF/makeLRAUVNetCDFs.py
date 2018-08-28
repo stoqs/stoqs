@@ -87,7 +87,7 @@ def process_command_line():
 def find_urls(base, select, startdate, enddate):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
-    print "Crawling: %s" % url
+    print("Crawling: {}".format(url))
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
     u = urlparse.urlsplit(url)
     name, ext = os.path.splitext(u.path)
@@ -118,10 +118,10 @@ def find_urls(base, select, startdate, enddate):
                     for url in d:
                         urls.append(url)
             except Exception as ex:
-                print "Error reading mission directory name %s" % ex
+                print("Error reading mission directory name {}".format(ex))
 
     except BaseException:
-        print "Skipping %s (error parsing the XML XML)" % url
+        print("Skipping {} (error parsing the XML XML)".format(url))
 
     return urls
 
