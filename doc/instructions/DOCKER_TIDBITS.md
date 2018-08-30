@@ -117,3 +117,19 @@ for a in acts:
 
 This will cause a cascade delete of all measurments and measured_parameters associated with the Activities in `acts`.
 
+
+## Running Python code for data processing requiring an additional volume mount
+
+To run code that may require access to institutional NFS volume mounts run a new container with the appropriate
+user id and volume specified with the `-u` and `-v` options:
+
+```bash
+docker-compose run -u 1087 -v /mbari/LRAUV:/LRAUV stoqs /bin/bash
+```
+
+It is also recommended to perform database loads using `docker-compose run ...` rather than `docker-compose exec ...` 
+as a restart of the stoqs container running the web app behind the nginx service will not interrupt their execution.
+
+Notes:
+    * A `docker-compose down` will stop these additional container executions
+
