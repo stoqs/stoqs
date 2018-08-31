@@ -121,13 +121,13 @@ CAMPAIGNS_MODULE=stoqs/mbari_campaigns.py
 and restart the stoqs service, then from the docker directory execute the load script for a campaign, e.g.:
 
 ```bash
-docker-compose exec stoqs stoqs/loaders/load.py --db stoqs_simz_aug2013
+docker-compose run stoqs stoqs/loaders/load.py --db stoqs_simz_aug2013
 ```
 
 In another window monitor its output:
 
 ```bash
-docker-compose exec stoqs tail -f /srv/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
+docker-compose run stoqs tail -f /srv/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
 # Or (The stoqs code is bound as a volume in the container from the GitHub cloned location)
 tail -f $STOQS_HOME/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
 ```
