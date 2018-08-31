@@ -80,20 +80,20 @@ def getNcStartEnd(urlNcDap, timeAxisName):
     try:
         timeAxisUnits = df[timeAxisName].units
     except KeyError as e:
-        logger.warn(e)
+        logger.warning(e)
         raise ServerError("Can't read %s time axis from %s" % (timeAxisName, urlNcDap))
 
     if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
         timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
 
     try:
-        startDatetime = from_udunits(df[timeAxisName][0][0], timeAxisUnits)
-        endDatetime = from_udunits(df[timeAxisName][-1][0], timeAxisUnits)
+        startDatetime = from_udunits(df[timeAxisName][0][0].data, timeAxisUnits)
+        endDatetime = from_udunits(df[timeAxisName][-1][0].data, timeAxisUnits)
     except pydap.exceptions.ServerError as e:
-        logger.warn(e)
+        logger.warning(e)
         raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
     except ValueError as e:
-        logger.warn(e)
+        logger.warning(e)
         raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap)) 
 
     return startDatetime, endDatetime
@@ -130,10 +130,10 @@ def processDecimated(args, pw, url, lastDatetime, start, end):
               pw.processNc4FileDecimated(url, inFile, outFile_i, args.parms, json.loads(args.groupparms), args.iparm)
 
         except TypeError:
-            logger.warn('Problem reading data from %s', url)
-            logger.warn('Assuming data are invalid and skipping')
+            logger.warning('Problem reading data from %s', url)
+            logger.warning('Assuming data are invalid and skipping')
         except IndexError:
-            logger.warn('Problem interpolating data from %s', url)
+            logger.warning('Problem interpolating data from %s', url)
         except KeyError:
             raise ServerError("Key error - can't read parameters from %s" % (url))
         except ValueError:
@@ -342,10 +342,10 @@ if __name__ == '__main__':
             else:
               raise Exception('{0} not in search year'.format(url))
         except ServerError as e:
-            logger.warn(e)
+            logger.warning(e)
             continue
         except Exception as e:
-            logger.warn(e)
+            logger.warning(e)
             continue
 
         lastDatetime = endDatetime
@@ -423,7 +423,7 @@ if __name__ == '__main__':
 
 
                 if not os.path.exists(outFile) or args.debug:
-                    logger.debug('out file %s url: %s ', outFile, url)
+                    logger.debug('out file {outFile} url: {url}')
                     c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title,
                                 outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
                     c.run()
@@ -437,16 +437,16 @@ if __name__ == '__main__':
                 logger.info("No measurements in this log set. Activity was not created as there was nothing to load.")
 
             except pydap.exceptions.ServerError as e:
-                logger.warn(e)
+                logger.warning(e)
 
             except DAPloaders.ParameterNotFound as e:
-                logger.warn(e)
+                logger.warning(e)
 
             except DAPloaders.InvalidSliceRequest as e:
-                logger.warn(e)
+                logger.warning(e)
 
             except Exception as e:
-                logger.warn(e)
+                logger.warning(e)
                 continue
 
     # update last 24 hr plot when requested
@@ -487,7 +487,7 @@ if __name__ == '__main__':
                     os.system(cmd)
 
         except Exception as e:
-            logger.warn(e)
+            logger.warning(e)
 
 
     logger.info('done')

@@ -22,14 +22,12 @@ import pydap
 import json
 import netCDF4
 import lrauvNc4ToNetcdf
-import urlparse
 import requests
 
 from coards import to_udunits, from_udunits
 from thredds_crawler.crawl import Crawl
-from thredds_crawler.etree import etree
-from datetime import datetime, timedelta
-from pydap.client import open_url
+from urllib.parse import urlparse
+from datetime import datetime
 
 # Set up global variables for logging output to STDOUT
 logger = logging.getLogger('makeLRAUVNetCDFS')
@@ -85,34 +83,32 @@ def process_command_line():
         return args
 
 def find_urls(base, select, startdate, enddate):
-    INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
     print("Crawling: {}".format(url))
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
-    u = urlparse.urlsplit(url)
+    u = urlparse(url)
     name, ext = os.path.splitext(u.path)
     if ext == ".html":
-        u = urlparse.urlsplit(url.replace(".html", ".xml"))
+        u = urlparse(url.replace(".html", ".xml"))
     url = u.geturl()
     urls = []
-    # Get an etree object
     try:
-        r = requests.get(url)
-        tree = etree.XML(r.text.encode('utf-8'))
+        c = Crawl(url, select=[".*dlist"])
 
         # Crawl the catalogRefs:
-        for ref in tree.findall('.//{}catalogRef'.format(INV_NS)):
+        for dataset in c.datasets:
 
             try:
                 # get the mission directory name and extract the start and ending dates
-                mission_dir_name = ref.attrib['{http://www.w3.org/1999/xlink}title']
+                dlist = os.path.basename(dataset).id
+                mission_dir_name = dlist.split('.')[0]
                 dts = mission_dir_name.split('_')
                 dir_start =  datetime.strptime(dts[0], '%Y%m%d')
                 dir_end =  datetime.strptime(dts[1], '%Y%m%d')
 
                 # if within a valid range, grab the valid urls
                 if dir_start >= startdate and dir_end <= enddate:
-                    catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
+                    catalog = '{}_{}/catalog.xml'.format(dir_start.strftime('%Y%m%d'), dir_end.strftime('%Y%m%d'))
                     c = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
                     d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
                     for url in d:
@@ -149,8 +145,8 @@ def getNcStartEnd(inDir, urlNcDap, timeAxisName):
         timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
 
     try:
-        startDatetime = from_udunits(df[timeAxisName][0], timeAxisUnits)
-        endDatetime = from_udunits(df[timeAxisName][-1], timeAxisUnits)
+        startDatetime = from_udunits(df[timeAxisName][0][0].data, timeAxisUnits)
+        endDatetime = from_udunits(df[timeAxisName][-1][0].data, timeAxisUnits)
     except pydap.exceptions.ServerError as ex:
         logger.warning(ex)
         raise ServerError("Can't read start and end dates of {} from {}".format(timeAxisUnits, urlNcDap))
