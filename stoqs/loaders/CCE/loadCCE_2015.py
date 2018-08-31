@@ -205,14 +205,22 @@ class CCE_2015_Campaign:
 
         # CCE SIN (Seafloor Instrument Node) data
         self.cl.ccesin_nominaldepth = 1836
-        self.cl.ccesin_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/SIN/20151013/netcdf/'
+        self.cl.ccesin_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/SIN/'
         self.cl.ccesin_files = [
-                            'MBCCE_SIN_CTD_20151013_timecorrected.nc',
-                            'MBCCE_SIN_OXY_20151013_timecorrected.nc',
-                            'MBCCE_SIN_ECO_20151013_timecorrected.nc',
-                            'MBCCE_SIN_ADCP300_20151013.nc',
-                            'MBCCE_SIN_ADCP1200_20151013.nc',
-                            'MBCCE_SIN_ADCP1200_20151013.nc'
+                            '20151013/CTDOBSTrans/MBCCE_SIN_CTDOBSTrans_20151013_timecorrected.nc',
+                            '20151013/OX/MBCCE_SIN_OX_20151013_timecorrected.nc',
+                            '20151013/FLNTU/MBCCE_SIN_FLNTU_20151013_timecorrected.nc',
+                            '20151013/ADCP300/MBCCE_SIN_ADCP300_20151013.nc',
+                            '20151013/ADCP600/MBCCE_SIN_ADCP600_20151013.nc',
+                            '20151013/ADCP1200/MBCCE_SIN_ADCP1200_20151013.nc',
+
+                            '20160417/CTDOBSTrans/MBCCE_SIN_CTDOBSTrans_20160417_timecorrected.nc',
+                            '20160417/OX/MBCCE_SIN_OX_20160417_timecorrected.nc',
+                            '20160417/FLNTU/MBCCE_SIN_FLNTU_20160417_timecorrected.nc',
+
+                            '20161018/CTDOBSTrans/MBCCE_SIN_CTDOBSTrans_20161018_timecorrected.nc',
+                            '20161018/OX/MBCCE_SIN_OX_20161018_timecorrected.nc',
+                            '20161018/FLNTU/MBCCE_SIN_FLNTU_20161018_timecorrected.nc',
                           ]
         self.cl.ccesin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'optical_backscatter',
                             'oxygen', 'saturation', 'optode_temperature',
