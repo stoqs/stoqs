@@ -346,7 +346,7 @@ class CCE_2015_Campaign:
                     except NoValidData as e:
                         self.cl.logger.warn(str(e))
 
-    def load_cce_sin(self, low_res_stride=300, high_res_stride=1):
+    def load_ccesin(self, low_res_stride=300, high_res_stride=1):
         # SIN (nee BIN): Low-res (10 minute) 
         for event in lores_event_times:
             setattr(self.cl, 'ccesin_start_datetime', event.start)
@@ -370,20 +370,20 @@ if __name__ == '__main__':
     campaign = CCE_2015_Campaign()
     if campaign.cl.args.test:
         campaign.load_cce_moorings(low_res_stride=1000, high_res_stride=100)
-        campaign.load_cce_sin(low_res_stride=1000, high_res_stride=100)
+        campaign.load_ccesin(low_res_stride=1000, high_res_stride=100)
         campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
         campaign.cl.loadBEDS(stride=5, featureType='trajectory')
 
     elif campaign.cl.args.optimal_stride:
         campaign.load_cce_moorings(low_res_stride=300, high_res_stride=10)
-        campaign.load_cce_sin(low_res_stride=300, high_res_stride=10)
+        campaign.load_ccesin(low_res_stride=300, high_res_stride=10)
         campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
         campaign.cl.loadBEDS(stride=1, featureType='trajectory')
 
     else:
         campaign.cl.stride = campaign.cl.args.stride
         campaign.load_cce_moorings()
-        campaign.load_cce_sin()
+        campaign.load_ccesin()
         campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
         campaign.cl.loadBEDS(featureType='trajectory')
 
