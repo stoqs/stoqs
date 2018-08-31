@@ -401,7 +401,7 @@ class InterpolatorWriter(BaseWriter):
           try:
             ts = self.createSeriesPydap(key, key + '_time')
             if ts.size == 0:
-                self.logger.info('Variable ' + var + ' empty so skipping')
+                self.logger.info('Variable ' + key + ' empty so skipping')
                 continue
 
             attr = {}
@@ -578,7 +578,7 @@ class InterpolatorWriter(BaseWriter):
 
                         # don't store or try to interpolate empty time series
                         if ts.size == 0:
-                            self.logger.info('Variable ' + var + ' empty so skipping')
+                            self.logger.info('Variable ' + v + ' empty so skipping')
                             continue
 
                         attr = {}
@@ -840,6 +840,7 @@ if __name__ == '__main__':
     pw.process_command_line()
     nc4_file='/home/vagrant/LRAUV/daphne/missionlogs/2015/20150930_20151008/20151006T201728/201510062017_201510062027.nc4'
     nc4_file='/mbari/LRAUV/opah/missionlogs/2017/20170502_20170508/20170508T185643/201705081856_201705090002.nc4'
+    nc4_file='/mbari/LRAUV/makai/missionlogs/2018/20180603_20180611/20180604T235249/201806042353_201806050437.nc4'
     outDir = '/tmp/'
     resample_freq='10S'
     rad_to_deg = True
