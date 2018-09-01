@@ -83,7 +83,7 @@ class CCE_2015_Campaign:
 
         # Several BED files: 30200078 to 3020080
         # bed_files, bed_platforms, bed_depths must have same number of items; they are zipped together in the load
-        ##self.cl.bed_files = [('CanyonEvents/BED3/20151001_20160115/{}.nc').format(n) for n in range(30200078, 30200081)]
+        ##self.cl.bed_files = [(f'CanyonEvents/BED3/20151001_20160115/{n}.nc') for n in range(30200078, 30200081)]
         ##self.cl.bed_platforms = ['BED03'] * len(self.cl.bed_files)
         ##self.cl.bed_depths = [201] * len(self.cl.bed_files)
 
@@ -125,7 +125,7 @@ class CCE_2015_Campaign:
                         ('BED00/Simulated/netcdf/BED00_SIM_rolling_trajectory.nc',
                             ''),
                         ] + [
-                        ('BED09/MBCCE_BED09_20160408_Event20161124/netcdf/901001{}_full_traj.nc'.format(n), '') for n in (
+                        (f'BED09/MBCCE_BED09_20160408_Event20161124/netcdf/901001{n}_full_traj.nc', '') for n in (
                             list(range(56, 63)) + list(range(64, 65)))
                         ] + [
                         ('BED09/MBCCE_BED09_20160408_Event20161124/netcdf/90100165_full.nc',
@@ -138,7 +138,7 @@ class CCE_2015_Campaign:
                             ''),
                         ] 
         self.cl.bed_files_framegrabs_2017 = [
-                        ('BED09/MBCCE_BED09_20160408_Watch/netcdf/9010000{}.nc'.format(n), '') for n in range(4, 8)
+                        (f'BED09/MBCCE_BED09_20160408_Watch/netcdf/9010000{n}.nc', '') for n in range(4, 8)
                         ] + [
                         ('BED09/MBCCE_BED09_20160408_Event20170109/netcdf/90100196_full_traj.nc',
                             ''),
@@ -244,7 +244,9 @@ class CCE_2015_Campaign:
                           ]
         self.cl.ccesin_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
 
-        # MS1 ADCP data
+        # MS1 ADCP data - timeseries data
+        self.cl.ccems1_start_datetime = campaign_start_datetime
+        self.cl.ccems1_end_datetime = campaign_end_datetime
         self.cl.ccems1_nominal_depth = 225
         self.cl.ccems1_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS1/'
         self.cl.ccems1_files = [ 
@@ -256,10 +258,18 @@ class CCE_2015_Campaign:
                            '20151006/TU65m/MBCCE_MS1_TU65m_20151006.nc',
                           ]
         self.cl.ccems1_parms = [ 
-                           'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217',
+                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
                            'P_1', 'T_1211',
                            'T_28', 'S_41', 'ST_70', 'tran_4010', 'ATTN_55', 'NEP_56', 'Trb_980',
                           ]
+        # MS1 ADCP data - timeseriesprofile (ADCP)  data
+        self.cl.ccems1_nominal_depth_ev = self.cl.ccems1_nominal_depth
+        self.cl.ccems1_base_ev = self.cl.ccems1_base
+        self.cl.ccems1_files_ev = [ 
+                           '20151006/ADCP300/MBCCE_MS1_ADCP300_20151006.nc',
+                           '20151006/Aquadopp2000/MBCCE_MS1_Aquadopp2000_20151006.nc',
+                          ]
+        self.cl.ccems1_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
 
         # MS2 ADCP data
         self.cl.ccems2_nominal_depth = 462
@@ -342,24 +352,35 @@ class CCE_2015_Campaign:
         # Execute the load for trajectory representation
         self.cl.process_command_line()
 
-    def load_cce_moorings(self, low_res_stride=20, high_res_stride=1,
-                                start_mooring=1, end_mooring=6):
+    def load_ccemoorings(self, stride=20, start_mooring=1, end_mooring=5):
+        for mooring in range(start_mooring, end_mooring + 1):
+            if hasattr(self.cl, f'ccems{mooring:d}_base'):
+                try:
+                    getattr(self.cl, f'load_ccems{mooring:d}')(stride=stride)
+                except NoValidData as e:
+                    self.cl.logger.warn(str(e))
+
+    def load_ccemoorings_ev(self, low_res_stride=20, high_res_stride=1,
+                                start_mooring=1, end_mooring=5):
         # DRY: for all moorings load all lo res and hi res data that have a .._base attribute
-        for mooring in range(start_mooring, end_mooring):
-            if hasattr(self.cl, 'ccems{:d}_base'.format(mooring)):
+        for mooring in range(start_mooring, end_mooring + 1):
+            setattr(self.cl, f'ccems{mooring:d}_base', eval(f'self.cl.ccems{mooring:d}_base_ev'))
+            setattr(self.cl, f'ccems{mooring:d}_files', eval(f'self.cl.ccems{mooring:d}_files_ev'))
+            setattr(self.cl, f'ccems{mooring:d}_parms', eval(f'self.cl.ccems{mooring:d}_parms_ev'))
+            if hasattr(self.cl, f'ccems{mooring:d}_base'):
                 for event in self.lores_event_times:
-                    setattr(self.cl, 'ccems{:d}_start_datetime'.format(mooring), event.start)
-                    setattr(self.cl, 'ccems{:d}_end_datetime'.format(mooring), event.end)
+                    setattr(self.cl, f'ccems{mooring:d}_start_datetime', event.start)
+                    setattr(self.cl, f'ccems{mooring:d}_end_datetime', event.end)
                     try:
-                        getattr(self.cl, 'load_ccems{:d}'.format(mooring))(stride=low_res_stride)
+                        getattr(self.cl, f'load_ccems{mooring:d}')(stride=low_res_stride)
                     except NoValidData as e:
                         self.cl.logger.warn(str(e))
 
                 for event in self.hires_event_times:
-                    setattr(self.cl, 'ccems{:d}_start_datetime'.format(mooring), event.start)
-                    setattr(self.cl, 'ccems{:d}_end_datetime'.format(mooring), event.end)
+                    setattr(self.cl, f'ccems{mooring:d}_start_datetime', event.start)
+                    setattr(self.cl, f'ccems{mooring:d}_end_datetime', event.end)
                     try:
-                        getattr(self.cl, 'load_ccems{:d}'.format(mooring))(stride=high_res_stride)
+                        getattr(self.cl, f'load_ccems{mooring:d}')(stride=high_res_stride)
                     except NoValidData as e:
                         self.cl.logger.warn(str(e))
 
@@ -392,21 +413,26 @@ class CCE_2015_Campaign:
 if __name__ == '__main__':
     campaign = CCE_2015_Campaign()
     if campaign.cl.args.test:
-        campaign.load_cce_moorings(low_res_stride=1000, high_res_stride=100)
+        campaign.load_ccemoorings(stride=100, start_mooring=1, end_mooring=5)
+        campaign.load_ccemoorings_ev(low_res_stride=10)
         campaign.cl.loadCCESIN(stride=1000)    # Normal base class loader for entire time series
         campaign.load_ccesin_ev(low_res_stride=1000, high_res_stride=100)
         campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
         campaign.cl.loadBEDS(stride=5, featureType='trajectory')
 
     elif campaign.cl.args.optimal_stride:
-        campaign.load_cce_moorings(low_res_stride=300, high_res_stride=10)
-        campaign.load_ccesin_ev(low_res_stride=300, high_res_stride=10)
+        campaign.load_ccemoorings(stride=10)
+        campaign.load_ccemoorings_ev(low_res_stride=10, high_res_stride=2)
+        campaign.cl.loadCCESIN(stride=1000)    # Normal base class loader for entire time series
+        campaign.load_ccesin_ev(low_res_stride=300, high_res_stride=2)
         campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
         campaign.cl.loadBEDS(stride=1, featureType='trajectory')
 
     else:
         campaign.cl.stride = campaign.cl.args.stride
-        campaign.load_cce_moorings()
+        campaign.load_ccemoorings()
+        campaign.load_ccemoorings_ev()
+        campaign.cl.loadCCESIN()    # Normal base class loader for entire time series
         campaign.load_ccesin_ev()
         campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
         campaign.cl.loadBEDS(featureType='trajectory')
