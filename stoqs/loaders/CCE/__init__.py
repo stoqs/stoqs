@@ -164,7 +164,7 @@ class CCELoader(LoadScript):
 
             loader.include_names = self.ccesin_parms
             loader.auxCoords = {}
-            if 'adcp' in f.lower():
+            if 'adcp' in f.lower() or 'aquadopp' in f.lower():
                 Mooring_Loader.getFeatureType = lambda self: 'timeseriesprofile'
                 # The timeseries variables 'Hdg_1215', 'Ptch_1216', 'Roll_1217' should have a coordinate of
                 # a singleton depth variable, but EPIC files has this as a sensor_depth variable attribute.  
@@ -226,6 +226,12 @@ def make_load_ccems_method(name):
 
             loader.include_names = parms
             loader.auxCoords = {}
+
+            if 'adcp' in f.lower() or 'aquadopp' in f.lower():
+                Mooring_Loader.getFeatureType = lambda self: 'timeseriesprofile'
+            else:
+                Mooring_Loader.getFeatureType = lambda self: 'timeseries'
+
             for p in parms:
                 # The timeseries variables 'Hdg_1215', 'Ptch_1216', 'Roll_1217' should have a coordinate of
                 # a singleton depth variable, but EPIC files has this as a sensor_depth variable attribute.  
