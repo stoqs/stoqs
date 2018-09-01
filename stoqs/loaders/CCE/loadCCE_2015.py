@@ -448,7 +448,7 @@ if __name__ == '__main__':
         campaign.load_ccemoorings_ev(low_res_stride=10, start_mooring=1, end_mooring=5)
         campaign.cl.loadCCESIN(stride=1000)    # Normal base class loader for entire time series
         campaign.load_ccesin_ev(low_res_stride=1000, high_res_stride=100)
-        campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
+        campaign.cl.bed_depths = [np.round(d, 1) for d in campaign.cl.get_start_bed_depths()]
         campaign.cl.loadBEDS(stride=5, featureType='trajectory')
 
     elif campaign.cl.args.optimal_stride:
