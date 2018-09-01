@@ -20,7 +20,7 @@ from datetime import datetime
 import numpy as np
 import timing
 
-# CCE event start and end times for loading mooring data
+# CCE event start and end times for loading timeseriesprofile mooring (ADCP) data
 Event = namedtuple('Event', ['start', 'end'])
 lores_event_times = [
         Event(datetime(2016, 1, 15,  0,  0), datetime(2016, 1, 18,  0,  0)),
@@ -449,7 +449,7 @@ if __name__ == '__main__':
         campaign.cl.loadCCESIN(stride=1000)    # Normal base class loader for entire time series
         campaign.load_ccesin_ev(low_res_stride=1000, high_res_stride=100)
         campaign.cl.bed_depths = [np.round(d, 1) for d in campaign.cl.get_start_bed_depths()]
-        campaign.cl.loadBEDS(stride=5, featureType='trajectory')
+        campaign.cl.loadBEDS(stride=100, featureType='trajectory')
 
     elif campaign.cl.args.optimal_stride:
         campaign.load_ccemoorings(stride=10)
