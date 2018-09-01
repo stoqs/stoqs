@@ -95,7 +95,6 @@ def showDatabase(request):
         act.id = a.id
         act.name = a.name
         act.comment = a.comment
-        import pdb; pdb.set_trace()
         act.startdate = a.startdate
         act.isostartdate = a.startdate.strftime('%Y%m%dT%H%M%S')
         if a.enddate:
