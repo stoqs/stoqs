@@ -94,7 +94,7 @@ class CCELoader(LoadScript):
             if ds.attributes['NC_GLOBAL']['featureType'].lower() == 'timeseries':
                 depths.append(ds['depth'][0][0])
             else:
-                depths.append(ds['depth']['depth'][0][0])
+                depths.append(float(ds['depth']['depth'][0][0].data))
 
         return depths
 
