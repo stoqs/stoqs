@@ -228,7 +228,7 @@ class StreamHandler(PatternMatchingEventHandler):
       # delay in case file being copied
       logger.info('Waiting 3 seconds to introduce slight delay in case still writing {}'.format(event.src_path))
       time.sleep(3)
-      self.scanNc4File(event.src_path)
+      self.scanNc4File(str(event.src_path))
       logger.info('=======>Done scanning file<=========')
 
     except Exception as ex:
@@ -255,8 +255,8 @@ if __name__ == '__main__':
     channel = connection.channel()
 
     if os.path.isfile(pidfile):
-      logger.info("%s already exists, exiting" % pidfile)
-      print("%s already exists, exiting" % pidfile)
+      logger.info("{} already exists, exiting".format(pidfile))
+      print("{} already exists, exiting".format(pidfile))
       sys.exit()
 
     open(pidfile, 'w').write(pid)
