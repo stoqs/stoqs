@@ -244,7 +244,10 @@ class Base_Loader(STOQS_Loader):
                 self.logger.debug('Getting timeseries start time for v = %s', v)
                 time_units = self.ds[list(self.ds[v].maps.keys())[0]].units.lower()
                 if time_units == 'true julian day':
-                    times, time_units = self._convert_EPIC_times()
+                    self.logger.debug('Converting EPIC times to epoch seconds')
+                    tindx = self.getTimeBegEndIndices(self.ds[list(self.ds[v].keys())[1]])
+                    times = self.ds[list(self.ds[v].maps.keys())[0]].data[tindx[0]:tindx[-1]:self.stride]
+                    times, time_units = self._convert_EPIC_times(times, tindx)
                     minDT[v] = from_udunits(times[0], time_units)
                     maxDT[v] = from_udunits(times[-1], time_units)
                 else:
@@ -578,6 +581,11 @@ class Base_Loader(STOQS_Loader):
         '''
         Return beginning and ending indices for the corresponding time axis indices
         '''
+        if not getattr(self, 'startDatetime', None) and not getattr(self, 'endDatetime', None):
+            s = 0
+            e = timeAxis.shape[0]
+            return s, e
+
         isEPIC = False
         try:
             isEPIC = 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper()
@@ -923,11 +931,11 @@ class Base_Loader(STOQS_Loader):
 
         return total_loaded
 
-    def _convert_EPIC_times(self):
+    def _convert_EPIC_times(self, times, tindx):
         # Create COARDS time from EPIC data
         time2s = self.ds['time2']['time2'].data[tindx[0]:tindx[-1]:self.stride]
         time_units = 'seconds since 1970-01-01 00:00:00'
-        epoch_seconds = {}
+        epoch_seconds = []
         for jd, ms in zip(times, time2s):
             gcal = jd2gcal(jd - 0.5, ms / 86400000.0)
             gcal_datetime = datetime(*gcal[:3]) + timedelta(days=gcal[3])
@@ -962,7 +970,7 @@ class Base_Loader(STOQS_Loader):
                     time_units = self.ds[list(self.ds[firstp].maps.keys())[0]].units.lower()
 
                     if time_units == 'true julian day': # pragma: no cover
-                        times, time_units = self._convert_EPIC_times()
+                        times, time_units = self._convert_EPIC_times(times, tindx)
 
                     time_units = time_units.replace('utc', 'UTC')           # coards requires UTC in uppercase
                     if self.ds[list(self.ds[firstp].maps.keys())[0]].units == 'seconds since 1970-01-01T00:00:00Z':
