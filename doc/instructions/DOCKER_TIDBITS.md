@@ -107,6 +107,19 @@ for dbAlias in dbAliases:
 ```
 
 
+### A little script to update the start and end dates for all the Activities of a Campaign
+
+```python
+from django.db.models import Max, Min
+for a in acts:
+    ip_qs = InstantPoint.objects.using('stoqs_cce2015_t').filter(activity=a).aggregate(Max('timevalue'), Min('timevalue'))
+    if ip_qs['timevalue__min'] and ip_qs['timevalue__max']:
+        a.startdate = ip_qs['timevalue__min']
+        a.enddate = ip_qs['timevalue__max']
+        a.save(using='stoqs_cce2015_t')
+```
+
+
 ### Delete an Activity:
 
 ```python
