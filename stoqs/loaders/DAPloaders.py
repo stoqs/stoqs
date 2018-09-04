@@ -242,8 +242,14 @@ class Base_Loader(STOQS_Loader):
                     
             elif self.getFeatureType() == TIMESERIES or self.getFeatureType() == TIMESERIESPROFILE: # pragma: no cover
                 self.logger.debug('Getting timeseries start time for v = %s', v)
-                minDT[v] = from_udunits(self.ds[v][ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
-                maxDT[v] = from_udunits(self.ds[v][ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'])
+                time_units = self.ds[list(self.ds[v].maps.keys())[0]].units.lower()
+                if time_units == 'true julian day':
+                    times, time_units = self._convert_EPIC_times()
+                    minDT[v] = from_udunits(times[0], time_units)
+                    maxDT[v] = from_udunits(times[-1], time_units)
+                else:
+                    minDT[v] = from_udunits(self.ds[v][ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
+                    maxDT[v] = from_udunits(self.ds[v][ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'])
             else:
                 # Perhaps a strange file like LOPC size class data along a trajectory
                 minDT[v] = from_udunits(self.ds[ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
@@ -917,6 +923,18 @@ class Base_Loader(STOQS_Loader):
 
         return total_loaded
 
+    def _convert_EPIC_times(self):
+        # Create COARDS time from EPIC data
+        time2s = self.ds['time2']['time2'].data[tindx[0]:tindx[-1]:self.stride]
+        time_units = 'seconds since 1970-01-01 00:00:00'
+        epoch_seconds = {}
+        for jd, ms in zip(times, time2s):
+            gcal = jd2gcal(jd - 0.5, ms / 86400000.0)
+            gcal_datetime = datetime(*gcal[:3]) + timedelta(days=gcal[3])
+            epoch_seconds.append(to_udunits(gcal_datetime, time_units))
+
+        return epoch_seconds, time_units
+
     def load_timeseriesprofile(self):
         '''Stream timeseriesprofile data directly from pydap proxies to generators fed to bulk_create() calls
         '''
@@ -944,16 +962,7 @@ class Base_Loader(STOQS_Loader):
                     time_units = self.ds[list(self.ds[firstp].maps.keys())[0]].units.lower()
 
                     if time_units == 'true julian day': # pragma: no cover
-                        # Create COARDS time from EPIC data
-                        time2s = self.ds['time2']['time2'].data[tindx[0]:tindx[-1]:self.stride]
-                        time_units = 'seconds since 1970-01-01 00:00:00'
-                        epoch_secs = []
-                        for jd, ms in zip(times, time2s):
-                            gcal = jd2gcal(jd - 0.5, ms / 86400000.0)
-                            gcal_datetime = datetime(*gcal[:3]) + timedelta(days=gcal[3])
-                            epoch_secs.append(to_udunits(gcal_datetime, time_units))
-
-                        times = epoch_secs
+                        times, time_units = self._convert_EPIC_times()
 
                     time_units = time_units.replace('utc', 'UTC')           # coards requires UTC in uppercase
                     if self.ds[list(self.ds[firstp].maps.keys())[0]].units == 'seconds since 1970-01-01T00:00:00Z':
