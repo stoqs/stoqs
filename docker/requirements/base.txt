@@ -35,6 +35,7 @@ ordereddict==1.1
 Paste==2.0.3
 PasteDeploy==1.5.2
 PasteScript==2.0.2
+pika==0.12.0
 Pillow==5.2.0
 psycopg2-binary==2.7.5
 pupynere==1.0.15
@@ -57,3 +58,4 @@ Sphinx==1.7.8
 sphinx-rtd-theme==0.4.1
 sqlparse==0.2.4
 thredds-crawler==1.5.4
+watchdog==0.9.0
