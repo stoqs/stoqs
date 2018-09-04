@@ -25,7 +25,7 @@ After the `stoqsadm=>` you can enter the commands below.  *Note: With this comma
 on all of the stoqs databases.  You have the capability to do great damage.  Use the privilege with great responsibility.*
 
 
-### Manually managing schema evolution: adding a geometry column to the Activity table to an existing database:
+#### Manually managing schema evolution: adding a geometry column to the Activity table to an existing database:
 
 This SQL text derive from output of `stoqs/manage.py sqlall stoqs`; replace `<database>` with your database name:
 
@@ -36,7 +36,7 @@ CREATE INDEX "stoqs_activity_mappoint_id" ON "stoqs_activity" USING GIST ( "mapp
 ```
 
 
-### Drop NOT NULL constraint on foreign key where we do not always have an Analysis Method:
+#### Drop NOT NULL constraint on foreign key where we do not always have an Analysis Method:
 
 
 ```sql
@@ -44,7 +44,7 @@ ALTER TABLE stoqs_sampledparameter ALTER COLUMN analysismethod_id DROP NOT NULL;
 ```
 
 
-### Examples of adding columns to accomodate a new schema:
+#### Examples of adding columns to accomodate a new schema:
 
 Note: This is now better done with schema evolution (migrations) that are now available in Django. 
 
@@ -55,7 +55,7 @@ ALTER TABLE stoqs_nominallocation ADD COLUMN "activity_id" integer REFERENCES "s
 ```
 
 
-### Change database password:
+#### Change database password:
 
 ```sql
 ALTER ROLE stoqsadm login password 'newpassword';
@@ -64,7 +64,7 @@ ALTER ROLE stoqsadm login password 'newpassword';
 Note: also update the `STOQSADM_PASSWORD` value in your docker/.env file.
 
 
-### Add an 'everyone' Postgres user with read access to all databases
+#### Add an 'everyone' Postgres user with read access to all databases
 
 Highly recommended for supporting Jupyter Notebook use of data in your databases.
 Note: The stoqs/loaders/load.py has the --grant_everyone_select that will do this for you.
@@ -88,7 +88,7 @@ docker-compose run stoqs stoqs/manage.py shell_plus
 
 Once the interactive `>>>`  REPL prompt appears enter you can enter the following Python snippets.
 
-### A little script to update the start and end dates for a set of Campaigns on a server:
+#### A little script to update the start and end dates for a set of Campaigns on a server:
 
 ```python
 from django.db.models import Max, Min
@@ -107,7 +107,7 @@ for dbAlias in dbAliases:
 ```
 
 
-### A little script to update the start and end dates for all the Activities of a Campaign
+#### A little script to update the start and end dates for all the Activities of a Campaign
 
 ```python
 from django.db.models import Max, Min
@@ -120,7 +120,7 @@ for a in acts:
 ```
 
 
-### Delete an Activity:
+#### Delete an Activity:
 
 ```python
 acts = Activity.objects.using('stoqs_march2013_s').filter(name__contains='plm04')
@@ -144,5 +144,6 @@ It is also recommended to perform database loads using `docker-compose run ...` 
 as a restart of the stoqs container running the web app behind the nginx service will not interrupt their execution.
 
 Notes:
+
     * A `docker-compose down` will stop these additional container executions
 
