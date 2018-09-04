@@ -193,9 +193,9 @@ def showCampaigns(request,format=None):
             if c.description:
                 description = c.description
             if c.startdate: 
-                startdate = c.startdate.strftime('%d %b %Y %H:%M:%S')
+                startdate = c.startdate.strftime('%d %b %Y')
             if c.enddate:
-                enddate = c.enddate.strftime('%d %b %Y %H:%M:%S')
+                enddate = c.enddate.strftime('%d %b %Y')
             camList.append({'name': c.name, 'dbAlias': k, 'description': description,
                             'startdate': startdate, 'enddate': enddate,
                             'MeasuredParameter_count': r.get('MeasuredParameter_count', ''),

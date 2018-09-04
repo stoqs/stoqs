@@ -1499,6 +1499,7 @@ class STOQS_Loader(object):
                 ymin, ymax = fh.variables['y_range'][:]
             except IOError as e:
                 self.logger.error(f'Cannot add {ALTITUDE}. Make sure file {self.grdTerrain} is present.')
+                self.logger.info(f'cd stoqs/loaders && wget https://stoqs.mbari.org/terrain/{self.grdTerrain}')
             except KeyError as e:
                 try:
                     # New GMT format
