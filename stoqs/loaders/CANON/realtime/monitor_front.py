@@ -71,10 +71,10 @@ def process_command_line():
 
   pargs = parser.parse_args()
   if pargs.platforms == None:
-    print "Missing required argument: -p/--platforms"
+    print("Missing required argument: -p/--platforms")
     sys.exit(1)
   if pargs.inDir == None:
-    print "Missing required argument: -i/--inDir"
+    print("Missing required argument: -i/--inDir")
     sys.exit(1)
 
   return pargs
@@ -193,23 +193,23 @@ class StreamHandler(PatternMatchingEventHandler):
             pst = utc.astimezone(local_tz)
 
             message = "========>Front detected:  "
-            message += '\ntime: {0}'.format(utc.isoformat())
-            message += '\nlocal time: {0}'.format(pst.isoformat())
-            message += '\nlat/lon: {0},{1}'.format(coord_value['latitude'], coord_value['longitude'])
-            message += '\ndepth: {0}'.format(coord_value['depth'])
-            message += '\ntemperature: {0}'.format(temperature)
+            message += '\ntime: {}'.format(utc.isoformat())
+            message += '\nlocal time: {}'.format(pst.isoformat())
+            message += '\nlat/lon: {},{}'.format(coord_value['latitude'], coord_value['longitude'])
+            message += '\ndepth: {}'.format(coord_value['depth'])
+            message += '\ntemperature: {}'.format(temperature)
             logger.info(message)
 
             # auv,thysFr,1493829848,38.6,-121.23,lrauvFrontDetect,
-            rmq_message = 'auv,{0}Fr,{1},{2},{3},lrauvFrontDetect,,,'.format(self.platform,
+            rmq_message = 'auv,{}Fr,{},{},{},lrauvFrontDetect,,,'.format(self.platform,
                                                                              time.mktime(pst.timetuple()),
                                                                              coord_value['latitude'],
                                                                              coord_value['longitude'])
-            logger.info('{0}'.format(rmq_message))
+            logger.info('{}'.format(rmq_message))
             if self.rmq_channel.basic_publish(body=rmq_message, exchange='auvs', routing_key='normandy_persist_auvs'):
-              logger.info('Message {0} has been delivered'.format(rmq_message))
+              logger.info('Message {} has been delivered'.format(rmq_message))
             else:
-              logger.warning('Message {0} has NOT been delivered'.format(rmq_message))
+              logger.warning('Message {} has NOT been delivered'.format(rmq_message))
         except Exception as ex:
           logger.error(ex)
 
@@ -224,11 +224,11 @@ class StreamHandler(PatternMatchingEventHandler):
         path/to/observed/file
     """
     try:
-      logger.info('=======>File %s %s<=========' % (event.src_path, event.event_type))
+      logger.info('=======>File {} {}<========='.format(event.src_path, event.event_type))
       # delay in case file being copied
-      logger.info('Waiting 3 seconds to introduce slight delay in case still writing {0}'.format(event.src_path))
+      logger.info('Waiting 3 seconds to introduce slight delay in case still writing {}'.format(event.src_path))
       time.sleep(3)
-      self.scanNc4File(event.src_path)
+      self.scanNc4File(str(event.src_path))
       logger.info('=======>Done scanning file<=========')
 
     except Exception as ex:
@@ -259,7 +259,7 @@ if __name__ == '__main__':
       print("%s already exists, exiting" % pidfile)
       sys.exit()
 
-    file(pidfile, 'w').write(pid)
+    open(pidfile, 'w').write(pid)
 
     observers = []
     for platform in vargs.platforms:
@@ -267,10 +267,10 @@ if __name__ == '__main__':
         try:
           observer = Observer()
           search_path = os.path.join(vargs.inDir, platform, dir)
-          logger.info("Setting file observer for path {0}".format(search_path))
+          logger.info("Setting file observer for path {}".format(search_path))
           observer.schedule(StreamHandler(channel, platform), path=search_path, recursive=True)
           observer.start()
-          logger.info("Waiting for next .nc4 file in {0}...".format(search_path))
+          logger.info("Waiting for next .nc4 file in {}...".format(search_path))
           observers.append(observer)
         except Exception as ex:
           logger.error(ex)

@@ -100,7 +100,7 @@ def find_urls(base, select, startdate, enddate):
 
             try:
                 # get the mission directory name and extract the start and ending dates
-                dlist = os.path.basename(dataset).id
+                dlist = os.path.basename(dataset.id)
                 mission_dir_name = dlist.split('.')[0]
                 dts = mission_dir_name.split('_')
                 dir_start =  datetime.strptime(dts[0], '%Y%m%d')
