@@ -136,6 +136,8 @@ class CCELoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.ccesin_files], self.ccesin_files):
             url = os.path.join(self.ccesin_base, f)
+            ccesin_start_datetime = getattr(self, 'ccesin_start_datetime', None)
+            ccesin_end_datetime = getattr(self, 'ccesin_end_datetime', None)
 
             dataStartDatetime = None
             if self.args.append:
@@ -158,8 +160,8 @@ class CCELoader(LoadScript):
                                     platformColor = self.colors[platformName.lower()],
                                     platformTypeName = 'mooring',
                                     stride = stride,
-                                    startDatetime = self.ccesin_start_datetime,
-                                    endDatetime = self.ccesin_end_datetime,
+                                    startDatetime = ccesin_start_datetime,
+                                    endDatetime = ccesin_end_datetime,
                                     dataStartDatetime = dataStartDatetime)
 
             loader.include_names = self.ccesin_parms

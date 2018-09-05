@@ -208,8 +208,6 @@ class CCE_2015_Campaign:
         self.hires_event_times = hires_event_times
 
         # CCE SIN (Seafloor Instrument Node) data - all parameters but the timeseriesprofile ADCP data
-        self.cl.ccesin_start_datetime = campaign_start_datetime
-        self.cl.ccesin_end_datetime = campaign_end_datetime
         self.cl.ccesin_nominaldepth = 1836
         self.cl.ccesin_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/SIN/'
         self.cl.ccesin_files = [
@@ -456,16 +454,16 @@ if __name__ == '__main__':
         campaign.load_ccemoorings_ev(low_res_stride=10, high_res_stride=2)
         campaign.cl.loadCCESIN(stride=1000)    # Normal base class loader for entire time series
         campaign.load_ccesin_ev(low_res_stride=300, high_res_stride=2)
-        campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
+        campaign.cl.bed_depths = [np.round(d, 1) for d in campaign.cl.get_start_bed_depths()]
         campaign.cl.loadBEDS(stride=1, featureType='trajectory')
 
     else:
         campaign.cl.stride = campaign.cl.args.stride
         campaign.load_ccemoorings()
         campaign.load_ccemoorings_ev()
-        campaign.cl.loadCCESIN()    # Normal base class loader for entire time series
+        ##campaign.cl.loadCCESIN(stride=300)    # Uncomment to load entire record of 10-minute data
         campaign.load_ccesin_ev()
-        campaign.cl.bed_depths = np.round(campaign.cl.get_start_bed_depths(), 1)
+        campaign.cl.bed_depths = [np.round(d, 1) for d in campaign.cl.get_start_bed_depths()]
         campaign.cl.loadBEDS(featureType='trajectory')
 
     # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
