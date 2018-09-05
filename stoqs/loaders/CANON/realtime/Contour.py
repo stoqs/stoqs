@@ -382,11 +382,11 @@ class Contour(object):
                 z = self.data[pn+name]['datavalue']
                 sdt_count = self.data[pn+name]['sdt_count']
 
-                units = '(' + self.data[pn+p]['units'] + ')'
+                units = '(' + self.data[pn+name]['units'] + ')'
 
                 if len(z):
                     if self.autoscale:
-                        rangez = [self.data[pn+p]['p010'],self.data[pn+p]['p990']]
+                        rangez = [self.data[pn+name]['p010'],self.data[pn+name]['p990']]
                     else:
                         rangez = [min(z), max(z)]
                 else:
