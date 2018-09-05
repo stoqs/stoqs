@@ -106,9 +106,12 @@ After editing your `.env` file you will need to rebuild your stoqs image and res
 services, this time with the `-d` option to run the containers in the background:
 
 ```bash
-docker-compose build stoqs
+docker-compose build
 docker-compose up -d
 ```
+
+The above commands should also be done following a `git pull` in order to deploy updated
+software on your server.
 
 See https://docs.docker.com/compose/production/ for more information about running in production.
 
