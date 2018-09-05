@@ -255,8 +255,8 @@ if __name__ == '__main__':
     channel = connection.channel()
 
     if os.path.isfile(pidfile):
-      logger.info("{} already exists, exiting".format(pidfile))
-      print("{} already exists, exiting".format(pidfile))
+      logger.info("%s already exists, exiting" % pidfile)
+      print("%s already exists, exiting" % pidfile)
       sys.exit()
 
     open(pidfile, 'w').write(pid)

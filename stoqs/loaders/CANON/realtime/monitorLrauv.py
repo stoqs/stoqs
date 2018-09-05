@@ -335,12 +335,12 @@ if __name__ == '__main__':
     # Look in time order - oldest to newest and skip over data that doesn't include the starting year to speed up the loads 
     for url in sorted(urls):
         try:
-            year_str = '{0}'.format(start.year)
-            logger.info('Looking for {0} in {1}'.format(year_str, url))
-            if '{0}'.format(start.year) in url:
+            year_str = '{}'.format(start.year)
+            logger.info('Looking for {} in {}'.format(year_str, url))
+            if '{}'.format(start.year) in url:
                 (url_src, startDatetime, endDatetime) = processDecimated(args, pw, url, lastDatetime, start, end)
             else:
-              raise Exception('{0} not in search year'.format(url))
+              raise Exception('{} not in search year'.format(url))
         except ServerError as e:
             logger.warning(e)
             continue
