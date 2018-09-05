@@ -15,8 +15,7 @@ debug=''
 database='stoqs_canon_september2018'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 declare -a searchstr=("/realtime/sbdlogs/2018/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
-declare -a platforms=("makai")
-# "daphne" "tethys")
+declare -a platforms=("makai" "daphne" "tethys")
 
 pos=$(( ${#searchstr[*]} - 1 ))
 last=${searchstr[$pos]}
