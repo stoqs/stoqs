@@ -8,4 +8,4 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 cd "$STOQS_HOME/stoqs/loaders/CANON/realtime"
-python monitor_front.py -i /mbari/LRAUV/  -s 'realtime/sbdlogs/2018' 'realtime/cell-logs' -p tethys daphne makai aku ahi opah &
+python monitor_front.py -i /mbari/LRAUV/  -s 'realtime/sbdlogs/2018' 'realtime/cell-logs' -p tethys daphne makai aku ahi opah
