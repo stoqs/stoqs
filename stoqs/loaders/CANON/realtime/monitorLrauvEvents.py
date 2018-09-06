@@ -142,12 +142,10 @@ class Loader(Thread):
 
           title = 'MBARI LRAUV Survey - ' + self.vehicle
 
-          if not os.path.exists(outFile) or self.args.debug:
-            logger.debug('out file {}'.format(outFile))
-
-            contour = Contour(startDatetimeUTC, endDatetimeUTC, self.args.database, [self.vehicle], self.args.plotgroup,
-                              title, outFile, self.args.autoscale, self.args.plotDotParmName, self.args.booleanPlotGroup)
-            contour.run()
+          logger.debug('out file {}'.format(outFile))
+          contour = Contour(startDatetimeUTC, endDatetimeUTC, self.args.database, [self.vehicle], self.args.plotgroup,
+                            title, outFile, self.args.autoscale, self.args.plotDotParmName, self.args.booleanPlotGroup)
+          contour.run()
 
           # Round the UTC time to the local time and do the query for the 24 hour period the log file falls into
           startDatetime = startDatetimeUTC
