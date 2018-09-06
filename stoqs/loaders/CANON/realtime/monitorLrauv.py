@@ -396,12 +396,10 @@ if __name__ == '__main__':
                     else:
                         outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0]  + '.png')
 
-                if not os.path.exists(outFile) or args.debug:
-                    logger.debug('out file %s', outFile)
-
-                    contour = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], args.plotgroup,
-                                      title, outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
-                    contour.run()
+                logger.debug('out file %s', outFile)
+                contour = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], args.plotgroup,
+                                  title, outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
+                contour.run()
 
                 # Replace netCDF file with png extension and that is the URL of the log
                 logUrl = re.sub('\.nc$','.png', url_src)

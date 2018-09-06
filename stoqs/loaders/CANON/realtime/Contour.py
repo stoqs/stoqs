@@ -714,20 +714,21 @@ class Contour(object):
         cs = None
 
         # Register the signal function handler
-        signal.signal(signal.SIGALRM, self.handler)
+        # TODO: factor this out into the main thread
+        # signal.signal(signal.SIGALRM, self.handler)
 
         # Define a timeout of 90 seconds for gridding functions
-        signal.alarm(90)
+        # signal.alarm(90)
 
         if not self.data:
             logger.warning('no data found to plot') 
-            signal.alarm(0)
+            #signal.alarm(0)
             raise Exception('no data')
         if contour_flag:
             try:
                 logger.warning('Gridding data with sdt_count = {}, and y_count = {}'.format(sdt_count, y_count))
                 zi = self.gridData(xg, y, z, xi, yi)
-                signal.alarm(0)
+                #signal.alarm(0)
             except KeyError:
                 logger.warning('Got KeyError. Could not grid the data')
                 contour_flag = False
@@ -737,7 +738,7 @@ class Contour(object):
                     logger.warning('Trying radial basis function')
                     xi,yi,zi = self.gridDataRbf(tmin, tmax, dmin, dmax, xg, y, z)
                     contour_flag = True
-                    signal.alarm(0)
+                    #signal.alarm(0)
                 except Exception as e:
                     logger.warning('Could not grid the data' + str(e))
             except Exception as e:
@@ -748,7 +749,7 @@ class Contour(object):
                     logger.warning('Trying radial basis function')
                     xi,yi,zi  = self.gridDataRbf(tmin, tmax, dmin, dmax, xg, y, z)
                     contour_flag = True
-                    signal.alarm(0)
+                    #signal.alarm(0)
                 except Exception as e:
                     logger.warning('Could not grid the data' + str(e))
 
