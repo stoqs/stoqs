@@ -862,9 +862,9 @@ class Base_Loader(STOQS_Loader):
         '''Stream trajectory data directly from pydap proxies to generators fed to bulk_create() calls
         '''
         load_groups, coor_groups = self.get_load_structure()
+        total_loaded = 0   
         for k, pnames in load_groups.items():
             ac = coor_groups[k]
-            total_loaded = 0   
             for i, pname in enumerate(pnames):
                 try:
                     tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
