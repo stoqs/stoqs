@@ -71,7 +71,8 @@ class IterableQueue():
 class Job: 
     def __init__(self, full_path, url_src):
         self.full_path = full_path
-        self.url_src = url_src 
+        self.url_src = url_src
+        self.activity_name = url_src.split('/')[-2] + '_' + url_src.split('/')[-1].split('.')[0]
         print('New job: {} {}'.format(full_path, url_src))
         return
   
@@ -112,12 +113,11 @@ class Loader(Thread):
                     if self.q.empty():
                         print('===> update animations {}'.format(job.full_path))
 
-                        #if self.update(start_date) and self.slack:
-                        print('====> posting to slack')
-                        # Replace netCDF file with png extension and that is the URL of the log
-                        log_url = re.sub('\.nc$', '.png', job.url_src)
-                        message = 'LRAUV log data processed through STOQS workflow. Log <{} plot> '.format(log_url)
-                        print(message)
+                        if self.update(start_date, end_date, job) and self.slack:
+                          print('====> posting to slack')
+                          log_url = re.sub('\.nc$', '.png', job.url_src)
+                          message = 'LRAUV log data processed through STOQS workflow. Log <{}|{} plot> '.format(log_url, job.activity_name)
+                          print(message)
                           # self.slack.chat.post_message("#lrauvs", message)
                 except ServerError as e:
                     logger.warning(e)
@@ -128,32 +128,49 @@ class Loader(Thread):
             else:
                 time.sleep(1)
 
-    def update(self, start_date):
-        try: 
-            title = 'MBARI LRAUV Survey - ' + self.vehicle
-            start_UTC = pytz.utc.localize(start_date)
+    def update(self, start_date, end_date, job):
+        try:
 
-            # Round the UTC time to the local time and do the query for the 24 hour period the log file falls into
-            start_date = start_UTC
-            start_local = start_date.astimezone(pytz.timezone('America/Los_Angeles'))
-            start_local = start_local.replace(hour=0, minute=0, second=0, microsecond=0)
-            start_UTC24 = start_local.astimezone(pytz.utc)
+          endDatetimeUTC = pytz.utc.localize(end_date)
+          startDatetimeUTC = pytz.utc.localize(start_date)
 
-            end_date = start_local
-            end_local = end_date.replace(hour=23, minute=59, second=0, microsecond=0)
-            end_UTC24 = end_local.astimezone(pytz.utc)
+          # format contour output file name replacing file extension with .png
+          if "sbd" in job.url_src:
+            outFile = os.path.join(self.args.outDir, '/'.join(job.url_src.split('/')[-3:]).split('.')[0] + '.png')
+          else:
+            outFile = os.path.join(self.args.outDir, '/'.join(job.url_src.split('/')[-2:]).split('.')[0] + '.png')
 
-            out_file = (self.args.contourDir + '/' + self.vehicle + '_log_' + start_UTC24.strftime('%Y%m%dT%H%M%S') +
-                       '_' + end_UTC24.strftime('%Y%m%dT%H%M%S') + '.png')
-            url = (self.args.contourUrl + self.vehicle + '_log_' + start_UTC24.strftime('%Y%m%dT%H%M%S') + '_' +
-                   end_UTC24.strftime('%Y%m%dT%H%M%S') + '.png')
+          title = 'MBARI LRAUV Survey - ' + self.vehicle
 
-            if not os.path.exists(out_file) or self.args.debug:
-                logger.debug('===========>Contour out file {} url: {} '.format(out_file, url))
-                c = Contour(start_UTC24, end_UTC24, self.args.database, [self.vehicle], self.args.plotgroup, title,
-                            out_file, self.args.autoscale, self.args.plotDotParmName, self.args.booleanPlotGroup)
-                c.run()
-            
+          if not os.path.exists(outFile) or self.args.debug:
+            logger.debug('out file {}'.format(outFile))
+
+            contour = Contour(startDatetimeUTC, endDatetimeUTC, self.args.database, [self.vehicle], self.args.plotgroup,
+                              title, outFile, self.args.autoscale, self.args.plotDotParmName, self.args.booleanPlotGroup)
+            contour.run()
+
+          # Round the UTC time to the local time and do the query for the 24 hour period the log file falls into
+          startDatetime = startDatetimeUTC
+          startDateTimeLocal = startDatetime.astimezone(pytz.timezone('America/Los_Angeles'))
+          startDateTimeLocal = startDateTimeLocal.replace(hour=0, minute=0, second=0, microsecond=0)
+          startDateTimeUTC24hr = startDateTimeLocal.astimezone(pytz.utc)
+
+          endDatetime = startDateTimeLocal
+          endDateTimeLocal = endDatetime.replace(hour=23, minute=59, second=0, microsecond=0)
+          endDateTimeUTC24hr = endDateTimeLocal.astimezone(pytz.utc)
+
+          outFile = (self.args.contourDir + '/' + self.vehicle + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') +
+                     '_' + endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png')
+          url = (self.args.contourUrl + self.vehicle + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' +
+                 endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png')
+
+          logger.debug('out file {} url: {}'.format(outFile, url))
+          c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, self.args.database, [self.vehicle], self.args.plotgroup, title,
+                      outFile, self.args.autoscale, self.args.plotDotParmName, self.args.booleanPlotGroup)
+          c.run()
+
+          return True
+
         except Exception as ex:
             logger.warning(ex)
 
@@ -256,14 +273,13 @@ class Loader(Thread):
         return url_i, start, end
 
     def load(self, job):
-        activity_name = job.url_src.split('/')[-2] + '_' + job.url_src.split('/')[-1].split('.')[0]
         data_start = None
-        print('====>Processing decimated nc file {}'.format(activity_name)) 
+        print('====>Processing decimated nc file {}'.format(job.activity_name))
         (url_dest, start, end) = self.process_decimated(job)
 
-        print('====>Loading {}'.format(activity_name)) 
+        print('====>Loading {}'.format(job.activity_name))
         if self.args.append:
-            core_name = activity_name.split('_')[0]
+            core_name = job.activity_name.split('_')[0]
             # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
             data_start = \
             InstantPoint.objects.using(self.args.database).filter(activity__name__contains=core_name).aggregate(
@@ -278,7 +294,7 @@ class Loader(Thread):
                 logger.info("Instantiating Lrauv_Loader for url = {}".format(url_dest))
                 DAPloaders.runLrauvLoader(cName = self.args.campaign,
                                                   cDesc = None,
-                                                  aName = activity_name,
+                                                  aName = job.activity_name,
                                                   aTypeName = 'LRAUV mission',
                                                   pName = self.vehicle,
                                                   pTypeName = 'auv',

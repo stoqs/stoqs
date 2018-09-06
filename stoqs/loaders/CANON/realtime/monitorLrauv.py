@@ -423,7 +423,7 @@ if __name__ == '__main__':
 
 
                 if not os.path.exists(outFile) or args.debug:
-                    logger.debug('out file {outFile} url: {url}')
+                    logger.debug('out file {} url: {}'.format(outFile, url))
                     c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title,
                                 outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
                     c.run()
