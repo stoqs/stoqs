@@ -122,8 +122,9 @@ class CCE_2015_Campaign:
                         ('BED10/MBCCE_BED10_20160408_Event20160901/netcdf/A0100096_decim_traj.nc',
                             'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2016/vnta3921/02_05_37_16.html'),
 
-                        ('BED00/Simulated/netcdf/BED00_SIM_rolling_trajectory.nc',
-                            ''),
+                        # Uncomment to test 3D replay of BED motion - it should rotate only around the X-Axis
+                        ##('BED00/Simulated/netcdf/BED00_SIM_rolling_trajectory.nc',
+                        ##    ''),
                         ] + [
                         (f'BED09/MBCCE_BED09_20160408_Event20161124/netcdf/901001{n}_full_traj.nc', '') for n in (
                             list(range(56, 63)) + list(range(64, 65)))
@@ -208,6 +209,10 @@ class CCE_2015_Campaign:
         self.hires_event_times = hires_event_times
 
         # CCE SIN (Seafloor Instrument Node) data - all parameters but the timeseriesprofile ADCP data
+        # There are 3 categories of loaded data:
+        # 1. 10-minute resolution entire timeseries of non-profile parameters
+        # 2. Low resolution profile data (ADCP) for a few days around each event
+        # 3. High resolution profile data (ADCP) for a several hours around each event
         self.cl.ccesin_nominaldepth = 1836
         self.cl.ccesin_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/SIN/'
         self.cl.ccesin_files = [
@@ -241,6 +246,24 @@ class CCE_2015_Campaign:
                             '20151013/ADCP1200/MBCCE_SIN_ADCP1200_20151013.nc',
                           ]
         self.cl.ccesin_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
+        # Just the timeseries data for the highres period
+        self.cl.ccesin_files_ev_hires = [
+                            '20151013/CTDOBSTrans/MBCCE_SIN_CTDOBSTrans_20151013_timecorrected.nc',
+                            '20151013/OX/MBCCE_SIN_OX_20151013_timecorrected.nc',
+                            '20151013/FLNTU/MBCCE_SIN_FLNTU_20151013_timecorrected.nc',
+
+                            '20160417/CTDOBSTrans/MBCCE_SIN_CTDOBSTrans_20160417_timecorrected.nc',
+                            '20160417/OX/MBCCE_SIN_OX_20160417_timecorrected.nc',
+                            '20160417/FLNTU/MBCCE_SIN_FLNTU_20160417_timecorrected.nc',
+
+                            '20161018/CTDOBSTrans/MBCCE_SIN_CTDOBSTrans_20161018_timecorrected.nc',
+                            '20161018/OX/MBCCE_SIN_OX_20161018_timecorrected.nc',
+                            '20161018/FLNTU/MBCCE_SIN_FLNTU_20161018_timecorrected.nc',
+                            ]
+        self.cl.ccesin_parms_ev_hires = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'optical_backscatter',
+                            'oxygen', 'saturation', 'optode_temperature',
+                            'chlor', 'ntu1', 'ntu2',
+                            'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
         # MS1 ADCP data - timeseries data
         self.cl.ccems1_start_datetime = campaign_start_datetime
@@ -433,6 +456,9 @@ class CCE_2015_Campaign:
         for event in hires_event_times:
             setattr(self.cl, 'ccesin_start_datetime', event.start)
             setattr(self.cl, 'ccesin_end_datetime', event.end)
+            if hasattr(self.cl, 'ccesin_files_ev_hires') and hasattr(self.cl, 'ccesin_parms_ev_hires'):
+                setattr(self.cl, 'ccesin_files', self.cl.ccesin_files_ev_hires)
+                setattr(self.cl, 'ccesin_parms', self.cl.ccesin_parms_ev_hires)
             try:
                 getattr(self.cl, 'loadCCESIN')(stride=high_res_stride)
             except NoValidData as e:
@@ -452,7 +478,7 @@ if __name__ == '__main__':
     elif campaign.cl.args.optimal_stride:
         campaign.load_ccemoorings(stride=10)
         campaign.load_ccemoorings_ev(low_res_stride=10, high_res_stride=2)
-        campaign.cl.loadCCESIN(stride=1000)    # Normal base class loader for entire time series
+        campaign.cl.loadCCESIN(stride=1000)
         campaign.load_ccesin_ev(low_res_stride=300, high_res_stride=2)
         campaign.cl.bed_depths = [np.round(d, 1) for d in campaign.cl.get_start_bed_depths()]
         campaign.cl.loadBEDS(stride=1, featureType='trajectory')
@@ -461,7 +487,7 @@ if __name__ == '__main__':
         campaign.cl.stride = campaign.cl.args.stride
         campaign.load_ccemoorings()
         campaign.load_ccemoorings_ev()
-        ##campaign.cl.loadCCESIN(stride=300)    # Uncomment to load entire record of 10-minute data
+        campaign.cl.loadCCESIN(stride=300)
         campaign.load_ccesin_ev()
         campaign.cl.bed_depths = [np.round(d, 1) for d in campaign.cl.get_start_bed_depths()]
         campaign.cl.loadBEDS(featureType='trajectory')
