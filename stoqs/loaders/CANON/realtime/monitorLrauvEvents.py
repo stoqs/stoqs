@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 __author__    = 'Mike McCann, Danelle Cline'
 '''
-Monitors messages  a messaging system for new realtime cell or sbdlog data from LRAUVs and use DAPloaders.py to load new data into the stoqs database.
+Monitors messages from the Pusher API  for new realtime cell or sbdlog data from LRAUVs.
+Use DAPloaders.py to load new data into the stoqs database and posts messages to Slack
+when new data is available.
 
 Danelle Cline
 MBARI 5 September 2018
@@ -20,7 +22,6 @@ import DAPloaders
 from CANON import CANONLoader
 import logging
 import lrauvNc4ToNetcdf
-from datetime import datetime, timedelta
 import re
 import pydap
 import pysher
@@ -31,7 +32,6 @@ import queue
 from threading import Thread
 
 from Contour import Contour
-from thredds_crawler.crawl import Crawl
 from coards import from_udunits
 from stoqs.models import InstantPoint
 from slacker import Slacker
@@ -71,7 +71,8 @@ class IterableQueue():
 class Job: 
     def __init__(self, full_path, url_src):
         self.full_path = full_path
-        self.url_src = url_src 
+        self.url_src = url_src
+        self.activity_name = url_src.split('/')[-2] + '_' + url_src.split('/')[-1].split('.')[0]
         print('New job: {} {}'.format(full_path, url_src))
         return
   
@@ -111,81 +112,76 @@ class Loader(Thread):
                     # if last item in the queue, update animations 
                     if self.q.empty():
                         print('===> update animations {}'.format(job.full_path))
-                        self.update(start_date, end_date, job.url_src)
-                    
-                    if self.slack:
-                        print('====> posting to slack')
-                        # Replace netCDF file with png extension and that is the URL of the log
-                        log_url = re.sub('\.nc$', '.png', job.url_src)
-                        message = 'LRAUV log data processed through STOQS workflow. Log <{}|{} plot> '.format(log_url, aName)
-                        # self.slack.chat.post_message("#lrauvs", message)
+
+                        if self.update(start_date, end_date, job) and self.slack:
+                          print('====> posting to slack')
+                          log_url = re.sub('\.nc$', '.png', job.url_src)
+                          message = 'LRAUV log data processed through STOQS workflow. Log <{}|{} plot> '.format(log_url, job.activity_name)
+                          print(message)
+                          # self.slack.chat.post_message("#lrauvs", message)
                 except ServerError as e:
-                    logger.warn(e)
+                    logger.warning(e)
                     continue
                 except Exception as e:
-                    logger.warn(e)
+                    logger.warning(e)
                     continue
             else:
                 time.sleep(1)
 
-    def update(self, start_date, end_date, url_src):
-        try: 
-            title = 'MBARI LRAUV Survey - ' + self.vehicle 
-            end_UTC = pytz.utc.localize(end_date)
-            end_local = end_UTC.astimezone(pytz.timezone('America/Los_Angeles'))
-            start_UTC = pytz.utc.localize(start_date)
-            start_local = start_UTC.astimezone(pytz.timezone('America/Los_Angeles'))
+    def update(self, start_date, end_date, job):
+        try:
 
+          endDatetimeUTC = pytz.utc.localize(end_date)
+          startDatetimeUTC = pytz.utc.localize(start_date)
 
-            # format contour output file name replacing file extension with .png
-            if self.args.outDir.startswith('/tmp'):
-                out_file = os.path.join(self.args.outDir, url_src.split('/')[-1].split('.')[0] + '.png')
-            else:
-                if "sbd" in url_src:
-                    out_file = os.path.join(self.args.outDir, '/'.join(url_src.split('/')[-3:]).split('.')[0] + '.png')
-                else:
-                    out_file = os.path.join(self.args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0] + '.png')
+          # format contour output file name replacing file extension with .png
+          if "sbd" in job.url_src:
+            outFile = os.path.join(self.args.outDir, '/'.join(job.url_src.split('/')[-3:]).split('.')[0] + '.png')
+          else:
+            outFile = os.path.join(self.args.outDir, '/'.join(job.url_src.split('/')[-2:]).split('.')[0] + '.png')
 
-            if not os.path.exists(out_file) or self.args.debug:
-                logger.debug('out file {}'.format(out_file))
+          title = 'MBARI LRAUV Survey - ' + self.vehicle
 
-                contour = Contour(start_UTC, end_UTC, self.args.database, [self.vehicle], self.args.plotgroup,
-                                  title, out_file, self.args.autoscale, self.args.plotDotParmName, self.args.booleanPlotGroup)
-                contour.run()
- 
-            # Round the UTC time to the local time and do the query for the 24 hour period the log file falls into
-            start_date = start_UTC
-            start_local = start_date.astimezone(pytz.timezone('America/Los_Angeles'))
-            start_local = start_local.replace(hour=0, minute=0, second=0, microsecond=0)
-            start_UTC24 = start_local.astimezone(pytz.utc)
+          if not os.path.exists(outFile) or self.args.debug:
+            logger.debug('out file {}'.format(outFile))
 
-            end_date = start_local
-            end_local = end_date.replace(hour=23, minute=59, second=0, microsecond=0)
-            end_UTC24 = end_local.astimezone(pytz.utc)
+            contour = Contour(startDatetimeUTC, endDatetimeUTC, self.args.database, [self.vehicle], self.args.plotgroup,
+                              title, outFile, self.args.autoscale, self.args.plotDotParmName, self.args.booleanPlotGroup)
+            contour.run()
 
-            out_file = (self.args.contourDir + '/' + self.vehicle + '_log_' + start_UTC24.strftime('%Y%m%dT%H%M%S') +
-                       '_' + end_UTC24.strftime('%Y%m%dT%H%M%S') + '.png')
-            url = (self.args.contourUrl + self.vehicle + '_log_' + start_UTC24.strftime('%Y%m%dT%H%M%S') + '_' +
-                   end_UTC24.strftime('%Y%m%dT%H%M%S') + '.png')
+          # Round the UTC time to the local time and do the query for the 24 hour period the log file falls into
+          startDatetime = startDatetimeUTC
+          startDateTimeLocal = startDatetime.astimezone(pytz.timezone('America/Los_Angeles'))
+          startDateTimeLocal = startDateTimeLocal.replace(hour=0, minute=0, second=0, microsecond=0)
+          startDateTimeUTC24hr = startDateTimeLocal.astimezone(pytz.utc)
 
-            if not os.path.exists(out_file) or self.args.debug:
-                logger.debug('out file %s url: %s ', out_file, url)
-                c = Contour(start_UTC24, end_UTC24, self.args.database, [self.vehicle], self.args.plotgroup,
-                            title,
-                            out_file, self.args.autoscale, self.args.plotDotParmName, self.args.booleanPlotGroup)
-                c.run()
-            
+          endDatetime = startDateTimeLocal
+          endDateTimeLocal = endDatetime.replace(hour=23, minute=59, second=0, microsecond=0)
+          endDateTimeUTC24hr = endDateTimeLocal.astimezone(pytz.utc)
+
+          outFile = (self.args.contourDir + '/' + self.vehicle + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') +
+                     '_' + endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png')
+          url = (self.args.contourUrl + self.vehicle + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' +
+                 endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png')
+
+          logger.debug('out file {} url: {}'.format(outFile, url))
+          c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, self.args.database, [self.vehicle], self.args.plotgroup, title,
+                      outFile, self.args.autoscale, self.args.plotDotParmName, self.args.booleanPlotGroup)
+          c.run()
+
+          return True
+
         except Exception as ex:
             logger.warning(ex)
-        
+
+        return False
+
     def get_times(self, url):
         '''Find the lines in the html with the .nc file, then open it and read the start/end times
         return url to the .nc  and start/end as datetime objects.
         '''
         logger.debug('open_url on url = {}'.format(url))
         df = pydap.client.open_url(url)
-        start = None
-        end = None
         time_axis_name = 'Time'
         try:
             time_units = df[time_axis_name].units
@@ -277,14 +273,13 @@ class Loader(Thread):
         return url_i, start, end
 
     def load(self, job):
-        activity_name = job.url_src.split('/')[-2] + '_' + job.url_src.split('/')[-1].split('.')[0]
         data_start = None
-        print('====>Processing decimated nc file {}'.format(activity_name)) 
+        print('====>Processing decimated nc file {}'.format(job.activity_name))
         (url_dest, start, end) = self.process_decimated(job)
 
-        print('====>Loading {}'.format(activity_name)) 
+        print('====>Loading {}'.format(job.activity_name))
         if self.args.append:
-            core_name = activity_name.split('_')[0]
+            core_name = job.activity_name.split('_')[0]
             # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
             data_start = \
             InstantPoint.objects.using(self.args.database).filter(activity__name__contains=core_name).aggregate(
@@ -297,9 +292,9 @@ class Loader(Thread):
         try:
             if not self.args.debug:
                 logger.info("Instantiating Lrauv_Loader for url = {}".format(url_dest))
-                lrauvLoad = DAPloaders.runLrauvLoader(cName = self.args.campaign,
+                DAPloaders.runLrauvLoader(cName = self.args.campaign,
                                                   cDesc = None,
-                                                  aName = activity_name,
+                                                  aName = job.activity_name,
                                                   aTypeName = 'LRAUV mission',
                                                   pName = self.vehicle,
                                                   pTypeName = 'auv',
@@ -377,6 +372,8 @@ def process_command_line():
                                 ['front', 'VTHI', 'temperature', 'salinity', 'chlorophyll'])
     parser.add_argument('--parms', action='store', help='List of space separated (non group) parameters to load', nargs='*',
                         default= ['front', 'VTHI', 'temperature', 'salinity'])
+    parser.add_argument('--vehicles', action='store', help='List of vehicles to monitor', nargs='*',
+                        default= ['daphne', 'makai', 'ahi', 'opah', 'tethys', 'aku'])
     parser.add_argument('--groupparms', action='store',
                         help='List of JSON formatted parameter groups, variables and renaming of variables',
                         default='{' \
@@ -427,7 +424,9 @@ def run():
 
     pusher = pysher.Pusher(os.environ['APPKEY'])
     event_name = "event-array"
-    vehicles = ['daphne', 'makai', 'ahi', 'opah', 'tethys', 'aku']
+    vehicles = args.vehicles
+    print('Monitoring {} vehicles'.format(vehicles))
+
     l = {}
     # create a loader thread per each vehicle
     for v in vehicles:

@@ -15,7 +15,7 @@ debug=''
 database='stoqs_canon_september2018'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 declare -a searchstr=("/realtime/sbdlogs/2018/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
-declare -a platforms=("makai" "daphne" "tethys")
+declare -a platforms=("daphne" "tethys")
 
 pos=$(( ${#searchstr[*]} - 1 ))
 last=${searchstr[$pos]}
@@ -57,11 +57,11 @@ do
         mass_concentration_of_oxygen_in_sea_water  \
         downwelling_photosynthetic_photon_flux_in_sea_water \
         --plotgroup \
-	front \
-	vertical_temperature_homogeneity_index \
-        bin_mean_mass_concentration_of_chlorophyll_in_sea_water \
-        bin_mean_sea_water_temperature \
-        bin_mean_sea_water_salinity \
+	    front \
+        VTHI \
+        chlorophyll \
+        temperature \
+        salinity \
         $latest24plot $post $debug > /tmp/monitorLrauv${platform}.out 2>&1
     done
 done

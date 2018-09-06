@@ -8,8 +8,7 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 cd "$STOQS_HOME/stoqs/loaders/CANON/realtime"
-#post='--post'
-post=''
+post='--post'
 debug=''
 #debug='--debug'
 export SLACKTOKEN=${SLACKTOCKEN}
@@ -18,6 +17,7 @@ urlbase='http://dods.mbari.org/opendap/data/lrauv/'
 latest24plot='--latest24hr'
 
 python monitorLrauvEvents.py \
+--vehicles tethys daphne \
 -d  'LRAUV Monterey data - September 2018' --productDir '/mbari/ODSS/data/other/routine/Products/LRAUV' \
 --contourDir /tmp/stoqs \
 --contourUrl 'http://dods.mbari.org/opendap/data/lrauv/stoqs/' \
@@ -48,8 +48,8 @@ mass_concentration_of_oxygen_in_sea_water  \
 downwelling_photosynthetic_photon_flux_in_sea_water \
 --plotgroup \
 front \
-vertical_temperature_homogeneity_index \
-bin_mean_mass_concentration_of_chlorophyll_in_sea_water \
-bin_mean_sea_water_temperature \
-bin_mean_sea_water_salinity \
+chlorophyll \
+temperature \
+salinity \
+VTHI \
 $latest24plot $post $debug #> /tmp/monitorLrauvEvents.out 2>&1
