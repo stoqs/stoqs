@@ -796,7 +796,7 @@ class CANONLoader(LoadScript):
                                         platformName, self.colors['m1'], 'mooring', 'Mooring Deployment', 
                                         self.m1_parms, self.dbAlias, stride, self.m1_startDatetime, 
                                         self.m1_endDatetime, command_line_args=self.args, 
-                                        backfill_timedelta=timedelta(seconds=3600))
+                                        backfill_timedelta=timedelta(seconds=0))
     
         # For timeseriesProfile data we need to pass the nominaldepth of the plaform
         # so that the model is put at the correct depth in the Spatial -> 3D view.
