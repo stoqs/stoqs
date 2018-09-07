@@ -657,11 +657,14 @@ class Base_Loader(STOQS_Loader):
             e = timeAxis[-1]
             self.logger.debug("requested_endDatetime not given, using the last value of timeAxis = %f", e.data[0])
 
-        tf = (s <= timeAxis) & (timeAxis <= e)
-        ##self.logger.debug('tf = %s', tf)
+        # Numpy Array tf will have True values at indices corresponding to the data we need to load
+        tf = (s < timeAxis) & (timeAxis <= e)
         tIndx = np.nonzero(tf == True)[0]
         if tIndx.size == 0:
-            raise NoValidData('No data from %s for time values between %s and %s.  Skipping.' % (self.url, s, e))
+            raise NoValidData('No time values from {self.url} between time values {s} and {e}')
+        elif tIndx.size == 1:
+            # Loading a single value
+            tIndx = np.array([tIndx[0], tIndx[0]])
 
         # For python slicing add 1 to the end index
         ##self.logger.debug('tIndx = %s', tIndx)
@@ -671,8 +674,8 @@ class Base_Loader(STOQS_Loader):
             raise NoValidData('Could not get first and last indexes from tIndex = %s. Skipping.' % (tIndx))
         self.logger.debug('Start and end indices are: %s', indices)
 
-        if tIndx[-1] <= tIndx[0]:
-            raise InvalidSliceRequest('Cannot issue OPeNDAP temporal constraint expression with length 0 or less.')
+        if tIndx[-1] < tIndx[0]:
+            raise InvalidSliceRequest('Cannot issue DAP temporal constraint expression with negative length: tIndx = {tIndx}')
 
         return indices
 
@@ -901,16 +904,17 @@ class Base_Loader(STOQS_Loader):
 
                 try:
                     if isinstance(self.ds[pname], pydap.model.GridType):
-                        constraint_string = f"Using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        constraint_string = f"using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                         values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
                     else:
-                        constraint_string = f"Using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        constraint_string = f"using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                         values = self.ds[pname].data[tindx[0]:tindx[-1]:self.stride]
                 except ValueError:
                     self.logger.warn(f'Stride of {self.stride} likely greater than range of data: {tindx[0]}:{tindx[-1]}')
                     self.logger.warn(f'Skipping load of {self.url}')
                     return total_loaded
 
+                self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1]}]")
                 if hasattr(values[0], '__iter__'):
                     # For data like LOPC data - expect all values to be non-nan
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
@@ -1156,6 +1160,7 @@ class Base_Loader(STOQS_Loader):
 
                 # End if i == 0 (loading coords for list of pnames)
  
+                constraint_string = f"using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                 values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
                 if len(values.shape) == 1:
                     self.logger.info("len(values.shape) = 1; likely EPIC timeseries data - reshaping to add a 'depth' dimension")
@@ -1167,7 +1172,8 @@ class Base_Loader(STOQS_Loader):
                                                 datavalue=va) for me, va in zip(meass, values))
 
                 # All items but mess are generators, so we can call len() on it
-                self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter')
+                self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
+                self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1]}]")
                 mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
                 total_loaded += len(mps)
 
