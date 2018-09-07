@@ -25,8 +25,11 @@ cl.m1_files = [ '201010/OS_M1_20101027hourly_CMSTV.nc',
 cl.m1_parms = [ 'northward_sea_water_velocity_HR', 'SEA_WATER_SALINITY_HR', 
                 'SEA_WATER_TEMPERATURE_HR', 'AIR_TEMPERATURE_HR', 'bb470', 'fl676'
               ]
+
+# Use the same startDatetime as in loadTestData.py so that the Activity is named the same
+# Load 1 more hour of data beyond the endDatetime in loadTestData.py
 cl.m1_startDatetime = datetime.datetime(2010, 10, 27)
-cl.m1_endDatetime = datetime.datetime(2010, 10, 29, 4)
+cl.m1_endDatetime = datetime.datetime(2010, 10, 29, 1)
 
 
 # Execute the load
