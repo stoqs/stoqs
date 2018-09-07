@@ -89,6 +89,13 @@ then
         exit -1
     fi
 
+    coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" loaders/loadMoreData.py --append
+    if [ $? != 0 ]
+    then
+        echo "loaders/loadMoreData.py failed to load more data to existing Activity; exiting test.sh."
+        exit -1
+    fi
+
     # Label some data in the test database
     coverage run -a --include="contrib/analysis/classify.py" contrib/analysis/classify.py \
       --createLabels --groupName Plankton --database default  --platform dorado \
