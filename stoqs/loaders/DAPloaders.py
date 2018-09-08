@@ -138,7 +138,7 @@ class Base_Loader(STOQS_Loader):
     def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, campaignDescription=None,
                 activitytypeName=None, platformColor=None, platformTypeName=None, 
                 startDatetime=None, endDatetime=None, dataStartDatetime=None, auxCoords=None, stride=1,
-                grdTerrain=None, appendFlag=False, backfill_timedelta=None ):
+                grdTerrain=None, appendFlag=False):
         '''
         Given a URL open the url and store the dataset as an attribute of the object,
         then build a set of standard names using the dataset.
@@ -167,9 +167,6 @@ class Base_Loader(STOQS_Loader):
         @param appendFlag: If true then a dataStartDatetime value will be set by looking up the last
                            timevalue in the database for the Activity returned by getActivityName().
                            A True value will override the passed parameter dataStartDatetime.
-        @param backfill_timedelta: Some appendFlag datastreams may have missing data data records at
-                                   end of previous loads, e.g. M1. Set this to a datetime.timedelta
-                                   to backfill those records.
         @param auxCoords: a dictionary of coordinate standard_names (time, latitude, longitude, depth) 
                           pointing to exact names of those coordinates. Used for variables missing the 
                           coordinates attribute.
@@ -192,7 +189,6 @@ class Base_Loader(STOQS_Loader):
         self.stride = stride
         self.grdTerrain = grdTerrain
         self.appendFlag = appendFlag
-        self.backfill_timedelta = backfill_timedelta
         self.coord_dicts = {}
 
         self.url = url
@@ -657,11 +653,20 @@ class Base_Loader(STOQS_Loader):
             e = timeAxis[-1]
             self.logger.debug("requested_endDatetime not given, using the last value of timeAxis = %f", e.data[0])
 
-        tf = (s <= timeAxis) & (timeAxis <= e)
-        ##self.logger.debug('tf = %s', tf)
+        if getattr(self, 'appendFlag', False):
+            # Exclusive of s, as that is the max timevalue in the database for the Activity
+            tf = (s < timeAxis) & (timeAxis <= e)
+        else:
+            # Inclusive of the specified start time
+            tf = (s <= timeAxis) & (timeAxis <= e)
+
+        # Numpy Array tf has True values at indices corresponding to the data we need to load
         tIndx = np.nonzero(tf == True)[0]
         if tIndx.size == 0:
-            raise NoValidData('No data from %s for time values between %s and %s.  Skipping.' % (self.url, s, e))
+            raise NoValidData('No time values from {self.url} between time values {s} and {e}')
+        elif tIndx.size == 1:
+            # Loading a single value
+            tIndx = np.array([tIndx[0], tIndx[0]])
 
         # For python slicing add 1 to the end index
         ##self.logger.debug('tIndx = %s', tIndx)
@@ -671,8 +676,8 @@ class Base_Loader(STOQS_Loader):
             raise NoValidData('Could not get first and last indexes from tIndex = %s. Skipping.' % (tIndx))
         self.logger.debug('Start and end indices are: %s', indices)
 
-        if tIndx[-1] <= tIndx[0]:
-            raise InvalidSliceRequest('Cannot issue OPeNDAP temporal constraint expression with length 0 or less.')
+        if tIndx[-1] < tIndx[0]:
+            raise InvalidSliceRequest('Cannot issue DAP temporal constraint expression with negative length: tIndx = {tIndx}')
 
         return indices
 
@@ -901,16 +906,17 @@ class Base_Loader(STOQS_Loader):
 
                 try:
                     if isinstance(self.ds[pname], pydap.model.GridType):
-                        constraint_string = f"Using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        constraint_string = f"using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                         values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
                     else:
-                        constraint_string = f"Using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        constraint_string = f"using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                         values = self.ds[pname].data[tindx[0]:tindx[-1]:self.stride]
                 except ValueError:
                     self.logger.warn(f'Stride of {self.stride} likely greater than range of data: {tindx[0]}:{tindx[-1]}')
                     self.logger.warn(f'Skipping load of {self.url}')
                     return total_loaded
 
+                self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1]}]")
                 if hasattr(values[0], '__iter__'):
                     # For data like LOPC data - expect all values to be non-nan
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
@@ -1156,6 +1162,7 @@ class Base_Loader(STOQS_Loader):
 
                 # End if i == 0 (loading coords for list of pnames)
  
+                constraint_string = f"using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                 values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
                 if len(values.shape) == 1:
                     self.logger.info("len(values.shape) = 1; likely EPIC timeseries data - reshaping to add a 'depth' dimension")
@@ -1167,7 +1174,8 @@ class Base_Loader(STOQS_Loader):
                                                 datavalue=va) for me, va in zip(meass, values))
 
                 # All items but mess are generators, so we can call len() on it
-                self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter')
+                self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
+                self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1]}]")
                 mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
                 total_loaded += len(mps)
 
@@ -1396,9 +1404,6 @@ class Base_Loader(STOQS_Loader):
             self.dataStartDatetime = (InstantPoint.objects.using(self.dbAlias)
                                         .filter(activity__name=self.getActivityName())
                                         .aggregate(Max('timevalue'))['timevalue__max'])
-            if hasattr(self, 'backfill_timedelta') and self.dataStartDatetime:
-                if self.backfill_timedelta:
-                    self.dataStartDatetime = self.dataStartDatetime - self.backfill_timedelta
 
         self.param_by_key = {}
         self.mv_by_key = {}
@@ -2035,7 +2040,7 @@ def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
 
 def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
                      dbAlias, stride, startDatetime=None, endDatetime=None, dataStartDatetime=None,
-                     command_line_args=None, backfill_timedelta=None):
+                     command_line_args=None):
     '''
     Run the DAPloader for OceanSites formatted Mooring Station data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -2061,7 +2066,7 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
             dataStartDatetime = dataStartDatetime,
             endDatetime = endDatetime,
             appendFlag = appendFlag,
-            backfill_timedelta = backfill_timedelta)
+            )
 
     if parmList:
         loader.logger.debug("Setting include_names to %s", parmList)

@@ -42,7 +42,7 @@ loader.load(campaigns, create_only=True)
 # Load only the March 2016 event lores Mooring data
 campaign.lores_event_times = [campaign.lores_event_times[1]]
 campaign.hires_event_times = []
-campaign.load_cce_moorings(low_res_stride=500, start_mooring=2, end_mooring=3)
+campaign.load_ccemoorings_ev(low_res_stride=500, start_mooring=2, end_mooring=3)
 
 # Add Trajectory data for the same time period
 l_662_url = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/OS_Glider_L_662_20151124_TS.nc'
