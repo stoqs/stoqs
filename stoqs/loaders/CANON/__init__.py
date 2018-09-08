@@ -795,8 +795,8 @@ class CANONLoader(LoadScript):
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
                                         platformName, self.colors['m1'], 'mooring', 'Mooring Deployment', 
                                         self.m1_parms, self.dbAlias, stride, self.m1_startDatetime, 
-                                        self.m1_endDatetime, command_line_args=self.args, 
-                                        backfill_timedelta=timedelta(seconds=0))
+                                        self.m1_endDatetime, command_line_args=self.args) 
+                                        
     
         # For timeseriesProfile data we need to pass the nominaldepth of the plaform
         # so that the model is put at the correct depth in the Spatial -> 3D view.
@@ -818,8 +818,7 @@ class CANONLoader(LoadScript):
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
                                         platformName, self.colors['m2'], 'mooring', 'Mooring Deployment', 
                                         self.m2_parms, self.dbAlias, stride, self.m2_startDatetime, 
-                                        self.m2_endDatetime, command_line_args=self.args, 
-                                        backfill_timedelta=timedelta(seconds=3600))
+                                        self.m2_endDatetime, command_line_args=self.args)
     
         # For timeseriesProfile data we need to pass the nominaldepth of the plaform
         # so that the model is put at the correct depth in the Spatial -> 3D view.

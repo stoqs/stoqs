@@ -138,7 +138,7 @@ class Base_Loader(STOQS_Loader):
     def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, campaignDescription=None,
                 activitytypeName=None, platformColor=None, platformTypeName=None, 
                 startDatetime=None, endDatetime=None, dataStartDatetime=None, auxCoords=None, stride=1,
-                grdTerrain=None, appendFlag=False, backfill_timedelta=None ):
+                grdTerrain=None, appendFlag=False):
         '''
         Given a URL open the url and store the dataset as an attribute of the object,
         then build a set of standard names using the dataset.
@@ -167,9 +167,6 @@ class Base_Loader(STOQS_Loader):
         @param appendFlag: If true then a dataStartDatetime value will be set by looking up the last
                            timevalue in the database for the Activity returned by getActivityName().
                            A True value will override the passed parameter dataStartDatetime.
-        @param backfill_timedelta: Some appendFlag datastreams may have missing data data records at
-                                   end of previous loads, e.g. M1. Set this to a datetime.timedelta
-                                   to backfill those records.
         @param auxCoords: a dictionary of coordinate standard_names (time, latitude, longitude, depth) 
                           pointing to exact names of those coordinates. Used for variables missing the 
                           coordinates attribute.
@@ -192,7 +189,6 @@ class Base_Loader(STOQS_Loader):
         self.stride = stride
         self.grdTerrain = grdTerrain
         self.appendFlag = appendFlag
-        self.backfill_timedelta = backfill_timedelta
         self.coord_dicts = {}
 
         self.url = url
@@ -1408,9 +1404,6 @@ class Base_Loader(STOQS_Loader):
             self.dataStartDatetime = (InstantPoint.objects.using(self.dbAlias)
                                         .filter(activity__name=self.getActivityName())
                                         .aggregate(Max('timevalue'))['timevalue__max'])
-            if hasattr(self, 'backfill_timedelta') and self.dataStartDatetime:
-                if self.backfill_timedelta:
-                    self.dataStartDatetime = self.dataStartDatetime - self.backfill_timedelta
 
         self.param_by_key = {}
         self.mv_by_key = {}
@@ -2047,7 +2040,7 @@ def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
 
 def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
                      dbAlias, stride, startDatetime=None, endDatetime=None, dataStartDatetime=None,
-                     command_line_args=None, backfill_timedelta=None):
+                     command_line_args=None):
     '''
     Run the DAPloader for OceanSites formatted Mooring Station data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -2073,7 +2066,7 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
             dataStartDatetime = dataStartDatetime,
             endDatetime = endDatetime,
             appendFlag = appendFlag,
-            backfill_timedelta = backfill_timedelta)
+            )
 
     if parmList:
         loader.logger.debug("Setting include_names to %s", parmList)
