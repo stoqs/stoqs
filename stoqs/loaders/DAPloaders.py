@@ -657,8 +657,14 @@ class Base_Loader(STOQS_Loader):
             e = timeAxis[-1]
             self.logger.debug("requested_endDatetime not given, using the last value of timeAxis = %f", e.data[0])
 
-        # Numpy Array tf will have True values at indices corresponding to the data we need to load
-        tf = (s < timeAxis) & (timeAxis <= e)
+        if getattr(self, 'appendFlag', False):
+            # Exclusive of s, as that is the max timevalue in the database for the Activity
+            tf = (s < timeAxis) & (timeAxis <= e)
+        else:
+            # Inclusive of the specified start time
+            tf = (s <= timeAxis) & (timeAxis <= e)
+
+        # Numpy Array tf has True values at indices corresponding to the data we need to load
         tIndx = np.nonzero(tf == True)[0]
         if tIndx.size == 0:
             raise NoValidData('No time values from {self.url} between time values {s} and {e}')
