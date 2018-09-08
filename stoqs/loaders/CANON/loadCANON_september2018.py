@@ -106,7 +106,25 @@ cl.nps34a_endDatetime = enddate
 cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201808/'
 
 cl.slocum_nemesis_files = [
-
+         'nemesis_20180907T181042_rt0.nc',
+         'nemesis_20180907T175240_rt0.nc',
+         'nemesis_20180907T160651_rt0.nc',
+         'nemesis_20180907T121649_rt0.nc',
+         'nemesis_20180907T104111_rt0.nc',
+         'nemesis_20180907T090004_rt0.nc',
+         'nemesis_20180907T080728_rt0.nc',
+         'nemesis_20180907T054213_rt0.nc',
+         'nemesis_20180907T042212_rt0.nc',
+         'nemesis_20180907T032232_rt0.nc',
+         'nemesis_20180907T025502_rt0.nc',
+         'nemesis_20180907T011917_rt0.nc',
+         'nemesis_20180907T002711_rt0.nc',
+         'nemesis_20180906T234022_rt0.nc',
+         'nemesis_20180906T231854_rt0.nc',
+         'nemesis_20180906T220249_rt0.nc',
+         'nemesis_20180906T212817_rt0.nc',
+         'nemesis_20180906T205625_rt0.nc',
+         'nemesis_20180906T203302_rt0.nc',
          'nemesis_20180906T194104_rt0.nc',
          'nemesis_20180906T191353_rt0.nc',
          'nemesis_20180906T184751_rt0.nc',
