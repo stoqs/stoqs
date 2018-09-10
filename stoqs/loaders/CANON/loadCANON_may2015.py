@@ -180,20 +180,15 @@ cl.rcpctd_files = [
 #####################################################################
 # JOHN MARTIN
 #####################################################################
-##cl.JMuctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Martin/uctd/' 
-##cl.JMuctd_parms = ['TEMP', 'PSAL', 'turb_scufa', 'fl_scufa' ]
-##cl.JMuctd_files = [ 'jhmudas_2013101.nc', 'jhmudas_2013102.nc', 'jhmudas_2013103.nc', 'jhmudas_2013911.nc', 'jhmudas_2013913.nc', 
-##                    'jhmudas_2013916.nc', 'jhmudas_2013917.nc', 'jhmudas_2013919.nc', 'jhmudas_2013923.nc', 'jhmudas_2013930.nc', ]
-
-##cl.JMpctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Martin/pctd/' 
-##cl.JMpctd_parms = ['TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
-##cl.JMpctd_files = [
-##                    '25613JMC01.nc', '25613JMC02.nc', '25613JMC03.nc', '25613JMC04.nc', '25613JMC05.nc', 
-##                    '26013JMC01.nc', '26013JMC02.nc', '26013JMC03.nc', '26013JMC04.nc', 
-##                    '26213JMC01.nc', '26213JMC02.nc', '26213JMC03.nc', '26213JMC04.nc', '26213JMC05.nc', '26613JMC01.nc',
-##                    '26613JMC02i1.nc', '26613JMC02.nc', '26613JMC03.nc', '27513JMC01.nc', '27513JMC02.nc', '27513JMC03.nc', 
-##                    '27513JMC04.nc', '27513JMC05.nc', '27613JMC01.nc', '27613JMC02.nc', '27613JMC03.nc', '27613JMC04.nc',
-##                  ]
+cl.JMpctd_base = cl.dodsBase + 'CANON/2015_May/Platforms/Ships/Martin/pctd/' 
+cl.JMpctd_parms = ['TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
+cl.JMpctd_files = [
+                    'EH15_18.nc', 'EH15_19.nc', 'EH15_20.nc', 'EH15_21.nc', 'EH15_22.nc', 'EH15_24.nc', 
+                    'EH15_25.nc', 'EH15_26.nc', 'EH15_27.nc', 'EH15_28a.nc', 'EH15_29a.nc', 'EH15_29b.nc', 
+                    'EH15_29.nc', 'EH15_30.nc', 'EH15_31.nc', 'EH15_Sta10a.nc', 'EH15_Sta11.nc', 'EH15_Sta12a.nc', 
+                    'EH15_Sta12.nc', 'EH15_Sta13.nc', 'EH15_Sta14.nc', 'EH15_Sta15.nc', 'EH15_Sta16.nc', 'EH15_Sta17.nc', 
+                    'EH15_Sta8b.nc', 'EH15_Sta9.nc', 
+                  ]
 
 ######################################################################
 #  MOORINGS May 2015
@@ -319,7 +314,7 @@ if cl.args.test:
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
     ##cl.loadJMuctd(stride=10) ## waiting for data to be formated for loading
-    ##cl.loadJMpctd(stride=10) ## waiting for data to be formated for loading
+    cl.loadJMpctd(stride=10)
     ##cl.loadWFuctd(stride=10) ## not in this campaign   
     ##cl.loadWFpctd(stride=10) ## not in this campaign
 
@@ -346,7 +341,7 @@ elif cl.args.optimal_stride:
     cl.loadRCuctd(stride=2)
     cl.loadRCpctd(stride=2)
     ##cl.loadJMuctd(stride=2) ## waiting for data to be formated for loading
-    ##cl.loadJMpctd(stride=2) ## waiting for data to be formated for loading
+    cl.loadJMpctd(stride=2)
     ##cl.loadWFuctd(stride=2) ## not in this campaign   
     ##cl.loadWFpctd(stride=2) ## not in this campaign
 
@@ -374,7 +369,7 @@ else:
     cl.loadRCuctd()
     cl.loadRCpctd()
     ##cl.loadJMuctd() ## waiting for data to be formated for loading
-    ##cl.loadJMpctd() ## waiting for data to be formated for loading
+    cl.loadJMpctd()
     ##cl.loadWFuctd() ## not in this campaign   
     ##cl.loadWFpctd() ## not in this campaign
 

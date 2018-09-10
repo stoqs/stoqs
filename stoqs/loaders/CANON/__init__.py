@@ -464,6 +464,8 @@ class CANONLoader(LoadScript):
                                         grdTerrain=self.grdTerrain)
             except DAPloaders.NoValidData as e:
                 self.logger.warn(f'No valid data in {url}')
+            except DAPloaders.DuplicateData as e:
+                self.logger.warn(f'Data from {url} already in database, skipping')
 
     def load_wg_oa(self, stride=None):
         '''
