@@ -138,7 +138,7 @@ class Base_Loader(STOQS_Loader):
     def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, campaignDescription=None,
                 activitytypeName=None, platformColor=None, platformTypeName=None, 
                 startDatetime=None, endDatetime=None, dataStartDatetime=None, auxCoords=None, stride=1,
-                grdTerrain=None, appendFlag=False):
+                grdTerrain=None, command_line_args=None):
         '''
         Given a URL open the url and store the dataset as an attribute of the object,
         then build a set of standard names using the dataset.
@@ -164,7 +164,7 @@ class Base_Loader(STOQS_Loader):
         @param endDatetime: A Python datetime.dateime object specifying the end date time of data to load
         @param dataStartDatetime: A Python datetime.dateime object specifying the start date time of data 
                                   to append to an existing Activity
-        @param appendFlag: If true then a dataStartDatetime value will be set by looking up the last
+        @param command_line_args.append: If true then a dataStartDatetime value will be set by looking up the last
                            timevalue in the database for the Activity returned by getActivityName().
                            A True value will override the passed parameter dataStartDatetime.
         @param auxCoords: a dictionary of coordinate standard_names (time, latitude, longitude, depth) 
@@ -188,7 +188,7 @@ class Base_Loader(STOQS_Loader):
         self.auxCoords = auxCoords
         self.stride = stride
         self.grdTerrain = grdTerrain
-        self.appendFlag = appendFlag
+        self.command_line_args = command_line_args
         self.coord_dicts = {}
 
         self.url = url
@@ -653,11 +653,13 @@ class Base_Loader(STOQS_Loader):
             e = timeAxis[-1]
             self.logger.debug("requested_endDatetime not given, using the last value of timeAxis = %f", e.data[0])
 
-        if getattr(self, 'appendFlag', False):
-            # Exclusive of s, as that is the max timevalue in the database for the Activity
-            self.logger.info(f"--append specified. Finding start index where time > {s}")
-            tf = (s < timeAxis) & (timeAxis <= e)
-        else:
+        tf = np.array([])
+        if getattr(self, 'command_line_args', False):
+            if self.command_line_args.append:
+                # Exclusive of s, as that is the max timevalue in the database for the Activity
+                self.logger.info(f"--append specified. Finding start index where time > {s}")
+                tf = (s < timeAxis) & (timeAxis <= e)
+        if not tf.any():
             # Inclusive of the specified start time
             tf = (s <= timeAxis) & (timeAxis <= e)
 
@@ -675,7 +677,7 @@ class Base_Loader(STOQS_Loader):
             indices = (tIndx[0], tIndx[-1] + 1)
         except IndexError:
             raise NoValidData('Could not get first and last indexes from tIndex = %s. Skipping.' % (tIndx))
-        self.logger.debug('Start and end indices are: %s', indices)
+        self.logger.info('Start and end indices are: %s', indices)
 
         if tIndx[-1] < tIndx[0]:
             raise InvalidSliceRequest('Cannot issue DAP temporal constraint expression with negative length: tIndx = {tIndx}')
@@ -1401,7 +1403,7 @@ class Base_Loader(STOQS_Loader):
         for key in self.include_names:
             parmCount[key] = 0
 
-        if self.appendFlag: # pragma: no cover
+        if getattr(self, 'command_line_args.append', False):
             self.dataStartDatetime = (InstantPoint.objects.using(self.dbAlias)
                                         .filter(activity__name=self.getActivityName())
                                         .aggregate(Max('timevalue'))['timevalue__max'])
@@ -1691,7 +1693,8 @@ class BED_Trajectory_Loader(Trajectory_Loader):
 #
 # Helper methods that expose a common interface for executing the loaders for specific platforms
 #
-def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, plotTimeSeriesDepth=None, grdTerrain=None):
+def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
+                        stride, plotTimeSeriesDepth=None, grdTerrain=None, command_line_args=None):
     '''
     Run the DAPloader for Generic AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1711,7 +1714,8 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
             platformColor = pColor,
             platformTypeName = pTypeName,
             stride = stride,
-            grdTerrain = grdTerrain)
+            grdTerrain = grdTerrain,
+            command_line_args = command_line_args)
 
     loader.include_names = parmList
 
@@ -1868,11 +1872,6 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
-    appendFlag = False
-    if isinstance(command_line_args, Namespace):
-        if command_line_args.append:
-            appendFlag = True
-
     loader = Lrauv_Loader(
             url = url,
             campaignName = cName,
@@ -1891,7 +1890,7 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
             contourUrl = contourUrl,
             auxCoords = auxCoords,
             timezone = timezone,
-            appendFlag = appendFlag)
+            command_line_args = command_line_args)
 
     if parmList:
         loader.include_names = []
@@ -1932,11 +1931,6 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
-    appendFlag = False
-    if isinstance(command_line_args, Namespace):
-        if command_line_args.append:
-            appendFlag = True
-
     loader = Glider_Loader(
             url = url,
             campaignName = cName,
@@ -1952,7 +1946,7 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
             endDatetime = endDatetime,
             dataStartDatetime = dataStartDatetime,
             grdTerrain = grdTerrain,
-            appendFlag = appendFlag)
+            command_line_args = command_line_args)
 
     if parmList:
         loader.logger.debug("Setting include_names to %s", parmList)
@@ -2012,7 +2006,8 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         loader.logger.debug("Loaded Activity with name = %s", aName)
 
 
-def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
+def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
+                        stride, startDatetime=None, endDatetime=None, command_line_args=None):
     '''
     Run the DAPloader for Generic CF Metadata timeSeries featureType data. 
     Following the load important updates are made to the database.
@@ -2029,7 +2024,8 @@ def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
             platformTypeName = pTypeName,
             stride = stride,
             startDatetime = startDatetime,
-            endDatetime = endDatetime)
+            endDatetime = endDatetime,
+            command_line_args = command_line_args)
 
     if parmList:
         loader.logger.debug("Setting include_names to %s", parmList)
@@ -2047,11 +2043,6 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
-    appendFlag = False
-    if isinstance(command_line_args, Namespace):
-        if command_line_args.append:
-            appendFlag = True
-
     loader = Mooring_Loader(
             url = url,
             campaignName = cName,
@@ -2066,7 +2057,7 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
             startDatetime = startDatetime,
             dataStartDatetime = dataStartDatetime,
             endDatetime = endDatetime,
-            appendFlag = appendFlag,
+            command_line_args = command_line_args,
             )
 
     if parmList:
