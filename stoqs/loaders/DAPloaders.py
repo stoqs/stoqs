@@ -655,6 +655,7 @@ class Base_Loader(STOQS_Loader):
 
         if getattr(self, 'appendFlag', False):
             # Exclusive of s, as that is the max timevalue in the database for the Activity
+            self.logger.info(f"--append specified. Finding start index where time > {s}")
             tf = (s < timeAxis) & (timeAxis <= e)
         else:
             # Inclusive of the specified start time
