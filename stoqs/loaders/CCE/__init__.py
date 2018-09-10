@@ -54,7 +54,7 @@ class CCELoader(LoadScript):
     num_beds = 11
     beds_names = [('bed{:02d}').format(n) for n in range(num_beds+1)]
     reds = plt.cm.Reds
-    for b, c in zip(beds_names, reds(np.arange(0, reds.N, reds.N/num_beds))):
+    for b, c in zip(beds_names, reds(np.arange(0, reds.N, reds.N/num_beds, dtype=int))):
         colors[b] = rgb2hex(c)[1:]
         # Duplicate color  for Trajectory 't' version
         colors[b + 't'] = rgb2hex(c)[1:]
@@ -80,7 +80,7 @@ class CCELoader(LoadScript):
     num_ms = 8
     ms_names = [('ccems{:1d}').format(n) for n in range(num_ms+1)]
     oranges = plt.cm.Oranges
-    for b, c in zip(ms_names, oranges(np.arange(0, oranges.N, oranges.N/num_ms))):
+    for b, c in zip(ms_names, oranges(np.arange(0, oranges.N, oranges.N/num_ms, dtype=int))):
         colors[b] = rgb2hex(c)[1:]
 
     def get_start_bed_depths(self):
