@@ -139,17 +139,6 @@ class CCELoader(LoadScript):
             ccesin_start_datetime = getattr(self, 'ccesin_start_datetime', None)
             ccesin_end_datetime = getattr(self, 'ccesin_end_datetime', None)
 
-            dataStartDatetime = None
-            if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple 
-                # activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                                activity__name=aName).aggregate(
-                                                Max('timevalue'))['timevalue__max']
-                if dataStartDatetime:
-                    # Subract an hour to fill in missing_values at end from previous load
-                    dataStartDatetime = dataStartDatetime - timedelta(seconds=3600)
-
             loader = Mooring_Loader(url = url, 
                                     campaignName = self.campaignName,
                                     campaignDescription = self.campaignDescription,
@@ -162,7 +151,7 @@ class CCELoader(LoadScript):
                                     stride = stride,
                                     startDatetime = ccesin_start_datetime,
                                     endDatetime = ccesin_end_datetime,
-                                    dataStartDatetime = dataStartDatetime)
+                                    command_line_args = self.args)
 
             loader.include_names = self.ccesin_parms
             loader.auxCoords = {}
