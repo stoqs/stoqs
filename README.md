@@ -25,11 +25,16 @@ curl "https://raw.githubusercontent.com/stoqs/stoqs/master/provision.sh" -o prov
 vagrant plugin install vagrant-vbguest
 vagrant up --provider virtualbox
 ```
+The Vagrantfile and provision.sh will provision a development system with an NFS mounted
+directory from your host operating system. If your host doesn't support serving files via
+NFS (most Windows hosts don't support NFS file serving) then you'll need to edit these files 
+before executing `vagrant up`. Look for the `...support NFS file serving` comments in these 
+files for the lines you need to change.
 
 The `vagrant up` command takes an hour or so to provision and setup a complete CentOS 7 
 STOQS Virtual Machine that also includes MB-System, InstantReality, and all the Python data science 
 tools bundled in packages such as Anaconda.  You will be prompted for your admin password
-for configuring a shared folder from the VM.  All connections to this VM are 
+for configuring a shared folder from the VM (unless you've disabled the NFS mount).  All connections to this VM are 
 performed from the the directory you installed it in; you must cd to it (e.g. `cd
 ~/Vagrants/stoqsvm`) before logging in with the `vagrant ssh -- -X` command.  After 
 installation finishes log into your new VM and test it:
