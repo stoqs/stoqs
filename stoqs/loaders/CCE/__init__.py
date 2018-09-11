@@ -188,8 +188,8 @@ def make_load_ccems_method(name):
         files = getattr(self, plt_name + '_files')
         parms = getattr(self, plt_name + '_parms')
         nominal_depth = getattr(self, plt_name + '_nominal_depth')
-        start_datetime = getattr(self, plt_name + '_start_datetime')
-        end_datetime = getattr(self, plt_name + '_end_datetime')
+        start_datetime = getattr(self, plt_name + '_start_datetime', None)
+        end_datetime = getattr(self, plt_name + '_end_datetime', None)
 
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in files], files):

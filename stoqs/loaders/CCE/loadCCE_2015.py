@@ -32,8 +32,8 @@ hires_event_times = [
                      ]
 
 # Overall time period for the whole campaign
-campaign_start_datetime = datetime(2015, 10, 13, 0,  0)
-campaign_end_datetime = datetime(2017, 4, 11, 0,  0)
+#campaign_start_datetime = datetime(2015, 10, 13, 0,  0)
+#campaign_end_datetime = datetime(2017, 4, 11, 0,  0)
 
 class CCE_2015_Campaign:
 
@@ -266,8 +266,6 @@ class CCE_2015_Campaign:
                             'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
         # MS1 ADCP data - timeseries data
-        self.cl.ccems1_start_datetime = campaign_start_datetime
-        self.cl.ccems1_end_datetime = campaign_end_datetime
         self.cl.ccems1_nominal_depth = 225
         self.cl.ccems1_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS1/'
         self.cl.ccems1_files = [ 
@@ -293,8 +291,6 @@ class CCE_2015_Campaign:
         self.cl.ccems1_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
 
         # MS2 ADCP data - timeseries data
-        self.cl.ccems2_start_datetime = campaign_start_datetime
-        self.cl.ccems2_end_datetime = campaign_end_datetime
         self.cl.ccems2_nominal_depth = 462
         self.cl.ccems2_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS2/'
         self.cl.ccems2_files = [ 
@@ -316,8 +312,6 @@ class CCE_2015_Campaign:
         self.cl.ccems2_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
 
         # MS3 ADCP and CTD data - timeseries data
-        self.cl.ccems3_start_datetime = campaign_start_datetime
-        self.cl.ccems3_end_datetime = campaign_end_datetime
         self.cl.ccems3_nominal_depth = 764
         self.cl.ccems3_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS3/'
         self.cl.ccems3_files = [ 
@@ -351,8 +345,6 @@ class CCE_2015_Campaign:
 
 
         # MS5 ADCP data - timeseries data
-        self.cl.ccems5_start_datetime = campaign_start_datetime
-        self.cl.ccems5_end_datetime = campaign_end_datetime
         self.cl.ccems5_nominal_depth = 1315
         self.cl.ccems5_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS5/'
         self.cl.ccems5_files = [ 

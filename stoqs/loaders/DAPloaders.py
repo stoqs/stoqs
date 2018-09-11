@@ -947,7 +947,13 @@ class Base_Loader(STOQS_Loader):
         epoch_seconds = []
         for jd, ms in zip(times, time2s):
             gcal = jd2gcal(jd - 0.5, ms / 86400000.0)
-            gcal_datetime = datetime(*gcal[:3]) + timedelta(days=gcal[3])
+            try:
+                gcal_datetime = datetime(*gcal[:3]) + timedelta(days=gcal[3])
+            except ValueError as e:
+                # Encountered this error after removing start & end times for the load on this dataset:
+                # http://dods.mbari.org/opendap/data/CCE_Archive/MS3/20151005/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20151005.nc.ascii?time[93900:1:94100]
+                self.logger.debug(f"{e} in {self.url}")
+
             epoch_seconds.append(to_udunits(gcal_datetime, time_units))
 
         return epoch_seconds, time_units
