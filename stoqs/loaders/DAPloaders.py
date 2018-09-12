@@ -305,7 +305,11 @@ class Base_Loader(STOQS_Loader):
         try:
             mv = float(self.ds[var].attributes['missing_value'])
         except KeyError:
-            self.logger.debug('Cannot get attribute missing_value for variable %s from url %s', var, self.url)
+            if 'nemesis' in self.url and var in ('u', 'v'):
+                self.logger.debug('Special fix for nemesis data, return a standard missing_value of -1.e34')
+                mv = -1.0e34
+            else:
+                self.logger.debug('Cannot get attribute missing_value for variable %s from url %s', var, self.url)
         except AttributeError as e:
             self.logger.debug(str(e))
         
@@ -672,7 +676,7 @@ class Base_Loader(STOQS_Loader):
             tIndx = np.array([tIndx[0], tIndx[0]])
 
         try:
-            indices = (tIndx[0], tIndx[-1])
+            indices = (tIndx[0], tIndx[-1] + 1)
         except IndexError:
             raise NoValidData('Could not get first and last indexes from tIndex = %s. Skipping.' % (tIndx))
         self.logger.info('Start and end indices are: %s', indices)
@@ -766,7 +770,8 @@ class Base_Loader(STOQS_Loader):
 
     def _meass(self, depths, longitudes, latitudes):
         for de, lo, la in zip(depths, longitudes, latitudes):
-            if de and lo and la:
+            # Accept depths that are 0.0, but not latitudes and longitudes that are zero
+            if de is not None and lo and la:
                 yield Measurement(depth=repr(de), geom=f'POINT({repr(lo)} {repr(la)})')
             else:
                 yield None
@@ -790,10 +795,13 @@ class Base_Loader(STOQS_Loader):
         except KeyError:
             # Allow for variables with no depth coordinate to be loaded at the depth specified in auxCoords
             if ac[DEPTH] in self.ds:
-                if isinstance(ac[DEPTH], float):
-                    depths =  ac[DEPTH] * np.ones(len(times))
+                if isinstance(ac[DEPTH], (int, float)):
+                    depths = ac[DEPTH] * np.ones(len(times))
             else:
                 self.logger.warn(f'No depth coordinate {ac[DEPTH]} in {self.ds}')
+                if isinstance(ac[DEPTH], (int, float)):
+                    self.logger.info('Overridden in auxCoords: ac[DEPTH] = {ac[DEPTH]}, setting depths to [{ac[DEPTH]}]')
+                    depths = [ac[DEPTH]]
 
         if isinstance(self.ds[ac[LATITUDE]], pydap.model.GridType):
             latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
@@ -806,8 +814,17 @@ class Base_Loader(STOQS_Loader):
             longitudes = self.ds[ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
 
         self.logger.debug(f'Getting good_coords for {pnames}...')
-        mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
-                                            pnames, mtimes, depths, latitudes, longitudes))
+        try:
+            mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
+                                        pnames, mtimes, depths, latitudes, longitudes))
+        except TypeError:
+            # When ac[DEPTH] is a number, convert one time value to a list
+            self.logger.info(f'Got TypeError, assuming coords are single valued and converting to lists:')
+            mtimes = [from_udunits(float(times.data), time_units)]
+            latitudes = [float(latitudes.data)]
+            longitudes = [float(longitudes.data)]
+            mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
+                                        pnames, mtimes, depths, latitudes, longitudes))
 
         # Reassign meass with Measurement objects that have their id set
         meass, mask = self._bulk_load_coordinates(self._ips(mtimes), self._meass(
@@ -816,7 +833,7 @@ class Base_Loader(STOQS_Loader):
         return meass, dup_times, mask
 
     def _load_coords_from_instr_ds(self, tindx, ac):
-        '''Pull itime coordinate from Instrument (time-coordinate-only) NetCDF dataset (e.g. LOPC),
+        '''Pull time coordinate from Instrument (time-coordinate-only) NetCDF dataset (e.g. LOPC),
         lookup matching Measurment (containing depth, latitude, and longitude) and bulk create 
         Instantpoints and Measurements in the database.
         '''
@@ -871,20 +888,29 @@ class Base_Loader(STOQS_Loader):
         total_loaded = 0   
         for k, pnames in load_groups.items():
             ac = coor_groups[k]
+            try:
+                tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
+            except InvalidSliceRequest:
+                self.logger.warn(f'Failed to getTimeBegEndIndices() for axes {k} from {self.url}')
+                continue
+
             for i, pname in enumerate(pnames):
-                try:
-                    tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
-                except InvalidSliceRequest:
-                    self.logger.warn(f'Failed to getTimeBegEndIndices() for {pname} from {self.url}')
-                    continue
-
-                if DEPTH not in ac:
-                    self.logger.warn(f'{self.param_by_key[pname]} does not have {DEPTH} in {ac}. Skipping.')
-                    continue
-
+                self.logger.debug(f'{i}, {pname}')
                 if i == 0:
                     # First time through, bulk load the coordinates: instant_points and measurements
-                    if ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
+                    if DEPTH not in ac:
+                        self.logger.warn(f'{self.param_by_key[pname]} does not have {DEPTH} in {ac}. Skipping.')
+                        continue
+                    if ac[DEPTH] not in self.ds:
+                        if isinstance(ac[DEPTH], (int, float)):
+                            # Likely u and v parameters from nemesis glider data where there is no depth_uv coordinate in the NetCDF
+                            self.logger.info(f'{self.param_by_key[pname]} does not have {DEPTH} in {self.url}.')
+                            self.logger.info(f'ac[DEPTH] = {ac[DEPTH]}. Assume that this depth coordinate was provided in auxCoords')
+                            self.logger.info(f'Loading coordinates for axes {k}')
+                            meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k)
+                        else:
+                            self.logger.warn(f'{pname} has no {ac[DEPTH]} coordinate in {self.url} or provided via auxCoords')
+                    elif ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
                         try:
                             # Expect CF Discrete Sampling Geometry or EPIC dataset
                             self.logger.info(f'Loading coordinates for axes {k}')
@@ -907,17 +933,24 @@ class Base_Loader(STOQS_Loader):
 
                 try:
                     if isinstance(self.ds[pname], pydap.model.GridType):
-                        constraint_string = f"using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        constraint_string = f"using python slice: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                         values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
                     else:
-                        constraint_string = f"using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        constraint_string = f"using python slice: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                         values = self.ds[pname].data[tindx[0]:tindx[-1]:self.stride]
                 except ValueError:
                     self.logger.warn(f'Stride of {self.stride} likely greater than range of data: {tindx[0]}:{tindx[-1]}')
                     self.logger.warn(f'Skipping load of {self.url}')
                     return total_loaded
 
-                self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1]}]")
+                # Test whether we need to make values iterable
+                try:
+                    len(values)
+                except TypeError:
+                    # Likely values is a single valued array, e.g. nemesis u, v data
+                    values = [float(values)]
+
+                self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
                 if hasattr(values[0], '__iter__'):
                     # For data like LOPC data - expect all values to be non-nan
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
@@ -1169,7 +1202,7 @@ class Base_Loader(STOQS_Loader):
 
                 # End if i == 0 (loading coords for list of pnames)
  
-                constraint_string = f"using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                constraint_string = f"using python slice: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                 values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
                 if len(values.shape) == 1:
                     self.logger.info("len(values.shape) = 1; likely EPIC timeseries data - reshaping to add a 'depth' dimension")
@@ -1182,7 +1215,7 @@ class Base_Loader(STOQS_Loader):
 
                 # All items but mess are generators, so we can call len() on it
                 self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
-                self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1]}]")
+                self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
                 mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
                 total_loaded += len(mps)
 
@@ -1454,7 +1487,7 @@ class Base_Loader(STOQS_Loader):
 
             return mps_loaded, path, parmCount
         except KeyError as e:
-            # Likely an include_name variable has a bad coordiantes attribute, give a better error message than just KeyError
+            # Likely an include_name variable has a bad coordinates attribute, give a better error message than just KeyError
             self.logger.exception(str(e))
             self.logger.error(f'Failed to bulk_create() data from URL: {self.url}')
 
