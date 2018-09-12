@@ -780,9 +780,13 @@ class STOQS_Loader(object):
         # Missing value rejections
         ac = self.coord_dicts[key]
         if 'depth' in ac:   # Tolerate EPIC 'sensor_depth' type data
-            if self.mv_by_key[ac['depth']]:
-                if np.isclose(depth, self.mv_by_key[ac['depth']]):
-                    return True
+            try:
+                if self.mv_by_key[ac['depth']]:
+                    if np.isclose(depth, self.mv_by_key[ac['depth']]):
+                        return True
+            except KeyError:
+                # Tolerate ac[DEPTH] == 0.0, or other value given in auxCoords
+                pass
 
         if lat:
             if self.mv_by_key[ac['latitude']]:
@@ -796,9 +800,13 @@ class STOQS_Loader(object):
 
         # fill_value rejections
         if 'depth' in ac:   # Tolerate EPIC 'sensor_depth' type data
-            if self.fv_by_key[ac['depth']]:
-                if np.isclose(depth, self.fv_by_key[ac['depth']]):
-                    return True
+            try:
+                if self.fv_by_key[ac['depth']]:
+                    if np.isclose(depth, self.fv_by_key[ac['depth']]):
+                        return True
+            except KeyError:
+                # Tolerate ac[DEPTH] == 0.0, or other value given in auxCoords
+                pass
 
         if lat:
             if self.fv_by_key[ac['latitude']]:
