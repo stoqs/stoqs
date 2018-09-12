@@ -1438,10 +1438,11 @@ class Base_Loader(STOQS_Loader):
         for key in self.include_names:
             parmCount[key] = 0
 
-        if getattr(self, 'command_line_args.append', False):
-            self.dataStartDatetime = (InstantPoint.objects.using(self.dbAlias)
-                                        .filter(activity__name=self.getActivityName())
-                                        .aggregate(Max('timevalue'))['timevalue__max'])
+        if getattr(self, 'command_line_args', False):
+            if self.command_line_args.append:
+                self.dataStartDatetime = (InstantPoint.objects.using(self.dbAlias)
+                                            .filter(activity__name=self.getActivityName())
+                                            .aggregate(Max('timevalue'))['timevalue__max'])
 
         self.param_by_key = {}
         self.mv_by_key = {}
