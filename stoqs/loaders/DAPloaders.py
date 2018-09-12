@@ -901,15 +901,12 @@ class Base_Loader(STOQS_Loader):
                     if DEPTH not in ac:
                         self.logger.warn(f'{self.param_by_key[pname]} does not have {DEPTH} in {ac}. Skipping.')
                         continue
-                    if ac[DEPTH] not in self.ds:
-                        if isinstance(ac[DEPTH], (int, float)):
-                            # Likely u and v parameters from nemesis glider data where there is no depth_uv coordinate in the NetCDF
-                            self.logger.info(f'{self.param_by_key[pname]} does not have {DEPTH} in {self.url}.')
-                            self.logger.info(f'ac[DEPTH] = {ac[DEPTH]}. Assume that this depth coordinate was provided in auxCoords')
-                            self.logger.info(f'Loading coordinates for axes {k}')
-                            meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k)
-                        else:
-                            self.logger.warn(f'{pname} has no {ac[DEPTH]} coordinate in {self.url} or provided via auxCoords')
+                    if ac[DEPTH] not in self.ds and isinstance(ac[DEPTH], (int, float)):
+                        # Likely u and v parameters from nemesis glider data where there is no depth_uv coordinate in the NetCDF
+                        self.logger.info(f'{self.param_by_key[pname]} does not have {DEPTH} in {self.url}.')
+                        self.logger.info(f'ac[DEPTH] = {ac[DEPTH]}. Assume that this depth coordinate was provided in auxCoords')
+                        self.logger.info(f'Loading coordinates for axes {k}')
+                        meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k)
                     elif ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
                         try:
                             # Expect CF Discrete Sampling Geometry or EPIC dataset
@@ -929,6 +926,7 @@ class Base_Loader(STOQS_Loader):
                             return total_loaded
                     else:
                         # Expect instrument (time-coordinate-only) dataset
+                        self.logger.warn(f'{pname} has no {ac[DEPTH]} coordinate - processing as time-coordinate-only, e.g. LOPC')
                         meass = self._load_coords_from_instr_ds(tindx, ac)
 
                 try:
