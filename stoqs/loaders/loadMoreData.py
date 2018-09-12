@@ -27,9 +27,9 @@ cl.m1_parms = [ 'northward_sea_water_velocity_HR', 'SEA_WATER_SALINITY_HR',
               ]
 
 # Use the same startDatetime as in loadTestData.py so that the Activity is named the same
-# Load 2 more hours of data beyond the endDatetime in loadTestData.py, with stride=2 we get 1 more point
+# Load 1 more hour of data beyond the endDatetime in loadTestData.py
 cl.m1_startDatetime = datetime.datetime(2010, 10, 27)
-cl.m1_endDatetime = datetime.datetime(2010, 10, 29, 2)
+cl.m1_endDatetime = datetime.datetime(2010, 10, 29, 1)
 
 
 # Execute the load
