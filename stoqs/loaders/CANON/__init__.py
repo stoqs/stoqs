@@ -461,7 +461,7 @@ class CANONLoader(LoadScript):
                                        'Slocum_nemesis', self.colors['slocum_nemesis'], 'glider', 'Glider Mission', 
                                         self.slocum_nemesis_parms, self.dbAlias, stride, 
                                         self.slocum_nemesis_startDatetime, self.slocum_nemesis_endDatetime,
-                                        grdTerrain=self.grdTerrain)
+                                        grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
             except DAPloaders.NoValidData as e:
                 self.logger.warn(f'No valid data in {url}')
             except DAPloaders.DuplicateData as e:
