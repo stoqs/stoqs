@@ -671,16 +671,14 @@ class Base_Loader(STOQS_Loader):
             # Loading a single value
             tIndx = np.array([tIndx[0], tIndx[0]])
 
-        # For python slicing add 1 to the end index
-        ##self.logger.debug('tIndx = %s', tIndx)
         try:
             indices = (tIndx[0], tIndx[-1])
         except IndexError:
             raise NoValidData('Could not get first and last indexes from tIndex = %s. Skipping.' % (tIndx))
         self.logger.info('Start and end indices are: %s', indices)
 
-        if tIndx[-1] < tIndx[0]:
-            raise InvalidSliceRequest('Cannot issue DAP temporal constraint expression with negative length: tIndx = {tIndx}')
+        if indices[1] <= indices[0]:
+            raise InvalidSliceRequest('Cannot issue DAP temporal constraint expression of non-positive slice: indices = {indices}')
 
         return indices
 
