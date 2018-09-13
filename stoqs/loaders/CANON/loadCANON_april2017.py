@@ -491,7 +491,6 @@ else:
     cl.loadLRAUV('ahi', startdate, enddate)
     cl.loadLRAUV('opah', startdate, enddate)
     cl.loadLRAUV('daphne', startdate, enddate)
-    cl.loadLRAUV('daphne', startdate, enddate)
     ##cl.loadL_662()  ## not in this campaign
     cl.loadL_662a()
     ##cl.load_NPS34()  ## not in this campaign

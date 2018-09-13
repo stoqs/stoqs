@@ -46,11 +46,10 @@ then
         echo "Cannot create default database stoqs; refer to above message."
         exit -1
     fi
-    ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_load_test.json
+    DATABASE_URL=$DATABASE_SUPERUSER_URL ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_load_test.json
     echo "Loading tests..."
     # Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL.
     # Note that DATABASE_URL is exported before this script is executed, this is so that it also works in Travis-CI.
-    
     DATABASE_URL=$DATABASE_SUPERUSER_URL coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
     loading_tests_status=$?
 fi
