@@ -4634,6 +4634,11 @@ function enable_cardboard(){
                 if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
                     options = $.extend(true, {}, options, { crosshair: { mode: "x" } });
                 }
+                if (parmData.dataset[0].data.length == 1) {
+                    // Crude fix for single-point (e.g. Nemesis u & v) series
+                    console.log('Setting series.points.show = true because "' + parmData.dataset[0].label + '": is single valued');
+                    options.series.points.show = true;
+                }
                 timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, options);
 
                 recolorParameterTime($('input:radio[name=pt-colors]:checked').val());

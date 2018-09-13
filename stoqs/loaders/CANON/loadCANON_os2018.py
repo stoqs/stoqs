@@ -28,7 +28,7 @@ from CANON import CANONLoader
 import timing
 
 cl = CANONLoader('stoqs_os2018', 'CANON - Off Season 2018',
-                 description='Off Season 2018 observations in Monterey Bay',
+                 description='Off Season 2018 observations in Monterey Bay and LRAUVs in Hawaii',
                  x3dTerrains={
                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -267,70 +267,34 @@ cl.subsample_csv_files = [
 cl.process_command_line()
 
 if cl.args.test:
-
-    cl.loadM1(stride=100)  
-    cl.loadL_662a(stride=100)
-    cl.loadLRAUV('tethys', startdate, enddate, stride=100)
-    cl.loadLRAUV('aku', startdate, enddate, stride=100)
-    cl.loadLRAUV('ahi', startdate, enddate, stride=100)
-    cl.loadLRAUV('opah', startdate, enddate, stride=100)
-    cl.loadLRAUV('daphne', startdate, enddate, stride=100)
-    ##cl.load_NPS34()  ## not in this campaign
-    ##cl.load_NPS34a() ## not in this campaign
-    ##cl.load_slocum_nemesis()  ## not in this campaign
-    ##cl.load_SG621(stride=2) ## KISS glider
-    ##cl.load_SG539(stride=2) ## KISS glider
-    cl.load_wg_Tiny(stride=100)
-    cl.load_oa1(stride=100)
-    cl.load_oa2(stride=100)
-    cl.loadDorado(stride=100)
-    ##cl.loadRCuctd()  ## not in this campaign
-    ##cl.loadRCpctd()  ## not in this campaign
-    ##cl.loadWFuctd()  ## not in this campaign
-    ##cl.loadWFpctd()  ## not in this campaign
-
-    cl.loadSubSamples()
-
+    cl.stride = 100
 elif cl.args.optimal_stride:
-
-    cl.loadL_662(stride=2)
-    ##cl.load_NPS29(stride=2)
-    #cl.load_NPS34(stride=2)
-    cl.load_wg_Tiny(stride=2)
-    cl.load_oa1(stride=2)
-    cl.load_oa2(stride=2)
-    cl.loadM1(stride=2)
-    ##cl.loadDorado(stride=2)
-    cl.loadRCuctd(stride=2)
-    cl.loadRCpctd(stride=2)
-
-    cl.loadSubSamples()
-
+    cl.stride = 2
 else:
     cl.stride = cl.args.stride
 
-    cl.loadM1()  
-    cl.loadLRAUV('tethys', startdate, enddate)
-    cl.loadLRAUV('aku', startdate, enddate)
-    cl.loadLRAUV('ahi', startdate, enddate)
-    cl.loadLRAUV('opah', startdate, enddate)
-    cl.loadLRAUV('daphne', startdate, enddate)
-    cl.loadL_662a()
-    ##cl.load_NPS34()  ## not in this campaign
-    ##cl.load_NPS34a() ## not in this campaign
-    ##cl.load_slocum_nemesis()  ## not in this campaign
-    ##cl.load_SG621(stride=2) ## KISS glider
-    ##cl.load_SG539(stride=2) ## KISS glider
-    cl.load_wg_Tiny()
-    cl.load_oa1()
-    cl.load_oa2()
-    cl.loadDorado()
-    ##cl.loadRCuctd()  ## not in this campaign
-    ##cl.loadRCpctd()  ## not in this campaign
-    ##cl.loadWFuctd()  ## not in this campaign
-    ##cl.loadWFpctd()  ## not in this campaign
+cl.loadM1()  
+cl.loadLRAUV('tethys', startdate, enddate)
+cl.loadLRAUV('aku', startdate, enddate)
+cl.loadLRAUV('ahi', startdate, enddate)
+cl.loadLRAUV('opah', startdate, enddate)
+cl.loadLRAUV('daphne', startdate, enddate)
+cl.loadL_662a()
+##cl.load_NPS34()  ## not in this campaign
+##cl.load_NPS34a() ## not in this campaign
+##cl.load_slocum_nemesis()  ## not in this campaign
+##cl.load_SG621(stride=2) ## KISS glider
+##cl.load_SG539(stride=2) ## KISS glider
+cl.load_wg_Tiny()
+cl.load_oa1()
+cl.load_oa2()
+cl.loadDorado()
+##cl.loadRCuctd()  ## not in this campaign
+##cl.loadRCpctd()  ## not in this campaign
+##cl.loadWFuctd()  ## not in this campaign
+##cl.loadWFpctd()  ## not in this campaign
 
-    #cl.loadSubSamples() ## no subSamples yet...
+#cl.loadSubSamples() ## no subSamples yet...
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
