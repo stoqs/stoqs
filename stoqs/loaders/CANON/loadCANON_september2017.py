@@ -150,8 +150,8 @@ cl.slocum_nemesis_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20170921/realTime/20170921.nc',
-                      'wgTiny/20171019/realTime/20171019.nc',
+                      'wgTiny/20170921/QC/20170921_QC.nc',
+                      'wgTiny/20171019/QC/20171019_QC.nc',
                    ]
 
 
