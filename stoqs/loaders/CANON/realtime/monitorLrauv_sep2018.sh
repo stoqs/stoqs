@@ -13,7 +13,7 @@ post='--post'
 debug=''
 #debug='--debug'
 database='stoqs_canon_september2018'
-urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
+urlbase='http://dods.mbari.org/thredds/catalog/LRAUV'
 declare -a searchstr=("/realtime/sbdlogs/2018/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
 declare -a platforms=("daphne" "tethys")
 
