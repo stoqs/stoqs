@@ -514,34 +514,27 @@ class Contour(object):
         lon = pointsnp[:,0]
         lat = pointsnp[:,1]
 
-        if self.extent:
-            ltmin = self.extent['maptrack__extent'][1]
-            ltmax = self.extent['maptrack__extent'][3]
-            lnmin = self.extent['maptrack__extent'][0]
-            lnmax = self.extent['maptrack__extent'][2]
-            lndiff = abs(lnmax - lnmin)
-            ltdiff = abs(ltmax - ltmin)
-            logger.debug("lon diff {} lat diff {}".format(lndiff, ltdiff))
-            mindeg = .02
-            paddeg = .01
-            if lndiff < mindeg :
-                lnmin -= mindeg
-                lnmax += mindeg
-            if ltdiff < mindeg:
-                ltmin -= mindeg
-                ltmax += mindeg
-            e = (lnmin - paddeg, ltmin - paddeg, lnmax + paddeg, ltmax + paddeg)
-        else:
-            # default map to Monterey Bay region
-            ltmin = 36.61
-            ltmax = 36.97
-            lnmin = -122.21
-            lnmax = -121.73
-            e = (lnmin, ltmin, lnmax, ltmax)
+        ltmin = self.extent['maptrack__extent'][1]
+        ltmax = self.extent['maptrack__extent'][3]
+        lnmin = self.extent['maptrack__extent'][0]
+        lnmax = self.extent['maptrack__extent'][2]
+        lndiff = abs(lnmax - lnmin)
+        ltdiff = abs(ltmax - ltmin)
+        logger.debug("lon diff {} lat diff {}".format(lndiff, ltdiff))
+        mindeg = .02
+        paddeg = .01
+        if lndiff < mindeg :
+            lnmin -= mindeg
+            lnmax += mindeg
+        if ltdiff < mindeg:
+            ltmin -= mindeg
+            ltmax += mindeg
 
-        logger.debug('Extent found {},{},{},{})'.format(e[0], e[1],e[2],e[3]))
+        e = (lnmin - paddeg, ltmin - paddeg, lnmax + paddeg, ltmax + paddeg)
+        logger.debug('Extent {},{},{},{})'.format(e[0], e[1],e[2],e[3]))
         # retry up to 5 times to get the basemap
         for i in range(0, 5):
+            logger.debug('Getting basemap')
             mp = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution='l', ax=ax)
             try:
                 # Works, but coarse resolution
@@ -915,13 +908,13 @@ class Contour(object):
                 shutil.rmtree(self.dirpath)
         else :
             try:
-                if self.data is not None:
-                    data_end_local = data_end.astimezone(pytz.timezone('America/Los_Angeles'))
-                    data_start_local = data_start.astimezone(pytz.timezone('America/Los_Angeles'))
-                    logger.debug('Plotting data')
-                    self.subtitle1 = '{}  to  {} PDT'.format(data_start_local.strftime('%Y-%m-%d %H:%M'), data_end_local.strftime('%Y-%m-%d %H:%M'))
-                    self.subtitle2 = '{}  to  {} UTC'.format(data_start.strftime('%Y-%m-%d %H:%M'), data_end.strftime('%Y-%m-%d %H:%M'))
-                    self.createPlot(data_start, data_end)
+                data_end_local = data_end.astimezone(pytz.timezone('America/Los_Angeles'))
+                data_start_local = data_start.astimezone(pytz.timezone('America/Los_Angeles'))
+                logger.debug('Plotting data')
+                self.subtitle1 = '{}  to  {} PDT'.format(data_start_local.strftime('%Y-%m-%d %H:%M'), data_end_local.strftime('%Y-%m-%d %H:%M'))
+                self.subtitle2 = '{}  to  {} UTC'.format(data_start.strftime('%Y-%m-%d %H:%M'), data_end.strftime('%Y-%m-%d %H:%M'))
+                self.createPlot(data_start, data_end)
             except Exception as e:
                 logger.error(e)
+                raise(e)
 
