@@ -95,6 +95,7 @@ class Loader(Thread):
 
     def put(self, job):
         found = False
+        # only place jobs in the queue with unique URLs
         for j in IterableQueue(self.q):
             if job.url_src in j.url_src:
                 found = True
@@ -108,16 +109,24 @@ class Loader(Thread):
                 self.q.task_done()
                 print('===>loading {}'.format(job.full_path))
                 try:
-                    start_date, end_date = self.load(job)
+                    url_dest, start_date, end_date = self.load(job)
                     # if last item in the queue, update animations 
                     if self.q.empty():
-                        print('===> update animations {}'.format(job.full_path))
+                        print('===> update animations {}'.format(url_dest))
+                        log_url = re.sub('\.nc$', '.png', url_dest)
 
-                        if self.update(start_date, end_date, job) and self.slack:
-                          print('====> posting to slack')
-                          log_url = re.sub('\.nc$', '.png', job.url_src)
-                          message = 'LRAUV log data processed through STOQS workflow. Log <{}|{} plot> '.format(log_url, job.activity_name)
-                          print(message)
+                        try:
+                          if self.update(start_date, end_date, url_dest) and self.slack:
+                            print('==========================> posting to slack')
+                            message = 'LRAUV log data loaded into STOQS <{} plot|{}> '.format(log_url, job.activity_name)
+                            print(message)
+                            # self.slack.chat.post_message("#lrauvs", message)
+                        except Exception as e:
+                            logger.warning(e)
+                            print('==========================> posting to slack')
+                            message = 'LRAUV log data loaded into STOQS <{}> '.format(job.activity_name)
+                            print(message)
+                            # self.slack.chat.post_message("#lrauvs", message)
                           # self.slack.chat.post_message("#lrauvs", message)
                 except ServerError as e:
                     logger.warning(e)
@@ -128,17 +137,17 @@ class Loader(Thread):
             else:
                 time.sleep(1)
 
-    def update(self, start_date, end_date, job):
+    def update(self, start_date, end_date, url_dest):
         try:
 
           endDatetimeUTC = pytz.utc.localize(end_date)
           startDatetimeUTC = pytz.utc.localize(start_date)
 
           # format contour output file name replacing file extension with .png
-          if "sbd" in job.url_src:
-            outFile = os.path.join(self.args.outDir, '/'.join(job.url_src.split('/')[-3:]).split('.')[0] + '.png')
+          if "sbd" in url_dest:
+            outFile = os.path.join(self.args.outDir, '/'.join(url_dest.split('/')[-3:]).split('.')[0] + '.png')
           else:
-            outFile = os.path.join(self.args.outDir, '/'.join(job.url_src.split('/')[-2:]).split('.')[0] + '.png')
+            outFile = os.path.join(self.args.outDir, '/'.join(url_dest.split('/')[-2:]).split('.')[0] + '.png')
 
           title = 'MBARI LRAUV Survey - ' + self.vehicle
 
@@ -323,7 +332,7 @@ class Loader(Thread):
         except Exception as e:
             logger.warning(e)
             
-        return start, end
+        return url_dest, start, end
 
 def process_command_line():
     import argparse
