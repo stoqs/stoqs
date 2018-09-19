@@ -34,9 +34,6 @@ before_script:
   - export PATH=$PWD/firefox:$PATH:$PWD/geckodriver
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
-  - wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/natgrid-0.2/natgrid-0.2.1.tar.gz
-  - tar -xzf natgrid-0.2.1.tar.gz
-  - cd natgrid-0.2.1 && python setup.py install && cd ..
 script:  
   - ./test.sh CHANGEME load noextraload
 after_script:
