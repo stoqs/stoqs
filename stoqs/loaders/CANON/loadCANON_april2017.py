@@ -285,8 +285,8 @@ cl.slocum_nemesis_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                     'wgTiny/20170307/realTime/20170307.nc',
-                     'wgTiny/20170412/realTime/20170412.nc',
+                     'wgTiny/20170307/QC/20170307_QC.nc',
+                     'wgTiny/20170412/QC/20170412_QC.nc',
                    ]
 cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
                     'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
