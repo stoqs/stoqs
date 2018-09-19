@@ -36,11 +36,6 @@ RUN wget -q -N http://download.osgeo.org/geos/geos-3.6.0.tar.bz2
 RUN tar -xjf geos-3.6.0.tar.bz2
 RUN cd geos-3.6.0 && ./configure && make -j 2 && make install && ldconfig && cd ..
 
-# NCAR's natgrid needed for contour plotting - several warnings/errors on compiling that can be ignored
-RUN wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/natgrid-0.2/natgrid-0.2.1.tar.gz
-RUN tar -xzf natgrid-0.2.1.tar.gz
-RUN cd natgrid-0.2.1 && python setup.py install && cd ..
-
 # Symlink to requirements from docker directory used to minimize context
 COPY requirements /requirements
 RUN pip3 install git+https://github.com/pymssql/pymssql
