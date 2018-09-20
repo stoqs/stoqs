@@ -51,7 +51,7 @@ cl = CANONLoader('stoqs_canon_september2018', 'CANON - September 2018',
 # beyond the temporal bounds of the campaign
 #
 startdate = datetime.datetime(2018, 8, 30)  # Fixed start. Aug 30, 2018
-enddate = datetime.datetime(2018, 9, 12)  # Fixed end. September 12, 2018.
+enddate = datetime.datetime(2018, 9, 19)  # Fixed end. September 19, 2018.
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
