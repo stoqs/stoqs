@@ -28,15 +28,15 @@ from CANON import CANONLoader
 import timing
 
 cl = CANONLoader('stoqs_canon_september2018', 'CANON - September 2018',
-                 description='September 2018 campaign observations in Monterey Bay',
+                 description='September 2018 ESP Tethys drift campaign observations in Monterey Bay',
                  x3dTerrains={
-                   'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                   'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
                      'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                      'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                      'VerticalExaggeration': '10',
                    },
-                   'http://stoqs.mbari.org/x3d/Monterey25_1x/Monterey25_1x_src_scene.x3d': {
+                   'https://stoqs.mbari.org/x3d/Monterey25_1x/Monterey25_1x_src_scene.x3d': {
                      'name': 'Monterey25_1x',
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
                      'orientation': '0.89575 -0.31076 -0.31791 1.63772',
@@ -51,7 +51,7 @@ cl = CANONLoader('stoqs_canon_september2018', 'CANON - September 2018',
 # beyond the temporal bounds of the campaign
 #
 startdate = datetime.datetime(2018, 8, 30)  # Fixed start. Aug 30, 2018
-enddate = datetime.datetime(2018, 9, 12)  # Fixed end. September 12, 2018.
+enddate = datetime.datetime(2018, 9, 19)  # Fixed end. September 19, 2018.
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -477,7 +477,7 @@ cl.load_oa1()
 cl.load_oa2()
 cl.loadDorado(startdate, enddate, build_attrs=True)
 cl.loadLRAUV('daphne', startdate, enddate)
-cl.loadLRAUV('makai', startdate, enddate)
+cl.loadLRAUV('tethys', startdate, enddate)
 ##cl.loadRCuctd()  ## not in this campaign
 ##cl.loadRCpctd()  ## not in this campaign
 ##cl.loadWFuctd()
