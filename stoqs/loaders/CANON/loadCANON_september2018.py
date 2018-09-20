@@ -477,7 +477,7 @@ cl.load_oa1()
 cl.load_oa2()
 cl.loadDorado(startdate, enddate, build_attrs=True)
 cl.loadLRAUV('daphne', startdate, enddate)
-cl.loadLRAUV('makai', startdate, enddate)
+cl.loadLRAUV('tethys', startdate, enddate)
 ##cl.loadRCuctd()  ## not in this campaign
 ##cl.loadRCpctd()  ## not in this campaign
 ##cl.loadWFuctd()
