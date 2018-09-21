@@ -28,7 +28,7 @@ vagrant up --provider virtualbox
 The Vagrantfile and provision.sh will provision a development system with an NFS mounted
 directory from your host operating system. If your host doesn't support serving files via
 NFS (most Windows hosts don't support NFS file serving) then you'll need to edit these files 
-before executing `vagrant up`. Look for the `...support NFS file serving` comments in these 
+before executing `vagrant up`. Look for the `support NFS file serving` comments in these 
 files for the lines you need to change.
 
 The `vagrant up` command takes an hour or so to provision and setup a complete CentOS 7 
