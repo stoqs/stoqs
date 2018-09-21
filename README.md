@@ -40,8 +40,9 @@ performed from the the directory you installed it in; you must cd to it (e.g. `c
 installation finishes log into your new VM and test it:
 
 ```bash
-vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt
-cd /vagrant/dev/stoqsgit && source venv-stoqs/bin/activate
+vagrant ssh -- -X           # Wait for [vagrant@localhost ~]$ prompt
+STOQS_HOME=/vagrant/dev     # Use STOQS_HOME=/home/vagrant/dev if not using NFS mount
+cd $STOQS_HOME/stoqsgit && source venv-stoqs/bin/activate
 export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
 ./test.sh CHANGEME load noextraload
 ```
@@ -50,7 +51,7 @@ In another terminal window start the development server (after a `cd ~/Vagrants/
 
 ```bash
 vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt
-cd /vagrant/dev/stoqsgit && source venv-stoqs/bin/activate
+cd $STOQS_HOME/dev/stoqsgit && source venv-stoqs/bin/activate
 export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
 stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
 ```
