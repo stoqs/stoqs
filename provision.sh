@@ -139,9 +139,9 @@ gmake -j 2 && gmake install
 cd ..
 
 echo Build and install GMT
-wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-5.3.1-src.tar.gz
-tar -xzf gmt-5.3.1-src.tar.gz
-cd gmt-5.3.1
+wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-5.4.4-src.tar.gz
+tar -xzf gmt-5.4.4-src.tar.gz
+cd gmt-5.4.4
 cp cmake/ConfigUserTemplate.cmake cmake/ConfigUser.cmake
 mkdir build
 cd build
@@ -208,15 +208,6 @@ cd ../..
 touch /tmp/mapserver_stoqshg.log
 chown apache.apache /tmp/mapserver_stoqshg.log
 sudo chmod go+w /tmp/mapserver_stoqshg.log
-
-# Needed for network support from docker containers & running docker w/o sudo
-hostnamectl set-hostname localhost
-cat <<EOT >> /etc/sysctl.conf
-net.ipv4.ip_forward=1
-EOT
-systemctl restart network
-groupadd docker
-usermod -aG docker $USER
 
 echo Build database for locate command
 updatedb
@@ -315,6 +306,15 @@ pip install --upgrade pip
 
 echo Giving user $USER ownership of everything in /home/$USER
 chown -R $USER /home/$USER
+
+echo Forward network traffic to support using docker without sudo - need to restart network at end of provisioning
+hostnamectl set-hostname localhost
+cat <<EOT >> /etc/sysctl.conf
+net.ipv4.ip_forward=1
+EOT
+systemctl restart network
+groupadd docker
+usermod -aG docker $USER
 
 echo Provisioning and setup have finished. 
 echo Default database loading and STOQS software tests should be run with:
