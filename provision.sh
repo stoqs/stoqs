@@ -209,15 +209,6 @@ touch /tmp/mapserver_stoqshg.log
 chown apache.apache /tmp/mapserver_stoqshg.log
 sudo chmod go+w /tmp/mapserver_stoqshg.log
 
-# Needed for network support from docker containers & running docker w/o sudo
-hostnamectl set-hostname localhost
-cat <<EOT >> /etc/sysctl.conf
-net.ipv4.ip_forward=1
-EOT
-systemctl restart network
-groupadd docker
-usermod -aG docker $USER
-
 echo Build database for locate command
 updatedb
 
@@ -315,6 +306,15 @@ pip install --upgrade pip
 
 echo Giving user $USER ownership of everything in /home/$USER
 chown -R $USER /home/$USER
+
+echo Forward network traffic to support using docker without sudo - need to restart network at end of provisioning
+hostnamectl set-hostname localhost
+cat <<EOT >> /etc/sysctl.conf
+net.ipv4.ip_forward=1
+EOT
+systemctl restart network
+groupadd docker
+usermod -aG docker $USER
 
 echo Provisioning and setup have finished. 
 echo Default database loading and STOQS software tests should be run with:
