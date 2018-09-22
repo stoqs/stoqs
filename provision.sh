@@ -139,9 +139,9 @@ gmake -j 2 && gmake install
 cd ..
 
 echo Build and install GMT
-wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-5.3.1-src.tar.gz
-tar -xzf gmt-5.3.1-src.tar.gz
-cd gmt-5.3.1
+wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-5.4.4-src.tar.gz
+tar -xzf gmt-5.4.4-src.tar.gz
+cd gmt-5.4.4
 cp cmake/ConfigUserTemplate.cmake cmake/ConfigUser.cmake
 mkdir build
 cd build
