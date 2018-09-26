@@ -51,11 +51,11 @@ requests-oauthlib==1.0.0
 scikit-learn==0.19.2
 scipy==1.1.0
 seawater==3.3.4
-selenium==3.14.0
+selenium==3.14.1
 simplejson==3.16.0
 six==1.11.0
 slacker==0.9.65
-Sphinx==1.8.0
+Sphinx==1.8.1
 sphinx-rtd-theme==0.4.1
 sqlparse==0.2.4
 thredds-crawler==1.5.4
