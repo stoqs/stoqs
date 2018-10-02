@@ -24,7 +24,7 @@ requests==2.19.1
 Pygments==2.2.0
 pygraphviz==1.5
 pymssql==2.1.4
-pyparsing==2.2.1
+pyparsing==2.2.2
 python-coveralls==2.9.1
 Shapely==1.6.4.post2
 snowballstemmer==1.2.1
