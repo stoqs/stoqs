@@ -23,7 +23,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from stoqs.models import MeasuredParameter, ActivityParameter
+from stoqs.models import MeasuredParameter, ActivityParameter, ParameterResource, Parameter
 from CCE.loadCCE_2015 import lores_event_times
 
 logger = logging.getLogger('stoqs.tests')
@@ -73,3 +73,14 @@ class MeasuredParameterTestCase(TestCase):
             for field in ap_fields:
                 self.assertIsNotNone(getattr(ap, field), f'ActivityParameter field {field} cannot be None')
 
+    def test_oxygen_units(self):
+
+        # Case when Glider_L_662 and daphne both have an 'oxygen' Parameter, but with different units
+        original_oxygen_name = 'oxygen'
+        prs = (ParameterResource.objects
+                    .filter(parameter__name=original_oxygen_name, resource__name='units')
+                    .values_list('resource__value', flat=True))
+        ps = (Parameter.objects.filter(name=original_oxygen_name).values_list('units', flat=True))
+        self.assertEquals(len(prs), len(ps), 'Should not have more that one units for a Parameter name')
+
+        
