@@ -15,9 +15,10 @@ parent_dir = os.path.join(os.path.dirname(__file__), "../../loaders")
 sys.path.insert(0, parent_dir)  # So that CCE & DAPloaders are found
 
 from argparse import Namespace
+from datetime import datetime
 from load import Loader
 from CCE.loadCCE_2015 import CCE_2015_Campaign
-from DAPloaders import runGliderLoader
+from DAPloaders import runGliderLoader, runLrauvLoader
 
 class Campaigns():
     pass
@@ -26,6 +27,7 @@ class Campaigns():
 # small amount of data for testing of the loading code
 db_alias = 'stoqs'
 campaign_name = 'Loading test database'
+campaign_description = 'Test database for all kinds of data: EPIC from CCE, Glider, LRAUV, etc.'
 campaign = CCE_2015_Campaign(db_alias, campaign_name)
 loader = Loader()
 
@@ -53,6 +55,16 @@ runGliderLoader(l_662_url, campaign_name, '', '/'.join(l_662_url.split('/')[-1:]
                 'SPRAY_L66a_Glider', '38978f', 'glider', 'Glider Mission',
                 l_662_parms, db_alias, 10, campaign.lores_event_times[0][0], 
                 campaign.lores_event_times[0][1])
+
+# Load Tethys data to test for same Parameter name (oxygen from l_662) having different units
+url = 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2016/20160517_20160519/20160517T165331/201605171653_201605191417_10S_sci.nc'
+parameters = ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen',
+              'bbp470', 'bbp650','PAR', 'yaw', 'pitch', 'roll', ]
+runLrauvLoader(url, campaign_name, campaign_description, url.rsplit('/', 1)[-1],
+               'tethys', 'fed976', 'auv', 'AUV mission',
+               parameters, db_alias, stride=1, plotTimeSeriesDepth=0,
+               startDatetime=datetime(2016, 5, 17, 19, 33, 0), 
+               endDatetime=datetime(2016, 5, 17, 22, 30, 0))
 
 print("All Done.")
 
