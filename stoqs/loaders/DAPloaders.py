@@ -670,7 +670,7 @@ class Base_Loader(STOQS_Loader):
         # Numpy Array tf has True values at indices corresponding to the data we need to load
         tIndx = np.nonzero(tf == True)[0]
         if tIndx.size == 0:
-            raise NoValidData('No time values from {self.url} between time values {s} and {e}')
+            raise NoValidData(f'No time values from {self.url} between time values {s} and {e}')
         elif tIndx.size == 1:
             # Loading a single value
             tIndx = np.array([tIndx[0], tIndx[0]])
