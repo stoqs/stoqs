@@ -48,23 +48,23 @@ campaign.cl.ccems2_start_datetime, campaign.cl.ccems2_end_datetime = campaign.lo
 campaign.load_ccemoorings(stride=500, start_mooring=2, end_mooring=2)
 campaign.load_ccemoorings_ev(low_res_stride=500, start_mooring=2, end_mooring=2)
 
-# Add Trajectory data for the same time period
-l_662_url = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/OS_Glider_L_662_20151124_TS.nc'
-l_662_parms = ['TEMP', 'PSAL', 'FLU2']
+# Add Glider Trajectory data for a time period when we have LRAUV oxygen data
+l_662_url = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/OS_Glider_L_662_20180816_TS.nc'
+l_662_parms = ['TEMP', 'PSAL', 'FLU2', 'oxygen']
+oxygen_start = datetime(2018, 9, 4, 22, 22, 0)
+oxygen_end = datetime(2018, 9, 5, 1, 58, 0)
 runGliderLoader(l_662_url, campaign_name, '', '/'.join(l_662_url.split('/')[-1:]),
                 'SPRAY_L66a_Glider', '38978f', 'glider', 'Glider Mission',
-                l_662_parms, db_alias, 10, campaign.lores_event_times[0][0], 
-                campaign.lores_event_times[0][1])
+                l_662_parms, db_alias, 10, oxygen_start, oxygen_end)
 
-# Load Tethys data to test for same Parameter name (oxygen from l_662) having different units
-url = 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2016/20160517_20160519/20160517T165331/201605171653_201605191417_10S_sci.nc'
+# Load Daphne data to test for same Parameter name (oxygen from l_662) having different units
+url = 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2018/20180904_20180911/20180904T210211/201809042102_201809050138_10S_sci.nc'
 parameters = ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen',
               'bbp470', 'bbp650','PAR', 'yaw', 'pitch', 'roll', ]
 runLrauvLoader(url, campaign_name, campaign_description, url.rsplit('/', 1)[-1],
-               'tethys', 'fed976', 'auv', 'AUV mission',
+               'daphne', 'feb24c', 'auv', 'AUV mission',
                parameters, db_alias, stride=1, plotTimeSeriesDepth=0,
-               startDatetime=datetime(2016, 5, 17, 19, 33, 0), 
-               endDatetime=datetime(2016, 5, 17, 22, 30, 0))
+               startDatetime=oxygen_start, endDatetime=oxygen_end)
 
 print("All Done.")
 
