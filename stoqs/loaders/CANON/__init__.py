@@ -792,12 +792,14 @@ class CANONLoader(LoadScript):
         '''
         platformName = 'M1_Mooring'
         stride = stride or self.stride
+        start_datetime = getattr(self, 'm1_startDatetime', None)
+        end_datetime = getattr(self, 'm1_endDatetime', None)
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.m1_files], self.m1_files):
             url = os.path.join(self.m1_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
                                         platformName, self.colors['m1'], 'mooring', 'Mooring Deployment', 
-                                        self.m1_parms, self.dbAlias, stride, self.m1_startDatetime, 
-                                        self.m1_endDatetime, command_line_args=self.args) 
+                                        self.m1_parms, self.dbAlias, stride, start_datetime, 
+                                        end_datetime, command_line_args=self.args) 
                                         
     
         # For timeseriesProfile data we need to pass the nominaldepth of the plaform
