@@ -293,8 +293,9 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # Select temperature for data access
+        temperature_id = Parameter.objects.get(name='temperature').id
         qstring = ('except=spsql&except=mpsql&'
-                   'measuredparametersgroup=temperature&'
+                   f'measuredparametersgroup={temperature_id:d}&'
                    'xaxis_min=1288214585000&xaxis_max=1288309759000&'
                    'yaxis_min=-100&yaxis_max=600&pplr=1&ppsl=1')
 
@@ -487,8 +488,9 @@ class SummaryDataTestCase(TestCase):
 
         diatom_id = Resource.objects.get(name='label', value='diatom').id
         sediment_id = Resource.objects.get(name='label', value='sediment').id
+        fl700_uncorr_id = Parameter.objects.get(name='fl700_uncorr').id
         qstring = ('except=spsql&except=mpsql&'
-                   'measuredparametersgroup=fl700_uncorr&'
+                   f'measuredparametersgroup={fl700_uncorr_id:d}&'
                    'xaxis_min=1288216319000&xaxis_max=1288279374000&'
                    'yaxis_min=-10&yaxis_max=50&mplabels={:d}&mplabels={:d}&'
                    'pplr=1&ppsl=1').format(diatom_id, sediment_id)
