@@ -2040,19 +2040,22 @@
         params['measuredparametersgroup']=[]
         params['parameterstandardname']=[]
         var regExp = new RegExp('--.+-sn');
+        var mpnames = [];
         $('td',$('#measuredparameter-table > tbody')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 if ( $('.measuredparametersgroup', $(element)).length) {
                     params['measuredparametersgroup'].push(element.id);
+                    mpnames.push(element.innerText);
                 }
                 if ( $('.parameterstandardname', $(element)).length) {
                     params['parameterstandardname'].push(element.id.replace(regExp,''));
+                    mpnames.push(element.innerText);
                 }
             }
         });
         $('#measuredparameters-anchor').html('Measured Parameter: ')
         if (params['measuredparametersgroup'].length) {
-            $('#measuredparameters-anchor').append('name(s): ' + params['measuredparametersgroup'].join())
+            $('#measuredparameters-anchor').append('name(s): ' + mpnames.join())
         }
         if (params['parameterstandardname'].length) {
             $('#measuredparameters-anchor').append('standard name(s): ' + params['parameterstandardname'].join())
@@ -4384,11 +4387,11 @@ function enable_cardboard(){
                                     '<i class="icon-info-sign"></i>' +
                                 '</span>' +
                             '</td>' +
-                            '<td id="' + value[0] +'">' +
+                            '<td id="' + value[2] +'">' +
                                 '<button class="btn btn-mini stoqs-toggle measuredparametersgroup">'+ value[0] +'</button>' + 
                             '</td>' + 
                             '<td style="width:1%">' +
-                                '<span id="' + value[0] + '_plats" style="background-color:rgb(192, 211, 228);"></span>' + 
+                                '<span id="' + value[2] + '_plats" style="background-color:rgb(192, 211, 228);"></span>' + 
                             '</td>';
                     if (value[1].length != 0) {
                         // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
@@ -4409,7 +4412,7 @@ function enable_cardboard(){
                 $('#measuredparameters-anchor').data('ids', mp_ids);
                 $('#measuredparameter-table > tbody:last').append(parameterButtonText);
                 $.each(data[key], function (index, value) {
-                    addPlatformSymbols($('#' + value[0] + '_plats'), value[2]);                                 // show which platforms have this parameter
+                    addPlatformSymbols($('#' + value[2] + '_plats'), value[2]);                                 // show which platforms have this parameter
                 });
             }
             else if (key == 'simpledepthtime') {
@@ -4802,13 +4805,14 @@ function enable_cardboard(){
                 $('.mp-standardname-row').removeClass('mp-standardname-row-enabled');                                 // Use class to identify filtered standardnames
                 $.each(data[key], function (index, value) {
                     // Here we need to enable those that are still valid
-                    enableButton($('button', '#' + value[0]));      // enable the name button in the table row
-                    enableXYZColorPlot($('input:radio', $('button', '#' + value[0]).parent().parent()));        // enable the X, Y, Z, Color radio buttons in the row
-                    enableXYZColorPlot($('input:checkbox', $('button', '#' + value[0]).parent().parent()));     // enable the Plot checkbox in the row
-                    enableParameterRow($('button', '#' + value[0]).parent().parent());                          // enable and show the whole row 
-                    addPlatformSymbols($('#' + value[0] + '_plats'), value[2]);                                 // show which platforms have this parameter
-                    $('button', '#' + value[1] + '--' + value[0] + '-sn').parent().parent().addClass('mp-standardname-row-enabled');
-                    ids.push(value[0]);
+                    var button_id = value[2];
+                    enableButton($('button', '#' + button_id));      // enable the name button in the table row
+                    enableXYZColorPlot($('input:radio', $('button', '#' + button_id).parent().parent()));        // enable the X, Y, Z, Color radio buttons in the row
+                    enableXYZColorPlot($('input:checkbox', $('button', '#' + button_id).parent().parent()));     // enable the Plot checkbox in the row
+                    enableParameterRow($('button', '#' + button_id).parent().parent());                          // enable and show the whole row 
+                    addPlatformSymbols($('#' + button_id + '_plats'), value[2]);                                 // show which platforms have this parameter
+                    $('button', '#' + value[1] + '--' + button_id + '-sn').parent().parent().addClass('mp-standardname-row-enabled');
+                    ids.push(button_id);
                     if (value[1].length != 0 && $('#show-standardnames-mp-checkbox').is(':checked')) {
                         enableButton($('button', '#' + value[1] + '--' + value[0] + '-sn'));                                // Enable the standard_name button in the table row
                         enableParameterRow($('button', '#' + value[1] + '--' + value[0] + '-sn').parent().parent());        // enable and show the whole row 
@@ -4817,7 +4821,7 @@ function enable_cardboard(){
                 });
                 $('#measuredparameter-table > tbody > tr > td > button').each(function (index, elem) { 
                     if (elem.parentNode.id.length != 0) {
-                        if ($.inArray(elem.parentNode.id.toString(), ids) == -1) {
+                        if ($.inArray(parseInt(elem.parentNode.id), ids) == -1) {
                             disableButton($(elem));                                                         // disable the button in the table row
                             disableXYZColorPlot($('input:radio', $(elem).parent().parent()));               // disable the X, Y, Z, Color radio buttons in the row
                             disableXYZColorPlot($('input:checkbox', $(elem).parent().parent()));            // disable the Plot checkbox in the row

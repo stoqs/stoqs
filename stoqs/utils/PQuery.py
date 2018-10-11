@@ -328,10 +328,10 @@ class PQuery(object):
 
         if 'measuredparametersgroup' in self.kwargs:
             if self.kwargs['measuredparametersgroup']:
-                qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
+                qparams['parameter__id__in'] = self.kwargs['measuredparametersgroup']
         if 'sampledparametersgroup' in self.kwargs:
             if self.kwargs['sampledparametersgroup']:
-                qparams['parameter__name__in'] = self.kwargs['sampledparametersgroup']
+                qparams['parameter__id__in'] = self.kwargs['sampledparametersgroup']
         if 'parameterstandardname' in self.kwargs:
             if self.kwargs['parameterstandardname']:
                 qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
