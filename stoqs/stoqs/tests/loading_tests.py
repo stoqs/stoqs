@@ -46,7 +46,7 @@ class MeasuredParameterTestCase(TestCase):
 
         for parm in list(parm_counts.keys()):
             # one_day_from_end = 2016-03-07T00:00:00
-            mp_count = MeasuredParameter.objects.filter(parameter__name=parm,
+            mp_count = MeasuredParameter.objects.filter(parameter__name__contains=parm,
                             measurement__instantpoint__timevalue__gt=one_day_from_end).count()
             logger.debug(f'{parm:10s}({parm_counts[parm]:2d}) {mp_count:-6d}')
             self.assertNotEquals(mp_count, 0, f'Expected {parm_counts[parm]} values for {parm}')
@@ -57,7 +57,7 @@ class MeasuredParameterTestCase(TestCase):
         parm_counts = dict(NEP_56=1, Trb_980=1)
 
         for parm in list(parm_counts.keys()):
-            mp_count = MeasuredParameter.objects.filter(parameter__name=parm).count()
+            mp_count = MeasuredParameter.objects.filter(parameter__name__contains=parm).count()
             logger.debug(f'{parm:10s}({parm_counts[parm]:2d}) {mp_count:-6d}')
             self.assertNotEquals(mp_count, 0, f'Expected {parm_counts[parm]} values for {parm}')
 
@@ -69,7 +69,7 @@ class MeasuredParameterTestCase(TestCase):
         ap_fields = ('min', 'max', 'mean', 'median', 'mode', 'p025', 'p975', 'p010', 'p990')
 
         for parm in parm_names:
-            ap = ActivityParameter.objects.get(activity__name__contains=act_name, parameter__name=parm)
+            ap = ActivityParameter.objects.get(activity__name__contains=act_name, parameter__name__contains=parm)
             for field in ap_fields:
                 self.assertIsNotNone(getattr(ap, field), f'ActivityParameter field {field} cannot be None')
 
