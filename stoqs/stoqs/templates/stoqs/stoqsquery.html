@@ -3736,7 +3736,7 @@ function enable_cardboard(){
                         else {
                             pos = 'left';
                         }
-                        yAxisLabel = data.parametertime.units[unit] + ' (' + unit + ')';
+                        yAxisLabel = data.parametertime.units[unit];
                         yaxesOptions.push({position: pos, axisLabel: yAxisLabel});
                     }
                     dataset.push({'label': activity, 'data': time_series, 'yaxis': yaxisNumber[unit], 'color': data.parametertime.colors[activity.split(' ')[0]]});
@@ -3779,7 +3779,7 @@ function enable_cardboard(){
         var units = parameterunits[parameter];
         histogram_options_labels = $.extend(true, {}, histogram_options, {
                                                             xaxes: [{
-                                                                        axisLabel: parameter + ' (' + units + ')'
+                                                                        axisLabel: parameter
                                                                     }],
                                                             yaxes: [{
                                                                         position: 'left',
