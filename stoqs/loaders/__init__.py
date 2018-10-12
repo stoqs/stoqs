@@ -647,7 +647,7 @@ class STOQS_Loader(object):
                     except ParameterNotFound as e:
                         self.logger.warn('Could not add plotTimeSeriesDepth PlatformResource for v = %s: %s', v, e)
         
-    def getParameterByName(self, name, exact_match=False):
+    def getParameterByName(self, name):
         '''
         Locate a parameter's object from the database.  Cache objects after lookup.
         If a standard name is provided we'll look up using it instead, as it's more standard.
@@ -673,17 +673,7 @@ class STOQS_Loader(object):
             self.logger.debug("Again '%s' is not in self.parameter_dict", name)
             try:
                 self.logger.debug("trying to get '%s' from database %s...", name, self.dbAlias)
-                if exact_match:
-                    self.parameter_dict[name] = m.Parameter.objects.using(self.dbAlias).get(name=name)
-                else:
-                    parms = m.Parameter.objects.using(self.dbAlias).filter(name__contains=name)
-                    if len(parms) == 0:
-                        raise ParameterNotFound(f"Parameter '{name}' not found in the cache nor in the database")
-                    if len(parms) == 1:
-                        self.parameter_dict[name] = parms[0]
-                    else:
-                        self.logger.error(f"More than one Parameter returned for name__contains={name}")
-                        raise Exception(f"More than one Parameter returned for name__contains={name}")
+                self.parameter_dict[name] = m.Parameter.objects.using(self.dbAlias).get(name=name)
                 self.logger.debug("self.parameter_dict[name].name = %s", self.parameter_dict[name].name)
             except ObjectDoesNotExist:
                 ##print >> sys.stderr, "Unable to locate parameter with name %s.  Adding to ignored_names list." % (name,)
