@@ -168,7 +168,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
             logger.debug('fmt = %s', fmt)
             base = reverse('stoqs:show-measuredparmeter', kwargs={ 'fmt': fmt,
                                                             'dbAlias': 'default'})
-            params = {  'parameter__name': 'temperature',
+            params = {  'parameter__name__contains': 'temperature',
                         'cmin': 11.5,
                         'cmax': 14.1 }
             qstring = ''
@@ -189,7 +189,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
             logger.debug('fmt = %s', fmt)
             base = reverse('stoqs:show-measuredparmeter', kwargs={'fmt': fmt,
                                                             'dbAlias': 'default'})
-            params = {  'parameter__name': 'temperature',
+            params = {  'parameter__name__contains': 'temperature',
                         'cmin': 11.5,
                         'cmax': 14.1,
                         'sea_water_sigma_t_MIN': 25.0,
@@ -293,7 +293,7 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # Select temperature for data access
-        temperature_id = Parameter.objects.get(name='temperature').id
+        temperature_id = Parameter.objects.get(name__contains='temperature').id
         qstring = ('except=spsql&except=mpsql&'
                    f'measuredparametersgroup={temperature_id:d}&'
                    'xaxis_min=1288214585000&xaxis_max=1288309759000&'
@@ -366,7 +366,7 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # SampledParameter (B1006_barnacles) vs. MeasuredParameter (fl700_uncoor)
-        fl700_uncorr_id = Parameter.objects.get(name='fl700_uncorr').id
+        fl700_uncorr_id = Parameter.objects.get(name__contains='fl700_uncorr').id
         B1006_barnacles_id = Parameter.objects.get(name='B1006_barnacles').id
         qstring = ('only=parameterparameterpng&only=parameterparameterx3d&'
                    'except=spsql&except=mpsql&xaxis_min=1288214585000&'
@@ -389,7 +389,7 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # SampledParameter vs. MeasuredParameter and 3D with color
-        fl700_uncorr_id = Parameter.objects.get(name='fl700_uncorr').id
+        fl700_uncorr_id = Parameter.objects.get(name__contains='fl700_uncorr').id
         B1006_barnacles_id = Parameter.objects.get(name='B1006_barnacles').id
         qstring = ('only=parameterparameterpng&only=parameterparameterx3d&'
                    'except=spsql&except=mpsql&xaxis_min=1288216319000&'
@@ -413,7 +413,7 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # Plot SEA_WATER_SALINITY_HR from M1_Mooring 
-        SEA_WATER_SALINITY_HR_id = Parameter.objects.get(name='SEA_WATER_SALINITY_HR').id
+        SEA_WATER_SALINITY_HR_id = Parameter.objects.get(name__contains='SEA_WATER_SALINITY_HR').id
         qstring = ('only=parametertime&except=spsql&except=mpsql&'
                    'xaxis_min=1288214585000&xaxis_max=1288309759000&'
                    'yaxis_min=-200&yaxis_max=600&parametertab=1&'
@@ -429,7 +429,7 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # Plot SEA_WATER_SALINITY_HR from M1_Mooring 
-        SEA_WATER_SALINITY_HR_id = Parameter.objects.get(name='SEA_WATER_SALINITY_HR').id
+        SEA_WATER_SALINITY_HR_id = Parameter.objects.get(name__contains='SEA_WATER_SALINITY_HR').id
         qstring = ('except=spsql&except=mpsql&xaxis_min=1288214585000&'
                    'xaxis_max=1288309759000&yaxis_min=-100&yaxis_max=600&'
                    'platforms=M1_Mooring&parameterplotid={:d}&'
@@ -488,7 +488,7 @@ class SummaryDataTestCase(TestCase):
 
         diatom_id = Resource.objects.get(name='label', value='diatom').id
         sediment_id = Resource.objects.get(name='label', value='sediment').id
-        fl700_uncorr_id = Parameter.objects.get(name='fl700_uncorr').id
+        fl700_uncorr_id = Parameter.objects.get(name__contains='fl700_uncorr').id
         qstring = ('except=spsql&except=mpsql&'
                    f'measuredparametersgroup={fl700_uncorr_id:d}&'
                    'xaxis_min=1288216319000&xaxis_max=1288279374000&'
@@ -539,7 +539,7 @@ class BugsFoundTestCase(TestCase):
         # Discovered that jetplus.txt was just 128 points when the KML colormap generation code
         # assumed 256 colors in the color lookup table. This test confirms that the correct color
         # is generated from the jetplus color lookup table.
-        qstring = ('parameter__name=temperature&measurement__instantpoint__activity__platform__name'
+        qstring = ('parameter__name__contains=temperature&measurement__instantpoint__activity__platform__name'
                    '=dorado&measurement__instantpoint__timevalue__gt=2010-10-28%2002:10:19&'
                    'measurement__instantpoint__timevalue__lt=2010-10-28%2003:43:39&'
                    'measurement__depth__gte=20.1&measurement__depth__lte=35.72&cmin=11.53&'
@@ -562,10 +562,10 @@ class BugsFoundTestCase(TestCase):
         bin_counts = dict(sepCountList=994, mepCountList=994)
 
         for parm in list(parm_counts.keys()):
-            mp_count = MeasuredParameter.objects.filter(parameter__name=parm).count()
+            mp_count = MeasuredParameter.objects.filter(parameter__name__contains=parm).count()
 
             # Check only the first element for number of dataarray bins
-            bin_count = len(MeasuredParameter.objects.filter(parameter__name=parm)[0].dataarray)
+            bin_count = len(MeasuredParameter.objects.filter(parameter__name__contains=parm)[0].dataarray)
 
             logger.debug(f'{parm:10s}({parm_counts[parm]:2d}) mp_count: {mp_count} bin_count: {bin_count}')
             self.assertEqual(mp_count, parm_counts[parm], f'Expected {parm_counts[parm]} MeasuredParameter values for {parm}')

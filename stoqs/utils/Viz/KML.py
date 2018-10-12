@@ -75,6 +75,8 @@ class KML(BaseParameter):
             pName = self.qparams['parameter__standard_name']
         if 'parameter__name' in self.qparams:
             pName = self.qparams['parameter__name']
+        if 'parameter__name__contains' in self.qparams:
+            pName = self.qparams['parameter__name__contains']
         if 'parameter__id' in self.qparams:
             logger.debug('parameter__id = %s', self.qparams['parameter__id'])
             pName = m.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.qparams['parameter__id'])).name
