@@ -288,7 +288,7 @@ class Base_Loader(STOQS_Loader):
         '''
         if self.checkForValidData():
             self.platform = self.getPlatform(self.platformName, self.platformTypeName)
-            self.addParameters(self.ds)
+            self.add_parameters(self.ds)
 
             # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
             if not self.startDatetime or not self.endDatetime:
@@ -1449,7 +1449,8 @@ class Base_Loader(STOQS_Loader):
         self.fv_by_key = {}
 
         for key in (set(self.include_names) & set(self.ds.keys())):
-            self.param_by_key[key] = self.getParameterByName(key)
+            parameter_name, _ = self.parameter_name(key)
+            self.param_by_key[key] = self.getParameterByName(parameter_name)
             self.parameter_counts[self.param_by_key[key]] = 0
 
         for key in self.ds.keys():
