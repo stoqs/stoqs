@@ -168,7 +168,10 @@ class BaseParameter(object):
                                             orientation='horizontal')
             try:
                 cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(parm_info[0]))
-                cb.set_label(cp.name)
+                if cp.units in cp.name:
+                    cb.set_label(cp.name)
+                else:
+                    cb.set_label(f"{cp.name} ({cp.units})")
             except (ValueError, models.Parameter.DoesNotExist):
                 # Likely a coordinate variable
                 cp = models.Parameter
@@ -1053,7 +1056,10 @@ class ParameterParameter(BaseParameter):
                                                 orientation='horizontal')
                 try:
                     cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
-                    cb.set_label(cp.name)
+                    if cp.units in cp.name:
+                        cb.set_label(cp.name)
+                    else:
+                        cb.set_label(f"{cp.name} ({cp.units})")
                 except ValueError:
                     # Likely a coordinate variable
                     cp = models.Parameter
@@ -1068,7 +1074,10 @@ class ParameterParameter(BaseParameter):
             # Label the axes
             try:
                 xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
-                ax.set_xlabel(xp.name)
+                if xp.units in xp.name:
+                    ax.set_xlabel(xp.name)
+                else:
+                    ax.set_xlabel(f"{xp.name} ({xp.units})")
             except ValueError:
                 # Likely a coordinate variable
                 xp = models.Parameter
@@ -1079,7 +1088,10 @@ class ParameterParameter(BaseParameter):
 
             try:
                 yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
-                ax.set_ylabel(yp.name)
+                if yp.units in yp.name:
+                    ax.set_ylabel(yp.name)
+                else:
+                    ax.set_ylabel(f"{yp.name} ({yp.units})")
             except ValueError:
                 # Likely a coordinate variable
                 yp = models.Parameter
@@ -1209,7 +1221,10 @@ class ParameterParameter(BaseParameter):
                 # Label the axes
                 try:
                     xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
-                    self.pMinMax['x'].append(('%s' % (xp.name, )))
+                    if xp.units in xp.name:
+                        self.pMinMax['x'].append(('%s' % (xp.name, )))
+                    else:
+                        self.pMinMax['x'].append(('%s (%s)' % (xp.name, xp.units)))
                 except ValueError:
                     # Likely a coordinate variable
                     xp = models.Parameter
@@ -1220,7 +1235,10 @@ class ParameterParameter(BaseParameter):
 
                 try:
                     yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
-                    self.pMinMax['y'].append(('%s' % (yp.name, )))
+                    if yp.units in yp.name:
+                        self.pMinMax['y'].append(('%s' % (yp.name, )))
+                    else:
+                        self.pMinMax['y'].append(('%s (%s)' % (yp.name, yp.units)))
                 except ValueError:
                     # Likely a coordinate variable
                     yp = models.Parameter
@@ -1231,7 +1249,10 @@ class ParameterParameter(BaseParameter):
 
                 try:
                     zp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z']))
-                    self.pMinMax['z'].append(('%s' % (zp.name, )))
+                    if zp.units in zp.name:
+                        self.pMinMax['z'].append(('%s' % (zp.name, )))
+                    else:
+                        self.pMinMax['z'].append(('%s (%s)' % (zp.name, zp.units)))
                 except ValueError:
                     # Likely a coordinate variable
                     zp = models.Parameter

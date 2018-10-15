@@ -3736,7 +3736,12 @@ function enable_cardboard(){
                         else {
                             pos = 'left';
                         }
-                        yAxisLabel = data.parametertime.units[unit];
+                        if ( data.parametertime.units[unit].indexOf(unit) === -1 ) {
+                            yAxisLabel = data.parametertime.units[unit] + ' (' + unit + ')';
+                        }
+                        else {
+                            yAxisLabel = data.parametertime.units[unit];
+                        }
                         yaxesOptions.push({position: pos, axisLabel: yAxisLabel});
                     }
                     dataset.push({'label': activity, 'data': time_series, 'yaxis': yaxisNumber[unit], 'color': data.parametertime.colors[activity.split(' ')[0]]});
@@ -3777,9 +3782,13 @@ function enable_cardboard(){
     
     function plotHistData(parameter, histdata, parameterunits) {
         var units = parameterunits[parameter];
+        var parameter_string = parameter;
+        if ( parameter.indexOf(units) === -1 ) {
+            parameter_string = parameter + '(' + units + ')';
+        }
         histogram_options_labels = $.extend(true, {}, histogram_options, {
                                                             xaxes: [{
-                                                                        axisLabel: parameter
+                                                                        axisLabel: parameter_string
                                                                     }],
                                                             yaxes: [{
                                                                         position: 'left',
