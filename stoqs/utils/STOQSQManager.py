@@ -139,8 +139,8 @@ class STOQSQManager(object):
         and self.qs will be built of a join of activities, parameters, and platforms with no constraints.
 
         Right now supported keyword arguments are the following:
-            sampledparametersgroup - a list of sampled parameter names to include
-            measuredparametersgroup - a list of measured parameter names to include
+            sampledparametersgroup - a list of sampled parameter ids to include
+            measuredparametersgroup - a list of measured parameter ids to include
             parameterstandardname - a list of parameter styandard_names to include
             platforms - a list of platform names to include
             time - a two-tuple consisting of a start and end time, if either is None, the assumption is no start (or end) time
@@ -366,8 +366,8 @@ class STOQSQManager(object):
             logger.warn("self.activityparameter_qs is None")
         if forCount:
             if self.kwargs['measuredparametersgroup']:
-                logger.debug('Adding Q object for parameter__name__in = %s', self.kwargs['measuredparametersgroup'])
-                return self.activityparameter_qs.filter(Q(parameter__name__in=self.kwargs['measuredparametersgroup']))
+                logger.debug('Adding Q object for parameter__id__in = %s', self.kwargs['measuredparametersgroup'])
+                return self.activityparameter_qs.filter(Q(parameter__id__in=self.kwargs['measuredparametersgroup']))
             else:
                 return self.activityparameter_qs
         else:
@@ -531,9 +531,9 @@ class STOQSQManager(object):
 
         if 'measuredparametersgroup' in self.kwargs:
             if len(self.kwargs['measuredparametersgroup']) == 1:
-                mpname = self.kwargs['measuredparametersgroup'][0]
+                mpid = self.kwargs['measuredparametersgroup'][0]
                 try:
-                    pid = models.Parameter.objects.using(self.dbname).get(name=mpname).id
+                    pid = models.Parameter.objects.using(self.dbname).get(id=mpid).id
                     logger.debug('pid = %s', pid)
                     if percentileAggregateType == 'extrema':
                         qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'))
@@ -1882,17 +1882,17 @@ class STOQSQManager(object):
                 q = Q(activityparameter__parameter__id__in=parameterid)
         return q
 
-    def _measuredparametersgroupQ(self, parametername, fromTable='Activity'):
+    def _measuredparametersgroupQ(self, parameterid, fromTable='Activity'):
         '''
         Build a Q object to be added to the current queryset as a filter.  This should 
-        ensure that our result doesn't contain any parameter names that were not selected.
+        ensure that our result doesn't contain any parameters that were not selected.
         '''
         q = Q()
-        if parametername is None:
+        if parameterid is None:
             return q
         else:
             if fromTable == 'Activity':
-                q = Q(activityparameter__parameter__name__in=parametername)
+                q = Q(activityparameter__parameter__id__in=parameterid)
             elif fromTable == 'Sample':
                 # Use sub-query to find all Samples from Activities that are in the existing Activity queryset
                 # Note: must do the monkey patch in __init__() so that Django's django/db/models/sql/query.py 

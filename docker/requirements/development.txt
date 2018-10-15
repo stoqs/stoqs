@@ -1,6 +1,6 @@
 -r base.txt
 
-alabaster==0.7.11
+alabaster==0.7.12
 amqp==2.3.2
 amqplib==1.0.2
 anyjson==0.3.3
@@ -8,9 +8,9 @@ Babel==2.6.0
 backports.ssl-match-hostname==3.5.0.1
 billiard==3.5.0.4
 binaryornot==0.4.4
-certifi==2018.8.24
+certifi==2018.10.15
 cookiecutter==1.6.0
-Cython==0.28.5
+Cython==0.29
 docutils==0.14
 ephem==3.7.6.0
 GDAL==2.3.2

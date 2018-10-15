@@ -438,74 +438,50 @@ class STOQS_Loader(object):
 
         return platform
 
-    def addParameters(self, parmDict):
+    def parameter_name(self, variable):
+        if variable not in self.ds:
+            raise ParameterNotFound(f"variable {variable} not in self.ds")
+        parameter_units = self.ds[variable].attributes.get('units')
+        if parameter_units:
+            parameter_name = f"{variable} ({parameter_units})"
+        else:
+            parameter_name = f"{variable}"
+   
+        return parameter_name, parameter_units
+
+    def add_parameters(self, ds):
         '''
-        This method is a get_or_create() equivalent, but on steroids.  It first tries to find the
-        parameter in a local cache (a python hash), first by standard_name, then by name.  Then it
-        checks to see if it's in the database.  If it's not in the database it will then add it
-        populating the fields from the attributes of the parameter dictionary that is passed.  The
-        dictionary is patterned after the pydap.model.BaseType variable from the NetCDF file (OPeNDAP URL).
+        Rely on Django's get_or_create() to add unique Parameters to the database.
         '''
         # Initialize cache for each url/ds/activity
         self.parameter_dict = {} 
 
         # Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
-        for key in list(parmDict.keys()):
-            self.logger.debug("key = %s", key)
-            if (key in self.ignored_names) or (key not in self.include_names): # skip adding parameters that are ignored
+        for variable in (set(self.include_names) & set(self.ds.keys())):
+            if (variable in self.ignored_names):
+                self.logger.debug(f"variable {variable} is in ignored_names")
                 continue
-            v = parmDict[key].attributes
-            self.logger.debug("v = %s", v)
-            try:
-                self.getParameterByName(key)
-            except ParameterNotFound as e:
-                self.logger.debug("Parameter not found. Assigning parms from ds variable.")
-                # Bug in pydap returns a gobbledegook list of things if the attribute value has not been
-                # set.  Check for this on units and override what pydap returns.
-                if isinstance(v.get('units'), list):
-                    unitStr = ''
-                else:
-                    unitStr = v.get('units')
-                
-                parms = {'units': unitStr,
-                    'standard_name': v.get('standard_name'),
-                    'long_name': v.get('long_name'),
-                    'type': v.get('type'),
-                    'description': v.get('description'),
-                    'origin': self.activityName,
-                    'name': key}
 
-                self.parameter_dict[key] = m.Parameter(**parms)
-                try:
-                    sid = transaction.savepoint(using=self.dbAlias)
-                    self.parameter_dict[key].save(using=self.dbAlias)
-                    self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                except IntegrityError as e:
-                    self.logger.warn('%s', e)
-                    transaction.savepoint_rollback(sid)
-                    if str(e).startswith('duplicate key value violates unique constraint "stoqs_parameter_pkey"'):
-                        self.resetParameterAutoSequenceId()
-                        try:
-                            sid2 = transaction.savepoint(using=self.dbAlias)
-                            self.parameter_dict[key].save(using=self.dbAlias)
-                            self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                        except Exception as e:
-                            self.logger.error('%s', e)
-                            transaction.savepoint_rollback(sid2,using=self.dbAlias)
-                            raise Exception('''Failed reset auto sequence id on the stoqs_parameter table''')
-                    else:
-                        self.logger.error('Exception %s', e)
-                        raise Exception('''Failed to add parameter for %s
-                            %s\nEither add parameter manually, or add to ignored_names''' % (key,
-                            '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in list(parms.items())])))
-                    
-                except Exception as e:
-                    self.logger.error('%s', e)
-                    transaction.savepoint_rollback(sid,using=self.dbAlias)
-                    raise Exception('''Failed to add parameter for %s
-                        %s\nEither add parameter manually, or add to ignored_names''' % (key,
-                        '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in list(parms.items())])))
-                self.logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
+            parameter_name, parameter_units = self.parameter_name(variable)
+
+            self.logger.info(f"variable: {variable}, parameter_name: {parameter_name}")
+            try:
+                self.getParameterByName(parameter_name)
+            except ParameterNotFound as e:
+                self.logger.info("Parameter not found in local cache. Getting from database.")
+                vattr = ds[variable].attributes
+                self.parameter_dict[parameter_name], created = (m.Parameter.objects
+                             .using(self.dbAlias).get_or_create(
+                                        name = parameter_name,
+                                        units = parameter_units,
+                                        standard_name = vattr.get('standard_name'),
+                                        long_name = vattr.get('long_name'),
+                                        type = vattr.get('type'),
+                                        description =  vattr.get('description'),
+                                        origin = self.activityName 
+                                    )) 
+                if created:
+                    self.logger.debug(f"Added parameter {parameter_name} from {self.url} to database {self.dbAlias}")
 
     def createCampaign(self):
         '''Create Campaign in the database ensuring that there is only one Campaign
@@ -634,8 +610,9 @@ class STOQS_Loader(object):
                         self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
                         resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                                               name=rn, value=value, resourcetype=resourceType)
+                        pn, _ = self.parameter_name(v)
                         m.ParameterResource.objects.using(self.dbAlias).get_or_create(
-                                        parameter=self.getParameterByName(v), resource=resource)
+                                        parameter=self.getParameterByName(pn), resource=resource)
                         m.ActivityResource.objects.using(self.dbAlias).get_or_create(
                                         activity=self.activity, resource=resource)
                         
@@ -661,8 +638,9 @@ class STOQS_Loader(object):
                     except ParameterNotFound as e:
                         self.logger.warn('Could not get_or_create uiResType or resource for v = %s: %s', v, e)
                     try:
+                        pn, _ = self.parameter_name(v)
                         m.ParameterResource.objects.using(self.dbAlias).get_or_create(
-                                        parameter=self.getParameterByName(v), resource=resource)
+                                        parameter=self.getParameterByName(pn), resource=resource)
                     except ParameterNotFound as e:
                         self.logger.warn('Could not add plotTimeSeriesDepth ParameterResource for v = %s: %s', v, e)
                     try:
@@ -697,8 +675,7 @@ class STOQS_Loader(object):
             self.logger.debug("Again '%s' is not in self.parameter_dict", name)
             try:
                 self.logger.debug("trying to get '%s' from database %s...", name, self.dbAlias)
-                ##(parameter, created) = m.Parameter.objects.get(name = name)
-                self.parameter_dict[name] = m.Parameter.objects.using(self.dbAlias).get(name = name)
+                self.parameter_dict[name] = m.Parameter.objects.using(self.dbAlias).get(name=name)
                 self.logger.debug("self.parameter_dict[name].name = %s", self.parameter_dict[name].name)
             except ObjectDoesNotExist:
                 ##print >> sys.stderr, "Unable to locate parameter with name %s.  Adding to ignored_names list." % (name,)
