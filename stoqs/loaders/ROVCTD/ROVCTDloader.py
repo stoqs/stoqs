@@ -157,7 +157,7 @@ class ROVCTD_Loader(Base_Loader):
             self.rovDataView = 'DocRickettsRovCtdBinData'
 
     def makeParmDict(self):
-        '''Make a pydap-type parameter dictionary for passing into self.addParameters()
+        '''Make a pydap-type parameter dictionary for passing into self.add_parameters()
         '''
         p = pydap.model.BaseType('nameless')
         p.attributes = {    'standard_name':    'sea_water_pressure',
@@ -298,7 +298,7 @@ ORDER BY divenumber''' % (self.platformName, self.diveNumber)
         parmList = list(self.parmDict.keys())
         # Allow time series plotting of all Parameters with psedo-depth of 0 m
         self.plotTimeSeriesDepth = dict.fromkeys(parmList + [ALTITUDE, SIGMAT, SPICE], 0)
-        self.addParameters(self.parmDict)
+        self.add_parameters(self.parmDict)
 
         # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
         if not self.startDatetime or not self.endDatetime:

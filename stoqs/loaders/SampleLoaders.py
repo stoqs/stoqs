@@ -407,9 +407,9 @@ class SeabirdLoader(STOQS_Loader):
             raise SingleActivityNotFound('Multiple objects returned for name__contains = %s' % self.activityName)
 
         parmDict = self.buildParmDict()
-        self.logger.debug('Calling addParameters for parmDict = %s', parmDict)
+        self.logger.debug('Calling add_parameters for parmDict = %s', parmDict)
         self.include_names = list(parmDict.keys())
-        self.addParameters(parmDict)
+        self.add_parameters(parmDict)
 
         for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
             dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
