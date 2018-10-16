@@ -145,8 +145,8 @@ def getNcStartEnd(inDir, urlNcDap, timeAxisName):
         timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
 
     try:
-        startDatetime = from_udunits(df[timeAxisName][0][0].data, timeAxisUnits)
-        endDatetime = from_udunits(df[timeAxisName][-1][0].data, timeAxisUnits)
+        startDatetime = from_udunits(df[timeAxisName][0].data, timeAxisUnits)
+        endDatetime = from_udunits(df[timeAxisName][-1].data, timeAxisUnits)
     except pydap.exceptions.ServerError as ex:
         logger.warning(ex)
         raise ServerError("Can't read start and end dates of {} from {}".format(timeAxisUnits, urlNcDap))

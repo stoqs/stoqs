@@ -12,7 +12,7 @@ start_datetime='20170101T000000'
 end_datetime='20171231T000000'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 dir='/mbari/LRAUV'
-year='2017'
+year='2018'
 declare -a platforms=("tethys" "makai" "daphne" "aku" "ahi" "opah")
 
 while getopts "s:e:y:" opt; do
@@ -30,16 +30,6 @@ logdir="missionlogs/${year}"
 search="${logdir}/.*nc4$"
 
 parms_sci="{
-            \"PNI_TCM\": [
-            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\", \"units\":\"degree\", \"standard_name\": \"platform_roll_angle\" },
-            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\", \"units\":\"degree\", \"standard_name\": \"platform_pitch_angle\" }, 
-            { \"name\": \"platform_orientation\", \"rename\":\"yaw\", \"units\":\"degree\", \"standard_name\": \"platform_yaw_angle\" }
-            ],
-            \"AHRS_sp3003D\": [
-            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\", \"units\":\"degree\", \"standard_name\": \"platform_roll_angle\" }, 
-            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\", \"units\":\"degree\", \"standard_name\": \"platform_pitch_angle\" }, 
-            { \"name\": \"platform_orientation\", \"rename\":\"yaw\", \"units\":\"degree\", \"standard_name\": \"platform_yaw_angle\" }
-            ],
             \"CTD_Seabird\": [
             { \"name\":\"sea_water_salinity\" , \"rename\":\"salinity\" },
             { \"name\":\"sea_water_temperature\" , \"rename\":\"temperature\" }
@@ -65,11 +55,6 @@ parms_sci="{
         }"
 
 parms_eng="{
-            \"PNI_TCM\": [
-            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\", \"units\":\"degree\", \"standard_name\": \"platform_roll_angle\" },
-            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\", \"units\":\"degree\", \"standard_name\": \"platform_pitch_angle\" }, 
-            { \"name\": \"platform_orientation\", \"rename\":\"yaw\", \"units\":\"degree\", \"standard_name\": \"platform_yaw_angle\" }
-            ],
             \"ElevatorServo\": [
             { \"name\": \"platform_elevator_angle\", \"rename\":\"control_inputs_elevator_angle\" }
             ],
@@ -91,11 +76,6 @@ parms_eng="{
             ],
             \"Onboard\": [
             { \"name\": \"platform_average_current\" , \"rename\":\"health_platform_average_current\" }
-            ],
-            \"AHRS_sp3003D\": [
-            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\", \"units\":\"degree\", \"standard_name\": \"platform_roll_angle\" }, 
-            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\", \"units\":\"degree\", \"standard_name\": \"platform_pitch_angle\" }, 
-            { \"name\": \"platform_orientation\", \"rename\":\"yaw\", \"units\":\"degree\", \"standard_name\": \"platform_yaw_angle\" }
             ],
             \"NAL9602\": [
             { \"name\": \"time_fix\" , \"rename\":\"fix_time\" },

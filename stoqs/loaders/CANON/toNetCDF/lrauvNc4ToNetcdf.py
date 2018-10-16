@@ -25,7 +25,6 @@ import os
 import errno
 # Add grandparent dir to pythonpath so that we can see the CANON and toNetCDF modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../") )
-import pdb
 import netCDF4
 import numpy as np
 import pandas as pd
@@ -45,7 +44,7 @@ import json
 sn_lookup = {
              'bin_mean_temperature': 'sea_water_temperature',
              'bin_mean_salinity': 'sea_water_salinity',
-             'bin_mean_chlorophyll': 'mass_concentration_of_chlorophyll_in_sea_water',
+             'bin_mean_chlorophyll': 'mass_concentration_of_chlorophyll_in_sea_water', 
             }
 
 
@@ -148,7 +147,7 @@ class InterpolatorWriter(BaseWriter):
         v = subgroup[name]
         v_t = subgroup[tname]
         v_time_epoch = v_t
-        v_time = pd.to_datetime(v_time_epoch[:],unit='s')
+        v_time = pd.to_datetime(v_time_epoch[:],unit='s',errors = 'coerce')
         v_time_series = pd.Series(v[:],index=v_time)
         return v_time_series
         # End createSeries
@@ -368,6 +367,44 @@ class InterpolatorWriter(BaseWriter):
 
         # End processSingleParm
 
+    def createNav(self, t_resample, resampleFreq):
+
+        nav =  {
+             'platform_pitch_angle': 'pitch',
+             'platform_roll_angle': 'roll',
+             'platform_orientation': 'yaw',
+            }
+        attr = {}
+        for v in self.df.variables:
+            if any(v in s for s in nav):
+                # Create pandas time series for each coordinate and store attributes
+                for c, c_rename in nav.items():
+                    try:
+                        ts = self.createSeries(self.df.variables, c, c+'_'+'time')
+
+                        # don't store or try to interpolate empty time series
+                        if ts.size == 0:
+                            self.logger.info('Variable ' + c + ' empty so skipping')
+                            continue
+
+                        if c_rename.find('pitch') != -1 or c_rename.find('roll') != -1 or c_rename.find('yaw') != -1:
+                            ts = ts * 180.0 / numpy.pi
+
+                        # resample using the mean then interpolate on to the time dimension
+                        ts_resample = ts.resample(resampleFreq).mean()[:]
+                        i = self.interpolate(ts_resample, t_resample.index)
+
+                        for name in self.df[c].ncattrs():
+                            attr[name] = getattr(self.df.variables[c],name)
+
+                        self.all_sub_ts[c_rename] = i
+                        self.all_attrib[c_rename] = attr
+                        self.all_coord[c_rename] = { 'time':'time', 'depth':'depth', 'latitude':'latitude', 'longitude':'longitude'}
+                    except Exception as e:
+                        self.logger.error(e)
+                        continue
+    # End createNav
+
     def createCoord(self, coord):
 
         all_ts = {}
@@ -379,10 +416,11 @@ class InterpolatorWriter(BaseWriter):
                 # Create pandas time series for each coordinate and store attributes
                 for c in coord:
                     try:
+                        print('Creating {}'.format(c))
                         ts = self.createSeries(self.df.variables, c, c+'_'+'time')
                         all_ts[c] = ts
                     except Exception as e:
-                        self.logger.error(e)
+                        self.logger.error('Error in creating coord {} {}'.format(c, e))
                         continue
 
         return all_ts
@@ -727,6 +765,9 @@ class InterpolatorWriter(BaseWriter):
                         self.logger.error(e)
                         continue
 
+        # add in navigation
+        self.createNav(t_resample, resampleFreq)
+
         # add in coordinates
         for key in coord:
             try:
@@ -840,7 +881,7 @@ if __name__ == '__main__':
     pw.process_command_line()
     nc4_file='/home/vagrant/LRAUV/daphne/missionlogs/2015/20150930_20151008/20151006T201728/201510062017_201510062027.nc4'
     nc4_file='/mbari/LRAUV/opah/missionlogs/2017/20170502_20170508/20170508T185643/201705081856_201705090002.nc4'
-    nc4_file='/mbari/LRAUV/makai/missionlogs/2018/20180603_20180611/20180604T235249/201806042353_201806050437.nc4'
+    nc4_file='/mbari/LRAUV/makai/missionlogs/2018/20180802_20180806/20180805T004113/201808050041_201808051748.nc4'
     outDir = '/tmp/'
     resample_freq='10S'
     rad_to_deg = True
