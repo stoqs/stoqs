@@ -22,7 +22,7 @@ from stoqs.models import (Activity, InstantPoint, Sample, SampleType, Resource,
 from loaders.seabird import get_year_lat_lon
 from loaders import STOQS_Loader, SkipRecord
 from datetime import datetime, timedelta
-from pydap.model import BaseType
+from pydap.model import BaseType, DatasetType
 import csv
 from urllib.request import urlopen, HTTPError
 import requests
@@ -223,31 +223,43 @@ class SeabirdLoader(STOQS_Loader):
         # oxygen.long_name = 'Oxygen, SBE 43'
         # oxygen.units = 'ml/l'
 
-        parmDict = {}
-
-        pr = BaseType('nameless')
-        pr.attributes = {'colname': 'PrDM', 'units': 'm' , 'long_name': 'DEPTH', 'standard_name': 'depth'}
-
-        temp = BaseType('nameless')
-        temp.attributes = {'colname': 'T190C', 'units': 'ITS-90, deg C', 'long_name': 'temperature', 'standard_name': 'sea_water_temperature'}
-
-        sal = BaseType('nameless')
-        sal.attributes = {'colname': 'Sal00', 'units': '1' , 'long_name': 'salinity', 'standard_name': 'sea_water_salinity'} 
-
-        xmiss = BaseType('nameless')
-        xmiss.attributes = {'colname': 'Xmiss', 'units': '%', 'long_name': 'Beam Transmission, Chelsea/Seatech'}
-
-        ecofl = BaseType('nameless')
-        ecofl.attributes = {'colname': 'FlECO-AFL', 'units': 'mg/m^3', 'long_name': 'Fluorescence, WET Labs ECO-AFL/FL'}
-
-        wetstar = BaseType('nameless')
-        wetstar.attributes = {'colname': 'WetStar', 'units': 'mg/m^3', 'long_name': 'Fluorescence, WET Labs WETstar'}
-
-        oxygen = BaseType('nameless')
-        oxygen.attributes = {'colname': 'Sbeox0ML/L', 'units': 'ml/l', 'long_name': 'Oxygen, SBE 43'}
+        # Fake up a Pydap-like dataset
+        self.ds = DatasetType('nameless')
 
         # The colname attribute must be the keys that DictReader returns - the keys of this dictionary will be the Parameter names in stoqs
-        parmDict = {'pressure': pr, 'TEMP': temp, 'PSAL': sal, 'xmiss': xmiss, 'ecofl': ecofl, 'oxygen': oxygen, 'wetstar': wetstar}
+        pr = BaseType('pressure')
+        pr.attributes = {'colname': 'PrDM', 'units': 'm' , 'long_name': 'DEPTH', 'standard_name': 'depth'}
+        self.ds['pressure'] = pr
+
+        temp = BaseType('TEMP')
+        temp.attributes = {'colname': 'T190C', 'units': 'ITS-90, deg C', 'long_name': 'temperature', 'standard_name': 'sea_water_temperature'}
+        self.ds['TEMP'] = temp
+
+        sal = BaseType('PSAL')
+        sal.attributes = {'colname': 'Sal00', 'long_name': 'salinity', 'standard_name': 'sea_water_salinity'} 
+        self.ds['PSAL'] = sal
+
+        xmiss = BaseType('xmiss')
+        xmiss.attributes = {'colname': 'Xmiss', 'units': '%', 'long_name': 'Beam Transmission, Chelsea/Seatech'}
+        self.ds['xmiss'] = xmiss
+
+        ecofl = BaseType('ecofl')
+        ecofl.attributes = {'colname': 'FlECO-AFL', 'units': 'mg/m^3', 'long_name': 'Fluorescence, WET Labs ECO-AFL/FL'}
+        self.ds['ecofl'] = ecofl
+
+        wetstar = BaseType('wetstar')
+        wetstar.attributes = {'colname': 'WetStar', 'units': 'mg/m^3', 'long_name': 'Fluorescence, WET Labs WETstar'}
+        self.ds['wetstar'] = wetstar
+
+        oxygen = BaseType('oxygen')
+        oxygen.attributes = {'colname': 'Sbeox0ML/L', 'units': 'ml/l', 'long_name': 'Oxygen, SBE 43'}
+        self.ds['oxygen'] = oxygen
+        
+        # Append ' (units)' to Parameter name
+        parmDict = {}
+        for name, var in self.ds.items():
+            parameter_name, _ = self.parameter_name(var.name)
+            parmDict[parameter_name] = var
 
         return parmDict
 
@@ -329,7 +341,7 @@ class SeabirdLoader(STOQS_Loader):
         else:
             self.logger.info('Loaded Bottle name = %s', bottleName)
 
-    def process_btl_file(self, fh, year, lat, lon):
+    def process_btl_file(self, fh, year, lat, lon, btlUrl):
         '''
         Iterate through lines of iterator to Seabird .btl file and pull out data for loading into STOQS
         '''
@@ -408,8 +420,10 @@ class SeabirdLoader(STOQS_Loader):
 
         parmDict = self.buildParmDict()
         self.logger.debug('Calling add_parameters for parmDict = %s', parmDict)
-        self.include_names = list(parmDict.keys())
-        self.add_parameters(parmDict)
+        self.include_names = list(self.ds.keys())
+        # add_parameters() from the base class expects a 'ds' parameter dictionary
+        self.url = btlUrl
+        self.add_parameters(self.ds)
 
         for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
             dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
@@ -503,7 +517,7 @@ class SeabirdLoader(STOQS_Loader):
                     year, lat, lon = get_year_lat_lon(hdrUrl = hdrUrl)
                     btlFH = urlopen(btlUrl).read().splitlines()
                     try:
-                        self.process_btl_file(btlFH, year, lat, lon)
+                        self.process_btl_file(btlFH, year, lat, lon, btlUrl)
                     except SingleActivityNotFound:
                         continue
 
