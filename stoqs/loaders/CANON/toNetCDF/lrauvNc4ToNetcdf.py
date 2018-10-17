@@ -396,9 +396,13 @@ class InterpolatorWriter(BaseWriter):
 
                         for name in self.df[c].ncattrs():
                             attr[name] = getattr(self.df.variables[c],name)
+                            if name == 'standard_name' and attr[name] == 'platform_orientation':
+                                # Override original standard_name for yaw
+                                attr[name] = 'platform_yaw_angle'
 
                         self.all_sub_ts[c_rename] = i
-                        self.all_attrib[c_rename] = attr
+                        self.logger.info(f"{c} -> {c_rename}: {attr.copy()}")
+                        self.all_attrib[c_rename] = attr.copy()
                         self.all_coord[c_rename] = { 'time':'time', 'depth':'depth', 'latitude':'latitude', 'longitude':'longitude'}
                     except Exception as e:
                         self.logger.error(e)
@@ -766,7 +770,9 @@ class InterpolatorWriter(BaseWriter):
                         continue
 
         # add in navigation
-        self.createNav(t_resample, resampleFreq)
+        if resampleFreq == '2S':
+            # Add roll, pitch, and yaw to only the 2S_eng.nc file
+            self.createNav(t_resample, resampleFreq)
 
         # add in coordinates
         for key in coord:
