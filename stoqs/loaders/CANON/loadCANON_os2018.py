@@ -43,6 +43,12 @@ cl = CANONLoader('stoqs_os2018', 'CANON - Off Season 2018',
                      'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                      'VerticalExaggeration': '1',
                    },
+                   'https://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
+                     'position': '14051448.48336 -15407886.51486 6184041.22775',
+                     'orientation': '0.83940 0.33030 0.43164 1.44880',
+                     'centerOfRotation': '0 0 0',
+                     'VerticalExaggeration': '10',
+                   },
                  },
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
