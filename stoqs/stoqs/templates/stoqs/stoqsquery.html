@@ -1670,15 +1670,8 @@
         
         var mp_param = '?';
         if (typeof params[group_name1 + 'parametersgroup'] != 'undefined') {
-            if ( group == 'mp' ) {
-                for (var i=0; i<params[group_name1 + 'parametersgroup'].length; i++) {
-                    mp_param = mp_param + 'parameter__name=' + params[group_name1 + 'parametersgroup'][i] + '&';
-                }
-            }
-            else if ( group == 'sp' ) {
-                for (var i=0; i<params[group_name1 + 'parametersgroup'].length; i++) {
-                    mp_param = mp_param + 'parameter__id=' + params[group_name1 + 'parametersgroup'][i] + '&';
-                }
+            for (var i=0; i<params[group_name1 + 'parametersgroup'].length; i++) {
+                mp_param = mp_param + 'parameter__id=' + params[group_name1 + 'parametersgroup'][i] + '&';
             }
         }
         if (typeof params['parameterstandardname'] != 'undefined') {
