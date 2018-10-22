@@ -119,7 +119,7 @@ class InterpolatorWriter(BaseWriter):
         self.logger.debug("Adding in global metadata")
         self.add_global_metadata()
         if getattr(self, 'trackingdb_values'):
-            self.ncFile.comment(f"latitude and longitude values interpolated from {self.trackingdb_values} values retrieved from {self.trackingdb_url}")
+            self.ncFile.comment = f"latitude and longitude values interpolated from {self.trackingdb_values} values retrieved from {self.trackingdb_url}"
 
         self.ncFile.close()
         # End write_netcdf()
