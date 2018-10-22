@@ -135,8 +135,8 @@ class InterpolatorWriter(BaseWriter):
         v = self.df[name]
         v_t = self.df[tname]
         data = np.asarray(v_t)
-        data[data/1e10 < -1.] = 'NaN'
-        data[data/1e10 > 1.] ='NaN'
+        data[data/1e10 < -1.] = -1.e34
+        data[data/1e10 > 1.] = -1.e34
         v_time_epoch = data
         v_time = pd.to_datetime(v_time_epoch[:],unit='s')
         v_time_series = pd.Series(v[:],index=v_time)
@@ -161,7 +161,7 @@ class InterpolatorWriter(BaseWriter):
             esec_list = v.index.values.astype(dt.datetime)/1E9
             # trajectory dataset, time is the only netCDF dimension
             self.ncFile.createDimension(key, len(esec_list))
-            rc = self.ncFile.createVariable(key, 'float64', (key,), fill_value='NaN')
+            rc = self.ncFile.createVariable(key, 'float64', (key,), fill_value=-1.e34)
             rc.standard_name = 'time' 
             rc.units = 'seconds since 1970-01-01 00:00:00'
             # Used in global metadata
@@ -172,7 +172,7 @@ class InterpolatorWriter(BaseWriter):
         elif key.find('latitude') != -1:
             # Record Variables - coordinates for trajectory - save in the instance and use for metadata generation
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value='NaN')
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=-1.e34)
             rc.long_name = 'LATITUDE'
             rc.standard_name = 'latitude' 
             rc.units = 'degree_north'
@@ -184,7 +184,7 @@ class InterpolatorWriter(BaseWriter):
 
         elif key.find('longitude') != -1:
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value='NaN')
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=-1.e34)
             rc.long_name = 'LONGITUDE'
             rc.standard_name = 'longitude'
             rc.units = 'degree_east'
@@ -196,7 +196,7 @@ class InterpolatorWriter(BaseWriter):
 
         elif key.find('depth') != -1:
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value='NaN')
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=-1.e34)
             rc.long_name = 'DEPTH'
             rc.standard_name = 'depth' 
             rc.units = 'm'
@@ -209,7 +209,7 @@ class InterpolatorWriter(BaseWriter):
         else:
             a = self.all_attrib[key]
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value='NaN')
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=-1.e34)
 
             if 'long_name' in a:
                 rc.long_name = a['long_name']

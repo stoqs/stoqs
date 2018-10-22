@@ -46,14 +46,18 @@ def iter_db_campaigns():
         try:
             c = Campaign.objects.using(db).get(id=1)
             yield db, c, load_script
-        except (django.db.utils.ConnectionDoesNotExist, django.db.utils.OperationalError,
-                psycopg2.OperationalError, Campaign.DoesNotExist) as e:
+        except (django.db.utils.ConnectionDoesNotExist, 
+                django.db.utils.OperationalError,
+                psycopg2.OperationalError, 
+                Campaign.DoesNotExist, 
+                django.db.utils.ProgrammingError) as e:
             print(f'{db:25s}: *** {str(e).strip()} ***')
 
 def iter_opendap_urls_batch(db, batch=4):
     '''Iterator to return a batch of urls in a list each time it's called
     '''
-    count = Resource.objects.using(db).filter(name='opendap_url').count()
+    count = Resource.objects.using(db).filter(name='opendap_url', 
+                                              uristring__startswith='http').count()
     for i in range(0, count, batch):
         yield (Resource.objects.using(db).filter(name='opendap_url')
                 .order_by('name').values_list('uristring', flat=True)[i:i + batch])
