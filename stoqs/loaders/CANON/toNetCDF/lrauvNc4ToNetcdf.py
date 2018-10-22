@@ -430,6 +430,15 @@ class InterpolatorWriter(BaseWriter):
         return all_ts
     # End createCoord
 
+    def trackingdb_lat_lon(self, args):
+        se = float(self.df['time'][0].data)
+        ee = float(self.df['time'][-1].data)
+        st = dt.datetime.utcfromtimestamp(se).strftime('%Y%m%dT%H%M%S')
+        et = dt.datetime.utcfromtimestamp(ee).strftime('%Y%m%dT%H%M%S')
+        vehicle = args.inDir.split('/')[3]
+        trackingdb_url = f"http://odss.mbari.org/trackingdb/position/{vehicle}_ac/between/{st}/{et}/data.html"
+        self.logger.debug(trackingdb_url)
+
     def processNc4FileDecimated(self, url, in_file, out_file, parms, group_parms, interp_key):
         self.reset()
         parm_valid = []
@@ -673,7 +682,7 @@ class InterpolatorWriter(BaseWriter):
         # End processNc4
 
 
-    def processResampleNc4File(self, in_file, out_file, parm, resampleFreq, rad_to_deg):
+    def processResampleNc4File(self, in_file, out_file, parm, resampleFreq, rad_to_deg, args):
         self.reset()
         coord_ts = {}
         start_times = []
@@ -781,6 +790,10 @@ class InterpolatorWriter(BaseWriter):
                 if rad_to_deg:
                     if key.find('latitude') != -1 or key.find('longitude') != -1:
                         value = value * 180.0/ numpy.pi
+
+                if args.trackingdb:
+                    self.trackingdb_lat_lon(args)
+
                 i = self.interpolate(value, t_resample.index)
                 self.all_sub_ts[key] = i
                 self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
@@ -884,7 +897,7 @@ class InterpolatorWriter(BaseWriter):
 if __name__ == '__main__':
 
     pw = InterpolatorWriter()
-    pw.process_command_line()
+    args = pw.process_command_line()
     nc4_file='/home/vagrant/LRAUV/daphne/missionlogs/2015/20150930_20151008/20151006T201728/201510062017_201510062027.nc4'
     nc4_file='/mbari/LRAUV/opah/missionlogs/2017/20170502_20170508/20170508T185643/201705081856_201705090002.nc4'
     nc4_file='/mbari/LRAUV/makai/missionlogs/2018/20180802_20180806/20180805T004113/201808050041_201808051748.nc4'
@@ -916,6 +929,6 @@ if __name__ == '__main__':
     # with resample appended to indicate it has resampled data and is now in .nc format
     f = nc4_file.rsplit('/',1)[1]
     out_file = outDir + '.'.join(f.split('.')[:-1]) + '_' + resample_freq + '.nc'
-    pw.processResampleNc4File(nc4_file, out_file, json.loads(parm),resample_freq, rad_to_deg)
+    pw.processResampleNc4File(nc4_file, out_file, json.loads(parm),resample_freq, rad_to_deg, args)
 
     print('Done.')
