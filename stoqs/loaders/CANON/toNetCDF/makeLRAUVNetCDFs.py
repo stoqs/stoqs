@@ -77,6 +77,7 @@ def process_command_line():
            '] }')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150930T000000', required=False)
         parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20151031T000000', required=False)
+        parser.add_argument('--trackingdb', action='store_true', help='Attempt to use positions of <name>_ac from the Tracking Database (ODSS)')
 
         args = parser.parse_args()
 
@@ -145,8 +146,8 @@ def getNcStartEnd(inDir, urlNcDap, timeAxisName):
         timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
 
     try:
-        startDatetime = from_udunits(df[timeAxisName][0][0].data, timeAxisUnits)
-        endDatetime = from_udunits(df[timeAxisName][-1][0].data, timeAxisUnits)
+        startDatetime = from_udunits(df[timeAxisName][0].data, timeAxisUnits)
+        endDatetime = from_udunits(df[timeAxisName][-1].data, timeAxisUnits)
     except pydap.exceptions.ServerError as ex:
         logger.warning(ex)
         raise ServerError("Can't read start and end dates of {} from {}".format(timeAxisUnits, urlNcDap))
@@ -157,7 +158,7 @@ def getNcStartEnd(inDir, urlNcDap, timeAxisName):
     return startDatetime, endDatetime
 
 
-def processResample(pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendString):
+def processResample(pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendString, args):
     '''
     Created resampled LRAUV data netCDF file
     '''
@@ -175,7 +176,7 @@ def processResample(pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendS
 
     try:
         if not os.path.exists(out_file):
-            pw.processResampleNc4File(in_file, out_file, parms, resample_freq, rad_to_deg)
+            pw.processResampleNc4File(in_file, out_file, parms, resample_freq, rad_to_deg, args)
     except TypeError as te:
         logger.warning('Problem reading data from {}'.format(url_in))
         logger.warning('Assuming data are invalid and skipping')
@@ -260,6 +261,7 @@ if __name__ == '__main__':
         try:
             startDatetime, endDatetime = getNcStartEnd(args.inDir, u, 'time_time')
         except Exception as e:
+            logger.warn(str(e))
             continue
 
         logger.debug('startDatetime, endDatetime = {}, {}'.format(startDatetime, endDatetime))
@@ -280,7 +282,7 @@ if __name__ == '__main__':
     convert_radians = True
     for url in sorted(urls):
         try:
-            processResample(pw, url, args.inDir, args.resampleFreq, parms, convert_radians, args.appendString)
+            processResample(pw, url, args.inDir, args.resampleFreq, parms, convert_radians, args.appendString, args)
         except ServerError as e:
             logger.warning(e)
             continue

@@ -508,8 +508,9 @@ cl.loadLRAUV('daphne', startdate, enddate)
 cl.loadLRAUV('makai', startdate, enddate)
 ##cl.loadRCuctd()  ## not in this campaign
 ##cl.loadRCpctd()  ## not in this campaign
-cl.loadWFuctd()
-cl.loadWFpctd()
+
+##cl.loadWFuctd()  # Settings above are for May 2017
+##cl.loadWFpctd()  # Settings above are for May 2017
 
 #cl.loadSubSamples() ## no subSamples yet...
 
