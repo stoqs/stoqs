@@ -32,6 +32,7 @@ import time
 import datetime as dt
 from time import mktime
 from CANON.toNetCDF import BaseWriter
+from contextlib import closing
 from netCDF4 import Dataset
 import pydap.client
 import numpy
@@ -39,6 +40,8 @@ import DAPloaders
 import logging
 import socket
 import json
+import csv
+import requests
 
 # Map common LRAUV variable names to CF standard names: http://cfconventions.org/standard-names.html
 sn_lookup = {
@@ -115,6 +118,9 @@ class InterpolatorWriter(BaseWriter):
 
         self.logger.debug("Adding in global metadata")
         self.add_global_metadata()
+        if getattr(self, 'trackingdb_values'):
+            self.ncFile.comment = f"latitude and longitude values interpolated from {self.trackingdb_values} values retrieved from {self.trackingdb_url}"
+            sefl.ncFile.title += " with acoustic navigation retrieved from MBARI's Tracking database"
 
         self.ncFile.close()
         # End write_netcdf()
@@ -135,8 +141,8 @@ class InterpolatorWriter(BaseWriter):
         v = self.df[name]
         v_t = self.df[tname]
         data = np.asarray(v_t)
-        data[data/1e10 < -1.] = -1.e34
-        data[data/1e10 > 1.] = -1.e34
+        data[data/1e10 < -1.] = np.nan
+        data[data/1e10 > 1.] = np.nan
         v_time_epoch = data
         v_time = pd.to_datetime(v_time_epoch[:],unit='s')
         v_time_series = pd.Series(v[:],index=v_time)
@@ -161,7 +167,7 @@ class InterpolatorWriter(BaseWriter):
             esec_list = v.index.values.astype(dt.datetime)/1E9
             # trajectory dataset, time is the only netCDF dimension
             self.ncFile.createDimension(key, len(esec_list))
-            rc = self.ncFile.createVariable(key, 'float64', (key,), fill_value=-1.e34)
+            rc = self.ncFile.createVariable(key, 'float64', (key,), fill_value=np.nan)
             rc.standard_name = 'time' 
             rc.units = 'seconds since 1970-01-01 00:00:00'
             # Used in global metadata
@@ -172,7 +178,7 @@ class InterpolatorWriter(BaseWriter):
         elif key.find('latitude') != -1:
             # Record Variables - coordinates for trajectory - save in the instance and use for metadata generation
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=-1.e34)
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=np.nan)
             rc.long_name = 'LATITUDE'
             rc.standard_name = 'latitude' 
             rc.units = 'degree_north'
@@ -184,7 +190,7 @@ class InterpolatorWriter(BaseWriter):
 
         elif key.find('longitude') != -1:
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=-1.e34)
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=np.nan)
             rc.long_name = 'LONGITUDE'
             rc.standard_name = 'longitude'
             rc.units = 'degree_east'
@@ -196,7 +202,7 @@ class InterpolatorWriter(BaseWriter):
 
         elif key.find('depth') != -1:
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=-1.e34)
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=np.nan)
             rc.long_name = 'DEPTH'
             rc.standard_name = 'depth' 
             rc.units = 'm'
@@ -209,7 +215,7 @@ class InterpolatorWriter(BaseWriter):
         else:
             a = self.all_attrib[key]
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=-1.e34)
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=np.nan)
 
             if 'long_name' in a:
                 rc.long_name = a['long_name']
@@ -429,6 +435,44 @@ class InterpolatorWriter(BaseWriter):
 
         return all_ts
     # End createCoord
+
+    def trackingdb_lat_lon(self, args, sec_extend=3600):
+        '''Query MBARI's Tracking Database and return Pandas time series
+        of any acoustic fixes found.
+        '''
+        self.logger.debug(f"Constructing trackingdb url to {sec_extend} seconds beyond time range of file")
+        se = float(self.df['time'][0].data) - sec_extend
+        ee = float(self.df['time'][-1].data) + sec_extend
+        st = dt.datetime.utcfromtimestamp(se).strftime('%Y%m%dT%H%M%S')
+        et = dt.datetime.utcfromtimestamp(ee).strftime('%Y%m%dT%H%M%S')
+        vehicle = args.inDir.split('/')[3]
+        url = f"http://odss.mbari.org/trackingdb/position/{vehicle}_ac/between/{st}/{et}/data.csv"
+        self.trackingdb_url = url
+        self.logger.debug(url)
+
+        # Read positions from .csv response and collect into lists - expect less than 10^3 values
+        ess = []
+        lons = []
+        lats = []
+        with closing(requests.get(url, stream=True)) as resp:
+            if resp.status_code != 200:
+                logger.error('Cannot read %s, resp.status_code = %s', url, resp.status_code)
+                return
+
+            r_decoded = (line.decode('utf-8') for line in resp.iter_lines())
+            lines = [line for line in csv.DictReader(r_decoded)]
+            for r in reversed(lines):
+                self.logger.debug(f"{float(r['epochSeconds'])}, {float(r['longitude'])}, {float(r['latitude'])}")
+                ess.append(float(r['epochSeconds']))
+                lons.append(float(r['longitude']))
+                lats.append(float(r['latitude']))
+
+        self.trackingdb_values = len(ess)
+        v_time = pd.to_datetime(ess, unit='s',errors = 'coerce')
+        lon_time_series = pd.Series(lons, index=v_time)
+        lat_time_series = pd.Series(lats, index=v_time)
+
+        return lon_time_series, lat_time_series
 
     def processNc4FileDecimated(self, url, in_file, out_file, parms, group_parms, interp_key):
         self.reset()
@@ -673,7 +717,7 @@ class InterpolatorWriter(BaseWriter):
         # End processNc4
 
 
-    def processResampleNc4File(self, in_file, out_file, parm, resampleFreq, rad_to_deg):
+    def processResampleNc4File(self, in_file, out_file, parm, resampleFreq, rad_to_deg, args):
         self.reset()
         coord_ts = {}
         start_times = []
@@ -781,6 +825,13 @@ class InterpolatorWriter(BaseWriter):
                 if rad_to_deg:
                     if key.find('latitude') != -1 or key.find('longitude') != -1:
                         value = value * 180.0/ numpy.pi
+                        if args.trackingdb:
+                            lons, lats = self.trackingdb_lat_lon(args)
+                            if key.find('longitude') != -1 and lons.any():
+                                value = lons
+                            if key.find('latitude') != -1 and lats.any():
+                                value = lats
+
                 i = self.interpolate(value, t_resample.index)
                 self.all_sub_ts[key] = i
                 self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
@@ -884,7 +935,7 @@ class InterpolatorWriter(BaseWriter):
 if __name__ == '__main__':
 
     pw = InterpolatorWriter()
-    pw.process_command_line()
+    args = pw.process_command_line()
     nc4_file='/home/vagrant/LRAUV/daphne/missionlogs/2015/20150930_20151008/20151006T201728/201510062017_201510062027.nc4'
     nc4_file='/mbari/LRAUV/opah/missionlogs/2017/20170502_20170508/20170508T185643/201705081856_201705090002.nc4'
     nc4_file='/mbari/LRAUV/makai/missionlogs/2018/20180802_20180806/20180805T004113/201808050041_201808051748.nc4'
@@ -916,6 +967,6 @@ if __name__ == '__main__':
     # with resample appended to indicate it has resampled data and is now in .nc format
     f = nc4_file.rsplit('/',1)[1]
     out_file = outDir + '.'.join(f.split('.')[:-1]) + '_' + resample_freq + '.nc'
-    pw.processResampleNc4File(nc4_file, out_file, json.loads(parm),resample_freq, rad_to_deg)
+    pw.processResampleNc4File(nc4_file, out_file, json.loads(parm),resample_freq, rad_to_deg, args)
 
     print('Done.')

@@ -99,7 +99,7 @@ parms_eng="{
 
 for platform in "${platforms[@]}"
 do
-        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_sci}" --resampleFreq '10S' -a 'sci' --start "${start_datetime}" --end "${end_datetime}"
-        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start "${start_datetime}" --end "${end_datetime}"
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_sci}" --resampleFreq '10S' -a 'sci' --start "${start_datetime}" --end "${end_datetime}" --trackingdb
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start "${start_datetime}" --end "${end_datetime}" --trackingdb
 done
 
