@@ -32,6 +32,7 @@ import time
 import datetime as dt
 from time import mktime
 from CANON.toNetCDF import BaseWriter
+from contextlib import closing
 from netCDF4 import Dataset
 import pydap.client
 import numpy
@@ -39,6 +40,8 @@ import DAPloaders
 import logging
 import socket
 import json
+import csv
+import requests
 
 # Map common LRAUV variable names to CF standard names: http://cfconventions.org/standard-names.html
 sn_lookup = {
@@ -430,14 +433,25 @@ class InterpolatorWriter(BaseWriter):
         return all_ts
     # End createCoord
 
-    def trackingdb_lat_lon(self, args):
-        se = float(self.df['time'][0].data)
-        ee = float(self.df['time'][-1].data)
+    def trackingdb_lat_lon(self, args, sec_extend=3600):
+        # Extend time range by a few hours on each end of the .nc4 file times
+        se = float(self.df['time'][0].data) - sec_extend
+        ee = float(self.df['time'][-1].data) + sec_extend
         st = dt.datetime.utcfromtimestamp(se).strftime('%Y%m%dT%H%M%S')
         et = dt.datetime.utcfromtimestamp(ee).strftime('%Y%m%dT%H%M%S')
         vehicle = args.inDir.split('/')[3]
-        trackingdb_url = f"http://odss.mbari.org/trackingdb/position/{vehicle}_ac/between/{st}/{et}/data.html"
-        self.logger.debug(trackingdb_url)
+        url = f"http://odss.mbari.org/trackingdb/position/{vehicle}_ac/between/{st}/{et}/data.csv"
+
+        with closing(requests.get(url, stream=True)) as resp:
+            if resp.status_code != 200:
+                logger.error('Cannot read %s, resp.status_code = %s', url, resp.status_code)
+                return
+
+            r_decoded = (line.decode('utf-8') for line in resp.iter_lines())
+            for r in csv.DictReader(r_decoded):
+                print(float(r['epochSeconds']), float(r['longitude']), float(r['latitude']))
+
+        self.logger.debug(url)
 
     def processNc4FileDecimated(self, url, in_file, out_file, parms, group_parms, interp_key):
         self.reset()
