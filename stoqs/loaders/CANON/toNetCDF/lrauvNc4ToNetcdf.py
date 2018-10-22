@@ -434,24 +434,40 @@ class InterpolatorWriter(BaseWriter):
     # End createCoord
 
     def trackingdb_lat_lon(self, args, sec_extend=3600):
-        # Extend time range by a few hours on each end of the .nc4 file times
+        '''Query MBARI's Tracking Database and return Pandas time series
+        of any acoustic fixes found.
+        '''
+        self.logger.debug(f"Constructing trackingdb url to {sec_extend} seconds beyond time range of file")
         se = float(self.df['time'][0].data) - sec_extend
         ee = float(self.df['time'][-1].data) + sec_extend
         st = dt.datetime.utcfromtimestamp(se).strftime('%Y%m%dT%H%M%S')
         et = dt.datetime.utcfromtimestamp(ee).strftime('%Y%m%dT%H%M%S')
         vehicle = args.inDir.split('/')[3]
         url = f"http://odss.mbari.org/trackingdb/position/{vehicle}_ac/between/{st}/{et}/data.csv"
+        self.logger.debug(url)
 
+        # Read positions from .csv response and collect into lists - expect less than 10^3 values
+        ess = []
+        lons = []
+        lats = []
         with closing(requests.get(url, stream=True)) as resp:
             if resp.status_code != 200:
                 logger.error('Cannot read %s, resp.status_code = %s', url, resp.status_code)
                 return
 
             r_decoded = (line.decode('utf-8') for line in resp.iter_lines())
-            for r in csv.DictReader(r_decoded):
-                print(float(r['epochSeconds']), float(r['longitude']), float(r['latitude']))
+            lines = [line for line in csv.DictReader(r_decoded)]
+            for r in reversed(lines):
+                self.logger.debug(f"{float(r['epochSeconds'])}, {float(r['longitude'])}, {float(r['latitude'])}")
+                ess.append(float(r['epochSeconds']))
+                lons.append(float(r['longitude']))
+                lats.append(float(r['latitude']))
 
-        self.logger.debug(url)
+        v_time = pd.to_datetime(ess, unit='s',errors = 'coerce')
+        lon_time_series = pd.Series(lons, index=v_time)
+        lat_time_series = pd.Series(lats, index=v_time)
+
+        return lon_time_series, lat_time_series
 
     def processNc4FileDecimated(self, url, in_file, out_file, parms, group_parms, interp_key):
         self.reset()
@@ -804,9 +820,12 @@ class InterpolatorWriter(BaseWriter):
                 if rad_to_deg:
                     if key.find('latitude') != -1 or key.find('longitude') != -1:
                         value = value * 180.0/ numpy.pi
-
-                if args.trackingdb:
-                    self.trackingdb_lat_lon(args)
+                        if args.trackingdb:
+                            lons, lats = self.trackingdb_lat_lon(args)
+                            if key.find('longitude') != -1 and lons:
+                                value = lons
+                            if key.find('latitude') != -1 and lats:
+                                value = lats
 
                 i = self.interpolate(value, t_resample.index)
                 self.all_sub_ts[key] = i
