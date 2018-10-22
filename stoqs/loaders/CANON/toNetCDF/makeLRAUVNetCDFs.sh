@@ -13,7 +13,8 @@ end_datetime='20171231T000000'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 dir='/mbari/LRAUV'
 year='2018'
-declare -a platforms=("tethys" "makai" "daphne" "aku" "ahi" "opah")
+##declare -a platforms=("tethys" "makai" "daphne" "aku" "ahi" "opah")
+declare -a platforms=("tethys")
 
 while getopts "s:e:y:" opt; do
     case "$opt" in
@@ -99,7 +100,7 @@ parms_eng="{
 
 for platform in "${platforms[@]}"
 do
-        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_sci}" --resampleFreq '10S' -a 'sci' --start "${start_datetime}" --end "${end_datetime}"
-        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start "${start_datetime}" --end "${end_datetime}"
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_sci}" --resampleFreq '10S' -a 'sci' --start "${start_datetime}" --end "${end_datetime}" --trackingdb
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start "${start_datetime}" --end "${end_datetime}" --trackingdb
 done
 
