@@ -120,7 +120,7 @@ class InterpolatorWriter(BaseWriter):
         self.add_global_metadata()
         if getattr(self, 'trackingdb_values'):
             self.ncFile.comment = f"latitude and longitude values interpolated from {self.trackingdb_values} values retrieved from {self.trackingdb_url}"
-            sefl.ncFile.title += " with acoustic navigation retrieved from MBARI's Tracking database"
+            self.ncFile.title += " with acoustic navigation retrieved from MBARI's Tracking database"
 
         self.ncFile.close()
         # End write_netcdf()
