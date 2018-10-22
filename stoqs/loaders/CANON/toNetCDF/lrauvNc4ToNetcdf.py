@@ -118,6 +118,8 @@ class InterpolatorWriter(BaseWriter):
 
         self.logger.debug("Adding in global metadata")
         self.add_global_metadata()
+        if getattr(self, 'trackingdb_values'):
+            self.ncFile.comment(f"latitude and longitude values interpolated from {self.trackingdb_values} values retrieved from {self.trackingdb_url}")
 
         self.ncFile.close()
         # End write_netcdf()
@@ -138,8 +140,8 @@ class InterpolatorWriter(BaseWriter):
         v = self.df[name]
         v_t = self.df[tname]
         data = np.asarray(v_t)
-        data[data/1e10 < -1.] = -1.e34
-        data[data/1e10 > 1.] = -1.e34
+        data[data/1e10 < -1.] = np.nan
+        data[data/1e10 > 1.] = np.nan
         v_time_epoch = data
         v_time = pd.to_datetime(v_time_epoch[:],unit='s')
         v_time_series = pd.Series(v[:],index=v_time)
@@ -164,7 +166,7 @@ class InterpolatorWriter(BaseWriter):
             esec_list = v.index.values.astype(dt.datetime)/1E9
             # trajectory dataset, time is the only netCDF dimension
             self.ncFile.createDimension(key, len(esec_list))
-            rc = self.ncFile.createVariable(key, 'float64', (key,), fill_value=-1.e34)
+            rc = self.ncFile.createVariable(key, 'float64', (key,), fill_value=np.nan)
             rc.standard_name = 'time' 
             rc.units = 'seconds since 1970-01-01 00:00:00'
             # Used in global metadata
@@ -175,7 +177,7 @@ class InterpolatorWriter(BaseWriter):
         elif key.find('latitude') != -1:
             # Record Variables - coordinates for trajectory - save in the instance and use for metadata generation
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=-1.e34)
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=np.nan)
             rc.long_name = 'LATITUDE'
             rc.standard_name = 'latitude' 
             rc.units = 'degree_north'
@@ -187,7 +189,7 @@ class InterpolatorWriter(BaseWriter):
 
         elif key.find('longitude') != -1:
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=-1.e34)
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=np.nan)
             rc.long_name = 'LONGITUDE'
             rc.standard_name = 'longitude'
             rc.units = 'degree_east'
@@ -199,7 +201,7 @@ class InterpolatorWriter(BaseWriter):
 
         elif key.find('depth') != -1:
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=-1.e34)
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=np.nan)
             rc.long_name = 'DEPTH'
             rc.standard_name = 'depth' 
             rc.units = 'm'
@@ -212,7 +214,7 @@ class InterpolatorWriter(BaseWriter):
         else:
             a = self.all_attrib[key]
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=-1.e34)
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value=np.nan)
 
             if 'long_name' in a:
                 rc.long_name = a['long_name']
@@ -444,6 +446,7 @@ class InterpolatorWriter(BaseWriter):
         et = dt.datetime.utcfromtimestamp(ee).strftime('%Y%m%dT%H%M%S')
         vehicle = args.inDir.split('/')[3]
         url = f"http://odss.mbari.org/trackingdb/position/{vehicle}_ac/between/{st}/{et}/data.csv"
+        self.trackingdb_url = url
         self.logger.debug(url)
 
         # Read positions from .csv response and collect into lists - expect less than 10^3 values
@@ -463,6 +466,7 @@ class InterpolatorWriter(BaseWriter):
                 lons.append(float(r['longitude']))
                 lats.append(float(r['latitude']))
 
+        self.trackingdb_values = len(ess)
         v_time = pd.to_datetime(ess, unit='s',errors = 'coerce')
         lon_time_series = pd.Series(lons, index=v_time)
         lat_time_series = pd.Series(lats, index=v_time)
@@ -822,9 +826,9 @@ class InterpolatorWriter(BaseWriter):
                         value = value * 180.0/ numpy.pi
                         if args.trackingdb:
                             lons, lats = self.trackingdb_lat_lon(args)
-                            if key.find('longitude') != -1 and lons:
+                            if key.find('longitude') != -1 and lons.any():
                                 value = lons
-                            if key.find('latitude') != -1 and lats:
+                            if key.find('latitude') != -1 and lats.any():
                                 value = lats
 
                 i = self.interpolate(value, t_resample.index)
