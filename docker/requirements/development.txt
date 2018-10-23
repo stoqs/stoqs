@@ -18,7 +18,7 @@ Genshi==0.7
 h5py==2.8.0
 MarkupSafe==1.0
 netCDF4==1.4.1
-numpy==1.15.2
+numpy==1.15.3
 pandas==0.23.4
 requests==2.20.0
 Pygments==2.2.0
