@@ -78,6 +78,7 @@ def process_command_line():
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150930T000000', required=False)
         parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20151031T000000', required=False)
         parser.add_argument('--trackingdb', action='store_true', help='Attempt to use positions of <name>_ac from the Tracking Database (ODSS)')
+        parser.add_argument('--nudge', action='store_true', help='Nudge the dead reckoned positions to meet the GPS fixes')
 
         args = parser.parse_args()
 
@@ -187,8 +188,6 @@ def processResample(pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendS
         raise ie
     except KeyError:
         raise ServerError("Key error - can't read parameters from {}".format(url_in))
-    except ValueError:
-        raise ServerError("Value error - can't read parameters from {}".format(url_in))
 
     url_o = url_out
     return url_o
@@ -284,9 +283,6 @@ if __name__ == '__main__':
         try:
             processResample(pw, url, args.inDir, args.resampleFreq, parms, convert_radians, args.appendString, args)
         except ServerError as e:
-            logger.warning(e)
-            continue
-        except Exception as e:
             logger.warning(e)
             continue
 
