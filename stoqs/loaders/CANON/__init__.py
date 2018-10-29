@@ -189,7 +189,7 @@ class CANONLoader(LoadScript):
                     'pose_longitude_DeadReckonUsingMultipleVelocitySources',
                     'pose_latitude_DeadReckonUsingMultipleVelocitySources',
                     'pose_depth_DeadReckonUsingMultipleVelocitySources',],
-                  stride=None, file_patterns=('.*2S_eng.nc$|.*10S_sci.nc$'), build_attrs=True):
+                  stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True):
         '''
         Loader for tethys, daphne, makai, ahi, aku, 
         '''
