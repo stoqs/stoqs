@@ -30,11 +30,7 @@ from urllib.parse import urlparse
 from datetime import datetime
 
 # Set up global variables for logging output to STDOUT
-logger = logging.getLogger('makeLRAUVNetCDFS')
-fh = logging.StreamHandler()
-f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
-fh.setFormatter(f)
-logger.addHandler(fh)
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 class ServerError(Exception):
@@ -86,7 +82,6 @@ def process_command_line():
 
 def find_urls(base, select, startdate, enddate):
     url = os.path.join(base, 'catalog.xml')
-    print("Crawling: {}".format(url))
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
     u = urlparse(url)
     name, ext = os.path.splitext(u.path)
@@ -250,7 +245,7 @@ if __name__ == '__main__':
     s = args.inUrl.rsplit('/',1)
     files = s[1]
     url = s[0]
-    logger.info("Crawling {} for {} files".format(url, files))
+    logger.info(f"Crawling {url} for {files} files to make {args.resampleFreq}_{args.appendString}.nc files")
 	
     # Get possible urls with mission dates in the directory name that fall between the requested times
     all_urls = find_urls(url, files, start, end)
