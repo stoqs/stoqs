@@ -96,10 +96,15 @@ parms_eng="{
             ]
         }"
 
+# Remove the first and last characters from parms so that we can combine them
+sci_vars=`echo $parms_sci | cut -c 2- | rev | cut -c 2- | rev` 
+eng_vars=`echo $parms_eng | cut -c 2- | rev | cut -c 2- | rev` 
+parms_scieng="{$sci_vars, $eng_vars}"
 
 for platform in "${platforms[@]}"
 do
-        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_sci}" --resampleFreq '10S' -a 'sci' --start "${start_datetime}" --end "${end_datetime}" --trackingdb
-        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start "${start_datetime}" --end "${end_datetime}" --trackingdb
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_sci}" --resampleFreq '10S' -a 'sci' --start "${start_datetime}" --end "${end_datetime}" --trackingdb --nudge
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start "${start_datetime}" --end "${end_datetime}" --trackingdb --nudge
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_scieng}" --resampleFreq '2S' -a 'scieng' --start "${start_datetime}" --end "${end_datetime}" --trackingdb --nudge
 done
 
