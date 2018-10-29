@@ -44,7 +44,7 @@ Pydap==3.2.2
 python-dateutil==2.7.5
 python3-memcached==1.51
 python-openid==2.2.5
-pytz==2018.6
+pytz==2018.7
 pyzmq==17.1.2
 readline==6.2.4.1
 requests-oauthlib==1.0.0
