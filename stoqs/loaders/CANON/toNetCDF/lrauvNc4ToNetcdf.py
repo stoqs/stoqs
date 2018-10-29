@@ -25,6 +25,7 @@ import os
 import errno
 # Add grandparent dir to pythonpath so that we can see the CANON and toNetCDF modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../") )
+from math import cos
 import netCDF4
 import numpy as np
 import pandas as pd
@@ -426,7 +427,7 @@ class InterpolatorWriter(BaseWriter):
                 # Create pandas time series for each coordinate and store attributes
                 for c in coord:
                     try:
-                        print('Creating {}'.format(c))
+                        self.logger.debug(f'For variable {v:>20} creating coordinate {c:>20}')
                         ts = self.createSeries(self.df.variables, c, c+'_'+'time')
                         all_ts[c] = ts
                     except Exception as e:
@@ -471,6 +472,71 @@ class InterpolatorWriter(BaseWriter):
         v_time = pd.to_datetime(ess, unit='s',errors = 'coerce')
         lon_time_series = pd.Series(lons, index=v_time)
         lat_time_series = pd.Series(lats, index=v_time)
+
+        return lon_time_series, lat_time_series
+
+    def nudge_coords(self, max_sec_diff_at_end=10):
+        '''Given a ds object to an LRAUV .nc4 file return adjusted longitude
+        and latitude arrays that reconstruct the trajectory so that the dead
+        reckoned positions are nudged so that they match the GPS fixes
+        '''
+        ds = self.df
+        
+        # Any dead reckoned points before first GPS fix - usually empty as GPS fix happens before dive
+        try:
+            segi = np.where(ds['latitude_time'] < ds['latitude_fix_time'][0])[0]
+        except IndexError as e:
+            raise IndexError(f"Failed to read latitude variable, perhaps it's zero-sized")
+        lon_nudged = ds['longitude'][segi] * 180.0 / np.pi
+        lat_nudged = ds['latitude'][segi] * 180.0 / np.pi
+        es_nudged = ds['latitude_time'][segi]
+            
+        self.logger.info(f"{'seg#':4s}  {'end_sec_diff':12s} {'end_lon_diff':12s} {'end_lat_diff':12s} {'len(segi)':9s} {'seg_min':7s} {'u_drift (cm/s)':14s} {'v_drift (cm/s)':14s}")
+        for i in range(len(ds['latitude_fix']) - 1):
+            # Segment of dead reckoned (under water) positions, each surrounded by GPS fixes
+            segi = np.where(np.logical_and(ds['latitude_time'] > ds['latitude_fix_time'][i], 
+                                           ds['latitude_time'] < ds['latitude_fix_time'][i+1]))[0]
+            end_sec_diff = ds['latitude_fix_time'][i+1] - ds['latitude_time'][segi[-1]]
+            if end_sec_diff > max_sec_diff_at_end:
+                self.logger.warn(f"end_sec_diff ({end_sec_diff}) greater than criteria of {max_sec_diff_at_end}")
+
+            end_lon_diff = ds['longitude_fix'][i+1] - ds['longitude'][segi[-1]] * 180.0 / np.pi
+            end_lat_diff = ds['latitude_fix'][i+1] - ds['latitude'][segi[-1]] * 180.0 / np.pi
+            
+            seg_min = (ds['latitude_time'][segi][-1] - ds['latitude_time'][segi][0]) / 60
+            u_drift = (end_lat_diff * cos(ds['latitude_fix'][i+1]) * 60 * 185300
+                        / (ds['latitude_time'][segi][-1] - ds['latitude_time'][segi][0]))
+            v_drift = (end_lat_diff * 60 * 185300 
+                        / (ds['latitude_time'][segi][-1] - ds['latitude_time'][segi][0]))
+            self.logger.info(f"{i:4d}: {end_sec_diff:12.3f} {end_lon_diff:12.7f} {end_lat_diff:12.7f} {len(segi):-9d} {seg_min:7.2f} {u_drift:14.2f} {v_drift:14.2f}")
+
+            # Start with zero adjustment at begining and linearly ramp up to the diff at the end
+            lon_nudge = np.interp( ds['longitude_time'][segi], 
+                                  [ds['longitude_time'][segi][0], ds['longitude_time'][segi][-1]],
+                                  [0, end_lon_diff] )
+            lat_nudge = np.interp( ds['latitude_time'][segi], 
+                                  [ds['latitude_time'][segi][0], ds['latitude_time'][segi][-1]],
+                                  [0, end_lat_diff] )
+
+            lon_seg_nudged = ds['longitude'][segi] * 180.0 / np.pi + lon_nudge
+            lon_nudged = np.append(lon_nudged, lon_seg_nudged)
+            
+            lat_seg_nudged = ds['latitude'][segi] * 180.0 / np.pi + lat_nudge
+            lat_nudged = np.append(lat_nudged, lat_seg_nudged)
+            
+            es_nudged = np.append(es_nudged, ds['latitude_time'][segi])
+        
+        # Any dead reckoned points after first GPS fix - not possible to nudge, just copy in
+        segi = np.where(ds['latitude_time'] > ds['latitude_fix_time'][-1])[0]
+        lon_nudged = np.append(lon_nudged, ds['longitude'][segi] * 180.0 / np.pi)
+        lat_nudged = np.append(lat_nudged, ds['latitude'][segi] * 180.0 / np.pi)
+        es_nudged = np.append(es_nudged, ds['latitude_time'][segi])
+        seg_min = (ds['latitude_time'][segi][-1] - ds['latitude_time'][segi][0]) / 60
+        self.logger.info(f"{i:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
+        
+        v_time = pd.to_datetime(es_nudged, unit='s',errors = 'coerce')
+        lon_time_series = pd.Series(lon_nudged, index=v_time)
+        lat_time_series = pd.Series(lat_nudged, index=v_time)
 
         return lon_time_series, lat_time_series
 
@@ -807,7 +873,7 @@ class InterpolatorWriter(BaseWriter):
 
                         self.logger.info('Found in group ' + group + ' parameter ' + var + ' renaming to ' + key)
                     except KeyError as e:
-                        self.logger.error(e)
+                        self.logger.warn(f"{e} not in {in_file}")
                         continue
                     except Exception as e:
                         self.logger.error(e)
@@ -825,6 +891,12 @@ class InterpolatorWriter(BaseWriter):
                 if rad_to_deg:
                     if key.find('latitude') != -1 or key.find('longitude') != -1:
                         value = value * 180.0/ numpy.pi
+                        if args.nudge:
+                            lons, lats = self.nudge_coords()
+                            if key.find('longitude') != -1 and lons.any():
+                                value = lons
+                            if key.find('latitude') != -1 and lats.any():
+                                value = lats
                         if args.trackingdb:
                             lons, lats = self.trackingdb_lat_lon(args)
                             if key.find('longitude') != -1 and lons.any():
@@ -835,9 +907,10 @@ class InterpolatorWriter(BaseWriter):
                 i = self.interpolate(value, t_resample.index)
                 self.all_sub_ts[key] = i
                 self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
-            except Exception as e:
+            except IndexError as e:
                 self.logger.error(e)
-                raise e
+                self.logger.error(f"Not creating {out_file}")
+                return
 
         self.logger.info("%s", list(self.all_sub_ts.keys()))
 
