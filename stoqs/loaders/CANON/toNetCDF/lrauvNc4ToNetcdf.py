@@ -473,7 +473,7 @@ class InterpolatorWriter(BaseWriter):
         v_time = pd.to_datetime(ess, unit='s',errors = 'coerce')
         lon_time_series = pd.Series(lons, index=v_time)
         lat_time_series = pd.Series(lats, index=v_time)
-        logger.info(f"Found {self.trackingdb_values} position values frome the Tracking database")
+        logger.info(f"Found {self.trackingdb_values} position values from the Tracking database")
 
         return lon_time_series, lat_time_series
 
