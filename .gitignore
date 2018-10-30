@@ -53,3 +53,4 @@ docker/*.rar
 
 # Jupyter Notebook checkpoints
 stoqs/contrib/notebooks/.ipynb_checkpoints/
+stoqs/loaders/CANON/toNetCDF/notebooks/.ipynb_checkpoints/
