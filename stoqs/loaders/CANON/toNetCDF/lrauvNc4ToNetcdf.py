@@ -543,6 +543,7 @@ class InterpolatorWriter(BaseWriter):
         v_time = pd.to_datetime(es_nudged, unit='s',errors = 'coerce')
         lon_time_series = pd.Series(lon_nudged, index=v_time)
         lat_time_series = pd.Series(lat_nudged, index=v_time)
+        logger.info(f"Points in final lat_time_series = {len(lat_time_series)}")
 
         return lon_time_series, lat_time_series
 
