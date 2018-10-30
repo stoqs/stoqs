@@ -56,7 +56,7 @@ sh = logging.StreamHandler()
 f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
 sh.setFormatter(f)
 logger.addHandler(sh)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class InterpolatorWriter(BaseWriter):
@@ -483,6 +483,13 @@ class InterpolatorWriter(BaseWriter):
         reckoned positions are nudged so that they match the GPS fixes
         '''
         ds = self.df
+        logger.info(f"{in_file}")    
+
+        # Some univrsal positions are in degress, some are in radians - maka a guess based on the mean value
+        rad_to_deg_fix = False
+        if np.max(np.abs(ds['longitude_fix'])) <= np.pi and np.max(np.abs(ds['latitude_fix'])) <= np.pi:
+            rad_to_deg_fix = True
+        logger.info(f"rad_to_deg_fix = {rad_to_deg_fix}")    
         
         # Any dead reckoned points before first GPS fix - usually empty as GPS fix happens before dive
         try:
@@ -493,48 +500,63 @@ class InterpolatorWriter(BaseWriter):
         lat_nudged = ds['latitude'][segi] * 180.0 / np.pi
         es_nudged = ds['latitude_time'][segi]
     
-        logger.info(f"{in_file}")    
         logger.info(f"{'seg#':4s}  {'end_sec_diff':12s} {'end_lon_diff':12s} {'end_lat_diff':12s} {'len(segi)':9s} {'seg_min':7s} {'u_drift (cm/s)':14s} {'v_drift (cm/s)':14s}")
         for i in range(len(ds['latitude_fix']) - 1):
             # Segment of dead reckoned (under water) positions, each surrounded by GPS fixes
+            logger.debug(f"Looking for DR segment between _fix times of {ds['latitude_fix_time'][i]} and {ds['latitude_fix_time'][i+1]}...")
             segi = np.where(np.logical_and(ds['latitude_time'] > ds['latitude_fix_time'][i], 
                                            ds['latitude_time'] < ds['latitude_fix_time'][i+1]))[0]
             end_sec_diff = ds['latitude_fix_time'][i+1] - ds['latitude_time'][segi[-1]]
             if end_sec_diff > max_sec_diff_at_end:
                 logger.warn(f"end_sec_diff ({end_sec_diff}) greater than criteria of {max_sec_diff_at_end}")
 
-            end_lon_diff = ds['longitude_fix'][i+1] - ds['longitude'][segi[-1]] * 180.0 / np.pi
-            end_lat_diff = ds['latitude_fix'][i+1] - ds['latitude'][segi[-1]] * 180.0 / np.pi
+            if rad_to_deg_fix:
+                end_lon_diff = ds['longitude_fix'][i+1] * 180.0 / np.pi - ds['longitude'][segi[-1]] * 180.0 / np.pi
+                end_lat_diff = ds['latitude_fix'][i+1] * 180.0 / np.pi - ds['latitude'][segi[-1]] * 180.0 / np.pi
+            else:
+                end_lon_diff = ds['longitude_fix'][i+1] - ds['longitude'][segi[-1]] * 180.0 / np.pi
+                end_lat_diff = ds['latitude_fix'][i+1] - ds['latitude'][segi[-1]] * 180.0 / np.pi
             
-            seg_min = (ds['latitude_time'][segi][-1] - ds['latitude_time'][segi][0]) / 60
-            u_drift = (end_lat_diff * cos(ds['latitude_fix'][i+1]) * 60 * 185300
-                        / (ds['latitude_time'][segi][-1] - ds['latitude_time'][segi][0]))
+            seg_min = (ds['latitude_time'][segi[-1]] - ds['latitude_time'][segi[0]]) / 60
+            if rad_to_deg_fix:
+                u_drift = (end_lat_diff * cos(ds['latitude_fix'][i+1]) * 60 * 185300
+                            / (ds['latitude_time'][segi[-1]] - ds['latitude_time'][segi[0]]))
+            else:
+                u_drift = (end_lat_diff * cos(ds['latitude_fix'][i+1] * np.pi / 180.0) * 60 * 185300
+                            / (ds['latitude_time'][segi[-1]] - ds['latitude_time'][segi[0]]))
             v_drift = (end_lat_diff * 60 * 185300 
-                        / (ds['latitude_time'][segi][-1] - ds['latitude_time'][segi][0]))
+                        / (ds['latitude_time'][segi[-1]] - ds['latitude_time'][segi[0]]))
             logger.info(f"{i:4d}: {end_sec_diff:12.3f} {end_lon_diff:12.7f} {end_lat_diff:12.7f} {len(segi):-9d} {seg_min:7.2f} {u_drift:14.2f} {v_drift:14.2f}")
 
             # Start with zero adjustment at begining and linearly ramp up to the diff at the end
             lon_nudge = np.interp( ds['longitude_time'][segi], 
-                                  [ds['longitude_time'][segi][0], ds['longitude_time'][segi][-1]],
+                                  [ds['longitude_time'][segi[0]], ds['longitude_time'][segi[-1]]],
                                   [0, end_lon_diff] )
+            logger.debug(f"Done with np.interp() producing {len(lon_nudge)} lon_nudge values")
             lat_nudge = np.interp( ds['latitude_time'][segi], 
-                                  [ds['latitude_time'][segi][0], ds['latitude_time'][segi][-1]],
+                                  [ds['latitude_time'][segi[0]], ds['latitude_time'][segi[-1]]],
                                   [0, end_lat_diff] )
+            logger.debug(f"Done with np.interp() producing {len(lat_nudge)} lat_nudge values")
 
             lon_seg_nudged = ds['longitude'][segi] * 180.0 / np.pi + lon_nudge
+            logger.debug(f"Added lon_nudge to original longitude segment")
             lon_nudged = np.append(lon_nudged, lon_seg_nudged)
+            logger.debug(f"Appended lon_seg_nudged segment to lon_nudged array")
             
             lat_seg_nudged = ds['latitude'][segi] * 180.0 / np.pi + lat_nudge
+            logger.debug(f"Added lat_nudge to original latitude segment")
             lat_nudged = np.append(lat_nudged, lat_seg_nudged)
+            logger.debug(f"Appended lat_seg_nudged segment to lat_nudged array")
             
             es_nudged = np.append(es_nudged, ds['latitude_time'][segi])
+            logger.debug(f"Appended time segment to es_nudged array")
         
         # Any dead reckoned points after first GPS fix - not possible to nudge, just copy in
         segi = np.where(ds['latitude_time'] > ds['latitude_fix_time'][-1])[0]
         lon_nudged = np.append(lon_nudged, ds['longitude'][segi] * 180.0 / np.pi)
         lat_nudged = np.append(lat_nudged, ds['latitude'][segi] * 180.0 / np.pi)
         es_nudged = np.append(es_nudged, ds['latitude_time'][segi])
-        seg_min = (ds['latitude_time'][segi][-1] - ds['latitude_time'][segi][0]) / 60
+        seg_min = (ds['latitude_time'][segi[-1]] - ds['latitude_time'][segi[0]]) / 60
         try:
             logger.info(f"{i:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
         except UnboundLocalError:
@@ -800,7 +822,7 @@ class InterpolatorWriter(BaseWriter):
 
 
         log_file = out_file.replace('.nc', '.log')
-        fh = logging.FileHandler(log_file)
+        fh = logging.FileHandler(log_file, 'w+')
         frm = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
         fh.setFormatter(frm)
         logger.addHandler(fh)
