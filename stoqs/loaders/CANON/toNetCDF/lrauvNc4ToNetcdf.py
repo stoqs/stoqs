@@ -558,7 +558,7 @@ class InterpolatorWriter(BaseWriter):
         es_nudged = np.append(es_nudged, ds['latitude_time'][segi])
         seg_min = (ds['latitude_time'][segi[-1]] - ds['latitude_time'][segi[0]]) / 60
         try:
-            logger.info(f"{i:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
+            logger.info(f"{i+1:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
         except UnboundLocalError:
             logger.debug("No segments found between GPS fixes.")
         
@@ -943,7 +943,7 @@ class InterpolatorWriter(BaseWriter):
                 i = self.interpolate(value, t_resample.index)
                 self.all_sub_ts[key] = i
                 self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
-            except IndexError as e:
+            except (IndexError, ValueError) as e:
                 logger.error(e)
                 logger.error(f"Not creating {out_file}")
                 return
