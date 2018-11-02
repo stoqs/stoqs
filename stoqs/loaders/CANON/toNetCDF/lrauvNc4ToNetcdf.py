@@ -65,12 +65,16 @@ class InterpolatorWriter(BaseWriter):
     all_sub_ts = {}
     all_coord = {}
     all_attrib = {}
+    nudged_file = {}
+    tracking_file = {}
 
     def reset(self):
         self.df = []
         self.all_sub_ts = {}
         self.all_coord = {}
         self.all_attrib = {}
+        self.nudged_file = {}
+        self.tracking_file = {}
 
     def write_netcdf(self, out_file, in_url):
 
@@ -477,13 +481,13 @@ class InterpolatorWriter(BaseWriter):
 
         return lon_time_series, lat_time_series
 
-    def var_series(self, data_array, time_array, tmin=0, tmax=time.time(), angle=False):
+    def var_series(self, in_file, data_array, time_array, tmin=0, tmax=time.time(), angle=False):
         '''Return a Pandas series of the coordinate with invalid and out of range time values removed'''
         mt = np.ma.masked_invalid(time_array)
         mt = np.ma.masked_outside(mt, tmin, tmax)
         bad_times = [str(dt.datetime.utcfromtimestamp(es)) for es in time_array[:][mt.mask]]
         if bad_times:
-            logger.info(f"Removing bad times in {data_array.name} ([index], [values]): {np.where(mt.mask)[0]}, {bad_times}")
+            logger.info(f"Removing bad {data_array.name} times from {in_file} ([index], [values]): {np.where(mt.mask)[0]}, {bad_times}")
         v_time = pd.to_datetime(mt.compressed(), unit='s',errors = 'coerce')
         da = pd.Series(data_array[:][~mt.mask], index=v_time)
         
@@ -507,10 +511,10 @@ class InterpolatorWriter(BaseWriter):
         logger.info(f"{in_file}")    
         
         # Produce Pandas time series from the NetCDF variables
-        lon_fix = self.var_series(ds['longitude_fix'], ds['longitude_fix_time'], angle=True)
-        lat_fix = self.var_series(ds['latitude_fix'], ds['latitude_fix_time'], angle=True)
-        lon = self.var_series(ds['longitude'], ds['longitude_time'], angle=True)
-        lat = self.var_series(ds['latitude'], ds['latitude_time'], angle=True)
+        lon_fix = self.var_series(in_file, ds['longitude_fix'], ds['longitude_fix_time'], angle=True)
+        lat_fix = self.var_series(in_file, ds['latitude_fix'], ds['latitude_fix_time'], angle=True)
+        lon = self.var_series(in_file, ds['longitude'], ds['longitude_time'], angle=True)
+        lat = self.var_series(in_file, ds['latitude'], ds['latitude_time'], angle=True)
 
         logger.info(f"{'seg#':4s}  {'end_sec_diff':12s} {'end_lon_diff':12s} {'end_lat_diff':12s} {'len(segi)':9s} {'seg_min':7s} {'u_drift (cm/s)':14s} {'v_drift (cm/s)':14s}")
         
@@ -934,19 +938,24 @@ class InterpolatorWriter(BaseWriter):
                 value = coord_ts[key]
                 if rad_to_deg:
                     if key.find('latitude') != -1 or key.find('longitude') != -1:
-                        value = value * 180.0/ numpy.pi
+                        value = value * 180.0 / numpy.pi
+                        # Navigation corrections, favor acoustic fixes over original nudged positions
                         if args.nudge:
-                            lons, lats = self.nudge_coords(in_file)
-                            if key.find('longitude') != -1 and lons.any():
-                                value = lons
-                            if key.find('latitude') != -1 and lats.any():
-                                value = lats
+                            if not self.nudged_file.get(in_file):
+                                self.nudged_lons, self.nudged_lats = self.nudge_coords(in_file)
+                                self.nudged_file[in_file] = True
+                            if key.find('longitude') != -1 and self.nudged_lons.any():
+                                value = self.nudged_lons
+                            if key.find('latitude') != -1 and self.nudged_lats.any():
+                                value = self.nudged_lats
                         if args.trackingdb:
-                            lons, lats = self.trackingdb_lat_lon(args)
-                            if key.find('longitude') != -1 and lons.any():
-                                value = lons
-                            if key.find('latitude') != -1 and lats.any():
-                                value = lats
+                            if not self.tracking_file.get(in_file):
+                                self.ac_lons, self.ac_lats = self.trackingdb_lat_lon(args)
+                                self.tracking_file[in_file] = True
+                            if key.find('longitude') != -1 and self.ac_lons.any():
+                                value = self.ac_lons
+                            if key.find('latitude') != -1 and self.ac_lats.any():
+                                value = self.ac_lats
 
                 i = self.interpolate(value, t_resample.index)
                 self.all_sub_ts[key] = i
