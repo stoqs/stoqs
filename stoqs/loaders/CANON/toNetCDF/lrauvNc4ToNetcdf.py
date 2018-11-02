@@ -524,18 +524,17 @@ class InterpolatorWriter(BaseWriter):
             lon_nudged = lon[segi]
             lat_nudged = lat[segi]
             dt_nudged = lon.index[segi]
-            logger.info(f"{' ':4}  {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
         else:
             lon_nudged = np.array([])
             lat_nudged = np.array([])
             dt_nudged = np.array([], dtype='datetime64[ns]')
-            if segi.any():
-                logger.info(f"{' ':4}  {'nan':>12} {'nan':>12} {'nan':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
         if segi.any():
             seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
         else:
             seg_min = 0
-        
+        logger.info(f"{' ':4}  {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
+       
+        seg_count = 0 
         for i in range(len(lat_fix) - 1):
             # Segment of dead reckoned (under water) positions, each surrounded by GPS fixes
             segi = np.where(np.logical_and(lat.index > lat_fix.index[i], 
@@ -565,6 +564,7 @@ class InterpolatorWriter(BaseWriter):
             lon_nudged = np.append(lon_nudged, lon[segi] + lon_nudge)
             lat_nudged = np.append(lat_nudged, lat[segi] + lat_nudge)
             dt_nudged = np.append(dt_nudged, lon.index[segi])
+            seg_count += 1
         
         # Any dead reckoned points after first GPS fix - not possible to nudge, just copy in
         segi = np.where(lat.index > lat_fix.index[-1])[0]
@@ -575,7 +575,7 @@ class InterpolatorWriter(BaseWriter):
             dt_nudged = np.append(dt_nudged, lon.index[segi])
             seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
        
-        logger.info(f"{i:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
+        logger.info(f"{seg_count+1:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
 
         logger.info(f"Points in final series = {len(dt_nudged)}")
 
