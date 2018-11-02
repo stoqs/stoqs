@@ -124,8 +124,11 @@ class InterpolatorWriter(BaseWriter):
 
         logger.debug("Adding in global metadata")
         self.add_global_metadata()
+        if getattr(self, 'segment_count') and getattr(self, 'segment_minsum'):
+            self.ncFile.summary += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward GPS fixes."
         if getattr(self, 'trackingdb_values'):
             self.ncFile.comment = f"latitude and longitude values interpolated from {self.trackingdb_values} values retrieved from {self.trackingdb_url}"
+            self.ncFile.summary = f" {self.trackingdb_values} acoustic navigation fixes retrieved from tracking database with {self.trackingdb_url}"
             self.ncFile.title += " with acoustic navigation data retrieved from Tracking Database"
 
         self.ncFile.close()
@@ -524,18 +527,18 @@ class InterpolatorWriter(BaseWriter):
             lon_nudged = lon[segi]
             lat_nudged = lat[segi]
             dt_nudged = lon.index[segi]
-            logger.info(f"{' ':4}  {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
         else:
             lon_nudged = np.array([])
             lat_nudged = np.array([])
             dt_nudged = np.array([], dtype='datetime64[ns]')
-            if segi.any():
-                logger.info(f"{' ':4}  {'nan':>12} {'nan':>12} {'nan':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
         if segi.any():
             seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
         else:
             seg_min = 0
-        
+        logger.info(f"{' ':4}  {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
+       
+        seg_count = 0 
+        seg_minsum = 0
         for i in range(len(lat_fix) - 1):
             # Segment of dead reckoned (under water) positions, each surrounded by GPS fixes
             segi = np.where(np.logical_and(lat.index > lat_fix.index[i], 
@@ -546,6 +549,7 @@ class InterpolatorWriter(BaseWriter):
             end_lon_diff = lon_fix[i+1] - lon[segi[-1]]
             end_lat_diff = lat_fix[i+1] - lat[segi[-1]]
             seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
+            seg_minsum += seg_min
             
             # Compute approximate horizontal drift rate as a sanity check
             u_drift = (end_lat_diff * cos(lat_fix[i+1]) * 60 * 185300
@@ -565,6 +569,7 @@ class InterpolatorWriter(BaseWriter):
             lon_nudged = np.append(lon_nudged, lon[segi] + lon_nudge)
             lat_nudged = np.append(lat_nudged, lat[segi] + lat_nudge)
             dt_nudged = np.append(dt_nudged, lon.index[segi])
+            seg_count += 1
         
         # Any dead reckoned points after first GPS fix - not possible to nudge, just copy in
         segi = np.where(lat.index > lat_fix.index[-1])[0]
@@ -575,7 +580,9 @@ class InterpolatorWriter(BaseWriter):
             dt_nudged = np.append(dt_nudged, lon.index[segi])
             seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
        
-        logger.info(f"{i:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
+        logger.info(f"{seg_count+1:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
+        self.segment_count = seg_count
+        self.segment_minsum = seg_minsum
 
         logger.info(f"Points in final series = {len(dt_nudged)}")
 
