@@ -65,12 +65,16 @@ class InterpolatorWriter(BaseWriter):
     all_sub_ts = {}
     all_coord = {}
     all_attrib = {}
+    nudged_file = {}
+    tracking_file = {}
 
     def reset(self):
         self.df = []
         self.all_sub_ts = {}
         self.all_coord = {}
         self.all_attrib = {}
+        self.nudged_file = {}
+        self.tracking_file = {}
 
     def write_netcdf(self, out_file, in_url):
 
@@ -477,6 +481,27 @@ class InterpolatorWriter(BaseWriter):
 
         return lon_time_series, lat_time_series
 
+    def var_series(self, in_file, data_array, time_array, tmin=0, tmax=time.time(), angle=False):
+        '''Return a Pandas series of the coordinate with invalid and out of range time values removed'''
+        mt = np.ma.masked_invalid(time_array)
+        mt = np.ma.masked_outside(mt, tmin, tmax)
+        bad_times = [str(dt.datetime.utcfromtimestamp(es)) for es in time_array[:][mt.mask]]
+        if bad_times:
+            logger.info(f"Removing bad {data_array.name} times from {in_file} ([index], [values]): {np.where(mt.mask)[0]}, {bad_times}")
+        v_time = pd.to_datetime(mt.compressed(), unit='s',errors = 'coerce')
+        da = pd.Series(data_array[:][~mt.mask], index=v_time)
+        
+        rad_to_deg = False
+        if angle:
+            # Some universal positions are in degrees, some are in radians - make a guess based on mean values
+            if np.max(np.abs(da)) <= np.pi and np.max(np.abs(da)) <= np.pi:
+                rad_to_deg = True
+            logger.debug(f"{data_array.name}: rad_to_deg = {rad_to_deg}")
+            if rad_to_deg:
+                da = da * 180.0 / np.pi
+
+        return da
+
     def nudge_coords(self, in_file, max_sec_diff_at_end=10):
         '''Given a ds object to an LRAUV .nc4 file return adjusted longitude
         and latitude arrays that reconstruct the trajectory so that the dead
@@ -484,90 +509,77 @@ class InterpolatorWriter(BaseWriter):
         '''
         ds = self.df
         logger.info(f"{in_file}")    
+        
+        # Produce Pandas time series from the NetCDF variables
+        lon_fix = self.var_series(in_file, ds['longitude_fix'], ds['longitude_fix_time'], angle=True)
+        lat_fix = self.var_series(in_file, ds['latitude_fix'], ds['latitude_fix_time'], angle=True)
+        lon = self.var_series(in_file, ds['longitude'], ds['longitude_time'], angle=True)
+        lat = self.var_series(in_file, ds['latitude'], ds['latitude_time'], angle=True)
 
-        # Some univrsal positions are in degress, some are in radians - maka a guess based on the mean value
-        rad_to_deg_fix = False
-        if np.max(np.abs(ds['longitude_fix'])) <= np.pi and np.max(np.abs(ds['latitude_fix'])) <= np.pi:
-            rad_to_deg_fix = True
-        logger.info(f"rad_to_deg_fix = {rad_to_deg_fix}")    
+        logger.info(f"{'seg#':4s}  {'end_sec_diff':12s} {'end_lon_diff':12s} {'end_lat_diff':12s} {'len(segi)':9s} {'seg_min':7s} {'u_drift (cm/s)':14s} {'v_drift (cm/s)':14s}")
         
         # Any dead reckoned points before first GPS fix - usually empty as GPS fix happens before dive
-        try:
-            segi = np.where(ds['latitude_time'] < ds['latitude_fix_time'][0])[0]
-        except IndexError as e:
-            raise IndexError(f"Failed to read latitude variable, perhaps it's zero-sized")
-        lon_nudged = ds['longitude'][segi] * 180.0 / np.pi
-        lat_nudged = ds['latitude'][segi] * 180.0 / np.pi
-        es_nudged = ds['latitude_time'][segi]
-    
-        logger.info(f"{'seg#':4s}  {'end_sec_diff':12s} {'end_lon_diff':12s} {'end_lat_diff':12s} {'len(segi)':9s} {'seg_min':7s} {'u_drift (cm/s)':14s} {'v_drift (cm/s)':14s}")
-        for i in range(len(ds['latitude_fix']) - 1):
+        segi = np.where(lat.index < lat_fix.index[0])[0]
+        if lon[:][segi].any():
+            lon_nudged = lon[segi]
+            lat_nudged = lat[segi]
+            dt_nudged = lon.index[segi]
+            logger.info(f"{' ':4}  {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
+        else:
+            lon_nudged = np.array([])
+            lat_nudged = np.array([])
+            dt_nudged = np.array([], dtype='datetime64[ns]')
+            if segi.any():
+                logger.info(f"{' ':4}  {'nan':>12} {'nan':>12} {'nan':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
+        if segi.any():
+            seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
+        else:
+            seg_min = 0
+        
+        for i in range(len(lat_fix) - 1):
             # Segment of dead reckoned (under water) positions, each surrounded by GPS fixes
-            logger.debug(f"Looking for DR segment between _fix times of {ds['latitude_fix_time'][i]} and {ds['latitude_fix_time'][i+1]}...")
-            segi = np.where(np.logical_and(ds['latitude_time'] > ds['latitude_fix_time'][i], 
-                                           ds['latitude_time'] < ds['latitude_fix_time'][i+1]))[0]
-            end_sec_diff = ds['latitude_fix_time'][i+1] - ds['latitude_time'][segi[-1]]
-            if end_sec_diff > max_sec_diff_at_end:
-                logger.warn(f"end_sec_diff ({end_sec_diff}) greater than criteria of {max_sec_diff_at_end}")
+            segi = np.where(np.logical_and(lat.index > lat_fix.index[i], 
+                                           lat.index < lat_fix.index[i+1]))[0]
+            end_sec_diff = (lat_fix.index[i+1] - lat.index[segi[-1]]).total_seconds()
+            assert(end_sec_diff < max_sec_diff_at_end)
 
-            if rad_to_deg_fix:
-                end_lon_diff = ds['longitude_fix'][i+1] * 180.0 / np.pi - ds['longitude'][segi[-1]] * 180.0 / np.pi
-                end_lat_diff = ds['latitude_fix'][i+1] * 180.0 / np.pi - ds['latitude'][segi[-1]] * 180.0 / np.pi
-            else:
-                end_lon_diff = ds['longitude_fix'][i+1] - ds['longitude'][segi[-1]] * 180.0 / np.pi
-                end_lat_diff = ds['latitude_fix'][i+1] - ds['latitude'][segi[-1]] * 180.0 / np.pi
+            end_lon_diff = lon_fix[i+1] - lon[segi[-1]]
+            end_lat_diff = lat_fix[i+1] - lat[segi[-1]]
+            seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
             
-            seg_min = (ds['latitude_time'][segi[-1]] - ds['latitude_time'][segi[0]]) / 60
-            if rad_to_deg_fix:
-                u_drift = (end_lat_diff * cos(ds['latitude_fix'][i+1]) * 60 * 185300
-                            / (ds['latitude_time'][segi[-1]] - ds['latitude_time'][segi[0]]))
-            else:
-                u_drift = (end_lat_diff * cos(ds['latitude_fix'][i+1] * np.pi / 180.0) * 60 * 185300
-                            / (ds['latitude_time'][segi[-1]] - ds['latitude_time'][segi[0]]))
+            # Compute approximate horizontal drift rate as a sanity check
+            u_drift = (end_lat_diff * cos(lat_fix[i+1]) * 60 * 185300
+                        / (lat.index[segi][-1] - lat.index[segi][0]).total_seconds())
             v_drift = (end_lat_diff * 60 * 185300 
-                        / (ds['latitude_time'][segi[-1]] - ds['latitude_time'][segi[0]]))
+                        / (lat.index[segi][-1] - lat.index[segi][0]).total_seconds())
             logger.info(f"{i:4d}: {end_sec_diff:12.3f} {end_lon_diff:12.7f} {end_lat_diff:12.7f} {len(segi):-9d} {seg_min:7.2f} {u_drift:14.2f} {v_drift:14.2f}")
 
             # Start with zero adjustment at begining and linearly ramp up to the diff at the end
-            lon_nudge = np.interp( ds['longitude_time'][segi], 
-                                  [ds['longitude_time'][segi[0]], ds['longitude_time'][segi[-1]]],
+            lon_nudge = np.interp( lon.index[segi].astype(np.int64), 
+                                  [lon.index[segi].astype(np.int64)[0], lon.index[segi].astype(np.int64)[-1]],
                                   [0, end_lon_diff] )
-            logger.debug(f"Done with np.interp() producing {len(lon_nudge)} lon_nudge values")
-            lat_nudge = np.interp( ds['latitude_time'][segi], 
-                                  [ds['latitude_time'][segi[0]], ds['latitude_time'][segi[-1]]],
+            lat_nudge = np.interp( lat.index[segi].astype(np.int64), 
+                                  [lat.index[segi].astype(np.int64)[0], lat.index[segi].astype(np.int64)[-1]],
                                   [0, end_lat_diff] )
-            logger.debug(f"Done with np.interp() producing {len(lat_nudge)} lat_nudge values")
 
-            lon_seg_nudged = ds['longitude'][segi] * 180.0 / np.pi + lon_nudge
-            logger.debug(f"Added lon_nudge to original longitude segment")
-            lon_nudged = np.append(lon_nudged, lon_seg_nudged)
-            logger.debug(f"Appended lon_seg_nudged segment to lon_nudged array")
-            
-            lat_seg_nudged = ds['latitude'][segi] * 180.0 / np.pi + lat_nudge
-            logger.debug(f"Added lat_nudge to original latitude segment")
-            lat_nudged = np.append(lat_nudged, lat_seg_nudged)
-            logger.debug(f"Appended lat_seg_nudged segment to lat_nudged array")
-            
-            es_nudged = np.append(es_nudged, ds['latitude_time'][segi])
-            logger.debug(f"Appended time segment to es_nudged array")
+            lon_nudged = np.append(lon_nudged, lon[segi] + lon_nudge)
+            lat_nudged = np.append(lat_nudged, lat[segi] + lat_nudge)
+            dt_nudged = np.append(dt_nudged, lon.index[segi])
         
         # Any dead reckoned points after first GPS fix - not possible to nudge, just copy in
-        segi = np.where(ds['latitude_time'] > ds['latitude_fix_time'][-1])[0]
-        lon_nudged = np.append(lon_nudged, ds['longitude'][segi] * 180.0 / np.pi)
-        lat_nudged = np.append(lat_nudged, ds['latitude'][segi] * 180.0 / np.pi)
-        es_nudged = np.append(es_nudged, ds['latitude_time'][segi])
-        seg_min = (ds['latitude_time'][segi[-1]] - ds['latitude_time'][segi[0]]) / 60
-        try:
-            logger.info(f"{i:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
-        except UnboundLocalError:
-            logger.debug("No segments found between GPS fixes.")
-        
-        v_time = pd.to_datetime(es_nudged, unit='s',errors = 'coerce')
-        lon_time_series = pd.Series(lon_nudged, index=v_time)
-        lat_time_series = pd.Series(lat_nudged, index=v_time)
-        logger.info(f"Points in final lat_time_series = {len(lat_time_series)}")
+        segi = np.where(lat.index > lat_fix.index[-1])[0]
+        seg_min = 0
+        if segi.any():
+            lon_nudged = np.append(lon_nudged, lon[segi])
+            lat_nudged = np.append(lat_nudged, lat[segi])
+            dt_nudged = np.append(dt_nudged, lon.index[segi])
+            seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
+       
+        logger.info(f"{i:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
 
-        return lon_time_series, lat_time_series
+        logger.info(f"Points in final series = {len(dt_nudged)}")
+
+        return pd.Series(lon_nudged, index=dt_nudged), pd.Series(lat_nudged, index=dt_nudged)
 
     def processNc4FileDecimated(self, url, in_file, out_file, parms, group_parms, interp_key):
         self.reset()
@@ -926,24 +938,29 @@ class InterpolatorWriter(BaseWriter):
                 value = coord_ts[key]
                 if rad_to_deg:
                     if key.find('latitude') != -1 or key.find('longitude') != -1:
-                        value = value * 180.0/ numpy.pi
+                        value = value * 180.0 / numpy.pi
+                        # Navigation corrections, favor acoustic fixes over original nudged positions
                         if args.nudge:
-                            lons, lats = self.nudge_coords(in_file)
-                            if key.find('longitude') != -1 and lons.any():
-                                value = lons
-                            if key.find('latitude') != -1 and lats.any():
-                                value = lats
+                            if not self.nudged_file.get(in_file):
+                                self.nudged_lons, self.nudged_lats = self.nudge_coords(in_file)
+                                self.nudged_file[in_file] = True
+                            if key.find('longitude') != -1 and self.nudged_lons.any():
+                                value = self.nudged_lons
+                            if key.find('latitude') != -1 and self.nudged_lats.any():
+                                value = self.nudged_lats
                         if args.trackingdb:
-                            lons, lats = self.trackingdb_lat_lon(args)
-                            if key.find('longitude') != -1 and lons.any():
-                                value = lons
-                            if key.find('latitude') != -1 and lats.any():
-                                value = lats
+                            if not self.tracking_file.get(in_file):
+                                self.ac_lons, self.ac_lats = self.trackingdb_lat_lon(args)
+                                self.tracking_file[in_file] = True
+                            if key.find('longitude') != -1 and self.ac_lons.any():
+                                value = self.ac_lons
+                            if key.find('latitude') != -1 and self.ac_lats.any():
+                                value = self.ac_lats
 
                 i = self.interpolate(value, t_resample.index)
                 self.all_sub_ts[key] = i
                 self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
-            except IndexError as e:
+            except (IndexError, ValueError) as e:
                 logger.error(e)
                 logger.error(f"Not creating {out_file}")
                 return

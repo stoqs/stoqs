@@ -31,7 +31,7 @@ from datetime import datetime
 
 # Set up global variables for logging output to STDOUT
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 class ServerError(Exception):
     pass
@@ -168,11 +168,11 @@ def processResample(pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendS
     out_file = os.path.join(inDir,  base_out)
     in_file =  os.path.join(inDir,  base_in)
 
-    logger.debug('Calling pw.process with file = {}'.format(in_file))
-
     try:
         if not os.path.exists(out_file):
             pw.processResampleNc4File(in_file, out_file, parms, resample_freq, rad_to_deg, args)
+        else:
+            logger.info(f"Not calling processResampleNc4File() for {out_file}: file exists")
     except TypeError as te:
         logger.warning('Problem reading data from {}'.format(url_in))
         logger.warning('Assuming data are invalid and skipping')
