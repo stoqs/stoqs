@@ -390,38 +390,44 @@ class InterpolatorWriter(BaseWriter):
              'platform_orientation': 'yaw',
             }
         attr = {}
+        create_nav_flag = False
         for v in self.df.variables:
             if any(v in s for s in nav):
-                # Create pandas time series for each coordinate and store attributes
-                for c, c_rename in nav.items():
-                    try:
-                        ts = self.createSeries(self.df.variables, c, c+'_'+'time')
+                create_nav_flag = True
 
-                        # don't store or try to interpolate empty time series
-                        if ts.size == 0:
-                            logger.info('Variable ' + c + ' empty so skipping')
-                            continue
+        if create_nav_flag:
+            # Create pandas time series for each coordinate and store attributes
+            for c, c_rename in nav.items():
+                try:
+                    ts = self.createSeries(self.df.variables, c, c+'_'+'time')
 
-                        if c_rename.find('pitch') != -1 or c_rename.find('roll') != -1 or c_rename.find('yaw') != -1:
-                            ts = ts * 180.0 / numpy.pi
-
-                        # resample using the mean then interpolate on to the time dimension
-                        ts_resample = ts.resample(resampleFreq).mean()[:]
-                        i = self.interpolate(ts_resample, t_resample.index)
-
-                        for name in self.df[c].ncattrs():
-                            attr[name] = getattr(self.df.variables[c],name)
-                            if name == 'standard_name' and attr[name] == 'platform_orientation':
-                                # Override original standard_name for yaw
-                                attr[name] = 'platform_yaw_angle'
-
-                        self.all_sub_ts[c_rename] = i
-                        logger.info(f"{c} -> {c_rename}: {attr.copy()}")
-                        self.all_attrib[c_rename] = attr.copy()
-                        self.all_coord[c_rename] = { 'time':'time', 'depth':'depth', 'latitude':'latitude', 'longitude':'longitude'}
-                    except Exception as e:
-                        logger.error(e)
+                    # don't store or try to interpolate empty time series
+                    if ts.size == 0:
+                        logger.info('Variable ' + c + ' empty so skipping')
                         continue
+
+                    if c_rename.find('pitch') != -1 or c_rename.find('roll') != -1 or c_rename.find('yaw') != -1:
+                        ts = ts * 180.0 / numpy.pi
+
+                    # resample using the mean then interpolate on to the time dimension
+                    logger.debug(f"calling ts.resample() for {c_rename}")
+                    ts_resample = ts.resample(resampleFreq).mean()[:]
+                    logger.debug(f"calling self.interpolate() for {c_rename}")
+                    i = self.interpolate(ts_resample, t_resample.index)
+
+                    for name in self.df[c].ncattrs():
+                        attr[name] = getattr(self.df.variables[c],name)
+                        if name == 'standard_name' and attr[name] == 'platform_orientation':
+                            # Override original standard_name for yaw
+                            attr[name] = 'platform_yaw_angle'
+
+                    self.all_sub_ts[c_rename] = i
+                    logger.info(f"{c} -> {c_rename}: {attr.copy()}")
+                    self.all_attrib[c_rename] = attr.copy()
+                    self.all_coord[c_rename] = { 'time':'time', 'depth':'depth', 'latitude':'latitude', 'longitude':'longitude'}
+                except Exception as e:
+                    logger.error(str(e))
+                    continue
     # End createNav
 
     def createCoord(self, coord):
@@ -544,7 +550,7 @@ class InterpolatorWriter(BaseWriter):
             segi = np.where(np.logical_and(lat.index > lat_fix.index[i], 
                                            lat.index < lat_fix.index[i+1]))[0]
             end_sec_diff = (lat_fix.index[i+1] - lat.index[segi[-1]]).total_seconds()
-            assert(end_sec_diff < max_sec_diff_at_end)
+            logger.warn(f"end_sec_diff ({end_sec_diffi}) < max_sec_diff_at_end ({max_sec_diff_at_end})")
 
             end_lon_diff = lon_fix[i+1] - lon[segi[-1]]
             end_lat_diff = lat_fix[i+1] - lat[segi[-1]]
