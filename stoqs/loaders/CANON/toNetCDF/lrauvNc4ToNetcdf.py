@@ -550,7 +550,7 @@ class InterpolatorWriter(BaseWriter):
             segi = np.where(np.logical_and(lat.index > lat_fix.index[i], 
                                            lat.index < lat_fix.index[i+1]))[0]
             end_sec_diff = (lat_fix.index[i+1] - lat.index[segi[-1]]).total_seconds()
-            logger.warn(f"end_sec_diff ({end_sec_diffi}) < max_sec_diff_at_end ({max_sec_diff_at_end})")
+            logger.warn(f"end_sec_diff ({end_sec_diff}) < max_sec_diff_at_end ({max_sec_diff_at_end})")
 
             end_lon_diff = lon_fix[i+1] - lon[segi[-1]]
             end_lat_diff = lat_fix[i+1] - lat[segi[-1]]
