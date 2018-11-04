@@ -128,7 +128,7 @@ class InterpolatorWriter(BaseWriter):
             self.ncFile.summary += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward GPS fixes."
         if getattr(self, 'trackingdb_values'):
             self.ncFile.comment = f"latitude and longitude values interpolated from {self.trackingdb_values} values retrieved from {self.trackingdb_url}"
-            self.ncFile.summary = f" {self.trackingdb_values} acoustic navigation fixes retrieved from tracking database with {self.trackingdb_url}"
+            self.ncFile.summary += f" {self.trackingdb_values} acoustic navigation fixes retrieved from tracking database with {self.trackingdb_url}"
             self.ncFile.title += " with acoustic navigation data retrieved from Tracking Database"
 
         self.ncFile.close()
