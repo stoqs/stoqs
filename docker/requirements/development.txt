@@ -16,7 +16,7 @@ ephem==3.7.6.0
 GDAL==2.3.2
 Genshi==0.7
 h5py==2.8.0
-MarkupSafe==1.0
+MarkupSafe==1.1.0
 netCDF4==1.4.2
 numpy==1.15.4
 pandas==0.23.4
