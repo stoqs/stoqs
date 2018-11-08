@@ -116,14 +116,18 @@ class BaseTestCase(StaticLiveServerTestCase):
 
     def _wait_until_text_is_visible(self, element_id, expected_text, delay=2, contains=True):
         try:
-            if contains:
+            if not contains:
                 WebDriverWait(self.browser, delay, poll_frequency=.2).until(
                               wait_for_text_to_match((By.ID, element_id), expected_text))
             else:
-                WebDriverWait(self.browser, delay, poll_frequency=.2).until(
-                              EC.text_to_be_present_in_element((By.ID, element_id), expected_text))
+                # First get the element
+                el = WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.ID, element_id)))
+                # Now wait for the expected_text to appear in it
+                tf = WebDriverWait(self.browser, delay, poll_frequency=.2).until(
+                                   EC.text_to_be_present_in_element((By.ID, element_id), expected_text))
+
         except TimeoutException:
-            print(f"TimeoutException: Waited {delay} seconds for text '{expected_text}'... to appear")
+            print(f"TimeoutException: Waited {delay} seconds for text '{expected_text}' to appear")
 
     def _test_share_view(self, func_name):
         # Generic for any func_name that creates a view to share
@@ -248,7 +252,7 @@ class BrowserTestCase(BaseTestCase):
 
         expected_text = 'Color: northward_sea_water_velocity_HR (cm s-1) from M1_Mooring'
         self._temporal_loading_panel_test(delay=6)
-        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
+        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text, delay=6)
         self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo').text)
 
         # Contour line of M1 northward_sea_water_velocity - same as color plot
