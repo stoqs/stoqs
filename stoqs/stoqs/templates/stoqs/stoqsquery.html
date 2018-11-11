@@ -1498,23 +1498,24 @@
 
         var timeparameterplot = $('#time-parameter-flot').data()['plot'];
 
-        // Color lines according to the platform color
-        $.each(timeparameterplot.getData(), function(index, ds) {
-            if (type == 'platform') {
-                $.each($('body').data()['activitycolors'], function(activity, color) {
-                    if (ds.label.indexOf(activity) != -1) {
-                        ds.color = '#' + color;
-                        return;
-                    }
-                });
-            }
-            else {
-                indx = index % num_pt_colors;
-                ds.color = timeparameterplot.getOptions().colors[indx];
-            }
-        });
-
-        timeparameterplot.draw();
+        if ( ! $.isEmptyObject(timeparameterplot) ) {
+            // Color lines according to the platform color
+            $.each(timeparameterplot.getData(), function(index, ds) {
+                if (type == 'platform') {
+                    $.each($('body').data()['activitycolors'], function(activity, color) {
+                        if (ds.label.indexOf(activity) != -1) {
+                            ds.color = '#' + color;
+                            return;
+                        }
+                    });
+                }
+                else {
+                    indx = index % num_pt_colors;
+                    ds.color = timeparameterplot.getOptions().colors[indx];
+                }
+            });
+            timeparameterplot.draw();
+        }
     }
 
     // Called with an element that was selectable, should make that element selectable.
