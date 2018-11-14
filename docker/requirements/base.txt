@@ -19,7 +19,7 @@ django-secure==1.0.1
 djangorestframework==3.9.0
 euclid==0.1
 GitPython==2.1.11
-httplib2==0.11.3
+httplib2==0.12.0
 ipython==7.1.1
 jdcal==1.4
 Jinja2==2.10
