@@ -28,13 +28,14 @@ import datetime
 from IOOS import IOOSLoader
 from DAPloaders import runGliderLoader
 from thredds_crawler.crawl import Crawl
+import timing
 
 logger = logging.getLogger('__main__')
 
 il = IOOSLoader('stoqs_ioos_gliders', 'IOOS Gliders',
                         description = 'Glider data from the Integrated Ocean Observing System Glider DAC',
                         x3dTerrains = {
-                            'http://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
+                            'https://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
                                 'position': '14051448.48336 -15407886.51486 6184041.22775',
                                 'orientation': '0.83940 0.33030 0.43164 1.44880',
                                 'centerOfRotation': '0 0 0',
@@ -52,10 +53,12 @@ il.endDatetime = None
 
 def loadGliders(loader, stride=1):
     '''
-    Crawl the IOOS Glider TDS for OPeNDAP links of Time aggregated files and load into STOQS
+    Crawl the IOOS Glider TDS for OPeNDAP links of mbari files and load into STOQS
     '''
 
-    c = Crawl("http://tds.gliders.ioos.us/thredds/catalog.xml", select=[".*_Time$"])
+    glider_dac_url = 'https://data.ioos.us/gliders/thredds/catalog/catalog.xml'
+    logger.info(f'Crawling {glider_dac_url}')
+    c = Crawl(glider_dac_url, select=[".*mbari.*"], debug=il.args.verbose)
     urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
     colors = list(loader.colors.values())
 

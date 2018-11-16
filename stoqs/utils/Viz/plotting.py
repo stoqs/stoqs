@@ -13,7 +13,7 @@ import cmocean
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
-from matplotlib.mlab import griddata
+from scipy.interpolate import griddata
 from matplotlib.colors import hex2color
 from pylab import polyval
 from collections import namedtuple
@@ -168,14 +168,18 @@ class BaseParameter(object):
                                             orientation='horizontal')
             try:
                 cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(parm_info[0]))
+                if cp.units in cp.name:
+                    cb.set_label(cp.name)
+                else:
+                    cb.set_label(f"{cp.name} ({cp.units})")
             except (ValueError, models.Parameter.DoesNotExist):
                 # Likely a coordinate variable
                 cp = models.Parameter
                 cp.name = parm_info[0]
                 cp.standard_name = parm_info[0]
                 cp.units = _getCoordUnits(parm_info[0])
+                cb.set_label('%s (%s)' % (cp.name, cp.units))
 
-            cb.set_label('%s (%s)' % (cp.name, cp.units))
             cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
             plt.close()
 
@@ -578,7 +582,8 @@ class MeasuredParameter(BaseParameter):
             if contourFlag:
                 try:
                     self.logger.debug('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
-                    zi = griddata(cx, cy, cz, xi, yi, interp='nn')
+                    # See https://scipy-cookbook.readthedocs.io/items/Matplotlib_Gridding_irregularly_spaced_data.html
+                    zi = griddata((cx, cy), cz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
                 except KeyError as e:
                     self.logger.exception('Got KeyError. Could not grid the data')
                     return None, None, 'Got KeyError. Could not grid the data'
@@ -652,7 +657,7 @@ class MeasuredParameter(BaseParameter):
                         ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10, edgecolors='k')
 
                 if self.contourParameterID is not None:
-                    zli = griddata(clx, cly, clz, xi, yi, interp='nn')
+                    zli = griddata((clx, cly), clz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
                     CS = ax.contour(xi, yi, zli, colors='white')
                     ax.clabel(CS, fontsize=9, inline=1)
 
@@ -1051,13 +1056,17 @@ class ParameterParameter(BaseParameter):
                                                 orientation='horizontal')
                 try:
                     cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
+                    if cp.units in cp.name:
+                        cb.set_label(cp.name)
+                    else:
+                        cb.set_label(f"{cp.name} ({cp.units})")
                 except ValueError:
                     # Likely a coordinate variable
                     cp = models.Parameter
                     cp.name = self.pDict['c']
                     cp.standard_name = self.pDict['c']
                     cp.units = _getCoordUnits(self.pDict['c'])
-                cb.set_label('%s (%s)' % (cp.name, cp.units))
+                    cb.set_label('%s (%s)' % (cp.name, cp.units))
             else:
                 self.logger.debug('Making scatter plot of %d points', len(self.x))
                 ax.scatter(self.x, self.y, marker='.', s=10, c='k', lw = 0, clip_on=False)
@@ -1065,16 +1074,24 @@ class ParameterParameter(BaseParameter):
             # Label the axes
             try:
                 xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
+                if xp.units in xp.name:
+                    ax.set_xlabel(xp.name)
+                else:
+                    ax.set_xlabel(f"{xp.name} ({xp.units})")
             except ValueError:
                 # Likely a coordinate variable
                 xp = models.Parameter
                 xp.name = self.pDict['x']
                 xp.standard_name = self.pDict['x']
                 xp.units = _getCoordUnits(self.pDict['x'])
-            ax.set_xlabel('%s (%s)' % (xp.name, xp.units))
+                ax.set_xlabel('%s (%s)' % (xp.name, xp.units))
 
             try:
                 yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
+                if yp.units in yp.name:
+                    ax.set_ylabel(yp.name)
+                else:
+                    ax.set_ylabel(f"{yp.name} ({yp.units})")
             except ValueError:
                 # Likely a coordinate variable
                 yp = models.Parameter
@@ -1083,7 +1100,7 @@ class ParameterParameter(BaseParameter):
                 yp.units = _getCoordUnits(self.pDict['y'])
                 if self.pDict['y'] == 'depth':
                     ax.invert_yaxis()
-            ax.set_ylabel('%s (%s)' % (yp.name, yp.units))
+                ax.set_ylabel('%s (%s)' % (yp.name, yp.units))
 
             # Add Sigma-t contours if x/y is salinity/temperature, approximate depth to pressure - must fix for deep water...
             Z = None
@@ -1204,33 +1221,45 @@ class ParameterParameter(BaseParameter):
                 # Label the axes
                 try:
                     xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
+                    if xp.units in xp.name:
+                        self.pMinMax['x'].append(('%s' % (xp.name, )))
+                    else:
+                        self.pMinMax['x'].append(('%s (%s)' % (xp.name, xp.units)))
                 except ValueError:
                     # Likely a coordinate variable
                     xp = models.Parameter
                     xp.name = self.pDict['x']
                     xp.standard_name = self.pDict['x']
                     xp.units = _getCoordUnits(self.pDict['x'])
-                self.pMinMax['x'].append(('%s (%s)' % (xp.name, xp.units)))
+                    self.pMinMax['x'].append(('%s (%s)' % (xp.name, xp.units)))
 
                 try:
                     yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
+                    if yp.units in yp.name:
+                        self.pMinMax['y'].append(('%s' % (yp.name, )))
+                    else:
+                        self.pMinMax['y'].append(('%s (%s)' % (yp.name, yp.units)))
                 except ValueError:
                     # Likely a coordinate variable
                     yp = models.Parameter
                     yp.name = self.pDict['y']
                     yp.standard_name = self.pDict['y']
                     yp.units = _getCoordUnits(self.pDict['y'])
-                self.pMinMax['y'].append(('%s (%s)' % (yp.name, yp.units)))
+                    self.pMinMax['y'].append(('%s (%s)' % (yp.name, yp.units)))
 
                 try:
                     zp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z']))
+                    if zp.units in zp.name:
+                        self.pMinMax['z'].append(('%s' % (zp.name, )))
+                    else:
+                        self.pMinMax['z'].append(('%s (%s)' % (zp.name, zp.units)))
                 except ValueError:
                     # Likely a coordinate variable
                     zp = models.Parameter
                     zp.name = self.pDict['z']
                     zp.standard_name = self.pDict['z']
                     zp.units = _getCoordUnits(self.pDict['z'])
-                self.pMinMax['z'].append(('%s (%s)' % (zp.name, zp.units)))
+                    self.pMinMax['z'].append(('%s (%s)' % (zp.name, zp.units)))
 
                 colorbarPngFile = ''
                 if self.pDict['c']:

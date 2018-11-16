@@ -1,16 +1,18 @@
 #!/bin/bash
 #
 # Remove all temporary files produced by operating the STOQS UI
+# Set STOQS_HOME environment variable before running, e.g.:
+#   export STOQS_HOME=/vagrant/dev  
+# or
+#   export STOQS_HOME=/home/vagrant/dev   # if not using NFS mount
 #
-HOME=/vagrant
-PD=$HOME/dev/stoqsgit
 
 # Section and ParameterParameter plots
-rm -v $PD/stoqs/stoqs/media/sections/*.png
-rm -v $PD/stoqs/stoqs/media/parameterparameter/*.png
+rm -v $STOQS_HOME/stoqsgit/stoqs/stoqs/media/sections/*.png
+rm -v $STOQS_HOME/stoqsgit/stoqs/stoqs/media/parameterparameter/*.png
 
 # Unit test fixture data - Handy to have for being able to rerun tests
-#rm -v $PD/stoqs/fixtures/*.json
+#rm -v $STOQS_HOME/stoqsgit/stoqs/fixtures/*.json
 
 # Mapserver .map files and log file
 rm -vf /dev/shm/*.map

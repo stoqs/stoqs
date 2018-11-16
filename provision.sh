@@ -48,10 +48,10 @@ then
     yum repolist
     wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
     rpm -Uvh remi-release-7*.rpm
-    wget -q -N https://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-redhat96-9.6-3.noarch.rpm
+    wget -q -N https://yum.postgresql.org/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm
     if [ $? -ne 0 ] ; then
         echo "*** Provisioning for STOQS failed. RPM for specified PostgreSQL not found. ***"
-        echo "Check https://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/ and update provision.sh."
+        echo "Check https://yum.postgresql.org/10/redhat/rhel-7-x86_64/ and update provision.sh."
         exit 1
     fi
     rpm -ivh pgdg*
@@ -92,9 +92,9 @@ make -j 2 && sudo make install
 cd ..
 
 echo Build and install gdal
-wget -q -N http://download.osgeo.org/gdal/2.2.2/gdal-2.2.2.tar.gz        
-tar -xzf gdal-2.2.2.tar.gz
-cd gdal-2.2.2
+wget -q -N http://download.osgeo.org/gdal/2.3.1/gdal-2.3.1.tar.gz        
+tar -xzf gdal-2.3.1.tar.gz
+cd gdal-2.3.1
 export PATH=$(pwd):$PATH
 ./configure --prefix=/usr/local
 gmake -j 2 && gmake install
@@ -103,8 +103,7 @@ cd ..
 # TODO: Add stanza for other OSes, e.g. 'ubuntu'
 if [ $OS = 'centos7' ]
 then
-    yum -y install postgresql96-server
-    yum -y groupinstall "PostgreSQL Database Server 9.6 PGDG"
+    yum -y groupinstall "PostgreSQL Database Server 10 PGDG"
 
     echo Put geckodriver in /usr/local/bin
     pushd /usr/local/bin
@@ -113,7 +112,7 @@ then
     popd
 
     yum -y install deltarpm rabbitmq-server scipy mod_wsgi memcached python-memcached
-    yum -y install graphviz-devel graphviz-python ImageMagick postgis2_96 SFCGAL-devel
+    yum -y install graphviz-devel graphviz-python ImageMagick postgis24_10 SFCGAL-devel
     yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
     yum -y install proj-nad proj-epsg libxml2-devel libxslt-devel pam-devel
     yum -y install python-psycopg2 libpqxx-devel hdf hdf-devel freetds-devel postgresql-devel
@@ -140,9 +139,9 @@ gmake -j 2 && gmake install
 cd ..
 
 echo Build and install GMT
-wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-5.3.1-src.tar.gz
-tar -xzf gmt-5.3.1-src.tar.gz
-cd gmt-5.3.1
+wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-5.4.4-src.tar.gz
+tar -xzf gmt-5.4.4-src.tar.gz
+cd gmt-5.4.4
 cp cmake/ConfigUserTemplate.cmake cmake/ConfigUser.cmake
 mkdir build
 cd build
@@ -193,7 +192,7 @@ tar xzf mapserver-7.0.7.tar.gz
 cd mapserver-7.0.7
 mkdir build
 cd build
-/opt/cmake/bin/cmake .. -DWITH_FRIBIDI=1 -DWITH_CAIRO=0 -DWITH_FCGI=0 -DCMAKE_PREFIX_PATH="/usr/local;/usr/pgsql-9.6"
+/opt/cmake/bin/cmake .. -DWITH_FRIBIDI=1 -DWITH_CAIRO=0 -DWITH_FCGI=0 -DCMAKE_PREFIX_PATH="/usr/local;/usr/pgsql-10"
 make -j 2 && make install
 cp /usr/local/bin/mapserv /var/www/cgi-bin
 ldconfig
@@ -210,22 +209,13 @@ touch /tmp/mapserver_stoqshg.log
 chown apache.apache /tmp/mapserver_stoqshg.log
 sudo chmod go+w /tmp/mapserver_stoqshg.log
 
-# Needed for network support from docker containers & running docker w/o sudo
-hostnamectl set-hostname localhost
-cat <<EOT >> /etc/sysctl.conf
-net.ipv4.ip_forward=1
-EOT
-systemctl restart network
-groupadd docker
-usermod -aG docker $USER
-
 echo Build database for locate command
 updatedb
 
 echo Configure and start services
-/usr/pgsql-9.6/bin/postgresql96-setup initdb
-/usr/bin/systemctl enable postgresql-9.6
-/usr/bin/systemctl start postgresql-9.6
+/usr/pgsql-10/bin/postgresql-10-setup initdb
+/usr/bin/systemctl enable postgresql-10
+/usr/bin/systemctl start postgresql-10
 /usr/bin/systemctl enable rabbitmq-server
 /usr/bin/systemctl start rabbitmq-server
 rabbitmqctl add_user stoqs stoqs
@@ -241,12 +231,12 @@ rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
 /usr/bin/systemctl start docker
 
 echo Have postgresql listen on port 5438
-cp /var/lib/pgsql/9.6/data/postgresql.conf /var/lib/pgsql/9.6/data/postgresql.conf.bak
-sed -i 's/#port = 5432/port = 5438/' /var/lib/pgsql/9.6/data/postgresql.conf
+cp /var/lib/pgsql/10/data/postgresql.conf /var/lib/pgsql/10/data/postgresql.conf.bak
+sed -i 's/#port = 5432/port = 5438/' /var/lib/pgsql/10/data/postgresql.conf
 
 echo Modify pg_hba.conf
-mv -f /var/lib/pgsql/9.6/data/pg_hba.conf /var/lib/pgsql/9.6/data/pg_hba.conf.bak
-cat <<EOT > /var/lib/pgsql/9.6/data/pg_hba.conf
+mv -f /var/lib/pgsql/10/data/pg_hba.conf /var/lib/pgsql/10/data/pg_hba.conf.bak
+cat <<EOT > /var/lib/pgsql/10/data/pg_hba.conf
 # Allow user/password login
 host    all     stoqsadm     127.0.0.1/32   md5
 host    all     stoqsadm     10.0.2.0/24    md5
@@ -256,27 +246,27 @@ local   all     all                         trust
 local   all     all                     peer map=root_as_others
 host    all     all     127.0.0.1/32    ident map=root_as_others
 EOT
-cat /var/lib/pgsql/9.6/data/pg_hba.conf.bak >> /var/lib/pgsql/9.6/data/pg_hba.conf
-cp /var/lib/pgsql/9.6/data/pg_ident.conf /var/lib/pgsql/9.6/data/pg_ident.conf.bak
-echo "root_as_others  root            postgres" >> /var/lib/pgsql/9.6/data/pg_ident.conf
+cat /var/lib/pgsql/10/data/pg_hba.conf.bak >> /var/lib/pgsql/10/data/pg_hba.conf
+cp /var/lib/pgsql/10/data/pg_ident.conf /var/lib/pgsql/10/data/pg_ident.conf.bak
+echo "root_as_others  root            postgres" >> /var/lib/pgsql/10/data/pg_ident.conf
 
 su - postgres -c 'createuser -s $USER'
-su - postgres -c "/usr/pgsql-9.6/bin/pg_ctl -D /var/lib/pgsql/9.6/data -l logfile start"
+su - postgres -c "/usr/pgsql-10/bin/pg_ctl -D /var/lib/pgsql/10/data -l logfile start"
 
-echo Create postgis database and restart postgresql-9.6
+echo Create postgis database and restart postgresql-10
 su - postgres -c "createdb postgis"
 su - postgres -c "createlang plpgsql postgis"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/postgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/spatial_ref_sys.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/postgis_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/rtpostgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/raster_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/topology.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/topology_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/postgis.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/spatial_ref_sys.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/postgis_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/rtpostgis.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/raster_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/topology.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/topology_comments.sql"
 su - postgres -c "psql -c \"CREATE DATABASE template_postgis WITH TEMPLATE postgis;\""
 su - postgres -c "psql -c \"CREATE USER vagrant LOGIN PASSWORD 'vagrant';\""
 su - postgres -c "psql -c \"ALTER ROLE vagrant SUPERUSER;\""
-/usr/bin/systemctl restart postgresql-9.6
+/usr/bin/systemctl restart postgresql-10
 cd ..
 
 echo Modifying local firewall to allow incoming connections on ports 80 and 8000
@@ -296,10 +286,13 @@ echo Configure and restart sshd for enabling PyCharm interpreter
 sed -i 's#/usr/lib/openssh/sftp-server#/usr/libexec/openssh/sftp-server#' /etc/ssh/sshd_config
 /usr/bin/systemctl restart sshd
 
-echo Cloning STOQS repo from https://github.com/stoqs/stoqs.git... 
+# Use STOQS_HOME=/home/vagrant/dev if your host doesn't support NFS file serving
+STOQS_HOME=/vagrant/dev
+echo Cloning STOQS repo from https://github.com/stoqs/stoqs.git into $STOQS_HOME... 
 echo ">>> See CONTRIBUTING.md for how to configure your development system so that you can contribute to STOQS"
-mkdir /vagrant/dev
-cd /vagrant/dev
+
+mkdir $STOQS_HOME
+cd $STOQS_HOME
 git clone --depth=50 https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit
 git config core.preloadindex true
@@ -308,17 +301,27 @@ python3.6 -m venv venv-stoqs
 
 echo Installing Python modules for a development system
 source venv-stoqs/bin/activate
+pip install --upgrade pip
 ./setup.sh
 
 echo Giving user $USER ownership of everything in /home/$USER
 chown -R $USER /home/$USER
 
+echo Forward network traffic to support using docker without sudo - need to restart network at end of provisioning
+hostnamectl set-hostname localhost
+cat <<EOT >> /etc/sysctl.conf
+net.ipv4.ip_forward=1
+EOT
+systemctl restart network
+groupadd docker
+usermod -aG docker $USER
+
 echo Provisioning and setup have finished. 
 echo Default database loading and STOQS software tests should be run with:
-echo "(These commands are also found in /vagrant/dev/stoqsgit/README.md)"
+echo "(These commands are also found in $STOQS_HOME/stoqsgit/README.md)"
 echo ---------------------------------------------------------------------
-echo vagrant ssh -- -X
-echo "cd /vagrant/dev/stoqsgit && source venv-stoqs/bin/activate"
+echo vagrant ssh -- -Y
+echo "cd $STOQS_HOME/stoqsgit && source venv-stoqs/bin/activate"
 echo export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
-echo ./test.sh CHANGEME
+echo ./test.sh CHANGEME load noextraload
 

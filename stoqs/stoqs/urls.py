@@ -20,7 +20,8 @@ from stoqs.views.query import queryData, queryMap, queryUI
 from stoqs.views.management import showCampaigns, showDatabase, deleteActivity, showActivitiesMBARICustom
 from stoqs.views.permalinks import generate_permalink, load_permalink
 from stoqs.views.parameterinfo import parameterinfo
-                         
+
+app_name = 'stoqs'                         
 
 # The database alias (the key of the DATABASES dictionary) will prefix all of our requests
 pre = r'^(?P<dbAlias>[^/]+)/'  

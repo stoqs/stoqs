@@ -54,7 +54,7 @@ class CCELoader(LoadScript):
     num_beds = 11
     beds_names = [('bed{:02d}').format(n) for n in range(num_beds+1)]
     reds = plt.cm.Reds
-    for b, c in zip(beds_names, reds(np.arange(0, reds.N, reds.N/num_beds))):
+    for b, c in zip(beds_names, reds(np.arange(0, reds.N, reds.N/num_beds, dtype=int))):
         colors[b] = rgb2hex(c)[1:]
         # Duplicate color  for Trajectory 't' version
         colors[b + 't'] = rgb2hex(c)[1:]
@@ -73,14 +73,14 @@ class CCELoader(LoadScript):
     colors['bed11'] = 'A4A4A4'
     colors['bed11t'] = 'A4A4A4'
 
-    # color for BIN
-    colors['ccebin'] = 'ff0000'
+    # color for SIN
+    colors['ccesin'] = 'ff0000'
 
     # Colors for MS* moorings
     num_ms = 8
     ms_names = [('ccems{:1d}').format(n) for n in range(num_ms+1)]
     oranges = plt.cm.Oranges
-    for b, c in zip(ms_names, oranges(np.arange(0, oranges.N, oranges.N/num_ms))):
+    for b, c in zip(ms_names, oranges(np.arange(0, oranges.N, oranges.N/num_ms, dtype=int))):
         colors[b] = rgb2hex(c)[1:]
 
     def get_start_bed_depths(self):
@@ -94,7 +94,7 @@ class CCELoader(LoadScript):
             if ds.attributes['NC_GLOBAL']['featureType'].lower() == 'timeseries':
                 depths.append(ds['depth'][0][0])
             else:
-                depths.append(ds['depth']['depth'][0][0])
+                depths.append(float(ds['depth']['depth'][0][0].data))
 
         return depths
 
@@ -123,30 +123,21 @@ class CCELoader(LoadScript):
                     runTimeSeriesLoader(url, self.campaignName, self.campaignDescription,
                                         aName, pName, self.colors[pName.lower()], 'bed', 
                                         'deployment', self.bed_parms, self.dbAlias, stride)
-                self.addPlatformResources('http://stoqs.mbari.org/x3d/beds/beds_housing_with_axes_src_scene.x3d',
+                self.addPlatformResources('https://stoqs.mbari.org/x3d/beds/beds_housing_with_axes_src_scene.x3d',
                                           pName, scalefactor=10)
             except (OpendapError, InvalidSliceRequest, webob.exc.HTTPError):
                 pass
 
-    def loadCCEBIN(self, stride=None):
+    def loadCCESIN(self, stride=None):
         '''
-        Mooring CCEBIN specific load functions
+        Mooring CCESIN specific load functions
         '''
-        platformName = 'CCEBIN'
+        platformName = 'CCESIN'
         stride = stride or self.stride
-        for (aName, f) in zip([ a + getStrideText(stride) for a in self.ccebin_files], self.ccebin_files):
-            url = os.path.join(self.ccebin_base, f)
-
-            dataStartDatetime = None
-            if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple 
-                # activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                                activity__name=aName).aggregate(
-                                                Max('timevalue'))['timevalue__max']
-                if dataStartDatetime:
-                    # Subract an hour to fill in missing_values at end from previous load
-                    dataStartDatetime = dataStartDatetime - timedelta(seconds=3600)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.ccesin_files], self.ccesin_files):
+            url = os.path.join(self.ccesin_base, f)
+            ccesin_start_datetime = getattr(self, 'ccesin_start_datetime', None)
+            ccesin_end_datetime = getattr(self, 'ccesin_end_datetime', None)
 
             loader = Mooring_Loader(url = url, 
                                     campaignName = self.campaignName,
@@ -158,13 +149,13 @@ class CCELoader(LoadScript):
                                     platformColor = self.colors[platformName.lower()],
                                     platformTypeName = 'mooring',
                                     stride = stride,
-                                    startDatetime = self.ccebin_start_datetime,
-                                    endDatetime = self.ccebin_end_datetime,
-                                    dataStartDatetime = dataStartDatetime)
+                                    startDatetime = ccesin_start_datetime,
+                                    endDatetime = ccesin_end_datetime,
+                                    command_line_args = self.args)
 
-            loader.include_names = self.ccebin_parms
+            loader.include_names = self.ccesin_parms
             loader.auxCoords = {}
-            if 'adcp' in f.lower():
+            if 'adcp' in f.lower() or 'aquadopp' in f.lower():
                 Mooring_Loader.getFeatureType = lambda self: 'timeseriesprofile'
                 # The timeseries variables 'Hdg_1215', 'Ptch_1216', 'Roll_1217' should have a coordinate of
                 # a singleton depth variable, but EPIC files has this as a sensor_depth variable attribute.  
@@ -181,10 +172,10 @@ class CCELoader(LoadScript):
             # For timeseriesProfile data we need to pass the nominaldepth of the plaform
             # so that the model is put at the correct depth in the Spatial -> 3D view.
             try:
-                self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
-                                          platformName, nominaldepth=self.ccebin_nominaldepth)
+                self.addPlatformResources('https://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
+                                          platformName, nominaldepth=self.ccesin_nominaldepth)
             except AttributeError:
-                self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
+                self.addPlatformResources('https://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
                                           platformName)
 
 # Dynamic method creation for any number of 'ccems' moorings
@@ -197,8 +188,8 @@ def make_load_ccems_method(name):
         files = getattr(self, plt_name + '_files')
         parms = getattr(self, plt_name + '_parms')
         nominal_depth = getattr(self, plt_name + '_nominal_depth')
-        start_datetime = getattr(self, plt_name + '_start_datetime')
-        end_datetime = getattr(self, plt_name + '_end_datetime')
+        start_datetime = getattr(self, plt_name + '_start_datetime', None)
+        end_datetime = getattr(self, plt_name + '_end_datetime', None)
 
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in files], files):
@@ -226,6 +217,12 @@ def make_load_ccems_method(name):
 
             loader.include_names = parms
             loader.auxCoords = {}
+
+            if 'adcp' in f.lower() or 'aquadopp' in f.lower():
+                Mooring_Loader.getFeatureType = lambda self: 'timeseriesprofile'
+            else:
+                Mooring_Loader.getFeatureType = lambda self: 'timeseries'
+
             for p in parms:
                 # The timeseries variables 'Hdg_1215', 'Ptch_1216', 'Roll_1217' should have a coordinate of
                 # a singleton depth variable, but EPIC files has this as a sensor_depth variable attribute.  

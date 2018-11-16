@@ -20,6 +20,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from django.contrib.gis.geos import LineString, Point
+from django.contrib.gis.db.models import Extent
 import numpy as np
 import time
 import pytz
@@ -88,7 +89,7 @@ class Contour(object):
         seaQS = qs.aggregate(Min('startdate'), Max('enddate'))
         self.activityStartTime = seaQS['startdate__min']
         self.activityEndTime = seaQS['enddate__max']
-        dataExtent = qs.extent(field_name='maptrack')
+        dataExtent = qs.aggregate(Extent('maptrack'))
         return dataExtent
 
     def getAxisInfo(self, parm):
@@ -105,7 +106,7 @@ class Contour(object):
         try:
             units = prQS.filter(parameter__name=parm)[0][0]
         except IndexError:
-            raise Exception("Unable to get units for parameter name %s from platform %s" % (parm, self.platformName))
+            raise Exception("Unable to get units for parameter name %s from platform {}".format(parm, self.platformName))
 
         return pmin, pmax, units
 
@@ -173,11 +174,11 @@ class Contour(object):
                             # dates are in reverse order - newest first
                             start_dt.append(data_dict[pln+pname]['datetime'][-1])
                             end_dt.append(data_dict[pln+pname]['datetime'][0])
-                            logger.debug('Loaded data for parameter %s', pname)
+                            logger.debug('Loaded data for parameter {}'.format(pname))
                             parameters_valid.append(pname)
 
                 except Exception:
-                    logger.error('%s not available in database for the dates %s %s', pname, start_datetime, end_datetime)
+                    logger.error('{} not available in database for the dates {} {}'.format(pname, start_datetime, end_datetime))
                     continue
 
                 if len(parameters_valid) > 0:
@@ -235,7 +236,7 @@ class Contour(object):
                     maptracks.append(geom)
 
         except Exception:
-            logger.error('%s not available in database for the dates %s %s', parm, start_datetime, end_datetime)
+            logger.error('{} not available in database for the dates {} {}', parm, start_datetime, end_datetime)
 
         return data, points, maptracks
 
@@ -245,7 +246,7 @@ class Contour(object):
             return data_start, data_end
 
         except Exception as e:
-            logger.warn(e)
+            logger.warning(e)
             raise e
 
         return start_datetime, end_datetime
@@ -381,11 +382,11 @@ class Contour(object):
                 z = self.data[pn+name]['datavalue']
                 sdt_count = self.data[pn+name]['sdt_count']
 
-                units = '(' + self.data[pn+p]['units'] + ')'
+                units = '(' + self.data[pn+name]['units'] + ')'
 
                 if len(z):
                     if self.autoscale:
-                        rangez = [self.data[pn+p]['p010'],self.data[pn+p]['p990']]
+                        rangez = [self.data[pn+name]['p010'],self.data[pn+name]['p990']]
                     else:
                         rangez = [min(z), max(z)]
                 else:
@@ -513,34 +514,27 @@ class Contour(object):
         lon = pointsnp[:,0]
         lat = pointsnp[:,1]
 
-        if self.extent:
-            ltmin = self.extent[1]
-            ltmax = self.extent[3]
-            lnmin = self.extent[0]
-            lnmax = self.extent[2]
-            lndiff = abs(lnmax - lnmin)
-            ltdiff = abs(ltmax - ltmin)
-            logger.debug("lon diff %f lat diff %f", lndiff, ltdiff)
-            mindeg = .02
-            paddeg = .01
-            if lndiff < mindeg :
-                lnmin -= mindeg
-                lnmax += mindeg
-            if ltdiff < mindeg:
-                ltmin -= mindeg
-                ltmax += mindeg
-            e = (lnmin - paddeg, ltmin - paddeg, lnmax + paddeg, ltmax + paddeg)
-        else:
-            # default map to Monterey Bay region
-            ltmin = 36.61
-            ltmax = 36.97
-            lnmin = -122.21
-            lnmax = -121.73
-            e = (lnmin, ltmin, lnmax, ltmax)
+        ltmin = self.extent['maptrack__extent'][1]
+        ltmax = self.extent['maptrack__extent'][3]
+        lnmin = self.extent['maptrack__extent'][0]
+        lnmax = self.extent['maptrack__extent'][2]
+        lndiff = abs(lnmax - lnmin)
+        ltdiff = abs(ltmax - ltmin)
+        logger.debug("lon diff {} lat diff {}".format(lndiff, ltdiff))
+        mindeg = .02
+        paddeg = .01
+        if lndiff < mindeg :
+            lnmin -= mindeg
+            lnmax += mindeg
+        if ltdiff < mindeg:
+            ltmin -= mindeg
+            ltmax += mindeg
 
-        logger.debug('Extent found %f,%f,%f,%f)', e[0], e[1],e[2],e[3])
+        e = (lnmin - paddeg, ltmin - paddeg, lnmax + paddeg, ltmax + paddeg)
+        logger.debug('Extent {},{},{},{})'.format(e[0], e[1],e[2],e[3]))
         # retry up to 5 times to get the basemap
         for i in range(0, 5):
+            logger.debug('Getting basemap')
             mp = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution='l', ax=ax)
             try:
                 # Works, but coarse resolution
@@ -568,7 +562,7 @@ class Contour(object):
                         ln,lt = list(zip(*track))
                         mp.plot(ln,lt,'-',c='k',alpha=0.5,linewidth=2, zorder=1)
                 except TypeError as e:
-                    logger.warn("%s\nCannot plot map track path to None", e)
+                    logger.warning("{}\nCannot plot map track path to None".format(e))
             else:
                 for track in maptracks:
                     if track is not None:
@@ -585,15 +579,15 @@ class Contour(object):
                     lat_stride = lat[0:sz:stride]
                     mp.scatter(lon_stride,lat_stride,c=z_stride,marker='.',lw=0,alpha=1.0,cmap=self.cm_jetplus,label=self.plotDotParmName,zorder=2)
                     if stride > 1:
-                        ax.text(0.70,0.1, ('%s (every %d points)' % (self.plotDotParmName, stride)), verticalalignment='bottom',
+                        ax.text(0.70,0.1, ('{} (every {} points)'.format(self.plotDotParmName, stride)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
                     else:
-                        ax.text(0.70,0.1, ('%s (every point)' % (self.plotDotParmName)), verticalalignment='bottom',
+                        ax.text(0.70,0.1, ('{} (every point)'.format(self.plotDotParmName)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
 
                 else:
                     mp.scatter(lon,lat,c=z,marker='.',lw=0,alpha=1.0,cmap=self.cm_jetplus,label=self.plotDotParmName,zorder=2)
-                    ax.text(0.70,0.1, ('%s (every point)' % (self.plotDotParmName)), verticalalignment='bottom',
+                    ax.text(0.70,0.1, ('{} (every point)'.format(self.plotDotParmName)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
 
             if self.booleanPlotGroup:
@@ -604,7 +598,7 @@ class Contour(object):
                     parm = [z2.strip() for z2 in g.split(',')]
                     for name in parm:
                         if name in self.plotGroupValid:
-                            logger.debug('Plotting boolean plot group parameter %s', name)
+                            logger.debug('Plotting boolean plot group parameter {}', name)
                             z, points, maptracks = self.getMeasuredPPData(start_datetime, end_datetime, self.platformName[0], name)
                             pointsnp = np.array(points)
                             lon = pointsnp[:,0]
@@ -620,15 +614,15 @@ class Contour(object):
             l.set_zorder(4) # put the legend on top
 
         except Exception as e:
-            logger.warn(e)
+            logger.warning(e)
 
         if self.animate:
             # append frames output as pngs with an indexed frame number before the gif extension
-            fname = '%s/frame_%02d.png' % (self.dirpath, self.frame)
+            fname = '{}/frame_{:02}.png'.format(self.dirpath, self.frame)
         else:
             fname = self.outFilename
 
-        logger.debug('Saving figure %s', fname)
+        logger.debug('Saving figure {}'.format(fname))
         fig.savefig(fname,dpi=120)#,transparent=True)
         plt.close()
         self.frame += 1
@@ -649,7 +643,7 @@ class Contour(object):
             zi = griddata((x, y), np.array(z), (xi[None,:], yi[:,None]), method='nearest')
             logger.debug('Done gridding')
         except KeyError as e:
-            logger.warn('Got KeyError. Could not grid the data')
+            logger.warning('Got KeyError. Could not grid the data')
             zi = None
             raise(e)
         return zi
@@ -664,7 +658,7 @@ class Contour(object):
             rbf = Rbf(x, y, z, epsilon=2)
             zi = rbf(xi, yi)
         except Exception as e:
-            logger.warn('Could not grid the data' +  str(e))
+            logger.warning('Could not grid the data' +  str(e))
             zi = None
         return xi,yi,zi
 
@@ -701,11 +695,11 @@ class Contour(object):
         try:
             scale_factor = float(tmax -tmin) / (dmax - dmin)
         except ZeroDivisionError as e:
-            logger.warn('Not setting scale_factor.  Scatter plots will still work.')
+            logger.warning('Not setting scale_factor.  Scatter plots will still work.')
             contour_flag = False
             scale_factor = 1
         else:
-            logger.warn('self.scale_factor = %f', scale_factor)
+            logger.warning('self.scale_factor = {}'.format(scale_factor))
             xi = xi / scale_factor
             xg = [xe/scale_factor for xe in x]
             contour_flag = True
@@ -713,43 +707,44 @@ class Contour(object):
         cs = None
 
         # Register the signal function handler
-        signal.signal(signal.SIGALRM, self.handler)
+        # TODO: factor this out into the main thread
+        # signal.signal(signal.SIGALRM, self.handler)
 
         # Define a timeout of 90 seconds for gridding functions
-        signal.alarm(90)
+        # signal.alarm(90)
 
         if not self.data:
-            logger.warn('no data found to plot') 
-            signal.alarm(0)
+            logger.warning('no data found to plot') 
+            #signal.alarm(0)
             raise Exception('no data')
         if contour_flag:
             try:
-                logger.warn('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
+                logger.warning('Gridding data with sdt_count = {}, and y_count = {}'.format(sdt_count, y_count))
                 zi = self.gridData(xg, y, z, xi, yi)
-                signal.alarm(0)
+                #signal.alarm(0)
             except KeyError:
-                logger.warn('Got KeyError. Could not grid the data')
+                logger.warning('Got KeyError. Could not grid the data')
                 contour_flag = False
                 scale_factor = 1
                 try:
                     # use RBF
-                    logger.warn('Trying radial basis function')
+                    logger.warning('Trying radial basis function')
                     xi,yi,zi = self.gridDataRbf(tmin, tmax, dmin, dmax, xg, y, z)
                     contour_flag = True
-                    signal.alarm(0)
+                    #signal.alarm(0)
                 except Exception as e:
-                    logger.warn('Could not grid the data' + str(e))
+                    logger.warning('Could not grid the data' + str(e))
             except Exception as e:
-                logger.warn('Could not grid the data' + str(e))
+                logger.warning('Could not grid the data' + str(e))
                 contour_flag = False
                 try:
                     # use RBF
-                    logger.warn('Trying radial basis function')
+                    logger.warning('Trying radial basis function')
                     xi,yi,zi  = self.gridDataRbf(tmin, tmax, dmin, dmax, xg, y, z)
                     contour_flag = True
-                    signal.alarm(0)
+                    #signal.alarm(0)
                 except Exception as e:
-                    logger.warn('Could not grid the data' + str(e))
+                    logger.warning('Could not grid the data' + str(e))
 
         try:
             if scale_factor > 1 and contour_flag:
@@ -831,7 +826,7 @@ class Contour(object):
             self.scale_factor = 1
 
             ax.set_ylim([dmax,dmin])
-            ax.set_ylabel('%s (bool)' % label,fontsize=8)
+            ax.set_ylabel('{} (bool)'.format(label),fontsize=8)
 
             ax.tick_params(axis='both',which='major',labelsize=8)
             ax.tick_params(axis='both',which='minor',labelsize=8)
@@ -891,8 +886,8 @@ class Contour(object):
                     data_start_local = start_datetime.astimezone(pytz.timezone('America/Los_Angeles'))
                     logger.debug('Plotting data for animation')
 
-                    self.subtitle1 = '%s  to  %s PDT' % (data_start_local.strftime('%Y-%m-%d %H:%M'), data_end_local.strftime('%Y-%m-%d %H:%M'))
-                    self.subtitle2 = '%s  to  %s UTC' % (start_datetime.strftime('%Y-%m-%d %H:%M'), end_datetime.strftime('%Y-%m-%d %H:%M'))
+                    self.subtitle1 = '{}  to  {} PDT'.format(data_start_local.strftime('%Y-%m-%d %H:%M'), data_end_local.strftime('%Y-%m-%d %H:%M'))
+                    self.subtitle2 = '{}  to  {} UTC'.format(start_datetime.strftime('%Y-%m-%d %H:%M'), end_datetime.strftime('%Y-%m-%d %H:%M'))
                     self.createPlot(start_datetime, end_datetime)
 
                     start_datetime = end_datetime - overlap_window
@@ -901,7 +896,7 @@ class Contour(object):
                 if not os.listdir(self.dirpath):
                    raise Exception('No plots generated')
 
-                cmd = "convert -loop 1 -delay 250 %s/frame*.png %s" % (self.dirpath,self.outFilename)
+                cmd = "convert -loop 1 -delay 250 {}/frame*.png {}".format(self.dirpath,self.outFilename)
                 logger.debug(cmd)
                 os.system(cmd)
 
@@ -913,13 +908,13 @@ class Contour(object):
                 shutil.rmtree(self.dirpath)
         else :
             try:
-                if self.data is not None:
-                    data_end_local = data_end.astimezone(pytz.timezone('America/Los_Angeles'))
-                    data_start_local = data_start.astimezone(pytz.timezone('America/Los_Angeles'))
-                    logger.debug('Plotting data')
-                    self.subtitle1 = '%s  to  %s PDT' % (data_start_local.strftime('%Y-%m-%d %H:%M'), data_end_local.strftime('%Y-%m-%d %H:%M'))
-                    self.subtitle2 = '%s  to  %s UTC' % (data_start.strftime('%Y-%m-%d %H:%M'), data_end.strftime('%Y-%m-%d %H:%M'))
-                    self.createPlot(data_start, data_end)
+                data_end_local = data_end.astimezone(pytz.timezone('America/Los_Angeles'))
+                data_start_local = data_start.astimezone(pytz.timezone('America/Los_Angeles'))
+                logger.debug('Plotting data')
+                self.subtitle1 = '{}  to  {} PDT'.format(data_start_local.strftime('%Y-%m-%d %H:%M'), data_end_local.strftime('%Y-%m-%d %H:%M'))
+                self.subtitle2 = '{}  to  {} UTC'.format(data_start.strftime('%Y-%m-%d %H:%M'), data_end.strftime('%Y-%m-%d %H:%M'))
+                self.createPlot(data_start, data_end)
             except Exception as e:
                 logger.error(e)
+                raise(e)
 

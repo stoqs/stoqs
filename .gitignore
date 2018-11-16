@@ -31,6 +31,7 @@ stoqs/campaigns.py
 stoqs/loaders/*/*.out
 
 # Ex-situ Sample data files
+stoqs/loaders/CANON/BOG_Data
 stoqs/loaders/MolecularEcology/BOG_Data/*.csv
 stoqs/loaders/MolecularEcology/SIMZAug2013/*.csv
 
@@ -47,4 +48,9 @@ stoqs/stoqs/media/loadlogs/
 docker/.env
 docker/*.key
 docker/*.crt
+docker/*.csr
+docker/*.rar
 
+# Jupyter Notebook checkpoints
+stoqs/contrib/notebooks/.ipynb_checkpoints/
+stoqs/loaders/CANON/toNetCDF/notebooks/.ipynb_checkpoints/

@@ -1,250 +1,62 @@
 # Dockerized STOQS
 
-**WIP**
+First, install [Docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/install/)
+on your system.  Then clone the repository; in the docker directory copy the `template.env` file to `.env` 
+and edit it for your specific installation, then execute `docker-compose up`:
 
-Status:
-
-- STOQS GUI running and exposed on host: http://localhost:8000/
-
-- On the `stoqs` container:
- 
-        docker exec -it stoqs bash
- 
-   all of the following seem to complete Ok:
-
-        cd stoqs/
-        ./manage.py makemigrations stoqs --settings=config.settings.ci --noinput
-        ./manage.py migrate --settings=config.settings.ci --noinput --database=default
-        wget -q -N -O loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
-        loaders/loadTestData.py
-
-- However, if trying the above with the `stoqsadm` username, that is, with
-  `DATABASE_URL=postgis://stoqsadm:changeme@stoqs-postgis:5432/stoqs`,
-  then errors like `... FATAL:  Ident authentication failed for user "stoqsadm"`
-  occur.
-
-- NOTE: creating a stoqs/mapserver image (based on geodata/mapserver:7.0.1) 
-only to proxy `/cgi-bin/mapserv` to `/`. 
-That is, geodata/mapserver:7.0.1 sets the mapserver endpoint to simply `/`;
-however, various STOQS resources add `/cgi-bin/mapserv` to the 
-`MAPSERVER_HOST` setting.
-Suggestion here would be to let the `MAPSERVER_HOST` to include any path
-for the actual mapserver endpoint.  
-
-# Some comments/questions/TODOs
-
-- `yum -y groups install "GNOME Desktop"` - perhaps unneeded?
-- base image:
-  - for now _installing_ nginx (as opposed to _extending_ some image) 
-    due to the whole needed provisioning.
-  - includes basically what `setup.sh production` does, that is:
-    - pip3.6 install -r requirements/production.txt
-    - Basemap installation
-    - natgrid installation
-- stoqs image:
-  - Note: no python virtualenv used as the environment is already containerized
-  - TODO: any other volume mappings (besides the mapserver one)?
-  - TODO: any additional environment variables?
-
-
-## General approach
-
-Images involved toward a fully operational STOQS instance would be:
-
-- `rabbitmq:3`: RabbitMQ
-- `???/mapserver`: MapServer
-- `mbari/stoqs-postgis`: Configured Postgres/Postgis server/database for STOQS use
-- `mbari/stoqs`: STOQS system itself
-
-The basic idea is that each image corresponds to a service that can be started/stopped/restarted
-as a unit, and, of course, according to relevant dependencies (for example, the STOQS system
-itself requires the Postgres and MapServer services, while RabbitMQ is optional..).
-
-## Building the mbari/stoqs* images
-
-The `.env` file captures environment variables that are used in build/run commands below.
-Edit the file following guidance in the comments to make proper settings for your deployment.
-
-```shell
-cd docker/
-source .env
+```bash
+git clone https://github.com/stoqs/stoqs.git stoqsgit
+cd stoqsgit/docker
+cp template.env .env
+chmod 600 .env      # Edit .env to customize (Ensure that STOQS_HOME is set to the full path of stoqsgit)
+docker-compose build
+docker-compose up
 ```
 
-### RabbitMQ image
+#### Developer Installation with Docker
 
-- We directly use the official image `rabbitmq:3` as the necessary settings 
-  ("stoqs" vhost, username and password), as seen in `provision.sh`,
-  can simply be indicated via environment variables in this entry.
-
-- At the moment only port 4369 is explicitly exposed to the host.
-
-- No dependencies on other services.
-
-- TODO: any needed data volume mappings?
+TODO: Offer instructions that are an alternative to running a STOQS development system in Vagrant
 
 
-### Postgis image
+#### Production Deployment with Docker
 
-In this case we build an image on top of 
-[mdillon/postgis:9.6](https://hub.docker.com/r/mdillon/postgis/)
-to include the intialization of the database and the necessary 
-adjustments to `pg_hba.conf` and `pg_hba_ident.conf`:
+The `docker-compose build` and `docker-compose up` commands should each take less than 15 minutes.
+The first time the latter is executed a default database is created and tests are executed.
+Once you see `... [emperor] vassal /etc/uwsgi/django-uwsgi.ini is ready to accept requests`
+you can visit the site at https://localhost &mdash; it uses a self-signed certificate, so your
+browser will complain. (The nginx service also delivers the same app at http://localhost:8000
+without the cerificate issue.)
 
-```
-docker build -f Dockerfile-postgis -t "mbari/stoqs-postgis" .
-```
+The default settings in `template.env` will run a production nginx/uwsgi/stoqs server configured
+for https://localhost.  To configure a server for intranet or public serving of
+your data follow the instructions provided in the comments for the settings in your `.env` file.
+After editing your `.env` file you will need to rebuild your stoqs image and restart the Docker 
+services, this time with the `-d` option to run the containers in the background:
 
-**NOTE**: 
-
-- The host `${STOQS_VOLS_DIR}/pgdata` directory is created upon first 
-  execution of the command above. Subsequent runs will use the existing
-  contents. So, keep this in mind in particular regarding any futher
-  needed adjustments to `pg_hba.conf` and `pg_hba_ident.conf`.
-
-### MapServer image
-
-Currently playing with `geodata/mapserver:7.0.1` directly.
-(NOTE: actually an adjusted one, see above)
-
-```
-docker build -f Dockerfile-mapserver -t "mbari/stoqs-mapserver" .
+```bash
+docker-compose build stoqs
+docker-compose up -d
 ```
 
-### STOQS image
+See https://docs.docker.com/compose/production/ for more information about running in production.
 
-We build the STOQS image on top of `mbari/stoqs-base`:
-
-Make sure to execute `docker build` from the parent directory:
-(Are environment variable settings needed in the build step, or just in cocker-compose?)
+To load some existing MBARI campaign data edit your `.env` file to uncomment the line:
 
 ```
-$ docker build -f docker/Dockerfile-stoqs \
-         --build-arg STOQS_HOST=${STOQSADM_HOST} \
-         --build-arg MAPSERVER_HOST=${MAPSERVER_HOST} \
-         --build-arg DATABASE_URL=${DATABASE_URL} \
-         -t "mbari/stoqs" .
+CAMPAIGNS_MODULE=stoqs/mbari_campaigns.py
 ```
 
-The entry point in this image launches the Django application in development mode.
+and restart the stoqs service, then from the docker directory execute the load script for a campaign:
 
-TODO configure the STOQS app on the inherited nginx endpoint.
-
-
-## Execution
-
-**Docker Compose** 
-
-I'm using docker-compose.yml as the central service specification for execution. 
-
-With the images described above in place, the complete STOQS system can be lauched
-as follows:
-
-```shell
-$ docker-compose up -d
+```bash
+docker-compose exec stoqs stoqs/loaders/load.py --db stoqs_simz_aug2013
 ```
 
-### Basic tests
+In another window monitor its output:
 
-#### Postgis
-
-Assuming you have `psql` on your host:
-
-```shell
-$ psql -h localhost -p 5432 -U stoqsadm -d postgres
-Password for user stoqsadm:
-psql (9.6.2, server 9.6.3)
-Type "help" for help.
-
-postgres=> \d
-               List of relations
- Schema |       Name        | Type  |  Owner
---------+-------------------+-------+----------
- public | geography_columns | view  | postgres
- public | geometry_columns  | view  | postgres
- public | raster_columns    | view  | postgres
- public | raster_overviews  | view  | postgres
- public | spatial_ref_sys   | table | postgres
-(5 rows)
+```bash
+docker-compose exec stoqs tail -f /srv/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
+# Or (The stoqs code is bound as a volume in the container from the GitHub cloned location)
+tail -f $STOQS_HOME/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
 ```
 
-#### MapServer
-
-- open "http://localhost:${STOQS_HOST_MAPSERVER_PORT}/" - 
-  should show `No query information to decode. QUERY_STRING is set, but empty.`
-
-- open "http://localhost:${STOQS_HOST_MAPSERVER_PORT}/?map=/usr/local/share/mapserver/examples/test.map&mode=map" - 
-  should show the basic example provided in the docker image.
-
-#### STOQS image
-
-- open "http://localhost/"
-  shows the STOQS GUI 
-  (currently with an empty Campaigns table)
-  
-- open "http://localhost:${STOQS_HOST_HTTP_PORT}/"
-  - currently this shows the default nginx page.
-  
-
-
-Interaction with the database:
-
-```shell
-$ docker exec -it stoqs bash
-(venv-stoqs) [root@a9bbe3f55dc6 stoqsgit]# psql -U stoqsadm -d postgres
-Password for user stoqsadm:
-psql (9.6.5, server 9.6.3)
-Type "help" for help.
-
-postgres=> \d
-               List of relations
- Schema |       Name        | Type  |  Owner
---------+-------------------+-------+----------
- public | geography_columns | view  | postgres
- public | geometry_columns  | view  | postgres
- public | raster_columns    | view  | postgres
- public | raster_overviews  | view  | postgres
- public | spatial_ref_sys   | table | postgres
-(5 rows)
-```
-
-Trying some of the instructions included in test.sh:
-
-```shell
-(venv-stoqs) [root@a9bbe3f55dc6 stoqsgit]# cd stoqs
-(venv-stoqs) [root@a9bbe3f55dc6 stoqs]# ./manage.py makemigrations stoqs --settings=config.settings.ci --noinput
-# (completed fine)
-```
-
-However:
-
-```shell
-(venv-stoqs) [root@a9bbe3f55dc6 stoqs]# ./manage.py migrate --settings=config.settings.ci --noinput --database=default
-Traceback (most recent call last):
-  File "/opt/stoqsgit/venv-stoqs/lib64/python3.6/site-packages/django/db/backends/utils.py", line 63, in execute
-    return self.cursor.execute(sql)
-psycopg2.ProgrammingError: permission denied to create extension "postgis"
-HINT:  Must be superuser to create this extension.
-```
-
-TODO 
-- actually, the "postgis" extension already exists.
-  Are there still missing privileges to be given to stoqsadm?
- 
-
-
-## Publishing the images
-
-When the time comes:
-
-```
-docker push mbari/stoqs-postgis
-docker push mbari/stoqs-mapserver
-docker push mbari/stoqs
-```
-
-
-## Some notes
-
-Regarding the `firewall-cmd` commands in provision.sh, 
-"You don't want to run a firewall inside the container,"
-see https://github.com/CentOS/sig-cloud-instance-images/issues/2#issuecomment-57486012

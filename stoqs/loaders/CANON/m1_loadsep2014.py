@@ -30,7 +30,7 @@ from CANON import CANONLoader
 cl = CANONLoader('stoqs_september2014', 'CANON-ECOHAB - September 2014',
                     description = 'Fall 2014 Dye Release Experiment in Monterey Bay',
                     x3dTerrains = {
-                                    'http://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                         'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                         'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                         'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
@@ -54,7 +54,7 @@ cl.m1_startDatetime = datetime.datetime(2014, 9, 1)
 cl.m1_endDatetime  = datetime.datetime(2014, 10, 12)
 
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
-cl.m1_base = 'http://dods.mbari.org/opendap/hyrax/data/ssdsdata/deployments/m1/201407/'
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201407/'
 cl.m1_files = ['OS_M1_20140716hourly_CMSTV.nc']
 cl.m1_parms = [ 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR', 'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR',
                 'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR',

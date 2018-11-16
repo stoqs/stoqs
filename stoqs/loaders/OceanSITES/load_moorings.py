@@ -9,18 +9,19 @@ MBARI 28 October 2014
 import os
 import sys
 
-# Use local thredds-crawler, see: https://github.com/asascience-open/thredds_crawler/issues/16
-sys.path.insert(0, '/home/vagrant/dev/thredds_crawler')
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
+import django
+django.setup()
 
-parentDir = os.path.join(os.path.dirname(__file__), "../")
-sys.path.insert(0, parentDir)  # So that OS and DAPloaders are found
-
-from OceanSITES import OSLoader
+from loaders.OceanSITES import OSLoader
 from thredds_crawler.crawl import Crawl
 
 # Monkey-patch coards functions to accept non-standard time units
 import coards
 from coards import parse_units, parse_date
+import timing
+
 coards.parse_units = lambda units: parse_units(units.lower())
 coards.parse_date = lambda date: parse_date(date.upper())
 
@@ -28,7 +29,7 @@ coards.parse_date = lambda date: parse_date(date.upper())
 osl = OSLoader('stoqs_oceansites', 'OS Moorings',
                         description = 'Mooring data from the OceanSITES GDAC',
                         x3dTerrains = {
-                            'http://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
+                            'https://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
                                 'position': '14051448.48336 -15407886.51486 6184041.22775',
                                 'orientation': '0.83940 0.33030 0.43164 1.44880',
                                 'centerOfRotation': '0 0 0',

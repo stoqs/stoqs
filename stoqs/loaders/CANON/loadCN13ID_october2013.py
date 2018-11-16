@@ -29,12 +29,13 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+import timing
        
 # building input data sources object
 cl = CANONLoader('stoqs_cn13id_oct2013', 'CN13ID - October 2013',
                         description = 'Warden cruise on Western Flyer into the California Current System off Monterey Bay',
                         x3dTerrains = {
-                            'http://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
+                            'https://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
                                 'position': '14051448.48336 -15407886.51486 6184041.22775',
                                 'orientation': '0.83940 0.33030 0.43164 1.44880',
                                 'centerOfRotation': '0 0 0',
@@ -66,7 +67,9 @@ cl.dorado_files = [
 				   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
                     'fl700_uncorr', 'salinity', 'biolume',
-                    'sepCountList', 'mepCountList']
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
+                  ]
 
 
 ######################################################################
@@ -89,7 +92,7 @@ cl.wfuctd_base = cl.dodsBase + 'CANON_october2013/Platforms/Ships/Western_Flyer/
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [ 
 'CN13IDm01.nc', 'CN13IDm02.nc', 'CN13IDm03.nc', 'CN13IDm04.nc', 'CN13IDm05.nc', 'CN13IDm06.nc', 'CN13IDm07.nc', 'CN13IDm08.nc', 'CN13IDm09.nc', 'CN13IDm10.nc',
-'CN13IDm11.nc', 'CN13IDm13.nc', 'CN13IDm13.nc', 'CN13IDm14.nc',
+'CN13IDm11.nc', 'CN13IDm12.nc', 'CN13IDm13.nc', 'CN13IDm14.nc',
                       ]
 
 # PCTD

@@ -20,23 +20,18 @@ import logging
 import re
 import pydap
 import json
-from . import lrauvNc4ToNetcdf
-import urllib.parse
+import netCDF4
+import lrauvNc4ToNetcdf
 import requests
 
 from coards import to_udunits, from_udunits
 from thredds_crawler.crawl import Crawl
-from thredds_crawler.etree import etree
-from datetime import datetime, timedelta
-from pydap.client import open_url
+from urllib.parse import urlparse
+from datetime import datetime
 
 # Set up global variables for logging output to STDOUT
-logger = logging.getLogger('makeLRAUVNetCDFS')
-fh = logging.StreamHandler()
-f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
-fh.setFormatter(f)
-logger.addHandler(fh)
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class ServerError(Exception):
     pass
@@ -78,92 +73,94 @@ def process_command_line():
            '] }')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150930T000000', required=False)
         parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20151031T000000', required=False)
+        parser.add_argument('--trackingdb', action='store_true', help='Attempt to use positions of <name>_ac from the Tracking Database (ODSS)')
+        parser.add_argument('--nudge', action='store_true', help='Nudge the dead reckoned positions to meet the GPS fixes')
 
         args = parser.parse_args()
 
         return args
 
 def find_urls(base, select, startdate, enddate):
-    INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
-    print(("Crawling: %s" % url))
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
-    u = urllib.parse.urlsplit(url)
+    u = urlparse(url)
     name, ext = os.path.splitext(u.path)
     if ext == ".html":
-        u = urllib.parse.urlsplit(url.replace(".html", ".xml"))
+        u = urlparse(url.replace(".html", ".xml"))
     url = u.geturl()
     urls = []
-    # Get an etree object
     try:
-        r = requests.get(url)
-        tree = etree.XML(r.text.encode('utf-8'))
+        c = Crawl(url, select=[".*dlist"])
 
         # Crawl the catalogRefs:
-        for ref in tree.findall('.//{%s}catalogRef' % INV_NS):
+        for dataset in c.datasets:
 
             try:
                 # get the mission directory name and extract the start and ending dates
-                mission_dir_name = ref.attrib['{http://www.w3.org/1999/xlink}title']
+                dlist = os.path.basename(dataset.id)
+                mission_dir_name = dlist.split('.')[0]
                 dts = mission_dir_name.split('_')
                 dir_start =  datetime.strptime(dts[0], '%Y%m%d')
                 dir_end =  datetime.strptime(dts[1], '%Y%m%d')
 
                 # if within a valid range, grab the valid urls
                 if dir_start >= startdate and dir_end <= enddate:
-                    catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
+                    catalog = '{}_{}/catalog.xml'.format(dir_start.strftime('%Y%m%d'), dir_end.strftime('%Y%m%d'))
                     c = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
                     d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
                     for url in d:
                         urls.append(url)
             except Exception as ex:
-                print(("Error reading mission directory name %s" % ex))
+                print("Error reading mission directory name {}".format(ex))
 
     except BaseException:
-        print(("Skipping %s (error parsing the XML XML)" % url))
+        print("Skipping {} (error parsing the XML XML)".format(url))
 
     return urls
 
-def getNcStartEnd(urlNcDap, timeAxisName):
+def getNcStartEnd(inDir, urlNcDap, timeAxisName):
     '''Find the lines in the html with the .nc file, then open it and read the start/end times
     return url to the .nc  and start/end as datetime objects.
     '''
-    logger.debug('open_url on urlNcDap = %s', urlNcDap)
+    logger.debug('open_url on urlNcDap = {}'.format(urlNcDap))
 
     try:
-        df = pydap.client.open_url(urlNcDap)
-    except pydap.exceptions.ServerError as e:
-        logger.warn(e)
-        raise ServerError("Can't read %s time axis from %s" % (timeAxisName, urlNcDap))
+        base_in =  '/'.join(urlNcDap.split('/')[-3:])
+        in_file = os.path.join(inDir, base_in) 
+        df = netCDF4.Dataset(in_file, mode='r')
+    except pydap.exceptions.ServerError as ex:
+        logger.warning(ex)
+        raise ServerError("Can't read {} time axis from {}".format(timeAxisName, urlNcDap))
 
     try:
         timeAxisUnits = df[timeAxisName].units
-    except KeyError as e:
-        logger.warn(e)
-        raise ServerError("Can't read %s time axis from %s" % (timeAxisName, urlNcDap))
+    except KeyError as ex:
+        logger.warning(ex)
+        raise ServerError("Can't read {} time axis from {}".format(timeAxisName, urlNcDap))
 
-    timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
+    if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
+        timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
 
     try:
-        startDatetime = from_udunits(df[timeAxisName][0][0], timeAxisUnits)
-        endDatetime = from_udunits(df[timeAxisName][-1][0], timeAxisUnits)
-    except pydap.exceptions.ServerError as e:
-        logger.warn(e)
-        raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
-    except ValueError as e:
-        logger.warn(e)
-        raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
+        startDatetime = from_udunits(df[timeAxisName][0].data, timeAxisUnits)
+        endDatetime = from_udunits(df[timeAxisName][-1].data, timeAxisUnits)
+    except pydap.exceptions.ServerError as ex:
+        logger.warning(ex)
+        raise ServerError("Can't read start and end dates of {} from {}".format(timeAxisUnits, urlNcDap))
+    except ValueError as ex:
+        logger.warning(ex)
+        raise ServerError("Can't read start and end dates of {} from {}".format(timeAxisUnits, urlNcDap))
 
     return startDatetime, endDatetime
 
 
-def processResample(pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendString):
+def processResample(pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendString, args):
     '''
     Created resampled LRAUV data netCDF file
     '''
     url_o = None
 
-    logger.debug('url = %s', url_in)
+    logger.debug('url = {}'.format(url_in))
     url_out = url_in.replace('.nc4', '_' + resample_freq + '_' + appendString + '.nc')
     base_in =  '/'.join(url_in.split('/')[-3:])
     base_out = '/'.join(url_out.split('/')[-3:])
@@ -171,23 +168,21 @@ def processResample(pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendS
     out_file = os.path.join(inDir,  base_out)
     in_file =  os.path.join(inDir,  base_in)
 
-    logger.debug('Calling pw.process with file = %s', in_file)
-
     try:
         if not os.path.exists(out_file):
-            pw.processResampleNc4File(in_file, out_file, parms, resample_freq, rad_to_deg)
-    except TypeError as e:
-        logger.warn('Problem reading data from %s', url_in)
-        logger.warn('Assuming data are invalid and skipping')
-        logger.warn(e)
-        raise e
-    except IndexError as e:
-        logger.warn('Problem interpolating data from %s', url_in)
-        raise e
-    except KeyError as e:
-        raise ServerError("Key error - can't read parameters from %s" % (url_in))
-    except ValueError as e:
-        raise ServerError("Value error - can't read parameters from %s" % (url_in))
+            pw.processResampleNc4File(in_file, out_file, parms, resample_freq, rad_to_deg, args)
+        else:
+            logger.info(f"Not calling processResampleNc4File() for {out_file}: file exists")
+    except TypeError as te:
+        logger.warning('Problem reading data from {}'.format(url_in))
+        logger.warning('Assuming data are invalid and skipping')
+        logger.warning(te)
+        raise te
+    except IndexError as ie:
+        logger.warning('Problem interpolating data from {}'.format(url_in))
+        raise ie
+    except KeyError:
+        raise ServerError("Key error - can't read parameters from {}".format(url_in))
 
     url_o = url_out
     return url_o
@@ -202,7 +197,7 @@ if __name__ == '__main__':
     try:
         parms = json.loads(args.parms)
     except Exception as e:
-        logger.warn('Parameter argument invalid %s' % args.parms)
+        logger.warning('Parameter argument invalid {}'.format(args.parms))
         exit(-1)
 
     # Unless start time defined, then start there
@@ -250,7 +245,7 @@ if __name__ == '__main__':
     s = args.inUrl.rsplit('/',1)
     files = s[1]
     url = s[0]
-    logger.info("Crawling %s for %s files" % (url, files))
+    logger.info(f"Crawling {url} for {files} files to make {args.resampleFreq}_{args.appendString}.nc files")
 	
     # Get possible urls with mission dates in the directory name that fall between the requested times
     all_urls = find_urls(url, files, start, end)
@@ -258,18 +253,19 @@ if __name__ == '__main__':
 
     for u in all_urls:
         try:
-            startDatetime, endDatetime = getNcStartEnd(u, 'time')
+            startDatetime, endDatetime = getNcStartEnd(args.inDir, u, 'time_time')
         except Exception as e:
+            logger.warn(str(e))
             continue
 
-        logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
+        logger.debug('startDatetime, endDatetime = {}, {}'.format(startDatetime, endDatetime))
 
         if start is not None and startDatetime <= start :
-            logger.info('startDatetime = %s out of bounds with user-defined startDatetime = %s' % (startDatetime, start))
+            logger.info('startDatetime = {} out of bounds with user-defined startDatetime = {}'.format(startDatetime, start))
             continue
 
         if end is not None and endDatetime >= end :
-            logger.info('endDatetime = %s out of bounds with user-defined endDatetime = %s' % (endDatetime, end))
+            logger.info('endDatetime = {} out of bounds with user-defined endDatetime = {}'.format(endDatetime, end))
             continue
 
         urls.append(u)
@@ -280,11 +276,8 @@ if __name__ == '__main__':
     convert_radians = True
     for url in sorted(urls):
         try:
-            processResample(pw, url, args.inDir, args.resampleFreq, parms, convert_radians, args.appendString)
+            processResample(pw, url, args.inDir, args.resampleFreq, parms, convert_radians, args.appendString, args)
         except ServerError as e:
-            logger.warn(e)
-            continue
-        except Exception as e:
-            logger.warn(e)
+            logger.warning(e)
             continue
 

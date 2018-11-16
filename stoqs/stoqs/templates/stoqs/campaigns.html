@@ -68,7 +68,7 @@
                         <thead>
                             <tr><th>Database Alias</th><th>Name</th><th>Description</th><th>Start (GMT)</th><th>End (GMT)</th>
                                 <th>Platform count</th><th>Parameter count</th><th>Activity count</th>
-                                <th>MP count</th><th>SP count</th><th>Loading Time</th>
+                                <th>MP count</th><th>SP count</th><th>Loading Time (minutes)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -79,7 +79,7 @@
                             <td>{{ c.startdate }}</td><td>{{ c.enddate }}</td>
                             <td>{{ c.Platform_count }}</td><td>{{ c.Parameter_count }}</td><td>{{ c.Activity_count }}</td>
                             <td>{{ c.MeasuredParameter_count }}</td><td>{{ c.SampledParameter_count }}</td>
-                            <td><a href="{{ c.loadlog }}">{{ c.real_exection_time }}</a></td>
+                            <td><a href="{{ c.loadlog }}">{{ c.minutes_to_load }}</a></td>
                             </tr>
                             {% endfor %}
                         </tbody>

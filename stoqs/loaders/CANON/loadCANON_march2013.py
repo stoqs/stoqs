@@ -25,10 +25,11 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+import timing
 
 cl = CANONLoader('stoqs_march2013', 'CANON-ECOHAB - March 2013',
                     description = 'Spring 2013 ECOHAB in San Pedro Bay',
-                    x3dTerrains = { '/stoqs/static/x3d/SanPedroBasin50/SanPedroBasin50_10x-pop.x3d': {
+                    x3dTerrains = { 'https://stoqs.mbari.org/x3d/SanPedroBasin50/SanPedroBasin50_10x-pop.x3d': {
                                         'position': '-2523652.5 -4726093.2 3499413.2',
                                         'orientation': '0.96902 -0.20915 -0.13134 1.74597',
                                         'centerOfRotation': '-2505293.6 -4686937.5 3513055.2',
@@ -44,7 +45,7 @@ cl.tdsBase = 'http://odss.mbari.org/thredds/'       # Use this on shore
 cl.dodsBase = cl.tdsBase + 'dodsC/'       
 
 # 2-second decimated dorado data
-cl.dorado_base = cl.dodsBase + 'CANON_march2013/dorado/'
+cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2013/netcdf/'
 cl.dorado_files = [ 
                     'Dorado389_2013_074_02_074_02_decim.nc',
                     'Dorado389_2013_075_05_075_06_decim.nc',
@@ -56,7 +57,9 @@ cl.dorado_files = [
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
                     'fl700_uncorr', 'salinity', 'biolume',
-                    'sepCountList', 'mepCountList']
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
+                  ]
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
 ##cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/'
@@ -71,7 +74,7 @@ daphne_r_files = [
 cl.daphne_r_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water']
 
 # Postrecovery full-resolution (_d_) daphne data - insert '_d_' for delayed-mode to not load the data
-daphne_d_base = 'http://dods.mbari.org/opendap/hyrax/data/lrauv/daphne/missionlogs/2013/'
+daphne_d_base = 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2013/'
 daphne_d_files = [ 
                     '20130313_20130318/20130313T195025/201303131950_201303132226.nc',
                     '20130313_20130318/20130313T222616/201303132226_201303140321.nc',
@@ -190,7 +193,7 @@ tethys_r_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_i
                     'platform_x_velocity_current', 'platform_y_velocity_current', 'platform_z_velocity_current']
 
 # Postrecovery full-resolution tethys data - insert '_d_' for delayed-mode to not load the data
-tethys_d_base = 'http://dods.mbari.org/opendap/hyrax/data/lrauv/tethys/missionlogs/2013/'
+tethys_d_base = 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2013/'
 tethys_d_files = [ 
                     '20130313_20130320/20130313T203723/201303132037_201303132240.nc',
                     '20130313_20130320/20130313T224020/201303132240_201303140239.nc',
@@ -375,8 +378,8 @@ cl.process_command_line()
 
 if cl.args.test:
     cl.loadDorado(stride=10)
-    cl.loadDaphne(stride=10)
-    cl.loadTethys(stride=10)
+    cl.loadLRAUV('daphne', stride=10, build_attrs=False)
+    cl.loadLRAUV('tethys', stride=10, build_attrs=False)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     cl.loadRCuctd(stride=2)
@@ -387,8 +390,8 @@ if cl.args.test:
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
-    cl.loadDaphne(stride=2)
-    cl.loadTethys(stride=2)
+    cl.loadLRAUV('daphne', stride=2, build_attrs=False)
+    cl.loadLRAUV('tethys', stride=2, build_attrs=False)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     cl.loadRCuctd(stride=1)
@@ -400,8 +403,8 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
     cl.loadDorado()
-    cl.loadDaphne()
-    cl.loadTethys()
+    cl.loadLRAUV('daphne', build_attrs=False)
+    cl.loadLRAUV('tethys', build_attrs=False)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     cl.loadRCuctd()

@@ -29,11 +29,12 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
 from thredds_crawler.crawl import Crawl
+import timing
 
 cl = CANONLoader('stoqs_canon_may2015', 'CANON-ECOHAB - May 2015',
                     description = 'Spring 2015 Experiment in Monterey Bay',
                     x3dTerrains = {
-                                    'http://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                         'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                         'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                         'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
@@ -64,46 +65,10 @@ cl.dorado_files = [
                    'Dorado389_2015_156_00_156_00_decim.nc',
                                    ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
-                    'fl700_uncorr', 'salinity', 'biolume', 'rhodamine' ]
-
-#####################################################################
-#  LRAUV 
-#####################################################################
-# NetCDF files produced (binned, etc.) by John Ryan
-##cl.tethys_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Tethys/NetCDF/'
-##cl.tethys_files = ['Tethys_CANON_Fall2013.nc']
-##cl.tethys_parms = ['temperature', 'salinity', 'chlorophyll', 'bb470', 'bb650']
-
-##cl.daphne_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Daphne/NetCDF/'
-##cl.daphne_files = ['Daphne_CANON_Fall2013.nc']
-##cl.daphne_parms = ['temperature', 'chlorophyll', 'bb470', 'bb650']
-# special location for lrauv data
-
-# NetCDF files produced (binned, etc.) by Danelle Cline
-# These binned files are created with the makeLRAUVNetCDFs.sh script in the
-# toNetCDF directory. You must run that script once to produce the binned
-# files before this will work
-  
-# Get directory list from thredds server
-platforms = ['tethys', 'daphne', 'makai']
-
-'''for p in platforms:
-  base =  'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2015/' 
-  dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2015/'
-  setattr(cl, p + '_files', []) 
-  setattr(cl, p + '_base', dods_base)
-  setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR'])
-  c = Crawl(os.path.join(base, 'catalog.xml'), select=['.*10S_sci.nc$'], debug=False) 
-  urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
-  files = []
-
-  if len(urls) > 0 :
-    for url in sorted(urls):
-      file = '/'.join(url.split('/')[-3:])
-      files.append(file)
-  files.append(',')
-  setattr(cl, p + '_files', files)
-'''
+                    'fl700_uncorr', 'salinity', 'biolume', 'rhodamine', 
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
+                  ]
 
 ######################################################################
 #  GLIDERS
@@ -215,20 +180,15 @@ cl.rcpctd_files = [
 #####################################################################
 # JOHN MARTIN
 #####################################################################
-##cl.JMuctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Martin/uctd/' 
-##cl.JMuctd_parms = ['TEMP', 'PSAL', 'turb_scufa', 'fl_scufa' ]
-##cl.JMuctd_files = [ 'jhmudas_2013101.nc', 'jhmudas_2013102.nc', 'jhmudas_2013103.nc', 'jhmudas_2013911.nc', 'jhmudas_2013913.nc', 
-##                    'jhmudas_2013916.nc', 'jhmudas_2013917.nc', 'jhmudas_2013919.nc', 'jhmudas_2013923.nc', 'jhmudas_2013930.nc', ]
-
-##cl.JMpctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Martin/pctd/' 
-##cl.JMpctd_parms = ['TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
-##cl.JMpctd_files = [
-##                    '25613JMC01.nc', '25613JMC02.nc', '25613JMC03.nc', '25613JMC04.nc', '25613JMC05.nc', 
-##                    '26013JMC01.nc', '26013JMC02.nc', '26013JMC03.nc', '26013JMC04.nc', 
-##                    '26213JMC01.nc', '26213JMC02.nc', '26213JMC03.nc', '26213JMC04.nc', '26213JMC05.nc', '26613JMC01.nc',
-##                    '26613JMC02i1.nc', '26613JMC02.nc', '26613JMC03.nc', '27513JMC01.nc', '27513JMC02.nc', '27513JMC03.nc', 
-##                    '27513JMC04.nc', '27513JMC05.nc', '27613JMC01.nc', '27613JMC02.nc', '27613JMC03.nc', '27613JMC04.nc',
-##                  ]
+cl.JMpctd_base = cl.dodsBase + 'CANON/2015_May/Platforms/Ships/Martin/pctd/' 
+cl.JMpctd_parms = ['TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
+cl.JMpctd_files = [
+                    'EH15_18.nc', 'EH15_19.nc', 'EH15_20.nc', 'EH15_21.nc', 'EH15_22.nc', 'EH15_24.nc', 
+                    'EH15_25.nc', 'EH15_26.nc', 'EH15_27.nc', 'EH15_28a.nc', 'EH15_29a.nc', 'EH15_29b.nc', 
+                    'EH15_29.nc', 'EH15_30.nc', 'EH15_31.nc', 'EH15_Sta10a.nc', 'EH15_Sta11.nc', 'EH15_Sta12a.nc', 
+                    'EH15_Sta12.nc', 'EH15_Sta13.nc', 'EH15_Sta14.nc', 'EH15_Sta15.nc', 'EH15_Sta16.nc', 'EH15_Sta17.nc', 
+                    'EH15_Sta8b.nc', 'EH15_Sta9.nc', 
+                  ]
 
 ######################################################################
 #  MOORINGS May 2015
@@ -350,14 +310,11 @@ if cl.args.test:
     ##cl.load_wg_oa(stride=10)  ## waiting for data to be formated for loading
 
     cl.loadDorado(stride=100)
-    #cl.loadDaphne(stride=100)
-    #cl.loadTethys(stride=100)
-    #cl.loadMakai(stride=100)
 
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
     ##cl.loadJMuctd(stride=10) ## waiting for data to be formated for loading
-    ##cl.loadJMpctd(stride=10) ## waiting for data to be formated for loading
+    cl.loadJMpctd(stride=10)
     ##cl.loadWFuctd(stride=10) ## not in this campaign   
     ##cl.loadWFpctd(stride=10) ## not in this campaign
 
@@ -380,14 +337,11 @@ elif cl.args.optimal_stride:
     ##cl.load_wg_oa(stride=2)  ## waiting for data to be formated for loading
 
     cl.loadDorado(stride=2)
-    #cl.loadDaphne(stride=2)
-    #cl.loadTethys(stride=2)
-    #cl.loadMakai(stride=2)
 
     cl.loadRCuctd(stride=2)
     cl.loadRCpctd(stride=2)
     ##cl.loadJMuctd(stride=2) ## waiting for data to be formated for loading
-    ##cl.loadJMpctd(stride=2) ## waiting for data to be formated for loading
+    cl.loadJMpctd(stride=2)
     ##cl.loadWFuctd(stride=2) ## not in this campaign   
     ##cl.loadWFpctd(stride=2) ## not in this campaign
 
@@ -411,14 +365,11 @@ else:
     ##cl.load_wg_oa()  ## waiting for data to be formated for loading
 
     cl.loadDorado()
-    #cl.loadDaphne()
-    #cl.loadTethys()
-    #cl.loadMakai()
 
     cl.loadRCuctd()
     cl.loadRCpctd()
     ##cl.loadJMuctd() ## waiting for data to be formated for loading
-    ##cl.loadJMpctd() ## waiting for data to be formated for loading
+    cl.loadJMpctd()
     ##cl.loadWFuctd() ## not in this campaign   
     ##cl.loadWFpctd() ## not in this campaign
 
