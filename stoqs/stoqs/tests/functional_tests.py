@@ -220,6 +220,13 @@ class BrowserTestCase(BaseTestCase):
     def test_share_view_trajectory(self):
         self._test_share_view('test_dorado_trajectory')
         self._temporal_loading_panel_test(delay=6)
+        self._wait_until_id_is_visible('mp-x3d-track')
+
+        # Hack to make test pass: click checkbox twice to make dorado_LOCATION appear
+        showplatforms = self.browser.find_element_by_id('showplatforms')
+        self._wait_until_visible_then_click(showplatforms)
+        self._wait_until_visible_then_click(showplatforms)
+
         self._wait_until_id_is_visible('dorado_LOCATION', delay=8)
         self.assertEquals('geolocation', self.browser.find_element_by_id('dorado_LOCATION').tag_name)
 
