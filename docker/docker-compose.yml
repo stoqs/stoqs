@@ -7,6 +7,7 @@ volumes:
 services:
 
   postgis:
+    image: mbari/stoqs-postgis
     build:
         context: .
         dockerfile: Dockerfile-postgis
@@ -38,6 +39,7 @@ services:
       - ./.env
 
   stoqs:
+    image: mbari/stoqs
     build:
         context: .
         dockerfile: Dockerfile-stoqs
@@ -74,6 +76,7 @@ services:
 
   # Disable nginx service if PRODUCTION=false
   nginx:
+    image: mbari/stoqs-nginx
     build:
         context: .
         dockerfile: Dockerfile-nginx
