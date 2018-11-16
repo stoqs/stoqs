@@ -31,20 +31,26 @@ except AttributeError:
     pass
 
 import DAPloaders
+import requests
+import urllib
+
 from SampleLoaders import SeabirdLoader, load_gulps, SubSamplesLoader 
-from loaders import LoadScript
+from loaders import LoadScript, FileNotFound
 from stoqs.models import InstantPoint
 from django.db.models import Max
-from datetime import timedelta
+from datetime import datetime, timedelta
 from argparse import Namespace
+from lxml import etree
 from nettow import NetTow
 from planktonpump import PlanktonPump
+from thredds_crawler.crawl import Crawl
 import logging
 import matplotlib as mpl
 mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import matplotlib.pyplot as plt
 from matplotlib.colors import rgb2hex
 import numpy as np
+import webob
 
 def getStrideText(stride):
     '''
@@ -69,7 +75,7 @@ class CANONLoader(LoadScript):
                 'l_662':        '35978f',
                 'l_662a':       '38978f',
                 'm1':           '35f78f',
-                'm2':           '35f780',
+                'm2':           '35f760',
                 'martin':       '01665e',
                 'flyer':        '11665e',
                 'espdrift':     '21665e',
@@ -93,7 +99,7 @@ class CANONLoader(LoadScript):
                 'sg539':        '5f9131',
                 'sg621':        '507131',
                 'm1':           'bd2026',
-                'm2':           'bd2020',
+                'm2':           'bd4040',
                 'oa':           '0f9cd4',
                 'oa2':          '2d2426',
                 'hehape':       'bd2026',
@@ -121,6 +127,7 @@ class CANONLoader(LoadScript):
                 'wg_oa':        '0f9cd4',
                 'wg_tex':       '9626ff',
                 'wg_Tiny':      '960000',
+                'wg_Sparky':    'FCDD00',
              }
 
     # Colors for roms_* "platforms"
@@ -130,154 +137,95 @@ class CANONLoader(LoadScript):
     for b, c in zip(roms_platforms, oranges(np.arange(0, oranges.N, oranges.N/num_roms))):
         colors[b] = rgb2hex(c)[1:]
 
-    def loadDorado(self, stride=None):
+    def loadDorado(self, startdate=None, enddate=None,
+                   parameters=[ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
+                    'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
+                    'sepCountList', 'mepCountList', 'roll', 'pitch', 'yaw', ], stride=None,
+                    file_patterns=('.*_decim.nc$'), build_attrs=False):
         '''
-        Dorado specific load functions
+        Support legacy use of loadDorad() and permit wider use by specifying startdate and endate
         '''
-        pName = 'dorado'
-        stride = stride or self.stride
-        for (aName, f) in zip([ a + getStrideText(stride) for a in self.dorado_files], self.dorado_files):
-            url = self.dorado_base + f
-            DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                       pName, self.colors[pName], 'auv', 'AUV mission', 
-                                       self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                       plotTimeSeriesDepth=0.0)
-            load_gulps(aName, f, self.dbAlias)
+        pname = 'dorado'
+        if build_attrs:
+            self.logger.info(f'Building load parameter attributes from crawling TDS')
+            self.build_dorado_attrs(pname, startdate, enddate, parameters, file_patterns)
+        else:
+            self.logger.info(f'Using load {pname} attributes set in load script')
+            parameters = getattr(self, f'{pname}_parms')
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName,
+        stride = stride or self.stride
+        if hasattr(self, 'dorado_base'):
+            urls = [os.path.join(self.dorado_base, f) for f in self.dorado_files]
+        else:
+            urls = self.dorado_urls
+
+        for url in urls:
+            dfile = url.split('/')[-1]
+            aname = dfile + getStrideText(stride)
+            try:
+                DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aname, 
+                                           pname, self.colors[pname], 'auv', 'AUV mission', 
+                                           self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
+                                           plotTimeSeriesDepth=0.0)
+                load_gulps(aname, dfile, self.dbAlias)
+            except DAPloaders.DuplicateData as e:
+                self.logger.warn(str(e))
+                self.logger.info(f"Skipping load of {url}")
+
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pname,
                                   scalefactor=2)
 
-    def loadTethys(self, stride=None):
+    def loadLRAUV(self, pname, startdate=None, enddate=None, 
+                  parameters=['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
+                    'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
+                    'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
+                    'health_platform_battery_charge', 'health_platform_average_voltage',
+                    'health_platform_average_current','fix_latitude', 'fix_longitude',
+                    'fix_residual_percent_distance_traveled_DeadReckonUsingSpeedCalculator',
+                    'pose_longitude_DeadReckonUsingSpeedCalculator',
+                    'pose_latitude_DeadReckonUsingSpeedCalculator',
+                    'pose_depth_DeadReckonUsingSpeedCalculator',
+                    'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources',
+                    'pose_longitude_DeadReckonUsingMultipleVelocitySources',
+                    'pose_latitude_DeadReckonUsingMultipleVelocitySources',
+                    'pose_depth_DeadReckonUsingMultipleVelocitySources',],
+                  stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True):
         '''
-        Tethys specific load functions
+        Loader for tethys, daphne, makai, ahi, aku, 
         '''
-        pName = 'tethys'
+        if build_attrs:
+            self.logger.info(f'Building load parameter attributes from crawling TDS')
+            self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
+        else:
+            self.logger.info(f'Using load {pname} attributes set in load script')
+            parameters = getattr(self, f'{pname}_parms')
+
         stride = stride or self.stride
-        for (aName, f) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
-            url = self.tethys_base + f
+        files = getattr(self, f'{pname}_files')
+        base = getattr(self, f'{pname}_base')
+        for (aname, f) in zip([ a + getStrideText(stride) for a in files], files):
+            url = os.path.join(base, f)
             # shorten the activity names
-            aName = aName.rsplit('/', 1)[-1]
+            if 'slate.nc' in aname:
+                aname = '_'.join(aname.split('/')[-2:])
+            else:
+                aname = aname.rsplit('/', 1)[-1]
+            if hasattr(self, f'{pname}_aux_coords'):
+                aux_coords = getattr(self, f'{pname}_aux_coords')
+            else:
+                setattr(self, f'{pname}s_aux_coords', None)
+                aux_coords = None
             try:
-                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                          pName, self.colors[pName], 'auv', 'AUV mission',
-                                          self.tethys_parms, self.dbAlias, stride, 
+                # Early LRAUV data had time coord of 'Time', override with auxCoords setting from load script
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aname, 
+                                          pname, self.colors[pname], 'auv', 'AUV mission',
+                                          parameters, self.dbAlias, stride, 
                                           grdTerrain=self.grdTerrain, command_line_args=self.args,
-                                          plotTimeSeriesDepth=0.0)
+                                          plotTimeSeriesDepth=0, auxCoords=aux_coords)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_tethys.x3d', pName,
-                                  scalefactor=2)
-
-    def loadDaphne(self, stride=None):
-        '''
-        Daphne specific load functions
-        '''
-        pName = 'daphne'
-        stride = stride or self.stride
-        for (aName, f) in zip([ a + getStrideText(stride) for a in self.daphne_files], self.daphne_files):
-            url = self.daphne_base + f
-            # shorten the activity names
-            aName = aName.rsplit('/', 1)[-1]
-            try:
-                # Set stride to 1 for telemetered data
-                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                          pName, self.colors[pName], 'auv', 'AUV mission',
-                                          self.daphne_parms, self.dbAlias, stride, 
-                                          grdTerrain=self.grdTerrain, command_line_args=self.args,
-                                          plotTimeSeriesDepth=0.0)
-            except DAPloaders.NoValidData:
-                self.logger.info("No valid data in %s" % url)
-
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_daphne.x3d', pName,
-                                  scalefactor=2)
-
-    def loadMakai(self, stride=None):
-        '''
-        Makai specific load functions
-        '''
-        pName = 'makai'
-        stride = stride or self.stride
-        for (aName, f) in zip([ a + getStrideText(stride) for a in self.makai_files], self.makai_files):
-            url = self.makai_base + f
-            # shorten the activity names
-            aName = aName.rsplit('/', 1)[-1]
-            try:
-                # Set stride to 1 for telemetered data
-                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                          pName, self.colors[pName], 'auv', 'AUV mission',
-                                          self.makai_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, 
-                                          command_line_args=self.args, plotTimeSeriesDepth=0.0)
-            except DAPloaders.NoValidData:
-                self.logger.info("No valid data in %s" % url)
-
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_makai.x3d', pName,
-                                  scalefactor=2)
-
-    def loadAku(self, stride=None):
-        '''
-        Aku specific load functions
-        '''
-        pName = 'aku'
-        stride = stride or self.stride
-        for (aName, f) in zip([ a + getStrideText(stride) for a in self.aku_files], self.aku_files):
-            url = self.aku_base + f
-            # shorten the activity names
-            aName = aName.rsplit('/', 1)[-1]
-            try:
-                # Set stride to 1 for telemetered data
-                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
-                                          pName, self.colors[pName], 'auv', 'AUV mission',
-                                          self.aku_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                          command_line_args=self.args, plotTimeSeriesDepth=0.0)
-            except DAPloaders.NoValidData:
-                self.logger.info("No valid data in %s" % url)
-
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_aku.x3d', pName,
-                                  scalefactor=2)
-
-    def loadAhi(self, stride=None):
-        '''
-        Ahi specific load functions
-        '''
-        pName = 'ahi'
-        stride = stride or self.stride
-        for (aName, f) in zip([a + getStrideText(stride) for a in self.ahi_files], self.ahi_files):
-            url = self.ahi_base + f
-            # shorten the activity names
-            aName = aName.rsplit('/', 1)[-1]
-            try:
-                # Set stride to 1 for telemetered data
-                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
-                                        pName, self.colors[pName], 'auv', 'AUV mission',
-                                        self.ahi_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                        command_line_args=self.args, plotTimeSeriesDepth=0.0)
-            except DAPloaders.NoValidData:
-                self.logger.info("No valid data in %s" % url)
-
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_ahi.x3d', pName,
-                                  scalefactor=2)
-
-    def loadOpah(self, stride=None):
-        '''
-        Opah specific load functions
-        '''
-        pName = 'opah'
-        stride = stride or self.stride
-        for (aName, f) in zip([a + getStrideText(stride) for a in self.opah_files], self.opah_files):
-            url = self.opah_base + f
-            # shorten the activity names
-            aName = aName.rsplit('/', 1)[-1]
-            try:
-                # Set stride to 1 for telemetered data
-                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
-                                          pName, self.colors[pName], 'auv', 'AUV mission',
-                                          self.opah_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                          command_line_args=self.args, plotTimeSeriesDepth=0.0)
-            except DAPloaders.NoValidData:
-                self.logger.info("No valid data in %s" % url)
-
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_opah.x3d', pName,
+        self.addPlatformResources(f'https://stoqs.mbari.org/x3d/lrauv/lrauv_{pname}.x3d', pname,
                                   scalefactor=2)
 
     def loadMartin(self, stride=None):
@@ -433,12 +381,15 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.nps34a_files], self.nps34a_files):
             url = self.nps34a_base + f
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+            try:
+                DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
                                        'NPS_Glider_34', self.colors['nps34a'], 'glider', 'Glider Mission',
                                         self.nps34a_parms, self.dbAlias, stride, self.nps34a_startDatetime,
                                         self.nps34a_endDatetime, grdTerrain=self.grdTerrain,
                                         command_line_args=self.args)
-
+            except (webob.exc.HTTPError, DAPloaders.NoValidData) as e:
+                self.logger.warn(str(e))
+                self.logger.warn(f'{e}')
 
     def load_glider_ctd(self, stride=None):
         '''
@@ -505,11 +456,16 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.slocum_nemesis_files], self.slocum_nemesis_files):
             url = self.slocum_nemesis_base + f
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
+            try:
+                DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
                                        'Slocum_nemesis', self.colors['slocum_nemesis'], 'glider', 'Glider Mission', 
                                         self.slocum_nemesis_parms, self.dbAlias, stride, 
                                         self.slocum_nemesis_startDatetime, self.slocum_nemesis_endDatetime,
-                                        grdTerrain=self.grdTerrain)
+                                        grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+            except DAPloaders.NoValidData as e:
+                self.logger.warn(f'No valid data in {url}')
+            except DAPloaders.DuplicateData as e:
+                self.logger.warn(f'Data from {url} already in database, skipping')
 
     def load_wg_oa(self, stride=None):
         '''
@@ -607,6 +563,19 @@ class CANONLoader(LoadScript):
                                        'wg_Tiny_Glider', self.colors['wg_Tiny'], 'waveglider', 'Glider Mission',
                                        self.wg_Tiny_parms, self.dbAlias, stride, self.wg_Tiny_startDatetime, 
                                        self.wg_Tiny_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+
+    def load_wg_Sparky(self, stride=None):
+        '''
+        Glider specific load functions, sets plotTimeSeriesDepth=0 to get Parameter tab in UI
+        '''
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_Sparky_files], self.wg_Sparky_files):
+            url = self.wg_Sparky_base + f
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+                                       'wg_Sparky_Glider', self.colors['wg_Sparky'], 'waveglider', 'Glider Mission',
+                                       self.wg_Sparky_parms, self.dbAlias, stride, self.wg_Sparky_startDatetime,
+                                       self.wg_Sparky_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+
     def load_wg_oa(self, stride=None):
         '''
         Glider specific load functions
@@ -823,21 +792,23 @@ class CANONLoader(LoadScript):
         '''
         platformName = 'M1_Mooring'
         stride = stride or self.stride
+        start_datetime = getattr(self, 'm1_startDatetime', None)
+        end_datetime = getattr(self, 'm1_endDatetime', None)
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.m1_files], self.m1_files):
             url = os.path.join(self.m1_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
                                         platformName, self.colors['m1'], 'mooring', 'Mooring Deployment', 
-                                        self.m1_parms, self.dbAlias, stride, self.m1_startDatetime, 
-                                        self.m1_endDatetime, command_line_args=self.args, 
-                                        backfill_timedelta=timedelta(seconds=3600))
+                                        self.m1_parms, self.dbAlias, stride, start_datetime, 
+                                        end_datetime, command_line_args=self.args) 
+                                        
     
         # For timeseriesProfile data we need to pass the nominaldepth of the plaform
         # so that the model is put at the correct depth in the Spatial -> 3D view.
         try:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+            self.addPlatformResources('https://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName, nominaldepth=self.m1_nominaldepth)
         except AttributeError:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+            self.addPlatformResources('https://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName)
 
     def loadM2(self, stride=None):
@@ -851,16 +822,15 @@ class CANONLoader(LoadScript):
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
                                         platformName, self.colors['m2'], 'mooring', 'Mooring Deployment', 
                                         self.m2_parms, self.dbAlias, stride, self.m2_startDatetime, 
-                                        self.m2_endDatetime, command_line_args=self.args, 
-                                        backfill_timedelta=timedelta(seconds=3600))
+                                        self.m2_endDatetime, command_line_args=self.args)
     
         # For timeseriesProfile data we need to pass the nominaldepth of the plaform
         # so that the model is put at the correct depth in the Spatial -> 3D view.
         try:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+            self.addPlatformResources('https://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName, nominaldepth=self.m2_nominaldepth)
         except AttributeError:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+            self.addPlatformResources('https://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName)
 
     def loadM1ts(self, stride=None):
@@ -990,7 +960,7 @@ class CANONLoader(LoadScript):
                                            platformName, self.colors['flyer'], 'ship', activitytypeName,
                                            self.wfuctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/flyer/flyer.x3d', platformName)
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/flyer/flyer.x3d', platformName)
 
     def loadWFpctd(self, stride=None, platformName='WesternFlyer_PCTD', activitytypeName='Western Flyer Profile CTD Data'):
         '''
@@ -1142,24 +1112,123 @@ class CANONLoader(LoadScript):
         except IOError as e:
             self.logger.error(str(e))
 
-    def loadAll(self, stride=None):
+    def find_lrauv_urls(self, base, search_str, startdate, enddate):
+        '''Use Thredds Crawler to return a list of DAP urls.  Initially written for LRAUV data, for
+        which we don't initially know the urls.
         '''
-        Execute all the load functions - this method is being deprecated as optimal strides vary for each platform
+        INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
+        url = os.path.join(base, 'catalog.xml')
+        self.logger.info(f"Crawling: {url}")
+        skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
+        u = urllib.parse.urlsplit(url)
+        name, ext = os.path.splitext(u.path)
+        if ext == ".html":
+            u = urllib.parse.urlsplit(url.replace(".html", ".xml"))
+        url = u.geturl()
+        urls = []
+        # Get an etree object
+        r = requests.get(url)
+        tree = etree.XML(r.text.encode('utf-8'))
+
+        # Crawl the catalogRefs:
+        for ref in tree.findall('.//{%s}catalogRef' % INV_NS):
+
+            # get the mission directory name and extract the start and ending dates
+            mission_dir_name = ref.attrib['{http://www.w3.org/1999/xlink}title']
+            if '_' in mission_dir_name:
+                dts = mission_dir_name.split('_')
+                dir_start =  datetime.strptime(dts[0], '%Y%m%d')
+                dir_end =  datetime.strptime(dts[1], '%Y%m%d')
+
+                # if within a valid range, grab the valid urls
+                self.logger.debug(f'{mission_dir_name}: Looking for {search_str} files between {startdate} and {enddate}')
+                if dir_start >= startdate and dir_end <= enddate:
+                    catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
+                    c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
+                    d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+                    for url in d:
+                        self.logger.debug(f'{url}')
+                        urls.append(url)
+
+        if not urls:
+            raise FileNotFound('No urls matching "{}" found in {}'.format(search_str, os.path.join(base, 'catalog.html')))
+
+        return urls
+
+    def build_lrauv_attrs(self, mission_year, platform, startdate, enddate, parameters, file_patterns):
+        '''Set loader attributes for each LRAUV platform
         '''
-        stride = stride or self.stride
-        # TODO: Deprecate this method. This module has grown too big with lots of 
-        #       different (but similar) platform data load methods
-        loaders = [ 'loadDorado', 'loadTethys', 'loadDaphne', 'loadMartin', 'loadFulmar', 'loadNps_g29', 'loadWaveglider', 'loadL_662', 'loadESPdrift',
-                    'loadWFuctd', 'loadWFpctd']
-        for loader in loaders:
-            if hasattr(self, loader):
-                # Call the loader if it exists
-                try:
-                    getattr(self, loader)()
-                except AttributeError as e:
-                    self.logger.warn("WARNING: No data from %s for dbAlias = %s, campaignName = %s", loader, self.dbAlias, self.campaignName)
-                    self.logger.error(str(e))
-                    pass
+        base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{mission_year}/'
+        dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{mission_year}/'
+        setattr(self, platform + '_files', [])
+        setattr(self, platform + '_base', dods_base)
+        setattr(self, platform + '_parms' , parameters)
+
+        urls = []
+        try:
+            urls += self.find_lrauv_urls(base, file_patterns, startdate, enddate)
+            files = []
+            if len(urls) > 0 :
+                for url in sorted(urls):
+                    file = '/'.join(url.split('/')[-3:])
+                    files.append(file)
+                setattr(self, platform + '_files', files)
+
+            setattr(self, platform  + '_startDatetime', startdate)
+            setattr(self, platform + '_endDatetime', enddate)
+
+        except FileNotFound as e:
+            self.logger.debug(f'{e}')
+
+    def find_dorado_urls(self, base, search_str, startdate, enddate):
+        '''Use Thredds Crawler to return a list of DAP urls.  Initially written for LRAUV data, for
+        which we don't initially know the urls.
+        '''
+        urls = []
+        catalog_url = os.path.join(base, 'catalog.xml')
+        c = Crawl(catalog_url, select=[search_str])
+        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+        for url in d:
+            yyyy_yd = '_'.join(url.split('/')[-1].split('_')[1:3])
+            file_dt = datetime.strptime(yyyy_yd, '%Y_%j')
+            if startdate < file_dt and file_dt < enddate:
+                urls.append(url)
+                self.logger.debug(f'* {url}')
+            else:
+                self.logger.debug(f'{url}')
+
+        if not urls:
+            raise FileNotFound('No urls matching "{search_str}" found in {catalog_url}')
+
+        return urls
+
+    def build_dorado_attrs(self, platform, startdate, enddate, parameters, file_patterns):
+        '''Set loader attributes for each Dorado vehicle
+        '''
+        setattr(self, platform + '_parms' , parameters)
+
+        urls = []
+        for year in range(startdate.year, enddate.year+1):
+            base = f'http://dods.mbari.org/thredds/catalog/auv/{platform}/{year}/netcdf/'
+            dods_base = f'http://dods.mbari.org/opendap/data/auvctd/surveys/{year}/netcdf/'
+            try:
+                urls += self.find_dorado_urls(base, file_patterns, startdate, enddate)
+                files = []
+                for url in sorted(urls):
+                    files.append(url.split('/')[-1])
+            except FileNotFound as e:
+                self.logger.debug(f'{e}')
+
+        # Send signal that urls span years by not setting dorado_base so that dorado_urls is used instead
+        if startdate.year == enddate.year:
+            setattr(self, platform + '_base', dods_base)
+        else:
+            setattr(self, platform + '_urls', sorted(urls))
+
+        setattr(self, platform + '_files', files)
+        setattr(self, platform  + '_startDatetime', startdate)
+        setattr(self, platform + '_endDatetime', enddate)
+
 
 if __name__ == '__main__':
     '''

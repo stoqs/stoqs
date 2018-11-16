@@ -1,20 +1,18 @@
 #!/bin/bash
 if [ -z "$STOQS_HOME" ]; then
-  echo "Set STOQS_HOME variable first, e.g. STOQS_HOME=/opt/stoqsgit_dj1.8" 
+  echo "Set STOQS_HOME variable first, e.g. STOQS_HOME=/src/stoqsgit"
   exit 1
 fi
 if [ -z "$DATABASE_URL" ]; then
   echo "Set DATABASE_URL variable first"
   exit 1
 fi
-cd "$STOQS_HOME/venv-stoqs/bin"
-source activate
 cd "$STOQS_HOME/stoqs/loaders/CANON/toNetCDF"
 start_datetime='20170101T000000'
 end_datetime='20171231T000000'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 dir='/mbari/LRAUV'
-year='2017'
+year='2018'
 declare -a platforms=("tethys" "makai" "daphne" "aku" "ahi" "opah")
 
 while getopts "s:e:y:" opt; do
@@ -32,16 +30,6 @@ logdir="missionlogs/${year}"
 search="${logdir}/.*nc4$"
 
 parms_sci="{
-            \"PNI_TCM\": [
-            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\", \"units\":\"degree\", \"standard_name\": \"platform_roll_angle\" },
-            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\", \"units\":\"degree\", \"standard_name\": \"platform_pitch_angle\" }, 
-            { \"name\": \"platform_orientation\", \"rename\":\"yaw\", \"units\":\"degree\", \"standard_name\": \"platform_yaw_angle\" }
-            ],
-            \"AHRS_sp3003D\": [
-            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\", \"units\":\"degree\", \"standard_name\": \"platform_roll_angle\" }, 
-            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\", \"units\":\"degree\", \"standard_name\": \"platform_pitch_angle\" }, 
-            { \"name\": \"platform_orientation\", \"rename\":\"yaw\", \"units\":\"degree\", \"standard_name\": \"platform_yaw_angle\" }
-            ],
             \"CTD_Seabird\": [
             { \"name\":\"sea_water_salinity\" , \"rename\":\"salinity\" },
             { \"name\":\"sea_water_temperature\" , \"rename\":\"temperature\" }
@@ -67,11 +55,6 @@ parms_sci="{
         }"
 
 parms_eng="{
-            \"PNI_TCM\": [
-            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\", \"units\":\"degree\", \"standard_name\": \"platform_roll_angle\" },
-            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\", \"units\":\"degree\", \"standard_name\": \"platform_pitch_angle\" }, 
-            { \"name\": \"platform_orientation\", \"rename\":\"yaw\", \"units\":\"degree\", \"standard_name\": \"platform_yaw_angle\" }
-            ],
             \"ElevatorServo\": [
             { \"name\": \"platform_elevator_angle\", \"rename\":\"control_inputs_elevator_angle\" }
             ],
@@ -94,11 +77,6 @@ parms_eng="{
             \"Onboard\": [
             { \"name\": \"platform_average_current\" , \"rename\":\"health_platform_average_current\" }
             ],
-            \"AHRS_sp3003D\": [
-            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\", \"units\":\"degree\", \"standard_name\": \"platform_roll_angle\" }, 
-            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\", \"units\":\"degree\", \"standard_name\": \"platform_pitch_angle\" }, 
-            { \"name\": \"platform_orientation\", \"rename\":\"yaw\", \"units\":\"degree\", \"standard_name\": \"platform_yaw_angle\" }
-            ],
             \"NAL9602\": [
             { \"name\": \"time_fix\" , \"rename\":\"fix_time\" },
             { \"name\": \"latitude_fix\" , \"rename\":\"fix_latitude\" },
@@ -118,10 +96,15 @@ parms_eng="{
             ]
         }"
 
+# Remove the first and last characters from parms so that we can combine them
+sci_vars=`echo $parms_sci | cut -c 2- | rev | cut -c 2- | rev` 
+eng_vars=`echo $parms_eng | cut -c 2- | rev | cut -c 2- | rev` 
+parms_scieng="{$sci_vars, $eng_vars}"
 
 for platform in "${platforms[@]}"
 do
-        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_sci}" --resampleFreq '10S' -a 'sci' --start "${start_datetime}" --end "${end_datetime}"
-        #python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start "${start_datetime}" --end "${end_datetime}"
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_sci}" --resampleFreq '10S' -a 'sci' --start "${start_datetime}" --end "${end_datetime}" --trackingdb --nudge
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start "${start_datetime}" --end "${end_datetime}" --trackingdb --nudge
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_scieng}" --resampleFreq '2S' -a 'scieng' --start "${start_datetime}" --end "${end_datetime}" --trackingdb --nudge
 done
 

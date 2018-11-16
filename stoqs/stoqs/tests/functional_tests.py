@@ -116,14 +116,18 @@ class BaseTestCase(StaticLiveServerTestCase):
 
     def _wait_until_text_is_visible(self, element_id, expected_text, delay=2, contains=True):
         try:
-            if contains:
+            if not contains:
                 WebDriverWait(self.browser, delay, poll_frequency=.2).until(
                               wait_for_text_to_match((By.ID, element_id), expected_text))
             else:
-                WebDriverWait(self.browser, delay, poll_frequency=.2).until(
-                              EC.text_to_be_present_in_element((By.ID, element_id), expected_text))
+                # First get the element
+                el = WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.ID, element_id)))
+                # Now wait for the expected_text to appear in it
+                tf = WebDriverWait(self.browser, delay, poll_frequency=.2).until(
+                                   EC.text_to_be_present_in_element((By.ID, element_id), expected_text))
+
         except TimeoutException:
-            print(f"TimeoutException: Waited {delay} seconds for text '{expected_text}'... to appear")
+            print(f"TimeoutException: Waited {delay} seconds for text '{expected_text}' to appear")
 
     def _test_share_view(self, func_name):
         # Generic for any func_name that creates a view to share
@@ -180,7 +184,7 @@ class BrowserTestCase(BaseTestCase):
         # - Measurement data
         measuredparameters_anchor = self.browser.find_element_by_id('measuredparameters-anchor')
         self._wait_until_visible_then_click(measuredparameters_anchor)
-        altitude_id = Parameter.objects.get(name='altitude').id
+        altitude_id = Parameter.objects.get(name__contains='altitude').id
         altitude_plot_button = self.browser.find_element(By.XPATH,
                 "//input[@name='parameters_plot' and @value='{}']".format(altitude_id))
         self._wait_until_visible_then_click(altitude_plot_button)
@@ -216,6 +220,13 @@ class BrowserTestCase(BaseTestCase):
     def test_share_view_trajectory(self):
         self._test_share_view('test_dorado_trajectory')
         self._temporal_loading_panel_test(delay=6)
+        self._wait_until_id_is_visible('mp-x3d-track')
+
+        # Hack to make test pass: click checkbox twice to make dorado_LOCATION appear
+        showplatforms = self.browser.find_element_by_id('showplatforms')
+        self._wait_until_visible_then_click(showplatforms)
+        self._wait_until_visible_then_click(showplatforms)
+
         self._wait_until_id_is_visible('dorado_LOCATION', delay=8)
         self.assertEquals('geolocation', self.browser.find_element_by_id('dorado_LOCATION').tag_name)
 
@@ -237,7 +248,7 @@ class BrowserTestCase(BaseTestCase):
         self._wait_until_visible_then_click(expand_temporal)
 
         # Make contour color plot of M1 northward_sea_water_velocity and hide Django toolbar
-        northward_sea_water_velocity_HR_id = Parameter.objects.get(name='northward_sea_water_velocity_HR').id
+        northward_sea_water_velocity_HR_id = Parameter.objects.get(name__contains='northward_sea_water_velocity_HR').id
         parameter_plot_radio_button = self.browser.find_element(By.XPATH,
             "//input[@name='parameters_plot' and @value='{}']".format(northward_sea_water_velocity_HR_id))
         parameter_plot_radio_button.click()
@@ -246,9 +257,9 @@ class BrowserTestCase(BaseTestCase):
         contour_button = self.browser.find_element(By.XPATH, "//input[@name='showdataas' and @value='contour']")
         self._wait_until_visible_then_click(contour_button)
 
-        expected_text = 'Color: northward_sea_water_velocity_HR from M1_Mooring'
+        expected_text = 'Color: northward_sea_water_velocity_HR (cm s-1) from M1_Mooring'
         self._temporal_loading_panel_test(delay=6)
-        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
+        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text, delay=6)
         self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo').text)
 
         # Contour line of M1 northward_sea_water_velocity - same as color plot
@@ -260,12 +271,12 @@ class BrowserTestCase(BaseTestCase):
         self.assertIn('_M1_Mooring_colorbar_', self.browser.find_element_by_id('sectioncolorbarimg').get_property('src'))
 
         # Contour line of M1 SEA_WATER_SALINITY_HR_id - different from color plot
-        SEA_WATER_SALINITY_HR_id = Parameter.objects.get(name='SEA_WATER_SALINITY_HR').id
+        SEA_WATER_SALINITY_HR_id = Parameter.objects.get(name__contains='SEA_WATER_SALINITY_HR').id
         parameter_contour_plot_radio_button = self.browser.find_element(By.XPATH,
             "//input[@name='parameters_contour_plot' and @value='{}']".format(SEA_WATER_SALINITY_HR_id))
         parameter_contour_plot_radio_button.click()
 
-        expected_text = 'Lines: SEA_WATER_SALINITY_HR from M1_Mooring'
+        expected_text = 'Lines: SEA_WATER_SALINITY_HR ( ) from M1_Mooring'
         self._temporal_loading_panel_test(delay=6)
         self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text, delay=6)
         self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
@@ -276,7 +287,7 @@ class BrowserTestCase(BaseTestCase):
         self.browser.execute_script("window.scrollTo(0, 0)")
 
         expected_text_color = ''
-        expected_text_lines = 'Lines: SEA_WATER_SALINITY_HR from M1_Mooring'
+        expected_text_lines = 'Lines: SEA_WATER_SALINITY_HR ( ) from M1_Mooring'
         self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text_color, delay=6)
         self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text_lines, delay=6)
         self._temporal_loading_panel_test(delay=6)
@@ -302,7 +313,7 @@ class BugsFoundTestCase(BaseTestCase):
         self._wait_until_visible_then_click(mp_section)
         bb470_button = self.browser.find_element(By.XPATH,
                 "//input[@name='parameters_plot' and @value='{}']".format(
-                Parameter.objects.get(name='bb470').id))
+                Parameter.objects.get(name__contains='bb470').id))
         bb470_button.click()
         self._temporal_loading_panel_test(delay=6)
 

@@ -29,10 +29,11 @@ project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 
 from BEDS import BEDSLoader
+import timing
 
 bl = BEDSLoader('stoqs_beds2013', 'BEDS - 2013', 
                                 x3dTerrains= { 
-                                    'http://stoqs.mbari.org/x3d/MontereyCanyonBeds_1m+5m_1x/MontereyCanyonBeds_1m+5m_1x.x3d': {
+                                    'https://stoqs.mbari.org/x3d/MontereyCanyonBeds_1m+5m_1x/MontereyCanyonBeds_1m+5m_1x.x3d': {
                                         'position': '-2706054.97556 -4352297.32558 3798919.71875',
                                         'orientation': '0.92863 -0.26237 -0.26231 1.59089',
                                         'centerOfRotation': '-2700040.0076912297 -4342439.858864189 3798898.2847731174',

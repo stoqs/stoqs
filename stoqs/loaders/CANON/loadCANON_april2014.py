@@ -25,10 +25,11 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 
 
 from CANON import CANONLoader
+import timing
 
 cl = CANONLoader('stoqs_canon_april2014', 'CANON-ECOHAB - April 2014',
                     description = 'Spring 2014 ECOHAB in San Pedro Bay',
-                    x3dTerrains= { '/stoqs/static/x3d/SanPedroBasin50/SanPedroBasin50_10x-pop.x3d': {
+                    x3dTerrains= { 'https://stoqs.mbari.org/x3d/SanPedroBasin50/SanPedroBasin50_10x-pop.x3d': {
                                         'position': '-2523652.5 -4726093.2 3499413.2',
                                         'orientation': '0.96902 -0.20915 -0.13134 1.74597',
                                         'centerOfRotation': '-2505293.6 -4686937.5 3513055.2',
@@ -44,7 +45,7 @@ cl.tdsBase = 'http://odss.mbari.org/thredds/'       # Use this on shore
 cl.dodsBase = cl.tdsBase + 'dodsC/'       
 
 # Decimated dorado data
-cl.dorado_base = cl.dodsBase + 'CANON/2014_Apr/Platforms/AUVs/Dorado/' 
+cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2014/netcdf/'
 cl.dorado_files = [ 
                     'Dorado389_2014_102_00_102_00_decim.nc', 'Dorado389_2014_103_00_103_00_decim.nc',
                     'Dorado389_2014_103_01_103_01_decim.nc', 'Dorado389_2014_104_01_104_01_decim.nc',
@@ -54,7 +55,9 @@ cl.dorado_files = [
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
-                    'sepCountList', 'mepCountList']
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
+                  ]
 
 # Rachel Carson Underway CTD
 cl.rcuctd_base = cl.dodsBase + 'CANON/2014_Apr/Platforms/Ships/Rachel_Carson/uctd/'
@@ -85,7 +88,7 @@ daphne_r_files = [
 cl.daphne_r_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water']
 
 # Postrecovery full-resolution (_d_) daphne data - insert '_d_' for delayed-mode to not load the data
-daphne_d_base = 'http://dods.mbari.org/opendap/hyrax/data/lrauv/daphne/missionlogs/2013/'
+daphne_d_base = 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2013/'
 daphne_d_files = [ 
                     '20130313_20130318/20130313T195025/201303131950_201303132226.nc',
                     '20130313_20130318/20130313T222616/201303132226_201303140321.nc',
@@ -114,7 +117,7 @@ tethys_r_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_i
                     'platform_x_velocity_current', 'platform_y_velocity_current', 'platform_z_velocity_current']
 
 # Postrecovery full-resolution tethys data - insert '_d_' for delayed-mode to not load the data
-tethys_d_base = 'http://dods.mbari.org/opendap/hyrax/data/lrauv/tethys/missionlogs/2013/'
+tethys_d_base = 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2013/'
 tethys_d_files = [ 
                     '20130313_20130320/20130313T203723/201303132037_201303132240.nc',
                     '20130313_20130320/20130313T224020/201303132240_201303140239.nc',
@@ -174,40 +177,21 @@ cl.process_command_line()
 
 if cl.args.test:
     cl.loadDorado(stride=100)
-    ##cl.loadDaphne(stride=10)
-    ##cl.loadTethys(stride=10)
-    ##cl.loadESPmack()
-    ##cl.loadESPbruce()
     cl.loadRCuctd(stride=100)
     cl.loadRCpctd()
-    ##cl.loadHeHaPe()
-    ##cl.loadRusalka(stride=10)
-    ##cl.loadYellowfin()
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
-    ##cl.loadDaphne(stride=2)
-    ##cl.loadTethys(stride=2)
-    ##cl.loadESPmack()
-    ##cl.loadESPbruce()
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
-    ##cl.loadHeHaPe(stride=10)      
     cl.loadRusalka()    
-    ##cl.loadYellowfin()
 
 else:
     cl.stride = cl.args.stride
     cl.loadDorado()
-    ##cl.loadDaphne()
-    ##cl.loadTethys()
-    ##cl.loadESPmack()
-    ##cl.loadESPbruce()
     cl.loadRCuctd()
     cl.loadRCpctd()
-    ##cl.loadHeHaPe()
     cl.loadRusalka()
-    ##cl.loadYellowfin()
 
 # Add any X3D Terrain information specified in the constructor to the database
 cl.addTerrainResources()

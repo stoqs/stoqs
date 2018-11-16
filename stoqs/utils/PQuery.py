@@ -15,7 +15,6 @@ The class hides the complexities of getting datavalues from both MeasuredParamet
 '''
 from django.conf import settings
 from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet, QuerySet
-from django.contrib.gis.db.models.query import GeoQuerySet
 from django.db import DatabaseError
 from datetime import datetime
 from stoqs.models import MeasuredParameter, Parameter, ParameterGroupParameter, MeasuredParameterResource
@@ -37,9 +36,9 @@ ITER_HARD_LIMIT = 100000
 
 class PQuerySet(object):
     '''
-    A class to simulate a GeoQuerySet that's suitable for use everywhere a GeoQuerySet may be used.
+    A class to simulate a QuerySet that's suitable for use everywhere a QuerySet may be used.
     This special class supports adapting MeasuredParameter RawQuerySets to make them look like regular
-    GeoQuerySets.  See: http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  (I looked at Google
+    QuerySets.  See: http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  (I looked at Google
     again to see if self-joins are possible in Django, and confirmed that they are probably not.  
     See: http://stackoverflow.com/questions/1578362/self-join-with-django-orm.)
     '''
@@ -82,7 +81,7 @@ class PQuerySet(object):
     def __iter__(self): # pragma: no cover
         '''
         Main way to access data that is used by interators in templates, etc.
-        Simulate behavior of regular GeoQuerySets.  Modify & format output as needed.
+        Simulate behavior of regular QuerySets.  Modify & format output as needed.
         '''
         minimal_values_list = False
         for item in self.rest_columns:
@@ -96,8 +95,6 @@ class PQuerySet(object):
 
         if isinstance(self.mp_query, QuerySet):
             logger.debug('self.mp_query is QuerySet')
-        if isinstance(self.mp_query, GeoQuerySet):
-            logger.debug('self.mp_query is GeoQuerySet')
         if isinstance(self.mp_query, RawQuerySet):
             logger.debug('self.mp_query is RawQuerySet')
 
@@ -258,7 +255,7 @@ class PQuery(object):
     or the SampledParameter tables of the STOQS database.  Special tooling is needed to perform 
     parameter value and parameter-parameter queries which require building raw sql statements in order to
     execute the self joins needed on the tables.  The structure of RawQuerySet returned is harmonized
-    with the normal GeoQuerySet returned through regular .filter() operations by using the PQuerySet "adapter".
+    with the normal QuerySet returned through regular .filter() operations by using the PQuerySet "adapter".
     '''
     rest_select_items = '''stoqs_parameter.name as parameter__name,
                          stoqs_parameter.standard_name as parameter__standard_name,
@@ -331,10 +328,10 @@ class PQuery(object):
 
         if 'measuredparametersgroup' in self.kwargs:
             if self.kwargs['measuredparametersgroup']:
-                qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
+                qparams['parameter__id__in'] = self.kwargs['measuredparametersgroup']
         if 'sampledparametersgroup' in self.kwargs:
             if self.kwargs['sampledparametersgroup']:
-                qparams['parameter__name__in'] = self.kwargs['sampledparametersgroup']
+                qparams['parameter__id__in'] = self.kwargs['sampledparametersgroup']
         if 'parameterstandardname' in self.kwargs:
             if self.kwargs['parameterstandardname']:
                 qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
@@ -380,7 +377,7 @@ class PQuery(object):
         else:
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams)
 
-        # Wrap PQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
+        # Wrap PQuerySet around either RawQuerySet or QuerySet to control the __iter__() items for lat/lon etc.
         qs_mpq = PQuerySet(None, values_list, qs_mp=qs_mp)
         if 'parametervalues' in self.kwargs:
             if self.kwargs['parametervalues'] != [{}]:

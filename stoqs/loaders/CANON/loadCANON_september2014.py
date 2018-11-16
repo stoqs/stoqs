@@ -28,11 +28,12 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+import timing
        
 cl = CANONLoader('stoqs_september2014', 'CANON-ECOHAB - September 2014',
                     description = 'Fall 2014 Dye Release Experiment in Monterey Bay',
                     x3dTerrains = {
-                            '/static/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                            'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                 'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                 'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                 'centerOfRotation': '-2711557.94 -4331414.32 3801353.46',
@@ -70,19 +71,9 @@ cl.dorado_files = [
 				   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
-                    'sepCountList', 'mepCountList' ]
-
-#####################################################################
-#  LRAUV 
-#####################################################################
-# NetCDF files produced (binned, etc.) by John Ryan
-##cl.tethys_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Tethys/NetCDF/'
-##cl.tethys_files = ['Tethys_CANON_Fall2013.nc']
-##cl.tethys_parms = ['temperature', 'salinity', 'chlorophyll', 'bb470', 'bb650']
-
-##cl.daphne_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Daphne/NetCDF/'
-##cl.daphne_files = ['Daphne_CANON_Fall2013.nc']
-##cl.daphne_parms = ['temperature', 'chlorophyll', 'bb470', 'bb650']
+                    'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
+                  ]
 
 
 ######################################################################
@@ -278,8 +269,6 @@ if cl.args.test:
     ##cl.load_wg_oa(stride=10) 
 
     cl.loadDorado(stride=100)
-    ##cl.loadDaphne(stride=100)
-    ##cl.loadTethys(stride=100)
 
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)

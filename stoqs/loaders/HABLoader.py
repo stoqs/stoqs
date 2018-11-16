@@ -165,7 +165,7 @@ class HABLoader(STOQS_Loader):
         '''
         self.platform = self.getPlatform(self.platformName, self.platformTypeName)
         self.createActivity()
-        self.addParameters(self.ds)     
+        self.add_parameters(self.ds)     
         #self.addResources()
 
     def load_measurement(self, lat, lon, depth, mtime, parmNameValues):

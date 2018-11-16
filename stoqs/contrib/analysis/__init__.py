@@ -47,13 +47,13 @@ class BiPlot(object):
         '''
         # Get the 1 & 99 percentiles of the data for setting limits on the scatter plot
         apQS = ActivityParameter.objects.using(self.args.database).filter(activity__platform__name=platform)
-        pQS = apQS.filter(parameter__name=parm).aggregate(Min('p010'), Max('p990'))
+        pQS = apQS.filter(parameter__name__contains=parm).aggregate(Min('p010'), Max('p990'))
         pmin, pmax = (pQS['p010__min'], pQS['p990__max'])
 
         # Get units for each parameter
         prQS = ParameterResource.objects.using(self.args.database).filter(resource__name='units').values_list('resource__value')
         try:
-            units = prQS.filter(parameter__name=parm)[0][0]
+            units = prQS.filter(parameter__name__contains=parm)[0][0]
         except IndexError:
             raise Exception("Unable to get units for parameter name %s from platform %s" % (parm, platform))
 
@@ -79,8 +79,8 @@ class BiPlot(object):
             INNER JOIN stoqs_measurement m_x ON m_x.instantpoint_id = stoqs_instantpoint.id
             INNER JOIN stoqs_measuredparameter mp_x ON mp_x.measurement_id = m_x.id
             INNER JOIN stoqs_parameter p_x ON mp_x.parameter_id = p_x.id
-            WHERE (p_x.name = '{pxname}')
-                AND (p_y.name = '{pyname}')
+            WHERE (p_x.name LIKE '{pxname}%')
+                AND (p_y.name LIKE '{pyname}%')
                 {platform_clause}
                 {time_clause}
                 {depth_clause}
@@ -151,8 +151,8 @@ class BiPlot(object):
             pq.logger.setLevel(logging.DEBUG)
 
         args = ()
-        kwargs = {  'parameterparameter': [ Parameter.objects.using(self.args.database).get(name=xParm).id,
-                                            Parameter.objects.using(self.args.database).get(name=yParm).id ],
+        kwargs = {  'parameterparameter': [ Parameter.objects.using(self.args.database).get(name__contains=xParm).id,
+                                            Parameter.objects.using(self.args.database).get(name__contains=yParm).id ],
                     'parametervalues': [pvDict]
                  }
 
@@ -289,7 +289,7 @@ class BiPlot(object):
 
             qs = qs.filter(measurement__instantpoint__timevalue__gte=startDatetime)
             qs = qs.filter(measurement__instantpoint__timevalue__lte=endDatetime)
-            qs = qs.filter(parameter__name=pname)
+            qs = qs.filter(parameter__name__contains=pname)
 
             if platformName:
                 qs = qs.filter(measurement__instantpoint__activity__platform__name=platformName)
@@ -328,7 +328,7 @@ class BiPlot(object):
         if parameterStandardName:
             qs = qs.filter(parameter__standard_name=parameterStandardName)
         if parameterName:
-            qs = qs.filter(parameter__name=parameterName)
+            qs = qs.filter(parameter__name__contains=parameterName)
 
         if platformName:
             qs = qs.filter(measurement__instantpoint__activity__platform__name=platformName)

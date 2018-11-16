@@ -51,7 +51,8 @@ import logging
 import socket
 import seawater.eos80 as sw
 from utils.utils import mode, simplify_points
-from loaders import STOQS_Loader, SkipRecord, HasMeasurement, MEASUREDINSITU, FileNotFound
+from loaders import (STOQS_Loader, SkipRecord, HasMeasurement, MEASUREDINSITU, FileNotFound,
+                     SIGMAT, SPICE, SPICINESS, ALTITUDE)
 from loaders.SampleLoaders import get_closest_instantpoint, ClosestTimeNotFoundException
 import numpy as np
 import psycopg2
@@ -100,11 +101,19 @@ class VariableMissingCoordinatesAttribute(Exception):
     pass
 
 
+class VariableHasBadCoordinatesAttribute(Exception):
+    pass
+
+
 class InvalidSliceRequest(Exception):
     pass
 
 
 class OpendapError(Exception):
+    pass
+
+
+class DuplicateData(Exception):
     pass
 
 
@@ -129,7 +138,7 @@ class Base_Loader(STOQS_Loader):
     def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, campaignDescription=None,
                 activitytypeName=None, platformColor=None, platformTypeName=None, 
                 startDatetime=None, endDatetime=None, dataStartDatetime=None, auxCoords=None, stride=1,
-                grdTerrain=None, appendFlag=False, backfill_timedelta=None ):
+                grdTerrain=None, command_line_args=None):
         '''
         Given a URL open the url and store the dataset as an attribute of the object,
         then build a set of standard names using the dataset.
@@ -155,12 +164,9 @@ class Base_Loader(STOQS_Loader):
         @param endDatetime: A Python datetime.dateime object specifying the end date time of data to load
         @param dataStartDatetime: A Python datetime.dateime object specifying the start date time of data 
                                   to append to an existing Activity
-        @param appendFlag: If true then a dataStartDatetime value will be set by looking up the last
+        @param command_line_args.append: If true then a dataStartDatetime value will be set by looking up the last
                            timevalue in the database for the Activity returned by getActivityName().
                            A True value will override the passed parameter dataStartDatetime.
-        @param backfill_timedelta: Some appendFlag datastreams may have missing data data records at
-                                   end of previous loads, e.g. M1. Set this to a datetime.timedelta
-                                   to backfill those records.
         @param auxCoords: a dictionary of coordinate standard_names (time, latitude, longitude, depth) 
                           pointing to exact names of those coordinates. Used for variables missing the 
                           coordinates attribute.
@@ -182,8 +188,7 @@ class Base_Loader(STOQS_Loader):
         self.auxCoords = auxCoords
         self.stride = stride
         self.grdTerrain = grdTerrain
-        self.appendFlag = appendFlag
-        self.backfill_timedelta = backfill_timedelta
+        self.command_line_args = command_line_args
         self.coord_dicts = {}
 
         self.url = url
@@ -233,8 +238,17 @@ class Base_Loader(STOQS_Loader):
                     
             elif self.getFeatureType() == TIMESERIES or self.getFeatureType() == TIMESERIESPROFILE: # pragma: no cover
                 self.logger.debug('Getting timeseries start time for v = %s', v)
-                minDT[v] = from_udunits(self.ds[v][ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
-                maxDT[v] = from_udunits(self.ds[v][ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'])
+                time_units = self.ds[list(self.ds[v].maps.keys())[0]].units.lower()
+                if time_units == 'true julian day':
+                    self.logger.debug('Converting EPIC times to epoch seconds')
+                    tindx = self.getTimeBegEndIndices(self.ds[list(self.ds[v].keys())[1]])
+                    times = self.ds[list(self.ds[v].maps.keys())[0]].data[tindx[0]:tindx[-1]:self.stride]
+                    times, time_units = self._convert_EPIC_times(times, tindx)
+                    minDT[v] = from_udunits(times[0], time_units)
+                    maxDT[v] = from_udunits(times[-1], time_units)
+                else:
+                    minDT[v] = from_udunits(self.ds[v][ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
+                    maxDT[v] = from_udunits(self.ds[v][ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'])
             else:
                 # Perhaps a strange file like LOPC size class data along a trajectory
                 minDT[v] = from_udunits(self.ds[ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
@@ -274,7 +288,7 @@ class Base_Loader(STOQS_Loader):
         '''
         if self.checkForValidData():
             self.platform = self.getPlatform(self.platformName, self.platformTypeName)
-            self.addParameters(self.ds)
+            self.add_parameters(self.ds)
 
             # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
             if not self.startDatetime or not self.endDatetime:
@@ -291,7 +305,11 @@ class Base_Loader(STOQS_Loader):
         try:
             mv = float(self.ds[var].attributes['missing_value'])
         except KeyError:
-            self.logger.debug('Cannot get attribute missing_value for variable %s from url %s', var, self.url)
+            if 'nemesis' in self.url and var in ('u', 'v'):
+                self.logger.debug('Special fix for nemesis data, return a standard missing_value of -1.e34')
+                mv = -1.0e34
+            else:
+                self.logger.debug('Cannot get attribute missing_value for variable %s from url %s', var, self.url)
         except AttributeError as e:
             self.logger.debug(str(e))
         
@@ -340,14 +358,15 @@ class Base_Loader(STOQS_Loader):
         # Modify Activity name if temporal subset extracted from NetCDF file
         newName = self.activityName
         if not ' starting at ' in newName:
-            if self.requested_startDatetime and self.requested_endDatetime:
-                if '(stride' in self.activityName:
-                    first_part = self.activityName[:self.activityName.find('(stride')]
-                    last_part = self.activityName[self.activityName.find('(stride'):]
-                else:
-                    first_part = self.activityName
-                    last_part = ''
-                newName = '{} starting at {} {}'.format(first_part.strip(), self.requested_startDatetime, last_part)
+            if hasattr(self, 'requested_startDatetime') and hasattr(self, 'requested_endDatetime'):
+                if self.requested_startDatetime and self.requested_endDatetime:
+                    if '(stride' in self.activityName:
+                        first_part = self.activityName[:self.activityName.find('(stride')]
+                        last_part = self.activityName[self.activityName.find('(stride'):]
+                    else:
+                        first_part = self.activityName
+                        last_part = ''
+                    newName = '{} starting at {} {}'.format(first_part.strip(), self.requested_startDatetime, last_part)
 
         return newName
 
@@ -358,10 +377,14 @@ class Base_Loader(STOQS_Loader):
         Possible return values: TRAJECTORY, TIMESERIES, TIMESERIESPROFILE, lowercase versions.
         '''
         conventions = ''
-        try:
-            nc_global_keys = self.ds.attributes['NC_GLOBAL']
-        except KeyError:
-            self.logger.warn('Dataset does not have an NC_GLOBAL attribute! Setting featureType to "trajectory" assuming that this is an old Tethys file')
+        if hasattr(self, 'ds'):
+            try:
+                nc_global_keys = self.ds.attributes['NC_GLOBAL']
+            except KeyError:
+                self.logger.warn('Dataset does not have an NC_GLOBAL attribute! Setting featureType to "trajectory" assuming that this is an old Tethys file')
+                return TRAJECTORY
+        else:
+            self.logger.warn('Loader has no ds attribute. Setting featureType to "trajectory" assuming that this is an ROVCTD Loader.')
             return TRAJECTORY
 
         if 'Conventions' in nc_global_keys:
@@ -374,7 +397,11 @@ class Base_Loader(STOQS_Loader):
             conventions = ''
 
         if 'cf-1.6' in conventions.lower():
-            featureType = self.ds.attributes['NC_GLOBAL']['featureType']
+            try:
+                featureType = self.ds.attributes['NC_GLOBAL']['featureType']
+            except KeyError:
+                # For https://dods.ndbc.noaa.gov/thredds/dodsC/oceansites/DATA/MBARI/OS_MBARI-M1_20160829_R_TS.nc.das
+                featureType = self.ds.attributes['NC_GLOBAL']['cdm_data_type']
         else:
             # Accept earlier versions of the concept of this attribute that may be in legacy data sets
             if 'cdm_data_type' in nc_global_keys:
@@ -411,10 +438,14 @@ class Base_Loader(STOQS_Loader):
         coordSN = {}
         snCoord = {}
         for k in from_variables:
-            if 'standard_name' in self.ds[k].attributes:
-                if self.ds[k].attributes['standard_name'] in ('time', 'latitude', 'longitude', 'depth'):
-                    coordSN[k] = self.ds[k].attributes['standard_name']
-                    snCoord[self.ds[k].attributes['standard_name']] = k
+            try:
+                if 'standard_name' in self.ds[k].attributes:
+                    if self.ds[k].attributes['standard_name'] in ('time', 'latitude', 'longitude', 'depth'):
+                        coordSN[k] = self.ds[k].attributes['standard_name']
+                        snCoord[self.ds[k].attributes['standard_name']] = k
+            except KeyError:
+                self.logger.error(f"Could not find variable {k} in the file. Perhaps there's a problem with the coordinates attribute?")
+                raise
 
         return coordSN, snCoord
 
@@ -437,7 +468,11 @@ class Base_Loader(STOQS_Loader):
         coord_dict = {}
         if 'coordinates' in self.ds[variable].attributes:
             coords = self.ds[variable].attributes['coordinates'].split()
-            coordSN, snCoord = self._getCoordinates(coords)
+            try:
+                coordSN, snCoord = self._getCoordinates(coords)
+            except KeyError as e:
+                self.logger.error(f"Could not get coordinates for {variable}. Check its coordinates attribute.")
+                raise VariableHasBadCoordinatesAttribute(e)
             for coord in coords:
                 self.logger.debug(coord)
                 try:
@@ -546,6 +581,11 @@ class Base_Loader(STOQS_Loader):
         '''
         Return beginning and ending indices for the corresponding time axis indices
         '''
+        if not getattr(self, 'startDatetime', None) and not getattr(self, 'endDatetime', None):
+            s = 0
+            e = timeAxis.shape[0]
+            return s, e
+
         isEPIC = False
         try:
             isEPIC = 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper()
@@ -615,24 +655,34 @@ class Base_Loader(STOQS_Loader):
             self.logger.debug("For endDatetime = %s, the udnits value is %f", self.endDatetime, e)
         else:
             e = timeAxis[-1]
-            self.logger.debug("requested_endDatetime not given, using the last value of timeAxis = %f", e)
+            self.logger.debug("requested_endDatetime not given, using the last value of timeAxis = %f", e.data[0])
 
-        tf = (s <= timeAxis) & (timeAxis <= e)
-        self.logger.debug('tf = %s', tf)
+        tf = np.array([])
+        if getattr(self, 'command_line_args', False):
+            if self.command_line_args.append:
+                # Exclusive of s, as that is the max timevalue in the database for the Activity
+                self.logger.info(f"--append specified. Finding start index where time > {s}")
+                tf = (s < timeAxis) & (timeAxis <= e)
+        if not tf.any():
+            # Inclusive of the specified start time
+            tf = (s <= timeAxis) & (timeAxis <= e)
+
+        # Numpy Array tf has True values at indices corresponding to the data we need to load
         tIndx = np.nonzero(tf == True)[0]
         if tIndx.size == 0:
-            raise NoValidData('No data from %s for time values between %s and %s.  Skipping.' % (self.url, s, e))
+            raise NoValidData(f'No time values from {self.url} between time values {s} and {e}')
+        elif tIndx.size == 1:
+            # Loading a single value
+            tIndx = np.array([tIndx[0], tIndx[0]])
 
-        # For python slicing add 1 to the end index
-        self.logger.debug('tIndx = %s', tIndx)
         try:
             indices = (tIndx[0], tIndx[-1] + 1)
         except IndexError:
             raise NoValidData('Could not get first and last indexes from tIndex = %s. Skipping.' % (tIndx))
-        self.logger.debug('Start and end indices are: %s', indices)
+        self.logger.info('Start and end indices are: %s', indices)
 
-        if tIndx[-1] <= tIndx[0]:
-            raise InvalidSliceRequest('Cannot issue OPeNDAP temporal constraint expression with length 0 or less.')
+        if indices[1] <= indices[0]:
+            raise InvalidSliceRequest('Cannot issue DAP temporal constraint expression of non-positive slice: indices = {indices}')
 
         return indices
 
@@ -695,20 +745,46 @@ class Base_Loader(STOQS_Loader):
                 self.logger.debug('include_name %s not in dataset %s', pname, self.url)
                 continue
             ac[pname] = self.coord_dicts[pname]
-            load_groups[''.join(sorted(list(ac[pname].values())))].append(pname)
-            coor_groups[''.join(sorted(list(ac[pname].values())))] = ac[pname]
+            try:
+                load_groups[''.join(sorted(list(ac[pname].values())))].append(pname)
+                coor_groups[''.join(sorted(list(ac[pname].values())))] = ac[pname]
+            except TypeError:
+                # Likely "TypeError: '<' not supported between instances of 'float' and 'str'" because depth = 0.0 in auxCoords
+                self.logger.debug(f'Number likely in auxCoords rather than a coordinate name, convert to string for group_name')
+                group_name = ''
+                for v in ac[pname].values():
+                    group_name += str(v)
+
+                self.logger.debug(f'group_name = {group_name}')
+                load_groups[group_name].append(pname)
+                coor_groups[group_name] = ac[pname]
 
         return load_groups, coor_groups
 
-    def _load_coords_from_dsg_ds(self, tindx, ac, pnames):
+    def _ips(self, mtimes):
+        for mt in mtimes:
+            if mt:
+                yield InstantPoint(activity=self.activity, timevalue=mt)
+            else:
+                yield None
+
+    def _meass(self, depths, longitudes, latitudes):
+        for de, lo, la in zip(depths, longitudes, latitudes):
+            # Accept depths that are 0.0, but not latitudes and longitudes that are zero
+            if de is not None and lo and la:
+                yield Measurement(depth=repr(de), geom=f'POINT({repr(lo)} {repr(la)})')
+            else:
+                yield None
+
+    def _load_coords_from_dsg_ds(self, tindx, ac, pnames, axes):
         '''Pull coordinates from Discrete Sampling Geometry NetCDF dataset,
         (with accomodations made so that it works as well for EPIC conventions)
-        and bulk create in the database.
+        and bulk create in the database. Retain None values for bad coordinates.
         '''
         times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
-            timeUnits = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
+            time_units = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
         mtimes = (from_udunits(mt, time_units) for mt in times)
 
         try:
@@ -719,10 +795,13 @@ class Base_Loader(STOQS_Loader):
         except KeyError:
             # Allow for variables with no depth coordinate to be loaded at the depth specified in auxCoords
             if ac[DEPTH] in self.ds:
-                if isinstance(ac[DEPTH], float):
-                    depths =  ac[DEPTH] * np.ones(len(times))
+                if isinstance(ac[DEPTH], (int, float)):
+                    depths = ac[DEPTH] * np.ones(len(times))
             else:
                 self.logger.warn(f'No depth coordinate {ac[DEPTH]} in {self.ds}')
+                if isinstance(ac[DEPTH], (int, float)):
+                    self.logger.info('Overridden in auxCoords: ac[DEPTH] = {ac[DEPTH]}, setting depths to [{ac[DEPTH]}]')
+                    depths = [ac[DEPTH]]
 
         if isinstance(self.ds[ac[LATITUDE]], pydap.model.GridType):
             latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
@@ -735,26 +814,37 @@ class Base_Loader(STOQS_Loader):
             longitudes = self.ds[ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
 
         self.logger.debug(f'Getting good_coords for {pnames}...')
-        mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
-                                            pnames, mtimes, depths, latitudes, longitudes))
-
-        self.logger.debug(f'Making points generator...')
-        points = (f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes))
-
-        ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
-        meass = (Measurement(depth=repr(de), geom=po) for de, po in zip(depths, points))
+        try:
+            mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
+                                        pnames, mtimes, depths, latitudes, longitudes))
+        except TypeError:
+            # When ac[DEPTH] is a number, convert one time value to a list
+            self.logger.info(f'Got TypeError, assuming coords are single valued and converting to lists:')
+            mtimes = [from_udunits(float(times.data), time_units)]
+            latitudes = [float(latitudes.data)]
+            longitudes = [float(longitudes.data)]
+            mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
+                                        pnames, mtimes, depths, latitudes, longitudes))
 
         # Reassign meass with Measurement objects that have their id set
-        meass = self._bulk_load_coordinates(ips, meass, dup_times)
+        meass, mask = self._bulk_load_coordinates(self._ips(mtimes), self._meass(
+                                            depths, longitudes, latitudes), dup_times, ac, axes)
 
-        return meass, dup_times
+        return meass, dup_times, mask
 
     def _load_coords_from_instr_ds(self, tindx, ac):
-        '''Pull itime coordinate from Instrument (time-coordinate-only) NetCDF dataset (e.g. LOPC),
+        '''Pull time coordinate from Instrument (time-coordinate-only) NetCDF dataset (e.g. LOPC),
         lookup matching Measurment (containing depth, latitude, and longitude) and bulk create 
         Instantpoints and Measurements in the database.
         '''
-        times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
+        meass_set = set([])
+        try:
+            times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
+        except ValueError:
+            self.logger.warn(f'Stride of {self.stride} likely greater than range of data: {tindx[0]}:{tindx[-1]}')
+            self.logger.warn(f'Skipping load of {self.url}')
+            return meass_set
+    
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
             timeUnits = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
@@ -795,27 +885,70 @@ class Base_Loader(STOQS_Loader):
         '''Stream trajectory data directly from pydap proxies to generators fed to bulk_create() calls
         '''
         load_groups, coor_groups = self.get_load_structure()
+        total_loaded = 0   
         for k, pnames in load_groups.items():
             ac = coor_groups[k]
-            total_loaded = 0   
-            for i, pname in enumerate(pnames):
+            try:
                 tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
+            except InvalidSliceRequest:
+                self.logger.warn(f'Failed to getTimeBegEndIndices() for axes {k} from {self.url}')
+                continue
+
+            for i, pname in enumerate(pnames):
+                self.logger.debug(f'{i}, {pname}')
                 if i == 0:
                     # First time through, bulk load the coordinates: instant_points and measurements
-                    if ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
-                        # Expect CF Discrete Sampling Geometry or EPIC dataset
-                        meass, dup_times = self._load_coords_from_dsg_ds(tindx, ac, pnames)
+                    if DEPTH not in ac:
+                        self.logger.warn(f'{self.param_by_key[pname]} does not have {DEPTH} in {ac}. Skipping.')
+                        continue
+                    if ac[DEPTH] not in self.ds and isinstance(ac[DEPTH], (int, float)):
+                        # Likely u and v parameters from nemesis glider data where there is no depth_uv coordinate in the NetCDF
+                        self.logger.info(f'{self.param_by_key[pname]} does not have {DEPTH} in {self.url}.')
+                        self.logger.info(f'ac[DEPTH] = {ac[DEPTH]}. Assume that this depth coordinate was provided in auxCoords')
+                        self.logger.info(f'Loading coordinates for axes {k}')
+                        meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k)
+                    elif ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
+                        try:
+                            # Expect CF Discrete Sampling Geometry or EPIC dataset
+                            self.logger.info(f'Loading coordinates for axes {k}')
+                            meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k)
+                        except ValueError as e:
+                            # Likely ValueError: not enough values to unpack (expected 5, got 0) from good_coords()
+                            self.logger.debug(str(e))
+                            self.logger.warn(f'No good coordinates for {pname} - skipping it')
+                            continue
+                        except OverflowError as e:
+                            # Likely unable to convert a udunit to a value as in time from:
+                            # http://legacy.cencoos.org:8080/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201705/nemesis_20170518T203246_rt0.nc.ascii?time[149:1:149]
+                            # = -4.31865376e+107  (should be a value like 1.495143822559231E9)
+                            self.logger.debug(str(e))
+                            self.logger.warn(f'OverflowError when converting coordinates for {pname} - skipping it')
+                            return total_loaded
                     else:
                         # Expect instrument (time-coordinate-only) dataset
+                        self.logger.warn(f'{pname} has no {ac[DEPTH]} coordinate - processing as time-coordinate-only, e.g. LOPC')
                         meass = self._load_coords_from_instr_ds(tindx, ac)
 
-                if isinstance(self.ds[pname], pydap.model.GridType):
-                    constraint_string = f"Using constraints: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
-                    values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
-                else:
-                    constraint_string = f"Using constraints: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
-                    values = self.ds[pname].data[tindx[0]:tindx[-1]:self.stride]
+                try:
+                    if isinstance(self.ds[pname], pydap.model.GridType):
+                        constraint_string = f"using python slice: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
+                    else:
+                        constraint_string = f"using python slice: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        values = self.ds[pname].data[tindx[0]:tindx[-1]:self.stride]
+                except ValueError:
+                    self.logger.warn(f'Stride of {self.stride} likely greater than range of data: {tindx[0]}:{tindx[-1]}')
+                    self.logger.warn(f'Skipping load of {self.url}')
+                    return total_loaded
 
+                # Test whether we need to make values iterable
+                try:
+                    len(values)
+                except TypeError:
+                    # Likely values is a single valued array, e.g. nemesis u, v data
+                    values = [float(values)]
+
+                self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
                 if hasattr(values[0], '__iter__'):
                     # For data like LOPC data - expect all values to be non-nan
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
@@ -824,9 +957,10 @@ class Base_Loader(STOQS_Loader):
                     # Need to bulk_create() all values, set bad ones to None and remove them after insert
                     values = self._good_value_generator(pname, values)
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
-                                                datavalue=va) for me, va, dt in zip(meass, values, dup_times) if not dt)
+                                                datavalue=va) for me, va, dt, mk in zip(
+                                                meass, values, dup_times, mask) if not dt and not mk)
 
-                # All items but mess are generators, so we can call len() on it
+                # All items but meass are generators, so we can call len() on it
                 self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
                 mps = self._measuredparameter_with_measurement(meass, mps)
                 mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
@@ -834,6 +968,24 @@ class Base_Loader(STOQS_Loader):
                 total_loaded += len(mps)
 
         return total_loaded
+
+    def _convert_EPIC_times(self, times, tindx):
+        # Create COARDS time from EPIC data
+        time2s = self.ds['time2']['time2'].data[tindx[0]:tindx[-1]:self.stride]
+        time_units = 'seconds since 1970-01-01 00:00:00'
+        epoch_seconds = []
+        for jd, ms in zip(times, time2s):
+            gcal = jd2gcal(jd - 0.5, ms / 86400000.0)
+            try:
+                gcal_datetime = datetime(*gcal[:3]) + timedelta(days=gcal[3])
+            except ValueError as e:
+                # Encountered this error after removing start & end times for the load on this dataset:
+                # http://dods.mbari.org/opendap/data/CCE_Archive/MS3/20151005/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20151005.nc.ascii?time[93900:1:94100]
+                self.logger.debug(f"{e} in {self.url}")
+
+            epoch_seconds.append(to_udunits(gcal_datetime, time_units))
+
+        return epoch_seconds, time_units
 
     def load_timeseriesprofile(self):
         '''Stream timeseriesprofile data directly from pydap proxies to generators fed to bulk_create() calls
@@ -862,16 +1014,7 @@ class Base_Loader(STOQS_Loader):
                     time_units = self.ds[list(self.ds[firstp].maps.keys())[0]].units.lower()
 
                     if time_units == 'true julian day': # pragma: no cover
-                        # Create COARDS time from EPIC data
-                        time2s = self.ds['time2']['time2'].data[tindx[0]:tindx[-1]:self.stride]
-                        time_units = 'seconds since 1970-01-01 00:00:00'
-                        epoch_secs = []
-                        for jd, ms in zip(times, time2s):
-                            gcal = jd2gcal(jd - 0.5, ms / 86400000.0)
-                            gcal_datetime = datetime(*gcal[:3]) + timedelta(days=gcal[3])
-                            epoch_secs.append(to_udunits(gcal_datetime, time_units))
-
-                        times = epoch_secs
+                        times, time_units = self._convert_EPIC_times(times, tindx)
 
                     time_units = time_units.replace('utc', 'UTC')           # coards requires UTC in uppercase
                     if self.ds[list(self.ds[firstp].maps.keys())[0]].units == 'seconds since 1970-01-01T00:00:00Z':
@@ -1057,6 +1200,7 @@ class Base_Loader(STOQS_Loader):
 
                 # End if i == 0 (loading coords for list of pnames)
  
+                constraint_string = f"using python slice: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                 values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
                 if len(values.shape) == 1:
                     self.logger.info("len(values.shape) = 1; likely EPIC timeseries data - reshaping to add a 'depth' dimension")
@@ -1068,7 +1212,8 @@ class Base_Loader(STOQS_Loader):
                                                 datavalue=va) for me, va in zip(meass, values))
 
                 # All items but mess are generators, so we can call len() on it
-                self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter')
+                self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
+                self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
                 mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
                 total_loaded += len(mps)
 
@@ -1078,108 +1223,63 @@ class Base_Loader(STOQS_Loader):
         for ip, meas in zip(ips, meass):
             meas.instantpoint = ip
             yield meas
-        
-    def _bulk_load_coordinates(self, ips, meass, dup_times):
+       
+    def _bulk_load_coordinates(self, ips, meass, dup_times, ac, axes):
 
         self.logger.info(f'Calling bulk_create() for InstantPoints in ips generator')
-        ips = InstantPoint.objects.using(self.dbAlias).bulk_create((ip for ip, dt in zip(ips, dup_times) if not dt))
+        # Create mask array in case any coordinate is None, so that we can know which MPs to bulk_create()
+        mask = []
+        ips_to_load = []
+        meas_to_load = []
+        for ip, meas, dt in zip(ips, meass, dup_times):
+            if not ip or not meas or dt:
+                mask.append(True)
+            else:
+                mask.append(False)
+                ips_to_load.append(ip)
+                meas_to_load.append(meas)
+       
+        try:
+            self.ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips_to_load)
+        except IntegrityError as e:
+            # Some data sets (e.g. Waveglider) share time coordinates with different depths
+            # Report the reuse of previous self.ips values
+            if hasattr(self, 'ips'):
+                self.logger.info(f"Duplicate time values for axes {axes}. Reusing previously loaded time values for {ac['time']}")
+            else:
+                self.logger.error(f"{e}")
+                self.logger.error(f"It's likely that the {ac['time']} variable in {self.url} has a duplicate value")
+                raise DuplicateData(f"Duplicate data from {self.url} in {self.dbAlias}")
 
-        meass = self._measurement_with_instantpoint(ips, meass)
+        meass = self._measurement_with_instantpoint(self.ips, meas_to_load)
 
         self.logger.info(f'Calling bulk_create() for Measurements in meass generator')
         meass = Measurement.objects.using(self.dbAlias).bulk_create(meass)
 
-        return meass
+        return meass, mask
 
     def _measuredparameter_with_measurement(self, meass, mps):
         for meas, mp in zip(meass, mps):
             mp.measurement = meas
             yield mp
 
-    def process_data(self, featureType=''): 
-        '''Iterate over the data source and load the data in by creating new objects
-        for each measurement.
+    def _delete_bad_datavalues(self, pname):
+        num, _ = (MeasuredParameter.objects.using(self.dbAlias)
+                    .filter(parameter__name=pname, datavalue=np.nan).delete())
+        if num:
+            self.logger.info(f'Deleted {num} nan {pname} MeasuredParameters')
+        num, _ = (MeasuredParameter.objects.using(self.dbAlias)
+                    .filter(parameter__name=pname, datavalue=np.inf).delete())
+        if num:
+            self.logger.info(f'Deleted {num} inf {pname} MeasuredParameters')
 
-        Note that due to the use of large-precision numerics, we'll convert all numbers to
-        strings prior to performing the import.  Django uses the Decimal type (arbitrary precision
-        numeric type), so we won't lose any precision.
-
-        Return the number of MeasuredParameters loaded.
-        '''
-
-        self.coord_dicts = {}
-        for v in self.include_names:
-            try:
-                self.coord_dicts[v] = self.getAuxCoordinates(v)
-            except ParameterNotFound as e:
-                self.logger.debug(str(e))
-
-        self.initDB()
-
-        path = None
-        parmCount = {}
-        self.parameter_counts = {}
-        for key in self.include_names:
-            parmCount[key] = 0
-
-        if self.appendFlag: # pragma: no cover
-            self.dataStartDatetime = (InstantPoint.objects.using(self.dbAlias)
-                                        .filter(activity__name=self.getActivityName())
-                                        .aggregate(Max('timevalue'))['timevalue__max'])
-            if hasattr(self, 'backfill_timedelta') and self.dataStartDatetime:
-                if self.backfill_timedelta:
-                    self.dataStartDatetime = self.dataStartDatetime - self.backfill_timedelta
-
-        self.param_by_key = {}
-        self.mv_by_key = {}
-        self.fv_by_key = {}
-
-        for key in (set(self.include_names) & set(self.ds.keys())):
-            self.param_by_key[key] = self.getParameterByName(key)
-            self.parameter_counts[self.param_by_key[key]] = 0
-
-        for key in self.ds.keys():
-            self.mv_by_key[key] = self.getmissing_value(key)
-            self.fv_by_key[key] = self.get_FillValue(key)
-
-        self.totalRecords = self.getTotalRecords()
-
-        self.logger.info("From: %s", self.url)
-        if featureType:
-            featureType = featureType.lower()
-        else:
-            featureType = self.getFeatureType()
-
-        mps_loaded = 0
-        try:
-            if featureType== TRAJECTORY:
-                mps_loaded = self.load_trajectory()
-            elif featureType == TIMESERIES:
-                mps_loaded = self.load_timeseriesprofile()
-            elif featureType == TIMESERIESPROFILE:
-                mps_loaded = self.load_timeseriesprofile()
-            elif featureType == TRAJECTORYPROFILE:
-                pass
-            else:
-                raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
-                        " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
-                        " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
-        except IntegrityError as e:
-            # Likely duplicate key value violates unique constraint "stoqs_measuredparameter_measurement_id_parameter_1328c3fb_uniq"
-            # Can't append data from source with bulk_create(), give appropriate warning
-            self.logger.exception(str(e))
-            self.logger.error(f'Failed to bulk_create() data from URL: {self.url}')
-            self.logger.error(f'If you need to load data that has been appended to the URL then delete its Activity before loading.')
-
-            return mps_loaded, path, parmCount
-
-        # Bulk loading may introduce None values, get rid of them
-        MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
+    def _post_process_updates(self, mps_loaded, featureType=''):
 
         #
         # Query database to a path for trajectory or stationPoint for timeSeriesProfile and timeSeries
         #
         stationPoint = None
+        path = None
         linestringPoints = Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=self.activity
                                                        ).order_by('instantpoint__timevalue').values_list('geom')
         try:
@@ -1200,12 +1300,17 @@ class Base_Loader(STOQS_Loader):
         # Add additional Parameters for all appropriate Measurements
         self.logger.info("Adding SigmaT and Spiciness to the Measurements...")
         self.addSigmaTandSpice(self.activity)
+
         if self.grdTerrain:
             self.logger.info("Adding altitude to the Measurements...")
             try:
                 self.addAltitude(self.activity)
             except FileNotFound as e:
                 self.logger.warn(str(e))
+
+        # Bulk loading of stoqs calculated values may introduce NaNs, remove them
+        for pname in (SIGMAT, SPICE, ALTITUDE):
+            self._delete_bad_datavalues(pname)
 
         # Update the Activity with information we now have following the load
         try:
@@ -1217,9 +1322,10 @@ class Base_Loader(STOQS_Loader):
         # Construct a meaningful comment that looks good in the UI Metadata->NetCDF area
         fmt_comment = 'Loaded variables {} from {}'
         comment_vars = [varList, self.url.split('/')[-1]]
-        if self.requested_startDatetime and self.requested_endDatetime:
-            fmt_comment += ' between {} and {}'
-            comment_vars.extend([self.requested_startDatetime, self.requested_endDatetime])
+        if hasattr(self, 'requested_startDatetime') and hasattr(self, 'requested_endDatetime'):
+            if self.requested_startDatetime and self.requested_endDatetime:
+                fmt_comment += ' between {} and {}'
+                comment_vars.extend([self.requested_startDatetime, self.requested_endDatetime])
         fmt_comment += ' with a stride of {} on {}Z'
         comment_vars.extend([self.stride, str(datetime.utcnow()).split('.')[0]])
         newComment = fmt_comment.format(*comment_vars)
@@ -1259,6 +1365,138 @@ class Base_Loader(STOQS_Loader):
         elif featureType == TRAJECTORYPROFILE:
             self.insertSimpleDepthTimeSeriesByNominalDepth(trajectoryProfileDepths=self.timeDepthProfiles)
         self.logger.info("Data load complete, %d records loaded.", mps_loaded)
+
+        return path
+
+
+    def process_trajectory_values_from_generator(self, data_generator): 
+        '''Use original method to load a MeasuredParameter datavalue a value
+        at a time into the database. Works only for featureType='trajectory'.
+        '''
+
+        self.initDB()
+
+        path = None
+        last_key = None
+        self.param_by_key = {}
+        self.parameter_counts = defaultdict(lambda: 0)
+        featureType='trajectory'
+        mps_loaded = 0
+        for row in data_generator():
+            row = self.preProcessParams(row)
+            (longitude, latitude, mtime, depth) = (
+                            row.pop('longitude'),
+                            row.pop('latitude'),
+                            from_udunits(row.pop('time'), row.pop('timeUnits')),
+                            row.pop('depth'))
+
+
+            key, value = list(row.items()).pop()
+            value = float(value)
+            if key != last_key:
+                logger.info(f'Loading values for Parameter {key}')
+            last_key = key
+
+            point = f'POINT({repr(longitude)} {repr(latitude)})'
+
+            self.param_by_key[key] = self.getParameterByName(key)
+            self.parameter_counts[self.param_by_key[key]] += 1
+
+            ip,_ = InstantPoint.objects.using(self.dbAlias).get_or_create(
+                                        activity=self.activity, timevalue=mtime)
+            meas,_ = Measurement.objects.using(self.dbAlias).get_or_create(
+                                        instantpoint=ip, geom=point, depth=depth)
+            mp = MeasuredParameter(measurement=meas, 
+                                        parameter=self.param_by_key[key], datavalue=value)
+
+            mp.save(using=self.dbAlias)
+            mps_loaded += 1
+
+        self.totalRecords = self.getTotalRecords()
+        path = self._post_process_updates(mps_loaded, featureType)
+
+        return mps_loaded, path, self.parameter_counts
+
+    def process_data(self, featureType=''): 
+        '''Bulk copy measurement data into database
+        '''
+
+        self.coord_dicts = {}
+        for v in self.include_names:
+            try:
+                self.coord_dicts[v] = self.getAuxCoordinates(v)
+            except ParameterNotFound as e:
+                self.logger.debug(str(e))
+            except VariableHasBadCoordinatesAttribute as e:
+                self.logger.error(str(e))
+
+        self.initDB()
+
+        path = None
+        parmCount = {}
+        self.parameter_counts = {}
+        for key in self.include_names:
+            parmCount[key] = 0
+
+        if getattr(self, 'command_line_args', False):
+            if self.command_line_args.append:
+                self.dataStartDatetime = (InstantPoint.objects.using(self.dbAlias)
+                                            .filter(activity__name=self.getActivityName())
+                                            .aggregate(Max('timevalue'))['timevalue__max'])
+
+        self.param_by_key = {}
+        self.mv_by_key = {}
+        self.fv_by_key = {}
+
+        for key in (set(self.include_names) & set(self.ds.keys())):
+            parameter_name, _ = self.parameter_name(key)
+            self.param_by_key[key] = self.getParameterByName(parameter_name)
+            self.parameter_counts[self.param_by_key[key]] = 0
+
+        for key in self.ds.keys():
+            self.mv_by_key[key] = self.getmissing_value(key)
+            self.fv_by_key[key] = self.get_FillValue(key)
+
+        self.logger.info("From: %s", self.url)
+        if featureType:
+            featureType = featureType.lower()
+        else:
+            featureType = self.getFeatureType()
+
+        mps_loaded = 0
+        try:
+            if featureType== TRAJECTORY:
+                mps_loaded = self.load_trajectory()
+            elif featureType == TIMESERIES:
+                mps_loaded = self.load_timeseriesprofile()
+            elif featureType == TIMESERIESPROFILE:
+                mps_loaded = self.load_timeseriesprofile()
+            elif featureType == TRAJECTORYPROFILE:
+                pass
+            else:
+                raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
+                        " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
+                        " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
+            self.totalRecords = mps_loaded
+        except IntegrityError as e:
+            # Likely duplicate key value violates unique constraint "stoqs_measuredparameter_measurement_id_parameter_1328c3fb_uniq"
+            # Can't append data from source with bulk_create(), give appropriate warning
+            self.logger.exception(str(e))
+            self.logger.error(f'Failed to bulk_create() data from URL: {self.url}')
+            self.logger.error(f'If you need to load data that has been appended to the URL then delete its Activity before loading.')
+
+            return mps_loaded, path, parmCount
+        except KeyError as e:
+            # Likely an include_name variable has a bad coordinates attribute, give a better error message than just KeyError
+            self.logger.exception(str(e))
+            self.logger.error(f'Failed to bulk_create() data from URL: {self.url}')
+
+            return mps_loaded, path, parmCount
+
+        if mps_loaded:
+            # Bulk loading may introduce None values, remove them
+            MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
+            path = self._post_process_updates(mps_loaded, featureType)
 
         return mps_loaded, path, parmCount
 
@@ -1492,7 +1730,8 @@ class BED_Trajectory_Loader(Trajectory_Loader):
 #
 # Helper methods that expose a common interface for executing the loaders for specific platforms
 #
-def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, plotTimeSeriesDepth=None, grdTerrain=None):
+def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
+                        stride, plotTimeSeriesDepth=None, grdTerrain=None, command_line_args=None):
     '''
     Run the DAPloader for Generic AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1512,7 +1751,8 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
             platformColor = pColor,
             platformTypeName = pTypeName,
             stride = stride,
-            grdTerrain = grdTerrain)
+            grdTerrain = grdTerrain,
+            command_line_args = command_line_args)
 
     loader.include_names = parmList
 
@@ -1524,8 +1764,8 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
                 loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
     if plotTimeSeriesDepth is not None:
-        # Used first for BEDS where we want both trajectory and timeSeries plots - assumes starting depth of BED
-        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
+        # Used first for BEDS where we want both trajectory and timeSeries plots
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + [ALTITUDE, SIGMAT, SPICE], plotTimeSeriesDepth)
 
     loader.process_data()
     loader.logger.debug("Loaded Activity with name = %s", aName)
@@ -1594,7 +1834,7 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
 
     if plotTimeSeriesDepth is not None:
         # Useful in some situations to have simple time series display of Dorado data
-        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + [ALTITUDE, SIGMAT, SPICE], plotTimeSeriesDepth)
 
     try:
         loader.process_data()
@@ -1669,11 +1909,6 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
-    appendFlag = False
-    if isinstance(command_line_args, Namespace):
-        if command_line_args.append:
-            appendFlag = True
-
     loader = Lrauv_Loader(
             url = url,
             campaignName = cName,
@@ -1692,7 +1927,7 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
             contourUrl = contourUrl,
             auxCoords = auxCoords,
             timezone = timezone,
-            appendFlag = appendFlag)
+            command_line_args = command_line_args)
 
     if parmList:
         loader.include_names = []
@@ -1714,7 +1949,7 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
 
     if plotTimeSeriesDepth is not None:
         # Useful to plot as time series engineering data for LRAUVs
-        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + [ALTITUDE, SIGMAT, SPICE], plotTimeSeriesDepth)
 
     try:
         loader.process_data()
@@ -1733,11 +1968,6 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
-    appendFlag = False
-    if isinstance(command_line_args, Namespace):
-        if command_line_args.append:
-            appendFlag = True
-
     loader = Glider_Loader(
             url = url,
             campaignName = cName,
@@ -1753,7 +1983,7 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
             endDatetime = endDatetime,
             dataStartDatetime = dataStartDatetime,
             grdTerrain = grdTerrain,
-            appendFlag = appendFlag)
+            command_line_args = command_line_args)
 
     if parmList:
         loader.logger.debug("Setting include_names to %s", parmList)
@@ -1813,7 +2043,8 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         loader.logger.debug("Loaded Activity with name = %s", aName)
 
 
-def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
+def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
+                        stride, startDatetime=None, endDatetime=None, command_line_args=None):
     '''
     Run the DAPloader for Generic CF Metadata timeSeries featureType data. 
     Following the load important updates are made to the database.
@@ -1830,7 +2061,8 @@ def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
             platformTypeName = pTypeName,
             stride = stride,
             startDatetime = startDatetime,
-            endDatetime = endDatetime)
+            endDatetime = endDatetime,
+            command_line_args = command_line_args)
 
     if parmList:
         loader.logger.debug("Setting include_names to %s", parmList)
@@ -1842,17 +2074,12 @@ def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
 
 def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
                      dbAlias, stride, startDatetime=None, endDatetime=None, dataStartDatetime=None,
-                     command_line_args=None, backfill_timedelta=None):
+                     command_line_args=None):
     '''
     Run the DAPloader for OceanSites formatted Mooring Station data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
-    appendFlag = False
-    if isinstance(command_line_args, Namespace):
-        if command_line_args.append:
-            appendFlag = True
-
     loader = Mooring_Loader(
             url = url,
             campaignName = cName,
@@ -1867,8 +2094,8 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
             startDatetime = startDatetime,
             dataStartDatetime = dataStartDatetime,
             endDatetime = endDatetime,
-            appendFlag = appendFlag,
-            backfill_timedelta = backfill_timedelta)
+            command_line_args = command_line_args,
+            )
 
     if parmList:
         loader.logger.debug("Setting include_names to %s", parmList)

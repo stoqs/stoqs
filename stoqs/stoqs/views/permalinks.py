@@ -20,7 +20,7 @@ from stoqs import models
 import logging 
 from django.views.decorators.csrf import csrf_exempt
 import simplejson as json
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 import threading
 _thread_local_vars = threading.local()
 logger=logging.getLogger(__name__)

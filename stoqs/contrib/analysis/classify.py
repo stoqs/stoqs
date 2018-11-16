@@ -147,17 +147,21 @@ class Classifier(BiPlot):
 
         # Remove Resource associations with Resource (label metadata), make rs list distinct with set() before iterating on the delete()
         if label and description and commandline:
-            rrs = ResourceResource.objects.using(self.args.database).filter(
-                                                (QDA(fromresource__name=LABEL) & QDA(fromresource__value=label)) &
-                                                ((QDA(toresource__name=DESCRIPTION) & QDA(toresource__value=description)) |
-                                                 (QDA(toresource__name=COMMANDLINE) & QDA(toresource__value=commandline)) ) )
-                                        
-            if self.args.verbose > 1:
-                print("  Removing ResourceResources with fromresource__value = '%s' and toresource__value = '%s'" % (label, description))
+            try:
+                rrs = ResourceResource.objects.using(self.args.database).filter(
+                                                    (QDA(fromresource__name=LABEL) & QDA(fromresource__value=label)) &
+                                                    ((QDA(toresource__name=DESCRIPTION) & QDA(toresource__value=description)) |
+                                                     (QDA(toresource__name=COMMANDLINE) & QDA(toresource__value=commandline)) ) )
+                if self.args.verbose > 1:
+                    print("  Removing ResourceResources with fromresource__value = '%s' and toresource__value = '%s'" % (label, description))
 
-            for rr in rrs:
-                rr.delete(using=self.args.database)
+                for rr in rrs:
+                    rr.delete(using=self.args.database)
 
+            except TypeError:
+                # Likely TypeError: __init__() got an unexpected keyword argument 'fromresource__name'
+                if self.args.verbose > 1:
+                    print("  Previous Resource associations not found.")
         else:
             if self.args.verbose > 1:
                 print("  Removing Resources associated with labeledGroupName = %s'" % labeledGroupName)

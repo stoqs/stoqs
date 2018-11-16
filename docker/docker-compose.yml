@@ -13,8 +13,10 @@ services:
     volumes:
       - ${POSTGRES_DATA}:/var/lib/postgresql/data
       - ${POSTGRES_WALDIR}:/var/lib/postgresql/waldir
+      - ./postgres-stoqs.conf:/etc/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql.conf
     ports:
-      - "5432:5432"
+      - "${STOQS_PGHOST_PORT}:5432"
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - STOQSADM_PASSWORD=${STOQSADM_PASSWORD}
@@ -29,6 +31,9 @@ services:
     volumes:
       - ${STOQS_VOLS_DIR}/maps:/maps:ro
     container_name: stoqs-mapserver
+    # Expose port 80 if PRODUCTION=false
+    ##ports:
+    ##  - "80:80"
     env_file:
       - ./.env
 
@@ -61,9 +66,13 @@ services:
     depends_on:
       - mapserver
       - postgis
+    # Expose port 8000 if PRODUCTION=false
+    ##ports:
+    ##  - "8000:8000"
     env_file:
       - ./.env
 
+  # Disable nginx service if PRODUCTION=false
   nginx:
     build:
         context: .
