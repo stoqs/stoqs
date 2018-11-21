@@ -18,7 +18,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, 
 
 from stoqs.models import (Activity, InstantPoint, Sample, SampleType, Resource,
                           SamplePurpose, SampleRelationship, Parameter, SampledParameter,
-                          MeasuredParameter, AnalysisMethod)
+                          MeasuredParameter, AnalysisMethod, Measurement)
 from loaders.seabird import get_year_lat_lon
 from loaders import STOQS_Loader, SkipRecord
 from datetime import datetime, timedelta
@@ -35,7 +35,7 @@ from bs4 import BeautifulSoup
 
 # Set up logging for module functions
 logger = logging.getLogger(__name__)
-# Logging level set in stoqs/config/common.py, but may override here
+# Logging level set in stoqs/config/settings/common.py, but may override here
 ##logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
@@ -57,6 +57,7 @@ NETTOW = 'NetTow'
 VERTICALNETTOW = 'VerticalNetTow'       # Must contain NETTOW string so that a filter for
 HORIZONTALNETTOW = 'VerticalNetTow'     # name__contains=NETTOW returns both vertical and horizontal net tows
 PLANKTONPUMP = 'PlanktonPump'
+ESP_ARCHIVE = 'ESP_Archive'
 
 class ClosestTimeNotFoundException(Exception):
     pass
@@ -127,7 +128,7 @@ def load_gulps(activityName, auv_file, dbAlias):
         activity = Activity.objects.using(dbAlias).filter(name__contains=activityName)[0]
         
 
-    # Use the dods server to read over http - works from outside of MABRI's Intranet
+    # Use the dods server to read over http - works from outside of MBARI's Intranet
     baseUrl = 'http://dods.mbari.org/data/auvctd/surveys/'
     yyyy = auv_file.split('_')[1].split('_')[0]
     survey = auv_file.split(r'_decim')[0]
@@ -169,6 +170,76 @@ def load_gulps(activityName, auv_file, dbAlias):
                 logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
             except ClosestTimeNotFoundException:
                 logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
+
+def load_lrauv_samples(activityName, url, dbAlias):
+    '''
+    url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
+    There is a syslog file in this folder.  Read from syslog and parse the sampling events to load into the dbAlias database.
+    '''
+
+    sampling_start_re = '.+\[sample #(\d+)\] ESP sampling state: S_FILTERING'
+    sampling_end_re = '.+\[sample #(\d+)\] ESP sampling state: S_STOPPING'
+
+    # Get the Activity from the Database
+    try:
+        activity = Activity.objects.using(dbAlias).get(name__contains=activityName)
+        logger.debug('Got activity = %s', activity)
+    except ObjectDoesNotExist:
+        logger.warn('Failed to find Activity with name like %s.  Skipping GulperLoad.', activityName)
+        return
+    except MultipleObjectsReturned:
+        logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', activityName)
+        activity = Activity.objects.using(dbAlias).filter(name__contains=activityName)[0]
+        
+
+    # Use the dods server to read over http - works from outside of MABRI's Intranet
+    syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
+
+    # Get or create SampleType for Gulper
+    (esp_archive_type, created) = SampleType.objects.using(dbAlias).get_or_create(name=ESP_ARCHIVE)
+    logger.debug('sampletype %s, created = %s', esp_archive_type, created)
+    with closing(requests.get(syslog_url, stream=True)) as r:
+        if r.status_code != 200:
+            logger.error('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
+            return
+
+        sampling = False
+        for row in (line.decode('utf-8') for line in r.iter_lines()):
+            ms = re.match(sampling_start_re, row)
+            if ms:
+                sampling = True
+                s_row = row
+            if sampling:
+                me = re.match(sampling_end_re, row)
+                if me:
+                    e_row = row
+                    ses = float(s_row.split(',')[1].split(' ')[0])
+                    ees = float(e_row.split(',')[1].split(' ')[0])
+                    timevalue = datetime.fromtimestamp(ses)
+                    cartridge_number = me.group(1)
+                    try:
+                        ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
+                        # Use MeasuredParameter Measurement location for the location of the Sample
+                        logger.info(f"Loading {ESP_ARCHIVE} Sample number {cartridge_number} that filtered for {ees-ses} seconds")
+                        print(f"Loading {ESP_ARCHIVE} Sample number {cartridge_number} that filtered for {ees-ses:.1f} seconds")
+                        stuple = (Sample.objects.using(dbAlias)
+                                    .get_or_create( 
+                                        name = cartridge_number,
+                                        instantpoint = ip,
+                                        geom = Measurement.objects.using(dbAlias).get(instantpoint=ip).geom,
+                                        depth = Measurement.objects.using(dbAlias).get(instantpoint=ip).depth,
+                                        sampletype = esp_archive_type,
+                                        volume = 100
+                                     ))
+                        rtuple = (Resource.objects.using(dbAlias)
+                                    .get_or_create(
+                                        name = 'Seconds away from InstantPoint',
+                                        value = seconds_diff
+                                    ))
+                        # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
+                        logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
+                    except ClosestTimeNotFoundException:
+                        logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
 
 
 class SeabirdLoader(STOQS_Loader):
