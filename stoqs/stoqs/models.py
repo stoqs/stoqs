@@ -448,7 +448,7 @@ class AnalysisMethod(models.Model):
 class Sample(models.Model):
     '''
     A Sample may have a depth value (this is an Oceanographic Query System) and a location (represented by the geom field), 
-    be associated with an InstantPoint and and a SampledParameter (where the measured datavalue is stored).  A Sample
+    be associated with an InstantPoint and a SampledParameter (where the measured datavalue is stored).  A Sample
     differs from a Measurement in that it represents an actual physical sample from which analyses may be made producing
     digital values which may be stored in the SampleParameter table.  Some of the fields have units.  The canonical unit
     values are:
