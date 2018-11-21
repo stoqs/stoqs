@@ -34,7 +34,7 @@ import DAPloaders
 import requests
 import urllib
 
-from SampleLoaders import SeabirdLoader, load_gulps, SubSamplesLoader 
+from SampleLoaders import SeabirdLoader, SubSamplesLoader, ParentSamplesLoader
 from loaders import LoadScript, FileNotFound
 from stoqs.models import InstantPoint
 from django.db.models import Max
@@ -146,6 +146,7 @@ class CANONLoader(LoadScript):
         Support legacy use of loadDorad() and permit wider use by specifying startdate and endate
         '''
         pname = 'dorado'
+        psl = ParentSamplesLoader('', '', dbAlias=self.dbAlias)
         if build_attrs:
             self.logger.info(f'Building load parameter attributes from crawling TDS')
             self.build_dorado_attrs(pname, startdate, enddate, parameters, file_patterns)
@@ -167,7 +168,7 @@ class CANONLoader(LoadScript):
                                            pname, self.colors[pname], 'auv', 'AUV mission', 
                                            self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
                                            plotTimeSeriesDepth=0.0)
-                load_gulps(aname, dfile, self.dbAlias)
+                psl.load_gulps(aname, dfile, self.dbAlias)
             except DAPloaders.DuplicateData as e:
                 self.logger.warn(str(e))
                 self.logger.info(f"Skipping load of {url}")
@@ -193,6 +194,7 @@ class CANONLoader(LoadScript):
         '''
         Loader for tethys, daphne, makai, ahi, aku, 
         '''
+        psl = ParentSamplesLoader('', '', dbAlias=self.dbAlias)
         if build_attrs:
             self.logger.info(f'Building load parameter attributes from crawling TDS')
             self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
@@ -222,6 +224,7 @@ class CANONLoader(LoadScript):
                                           parameters, self.dbAlias, stride, 
                                           grdTerrain=self.grdTerrain, command_line_args=self.args,
                                           plotTimeSeriesDepth=0, auxCoords=aux_coords)
+                psl.load_lrauv_samples(aname, url, self.dbAlias)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
