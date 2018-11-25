@@ -286,14 +286,13 @@ echo Configure and restart sshd for enabling PyCharm interpreter
 sed -i 's#/usr/lib/openssh/sftp-server#/usr/libexec/openssh/sftp-server#' /etc/ssh/sshd_config
 /usr/bin/systemctl restart sshd
 
-# Use STOQS_HOME=/home/vagrant/dev if your host doesn't support NFS file serving
-STOQS_HOME=/vagrant/dev
+# Use STOQS_HOME=/home/vagrant/dev/stoqsgit if your host doesn't support NFS file serving
+STOQS_HOME=/vagrant/dev/stoqsgit
 echo Cloning STOQS repo from https://github.com/stoqs/stoqs.git into $STOQS_HOME... 
 echo ">>> See CONTRIBUTING.md for how to configure your development system so that you can contribute to STOQS"
 
-mkdir $STOQS_HOME
-cd $STOQS_HOME
-git clone --depth=50 https://github.com/stoqs/stoqs.git stoqsgit
+mkdir -p $STOQS_HOME
+git clone --depth=50 https://github.com/stoqs/stoqs.git $STOQS_HOME
 cd stoqsgit
 git config core.preloadindex true
 export PATH="/usr/local/bin:$PATH"
@@ -318,10 +317,10 @@ usermod -aG docker $USER
 
 echo Provisioning and setup have finished. 
 echo Default database loading and STOQS software tests should be run with:
-echo "(These commands are also found in $STOQS_HOME/stoqsgit/README.md)"
+echo "(These commands are also found in $STOQS_HOME/README.md)"
 echo ---------------------------------------------------------------------
 echo vagrant ssh -- -Y
-echo "cd $STOQS_HOME/stoqsgit && source venv-stoqs/bin/activate"
+echo "cd $STOQS_HOME && source venv-stoqs/bin/activate"
 echo export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
 echo ./test.sh CHANGEME load noextraload
 

@@ -18,10 +18,11 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, 
 
 from stoqs.models import (Activity, InstantPoint, Sample, SampleType, Resource,
                           SamplePurpose, SampleRelationship, Parameter, SampledParameter,
-                          MeasuredParameter, AnalysisMethod)
+                          MeasuredParameter, AnalysisMethod, Measurement)
 from loaders.seabird import get_year_lat_lon
 from loaders import STOQS_Loader, SkipRecord
 from datetime import datetime, timedelta
+from decimal import Decimal
 from pydap.model import BaseType, DatasetType
 import csv
 from urllib.request import urlopen, HTTPError
@@ -35,7 +36,7 @@ from bs4 import BeautifulSoup
 
 # Set up logging for module functions
 logger = logging.getLogger(__name__)
-# Logging level set in stoqs/config/common.py, but may override here
+# Logging level set in stoqs/config/settings/common.py, but may override here
 ##logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
@@ -57,6 +58,7 @@ NETTOW = 'NetTow'
 VERTICALNETTOW = 'VerticalNetTow'       # Must contain NETTOW string so that a filter for
 HORIZONTALNETTOW = 'VerticalNetTow'     # name__contains=NETTOW returns both vertical and horizontal net tows
 PLANKTONPUMP = 'PlanktonPump'
+ESP_ARCHIVE = 'ESP_Archive'
 
 class ClosestTimeNotFoundException(Exception):
     pass
@@ -109,66 +111,139 @@ def get_closest_instantpoint(aName, tv, dbAlias):
     logger.debug('i_min = %d', i_min)
     return qs[i_min], secdiff[i_min]
 
-def load_gulps(activityName, auv_file, dbAlias):
+
+class ParentSamplesLoader(STOQS_Loader):
+    '''Holds methods customized for reading sample event information from mainly AUV syslog files
     '''
-    auv_file looks like 'Dorado389_2011_111_00_111_00_decim.nc'.  From hard-coded knowledge of MBARI's filesystem
-    read the associated _gulper.txt file for the survey and load the gulps as samples in the dbAlias database.
-    '''
+    def load_gulps(self, activityName, auv_file, dbAlias):
+        '''
+        auv_file looks like 'Dorado389_2011_111_00_111_00_decim.nc'.  From hard-coded knowledge of MBARI's filesystem
+        read the associated _gulper.txt file for the survey and load the gulps as samples in the dbAlias database.
+        '''
 
-    # Get the Activity from the Database
-    try:
-        activity = Activity.objects.using(dbAlias).get(name__contains=activityName)
-        logger.debug('Got activity = %s', activity)
-    except ObjectDoesNotExist:
-        logger.warn('Failed to find Activity with name like %s.  Skipping GulperLoad.', activityName)
-        return
-    except MultipleObjectsReturned:
-        logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', activityName)
-        activity = Activity.objects.using(dbAlias).filter(name__contains=activityName)[0]
-        
-
-    # Use the dods server to read over http - works from outside of MABRI's Intranet
-    baseUrl = 'http://dods.mbari.org/data/auvctd/surveys/'
-    yyyy = auv_file.split('_')[1].split('_')[0]
-    survey = auv_file.split(r'_decim')[0]
-    # E.g.: http://dods.mbari.org/data/auvctd/surveys/2010/odv/Dorado389_2010_300_00_300_00_Gulper.txt
-    gulperUrl = baseUrl + yyyy + '/odv/' + survey + '_Gulper.txt'
-
-    # Get or create SampleType for Gulper
-    (gulper_type, created) = SampleType.objects.using(dbAlias).get_or_create(name=GULPER)
-    logger.debug('sampletype %s, created = %s', gulper_type, created)
-    with closing(requests.get(gulperUrl, stream=True)) as r:
-        if r.status_code != 200:
-            logger.error('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
+        # Get the Activity from the Database
+        try:
+            activity = Activity.objects.using(dbAlias).get(name__contains=activityName)
+            self.logger.debug('Got activity = %s', activity)
+        except ObjectDoesNotExist:
+            self.logger.warn('Failed to find Activity with name like %s.  Skipping GulperLoad.', activityName)
             return
+        except MultipleObjectsReturned:
+            self.logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', activityName)
+            activity = Activity.objects.using(dbAlias).filter(name__contains=activityName)[0]
+            
 
-        r_decoded = (line.decode('utf-8') for line in r.iter_lines())
-        reader = csv.DictReader(r_decoded, dialect='excel-tab')
-        for row in reader:
-            # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
-            try:
-                timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
-            except TypeError as e:
-                logger.error('%s.  Skipping this Sample - you may want to fix the input file', e)
-                continue
-            try:
-                ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
-                point = 'POINT(%s %s)' % (repr(float(row[r'Lon (degrees_east)']) - 360.0), row[r'Lat (degrees_north)'])
-                stuple = Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
-                                                                    depth = row[r'DEPTH [m]'],
-                                                                    geom = point,
-                                                                    instantpoint = ip,
-                                                                    sampletype = gulper_type,
-                                                                    volume = 1800
-                                                                  )
-                rtuple = Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
-                                                                      value = seconds_diff
-                                                                    )
+        # Use the dods server to read over http - works from outside of MBARI's Intranet
+        baseUrl = 'http://dods.mbari.org/data/auvctd/surveys/'
+        yyyy = auv_file.split('_')[1].split('_')[0]
+        survey = auv_file.split(r'_decim')[0]
+        # E.g.: http://dods.mbari.org/data/auvctd/surveys/2010/odv/Dorado389_2010_300_00_300_00_Gulper.txt
+        gulperUrl = baseUrl + yyyy + '/odv/' + survey + '_Gulper.txt'
 
-                # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
-                logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
-            except ClosestTimeNotFoundException:
-                logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
+        # Get or create SampleType for Gulper
+        (gulper_type, created) = SampleType.objects.using(dbAlias).get_or_create(name=GULPER)
+        self.logger.debug('sampletype %s, created = %s', gulper_type, created)
+        with closing(requests.get(gulperUrl, stream=True)) as r:
+            if r.status_code != 200:
+                self.logger.error('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
+                return
+
+            r_decoded = (line.decode('utf-8') for line in r.iter_lines())
+            reader = csv.DictReader(r_decoded, dialect='excel-tab')
+            for row in reader:
+                # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
+                try:
+                    timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
+                except TypeError as e:
+                    self.logger.error('%s.  Skipping this Sample - you may want to fix the input file', e)
+                    continue
+                try:
+                    ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
+                    point = 'POINT(%s %s)' % (repr(float(row[r'Lon (degrees_east)']) - 360.0), row[r'Lat (degrees_north)'])
+                    stuple = Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
+                                                                        depth = row[r'DEPTH [m]'],
+                                                                        geom = point,
+                                                                        instantpoint = ip,
+                                                                        sampletype = gulper_type,
+                                                                        volume = 1800
+                                                                      )
+                    rtuple = Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
+                                                                          value = seconds_diff
+                                                                        )
+
+                    # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
+                    self.logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
+                except ClosestTimeNotFoundException:
+                    self.logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
+
+    def load_lrauv_samples(self, activityName, url, dbAlias):
+        '''
+        url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
+        There is a syslog file in this folder.  Read from syslog and parse the sampling events to load into the dbAlias database.
+        '''
+
+        sampling_start_re = '.+\[sample #(\d+)\] ESP sampling state: S_FILTERING'
+        sampling_end_re = '.+\[sample #(\d+)\] ESP sampling state: S_STOPPING'
+
+        # Get the Activity from the Database
+        try:
+            activity = Activity.objects.using(dbAlias).get(name__contains=activityName)
+            self.logger.debug('Got activity = %s', activity)
+        except ObjectDoesNotExist:
+            self.logger.warn('Failed to find Activity with name like %s.  Skipping GulperLoad.', activityName)
+            return
+        except MultipleObjectsReturned:
+            self.logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', activityName)
+            activity = Activity.objects.using(dbAlias).filter(name__contains=activityName)[0]
+            
+
+        # Use the dods server to read over http - works from outside of MABRI's Intranet
+        syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
+
+        # Get or create SampleType for Gulper
+        (esp_archive_type, created) = SampleType.objects.using(dbAlias).get_or_create(name=ESP_ARCHIVE)
+        self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
+        with closing(requests.get(syslog_url, stream=True)) as r:
+            if r.status_code != 200:
+                self.logger.error('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
+                return
+
+            sampling = False
+            for row in (line.decode('utf-8') for line in r.iter_lines()):
+                ms = re.match(sampling_start_re, row)
+                if ms:
+                    sampling = True
+                    s_row = row
+                if sampling:
+                    me = re.match(sampling_end_re, row)
+                    if me:
+                        e_row = row
+                        ses = float(s_row.split(',')[1].split(' ')[0])
+                        ees = float(e_row.split(',')[1].split(' ')[0])
+                        timevalue = datetime.fromtimestamp(ses)
+                        cartridge_number = me.group(1)
+                        try:
+                            ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
+                            # Use MeasuredParameter Measurement location for the location of the Sample
+                            self.logger.info(f"Loading {ESP_ARCHIVE} Sample number {cartridge_number} that filtered for {ees-ses} seconds")
+                            stuple = (Sample.objects.using(dbAlias)
+                                        .get_or_create( 
+                                            name = cartridge_number,
+                                            instantpoint = ip,
+                                            geom = Measurement.objects.using(dbAlias).get(instantpoint=ip).geom,
+                                            depth = Decimal(str(round(Measurement.objects.using(dbAlias).get(instantpoint=ip).depth, 2))),
+                                            sampletype = esp_archive_type,
+                                            volume = 100
+                                         ))
+                            rtuple = (Resource.objects.using(dbAlias)
+                                        .get_or_create(
+                                            name = 'Seconds away from InstantPoint',
+                                            value = seconds_diff
+                                        ))
+                            # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
+                            self.logger.info(f'Loaded Sample: {stuple} with Resource: {rtuple}')
+                        except ClosestTimeNotFoundException:
+                            self.logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
 
 
 class SeabirdLoader(STOQS_Loader):
