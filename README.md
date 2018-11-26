@@ -13,7 +13,7 @@ See http://www.stoqs.org.
 
 #### Getting started with a STOQS development system 
 
-First, install [Vagrant](https://www.vagrantup.com/) and and [VirtualBox](https://www.virtualbox.org/)
+First, install [Vagrant](https://www.vagrantup.com/) and [VirtualBox](https://www.virtualbox.org/)
 &mdash; there are standard installers for Mac, Windows, and Linux. (You will also need 
 [X Windows System](doc/instructions/XWINDOWS.md) sofware on your computer.) Then create an empty folder off your 
 home directory such as `Vagrants/stoqsvm`, open a command prompt window, cd to that folder, and enter these 
