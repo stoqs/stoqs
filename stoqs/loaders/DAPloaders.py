@@ -819,7 +819,7 @@ class Base_Loader(STOQS_Loader):
                                         pnames, mtimes, depths, latitudes, longitudes))
         except TypeError:
             # When ac[DEPTH] is a number, convert one time value to a list
-            self.logger.info(f'Got TypeError, assuming coords are single valued and converting to lists:')
+            self.logger.info(f'Assuming coords are single valued and converting to lists')
             mtimes = [from_udunits(float(times.data), time_units)]
             latitudes = [float(latitudes.data)]
             longitudes = [float(longitudes.data)]
@@ -1284,10 +1284,10 @@ class Base_Loader(STOQS_Loader):
                                                        ).order_by('instantpoint__timevalue').values_list('geom')
         try:
             path = LineString([p[0] for p in linestringPoints]).simplify(tolerance=.001)
-        except TypeError as e:
-            self.logger.warn("%s\nSetting path to None", e)
-        except Exception as e:
-            self.logger.error('%s', e)    # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
+        except (TypeError, ValueError) as e:
+            # Likely "LineString requires at least 2 points, got 1."
+            self.logger.warn('%s', e)
+            self.logger.info('Leaving path set to None')
         else:
             if len(path) == 2:
                 self.logger.info("Length of path = 2: path = %s", path)
