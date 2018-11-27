@@ -23,7 +23,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from stoqs import models
 from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL
-from loaders.SampleLoaders import SAMPLED, NETTOW, PLANKTONPUMP
+from loaders.SampleLoaders import SAMPLED, NETTOW, PLANKTONPUMP, ESP_ARCHIVE
 from .utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
 from .utils import (getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, 
                    getShow_All_Parameter_Values, getShow_Parameter_Platform_Data)
@@ -1396,9 +1396,12 @@ class STOQSQManager(object):
         sample_durations = []
         nettow = models.SampleType.objects.using(self.dbname).filter(name__contains=NETTOW)
         planktonpump = models.SampleType.objects.using(self.dbname).filter(name__contains=PLANKTONPUMP)
-        if self.getSampleQS() and (nettow or planktonpump):
-            qs = self.getSampleQS().filter(Q(sampletype=nettow) |
-                                           Q(sampletype=planktonpump)).values_list(
+        esp_archive = models.SampleType.objects.using(self.dbname).filter(name__contains=ESP_ARCHIVE)
+        if self.getSampleQS() and (nettow or planktonpump or esp_archive):
+            qs = self.getSampleQS().filter(  Q(sampletype=nettow)
+                                           | Q(sampletype=planktonpump)
+                                           | Q(sampletype=esp_archive)
+                                          ).values_list(
                                     'instantpoint__timevalue', 
                                     'depth',
                                     'instantpoint__activity__name',
