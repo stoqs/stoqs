@@ -2,24 +2,24 @@ This directory contains laboratory analysis data for a STOQS campaign.
 The data are in version control to serve as an example for how STOQS can
 handle these kind of data.
 
-# Unzip the gzipped files:
+# First, load the stoqs_simz_aug2013 database:
+stoqs/loaders/load.py --db stoqs_simz_aug2013
 
+# Then, unzip the gzipped files:
 gunzip *.csv.gz
 
-
-# Create the Parent Sample data files before running the loadSIMZ_aug2013.py load script:
-
+# And, create the Parent Sample data files:
 ../../nettow.py --database stoqs_simz_aug2013 --subsampleFile 2013_SIMZ_TowNets_STOQS.csv --csvFile 2013_SIMZ_TowNet_ParentSamples.csv -v
 ../../planktonpump.py --database stoqs_simz_aug2013 --subsampleFile SIMZ_2013_PPump_STOQS_tidy_v2.csv --csv_file 2013_SIMZ_PlanktonPump_ParentSamples.csv -v
 
-# In Docker container
-
+# (In Docker container)
 docker exec stoqs stoqs/loaders/nettow.py --database stoqs_simz_aug2013 --subsampleFile /srv/stoqs/loaders/MolecularEcology/SIMZAug2013/2013_SIMZ_TowNets_STOQS.csv --csvFile /srv/stoqs/loaders/MolecularEcology/SIMZAug2013/2013_SIMZ_TowNet_ParentSamples.csv -v
-
 docker exec stoqs stoqs/loaders/planktonpump.py --database stoqs_simz_aug2013 --subsampleFile /srv/stoqs/loaders/MolecularEcology/SIMZAug2013/SIMZ_2013_PPump_STOQS_tidy_v2.csv --csv_file /srv/stoqs/loaders/MolecularEcology/SIMZAug2013/2013_SIMZ_PlanktonPump_ParentSamples.csv -v
 
-# Clean up directory after data load so that 'git status' is clean
+# Reload the toqs_simz_aug2013 database (this is rather brute force, but the load take only about a half hour):
+stoqs/loaders/load.py --db stoqs_simz_aug2013 --clobber
 
+# Clean up directory after data load so that 'git status' is clean
 rm *ParentSamples.csv
 gzip *.csv
 
@@ -27,4 +27,4 @@ gzip *.csv
 
 --
 Mike McCann
-7 April 2017
+27 November 2018
