@@ -224,7 +224,7 @@ class CANONLoader(LoadScript):
                                           parameters, self.dbAlias, stride, 
                                           grdTerrain=self.grdTerrain, command_line_args=self.args,
                                           plotTimeSeriesDepth=0, auxCoords=aux_coords)
-                psl.load_lrauv_samples(aname, url, self.dbAlias)
+                psl.load_lrauv_samples(pname, aname, url, self.dbAlias)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
