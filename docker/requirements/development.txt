@@ -14,7 +14,7 @@ Cython==0.29
 docutils==0.14
 ephem==3.7.6.0
 GDAL==2.3.2
-Genshi==0.7
+Genshi==0.7.1
 h5py==2.8.0
 MarkupSafe==1.1.0
 netCDF4==1.4.2
