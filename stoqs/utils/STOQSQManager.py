@@ -1397,10 +1397,11 @@ class STOQSQManager(object):
         nettow = models.SampleType.objects.using(self.dbname).filter(name__contains=NETTOW)
         planktonpump = models.SampleType.objects.using(self.dbname).filter(name__contains=PLANKTONPUMP)
         esp_archive = models.SampleType.objects.using(self.dbname).filter(name__contains=ESP_ARCHIVE)
-        if self.getSampleQS() and (nettow or planktonpump or esp_archive):
+
+        # Samples for which activity mindepth and maxdepth are sufficient for simpledepthtime display
+        if self.getSampleQS() and (nettow or planktonpump):
             qs = self.getSampleQS().filter(  Q(sampletype=nettow)
                                            | Q(sampletype=planktonpump)
-                                           | Q(sampletype=esp_archive)
                                           ).values_list(
                                     'instantpoint__timevalue', 
                                     'depth',
@@ -1427,6 +1428,38 @@ class STOQSQManager(object):
                 except TypeError:
                     # Likely s[6] and s[7] are None
                     continue
+
+                sample_durations.append(rec)
+
+        # Samples for which we want to use a start depth and an end depth
+        if self.getSampleQS() and (esp_archive):
+            qs = self.getSampleQS().filter( Q(sampletype=esp_archive)
+                                          ).values_list(
+                                    'instantpoint__timevalue', 
+                                    'depth',
+                                    'instantpoint__activity__name',
+                                    'name',
+                                    'instantpoint__activity__startdate',
+                                    'instantpoint__activity__enddate',
+                                    'instantpoint__activity__mindepth',
+                                    'instantpoint__activity__maxdepth',
+                                ).order_by('instantpoint__timevalue')
+            for s in qs:
+                s_ems = int(1000 * to_udunits(s[4], 'seconds since 1970-01-01'))
+                e_ems = int(1000 * to_udunits(s[5], 'seconds since 1970-01-01'))
+                # Sample Activity startdate and enddate must be related to a Measurement
+                m_qs = models.Measurement.objects.using(self.request.META['dbAlias']).filter(
+                            instantpoint__timevalue__gte=s[4], 
+                            instantpoint__timevalue__lte=s[5]).order_by('instantpoint__timevalue')
+                start_depth = m_qs[0].depth
+                end_depth = m_qs.reverse()[0].depth
+                # Kludgy handling of activity names - flot needs 2 items separated by a space to handle sample event clicking
+                if (s[2].find(' ') != -1):
+                    label = '%s %s' % (s[2].split(' ')[0], s[3],)                   # Lop off everything after a space in the activity name
+                else:
+                    label = '%s %s' % (s[2], s[3],)                                 # Show entire Activity name & sample name
+
+                rec = {'label': label, 'data': [[s_ems, '%.2f' % start_depth], [e_ems, '%.2f' % end_depth]]}
 
                 sample_durations.append(rec)
 
