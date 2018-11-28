@@ -9,7 +9,6 @@ Vagrant.configure("2") do |config|
     v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
     v.customize ["modifyvm", :id, "--ioapic", "on"]
     v.customize ["modifyvm", :id, "--vram", "16"]
-    v.customize ["modifyvm", :id, "--accelerate3d", "on"]
   end
   config.vm.box = "bento/centos-7.5"
   config.ssh.forward_agent = true
