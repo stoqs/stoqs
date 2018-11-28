@@ -203,7 +203,11 @@ class ParentSamplesLoader(STOQS_Loader):
 
         sdt = datetime.fromtimestamp(ses)
         edt = datetime.fromtimestamp(ees)
-        m_qs = Measurement.objects.using(db_alias).filter(instantpoint__timevalue__gte=sdt,
+        ip_qs = InstantPoint.objects.using(db_alias).filter(activity__name=activity_name,
+                                                            timevalue__gte=sdt,
+                                                            timevalue__lte=edt).order_by('timevalue')
+        m_qs = Measurement.objects.using(db_alias).filter(instantpoint__activity__name=activity_name,
+                                                          instantpoint__timevalue__gte=sdt,
                                                           instantpoint__timevalue__lte=edt)
         qs = m_qs.aggregate(Min('depth'), Max('depth'), Avg('depth'))
 
@@ -214,8 +218,8 @@ class ParentSamplesLoader(STOQS_Loader):
                             name = f"{short_activity_name}_{sample_type}_{cartridge_number}",
                             comment = f'{sample_type} Sample done in conjunction with LRAUV Activity {activity_name}',
                             platform = platform,
-                            startdate = sdt,
-                            enddate = edt,
+                            startdate = ip_qs[0].timevalue,
+                            enddate = ip_qs.reverse()[0].timevalue,
                             mindepth = qs['depth__min'],
                             maxdepth = qs['depth__max'],
                        )
@@ -223,17 +227,13 @@ class ParentSamplesLoader(STOQS_Loader):
         sample_act.loaded_date = datetime.utcnow()
         sample_act.save(using=db_alias)
 
-        # TODO: Do better connection for Measurement data, simply using the instantpoint
-        # of the last bottle makes the UI show the whole cast as a sampleduration
-        ##ip = self._pumping_instantpoint(r.get('Cast'), r)
-
         # Time and location of Sample (a single value) is midpoint of start and end times
-        timevalue = datetime.fromtimestamp((ses + ees) / 2.0)
+        sample_tv = ip_qs[int(len(ip_qs)/2)].timevalue
         point = LineString([p for p in m_qs.values_list('geom', flat=True)]).centroid
-        ip, _ = InstantPoint.objects.using(db_alias).get_or_create(activity = sample_act, timevalue=timevalue)
+        sample_ip, _ = InstantPoint.objects.using(db_alias).get_or_create(activity=sample_act, timevalue=sample_tv)
         depth = Decimal(str(round(qs['depth__avg'], 2)))
 
-        return sample_act, ip, point, depth
+        return sample_act, sample_ip, point, depth
 
     def load_lrauv_samples(self, platform_name, activity_name, url, db_alias):
         '''
