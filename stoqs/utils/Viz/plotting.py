@@ -22,7 +22,7 @@ from django.db import connections, DatabaseError, transaction
 from datetime import datetime
 from stoqs import models
 from utils.utils import pearsonr, round_to_n, EPOCH_STRING
-from loaders.SampleLoaders import SAMPLED, NETTOW, VERTICALNETTOW
+from loaders.SampleLoaders import SAMPLED, NETTOW, VERTICALNETTOW, PLANKTONPUMP, ESP_ARCHIVE
 from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL, X3D_MODEL_SCALEFACTOR
 import seawater.eos80 as sw
 import numpy as np
@@ -412,11 +412,11 @@ class MeasuredParameter(BaseParameter):
             else:
                 sname.append(s['name'])
 
-        if spanned and act_name == VERTICALNETTOW:
+        if spanned and (act_name == VERTICALNETTOW or act_name == PLANKTONPUMP):
             xsamp = []
             ysamp = []
             sname = []
-            # Build tuples of start and end for the samples so that lines may be drawn, maxdepth is first
+            # Build tuples of start and end for the samples so that lines may be drawn, maxdepth is first for VERTICALNETTOW
             qs = qs.values('instantpoint__activity__startdate', 'instantpoint__activity__enddate', 
                            'instantpoint__activity__maxdepth', 'instantpoint__activity__mindepth', 
                            'instantpoint__activity__name', 'name').distinct()
@@ -642,19 +642,25 @@ class MeasuredParameter(BaseParameter):
                     xsamp, ysamp, sname = self._get_samples_for_markers(exclude_act_name=NETTOW)
                     ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
                     for x,y,sn in zip(xsamp, ysamp, sname):
-                        plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
+                        plt.annotate(sn, xy=(x,y), xytext=(5,-10), textcoords='offset points', fontsize=7)
 
                     # Annotate NetTow Samples at Sample record location - points
                     xsamp, ysamp, sname = self._get_samples_for_markers(act_name=NETTOW)
                     ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
                     for x,y,sn in zip(xsamp, ysamp, sname):
-                        plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
+                        plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords='offset points', fontsize=7)
 
                     # Sample markers for Vertical Net Tows (put circle at surface) - lines
                     xspan, yspan, sname = self._get_samples_for_markers(act_name=VERTICALNETTOW, spanned=True)
                     for xs,ys in zip(xspan, yspan):
                         ax.plot(xs, ys, c='k', lw=2)
                         ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10, edgecolors='k')
+
+                    # Sample markers for Plankton Pumps - lines
+                    xspan, yspan, sname = self._get_samples_for_markers(act_name=PLANKTONPUMP, spanned=True)
+                    for xs,ys in zip(xspan, yspan):
+                        ax.plot(xs, ys, c='k', lw=2)
+                        ax.scatter([xs[1]], [ys[1]], marker='o', c='w', s=15, zorder=10, edgecolors='k')
 
                 if self.contourParameterID is not None:
                     zli = griddata((clx, cly), clz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
