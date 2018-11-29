@@ -3680,13 +3680,21 @@ function enable_cardboard(){
 
         // Add the sampledurations lines, each with a label
         $.each(data['sampledurationsdepthtime'], function (index, sampledurations) {
-            sampledurations["color"] = "#000000";
-            sampledurations["fillColor"] = "#ffffff";
-            sampledurations["points"] = {show: true, fill: true, lineWidth: 1};
-            sampledurations["lines"] = {show: true, lineWidth: 4};
-            sampledurations["hoverable"] = true;
-            sampledurations["clickable"] = true;
-            dataset.push(sampledurations);
+            if (sampledurations.data.length == 2) {
+                sampledurations["color"] = "#000000";
+                sampledurations["fillColor"] = "#ffffff";
+                sampledurations["points"] = {show: true, fill: true, lineWidth: 1};
+                sampledurations["lines"] = {show: true, lineWidth: 4};
+                sampledurations["hoverable"] = true;
+                sampledurations["clickable"] = true;
+                dataset.push(sampledurations);
+            }
+            else {
+                // More than 2 points, draw a 50% transparent line
+                sampledurations["color"] = "#0000007f";
+                sampledurations["lines"] = {show: true, lineWidth: 4};
+                dataset.push(sampledurations);
+            }
         });
 
         return dataset;
@@ -4856,7 +4864,7 @@ function enable_cardboard(){
                 // Make the contour plot if checkbox is checked and is not disabled
                 if ( $('input:radio[name=parameters_plot]').is(':checked') ) {
                     if ( $('input:radio[name=parameters_plot]').is(':checked') || $('input:radio[name=parameters_contour_plot]').is(':checked') ) {
-                        if (data['parameterplatformdatavaluepng'][0]) {
+                        if ( ! $.isEmptyObject(data['parameterplatformdatavaluepng'][0]) ) {
                             var flotdata;
                             var options = simpledepthtime_options_zoom;
                             if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
