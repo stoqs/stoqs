@@ -193,8 +193,8 @@ class ParentSamplesLoader(STOQS_Loader):
 
     def _create_activity_instantpoint_platform(self, db_alias, platform_name, activity_name, sample_type, ses, ees,
                                                cartridge_number):
-        '''Create an Activity and use the InstantPoint of the nearest
-        bottle and connect the Sample. Return the Activity and InstantPoint.
+        '''Create an Activity for the Sample and copy the Measurement locations
+        to create records for drawing the trace of the long duration sample in the UI
         '''
         campaign = Campaign.objects.using(db_alias).filter(activity__name=activity_name)[0]
         lrauv_platform = Platform.objects.using(db_alias).filter(activity__name=activity_name)[0]
@@ -239,7 +239,7 @@ class ParentSamplesLoader(STOQS_Loader):
         sample_tv = ip_qs[int(len(ip_qs)/2)].timevalue
         point = LineString([p for p in m_qs.values_list('geom', flat=True)]).centroid
         sample_ip, _ = InstantPoint.objects.using(db_alias).get_or_create(activity=sample_act, timevalue=sample_tv)
-        depth = Decimal(str(round(qs['depth__avg'], 2)))
+        depth = Decimal(str(round(m_qs[int(len(m_qs)/2)].depth, 2)))
 
         self.insertSimpleDepthTimeSeries(critSimpleDepthTime=0.001)
 
