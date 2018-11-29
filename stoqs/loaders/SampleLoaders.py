@@ -227,11 +227,21 @@ class ParentSamplesLoader(STOQS_Loader):
         sample_act.loaded_date = datetime.utcnow()
         sample_act.save(using=db_alias)
 
+        # Add deep copies of original Activity Measurments to the new Sample Activity to have accurate time and locations
+        self.activity = sample_act
+        for me in m_qs:
+            measurement = self.createMeasurement(mtime=me.instantpoint.timevalue, 
+                                                 depth=me.depth, 
+                                                 lon=me.geom.x,
+                                                 lat=me.geom.y)
+
         # Time and location of Sample (a single value) is midpoint of start and end times
         sample_tv = ip_qs[int(len(ip_qs)/2)].timevalue
         point = LineString([p for p in m_qs.values_list('geom', flat=True)]).centroid
         sample_ip, _ = InstantPoint.objects.using(db_alias).get_or_create(activity=sample_act, timevalue=sample_tv)
         depth = Decimal(str(round(qs['depth__avg'], 2)))
+
+        self.insertSimpleDepthTimeSeries(critSimpleDepthTime=0.001)
 
         return sample_act, sample_ip, point, depth
 
