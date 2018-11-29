@@ -1431,7 +1431,7 @@ class STOQSQManager(object):
 
                 sample_durations.append(rec)
 
-        # Samples for which we want to use a start depth and an end depth
+        # Long duration Samples for which we use the whole depth time series
         if self.getSampleQS() and (esp_archive):
             qs = self.getSampleQS().filter( Q(sampletype=esp_archive)
                                           ).values_list(
@@ -1445,23 +1445,22 @@ class STOQSQManager(object):
                                     'instantpoint__activity__maxdepth',
                                 ).order_by('instantpoint__timevalue')
             for s in qs:
-                s_ems = int(1000 * to_udunits(s[4], 'seconds since 1970-01-01'))
-                e_ems = int(1000 * to_udunits(s[5], 'seconds since 1970-01-01'))
                 # Sample Activity startdate and enddate must be related to a Measurement
                 m_qs = models.Measurement.objects.using(self.request.META['dbAlias']).filter(
                             instantpoint__timevalue__gte=s[4], 
                             instantpoint__timevalue__lte=s[5]).order_by('instantpoint__timevalue')
-                start_depth = m_qs[0].depth
-                end_depth = m_qs.reverse()[0].depth
+                samp_depth_time_series = []
+                for me in m_qs:
+                    samp_depth_time_series.append(
+                        [int(1000 * to_udunits(me.instantpoint.timevalue, 'seconds since 1970-01-01')),
+                         me.depth])
                 # Kludgy handling of activity names - flot needs 2 items separated by a space to handle sample event clicking
                 if (s[2].find(' ') != -1):
                     label = '%s %s' % (s[2].split(' ')[0], s[3],)                   # Lop off everything after a space in the activity name
                 else:
                     label = '%s %s' % (s[2], s[3],)                                 # Show entire Activity name & sample name
 
-                rec = {'label': label, 'data': [[s_ems, '%.2f' % start_depth], [e_ems, '%.2f' % end_depth]]}
-
-                sample_durations.append(rec)
+                sample_durations.append({'label': label, 'data': samp_depth_time_series})
 
         return(sample_durations)
 
