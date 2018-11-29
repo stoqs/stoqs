@@ -4864,7 +4864,7 @@ function enable_cardboard(){
                 // Make the contour plot if checkbox is checked and is not disabled
                 if ( $('input:radio[name=parameters_plot]').is(':checked') ) {
                     if ( $('input:radio[name=parameters_plot]').is(':checked') || $('input:radio[name=parameters_contour_plot]').is(':checked') ) {
-                        if ( ! $.isEmptyObject(data['parameterplatformdatavaluepng'][0]) ) {
+                        if ( ! $.isEmptyObject(data['parameterplatformdatavaluepng']) ) {
                             var flotdata;
                             var options = simpledepthtime_options_zoom;
                             if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
