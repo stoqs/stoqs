@@ -431,6 +431,28 @@ class MeasuredParameter(BaseParameter):
                 ysamp.append((s['instantpoint__activity__maxdepth'], s['instantpoint__activity__mindepth']))
                 sname.append(s['instantpoint__activity__name'])
 
+        if spanned and (act_name == ESP_ARCHIVE):
+            xsamp = []
+            ysamp = []
+            sname = []
+            # Collect all Measurment locations for the Sample Activity
+            for sample in self.sampleQS.select_related('instantpoint__activity'):
+                act = sample.instantpoint.activity
+                xpoints = []
+                ypoints = []
+                for ms in (models.Measurement.objects.using(self.request.META['dbAlias'])
+                                .filter(instantpoint__activity=act)
+                                .order_by('instantpoint__timevalue')):
+                    if self.scale_factor:
+                        xpoints.append(time.mktime(ms.instantpoint.timevalue.timetuple()) / self.scale_factor)
+                    else:
+                        xpoints.append(time.mktime(ms.instantpoint.timevalue.timetuple()))
+                    ypoints.append(ms.depth)
+
+                xsamp.append(xpoints)
+                ysamp.append(ypoints)
+                sname.append(act.name)
+
         return xsamp, ysamp, sname
 
     def _get_color(self, datavalue, cmin, cmax, clt=None):
@@ -661,6 +683,11 @@ class MeasuredParameter(BaseParameter):
                     for xs,ys in zip(xspan, yspan):
                         ax.plot(xs, ys, c='k', lw=2)
                         ax.scatter([xs[1]], [ys[1]], marker='o', c='w', s=15, zorder=10, edgecolors='k')
+
+                    # Sample markers for ESP Archives - thick transparent lines
+                    xspan, yspan, sname = self._get_samples_for_markers(act_name=ESP_ARCHIVE, spanned=True)
+                    for xs,ys in zip(xspan, yspan):
+                        ax.plot(xs, ys, c='k', lw=3, alpha=0.5)
 
                 if self.contourParameterID is not None:
                     zli = griddata((clx, cly), clz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
