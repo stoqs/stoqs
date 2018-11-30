@@ -274,13 +274,20 @@ firewall-cmd --zone=public --add-port=8000/tcp --permanent
 firewall-cmd --zone=public --add-port=80/tcp --permanent
 firewall-cmd --reload
 
-echo Configuring vim edit environment
+echo Configuring vim and ssh
 cd /home/$USER
 cat <<EOT > .vimrc
 :set tabstop=4
 :set expandtab
 :set shiftwidth=4
 EOT
+cat <<EOT > .ssh/config
+Host *
+    ServerAliveInterval 120
+    ServerAliveCountMax 30
+    ConnectTimeout 30
+EOT
+chmod 600 .ssh/config
 
 echo Configure and restart sshd for enabling PyCharm interpreter
 sed -i 's#/usr/lib/openssh/sftp-server#/usr/libexec/openssh/sftp-server#' /etc/ssh/sshd_config
