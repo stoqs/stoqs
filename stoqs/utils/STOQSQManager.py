@@ -1388,15 +1388,16 @@ class STOQSQManager(object):
     def getSampleDurationDepthTime(self):
         '''
         Based on the current selected query criteria for activities, return the associated SampleDuration time series
-        values as a 2 2-tuple list.  Theses are like SampleDepthTime, but have a start and end time/depth.
+        values as a 2 2-tuple list.  Theses are like SampleDepthTime, but have a depth time series.
         The UI uses a different glyph which is why these are delivered in a separate structure.
         The convention for SampleDurations is for one Sample per activity, therefore we can examine the attributes
-        of the activity to get the start and end time and min and max depths. 
+        of the activity to get the start and end time and min and max depths, or the depth time series. 
         '''
         sample_durations = []
         nettow = models.SampleType.objects.using(self.dbname).filter(name__contains=NETTOW)
         planktonpump = models.SampleType.objects.using(self.dbname).filter(name__contains=PLANKTONPUMP)
         esp_archive = models.SampleType.objects.using(self.dbname).filter(name__contains=ESP_ARCHIVE)
+        esp_archive_at = models.ActivityType.objects.using(self.dbname).filter(name__contains=ESP_ARCHIVE)
 
         # Samples for which activity mindepth and maxdepth are sufficient for simpledepthtime display
         if self.getSampleQS() and (nettow or planktonpump):
@@ -1447,6 +1448,7 @@ class STOQSQManager(object):
             for s in qs:
                 # Sample Activity startdate and enddate must be related to a Measurement
                 m_qs = models.Measurement.objects.using(self.request.META['dbAlias']).filter(
+                            instantpoint__activity__activitytype=esp_archive_at,
                             instantpoint__timevalue__gte=s[4], 
                             instantpoint__timevalue__lte=s[5]).order_by('instantpoint__timevalue')
                 samp_depth_time_series = []
