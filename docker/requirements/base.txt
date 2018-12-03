@@ -10,7 +10,7 @@ Django==1.11.16
 django-cache-url==3.0.0
 django-celery==3.2.2
 django-configurations==2.1
-django-debug-toolbar==1.10.1
+django-debug-toolbar==1.11
 django-environ==0.4.5
 django-extensions==2.1.4
 django-model-utils==3.1.2
