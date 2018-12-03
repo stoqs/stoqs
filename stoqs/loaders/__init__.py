@@ -1098,8 +1098,12 @@ class STOQS_Loader(object):
 
         for t,d,k in simple_line:
             try:
-                ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
-                m.SimpleDepthTime.objects.using(self.dbAlias).create(activity = self.activity, instantpoint = ip, depth = d, epochmilliseconds = t)
+                ip = m.InstantPoint.objects.using(self.dbAlias).get(id=pklookup[k])
+                m.SimpleDepthTime.objects.using(self.dbAlias).create(
+                                            activity=self.activity, 
+                                            instantpoint=ip,
+                                            depth=d, 
+                                            epochmilliseconds=t)
             except ObjectDoesNotExist:
                 self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
