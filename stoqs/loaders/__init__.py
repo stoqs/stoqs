@@ -706,6 +706,9 @@ class STOQS_Loader(object):
         @param nomLat: The nominal latitude (e.g. for a timeSeriesProfile featureType) measurement
         @param nomLong: The nominal longitude (e.g. for a timeSeriesProfile featureType) measurement
         @return: An instance of stoqs.models.Measurement
+
+        Note: createMeasurement() is mostly deprecated following implementation of bulk_create in 2018.
+        It is still used for loading small numbers of Measurements in stoqs/loaders/SampleLoaders.py.
         '''
         # Brute force QC check on depth to remove egregous outliers
         minDepth = -1000
@@ -1072,8 +1075,9 @@ class STOQS_Loader(object):
         simple depth time series for display in flot.
         @param critSimpleDepthTime: An integer for the simplification factor, 10 is course, .0001 is fine
         '''
-        vlqs = m.Measurement.objects.using(self.dbAlias).filter( instantpoint__activity=self.activity,
-                                                              ).values_list('instantpoint__timevalue', 'depth', 'instantpoint__pk')
+        vlqs = (m.Measurement.objects.using(self.dbAlias)
+                        .filter(instantpoint__activity=self.activity)
+                        .values_list('instantpoint__timevalue', 'depth', 'instantpoint__pk'))
         line = []
         pklookup = []
         for dt,dd,pk in vlqs:
@@ -1094,8 +1098,12 @@ class STOQS_Loader(object):
 
         for t,d,k in simple_line:
             try:
-                ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
-                m.SimpleDepthTime.objects.using(self.dbAlias).create(activity = self.activity, instantpoint = ip, depth = d, epochmilliseconds = t)
+                ip = m.InstantPoint.objects.using(self.dbAlias).get(id=pklookup[k])
+                m.SimpleDepthTime.objects.using(self.dbAlias).create(
+                                            activity=self.activity, 
+                                            instantpoint=ip,
+                                            depth=d, 
+                                            epochmilliseconds=t)
             except ObjectDoesNotExist:
                 self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
