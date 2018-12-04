@@ -3680,13 +3680,21 @@ function enable_cardboard(){
 
         // Add the sampledurations lines, each with a label
         $.each(data['sampledurationsdepthtime'], function (index, sampledurations) {
-            sampledurations["color"] = "#000000";
-            sampledurations["fillColor"] = "#ffffff";
-            sampledurations["points"] = {show: true, fill: true, lineWidth: 1};
-            sampledurations["lines"] = {show: true, lineWidth: 4};
-            sampledurations["hoverable"] = true;
-            sampledurations["clickable"] = true;
-            dataset.push(sampledurations);
+            if (sampledurations.data.length == 2) {
+                sampledurations["color"] = "#000000";
+                sampledurations["fillColor"] = "#ffffff";
+                sampledurations["points"] = {show: true, fill: true, lineWidth: 1};
+                sampledurations["lines"] = {show: true, lineWidth: 4};
+                sampledurations["hoverable"] = true;
+                sampledurations["clickable"] = true;
+                dataset.push(sampledurations);
+            }
+            else {
+                // More than 2 points, draw a 50% transparent line
+                sampledurations["color"] = "#0000007f";
+                sampledurations["lines"] = {show: true, lineWidth: 4};
+                dataset.push(sampledurations);
+            }
         });
 
         return dataset;
@@ -4856,64 +4864,66 @@ function enable_cardboard(){
                 // Make the contour plot if checkbox is checked and is not disabled
                 if ( $('input:radio[name=parameters_plot]').is(':checked') ) {
                     if ( $('input:radio[name=parameters_plot]').is(':checked') || $('input:radio[name=parameters_contour_plot]').is(':checked') ) {
-                        if (data['parameterplatformdatavaluepng'][0]) {
-                            var flotdata;
-                            var options = simpledepthtime_options_zoom;
-                            if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
-                                // Zoomed
-                                flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
-                                    $('body').data()['start-ems'], $('body').data()['start-depth'], $('body').data()['end-ems'], $('body').data()['end-depth'] ] ] ];
-                                options = $.extend(true, {}, options, {
-                                    series: { images: { show: true } }
+                        if ( ! $.isEmptyObject(data['parameterplatformdatavaluepng']) ) {
+                            if ( ! $.isEmptyObject(data['parameterplatformdatavaluepng'][0]) ) {
+                                var flotdata;
+                                var options = simpledepthtime_options_zoom;
+                                if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
+                                    // Zoomed
+                                    flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
+                                        $('body').data()['start-ems'], $('body').data()['start-depth'], $('body').data()['end-ems'], $('body').data()['end-depth'] ] ] ];
+                                    options = $.extend(true, {}, options, {
+                                        series: { images: { show: true } }
+                                    });
+                                }
+                                else {
+                                    // Not Zooomed
+                                    flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
+                                        timedepthplot.getAxes().xaxis.min, timedepthplot.getAxes().yaxis.min, timedepthplot.getAxes().xaxis.max, timedepthplot.getAxes().yaxis.max] ] ];
+                                    options = $.extend(true, {}, options, {
+                                        series: { images: { show: true } },
+                                        xaxis: { min: timedepthplot.getAxes().xaxis.min, max: timedepthplot.getAxes().xaxis.max },
+                                        yaxis: { min: timedepthplot.getAxes().yaxis.min, max: timedepthplot.getAxes().yaxis.max } 
+                                    });
+                                }
+                                if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
+                                    options = $.extend(true, {}, options, { crosshair: { mode: "x" } });
+                                }
+                                $.plot.image.loadDataImages(flotdata, options, function () {
+                                    $.plot($("#time-depth-flot"), flotdata, options);
                                 });
-                            }
-                            else {
-                                // Not Zooomed
-                                flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
-                                    timedepthplot.getAxes().xaxis.min, timedepthplot.getAxes().yaxis.min, timedepthplot.getAxes().xaxis.max, timedepthplot.getAxes().yaxis.max] ] ];
-                                options = $.extend(true, {}, options, {
-                                    series: { images: { show: true } },
-                                    xaxis: { min: timedepthplot.getAxes().xaxis.min, max: timedepthplot.getAxes().xaxis.max },
-                                    yaxis: { min: timedepthplot.getAxes().yaxis.min, max: timedepthplot.getAxes().yaxis.max } 
-                                });
-                            }
-                            if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
-                                options = $.extend(true, {}, options, { crosshair: { mode: "x" } });
-                            }
-                            $.plot.image.loadDataImages(flotdata, options, function () {
-                                $.plot($("#time-depth-flot"), flotdata, options);
-                            });
 
-                            // Construct text for Plot Data results - more verbose if Lines and Color selected
-                            var plot_data_color, plot_data_lines;
-                            if ( $('input:radio[name=parameters_plot]:checked').val() ) {
-                                plot_data_color = 'Color: ' + $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
-                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()];
-                                // Show colorbar
-                                $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
-                                $('#sectioncolorbarimg').attr('href', '#collapseColormap');
-                                $('#sectioncolorbarimg').attr('title', 'Click to modify colormap').tooltip('fixTitle').tooltip('hide');
+                                // Construct text for Plot Data results - more verbose if Lines and Color selected
+                                var plot_data_color, plot_data_lines;
+                                if ( $('input:radio[name=parameters_plot]:checked').val() ) {
+                                    plot_data_color = 'Color: ' + $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
+                                                      $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()];
+                                    // Show colorbar
+                                    $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
+                                    $('#sectioncolorbarimg').attr('href', '#collapseColormap');
+                                    $('#sectioncolorbarimg').attr('title', 'Click to modify colormap').tooltip('fixTitle').tooltip('hide');
+                                }
+                                else {
+                                    plot_data_color = '';
+                                }
+                                if ( $('input:radio[name=parameters_contour_plot]:checked').val() ) {
+                                    plot_data_lines = 'Lines: ' + $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
+                                                      $('body').data()['parameterplatforms'][$('input:radio[name=parameters_contour_plot]:checked').val()];
+                                }
+                                else {
+                                    plot_data_lines = '';
+                                }
+                                $('#temporalparameterplotinfo').text(plot_data_color);
+                                $('#temporalparameterplotinfo_lines').text(plot_data_lines);
+                                $('#temporalparameterplotinfo').css( { 'color': 'black' } );
+                                $('#temporalparameterstrideinfo').text(data['parameterplatformdatavaluepng'][2]);
                             }
                             else {
-                                plot_data_color = '';
+                                $('#temporalparameterplotinfo').text(data['parameterplatformdatavaluepng'][2]);
+                                $('#temporalparameterplotinfo').css( { 'color': 'red' } );
+                                $('#sectioncolorbarimg').attr('src', '{{STATIC_URL}}images/dummy_colorbar.png');
+                                $('#sectioncolorbarimg').removeAttr('href');
                             }
-                            if ( $('input:radio[name=parameters_contour_plot]:checked').val() ) {
-                                plot_data_lines = 'Lines: ' + $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
-                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_contour_plot]:checked').val()];
-                            }
-                            else {
-                                plot_data_lines = '';
-                            }
-                            $('#temporalparameterplotinfo').text(plot_data_color);
-                            $('#temporalparameterplotinfo_lines').text(plot_data_lines);
-                            $('#temporalparameterplotinfo').css( { 'color': 'black' } );
-                            $('#temporalparameterstrideinfo').text(data['parameterplatformdatavaluepng'][2]);
-                        }
-                        else {
-                            $('#temporalparameterplotinfo').text(data['parameterplatformdatavaluepng'][2]);
-                            $('#temporalparameterplotinfo').css( { 'color': 'red' } );
-                            $('#sectioncolorbarimg').attr('src', '{{STATIC_URL}}images/dummy_colorbar.png');
-                            $('#sectioncolorbarimg').removeAttr('href');
                         }
                     }
                     else {

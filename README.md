@@ -40,9 +40,9 @@ performed from the the directory you installed it in; you must cd to it (e.g. `c
 installation finishes log into your new VM and test it:
 
 ```bash
-vagrant ssh -- -X               # Wait for [vagrant@localhost ~]$ prompt
-export STOQS_HOME=/vagrant/dev  # Use STOQS_HOME=/home/vagrant/dev if not using NFS mount
-cd $STOQS_HOME/stoqsgit && source venv-stoqs/bin/activate
+vagrant ssh -- -X                        # Wait for [vagrant@localhost ~]$ prompt
+export STOQS_HOME=/vagrant/dev/stoqsgit  # Use STOQS_HOME=/home/vagrant/dev/stoqsgit if not using NFS mount
+cd $STOQS_HOME && source venv-stoqs/bin/activate
 export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
 ./test.sh CHANGEME load noextraload
 ```
@@ -51,7 +51,7 @@ In another terminal window start the development server (after a `cd ~/Vagrants/
 
 ```bash
 vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt
-cd $STOQS_HOME/dev/stoqsgit && source venv-stoqs/bin/activate
+cd $STOQS_HOME && source venv-stoqs/bin/activate
 export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
 stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
 ```
@@ -95,6 +95,7 @@ git clone https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit/docker
 cp template.env .env
 chmod 600 .env      # Edit .env to customize (Ensure that STOQS_HOME is set to the full path of stoqsgit)
+cd ../..
 docker-compose build
 docker-compose up
 ```
@@ -138,7 +139,7 @@ In another window monitor its output:
 ```bash
 docker-compose run stoqs tail -f /srv/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
 # Or (The stoqs code is bound as a volume in the container from the GitHub cloned location)
-tail -f $STOQS_HOME/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
+tail -f stoqsgit/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
 ```
 
 

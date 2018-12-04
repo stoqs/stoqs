@@ -207,7 +207,7 @@ class PlanktonPump():
 
     def _create_activity_instantpoint_platform(self, r, duration_minutes, 
                                                planktonpump_name, point):
-        '''Create an Activity and and use the InstantPoint of the nearest 
+        '''Create an Activity and use the InstantPoint of the nearest 
         bottle and connect the Sample. Return the Activity and InstantPoint.
         '''
         campaign = Campaign.objects.using(self.args.database).filter(activity__name__contains=r.get('Cast'))[0]
