@@ -51,8 +51,9 @@ from django.db.backends.utils import CursorWrapper
 if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
 
-# Constant for ParameterGroup name - for utils/STOQSQmanager.py to use
+# Constants for utils/STOQSQmanager.py to use
 SAMPLED = 'Sampled'
+sample_simplify_crit = 0.5
 
 # SampleTypes
 GULPER = 'Gulper'
@@ -241,7 +242,7 @@ class ParentSamplesLoader(STOQS_Loader):
         sample_ip, _ = InstantPoint.objects.using(db_alias).get_or_create(activity=sample_act, timevalue=sample_tv)
         depth = Decimal(str(round(m_qs[int(len(m_qs)/2)].depth, 2)))
 
-        self.insertSimpleDepthTimeSeries(critSimpleDepthTime=0.001)
+        self.insertSimpleDepthTimeSeries(critSimpleDepthTime=sample_simplify_crit)
 
         return sample_act, sample_ip, point, depth
 
