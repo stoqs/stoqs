@@ -259,6 +259,7 @@ class ParentSamplesLoader(STOQS_Loader):
         # Get or create SampleType for Gulper
         (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_ARCHIVE)
         self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
+        self.logger.info(f'Looking for sample #s in {syslog_url}')
 
         with closing(requests.get(syslog_url, stream=True)) as r:
             if r.status_code != 200:
@@ -267,7 +268,7 @@ class ParentSamplesLoader(STOQS_Loader):
 
             # Find start and end strings to get start and end time of sampling (filtering)
             sampling = False
-            for row in (line.decode('utf-8') for line in r.iter_lines()):
+            for row in (line.decode('utf-8', errors='ignore') for line in r.iter_lines()):
                 ms = re.match(sampling_start_re, row)
                 if ms:
                     sampling = True
