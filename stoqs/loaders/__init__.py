@@ -1086,8 +1086,8 @@ class STOQS_Loader(object):
             line.append((ems,d,))
             pklookup.append(pk)
 
-        self.logger.debug('line = %s', line)
         self.logger.info('Number of points in original depth time series = %d', len(line))
+        ##self.logger.debug('line = %s', line)
         try:
             # Original simplify_points code modified: the index from the original line is added as 3rd item in the return
             simple_line = simplify_points(line, critSimpleDepthTime)
