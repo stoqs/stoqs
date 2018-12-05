@@ -30,7 +30,6 @@ from pydap.model import BaseType, DatasetType
 import csv
 from urllib.request import urlopen, HTTPError
 import requests
-from contextlib import closing
 import logging
 from glob import glob
 from tempfile import NamedTemporaryFile
@@ -147,7 +146,7 @@ class ParentSamplesLoader(STOQS_Loader):
         # Get or create SampleType for Gulper
         (gulper_type, created) = SampleType.objects.using(dbAlias).get_or_create(name=GULPER)
         self.logger.debug('sampletype %s, created = %s', gulper_type, created)
-        with closing(requests.get(gulperUrl, stream=True)) as r:
+        with requests.get(gulperUrl, stream=True) as r:
             if r.status_code != 200:
                 self.logger.error('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
                 return
@@ -262,7 +261,7 @@ class ParentSamplesLoader(STOQS_Loader):
         self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
         self.logger.info(f'Looking for sample #s in {syslog_url}')
 
-        with closing(requests.get(syslog_url, stream=True)) as r:
+        with requests.get(syslog_url, stream=True) as r:
             if r.status_code != 200:
                 self.logger.error('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
                 return
@@ -281,11 +280,36 @@ class ParentSamplesLoader(STOQS_Loader):
                         ses = float(s_row.split(',')[1].split(' ')[0])
                         ees = float(e_row.split(',')[1].split(' ')[0])
                         cartridge_number = me.group(1)
+                        self.logger.info(f"Found Sample number {cartridge_number} that filtered for {ees-ses:.2f} seconds")
+
+        self.logger.info(f"Reading {syslog_url} again to load these Samples")
+        with requests.get(syslog_url, stream=False) as r:
+            if r.status_code != 200:
+                self.logger.error('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
+                return
+
+            # Find start and end strings to get start and end time of sampling (filtering)
+            sampling = False
+            for row in (line.decode('utf-8', errors='ignore') for line in r.iter_lines()):
+                ms = re.match(sampling_start_re, row)
+                if ms:
+                    self.logger.debug(f"Setting sampling to True with row={row}")
+                    sampling = True
+                    s_row = row
+                if sampling:
+                    self.logger.debug(f"row={row}")
+                    me = re.match(sampling_end_re, row)
+                    if me:
+                        e_row = row
+                        ses = float(s_row.split(',')[1].split(' ')[0])
+                        ees = float(e_row.split(',')[1].split(' ')[0])
+                        cartridge_number = me.group(1)
+                        self.logger.debug(f"Calling _create_activity_instantpoint_platform() for cartridge_number={cartridge_number}")
                         act, ip, point, depth = self._create_activity_instantpoint_platform(
                                                             db_alias, platform_name, 
                                                             activity_name, esp_archive_type, 
                                                             ses, ees, cartridge_number)
-                        self.logger.info(f"Loading {ESP_ARCHIVE} Sample number {cartridge_number} that filtered for {ees-ses} seconds")
+                        self.logger.info(f"Loading {ESP_ARCHIVE} Sample number {cartridge_number} that filtered for {ees-ses:.2f} seconds")
                         stuple = (Sample.objects.using(db_alias).get_or_create( 
                                         name = cartridge_number,
                                         instantpoint = ip,
@@ -294,6 +318,11 @@ class ParentSamplesLoader(STOQS_Loader):
                                         sampletype = esp_archive_type,
                                         volume = 100))
                         self.logger.info(f'Loaded Sample: {stuple}')
+                        self.logger.debug(f"Setting sampling to False with row={row}")
+                        sampling = False
+
+            if sampling:
+                self.logger.warn(f'Finished reading {syslog_url} while in a sampling state')
 
 
 class SeabirdLoader(STOQS_Loader):
