@@ -384,21 +384,21 @@ class MeasuredParameter(BaseParameter):
         self.depth = self.y
         self.value = self.z
 
-    def _get_samples_for_markers(self, act_name=None, spanned=False, exclude_act_name=None):
+    def _get_samples_for_markers(self, act_type_name=None, spanned=False, exclude_act_type_name=None):
         '''
         Return time, depth, and name of Samples for plotting as symbols.
-        Restrict to activitytype__name if act_name is specified.
+        Restrict to activitytype__name if act_type_name is specified.
         '''
         # Add sample locations and names, but not if the underlying data are from the Samples themselves
         xsamp = []
         ysamp = []
         sname = []
         qs = self.sampleQS.values('instantpoint__timevalue', 'instantpoint__activity__name', 'depth', 'name')
-        if act_name:
-            qs = qs.filter(instantpoint__activity__activitytype__name__contains=act_name)
+        if act_type_name:
+            qs = qs.filter(instantpoint__activity__activitytype__name__contains=act_type_name)
         else:
-            if exclude_act_name:
-                qs = qs.exclude(instantpoint__activity__activitytype__name__contains=exclude_act_name)
+            if exclude_act_type_name:
+                qs = qs.exclude(instantpoint__activity__activitytype__name__contains=exclude_act_type_name)
 
         for s in qs:
             if self.scale_factor:
@@ -406,13 +406,13 @@ class MeasuredParameter(BaseParameter):
             else:
                 xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()))
             ysamp.append(s['depth'])
-            if act_name:
+            if act_type_name:
                 # Convention is to use Activity information for things like NetTows
                 sname.append(s['instantpoint__activity__name'])
             else:
                 sname.append(s['name'])
 
-        if spanned and (act_name == VERTICALNETTOW or act_name == PLANKTONPUMP):
+        if spanned and (act_type_name == VERTICALNETTOW or act_type_name == PLANKTONPUMP):
             xsamp = []
             ysamp = []
             sname = []
@@ -431,12 +431,14 @@ class MeasuredParameter(BaseParameter):
                 ysamp.append((s['instantpoint__activity__maxdepth'], s['instantpoint__activity__mindepth']))
                 sname.append(s['instantpoint__activity__name'])
 
-        if spanned and (act_name == ESP_ARCHIVE):
+        if spanned and (act_type_name == ESP_ARCHIVE):
             xsamp = []
             ysamp = []
             sname = []
             # Collect all Measurment locations for the Sample Activity
-            for sample in self.sampleQS.select_related('instantpoint__activity'):
+            self.logger.debug(f"Getting Samples for {act_type_name}")
+            for sample in (self.sampleQS.select_related('instantpoint__activity')
+                               .filter(instantpoint__activity__activitytype__name=act_type_name)):
                 act = sample.instantpoint.activity
                 xpoints = []
                 ypoints = []
@@ -652,6 +654,7 @@ class MeasuredParameter(BaseParameter):
                         ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2],
                                    norm=self.norm)
                         # Draw any spanned data, e.g. NetTows
+                        self.logger.debug(f"Drawing spanned data: {len(self.xspan)} samples")
                         for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
                             try:
                                 ax.plot(xs, ys, c=self._get_color(z, parm_info[1], parm_info[2]), lw=3)
@@ -661,31 +664,36 @@ class MeasuredParameter(BaseParameter):
 
                 if self.sampleQS and SAMPLED not in self.parameterGroups:
                     # Sample markers for everything but Net Tows
-                    xsamp, ysamp, sname = self._get_samples_for_markers(exclude_act_name=NETTOW)
+                    xsamp, ysamp, sname = self._get_samples_for_markers(exclude_act_type_name=NETTOW)
+                    self.logger.debug(f"Drawing scatter of Net Tows: {len(xsamp)} samples")
                     ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
                     for x,y,sn in zip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-10), textcoords='offset points', fontsize=7)
 
                     # Annotate NetTow Samples at Sample record location - points
-                    xsamp, ysamp, sname = self._get_samples_for_markers(act_name=NETTOW)
+                    xsamp, ysamp, sname = self._get_samples_for_markers(act_type_name=NETTOW)
+                    self.logger.debug(f"Annotating scatter of Net Tows: {len(xsamp)} samples")
                     ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
                     for x,y,sn in zip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords='offset points', fontsize=7)
 
                     # Sample markers for Vertical Net Tows (put circle at surface) - lines
-                    xspan, yspan, sname = self._get_samples_for_markers(act_name=VERTICALNETTOW, spanned=True)
+                    xspan, yspan, sname = self._get_samples_for_markers(act_type_name=VERTICALNETTOW, spanned=True)
+                    self.logger.debug(f"Plotting Vertical Net Tows: {len(xsamp)} samples")
                     for xs,ys in zip(xspan, yspan):
                         ax.plot(xs, ys, c='k', lw=2)
                         ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10, edgecolors='k')
 
                     # Sample markers for Plankton Pumps - lines
-                    xspan, yspan, sname = self._get_samples_for_markers(act_name=PLANKTONPUMP, spanned=True)
+                    xspan, yspan, sname = self._get_samples_for_markers(act_type_name=PLANKTONPUMP, spanned=True)
+                    self.logger.debug(f"Sample markers for Plankton Pumps: {len(xspan)} samples")
                     for xs,ys in zip(xspan, yspan):
                         ax.plot(xs, ys, c='k', lw=2)
                         ax.scatter([xs[1]], [ys[1]], marker='o', c='w', s=15, zorder=10, edgecolors='k')
 
                     # Sample markers for ESP Archives - thick transparent lines
-                    xspan, yspan, sname = self._get_samples_for_markers(act_name=ESP_ARCHIVE, spanned=True)
+                    xspan, yspan, sname = self._get_samples_for_markers(act_type_name=ESP_ARCHIVE, spanned=True)
+                    self.logger.debug(f"Sample markers for ESP Archives: {len(xspan)} samples")
                     for xs,ys in zip(xspan, yspan):
                         ax.plot(xs, ys, c='k', lw=3, alpha=0.5)
 
