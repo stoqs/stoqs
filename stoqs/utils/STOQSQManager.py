@@ -23,7 +23,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from stoqs import models
 from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL
-from loaders.SampleLoaders import SAMPLED, NETTOW, PLANKTONPUMP
+from loaders.SampleLoaders import SAMPLED, NETTOW, PLANKTONPUMP, ESP_ARCHIVE, sample_simplify_crit
 from .utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
 from .utils import (getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, 
                    getShow_All_Parameter_Values, getShow_Parameter_Platform_Data)
@@ -301,7 +301,7 @@ class STOQSQManager(object):
         try:
             approximate_count_localized = locale.format("%d", approximate_count, grouping=True)
         except TypeError:
-            logger.exception('Failed to format approximate_count = %s into a number', approximate_count)
+            logger.warn('Failed to format approximate_count = %s into a number, setting to None', approximate_count)
             approximate_count_localized = None
         
         if actual_count:
@@ -1388,17 +1388,22 @@ class STOQSQManager(object):
     def getSampleDurationDepthTime(self):
         '''
         Based on the current selected query criteria for activities, return the associated SampleDuration time series
-        values as a 2 2-tuple list.  Theses are like SampleDepthTime, but have a start and end time/depth.
+        values as a 2 2-tuple list.  Theses are like SampleDepthTime, but have a depth time series.
         The UI uses a different glyph which is why these are delivered in a separate structure.
         The convention for SampleDurations is for one Sample per activity, therefore we can examine the attributes
-        of the activity to get the start and end time and min and max depths. 
+        of the activity to get the start and end time and min and max depths, or the depth time series. 
         '''
         sample_durations = []
         nettow = models.SampleType.objects.using(self.dbname).filter(name__contains=NETTOW)
         planktonpump = models.SampleType.objects.using(self.dbname).filter(name__contains=PLANKTONPUMP)
+        esp_archive = models.SampleType.objects.using(self.dbname).filter(name__contains=ESP_ARCHIVE)
+        esp_archive_at = models.ActivityType.objects.using(self.dbname).filter(name__contains=ESP_ARCHIVE)
+
+        # Samples for which activity mindepth and maxdepth are sufficient for simpledepthtime display
         if self.getSampleQS() and (nettow or planktonpump):
-            qs = self.getSampleQS().filter(Q(sampletype=nettow) |
-                                           Q(sampletype=planktonpump)).values_list(
+            qs = self.getSampleQS().filter(  Q(sampletype=nettow)
+                                           | Q(sampletype=planktonpump)
+                                          ).values_list(
                                     'instantpoint__timevalue', 
                                     'depth',
                                     'instantpoint__activity__name',
@@ -1426,6 +1431,40 @@ class STOQSQManager(object):
                     continue
 
                 sample_durations.append(rec)
+
+        # Long duration Samples for which we use the whole depth time series
+        if self.getSampleQS() and (esp_archive):
+            qs = self.getSampleQS().filter( Q(sampletype=esp_archive)
+                                          ).values_list(
+                                    'instantpoint__timevalue', 
+                                    'depth',
+                                    'instantpoint__activity__name',
+                                    'name',
+                                    'instantpoint__activity__startdate',
+                                    'instantpoint__activity__enddate',
+                                    'instantpoint__activity__mindepth',
+                                    'instantpoint__activity__maxdepth',
+                                ).order_by('instantpoint__timevalue')
+            for s in qs:
+                # Sample Activity startdate and enddate must be related to a Measurement
+                m_qs = models.Measurement.objects.using(self.request.META['dbAlias']).filter(
+                            instantpoint__activity__activitytype=esp_archive_at,
+                            instantpoint__timevalue__gte=s[4], 
+                            instantpoint__timevalue__lte=s[5]).order_by('instantpoint__timevalue')
+                samp_depth_time_series = []
+                for me in m_qs:
+                    samp_depth_time_series.append(
+                        (int(1000 * to_udunits(me.instantpoint.timevalue, 'seconds since 1970-01-01')),
+                         me.depth))
+                # Kludgy handling of activity names - flot needs 2 items separated by a space to handle sample event clicking
+                if (s[2].find(' ') != -1):
+                    label = '%s %s' % (s[2].split(' ')[0], s[3],)                   # Lop off everything after a space in the activity name
+                else:
+                    label = '%s %s' % (s[2], s[3],)                                 # Show entire Activity name & sample name
+
+                tdk = simplify_points(samp_depth_time_series, sample_simplify_crit)
+                simple_series = [(t,d) for (t,d,_) in tdk]
+                sample_durations.append({'label': label, 'data': simple_series})
 
         return(sample_durations)
 
