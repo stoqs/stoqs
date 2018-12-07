@@ -124,6 +124,7 @@ class MPQuerySet(object):
             try:
                 # Dictionaries
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
+                    # TODO: Fix this to make it a more performant generator - making row takes time
                     row = { 'measurement__depth': mp['measurement__depth'],
                             'measurement__instantpoint__timevalue': mp['measurement__instantpoint__timevalue'],
                             'measurement__instantpoint__activity__name': mp['measurement__instantpoint__activity__name'],
