@@ -369,6 +369,8 @@ class MeasuredParameter(BaseParameter):
                 i = 0
                 self.logger.debug('Slicing with mod division on a counter...')
                 for counter, mp in enumerate(qs_mp):
+                    if counter == 0:
+                        self.logger.debug('Starting to call _fillXYZ()')
                     if counter % stride == 0:
                         self._fillXYZ(mp)
                         i = i + 1
@@ -377,6 +379,8 @@ class MeasuredParameter(BaseParameter):
             else:
                 self.logger.debug('Slicing Pythonicly...')
                 for i, mp in enumerate(qs_mp[::stride]):
+                    if 1 == 0:
+                        self.logger.debug('Starting to call _fillXYZ()')
                     self._fillXYZ(mp)
                     if (i % 1000) == 0:
                         self.logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
