@@ -369,6 +369,8 @@ class MeasuredParameter(BaseParameter):
                 i = 0
                 self.logger.debug('Slicing with mod division on a counter...')
                 for counter, mp in enumerate(qs_mp):
+                    if counter == 0:
+                        self.logger.debug('Starting to call _fillXYZ()')
                     if counter % stride == 0:
                         self._fillXYZ(mp)
                         i = i + 1
@@ -377,6 +379,8 @@ class MeasuredParameter(BaseParameter):
             else:
                 self.logger.debug('Slicing Pythonicly...')
                 for i, mp in enumerate(qs_mp[::stride]):
+                    if 1 == 0:
+                        self.logger.debug('Starting to call _fillXYZ()')
                     self._fillXYZ(mp)
                     if (i % 1000) == 0:
                         self.logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
@@ -442,14 +446,21 @@ class MeasuredParameter(BaseParameter):
                 act = sample.instantpoint.activity
                 xpoints = []
                 ypoints = []
-                for ms in (models.Measurement.objects.using(self.request.META['dbAlias'])
-                                .filter(instantpoint__activity=act)
-                                .order_by('instantpoint__timevalue')):
-                    if self.scale_factor:
-                        xpoints.append(time.mktime(ms.instantpoint.timevalue.timetuple()) / self.scale_factor)
-                    else:
-                        xpoints.append(time.mktime(ms.instantpoint.timevalue.timetuple()))
-                    ypoints.append(ms.depth)
+                self.logger.debug(f"Getting Measurements for {act}")
+
+                if self.scale_factor:
+                    scfac = self.scale_factor
+                else:
+                    scfac = 1.0
+                xstart = time.mktime(act.startdate.timetuple()) / scfac
+                xend = time.mktime(act.enddate.timetuple()) / scfac
+                for x, y in zip(self.x, self.y):
+                    if x >= xstart and x <= xend:
+                        xpoints.append(x)
+                        ypoints.append(y)
+
+                # Need to sort for line plotting as qs_mp is unorderded 
+                xpoints, ypoints = zip(*sorted(zip(xpoints, ypoints)))
 
                 xsamp.append(xpoints)
                 ysamp.append(ypoints)
@@ -695,7 +706,7 @@ class MeasuredParameter(BaseParameter):
                     xspan, yspan, sname = self._get_samples_for_markers(act_type_name=ESP_ARCHIVE, spanned=True)
                     self.logger.debug(f"Sample markers for ESP Archives: {len(xspan)} samples")
                     for xs,ys in zip(xspan, yspan):
-                        ax.plot(xs, ys, c='k', lw=3, alpha=0.5)
+                        ax.plot(xs, ys, c='k', lw=1, alpha=0.5)
 
                 if self.contourParameterID is not None:
                     zli = griddata((clx, cly), clz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)

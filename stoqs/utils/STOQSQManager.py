@@ -1434,37 +1434,22 @@ class STOQSQManager(object):
 
         # Long duration Samples for which we use the whole depth time series
         if self.getSampleQS() and (esp_archive):
-            qs = self.getSampleQS().filter( Q(sampletype=esp_archive)
-                                          ).values_list(
-                                    'instantpoint__timevalue', 
-                                    'depth',
-                                    'instantpoint__activity__name',
-                                    'name',
-                                    'instantpoint__activity__startdate',
-                                    'instantpoint__activity__enddate',
-                                    'instantpoint__activity__mindepth',
-                                    'instantpoint__activity__maxdepth',
-                                ).order_by('instantpoint__timevalue')
-            for s in qs:
-                # Sample Activity startdate and enddate must be related to a Measurement
-                m_qs = models.Measurement.objects.using(self.request.META['dbAlias']).filter(
-                            instantpoint__activity__activitytype=esp_archive_at,
-                            instantpoint__timevalue__gte=s[4], 
-                            instantpoint__timevalue__lte=s[5]).order_by('instantpoint__timevalue')
+            samples = (self.qs.filter(activitytype=esp_archive_at).order_by('name'))
+            for samp in samples:
+                sample_number = samp.name.split('_')[-1]
                 samp_depth_time_series = []
-                for me in m_qs:
-                    samp_depth_time_series.append(
-                        (int(1000 * to_udunits(me.instantpoint.timevalue, 'seconds since 1970-01-01')),
-                         me.depth))
-                # Kludgy handling of activity names - flot needs 2 items separated by a space to handle sample event clicking
-                if (s[2].find(' ') != -1):
-                    label = '%s %s' % (s[2].split(' ')[0], s[3],)                   # Lop off everything after a space in the activity name
+                for td in (self.qs.filter(name=samp.name)
+                                   .values_list('simpledepthtime__epochmilliseconds',
+                                                'simpledepthtime__depth', 'name')
+                                   .order_by('simpledepthtime__epochmilliseconds')):
+                    samp_depth_time_series.append([td[0], td[1]])
+                    
+                if ' ' in samp.name:
+                    label = '%s %s' % (samp.name.split(' ')[0], sample_number)  # Lop off everything after first space in the activity name
                 else:
-                    label = '%s %s' % (s[2], s[3],)                                 # Show entire Activity name & sample name
+                    label = '%s %s' % (samp.name, sample_number)                # Show entire Activity name & sample name
 
-                tdk = simplify_points(samp_depth_time_series, sample_simplify_crit)
-                simple_series = [(t,d) for (t,d,_) in tdk]
-                sample_durations.append({'label': label, 'data': simple_series})
+                sample_durations.append({'label': label, 'data': samp_depth_time_series})
 
         return(sample_durations)
 
