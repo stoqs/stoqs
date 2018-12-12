@@ -24,6 +24,7 @@ from stoqs.models import (Activity, InstantPoint, Sample, SampleType, Resource,
                           Platform, PlatformType, ActivityType)
 from loaders.seabird import get_year_lat_lon
 from loaders import STOQS_Loader, SkipRecord
+from collections import defaultdict
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pydap.model import BaseType, DatasetType
@@ -228,12 +229,22 @@ class ParentSamplesLoader(STOQS_Loader):
         sample_act.save(using=db_alias)
 
         # Add deep copies of original Activity Measurments to the new Sample Activity to have accurate time and locations
+        # and statistics of the MeasuredParameters for the Sample
         self.activity = sample_act
+        parameter_counts = defaultdict(lambda:0)
         for me in m_qs:
             measurement = self.createMeasurement(mtime=me.instantpoint.timevalue, 
                                                  depth=me.depth, 
                                                  lon=me.geom.x,
                                                  lat=me.geom.y)
+            for mp in MeasuredParameter.objects.using(db_alias).filter(measurement=me):
+                parameter_counts[mp.parameter] += 1
+                samp_mp = MeasuredParameter(measurement=measurement, 
+                                            parameter=mp.parameter, 
+                                            datavalue=mp.datavalue)
+                samp_mp.save(using=db_alias)
+
+        self.update_activityparameter_stats(db_alias, sample_act, parameter_counts)
 
         # Time and location of Sample (a single value) is midpoint of start and end times
         sample_tv = ip_qs[int(len(ip_qs)/2)].timevalue

@@ -340,6 +340,7 @@
         <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
         <Group id='spatial-3d-root' render='true'>
           <Group id='spatial-3d-scene' def="spatial-3d-scene">
+            <Group id="mp-x3d-track"></Group>
             <GeoOriginTransform containerField='children'>
               <Group id="mp-x3d-terrain">
               </Group>
@@ -5061,22 +5062,15 @@ function enable_cardboard(){
                 if (data[key]) {
                     if (data[key]['points']) {
                         if ( ! $.isEmptyObject(data.measuredparameterx3d.points) ) {
-                            if ( $('#mp-x3d-track').length == 0) {
-                                $('#spatial-3d-scene').append([
-                                    '<Shape id="mp-x3d-track">',
-                                        '<Appearance><LineProperties linewidthScaleFactor="5"></LineProperties></Appearance>',
-                                        '<indexedlineset coordIndex="' + data.measuredparameterx3d.index + '">',
-                                            '<color color="' + data.measuredparameterx3d.colors + '"></color>',
-                                            '<geocoordinate point="' + data.measuredparameterx3d.points  + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>',
-                                        '</indexedlineset>',
-                                    '</Shape>'
-                                ].join(''));
-
-                                // Cycle viewpoint binding to fix NavigationInfo speed increase issue
-                                var viewpoint = $('#spatial-3d-x3d')[0].runtime.viewpoint();
-                                viewpoint._vf.bind = 'false';
-                                viewpoint._vf.bind = 'true';
-                            }
+                            $('#mp-x3d-track').replaceWith([
+                                '<Shape id="mp-x3d-track">',
+                                    '<Appearance><LineProperties linewidthScaleFactor="5"></LineProperties></Appearance>',
+                                    '<indexedlineset coordIndex="' + data.measuredparameterx3d.index + '">',
+                                        '<color color="' + data.measuredparameterx3d.colors + '"></color>',
+                                        '<geocoordinate point="' + data.measuredparameterx3d.points  + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>',
+                                    '</indexedlineset>',
+                                '</Shape>'
+                            ].join(''));
                         }
                         $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data.measuredparameterx3d.colorbar + '" />');
                     }
@@ -5133,11 +5127,6 @@ function enable_cardboard(){
                     if (has_rotaxes) {
                         show_geox3drotaxis($('#showgeox3drotaxis').is(':checked'));
                     }
-
-                    // Cycle viewpoint binding to fix NavigationInfo speed increase issue
-                    var viewpoint = $('#spatial-3d-x3d')[0].runtime.viewpoint();
-                    viewpoint._vf.bind = 'false';
-                    viewpoint._vf.bind = 'true';
                 }
                 else {
                     if ( ! $.isEmptyObject(data[key]['message']) ) {
