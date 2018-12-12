@@ -249,6 +249,7 @@ class PlatformAnimation(object):
         if platform.name not in self.angle_by_plat:
             self.angle_by_plat[platform.name] = []
 
+        # Specific for BEDs data, or other platforms that have these Parameters in their NetCDF files
         for mp in pqs.filter(parameter__name='AXIS_X'):
             self.axis_x_by_plat[platform.name].append(mp['datavalue'])
         for mp in pqs.filter(parameter__name='AXIS_Y'):
@@ -394,10 +395,22 @@ class PlatformAnimation(object):
                 pitch = self.pitch_by_plat[pName][0]
                 yaw = self.yaw_by_plat[pName][0]
                 roll = self.roll_by_plat[pName][0]
-                axis_x = self.axis_x_by_plat[pName][0]
-                axis_y = self.axis_y_by_plat[pName][0]
-                axis_z = self.axis_z_by_plat[pName][0]
-                angle = self.angle_by_plat[pName][0]
+                try:
+                    axis_x = self.axis_x_by_plat[pName][0]
+                except IndexError:
+                    axis_x = None
+                try:
+                    axis_y = self.axis_y_by_plat[pName][0]
+                except IndexError:
+                    axis_y = None
+                try:
+                    axis_z = self.axis_z_by_plat[pName][0]
+                except IndexError:
+                    axis_z = None
+                try:
+                    angle = self.angle_by_plat[pName][0]
+                except IndexError:
+                    angle = None
 
                 self._append_animation_values(st_ems, et_ems, pName, lat, lon, depth, t, vert_ex,
                                               pitch, yaw, roll, axis_x, axis_y, axis_z, angle)
