@@ -452,15 +452,14 @@ class MeasuredParameter(BaseParameter):
                     scfac = self.scale_factor
                 else:
                     scfac = 1.0
-                xstart = time.mktime(act.startdate.timetuple()) / scfac
-                xend = time.mktime(act.enddate.timetuple()) / scfac
-                for x, y in zip(self.x, self.y):
-                    if x >= xstart and x <= xend:
-                        xpoints.append(x)
-                        ypoints.append(y)
 
-                # Need to sort for line plotting as qs_mp is unorderded 
-                xpoints, ypoints = zip(*sorted(zip(xpoints, ypoints)))
+                # Get already simplified depth and time points from simpledepthtime
+                for td in (self.qs.filter(instantpoint__sample=sample)
+                                  .values_list('simpledepthtime__epochmilliseconds',
+                                               'simpledepthtime__depth')
+                                  .order_by('simpledepthtime__epochmilliseconds')):
+                    xpoints.append(td[0] / scfac / 1000.0)
+                    ypoints.append(td[1])
 
                 xsamp.append(xpoints)
                 ysamp.append(ypoints)
