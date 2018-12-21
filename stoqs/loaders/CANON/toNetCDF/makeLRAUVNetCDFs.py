@@ -183,6 +183,8 @@ def processResample(pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendS
         raise ie
     except KeyError:
         raise ServerError("Key error - can't read parameters from {}".format(url_in))
+    except ValueError as e:
+        raise ServerError("ValueError: {} - can't read parameters from {}".format(e, url_in))
 
     url_o = url_out
     return url_o
@@ -255,7 +257,20 @@ if __name__ == '__main__':
         try:
             startDatetime, endDatetime = getNcStartEnd(args.inDir, u, 'time_time')
         except Exception as e:
-            logger.warn(str(e))
+            # Write a message to the .log file for the expected output file so that
+            # lrauv-data-file-audit.sh can detect the problem
+            log_file = os.path.join(args.inDir, '/'.join(u.split('/')[9:]))
+            log_file = log_file.replace('.nc4', '_' + args.resampleFreq + '_' + args.appendString + '.log')
+
+            fh = logging.FileHandler(log_file, 'w+')
+            frm = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
+            fh.setFormatter(frm)
+            logger.addHandler(fh)
+            logger.warn(f"Can't get start and end date from .nc4: time_time not found in {u}")
+            fh.close()
+            sh = logging.StreamHandler()
+            sh.setFormatter(frm)
+            logger.handlers = [sh]
             continue
 
         logger.debug('startDatetime, endDatetime = {}, {}'.format(startDatetime, endDatetime))
