@@ -168,10 +168,13 @@ class BaseParameter(object):
                                             orientation='horizontal')
             try:
                 cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(parm_info[0]))
-                if cp.units in cp.name:
-                    cb.set_label(cp.name)
+                if cp.units:
+                    if cp.units in cp.name:
+                        cb.set_label(cp.name)
+                    else:
+                        cb.set_label(f"{cp.name} ({cp.units})")
                 else:
-                    cb.set_label(f"{cp.name} ({cp.units})")
+                    cb.set_label(cp.name)
             except (ValueError, models.Parameter.DoesNotExist):
                 # Likely a coordinate variable
                 cp = models.Parameter
@@ -1107,10 +1110,13 @@ class ParameterParameter(BaseParameter):
                                                 orientation='horizontal')
                 try:
                     cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
-                    if cp.units in cp.name:
-                        cb.set_label(cp.name)
+                    if cp.units:
+                        if cp.units in cp.name:
+                            cb.set_label(cp.name)
+                        else:
+                            cb.set_label(f"{cp.name} ({cp.units})")
                     else:
-                        cb.set_label(f"{cp.name} ({cp.units})")
+                        cb.set_label(cp.name)
                 except ValueError:
                     # Likely a coordinate variable
                     cp = models.Parameter
