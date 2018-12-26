@@ -76,6 +76,24 @@ class InterpolatorWriter(BaseWriter):
         self.nudged_file = {}
         self.tracking_file = {}
 
+    def get_deployment_name(self, log_dir):
+        '''Navigate to .dlist file in the parent directory and return the given Deployment Name
+        '''
+        file_name = os.path.basename(os.path.abspath(os.path.join(log_dir, os.pardir))) + '.dlist'
+        dlist_path = os.path.abspath(os.path.join(log_dir, os.pardir, os.pardir, file_name))
+
+        # This is how lrauv-tools/handle-lrauv-logs/*/scripts/dlist-tools.py parses the Name
+        with open(dlist_path, 'r') as d:
+            dlist_lines = [line.strip() for line in d]
+
+        try:
+            key, value = dlist_lines[0].split(': ', 1)
+            deployment_name = value.strip()
+        except ValueError:
+            deployment_name = ''
+
+        return deployment_name
+
     def write_netcdf(self, out_file, in_url):
 
         # Check parent directory and create if needed
@@ -90,8 +108,14 @@ class InterpolatorWriter(BaseWriter):
         logger.debug("Creating netCDF file %s", out_file)
         self.ncFile = Dataset(out_file, 'w')
 
-        # If specified on command line override the default generic title with what is specified
-        self.ncFile.title = 'LRAUV interpolated data'
+        # Lead the title with the Deployment Name form the .dlist file - if it exists
+        # also save it in a 'deployment_name' global attribute
+        deployment_name = self.get_deployment_name(dirName)
+        if deployment_name:
+            self.ncFile.title = deployment_name + ' - LRAUV interpolated data'
+            self.ncFile.deployment_name = deployment_name
+        else:
+            self.ncFile.title = 'LRAUV interpolated data'
 
         # Combine any summary text specified on command line with the generic summary stating the original source file
         self.ncFile.summary = 'Observational oceanographic data translated with modification from original data file %s' % in_url
