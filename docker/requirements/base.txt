@@ -1,4 +1,4 @@
-aiohttp==3.4.4
+aiohttp==3.5.1
 beautifulsoup4==4.6.3
 celery==4.2.1
 cmocean==1.2
@@ -54,7 +54,7 @@ seawater==3.3.4
 selenium==3.141.0
 simplejson==3.16.0
 slacker==0.12.0
-Sphinx==1.8.2
+Sphinx==1.8.3
 sphinx-rtd-theme==0.4.2
 sqlparse==0.2.4
 thredds-crawler==1.5.4
