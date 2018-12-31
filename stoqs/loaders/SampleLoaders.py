@@ -193,7 +193,7 @@ class ParentSamplesLoader(STOQS_Loader):
         return platform
 
     def _create_activity_instantpoint_platform(self, db_alias, platform_name, activity_name, sample_type, ses, ees,
-                                               cartridge_number):
+                                               sample_name):
         '''Create an Activity for the Sample and copy the Measurement locations
         to create records for drawing the trace of the long duration sample in the UI
         '''
@@ -216,7 +216,7 @@ class ParentSamplesLoader(STOQS_Loader):
         sample_act, _ = Activity.objects.using(db_alias).get_or_create(
                             campaign = campaign,
                             activitytype = at,
-                            name = f"{short_activity_name}_{sample_type}_{cartridge_number}",
+                            name = f"{short_activity_name}_{sample_type}_{sample_name}",
                             comment = f'{sample_type} Sample done in conjunction with LRAUV Activity {activity_name}',
                             platform = platform,
                             startdate = ip_qs[0].timevalue,
@@ -263,6 +263,8 @@ class ParentSamplesLoader(STOQS_Loader):
         '''
         sampling_start_re = '.+\[sample #(\d+)\] ESP sampling state: S_FILTERING'
         sampling_end_re = '.+\[sample #(\d+)\] ESP sampling state: S_STOPPING'
+        no_num_sampling_start_re = '.+ ESP sampling state: S_FILTERING'
+        no_num_sampling_end_re = '.+ ESP sampling state: S_STOPPING'
 
         # Use the dods server to read LRAUV syslog file over http - works from outside of MBARI's Intranet
         syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
@@ -270,39 +272,21 @@ class ParentSamplesLoader(STOQS_Loader):
         # Get or create SampleType for Gulper
         (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_ARCHIVE)
         self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
+
         self.logger.info(f'Looking for sample #s in {syslog_url}')
-
-        with requests.get(syslog_url, stream=True) as r:
-            if r.status_code != 200:
-                self.logger.error('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
-                return
-
-            # Find start and end strings to get start and end time of sampling (filtering)
-            sampling = False
-            for row in (line.decode('utf-8', errors='ignore') for line in r.iter_lines()):
-                ms = re.match(sampling_start_re, row)
-                if ms:
-                    sampling = True
-                    s_row = row
-                if sampling:
-                    me = re.match(sampling_end_re, row)
-                    if me:
-                        e_row = row
-                        ses = float(s_row.split(',')[1].split(' ')[0])
-                        ees = float(e_row.split(',')[1].split(' ')[0])
-                        cartridge_number = me.group(1)
-                        self.logger.info(f"Found Sample number {cartridge_number} that filtered for {ees-ses:.2f} seconds")
-
-        self.logger.info(f"Reading {syslog_url} again to load these Samples")
         with requests.get(syslog_url, stream=False) as r:
             if r.status_code != 200:
-                self.logger.error('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
+                self.logger.error('Cannot read %s, r.status_code = %s', syslog_url, r.status_code)
                 return
 
             # Find start and end strings to get start and end time of sampling (filtering)
             sampling = False
+            seq_num = 0
             for row in (line.decode('utf-8', errors='ignore') for line in r.iter_lines()):
                 ms = re.match(sampling_start_re, row)
+                if not ms:
+                    # Check for early syslog message with no sample #
+                    ms = re.match(no_num_sampling_start_re, row)
                 if ms:
                     self.logger.debug(f"Setting sampling to True with row={row}")
                     sampling = True
@@ -310,19 +294,30 @@ class ParentSamplesLoader(STOQS_Loader):
                 if sampling:
                     self.logger.debug(f"row={row}")
                     me = re.match(sampling_end_re, row)
+                    if not me:
+                        # Check for early syslog message with no sample #
+                        me = re.match(no_num_sampling_end_re, row)
                     if me:
                         e_row = row
                         ses = float(s_row.split(',')[1].split(' ')[0])
                         ees = float(e_row.split(',')[1].split(' ')[0])
-                        cartridge_number = me.group(1)
-                        self.logger.debug(f"Calling _create_activity_instantpoint_platform() for cartridge_number={cartridge_number}")
+                        try:
+                            sample_name = f"Sample #{me.group(1)}"
+                            self.logger.info(f"Found Sample number {sample_name} that filtered for {ees-ses:.2f} seconds")
+                        except IndexError:
+                            # Use a sequence number for the syslog file to number the no number samples
+                            seq_num += 1
+                            sample_name = f"Seq {seq_num}"
+                            self.logger.info(f"Found Sample with no number that filtered for {ees-ses:.2f} seconds")
+
+                        self.logger.debug(f"Calling _create_activity_instantpoint_platform() for sample_name={sample_name}")
                         act, ip, point, depth = self._create_activity_instantpoint_platform(
                                                             db_alias, platform_name, 
                                                             activity_name, esp_archive_type, 
-                                                            ses, ees, cartridge_number)
-                        self.logger.info(f"Loading {ESP_ARCHIVE} Sample number {cartridge_number} that filtered for {ees-ses:.2f} seconds")
+                                                            ses, ees, sample_name)
+                        self.logger.info(f"Loading {ESP_ARCHIVE} Sample {sample_name} that filtered for {ees-ses:.2f} seconds")
                         stuple = (Sample.objects.using(db_alias).get_or_create( 
-                                        name = cartridge_number,
+                                        name = sample_name,
                                         instantpoint = ip,
                                         geom = point,
                                         depth = depth,
