@@ -496,9 +496,15 @@ local   all             all                                     peer
                 self.logger.info('Dropping indexes...')
                 self._drop_indexes()
             else:
-                call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
+                try:
+                    call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
+                except TypeError:
+                    call_command('makemigrations', 'stoqs', settings='config.settings.local', interactive=False)
 
-            call_command('migrate', settings='config.settings.local', noinput=True, database=db)
+            try:
+                call_command('migrate', settings='config.settings.local', noinput=True, database=db)
+            except TypeError:
+                call_command('migrate', settings='config.settings.local', interactive=False, database=db)
 
             if create_only:
                 return
