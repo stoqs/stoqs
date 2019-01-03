@@ -12,7 +12,7 @@ from stoqs.views import (showActivityResource, showActivityParameter, showActivi
                          showParameterResource, showParameter, showPlatformResource,
                          showPlatformType, showPlatform, showResourceResource,
                          showResourceType, showResource, showSampleType, showSamplePurpose,
-                         showSample, showSimpleDepthTime)
+                         showSample, showSimpleDepthTime, showNominalLocation)
 from stoqs.views.app import (showMeasuredParameter, showSampledParameter, 
                              showActivityParameterHistogram, showResourceActivity,
                              showSampleDT, showQuickLookPlots)
@@ -64,6 +64,7 @@ urlpatterns = [
     url(pre + r'api/samplepurpose.?'     + formatPat, showSamplePurpose,     {}, name='show-samplepuspose'),
     url(pre + r'api/sample.?'            + formatPat, showSample,            {}, name='show-sample'),
     url(pre + r'api/simpledepthtime.?'   + formatPat, showSimpleDepthTime,   {}, name='show-simpledepthtime'),
+    url(pre + r'api/nominallocation.?'   + formatPat, showNominalLocation,   {}, name='show-nominallocation'),
 
     # Requests that override BaseOutputer
     url(pre + r'api/measuredparameter.?' + formatPat, showMeasuredParameter,  {}, name='show-measuredparmeter'),
