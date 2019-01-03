@@ -1211,7 +1211,7 @@ class STOQS_Loader(object):
             nomDepth = nl.depth
             self.logger.debug('nomDepth = %s', nomDepth)
             # Collect depth time series into a timeseries by activity and nominal depth hash
-            ndlqs = m.Measurement.objects.using(self.dbAlias).filter( instantpoint__activity=self.activity, nominallocation__depth=nomDepth
+            ndlqs = m.Measurement.objects.using(self.dbAlias).filter( instantpoint__activity=self.activity, nominallocation=nl
                                         ).values_list('instantpoint__timevalue', 'depth', 'instantpoint__pk').order_by('instantpoint__timevalue')
             line = []
             pklookup = []
