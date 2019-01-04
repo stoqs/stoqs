@@ -796,7 +796,7 @@ class Base_Loader(STOQS_Loader):
         for de, lo, la in zip(depths, longitudes, latitudes):
             # Accept depths that are 0.0, but not latitudes and longitudes that are zero
             if de is not None and lo and la:
-                yield Measurement(depth=repr(de), geom=f'POINT({repr(lo)} {repr(la)})')
+                yield Measurement(depth=repr(de), geom=Point(float(lo), float(la)))
             else:
                 yield None
 
@@ -1159,7 +1159,7 @@ class Base_Loader(STOQS_Loader):
                             latitudes = longitudes
                             longitudes = tmp_var
 
-                        points = [f'POINT({repr(longitudes)} {repr(latitudes)})'] * len(list(mtimes))
+                        points = [Point(longitudes, latitudes) for i in range(len(list(mtimes)))]
 
                     # Need a set of points for all the timeseriesprofile depths
                     points = points * len(list(depths))
@@ -1194,7 +1194,7 @@ class Base_Loader(STOQS_Loader):
                     time_axes_loaded.add(ac[TIME])
 
                     if nomLon and nomLat:
-                        nom_point = f'POINT({repr(nomLon)} {repr(nomLat)})'
+                        nom_point = Point(float(nomLon), float(nomLat))
 
                     # Expect that nomDepths is a numpy array, even it is single-valued
                     if nomDepths.any() and nom_point:
@@ -1349,10 +1349,11 @@ class Base_Loader(STOQS_Loader):
                 lat = set([p.y for p in NominalLocation.objects.using(self.dbAlias)
                                         .filter(activity=self.activity)
                                         .values_list('geom', flat=True)])
-                if len(lon) != 1 or len(lat) != 1:
-                    self.logger.error(f"For activity={self.activity} length of nominal latitudes and longitudes != 1")
-                else:
-                    stationPoint = Point(lon.pop(), lat.pop())
+                if lon and lat:
+                    if len(lon) != 1 or len(lat) != 1:
+                        self.logger.error(f"For activity={self.activity} length of nominal latitudes and longitudes != 1")
+                    else:
+                        stationPoint = Point(lon.pop(), lat.pop())
 
         # Add additional Parameters for all appropriate Measurements
         self.logger.info("Adding SigmaT and Spiciness to the Measurements...")
@@ -1454,7 +1455,7 @@ class Base_Loader(STOQS_Loader):
                 logger.info(f'Loading values for Parameter {key}')
             last_key = key
 
-            point = f'POINT({repr(longitude)} {repr(latitude)})'
+            point = Point(longitude, latitude)
 
             self.param_by_key[key] = self.getParameterByName(key)
             self.parameter_counts[self.param_by_key[key]] += 1

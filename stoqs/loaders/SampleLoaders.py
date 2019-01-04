@@ -14,7 +14,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../") )
 os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 from django.conf import settings
-from django.contrib.gis.geos import LineString
+from django.contrib.gis.geos import LineString, Point
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.db.models import Q, Min, Max, Avg
 
@@ -163,7 +163,7 @@ class ParentSamplesLoader(STOQS_Loader):
                     continue
                 try:
                     ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
-                    point = 'POINT(%s %s)' % (repr(float(row[r'Lon (degrees_east)']) - 360.0), row[r'Lat (degrees_north)'])
+                    point = Point(float(row[r'Lon (degrees_east)']) - 360.0, float(row[r'Lat (degrees_north)']))
                     stuple = Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
                                                                         depth = row[r'DEPTH [m]'],
                                                                         geom = point,
@@ -487,7 +487,7 @@ class SeabirdLoader(STOQS_Loader):
         self.logger.debug('samplepurpose %s, created = %s', sample_purpose, created)
         try:
             ip, _ = get_closest_instantpoint(self.activityName, timevalue, self.dbAlias)
-            point = 'POINT(%s %s)' % (lon, lat)
+            point = Point(lon, lat)
             Sample.objects.using(self.dbAlias).get_or_create( name = bottleName,
                                                                     depth = str(depth),     # Must be str to convert to Decimal
                                                                     geom = point,
