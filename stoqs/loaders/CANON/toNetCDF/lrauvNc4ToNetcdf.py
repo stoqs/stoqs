@@ -527,8 +527,14 @@ class InterpolatorWriter(BaseWriter):
         rad_to_deg = False
         if angle:
             # Some universal positions are in degrees, some are in radians - make a guess based on mean values
-            if np.max(np.abs(da)) <= np.pi and np.max(np.abs(da)) <= np.pi:
+            if np.max(np.abs(da)) <= np.pi:
                 rad_to_deg = True
+            else:
+                # Check if there is just a few outliers
+                max_num_outliers = 2
+                if len(np.where(np.abs(da) > np.pi)) <= max_num_outliers:
+                    rad_to_deg = True
+
             logger.debug(f"{data_array.name}: rad_to_deg = {rad_to_deg}")
             if rad_to_deg:
                 da = da * 180.0 / np.pi
@@ -574,7 +580,8 @@ class InterpolatorWriter(BaseWriter):
             segi = np.where(np.logical_and(lat.index > lat_fix.index[i], 
                                            lat.index < lat_fix.index[i+1]))[0]
             end_sec_diff = (lat_fix.index[i+1] - lat.index[segi[-1]]).total_seconds()
-            logger.warn(f"end_sec_diff ({end_sec_diff}) < max_sec_diff_at_end ({max_sec_diff_at_end})")
+            if end_sec_diff > max_sec_diff_at_end:
+                logger.warn(f"end_sec_diff ({end_sec_diff}) > max_sec_diff_at_end ({max_sec_diff_at_end})")
 
             end_lon_diff = lon_fix[i+1] - lon[segi[-1]]
             end_lat_diff = lat_fix[i+1] - lat[segi[-1]]
