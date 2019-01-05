@@ -523,6 +523,16 @@ class InterpolatorWriter(BaseWriter):
             logger.info(f"Removing bad {data_array.name} times from {in_file} ([index], [values]): {np.where(mt.mask)[0]}, {bad_times}")
         v_time = pd.to_datetime(mt.compressed(), unit='s',errors = 'coerce')
         da = pd.Series(data_array[:][~mt.mask], index=v_time)
+
+        # Specific ad hoc QC fixes
+        if ('daphne/missionlogs/2017/20171002_20171005/20171003T231731/201710032317_201710040517' in in_file or 
+            'daphne/missionlogs/2017/20171002_20171005/20171004T170805/201710041708_201710042304' in in_file):
+            if data_array.name == 'latitude':
+                md = np.ma.masked_less(data_array, 0.6)     # < 30 deg latitude
+                da = pd.Series(da[:][~md.mask], index=v_time)
+            if data_array.name == 'longitude':
+                md = np.ma.masked_less(data_array, -2.15)     # < -130 deg longitude
+                da = pd.Series(da[:][~md.mask], index=v_time)
         
         rad_to_deg = False
         if angle:
@@ -602,6 +612,12 @@ class InterpolatorWriter(BaseWriter):
             lat_nudge = np.interp( lat.index[segi].astype(np.int64), 
                                   [lat.index[segi].astype(np.int64)[0], lat.index[segi].astype(np.int64)[-1]],
                                   [0, end_lat_diff] )
+
+            # Sanity check
+            if np.max(np.abs(lon[segi] + lon_nudge)) > 180 or np.max(np.abs(lat[segi] + lon_nudge)) > 90:
+                logger.warn(f"Nudged coordinate is way out of reasonable range - segment {seg_count}")
+                logger.warn(f" max(abs(lon)) = {np.max(np.abs(lon[segi] + lon_nudge))}")
+                logger.warn(f" max(abs(lat)) = {np.max(np.abs(lat[segi] + lat_nudge))}")
 
             lon_nudged = np.append(lon_nudged, lon[segi] + lon_nudge)
             lat_nudged = np.append(lat_nudged, lat[segi] + lat_nudge)
