@@ -524,6 +524,11 @@ class InterpolatorWriter(BaseWriter):
         v_time = pd.to_datetime(mt.compressed(), unit='s',errors = 'coerce')
         da = pd.Series(data_array[:][~mt.mask], index=v_time)
 
+        # Remove 0 values
+        if 'longitude' in data_array.name or 'latitude' in data_array.name:
+            md = np.ma.masked_equal(data_array, 0)
+            da = pd.Series(da[:][~md.mask], index=v_time)
+
         # Specific ad hoc QC fixes
         if ('daphne/missionlogs/2017/20171002_20171005/20171003T231731/201710032317_201710040517' in in_file or 
             'daphne/missionlogs/2017/20171002_20171005/20171004T170805/201710041708_201710042304' in in_file):
@@ -613,7 +618,7 @@ class InterpolatorWriter(BaseWriter):
                                   [lat.index[segi].astype(np.int64)[0], lat.index[segi].astype(np.int64)[-1]],
                                   [0, end_lat_diff] )
 
-            # Sanity check
+            # Sanity checks
             if np.max(np.abs(lon[segi] + lon_nudge)) > 180 or np.max(np.abs(lat[segi] + lon_nudge)) > 90:
                 logger.warn(f"Nudged coordinate is way out of reasonable range - segment {seg_count}")
                 logger.warn(f" max(abs(lon)) = {np.max(np.abs(lon[segi] + lon_nudge))}")
