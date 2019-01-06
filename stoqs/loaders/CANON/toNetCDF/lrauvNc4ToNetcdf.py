@@ -538,7 +538,12 @@ class InterpolatorWriter(BaseWriter):
             if data_array.name == 'longitude':
                 md = np.ma.masked_less(data_array, -2.15)     # < -130 deg longitude
                 da = pd.Series(da[:][~md.mask], index=v_time)
-        
+       
+        if 'tethys/missionlogs/2016/20160923_20161003/20161001T150952/201610011510_201610031606' in in_file:
+            if data_array.name == 'longitude':
+                md = np.ma.masked_greater(data_array, -2.0)     # Remove points in Utah
+                da = pd.Series(da[:][~md.mask], index=v_time)
+ 
         rad_to_deg = False
         if angle:
             # Some universal positions are in degrees, some are in radians - make a guess based on mean values
