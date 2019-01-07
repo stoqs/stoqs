@@ -43,6 +43,7 @@ import csv
 import logging
 from datetime import timedelta, datetime
 from datadiff.tools import assert_equal
+from django.contrib.gis.geos import Point
 from django.db.models import Avg, Max
 from collections import defaultdict, OrderedDict
 from loaders.SampleLoaders import PLANKTONPUMP
@@ -245,7 +246,7 @@ class PlanktonPump():
         '''
         with open(self.args.load_file) as f:
             for r in csv.DictReader(f):
-                point = 'POINT(%s %s)' % (r.get('longitude'), r.get('latitude'))
+                point = Point(float(r.get('longitude')), float(r.get('latitude')))
 
                 act, ip = self._create_activity_instantpoint_platform(r, 
                         duration_minutes=self.args.duration, 
