@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))  # sett
 from django.conf import settings
 from stoqs import models as m
 from django.db.utils import IntegrityError
-from django.contrib.gis.geos import LineString
+from django.contrib.gis.geos import LineString, Point
 from coards import to_udunits
 
 logger = logging.getLogger('__main__')
@@ -210,7 +210,7 @@ class Consumer(object):
         '''
         (ip, created) = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity = self.activity, timevalue = time)
 
-        point = 'POINT(%s %s)' % (repr(lon), repr(lat))
+        point = Point(lon, lat)
         (measurement, created) = m.Measurement.objects.using(self.dbAlias).get_or_create(instantpoint = ip, depth = repr(depth), geom = point)
 
         return measurement
@@ -229,7 +229,7 @@ class Consumer(object):
         '''
         ip, _ = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity = self.activity, timevalue = time)
 
-        point = 'POINT(%s %s)' % (repr(lon), repr(lat))
+        point = Point(lon, lat)
         sample, _ = m.Sample.objects.using(self.dbAlias).get_or_create(instantpoint = ip, depth = repr(depth), geom = point, name = value)
 
         return sample
