@@ -22,7 +22,7 @@ import logging
 from datetime import timedelta
 from django.conf import settings
 from django.test import TestCase
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from stoqs.models import MeasuredParameter, ActivityParameter, ParameterResource, Parameter
 from CCE.loadCCE_2015 import lores_event_times
 

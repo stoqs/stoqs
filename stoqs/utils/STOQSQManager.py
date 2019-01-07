@@ -17,7 +17,7 @@ from django.db import transaction
 from django.db.models import Q, Max, Min, Sum, Avg
 from django.db.models.sql import query
 from django.contrib.gis.db.models import Extent, Union
-from django.contrib.gis.geos import fromstr, MultiPoint
+from django.contrib.gis.geos import fromstr, MultiPoint, Point
 from django.db.utils import DatabaseError, DataError
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
@@ -2226,8 +2226,8 @@ class STOQSQManager(object):
             for extent in extentList[index:]:
                 if extent is not None:
                     if extent[0] == extent[2] and extent[1] == extent[3]:
-                        logger.debug('Unioning extent = %s as a POINT', extent)
-                        geom_union = geom_union.union(fromstr('POINT (%s %s)' % extent[:2], srid=srid))
+                        logger.debug('Unioning extent = %s as a Point', extent)
+                        geom_union = geom_union.union(Point(*extent[:2], srid=srid))
                     else:
                         logger.debug('Unioning extent = %s as a LINESTRING', extent)
                         geom_union = geom_union.union(fromstr('LINESTRING (%s %s, %s %s)' % extent, srid=srid))

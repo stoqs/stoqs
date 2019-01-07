@@ -523,12 +523,38 @@ class InterpolatorWriter(BaseWriter):
             logger.info(f"Removing bad {data_array.name} times from {in_file} ([index], [values]): {np.where(mt.mask)[0]}, {bad_times}")
         v_time = pd.to_datetime(mt.compressed(), unit='s',errors = 'coerce')
         da = pd.Series(data_array[:][~mt.mask], index=v_time)
-        
+
+        # Remove 0 values
+        if 'longitude' in data_array.name or 'latitude' in data_array.name:
+            md = np.ma.masked_equal(data_array, 0)
+            da = pd.Series(da[:][~md.mask], index=v_time)
+
+        # Specific ad hoc QC fixes
+        if ('daphne/missionlogs/2017/20171002_20171005/20171003T231731/201710032317_201710040517' in in_file or 
+            'daphne/missionlogs/2017/20171002_20171005/20171004T170805/201710041708_201710042304' in in_file):
+            if data_array.name == 'latitude':
+                md = np.ma.masked_less(data_array, 0.6)     # < 30 deg latitude
+                da = pd.Series(da[:][~md.mask], index=v_time)
+            if data_array.name == 'longitude':
+                md = np.ma.masked_less(data_array, -2.15)     # < -130 deg longitude
+                da = pd.Series(da[:][~md.mask], index=v_time)
+       
+        if 'tethys/missionlogs/2016/20160923_20161003/20161001T150952/201610011510_201610031606' in in_file:
+            if data_array.name == 'longitude':
+                md = np.ma.masked_greater(data_array, -2.0)     # Remove points in Utah
+                da = pd.Series(da[:][~md.mask], index=v_time)
+ 
         rad_to_deg = False
         if angle:
             # Some universal positions are in degrees, some are in radians - make a guess based on mean values
-            if np.max(np.abs(da)) <= np.pi and np.max(np.abs(da)) <= np.pi:
+            if np.max(np.abs(da)) <= np.pi:
                 rad_to_deg = True
+            else:
+                # Check if there is just a few outliers
+                max_num_outliers = 2
+                if len(np.where(np.abs(da) > np.pi)) <= max_num_outliers:
+                    rad_to_deg = True
+
             logger.debug(f"{data_array.name}: rad_to_deg = {rad_to_deg}")
             if rad_to_deg:
                 da = da * 180.0 / np.pi
@@ -574,7 +600,8 @@ class InterpolatorWriter(BaseWriter):
             segi = np.where(np.logical_and(lat.index > lat_fix.index[i], 
                                            lat.index < lat_fix.index[i+1]))[0]
             end_sec_diff = (lat_fix.index[i+1] - lat.index[segi[-1]]).total_seconds()
-            logger.warn(f"end_sec_diff ({end_sec_diff}) < max_sec_diff_at_end ({max_sec_diff_at_end})")
+            if end_sec_diff > max_sec_diff_at_end:
+                logger.warn(f"end_sec_diff ({end_sec_diff}) > max_sec_diff_at_end ({max_sec_diff_at_end})")
 
             end_lon_diff = lon_fix[i+1] - lon[segi[-1]]
             end_lat_diff = lat_fix[i+1] - lat[segi[-1]]
@@ -595,6 +622,12 @@ class InterpolatorWriter(BaseWriter):
             lat_nudge = np.interp( lat.index[segi].astype(np.int64), 
                                   [lat.index[segi].astype(np.int64)[0], lat.index[segi].astype(np.int64)[-1]],
                                   [0, end_lat_diff] )
+
+            # Sanity checks
+            if np.max(np.abs(lon[segi] + lon_nudge)) > 180 or np.max(np.abs(lat[segi] + lon_nudge)) > 90:
+                logger.warn(f"Nudged coordinate is way out of reasonable range - segment {seg_count}")
+                logger.warn(f" max(abs(lon)) = {np.max(np.abs(lon[segi] + lon_nudge))}")
+                logger.warn(f" max(abs(lat)) = {np.max(np.abs(lat[segi] + lat_nudge))}")
 
             lon_nudged = np.append(lon_nudged, lon[segi] + lon_nudge)
             lat_nudged = np.append(lat_nudged, lat[segi] + lat_nudge)

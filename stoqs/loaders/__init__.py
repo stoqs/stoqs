@@ -17,7 +17,7 @@ django.setup()
 
 from collections import defaultdict
 from django.conf import settings
-from django.contrib.gis.geos import Polygon
+from django.contrib.gis.geos import Polygon, Point
 from django.db.utils import IntegrityError
 from django.db import transaction, DatabaseError
 from django.db.models import Max, Min
@@ -725,10 +725,10 @@ class STOQS_Loader(object):
         ip, _ = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=mtime)
 
         nl = None
-        point = 'POINT(%s %s)' % (repr(lon), repr(lat))
+        point = Point(lon, lat)
         if not (nomDepth is None and nomLat is None and nomLong is None):
             self.logger.debug('nomDepth = %s nomLat = %s nomLong = %s', nomDepth, nomLat, nomLong)
-            nom_point = 'POINT(%s %s)' % (repr(nomLong), repr(nomLat))
+            nom_point = Point(nomLong, nomLat)
             nl, _ = m.NominalLocation.objects.using(self.dbAlias).get_or_create(depth=repr(nomDepth), 
                                     geom=nom_point, activity=self.activity)
 
@@ -1211,7 +1211,7 @@ class STOQS_Loader(object):
             nomDepth = nl.depth
             self.logger.debug('nomDepth = %s', nomDepth)
             # Collect depth time series into a timeseries by activity and nominal depth hash
-            ndlqs = m.Measurement.objects.using(self.dbAlias).filter( instantpoint__activity=self.activity, nominallocation__depth=nomDepth
+            ndlqs = m.Measurement.objects.using(self.dbAlias).filter( instantpoint__activity=self.activity, nominallocation=nl
                                         ).values_list('instantpoint__timevalue', 'depth', 'instantpoint__pk').order_by('instantpoint__timevalue')
             line = []
             pklookup = []

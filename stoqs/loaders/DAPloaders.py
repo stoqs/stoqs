@@ -518,7 +518,8 @@ class Base_Loader(STOQS_Loader):
         '''
         For timeSeries and timeSeriesProfile data return nominal location as a tuple of (depth, latitude, longitude) as
         expressed in the coordinate variables of the mooring or station. For timeSeries features depth will be a scalar, 
-        for timeSeriesProfile depth will be an array of depths.
+        for timeSeriesProfile depth will be an array of depths.  For timeSeries and timeSeriesProfile variables with precise
+        longitudes and latitudes ignore them here - this method returns just the single nominal horizontal position.
         '''
         depths = {}
         lats = {}
@@ -547,7 +548,12 @@ class Base_Loader(STOQS_Loader):
                 except KeyError:
                     # Likely a TIMESERIES variable in a TIMESERIESPROFILE file (e.g. heading in ADCP file)
                     # look elsewhere for a nominal depth
-                    depths[v] = [float(self.ds.attributes['NC_GLOBAL']['nominal_sensor_depth'])]
+                    if 'nominal_sensor_depth' in self.ds.attributes['NC_GLOBAL']:
+                        # Hard-coded CCE EPIC nominal depth
+                        depths[v] = [float(self.ds.attributes['NC_GLOBAL']['nominal_sensor_depth'])]
+                    else:
+                        # Hard-coded OASIS ADCP nominal depth
+                        depths[v] = [self.ds['ADCP_DEPTH'].data[:][0]]
             elif self.getFeatureType() == TRAJECTORYPROFILE:
                 self.logger.debug('Initializing depths list for trajectoryprofile, ac = %s', ac)
                 depths[v] = self.ds[v][ac['depth']].data[:]
@@ -557,6 +563,15 @@ class Base_Loader(STOQS_Loader):
             except KeyError:
                 if len(self.ds[ac['longitude']].data[:]) == 1:
                     lons[v] = self.ds[ac['longitude']].data[:][0]
+                elif len(self.ds[ac['longitude']].data[:]) == 2:
+                    # OASIS ADCP data has GPS_LONGITUDE and GPS_LATITUDE time series in auxillary coordinate
+                    self.logger.debug(f"Auxillary longitude coordinate {ac['longitude']} is a variable with"
+                                      f" {len(self.ds[ac['longitude']][ac['longitude']].data[:])} points")
+                    self.logger.info(f"Using COARDS coordinate for {v}'s longitude")
+                    try:
+                        lons[v] = self.ds[list(self.ds[v].maps.keys())[3]].data[:][0]
+                    except IndexError:
+                        self.logger.warn(f'Cannot get nominal longitude coordinate using COARDS rules: self.ds[v].keys() = {self.ds[v].keys()}')
                 else:
                     self.logger.warn('Variable %s has longitude auxillary coordinate of length %d, expecting it to be 1.',
                                 v, len(self.ds[ac['longitude']].data[:]))
@@ -566,6 +581,15 @@ class Base_Loader(STOQS_Loader):
             except KeyError:
                 if len(self.ds[ac['latitude']].data[:]) == 1:
                     lats[v] = self.ds[ac['latitude']].data[:][0]
+                elif len(self.ds[ac['latitude']].data[:]) == 2:
+                    # OASIS ADCP data has GPS_LONGITUDE and GPS_LATITUDE time series in auxillary coordinate
+                    self.logger.debug(f"Auxillary latitude coordinate {ac['latitude']} is a variable with"
+                                      f" {len(self.ds[ac['latitude']][ac['latitude']].data[:])} points")
+                    self.logger.info(f"Using COARDS coordinate for {v}'s latitude")
+                    try:
+                        lats[v] = self.ds[list(self.ds[v].maps.keys())[2]].data[:][0]
+                    except IndexError:
+                        self.logger.warn(f'Cannot get nominal latitude coordinate using COARDS rules: self.ds[v].keys() = {self.ds[v].keys()}')
                 else:
                     self.logger.warn('Variable %s has latitude auxillary coordidate of length %d, expecting it to be 1.', 
                                 v, len(self.ds[ac['latitude']].data[:]))
@@ -772,7 +796,7 @@ class Base_Loader(STOQS_Loader):
         for de, lo, la in zip(depths, longitudes, latitudes):
             # Accept depths that are 0.0, but not latitudes and longitudes that are zero
             if de is not None and lo and la:
-                yield Measurement(depth=repr(de), geom=f'POINT({repr(lo)} {repr(la)})')
+                yield Measurement(depth=repr(de), geom=Point(float(lo), float(la)))
             else:
                 yield None
 
@@ -988,7 +1012,8 @@ class Base_Loader(STOQS_Loader):
         return epoch_seconds, time_units
 
     def load_timeseriesprofile(self):
-        '''Stream timeseriesprofile data directly from pydap proxies to generators fed to bulk_create() calls
+        '''Stream timeseriesprofile data directly from pydap proxies to generators fed to bulk_create() calls.
+        Used also for timeseries data.
         '''
         time_axes_loaded = set()
         depth_axes_loaded = set()
@@ -1022,7 +1047,7 @@ class Base_Loader(STOQS_Loader):
 
                     mtimes = [from_udunits(mt, time_units) for mt in times]
 
-                    # - depths: first by CF/COARDS coordinate rules, then by EPIC conventions
+                    # 1. - depths: first by CF/COARDS coordinate rules, then by EPIC conventions
                     nomDepths = None
                     nomLat = None
                     nomLon = None
@@ -1047,12 +1072,15 @@ class Base_Loader(STOQS_Loader):
                             nomLon = self.ds.attributes['NC_GLOBAL']['longitude']
                         except KeyError:
                             self.logger.warn('EPIC nominal position not found in global attributes. Assigning from variables (and maybe variable attribute).')
-                            if not hasattr(self.ds['depth'].data[0], '__iter__'):
-                                depths = np.array([self.ds['depth'].data[0]])
+                            if 'depth' in self.ds:
+                                if not hasattr(self.ds['depth'].data[0], '__iter__'):
+                                    depths = np.array([self.ds['depth'].data[0]])
                             if 'nominal_instrument_depth' in self.ds[firstp].attributes:
                                 nomDepths = self.ds[firstp].attributes['nominal_instrument_depth']
-                            nomLat = self.ds['lat'].data[0][0]
-                            nomLon = self.ds['lon'].data[0][0]
+                            if 'lat' in self.ds:
+                                nomLat = self.ds['lat'].data[0][0]
+                            if 'lon' in self.ds:
+                                nomLon = self.ds['lon'].data[0][0]
 
                     if nomDepths and nomLat and nomLon:
                         pass
@@ -1072,15 +1100,24 @@ class Base_Loader(STOQS_Loader):
                     except AttributeError:
                         nomDepths = np.array(nomDepths)
 
-                    # - latitudes & longitudes: first by CF/COARDS coordinate rules, then by EPIC conventions
+                    # 2 & 3. - latitudes & longitudes: first by CF/COARDS coordinate rules, then by EPIC conventions
                     shape_length = self.get_shape_length(firstp)
                     if shape_length == 4:
                         self.logger.info('%s has shape of 4, assume that singleton dimensions are used for nominal latitude and longitude', firstp)
                         # Would like all data set to have COARDS coordinate ordering, but they don't
                         # - http://dods.mbari.org/opendap/data/CCE_Archive/MS1/20151006/TU65m/MBCCE_MS1_TU65m_20151006.nc.html - has COARDS ordering
                         # - http://dods.mbari.org/opendap/data/CCE_Archive/MS2/20151005/ADCP300/MBCCE_MS2_ADCP300_20151005.nc - does not have COARDS ordering!
-                        longitudes = float(self.ds[list(self.ds[firstp].maps.keys())[2]].data[0])     # TODO lookup more precise gps lat via coordinates pointing to a vector
-                        latitudes = float(self.ds[list(self.ds[firstp].maps.keys())[3]].data[0])      # TODO lookup more precise gps lon via coordinates pointing to a vector
+                        if ac['latitude'] in self.ds[ac['latitude']]:
+                            # Precise GPS latitude positions
+                            latitudes = self.ds[ac['latitude']][ac['latitude']].data[:]
+                        else:
+                            latitudes = float(self.ds[list(self.ds[firstp].maps.keys())[2]].data[0])
+
+                        if ac['longitude'] in self.ds[ac['longitude']]:
+                            # Precise GPS longitude positions
+                            longitudes = self.ds[ac['longitude']][ac['longitude']].data[:]
+                        else:
+                            longitudes = float(self.ds[list(self.ds[firstp].maps.keys())[3]].data[0])
 
                     elif shape_length == 3 and 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper(): # pragma: no cover
                         # Special fix for USGS EPIC ADCP variables missing depth coordinate, but having nominal sensor depth metadata
@@ -1103,20 +1140,28 @@ class Base_Loader(STOQS_Loader):
                     else:
                         raise Exception('{} has shape of {}. Can handle only shapes of 2, and 4'.format(firstp, shape_length))
 
-                    if abs(latitudes) > 90:
-                        # Brute-force fix for non-COARDS ordering, swap the coordinates
-                        self.logger.info('%s appears to not have COARDS ordering of coordinate dimensions, swapping them', firstp)
-                        tmp_var = latitudes
-                        latitudes = longitudes
-                        longitudes = tmp_var
-
-                    # Ensure uniqueness
                     if hasattr(latitudes, '__iter__') and hasattr(longitudes, '__iter__'):
                         # We have precise gps positions, a location for each time value
-                        points = [f'POINT({repr(lo)} {repr(la)})' for lo, la in zip(longitudes, latitudes)]
+                        points = []
+                        for i, (lo, la) in enumerate(zip(longitudes, latitudes)):
+                            if (lo == self.ds[ac['longitude']].attributes['_FillValue'] or
+                                lo == self.ds[ac['longitude']].attributes['missing_value'] or
+                                la == self.ds[ac['latitude']].attributes['_FillValue'] or
+                                la == self.ds[ac['latitude']].attributes['missing_value']):
+                                self.logger.debug(f"Not using missing or fill value at index {i}: lo, la = {lo}, {la}")
+                            else:
+                                points.append(Point(lo, la))
                     else:
-                        points = [f'POINT({repr(longitudes)} {repr(latitudes)})'] * len(list(mtimes))
+                        if abs(latitudes) > 90:
+                            # Brute-force fix for non-COARDS ordering, swap the coordinates
+                            self.logger.info('%s appears to not have COARDS ordering of coordinate dimensions, swapping them', firstp)
+                            tmp_var = latitudes
+                            latitudes = longitudes
+                            longitudes = tmp_var
 
+                        points = [Point(longitudes, latitudes) for i in range(len(list(mtimes)))]
+
+                    # Need a set of points for all the timeseriesprofile depths
                     points = points * len(list(depths))
 
                     ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
@@ -1149,7 +1194,7 @@ class Base_Loader(STOQS_Loader):
                     time_axes_loaded.add(ac[TIME])
 
                     if nomLon and nomLat:
-                        nom_point = f'POINT({repr(nomLon)} {repr(nomLat)})'
+                        nom_point = Point(float(nomLon), float(nomLat))
 
                     # Expect that nomDepths is a numpy array, even it is single-valued
                     if nomDepths.any() and nom_point:
@@ -1296,6 +1341,19 @@ class Base_Loader(STOQS_Loader):
                                 " path as a point as the featureType is also %s.", featureType)
                     stationPoint = Point(path[0][0], path[0][1])
                     path = None
+            else:
+                # Use NominalLocation - for cases when we have precise GPS locations
+                lon = set([p.x for p in NominalLocation.objects.using(self.dbAlias)
+                                        .filter(activity=self.activity)
+                                        .values_list('geom', flat=True)])
+                lat = set([p.y for p in NominalLocation.objects.using(self.dbAlias)
+                                        .filter(activity=self.activity)
+                                        .values_list('geom', flat=True)])
+                if lon and lat:
+                    if len(lon) != 1 or len(lat) != 1:
+                        self.logger.error(f"For activity={self.activity} length of nominal latitudes and longitudes != 1")
+                    else:
+                        stationPoint = Point(lon.pop(), lat.pop())
 
         # Add additional Parameters for all appropriate Measurements
         self.logger.info("Adding SigmaT and Spiciness to the Measurements...")
@@ -1397,7 +1455,7 @@ class Base_Loader(STOQS_Loader):
                 logger.info(f'Loading values for Parameter {key}')
             last_key = key
 
-            point = f'POINT({repr(longitude)} {repr(latitude)})'
+            point = Point(longitude, latitude)
 
             self.param_by_key[key] = self.getParameterByName(key)
             self.parameter_counts[self.param_by_key[key]] += 1

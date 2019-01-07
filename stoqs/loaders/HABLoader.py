@@ -248,7 +248,7 @@ class HABLoader(STOQS_Loader):
         logger.debug('samplepurpose %s, created = %s', sample_purpose, created)
         try:
             ip, seconds_diff = get_closest_instantpoint(self.activityName, timevalue, self.dbAlias)
-            point = 'POINT(%s %s)' % (lon, lat)
+            point = Point(lon, lat)
             stuple = m.Sample.objects.using(self.dbAlias).get_or_create( name = bottleName,
                                                                     depth = str(depth),     # Must be str to convert to Decimal
                                                                     geom = point,
@@ -441,7 +441,7 @@ class HABLoader(STOQS_Loader):
                         name = aName,
                         comment = newComment,
                         maptrack = None,
-                        mappoint = 'POINT(%s %s)' % (lon, lat),
+                        mappoint = Point(lon, lat),
                         mindepth = self.mindepth,
                         maxdepth = self.maxdepth,
                         num_measuredparameters = self.loaded,

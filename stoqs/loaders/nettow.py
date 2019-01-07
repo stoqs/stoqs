@@ -32,6 +32,7 @@ import csv
 import logging
 from datetime import timedelta, datetime
 from datadiff.tools import assert_equal
+from django.contrib.gis.geos import Point
 from collections import defaultdict, OrderedDict
 from loaders.SampleLoaders import NETTOW, VERTICALNETTOW
 from stoqs.models import Activity, Sample, InstantPoint, ActivityType, Campaign, Platform, SampleType, SamplePurpose, PlatformType
@@ -194,7 +195,7 @@ class NetTow():
         nettow_number = 1
         with open(self.args.loadFile) as f:
             for r in csv.DictReader(f):
-                point = 'POINT(%s %s)' % (r.get('longitude'), r.get('latitude'))
+                point = Point(float(r.get('longitude')), float(r.get('latitude')))
                 # TODO: If net tow numbers are in the .csv file then they will need to be paresed for nettow_number here
                 act, ip = self._create_activity_instantpoint_platform(r, duration_minutes=2, nettow_number=nettow_number, point=point)
 
