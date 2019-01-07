@@ -1,5 +1,5 @@
 aiohttp==3.5.1
-beautifulsoup4==4.7.0
+beautifulsoup4==4.7.1
 celery==4.2.1
 cmocean==1.2
 coards==1.0.5
