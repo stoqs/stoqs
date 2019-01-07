@@ -249,7 +249,7 @@ class Consumer(object):
         logger.debug("time = %s", time)
         ip, _ = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity = self.activity, timevalue = time)
 
-        point = 'POINT(%s %s)' % (repr(lon), repr(lat))
+        point = Point(lon, lat)
         sample, _ = m.Sample.objects.using(self.dbAlias).get_or_create(instantpoint = ip, depth = repr(depth), geom = point, name = value)
 
         return sample
