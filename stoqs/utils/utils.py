@@ -356,6 +356,9 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
                 ##logger.debug('Replacing items = %s with new_items = %s', items, new_items)
                 q = q.replace(r' IN (' + items, r' IN (' + new_items) 
 
+    # Remove all '::bytea' added to the geom fields
+    q = q.replace(r'::bytea', r'')
+
     return q
 
 def spiciness(t,s):
