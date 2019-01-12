@@ -5,7 +5,7 @@ amqp==2.3.2
 amqplib==1.0.2
 anyjson==0.3.3
 Babel==2.6.0
-backports.ssl-match-hostname==3.5.0.1
+backports.ssl-match-hostname==3.7.0.1
 billiard==3.5.0.5
 binaryornot==0.4.4
 certifi==2018.11.29
