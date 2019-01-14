@@ -24,28 +24,29 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
 
-cmaps = [('Ocean',          cmocean.cm.cmapnames),
+# List of tuples produced from https://matplotlib.org/tutorials/colors/colormaps.html
+omaps = [('Ocean',          cmocean.cm.cmapnames),
          ('Uniform',
-                            ['viridis', 'inferno', 'plasma', 'magma', 'cividis']),
-         ('Sequential1',     ['afmhot', 'autumn', 'bone', 'cool',
-                             'copper', 'gist_heat', 'gray', 'hot',
-                             'pink', 'spring', 'summer', 'winter',
-                             'cool', 'Wistia', 'hot', 'afmhot', 'gist_heat', 'copper']),
-         ('Sequential2',     ['Blues', 'BuGn', 'BuPu',
-                             'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd',
-                             'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu',
-                             'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd',]),
-         ('Diverging',      ['BrBG', 'bwr', 'coolwarm', 'PiYG', 'PRGn', 'PuOr',
-                             'RdBu', 'RdGy', 'RdYlBu', 'RdYlGn', 'Spectral',
-                             'seismic']),
-         ('Qualitative',    ['Accent', 'Dark2', 'Paired', 'Pastel1',
-                             'Pastel2', 'Set1', 'Set2', 'Set3',
+                            ['viridis', 'plasma', 'inferno', 'magma', 'cividis']),
+         ('Sequential1',    ['Greys', 'Purples', 'Blues', 'Greens', 'Oranges', 'Reds',
+                             'YlOrBr', 'YlOrRd', 'OrRd', 'PuRd', 'RdPu', 'BuPu',
+                             'GnBu', 'PuBu', 'YlGnBu', 'PuBuGn', 'BuGn', 'YlGn']),
+         ('Sequential2',    ['binary', 'gist_yarg', 'gist_gray', 'gray', 'bone', 'pink',
+                             'spring', 'summer', 'autumn', 'winter', 'cool', 'Wistia',
+                             'hot', 'afmhot', 'gist_heat', 'copper']),
+         ('Diverging',      ['PiYG', 'PRGn', 'BrBG', 'PuOr', 'RdGy', 'RdBu',
+                             'RdYlBu', 'RdYlGn', 'Spectral', 'coolwarm', 'bwr', 'seismic']),
+         ('Qualitative',    ['Pastel1', 'Pastel2', 'Paired', 'Accent',
+                             'Dark2', 'Set1', 'Set2', 'Set3',
                              'tab10', 'tab20', 'tab20b', 'tab20c']),
-         ('Miscellaneous',  ['gist_earth', 'terrain', 'ocean', 'gist_stern',
-                             'brg', 'CMRmap', 'cubehelix',
-                             'gnuplot', 'gnuplot2', 'gist_ncar',
-                             'nipy_spectral', 'jet', 'jetplus', 'rainbow',
-                             'gist_rainbow', 'hsv', 'flag', 'prism'])]
+         ('Miscellaneous',  ['flag', 'prism', 'ocean', 'gist_earth', 'terrain', 'gist_stern',
+                             'gnuplot', 'gnuplot2', 'CMRmap', 'cubehelix', 'brg',
+                             'gist_rainbow', 'rainbow', 'jet', 'nipy_spectral', 'gist_ncar'])]
+
+# Order the original colormap lists by name
+cmaps = []
+for cmap_category, cmap_list in omaps:
+    cmaps.append((cmap_category, sorted(cmap_list)))
 
 # Add reverse colormaps to the cmaps list
 cmaps_with_r = []
