@@ -11,7 +11,7 @@ RUN apt-get update && \
     git \
     gmt \
     libncurses-dev \
-    postgresql \
+    postgresql-10 \
     time \
     wget \
     imagemagick
