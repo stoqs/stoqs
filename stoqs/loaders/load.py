@@ -118,6 +118,23 @@ class Loader(object):
         except IOError as e:
             self.logger.warn(e)
 
+    def _create_pg_dump(self, db):
+        pg_dumps_dir = os.path.join(settings.MEDIA_ROOT, 'pg_dumps')
+        try: 
+            os.makedirs(pg_dumps_dir)
+        except OSError:
+            if not os.path.isdir(pg_dumps_dir):
+                raise
+
+        port = settings.DATABASES[db]['PORT']
+        pg_dump_file = os.path.join(pg_dumps_dir, db + '.pg_dump')
+        # Rely on system path to find the correct version of pg_dump
+        pg_dump_cmd = f"pg_dump -p {port} -U postgres -Fc {db} > {pg_dump_file}"
+
+        self.logger.info(f"Creating pg_dump of {db} in {pg_dump_file}")
+        self.logger.debug(f"pg_dump_cmd = {pg_dump_cmd}")
+        ret = os.system(pg_dump_cmd)
+
     def _provenance_dict(self, db, load_command, log_file):
         '''Return a dictionary of provenance Resource items. Special handling 
         for --background operation: don't tail log file, instead add those
@@ -391,6 +408,21 @@ local   all             all                                     peer
             ret = os.system(grant)
             self.logger.debug('ret = %s', ret)
                 
+    def pg_dump(self):
+        campaigns = importlib.import_module(self.args.campaigns)
+        for db,load_command in list(campaigns.campaigns.items()):
+            if self.args.db:
+                if db not in self.args.db:
+                    continue
+
+            if self.args.test:
+                if self._has_no_t_option(db, load_command):
+                    continue
+
+                db += '_t'
+
+            self._create_pg_dump(db)
+
     def removetest(self):
         self.logger.info('Removing test databases from sever running on port %s', 
                 settings.DATABASES['default']['PORT'])
@@ -633,8 +665,9 @@ A typical workflow to build up a production server is:
     cd docker
     docker exec -e SLACKTOKEN=<your_private_token> -e STOQS_CAMPAIGNS=<results_from_previous_step> stoqs {load} --test --slack
     (The --clobber, --db <database>, and --verbose <num> options can be used to reload and debug problems.)
-6. Add metadata to the database with links to the log files:
+6. Add metadata to the database with links to the log files and create a pg_dump of the database:
     {load} --test --updateprovenance
+    {load} --test --pg_dump
 7. Set your environment variables and run your server:
     export DATABASE_URL=postgis://<dbuser>:<pw>@<host>:<port>/stoqs
     export STOQS_CAMPAIGNS=<output_from_previous_step>
@@ -652,9 +685,16 @@ A typical workflow to build up a production server is:
 13. Add provenance information to the database, with setting for non-default MEDIA_ROOT:
     export MEDIA_ROOT=/usr/share/nginx/media
     {load} --updateprovenance -v 
-14. Give the 'everyone' role SELECT privileges on all databases:
+14. Create a pg_dump of the database that can be used for backups and quicker loading of a development database:
+    {load} --pg_dump
+15. Give the 'everyone' role SELECT privileges on all databases:
     {load} --grant_everyone_select -v 
-15. After a final check announce the availability of these databases
+16. After a final check announce the availability of these databases
+17. To restore from a backup on Docker (with stoqs_simz_aug2013 as an example):
+    docker-compose run stoqs createdb -U postgres stoqs_simz_aug2013_restored
+    docker-compose run stoqs pg_restore -Fc -U postgres -d stoqs_simz_aug2013_restored /srv/media-files/pg_dumps/stoqs_simz_aug2013.pg_dump
+    (If the server hosts the original database as well, then the Campaign name must be changed for it to show on the campaign list.)
+
 
 To get any stdout/stderr output you must use -v, the default is no output.
 ''').format(**{'load': sys.argv[0], 'user': os.environ['USER']}),
@@ -677,6 +717,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
                                                                             ' loadlogs and update provenance information'))
         parser.add_argument('--grant_everyone_select', action='store_true', help='Grant everyone role select privileges on all relations')
         parser.add_argument('--drop_indexes', action='store_true', help='Before load drop indexes and create them following the load')
+        parser.add_argument('--pg_dump', action='store_true', help='Store a pg_dump(1) with "-Fc" option file on the server')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
     
@@ -710,5 +751,7 @@ if __name__ == '__main__':
         l.updateprovenance()
     elif l.args.grant_everyone_select:
         l.grant_everyone_select()
+    elif l.args.pg_dump:
+        l.pg_dump()
     else:
         l.load()
