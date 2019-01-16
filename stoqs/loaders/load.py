@@ -464,6 +464,8 @@ local   all             all                                     peer
 
         print(('\n'.join(stoqs_campaigns)))
         print(('export STOQS_CAMPAIGNS="' + ','.join(stoqs_campaigns) + '"'))
+        print()
+        print(' '.join(stoqs_campaigns))
 
     def lines_with_string(self, file_name, string, max_lines=10):
         matching_lines = ''
