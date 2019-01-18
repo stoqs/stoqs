@@ -144,7 +144,7 @@
             <span class="icon-bar"></span>
           </a>
           <a class="brand" href="{{home_page_link}}" style="padding-top:4px;"><img src="{{STATIC_URL}}images/{{home_page_logo}}" alt="{{home_page_alt}}"/></a>
-          <a class="brand" href="#">{{request.META.dbAlias}}</a>
+          <a class="brand" href="#pg_dump-popup" data-toggle="modal">{{request.META.dbAlias}}</a>
           <div class="nav-collapse">
             <ul class="nav">
               <li><a href="{% url 'stoqs:show-default' %}"><i class="icon-list-alt icon-white"></i> Campaign list</a></li>
@@ -165,6 +165,31 @@
       </div>
     </div>
 
+  <div id="pg_dump-popup" class="modal hide fade in" style="width:auto;">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">×</a>
+        <h3>Download database</h3>
+    </div>
+    <div class="modal-body">
+        <h4>Download a pg_dump of this database</h4>
+        <div>
+            <i class="icon-download"></i>
+            <a href="{{MEDIA_URL}}pg_dumps/{{request.META.dbAlias}}.pg_dump">{{site_uri}}{{MEDIA_URL}}pg_dumps/{{request.META.dbAlias}}.pg_dump</a>
+        </div>
+        <div>
+            To load this database (provided it doesn't exist) on your Docker-based STOQS system do:
+            <pre>
+cd $STOQS_HOME/docker
+source .env
+sudo mkdir $STOQS_VOLS_DIR/pg_dumps
+docker-compose run stoqs createdb -U postgres {{request.META.dbAlias}}
+sudo wget --no-check-certificate -qO- {{site_uri}}{{MEDIA_URL}}pg_dumps/{{request.META.dbAlias}}.pg_dump | docker exec -i stoqs psql -U postgres {{request.META.dbAlias}}</pre>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">Close</a>
+    </div>
+  </div>
 
   <div id="permalink-popup" class="modal hide fade in" style="display:none;width:700px;">
     <div class="modal-header">
