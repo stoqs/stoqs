@@ -33,8 +33,9 @@ fi
 # Assume starting in project home (stoqsgit) directory
 cd stoqs
 
-# Create database role used by STOQS applications - don't print out errors, e.g.: role already exists
+# Create database roles used by STOQS applications - don't print out errors, e.g.: if role already exists
 psql -p $PGPORT -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres 2> /dev/null
+psql -p $PGPORT -c "CREATE USER everyone WITH PASSWORD 'guest';" -U postgres 2> /dev/null
 
 # If there is a third argument and it is 'extraload' execute this block, use 3rd arg of 'noextraload' to not execute
 if [ ${3:-extraload} == 'extraload' ]
@@ -100,6 +101,9 @@ then
       --createLabels --groupName Plankton --database default  --platform dorado \
       --inputs bbp700 fl700_uncorr --discriminator salinity --labels diatom dino1 dino2 sediment \
       --mins 33.33 33.65 33.70 33.75 --maxes 33.65 33.70 33.75 33.93 -v
+
+    # Show how to add everyone select permission to a database
+    psql -p $PGPORT -c "GRANT select on all tables in schema public to everyone;" -U postgres -d stoqs 2> /dev/null
 
     # Create database fixture
     ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_test_data.json
