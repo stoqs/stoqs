@@ -38,7 +38,7 @@ PasteScript==3.0.0
 pika==0.13.0
 Pillow==5.4.1
 pysher==1.0.4
-psycopg2-binary==2.7.6.1
+psycopg2-binary==2.7.7
 pupynere==1.0.15
 Pydap==3.2.2
 python-dateutil==2.7.5
