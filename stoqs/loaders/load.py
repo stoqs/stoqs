@@ -133,7 +133,9 @@ class Loader(object):
 
         self.logger.info(f"Creating pg_dump of {db} in {pg_dump_file}")
         self.logger.debug(f"pg_dump_cmd = {pg_dump_cmd}")
-        ret = os.system(pg_dump_cmd)
+        os.system(pg_dump_cmd)
+
+        return pg_dump_file, os.path.getsize(pg_dump_file)
 
     def _provenance_dict(self, db, load_command, log_file):
         '''Return a dictionary of provenance Resource items. Special handling 
@@ -311,7 +313,7 @@ local   all             all                                     peer
             print(("On the server running on port =", settings.DATABASES['default']['PORT']))
             print("You are about to load all these databases:")
             print((' '.join(list(campaigns.campaigns.keys()))))
-            ans = eval(input('\nAre you sure you want load all these databases? [y/N] '))
+            ans = input('\nAre you sure you want load all these databases? [y/N] ') or 'N'
             if ans.lower() != 'y':
                 print('Exiting')
                 sys.exit()
@@ -323,12 +325,11 @@ local   all             all                                     peer
                     print(f'{campaigns.campaigns[db]} does not support the --test argument')
                     sys.exit(-1)
 
-    def recordprovenance(self, db, load_command, log_file):
-        '''Add Resources to the Campaign that describe what loaded it
+    def _assign_rt_campaign(self, db, rt_name='provenance'):
+        '''Set resourcetype and campaign items for provenance and pg_dump metadata
         '''
-        self.logger.debug('Recording provenance for %s using log_file = %s', db, log_file)
         try:
-            rt, _ = ResourceType.objects.using(db).get_or_create( name='provenance', 
+            self.rt, _ = ResourceType.objects.using(db).get_or_create(name=rt_name, 
                     description='Information about the source of data')
         except (ConnectionDoesNotExist, OperationalError, ProgrammingError) as e:
             self.logger.warn('Could not open database "%s" for updating provenance.', db)
@@ -336,11 +337,11 @@ local   all             all                                     peer
             return
 
         i = 0
-        c = None
-        while not c:
+        self.campaign = None
+        while not self.campaign:
             try:
                 self.logger.debug('Looking in database %s for first Campaign record', db)
-                c = Campaign.objects.using(db).get(id=1)
+                self.campaign = Campaign.objects.using(db).get(id=1)
             except ObjectDoesNotExist:
                 if self.args.background:
                     # Sleep a bit for background jobs to create the Campaign
@@ -356,13 +357,19 @@ local   all             all                                     peer
                     self.logger.error(f'Look for error messages in: {log_file}')
                     return
 
+    def recordprovenance(self, db, load_command, log_file):
+        '''Add Resources to the Campaign that describe what loaded it
+        '''
+        self.logger.debug('Recording provenance for %s using log_file = %s', db, log_file)
+        self._assign_rt_campaign(db)
+
         self.logger.info('Database %s', db)
         self._provenance_dict(db, load_command, log_file)
         for name,value in list(self.prov.items()):
             r, _ = Resource.objects.using(db).get_or_create(
-                            uristring='', name=name, value=value, resourcetype=rt)
+                            uristring='', name=name, value=value, resourcetype=self.rt)
             CampaignResource.objects.using(db).get_or_create(
-                            campaign=c, resource=r)
+                            campaign=self.campaign, resource=r)
             self.logger.info('Resource uristring="%s", name="%s", value="%s"', '', name, value)
 
     def updateprovenance(self):
@@ -421,7 +428,21 @@ local   all             all                                     peer
 
                 db += '_t'
 
-            self._create_pg_dump(db)
+            pg_dump_file, pg_dump_size = self._create_pg_dump(db)
+
+            self._assign_rt_campaign(db)
+
+            self.logger.debug(f'Recording pg_dump_size = {pg_dump_size} in provenance')
+            for name,value in {'pg_dump_file': pg_dump_file, 
+                               'pg_dump_size': pg_dump_size,
+                               'pg_dump_date_gmt': datetime.datetime.utcnow()}.items():
+                r, _ = Resource.objects.using(db).get_or_create(
+                                uristring='', name=name, value=value, resourcetype=self.rt)
+                CampaignResource.objects.using(db).get_or_create(
+                                campaign=self.campaign, resource=r)
+                self.logger.info('Resource uristring="%s", name="%s", value="%s"', '', name, value)
+
+
 
     def removetest(self):
         self.logger.info('Removing test databases from sever running on port %s', 
