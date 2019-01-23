@@ -168,23 +168,10 @@
   <div id="pg_dump-popup" class="modal hide fade in" style="width:auto;">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">×</a>
-        <h3>Download database</h3>
+        <h3 id="dump_or_restore_header"></h3>
     </div>
     <div class="modal-body">
-        <h4>Download a pg_dump of this database</h4>
-        <div>
-            <i class="icon-download"></i>
-            <a href="{{MEDIA_URL}}pg_dumps/{{request.META.dbAlias}}.pg_dump">{{site_uri}}{{MEDIA_URL}}pg_dumps/{{request.META.dbAlias}}.pg_dump</a>
-        </div>
-        <div>
-            To load this database (provided it doesn't exist) on your Docker-based STOQS system do:
-            <pre>
-cd $STOQS_HOME/docker
-source .env
-sudo mkdir $STOQS_VOLS_DIR/pg_dumps
-docker-compose run stoqs createdb -U postgres {{request.META.dbAlias}}
-sudo wget --no-check-certificate -qO- {{site_uri}}{{MEDIA_URL}}pg_dumps/{{request.META.dbAlias}}.pg_dump | docker exec -i stoqs psql -U postgres {{request.META.dbAlias}}</pre>
-        </div>
+        <div id="dump_or_restore"></div>
     </div>
     <div class="modal-footer">
         <a href="#" class="btn" data-dismiss="modal">Close</a>
@@ -1949,6 +1936,15 @@ sudo wget --no-check-certificate -qO- {{site_uri}}{{MEDIA_URL}}pg_dumps/{{reques
         }
                                 
         return ordinal
+    }
+
+    function formatBytes(bytes,decimals) {
+        if(bytes == 0) return '0 Bytes';
+        var k = 1024,
+            dm = decimals <= 0 ? 0 : decimals || 2,
+            sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+            i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
 
     function makeSlider(divid, type, data) {
@@ -4597,6 +4593,26 @@ function enable_cardboard(){
                     $('#campaigninfo').html(info_text);
                 }
                 buildMetadataHtml(data, true);
+
+                if ( ! $.isEmptyObject(data.resources.campaign.pg_dump_date_gmt) ) {
+                    $('#dump_or_restore_header').html("<h3>Restore this database on your system</h3>");
+                    restore_text = "To load this database (" + formatBytes(data.resources.campaign.pg_dump_size) + " compressed) on your Docker-based STOQS system first create it:\n";
+                    restore_text += "<pre>cd $STOQS_HOME/docker\ndocker-compose exec stoqs createdb -U postgres {{request.META.dbAlias}}</pre>\n";
+                    restore_text += "Then restore it from this server using either curl:\n";
+                    restore_text += "<pre>curl -k {{site_uri}}" + data.resources.campaign.pg_dump_file + " | \\\n";
+                    restore_text += "    docker exec -i stoqs pg_restore -Fc -U postgres -d {{request.META.dbAlias}}</pre>\n";
+                    restore_text += "or wget:<pre>sudo wget --no-check-certificate -qO- \\n";
+                    restore_text += "{{site_uri}}" + data.resources.campaign.pg_dump_file + " | \\\n";
+                    restore_text += "    docker exec -i stoqs psql -U postgres {{request.META.dbAlias}}</pre>\n";
+                    restore_text += "Wait for the command prompt, then restart your stoqs container:\n<pre>docker-compose restart stoqs</pre>\n";
+                    $('#dump_or_restore').html(restore_text);
+                }
+                else {
+                    $('#dump_or_restore_header').html("<h3>Create a backup of this database on your system</h3>");
+                    dump_text = "To create a 'pg_dump -Fc' file of this database on your Docker-based server:\n";
+                    dump_text += "<pre>cd $STOQS_HOME/docker\ndocker-compose run stoqs stoqs/loaders/load.py --db {{request.META.dbAlias}} --pg_dump</pre>";
+                    $('#dump_or_restore').html(dump_text);
+                }
             }
             else if (key == 'attributes') {
                 if ( ! $.isEmptyObject(data[key]) ) {
