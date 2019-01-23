@@ -127,15 +127,17 @@ class Loader(object):
                 raise
 
         port = settings.DATABASES[db]['PORT']
-        pg_dump_file = os.path.join(pg_dumps_dir, db + '.pg_dump')
+        pg_fq_dump_file = os.path.join(pg_dumps_dir, db + '.pg_dump')
+        # File location relative to server root
+        pg_dump_file = os.path.join(settings.MEDIA_URL, 'pg_dumps', db + '.pg_dump')
         # Rely on system path to find the correct version of pg_dump
-        pg_dump_cmd = f"pg_dump -p {port} -U postgres -Fc {db} > {pg_dump_file}"
+        pg_dump_cmd = f"pg_dump -p {port} -U postgres -Fc {db} > {pg_fq_dump_file}"
 
-        self.logger.info(f"Creating pg_dump of {db} in {pg_dump_file}")
+        self.logger.info(f"Creating pg_dump of {db} in {pg_fq_dump_file}")
         self.logger.debug(f"pg_dump_cmd = {pg_dump_cmd}")
         os.system(pg_dump_cmd)
 
-        return pg_dump_file, os.path.getsize(pg_dump_file)
+        return pg_fq_dump_file, pg_dump_file, os.path.getsize(pg_fq_dump_file)
 
     def _provenance_dict(self, db, load_command, log_file):
         '''Return a dictionary of provenance Resource items. Special handling 
@@ -428,16 +430,20 @@ local   all             all                                     peer
 
                 db += '_t'
 
-            pg_dump_file, pg_dump_size = self._create_pg_dump(db)
+            pg_fq_dump_file, pg_dump_file, pg_dump_size = self._create_pg_dump(db)
 
             self._assign_rt_campaign(db)
 
             self.logger.debug(f'Recording pg_dump_size = {pg_dump_size} in provenance')
             for name,value in {'pg_dump_file': pg_dump_file, 
+                               'pg_fq_dump_file': pg_fq_dump_file,
                                'pg_dump_size': pg_dump_size,
                                'pg_dump_date_gmt': datetime.datetime.utcnow()}.items():
                 r, _ = Resource.objects.using(db).get_or_create(
-                                uristring='', name=name, value=value, resourcetype=self.rt)
+                                uristring='', name=name, resourcetype=self.rt)
+                r.value = value
+                r.save(using=db)
+                    
                 CampaignResource.objects.using(db).get_or_create(
                                 campaign=self.campaign, resource=r)
                 self.logger.info('Resource uristring="%s", name="%s", value="%s"', '', name, value)
