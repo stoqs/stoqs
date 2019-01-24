@@ -336,7 +336,7 @@ local   all             all                                     peer
         except (ConnectionDoesNotExist, OperationalError, ProgrammingError) as e:
             self.logger.warn('Could not open database "%s" for updating provenance.', db)
             self.logger.warn(e)
-            return
+            raise ObjectDoesNotExist(e)
 
         i = 0
         self.campaign = None
@@ -356,8 +356,7 @@ local   all             all                                     peer
                             'Check log_file for errors: {}').format(sec_wait * max_iter, log_file))
                 else:
                     self.logger.error(f'Could not find Campaign record for {db} in the database.')
-                    self.logger.error(f'Look for error messages in: {log_file}')
-                    return
+                    raise
 
     def recordprovenance(self, db, load_command, log_file):
         '''Add Resources to the Campaign that describe what loaded it
@@ -432,7 +431,11 @@ local   all             all                                     peer
 
             pg_fq_dump_file, pg_dump_file, pg_dump_size = self._create_pg_dump(db)
 
-            self._assign_rt_campaign(db)
+            try:
+                self._assign_rt_campaign(db)
+            except ObjectDoesNotExist:
+                self.logger.warn('Skipping')
+                continue
 
             self.logger.debug(f'Recording pg_dump_size = {pg_dump_size} in provenance')
             for name,value in {'pg_dump_file': pg_dump_file, 
