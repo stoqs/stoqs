@@ -58,6 +58,6 @@ else
     # For testing on port 8000 before certificate is in place make a security exception in your browser
     export MAPSERVER_SCHEME=https
     python stoqs/manage.py collectstatic --noinput  # Collect static files
-    /usr/local/bin/uwsgi --emperor /etc/uwsgi/django-uwsgi.ini
+    /usr/local/bin/uwsgi --emperor /etc/uwsgi/django-uwsgi.ini --pidfile=/tmp/uwsgi.pid
 fi
 
