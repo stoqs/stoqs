@@ -6,7 +6,7 @@ STOQS_SRVPROJ=/srv/stoqs
 # Ensure that stoqs-postgis container is serving databases before continuing
 POSTGRES_DB=postgres python ${STOQS_SRVHOME}/docker/database-check.py > /dev/null 2>&1
 while [[ $? != 0 ]] ; do
-    sleep 5; echo "*** Waiting for postgres container ..."
+    sleep 5; echo "*** Waiting for postis container ..."
     POSTGRES_DB=postgres python ${STOQS_SRVHOME}/docker/database-check.py > /dev/null 2>&1
 done
 
@@ -58,6 +58,6 @@ else
     # For testing on port 8000 before certificate is in place make a security exception in your browser
     export MAPSERVER_SCHEME=https
     python stoqs/manage.py collectstatic --noinput  # Collect static files
-    /usr/local/bin/uwsgi --emperor /etc/uwsgi/django-uwsgi.ini
+    /usr/local/bin/uwsgi --emperor /etc/uwsgi/django-uwsgi.ini --pidfile=/tmp/uwsgi.pid
 fi
 
