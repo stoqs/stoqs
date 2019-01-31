@@ -18,7 +18,8 @@ services:
     command: postgres -c config_file=/etc/postgresql.conf
     ports:
       - "${STOQS_PGHOST_PORT}:5432"
-    user: ${HOST_UID}
+    # Set user for deployment on MacOS, assign HOST_ID=<result of `id -u`> in your .env file
+    ##user: ${HOST_UID}
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - STOQSADM_PASSWORD=${STOQSADM_PASSWORD}
