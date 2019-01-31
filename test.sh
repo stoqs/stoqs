@@ -81,7 +81,7 @@ then
     psql -p $PGPORT -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
 
     # Get bathymetry and load data from MBARI data servers
-    wget -N -O loaders/Monterey25.grd https://stoqs.mbari.org/terrain/Monterey25.grd
+    wget -N -O -q loaders/Monterey25.grd https://stoqs.mbari.org/terrain/Monterey25.grd
     coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" loaders/loadTestData.py
     if [ $? != 0 ]
     then
