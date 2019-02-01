@@ -42,7 +42,7 @@ RUN pip3 install git+https://github.com/pymssql/pymssql
 RUN /bin/bash -c 'pip install -r /requirements/production.txt'
 
 # Basemap install - needed for monitorLrauv.py in production (some warnings/errors on compiling that can be ignored)
-RUN wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz
+RUN wget -q http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz
 RUN tar -xzf basemap-1.0.7.tar.gz
 RUN cd basemap-1.0.7 && GEOS_DIR=/usr/local python setup.py install && cd ..
 
