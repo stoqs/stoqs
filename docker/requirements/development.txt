@@ -20,7 +20,7 @@ MarkupSafe==1.1.0
 netCDF4==1.4.2
 pandas==0.24.1
 numpy==1.16.1
-pandas==0.24.0
+pandas==0.24.1
 requests==2.21.0
 Pygments==2.3.1
 pygraphviz==1.5
