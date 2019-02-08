@@ -10,7 +10,7 @@ billiard==3.5.0.5
 binaryornot==0.4.4
 certifi==2018.11.29
 cookiecutter==1.6.0
-Cython==0.29.3
+Cython==0.29.4
 docutils==0.14
 ephem==3.7.6.0
 GDAL==2.4.0
@@ -18,8 +18,9 @@ Genshi==0.7.1
 h5py==2.9.0
 MarkupSafe==1.1.0
 netCDF4==1.4.2
-numpy==1.16.0
 pandas==0.24.1
+numpy==1.16.1
+pandas==0.24.0
 requests==2.21.0
 Pygments==2.3.1
 pygraphviz==1.5
