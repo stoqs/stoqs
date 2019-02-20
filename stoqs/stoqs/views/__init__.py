@@ -420,6 +420,9 @@ def showActivity(request, fmt='html'):
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, fmt, query_set, stoqs_object)
+    o.fields = ['id', 'campaign__name', 'platform__name', 'name', 'comment', 'startdate', 'enddate', 
+            'num_measuredparameters', 'loaded_date', 'maptrack', 'mappoint', 'mindepth', 'maxdepth', 
+            'activitytype__name']
     return o.process_request()
 
 def showActivityType(request, fmt='html'):
@@ -472,7 +475,9 @@ def showActivityParameter(request, fmt='html'):
     query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, fmt, query_set, stoqs_object)
-    o.fields = ['id', 'activity__name', 'parameter__name', 'number', 'min', 'max', 'mean', 
+    o.fields = ['id', 'activity__name', 'parameter__name', 'activity__startdate', 'activity__enddate', 
+                'activity__mindepth', 'activity__maxdepth', 
+                'number', 'min', 'max', 'mean', 
                 'median', 'mode', 'p025', 'p975', 'p010', 'p990']
     return o.process_request()
 
