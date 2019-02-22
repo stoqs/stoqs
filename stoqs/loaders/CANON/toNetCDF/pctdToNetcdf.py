@@ -63,6 +63,8 @@ class ParserWriter(BaseWriter):
         self.logger.debug(f"Looking in {self.args.inDir} for files matching pattern {self.args.pattern}")
         fileList = glob(os.path.join(self.args.inDir, self.args.pattern))
         self.logger.debug(f"fileList = {fileList}")
+        if not fileList:
+            raise FileNotFoundError(f"No files with pattern {self.args.pattern} found in {self.args.inDir}")
     
         fileList.sort()
         for file in fileList:
