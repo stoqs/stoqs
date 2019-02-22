@@ -35,7 +35,7 @@ import coards
 import urllib.request, urllib.error, urllib.parse
 from datetime import datetime, timedelta
 import numpy as np
-from pupynere import netcdf_file
+from netCDF4 import Dataset
 from seawater import eos80
 
 from CANON.toNetCDF import BaseWriter
@@ -99,8 +99,8 @@ class ParserWriter(BaseWriter):
                 self.an_chan, self.an_var, self.an_units = self.args.analog.split(':')
                 self.analog_list = []
 
-            for r in csv.DictReader(open(file), delimiter=' ', skipinitialspace=True):
-                ##print r
+            for r in csv.DictReader(open(file, errors='ignore'), delimiter=' ', skipinitialspace=True):
+                self.logger.debug(f"r = {r}")
                 if not r['TimeJ']:
                     continue
                 if r['TimeJ'] == '-9.990e-29':
@@ -174,7 +174,7 @@ class ParserWriter(BaseWriter):
         outFile = '.'.join(inFile.split('.')[:-1]) + '.nc'
 
         # Create the NetCDF file
-        self.ncFile = netcdf_file(outFile, 'w')
+        self.ncFile = Dataset(outFile, 'w')
 
         # If specified on command line override the default generic title with what is specified
         self.ncFile.title = 'Profile CTD cast data'
@@ -233,11 +233,10 @@ class ParserWriter(BaseWriter):
         sal.coordinates = 'time depth latitude longitude'
         sal[:] = self.sal_list
 
-        xmiss = self.ncFile.createVariable('xmiss', 'float64', ('time',))
+        xmiss = self.ncFile.createVariable('xmiss', 'float64', ('time',), fill_value=self._FillValue)
         xmiss.long_name = 'Beam Transmission, Chelsea/Seatech'
         xmiss.coordinates = 'time depth latitude longitude'
         xmiss.missing_value = self.missing_value
-        xmiss._FillValue = self._FillValue
         xmiss.units = '%'
         xmiss[:] = self.xmiss_list
 
