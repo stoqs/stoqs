@@ -60,30 +60,28 @@ class ParserWriter(BaseWriter):
         '''
 
         # Fill up the object's member data item lists from all the files - read only the processed *.asc files that match pattern, 
-        if self.args.verbose:
-            print(f"Looking in {self.args.inDir} for files matching pattern {self.args.pattern}")
+        self.logger.debug(f"Looking in {self.args.inDir} for files matching pattern {self.args.pattern}")
         fileList = glob(os.path.join(self.args.inDir, self.args.pattern))
-        if self.args.verbose:
-            print(f"fileList = {fileList}")
+        self.logger.debug(f"fileList = {fileList}")
     
         fileList.sort()
         for file in fileList:
             if not file.endswith('.asc'):
                 continue
-            print(("file = %s" % file))
+            self.logger.info("file = %s" % file)
             if file == './pctd/c0912c01.asc':
                 # Special fix for first cast on September 2012 CANON cruise
-                print(("Converting %s up to down" % file))
+                self.logger.info("Converting %s up to down" % file)
                 file = convert_up_to_down(file)
 
             try:
                 year, lat, lon = get_year_lat_lon(file)
             except HdrFileNotFound as e:
-                print(e)
-                print("Please make sure that the archive is consistent with naming of .asc, .btl, and .hdr files")
+                self.logger.info(e)
+                self.logger.info("Please make sure that the archive is consistent with naming of .asc, .btl, and .hdr files")
                 continue
             except PositionNotFound as e:
-                print(e)
+                self.logger.info(e)
                 continue
 
             # Initialize member lists for each file processed
@@ -274,7 +272,7 @@ class ParserWriter(BaseWriter):
         self.add_global_metadata()
 
         self.ncFile.close()
-        print(('Wrote ' + outFile))
+        self.logger.info('Wrote ' + outFile)
 
         # End write_pctd()
 
@@ -284,6 +282,6 @@ if __name__ == '__main__':
     pw = ParserWriter()
     pw.process_command_line()
     pw.process_asc_files()
-    print('Done.')
+    pw.logger.info('Done.')
 
 
