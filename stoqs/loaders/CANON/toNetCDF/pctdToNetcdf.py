@@ -35,7 +35,7 @@ import coards
 import urllib.request, urllib.error, urllib.parse
 from datetime import datetime, timedelta
 import numpy as np
-from pupynere import netcdf_file
+from netCDF4 import Dataset
 from seawater import eos80
 
 from CANON.toNetCDF import BaseWriter
@@ -60,25 +60,30 @@ class ParserWriter(BaseWriter):
         '''
 
         # Fill up the object's member data item lists from all the files - read only the processed *.asc files that match pattern, 
+        self.logger.debug(f"Looking in {self.args.inDir} for files matching pattern {self.args.pattern}")
         fileList = glob(os.path.join(self.args.inDir, self.args.pattern))
+        self.logger.debug(f"fileList = {fileList}")
+        if not fileList:
+            raise FileNotFoundError(f"No files with pattern {self.args.pattern} found in {self.args.inDir}")
+    
         fileList.sort()
         for file in fileList:
             if not file.endswith('.asc'):
                 continue
-            print(("file = %s" % file))
+            self.logger.info("file = %s" % file)
             if file == './pctd/c0912c01.asc':
                 # Special fix for first cast on September 2012 CANON cruise
-                print(("Converting %s up to down" % file))
+                self.logger.info("Converting %s up to down" % file)
                 file = convert_up_to_down(file)
 
             try:
                 year, lat, lon = get_year_lat_lon(file)
             except HdrFileNotFound as e:
-                print(e)
-                print("Please make sure that the archive is consistent with naming of .asc, .btl, and .hdr files")
+                self.logger.info(e)
+                self.logger.info("Please make sure that the archive is consistent with naming of .asc, .btl, and .hdr files")
                 continue
             except PositionNotFound as e:
-                print(e)
+                self.logger.info(e)
                 continue
 
             # Initialize member lists for each file processed
@@ -96,8 +101,8 @@ class ParserWriter(BaseWriter):
                 self.an_chan, self.an_var, self.an_units = self.args.analog.split(':')
                 self.analog_list = []
 
-            for r in csv.DictReader(open(file), delimiter=' ', skipinitialspace=True):
-                ##print r
+            for r in csv.DictReader(open(file, errors='ignore'), delimiter=' ', skipinitialspace=True):
+                self.logger.debug(f"r = {r}")
                 if not r['TimeJ']:
                     continue
                 if r['TimeJ'] == '-9.990e-29':
@@ -171,7 +176,7 @@ class ParserWriter(BaseWriter):
         outFile = '.'.join(inFile.split('.')[:-1]) + '.nc'
 
         # Create the NetCDF file
-        self.ncFile = netcdf_file(outFile, 'w')
+        self.ncFile = Dataset(outFile, 'w')
 
         # If specified on command line override the default generic title with what is specified
         self.ncFile.title = 'Profile CTD cast data'
@@ -230,11 +235,10 @@ class ParserWriter(BaseWriter):
         sal.coordinates = 'time depth latitude longitude'
         sal[:] = self.sal_list
 
-        xmiss = self.ncFile.createVariable('xmiss', 'float64', ('time',))
+        xmiss = self.ncFile.createVariable('xmiss', 'float64', ('time',), fill_value=self._FillValue)
         xmiss.long_name = 'Beam Transmission, Chelsea/Seatech'
         xmiss.coordinates = 'time depth latitude longitude'
         xmiss.missing_value = self.missing_value
-        xmiss._FillValue = self._FillValue
         xmiss.units = '%'
         xmiss[:] = self.xmiss_list
 
@@ -269,7 +273,7 @@ class ParserWriter(BaseWriter):
         self.add_global_metadata()
 
         self.ncFile.close()
-        print(('Wrote ' + outFile))
+        self.logger.info('Wrote ' + outFile)
 
         # End write_pctd()
 
@@ -279,6 +283,6 @@ if __name__ == '__main__':
     pw = ParserWriter()
     pw.process_command_line()
     pw.process_asc_files()
-    print('Done.')
+    pw.logger.info('Done.')
 
 

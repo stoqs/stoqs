@@ -25,6 +25,7 @@ import sys
 import csv
 import time
 import coards
+import logging
 import urllib.request, urllib.error, urllib.parse
 import datetime
 import numpy as np
@@ -36,6 +37,13 @@ class BaseWriter(object):
     '''
     _FillValue = -1.e34
     missing_value = -1.e34
+
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    sh = logging.StreamHandler()
+    logger.addHandler(sh)
+    formatter = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
+    sh.setFormatter(formatter)
 
     def add_global_metadata(self, featureType='trajectory'):
         '''
@@ -125,6 +133,9 @@ Write a paragraph or abstract about the data contained within the file, expandin
                             help='Turn on verbose output')
 
         self.args = parser.parse_args()
+
+        if self.args.verbose:
+            self.logger.setLevel(logging.DEBUG)
 
 
 if __name__ == '__main__':

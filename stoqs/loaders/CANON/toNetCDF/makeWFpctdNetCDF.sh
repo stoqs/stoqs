@@ -5,19 +5,43 @@
 # password to $LOGIN@$RH.  Loads for previous campaigns may be commented so as to keep a record
 # of conversions.
 #
+# For running on a Docker-based installation give the script a docker argument from the docker
+# direcory, e.g.:
+#   cd $STOQS_HOME/docker
+#   ../stoqs/loaders/CANON/toNetCDF/makeWFpctdNetCDF.sh docker
+#
 # --
 # Mike McCann
-# 15 January 2014
-# Duane Edgington modified for Fall Canon 2014. September 29, 2014
+# 22 February 2019
 
+# Connection to MBARI host that holds CTD data and serves .nc files via OPeNDAP
 LOGIN=odssadm
 RH=odss.mbari.org
 
+# Directories and titles for Western Flyer Profile CTD data - Keep previously processed data commented out
+#DIR=/data/canon/2015_Sep/Platforms/Ships/Western_Flyer/pctd
+#TITLE="Profile CTD data from R/V Western Flyer during CANON - September 2015"
+DIR=/data/other/routine/Platforms/Ships/WesternFlyer/pctd/cn18
+TITLE="Profile CTD data from R/V Western Flyer during CANON - September 2018"
 
-DIR=/data/canon/2015_Sep/Platforms/Ships/Western_Flyer/pctd
-LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
+# Set local processing directory
+if [ "$1" == "docker" ]
+then
+    LOCALDIR="/srv/docker/"`basename $DIR`
+else
+    LOCALDIR=`basename $DIR`
+fi
+
+# Copy the data from DIR and create the .nc files - You will be prompted for credentials
 rsync -rv $LOGIN@$RH:$DIR  .
-./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Western Flyer during CANON - September 2015" -a V0:rhodamine:V
+if [ "$1" == "docker" ]
+then
+    docker-compose exec stoqs stoqs/loaders/CANON/toNetCDF/pctdToNetcdf.py -i $LOCALDIR -t "$TITLE" -a V0:rhodamine:V
+else
+    ./pctdToNetcdf.py -i $LOCALDIR -t "$TITLE" -a V0:rhodamine:V
+fi
+
+# Copy the .nc files back to the MBARI DAP host - You will be prompted for credentials 
 scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 rm -r $LOCALDIR
 
