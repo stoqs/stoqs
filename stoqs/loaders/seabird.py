@@ -48,13 +48,12 @@ def get_year_lat_lon(*args, **kwargs):
     except KeyError:
         hdrFile = '.'.join(args[0].split('.')[:-1]) + '.hdr'
         if os.path.exists(hdrFile):
-            FH = open(hdrFile)
+            FH = open(hdrFile, errors='ignore')
         else:
             raise HdrFileNotFound('Header file %s not found' % hdrFile)
 
     for line in FH:
         ##print line
-        line = line.decode('utf-8')
         if line.find('NMEA Latitude') != -1:
             latD = int(line.split(' ')[4])
             latM = float(line.split(' ')[5])
