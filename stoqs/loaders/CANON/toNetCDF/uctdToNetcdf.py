@@ -37,10 +37,10 @@ class ParserWriter(BaseWriter):
             raise Exception('Must specify --depth for UCTD data')
 
         if self.args.format == 'Martin_UDAS':
-            print(("Processing %s .txt files from directory '%s' with pattern '%s'" % (self.args.format, self.args.inDir, self.args.pattern)))
+            self.logger.info("Processing %s .txt files from directory '%s' with pattern '%s'" % (self.args.format, self.args.inDir, self.args.pattern))
             self.process_martinudas_files()
         else:
-            print(("Processing Sea-Bird .asc and .hdr files from directory '%s' with pattern '%s'" % (self.args.inDir, self.args.pattern)))
+            self.logger.info("Processing Sea-Bird .asc and .hdr files from directory '%s' with pattern '%s'" % (self.args.inDir, self.args.pattern))
             self.process_seabird_files()
 
     def initialize_lists(self):
@@ -76,10 +76,12 @@ class ParserWriter(BaseWriter):
         '''
 
         # Fill up the object's member data item lists from all the files - read only the processed .asc files that match the specified pattern, 
+        self.logger.debug(f"Looking in {self.args.inDir} for files matching pattern {self.args.pattern}")
         fileList = glob(os.path.join(self.args.inDir, self.args.pattern))
+        self.logger.debug(f"fileList = {fileList}")
         fileList.sort()
         for sb_file in fileList:
-            print(("sb_file = %s" % sb_file))
+            self.logger.info("sb_file = %s" % sb_file)
             self.initialize_lists()
 
             # Open .hdr file to get the year, parse year from a line like this:
@@ -137,7 +139,7 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
         fileList = glob(os.path.join(self.args.inDir, self.args.pattern))
         fileList.sort()
         for udas_file in fileList:
-            print(("udas_file = %s" % udas_file))
+            self.logger.info("udas_file = %s" % udas_file)
             self.initialize_lists()
 
             # Need to skip over first line in the data file, assume that the times are in Moss Landing Time zone
@@ -148,9 +150,9 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
 
             for r in csv.DictReader(fh, delimiter=' ', skipinitialspace=True):
                 if self.args.verbose:
-                    print(('r = ', r))
+                    self.logger.info('r = ', r)
                     for k,v in list(r.items()):
-                        print(('%s: %s' % (k, v)))
+                        self.logger.info('%s: %s' % (k, v))
 
                 # Skip over clearly bad values
                 if r['Latitude'] == "0.'000000":
@@ -164,7 +166,7 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
                 local_dt = localtz.localize(dt_naive, is_dst=None)
                 es = time.mktime(local_dt.astimezone(pytz.utc).timetuple())
                 if self.args.verbose:
-                    print((local_dt, local_dt.astimezone(pytz.utc), es))
+                    self.logger.info(local_dt, local_dt.astimezone(pytz.utc), es)
 
                 self.esec_list.append(es)
 
@@ -174,7 +176,7 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
                 lon = float(r['Longitude'].split("'")[0]) + float(r['Longitude'].split("'")[1]) / 60.0
                 self.lon_list.append(-lon)
                 if self.args.verbose:
-                    print((lon, lat))
+                    self.logger.info(lon, lat)
 
                 self.dep_list.append(self.args.depth) 
 
@@ -303,7 +305,7 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
         self.add_global_metadata()
 
         self.ncFile.close()
-        print(("Wrote %s" % outFile))
+        self.logger.info("Wrote %s" % outFile)
 
         # End write_ctd()
 
@@ -313,6 +315,6 @@ if __name__ == '__main__':
     pw = ParserWriter()
     pw.process_command_line()
     pw.process_files()
-    print("Done.")
+    pw.logger.info("Done.")
 
 
