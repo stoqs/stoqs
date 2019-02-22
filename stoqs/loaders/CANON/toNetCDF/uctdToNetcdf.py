@@ -17,7 +17,7 @@ import time
 import pytz
 from glob import glob
 from datetime import datetime, timedelta
-from pupynere import netcdf_file
+from netCDF4 import Dataset
 
 # Add grandparent dir to pythonpath so that we can see the CANON and toNetCDF modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../") )
@@ -203,7 +203,7 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
 
         # Create the NetCDF file
         outFile = '.'.join(inFile.split('.')[:-1]) + '.nc'
-        self.ncFile = netcdf_file(outFile, 'w')
+        self.ncFile = Dataset(outFile, 'w')
 
         # If specified on command line override the default generic title with what is specified
         self.ncFile.title = 'Underway CTD data'
@@ -253,56 +253,50 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
         self.depth[:] = self.dep_list
 
         # Record Variables - Underway CTD Data
-        temp = self.ncFile.createVariable('TEMP', 'float64', ('time',))
+        temp = self.ncFile.createVariable('TEMP', 'float64', ('time',), fill_value=self._FillValue)
         temp.long_name = 'Temperature, 2 [ITS-90, deg C]'
         temp.standard_name = 'sea_water_temperature'
         temp.coordinates = 'time depth latitude longitude'
         temp.units = 'Celsius'
-        temp._FillValue = self._FillValue
         temp.missing_value = self.missing_value
         temp[:] = self.t1_list
 
-        sal = self.ncFile.createVariable('PSAL', 'float64', ('time',))
+        sal = self.ncFile.createVariable('PSAL', 'float64', ('time',), fill_value=self._FillValue)
         sal.long_name = 'Salinity, Practical [PSU]'
         sal.standard_name = 'sea_water_salinity'
         sal.coordinates = 'time depth latitude longitude'
-        sal._FillValue = self._FillValue
         sal.missing_value = self.missing_value
         sal[:] = self.sal_list
 
         if self.xmiss_list:
-            xmiss = self.ncFile.createVariable('xmiss', 'float64', ('time',))
+            xmiss = self.ncFile.createVariable('xmiss', 'float64', ('time',), fill_value=self._FillValue)
             xmiss.long_name = 'Beam Transmission, Chelsea/Seatech'
             xmiss.coordinates = 'time depth latitude longitude'
             xmiss.units = '%'
-            xmiss._FillValue = self._FillValue
             xmiss.missing_value = self.missing_value
             xmiss[:] = self.xmiss_list
 
         if self.wetstar_list:
-            wetstar = self.ncFile.createVariable('wetstar', 'float64', ('time',))
+            wetstar = self.ncFile.createVariable('wetstar', 'float64', ('time',), fill_value=self._FillValue)
             wetstar.long_name = 'Fluorescence, WET Labs WETstar'
             wetstar.coordinates = 'time depth latitude longitude'
             wetstar.units = 'mg/m^3'
-            wetstar._FillValue = self._FillValue
             wetstar.missing_value = self.missing_value
             wetstar[:] = self.wetstar_list
 
         if self.turb_scufa_list:
-            turb_scufa = self.ncFile.createVariable('turb_scufa', 'float64', ('time',))
+            turb_scufa = self.ncFile.createVariable('turb_scufa', 'float64', ('time',), fill_value=self._FillValue)
             turb_scufa.long_name = 'Turbidity_Scufa'
             turb_scufa.coordinates = 'time depth latitude longitude'
             turb_scufa.units = 'NTU'
-            turb_scufa._FillValue = self._FillValue
             turb_scufa.missing_value = self.missing_value
             turb_scufa[:] = self.turb_scufa_list
 
         if self.fl_scufa_list:
-            fl_scufa = self.ncFile.createVariable('fl_scufa', 'float64', ('time',))
+            fl_scufa = self.ncFile.createVariable('fl_scufa', 'float64', ('time',), fill_value=self._FillValue)
             fl_scufa.long_name = 'Raw_Fluorescence_Volts_Scufa'
             fl_scufa.coordinates = 'time depth latitude longitude'
             fl_scufa.units = 'volts'
-            fl_scufa._FillValue = self._FillValue
             fl_scufa.missing_value = self.missing_value
             fl_scufa[:] = self.fl_scufa_list
 
