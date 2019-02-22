@@ -17,7 +17,7 @@ import time
 import pytz
 from glob import glob
 from datetime import datetime, timedelta
-from pupynere import netcdf_file
+from netCDF4 import Dataset
 
 # Add grandparent dir to pythonpath so that we can see the CANON and toNetCDF modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../") )
@@ -37,10 +37,10 @@ class ParserWriter(BaseWriter):
             raise Exception('Must specify --depth for UCTD data')
 
         if self.args.format == 'Martin_UDAS':
-            print(("Processing %s .txt files from directory '%s' with pattern '%s'" % (self.args.format, self.args.inDir, self.args.pattern)))
+            self.logger.info("Processing %s .txt files from directory '%s' with pattern '%s'" % (self.args.format, self.args.inDir, self.args.pattern))
             self.process_martinudas_files()
         else:
-            print(("Processing Sea-Bird .asc and .hdr files from directory '%s' with pattern '%s'" % (self.args.inDir, self.args.pattern)))
+            self.logger.info("Processing Sea-Bird .asc and .hdr files from directory '%s' with pattern '%s'" % (self.args.inDir, self.args.pattern))
             self.process_seabird_files()
 
     def initialize_lists(self):
@@ -76,10 +76,12 @@ class ParserWriter(BaseWriter):
         '''
 
         # Fill up the object's member data item lists from all the files - read only the processed .asc files that match the specified pattern, 
+        self.logger.debug(f"Looking in {self.args.inDir} for files matching pattern {self.args.pattern}")
         fileList = glob(os.path.join(self.args.inDir, self.args.pattern))
+        self.logger.debug(f"fileList = {fileList}")
         fileList.sort()
         for sb_file in fileList:
-            print(("sb_file = %s" % sb_file))
+            self.logger.info("sb_file = %s" % sb_file)
             self.initialize_lists()
 
             # Open .hdr file to get the year, parse year from a line like this:
@@ -137,7 +139,7 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
         fileList = glob(os.path.join(self.args.inDir, self.args.pattern))
         fileList.sort()
         for udas_file in fileList:
-            print(("udas_file = %s" % udas_file))
+            self.logger.info("udas_file = %s" % udas_file)
             self.initialize_lists()
 
             # Need to skip over first line in the data file, assume that the times are in Moss Landing Time zone
@@ -148,9 +150,9 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
 
             for r in csv.DictReader(fh, delimiter=' ', skipinitialspace=True):
                 if self.args.verbose:
-                    print(('r = ', r))
+                    self.logger.info('r = ', r)
                     for k,v in list(r.items()):
-                        print(('%s: %s' % (k, v)))
+                        self.logger.info('%s: %s' % (k, v))
 
                 # Skip over clearly bad values
                 if r['Latitude'] == "0.'000000":
@@ -164,7 +166,7 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
                 local_dt = localtz.localize(dt_naive, is_dst=None)
                 es = time.mktime(local_dt.astimezone(pytz.utc).timetuple())
                 if self.args.verbose:
-                    print((local_dt, local_dt.astimezone(pytz.utc), es))
+                    self.logger.info(local_dt, local_dt.astimezone(pytz.utc), es)
 
                 self.esec_list.append(es)
 
@@ -174,7 +176,7 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
                 lon = float(r['Longitude'].split("'")[0]) + float(r['Longitude'].split("'")[1]) / 60.0
                 self.lon_list.append(-lon)
                 if self.args.verbose:
-                    print((lon, lat))
+                    self.logger.info(lon, lat)
 
                 self.dep_list.append(self.args.depth) 
 
@@ -203,7 +205,7 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
 
         # Create the NetCDF file
         outFile = '.'.join(inFile.split('.')[:-1]) + '.nc'
-        self.ncFile = netcdf_file(outFile, 'w')
+        self.ncFile = Dataset(outFile, 'w')
 
         # If specified on command line override the default generic title with what is specified
         self.ncFile.title = 'Underway CTD data'
@@ -253,63 +255,57 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
         self.depth[:] = self.dep_list
 
         # Record Variables - Underway CTD Data
-        temp = self.ncFile.createVariable('TEMP', 'float64', ('time',))
+        temp = self.ncFile.createVariable('TEMP', 'float64', ('time',), fill_value=self._FillValue)
         temp.long_name = 'Temperature, 2 [ITS-90, deg C]'
         temp.standard_name = 'sea_water_temperature'
         temp.coordinates = 'time depth latitude longitude'
         temp.units = 'Celsius'
-        temp._FillValue = self._FillValue
         temp.missing_value = self.missing_value
         temp[:] = self.t1_list
 
-        sal = self.ncFile.createVariable('PSAL', 'float64', ('time',))
+        sal = self.ncFile.createVariable('PSAL', 'float64', ('time',), fill_value=self._FillValue)
         sal.long_name = 'Salinity, Practical [PSU]'
         sal.standard_name = 'sea_water_salinity'
         sal.coordinates = 'time depth latitude longitude'
-        sal._FillValue = self._FillValue
         sal.missing_value = self.missing_value
         sal[:] = self.sal_list
 
         if self.xmiss_list:
-            xmiss = self.ncFile.createVariable('xmiss', 'float64', ('time',))
+            xmiss = self.ncFile.createVariable('xmiss', 'float64', ('time',), fill_value=self._FillValue)
             xmiss.long_name = 'Beam Transmission, Chelsea/Seatech'
             xmiss.coordinates = 'time depth latitude longitude'
             xmiss.units = '%'
-            xmiss._FillValue = self._FillValue
             xmiss.missing_value = self.missing_value
             xmiss[:] = self.xmiss_list
 
         if self.wetstar_list:
-            wetstar = self.ncFile.createVariable('wetstar', 'float64', ('time',))
+            wetstar = self.ncFile.createVariable('wetstar', 'float64', ('time',), fill_value=self._FillValue)
             wetstar.long_name = 'Fluorescence, WET Labs WETstar'
             wetstar.coordinates = 'time depth latitude longitude'
             wetstar.units = 'mg/m^3'
-            wetstar._FillValue = self._FillValue
             wetstar.missing_value = self.missing_value
             wetstar[:] = self.wetstar_list
 
         if self.turb_scufa_list:
-            turb_scufa = self.ncFile.createVariable('turb_scufa', 'float64', ('time',))
+            turb_scufa = self.ncFile.createVariable('turb_scufa', 'float64', ('time',), fill_value=self._FillValue)
             turb_scufa.long_name = 'Turbidity_Scufa'
             turb_scufa.coordinates = 'time depth latitude longitude'
             turb_scufa.units = 'NTU'
-            turb_scufa._FillValue = self._FillValue
             turb_scufa.missing_value = self.missing_value
             turb_scufa[:] = self.turb_scufa_list
 
         if self.fl_scufa_list:
-            fl_scufa = self.ncFile.createVariable('fl_scufa', 'float64', ('time',))
+            fl_scufa = self.ncFile.createVariable('fl_scufa', 'float64', ('time',), fill_value=self._FillValue)
             fl_scufa.long_name = 'Raw_Fluorescence_Volts_Scufa'
             fl_scufa.coordinates = 'time depth latitude longitude'
             fl_scufa.units = 'volts'
-            fl_scufa._FillValue = self._FillValue
             fl_scufa.missing_value = self.missing_value
             fl_scufa[:] = self.fl_scufa_list
 
         self.add_global_metadata()
 
         self.ncFile.close()
-        print(("Wrote %s" % outFile))
+        self.logger.info("Wrote %s" % outFile)
 
         # End write_ctd()
 
@@ -319,6 +315,6 @@ if __name__ == '__main__':
     pw = ParserWriter()
     pw.process_command_line()
     pw.process_files()
-    print("Done.")
+    pw.logger.info("Done.")
 
 
