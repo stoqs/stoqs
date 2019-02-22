@@ -60,7 +60,12 @@ class ParserWriter(BaseWriter):
         '''
 
         # Fill up the object's member data item lists from all the files - read only the processed *.asc files that match pattern, 
+        if self.args.verbose:
+            print(f"Looking in {self.args.inDir} for files matching pattern {self.args.pattern}")
         fileList = glob(os.path.join(self.args.inDir, self.args.pattern))
+        if self.args.verbose:
+            print(f"fileList = {fileList}")
+    
         fileList.sort()
         for file in fileList:
             if not file.endswith('.asc'):
