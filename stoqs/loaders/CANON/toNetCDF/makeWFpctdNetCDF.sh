@@ -25,18 +25,13 @@ DIR=/data/other/routine/Platforms/Ships/WesternFlyer/pctd/cn18
 TITLE="Profile CTD data from R/V Western Flyer during CANON - September 2018"
 
 # Set local processing directory
-if [ "$1" == "docker" ]
-then
-    LOCALDIR="/srv/docker/"`basename $DIR`
-else
-    LOCALDIR=`basename $DIR`
-fi
+LOCALDIR=`basename $DIR`
 
 # Copy the data from DIR and create the .nc files - You will be prompted for credentials
 rsync -rv $LOGIN@$RH:$DIR  .
 if [ "$1" == "docker" ]
 then
-    docker-compose exec stoqs stoqs/loaders/CANON/toNetCDF/pctdToNetcdf.py -i $LOCALDIR -t "$TITLE" -a V0:rhodamine:V
+    docker-compose exec stoqs stoqs/loaders/CANON/toNetCDF/pctdToNetcdf.py -i /srv/docker/$LOCALDIR -t "$TITLE" -a V0:rhodamine:V
 else
     ./pctdToNetcdf.py -i $LOCALDIR -t "$TITLE" -a V0:rhodamine:V
 fi
