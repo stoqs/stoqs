@@ -19,21 +19,22 @@ LOGIN=odssadm
 RH=odss.mbari.org
 
 # Directories and titles for Western Flyer Profile CTD data - Keep previously processed data commented out
-DIR=/data/canon/2015_Sep/Platforms/Ships/Western_Flyer/uctd
-TITLE="Underway CTD data from R/V Western Flyer during CANON - September 2015"
-#DIR=/data/other/routine/Platforms/Ships/WesternFlyer/uctd/cn18
-#TITLE="Underway CTD data from R/V Western Flyer during CANON - September 2018"
+#DIR=/data/canon/2015_Sep/Platforms/Ships/Western_Flyer/uctd
+#TITLE="Underway CTD data from R/V Western Flyer during CANON - September 2015"
+DIR=/data/other/routine/Platforms/Ships/WesternFlyer/uctd
+PATTERN="cn18*"
+TITLE="Underway CTD data from R/V Western Flyer during CANON - September 2018"
 
 # Set local processing directory
 LOCALDIR=`basename $DIR`
 
 # Copy the data from DIR and create the .nc files - You will be prompted for credentials
-rsync -rv $LOGIN@$RH:$DIR  .
+rsync -rv $LOGIN@$RH:$DIR/$PATTERN $LOCALDIR
 if [ "$1" == "docker" ]
 then
-    docker-compose exec stoqs stoqs/loaders/CANON/toNetCDF/uctdToNetcdf.py --inDir /srv/docker/$LOCALDIR --pattern "*.asc" --depth 2.0 --title "$TITLE"
+    docker-compose exec stoqs stoqs/loaders/CANON/toNetCDF/uctdToNetcdf.py -i /srv/docker/$LOCALDIR -p "$PATTERN" -t "$TITLE" -d 2.0
 else
-    ./uctdToNetcdf.py --inDir $LOCALDIR --pattern "*.asc" --depth 2.0 --title "$TITLE"
+    ./uctdToNetcdf.py --inDir $LOCALDIR --pattern "$PATTERN" --title "$TITLE" --depth 2.0
 fi
 
 # Copy the .nc files back to the MBARI DAP host - You will be prompted for credentials 
