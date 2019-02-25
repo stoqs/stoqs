@@ -81,6 +81,8 @@ class ParserWriter(BaseWriter):
         self.logger.debug(f"fileList = {fileList}")
         fileList.sort()
         for sb_file in fileList:
+            if not sb_file.endswith('.asc'):
+                continue
             self.logger.info("sb_file = %s" % sb_file)
             self.initialize_lists()
 
