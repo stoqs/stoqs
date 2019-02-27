@@ -408,6 +408,14 @@ def showSamplePurpose(request, fmt='html'):
     o = BaseOutputer(request, fmt, query_set, stoqs_object)
     return o.process_request()
 
+def showSampleResource(request, fmt='html'):
+    stoqs_object = mod.SampleResource
+    query_set = stoqs_object.objects.all().order_by('sample__name')
+
+    o = BaseOutputer(request, fmt, query_set, stoqs_object)
+    o.fields = ['id', 'sample__name', 'resource__name', 'resource__value', 'resource__uristring']
+    return o.process_request()
+
 def showAnalysisMethod(request, fmt='html'):
     stoqs_object = mod.AnalysisMethod
     query_set = stoqs_object.objects.all().order_by('name')
