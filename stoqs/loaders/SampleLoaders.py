@@ -24,7 +24,7 @@ from stoqs.models import (Activity, InstantPoint, Sample, SampleType, Resource,
                           Platform, PlatformType, ActivityType)
 from loaders.seabird import get_year_lat_lon
 from loaders import STOQS_Loader, SkipRecord
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pydap.model import BaseType, DatasetType
@@ -256,15 +256,102 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return sample_act, sample_ip, point, depth
 
+    def _samples_from_json(self, platform_name, url):
+        '''
+        Retrieve Sample information that's available in the syslogurl from the TethysDash REST API
+        url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
+        Construct a TethysDash REST URL that looks like:
+        https://okeanids.mbari.org/TethysDash/api/events?vehicles=tethys&from=2018-09-08T00:00&to=2018-09-08T06:00&eventTypes=logImportant&limit=1000
+        Query it to build information on each sample in the url.
+        '''
+        st = url.split('/')[-1].split('_')[0]
+        et = url.split('/')[-1].split('_')[1]
+        from_time = f"{st[0:4]}-{st[4:6]}-{st[6:8]}T{st[8:10]}:{st[10:12]}"
+        to_time = f"{et[0:4]}-{et[4:6]}-{et[6:8]}T{et[8:10]}:{et[10:12]}"
+        td_url = f"https://okeanids.mbari.org/TethysDash/api/events?vehicles={platform_name}&from={from_time}&to={to_time}&eventTypes=logImportant"
+
+        FILTERING = 'ESP sampling state: S_FILTERING'
+        STOPPING = 'ESP sampling state: S_STOPPING'
+        LOGSUMMARY = 'ESP log summary report'
+
+        self.logger.debug(f"Opening td_url = {td_url}")
+        with requests.get(td_url) as resp:
+            if resp.status_code != 200:
+                self.logger.error('Cannot read %s, resp.status_code = %s', syslog_url, resp.status_code)
+                return
+            td_log_important = resp.json()['result']
+
+        Log = namedtuple('Log', 'esec text')
+        esp_s_filtering = [Log(d['unixTime'], d['text']) for d in td_log_important if FILTERING in d['text']]
+        esp_s_stopping = [Log(d['unixTime'], d['text']) for d in td_log_important if STOPPING in d['text']]
+        esp_log_summaries = [Log(d['unixTime'], d['text']) for d in td_log_important if LOGSUMMARY in d['text']]
+        self.logger.debug(f"Parsed {len(esp_log_summaries)} Samples from {td_url}")
+        
+        return esp_s_filtering, esp_s_stopping, esp_log_summaries 
+
+    def _match_seq_to_cartridge(self, filterings, stoppings, summaries):
+        '''
+        Take lists from parsing TethysDash log and build Sample names list with start and end times
+        '''
+
+        # Have both sample # and no_num versions of regular expressions so as to also get legacy samples
+        no_num_sampling_start_re = 'ESP sampling state: S_FILTERING'
+        no_num_sampling_end_re = 'ESP sampling state: S_STOPPING'
+        no_num_log_summary_report_re = (r'ESP log summary report \((?P<num_messages>\d+) messages\):\n'
+                                        r'.+Selecting Cartridge (?P<cartridge_number>\d+)\n'
+                                        r'.+Sampled\s+(?P<volume_num>[-+]?\d*\.\d+|\d+)(?P<volume_units>[a-z]{2})\n?'
+                                        r'(?P<esp_error_message>.*)')
+        sample_prefix = '\[sample #(?P<seq_num>\d+)\] '
+        sampling_start_re     = sample_prefix + no_num_sampling_start_re
+        sampling_end_re       = sample_prefix + no_num_sampling_end_re
+        log_summary_report_re = sample_prefix + no_num_log_summary_report_re
+
+        # Loop through exctractions from syslog to build dictionary
+        SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
+        sample_names = defaultdict(SampleInfo)
+        for filtering, stopping, summary in zip(filterings, stoppings, summaries):
+            self.logger.debug(f"summary = {summary}")
+            ms = (re.match(sampling_start_re, filtering.text) or 
+                  re.match(no_num_sampling_start_re, filtering.text))
+            me = (re.match(sampling_end_re, stopping.text) or
+                  re.match(no_num_sampling_end_re, stopping.text))
+            mls = (re.match(log_summary_report_re, summary.text) or
+                   re.match(no_num_log_summary_report_re, summary.text))
+
+            # Ensure that sample # (seq) numbers match
+            if not (ms.groupdict().get('seq_num') == me.groupdict().get('seq_num') == mls.groupdict().get('seq_num')):
+                raise AssertionError(f"Sample numbers do not match for {filtering.text}, {stopping.text}, and {summary.text}")
+
+            sample_name = f"Cartridge {mls.groupdict().get('cartridge_number')}"
+            self.logger.info(f"sample_name = {sample_name}")
+
+            # Convert volumes to ml and check for error in 3rd line of messages from ESP
+            if mls.groupdict().get('volume_units') == 'ml':
+                volume = float(mls.groupdict().get('volume_num'))
+            import pdb; pdb.set_trace()
+            if mls.groupdict().get('esp_error_message'):
+                merr = re.match('.+actually (\d+)([a-z]+)', mls.groupdict().get('esp_error_message'))
+                if merr.group(2) == 'ul':
+                    volume = float(merr.group(1)) * 1.e-3
+                
+            sample_names[sample_name] = SampleInfo(filtering.esec, stopping.esec, volume, summary.text)
+            
+
     def load_lrauv_samples(self, platform_name, activity_name, url, db_alias):
         '''
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
         There is a syslog file in this folder.  Read from syslog and parse the sampling events to load into the db_alias database.
         '''
+
+        filterings, stoppings, summaries = self._samples_from_json(platform_name, url)
+        sample_names = self._match_seq_to_cartridge(filterings, stoppings, summaries)
+
         sampling_start_re = '.+\[sample #(\d+)\] ESP sampling state: S_FILTERING'
         sampling_end_re = '.+\[sample #(\d+)\] ESP sampling state: S_STOPPING'
         no_num_sampling_start_re = '.+ ESP sampling state: S_FILTERING'
         no_num_sampling_end_re = '.+ ESP sampling state: S_STOPPING'
+        log_summary_report_re = '.+ \[sample #(\d+)\] ESP log summary report \((\d+) messages\)'
+        no_num_log_summary_report_re = '.+ ESP log summary report \((\d+) messages\)'
 
         # Use the dods server to read LRAUV syslog file over http - works from outside of MBARI's Intranet
         syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
@@ -310,6 +397,15 @@ class ParentSamplesLoader(STOQS_Loader):
                             sample_name = f"Seq {seq_num}"
                             self.logger.info(f"Found Sample with no number that filtered for {ees-ses:.2f} seconds")
 
+                    # Continue reading records until "ESP log summary report" encountered
+                    ##import pdb; pdb.set_trace()
+                    mlsr = re.match(log_summary_report_re, row)
+                    if mlsr:
+                        import pdb; pdb.set_trace()
+                        self.logger.debug(f"Found log summary report '{row}'")
+                        sampling = False
+
+
                         self.logger.debug(f"Calling _create_activity_instantpoint_platform() for sample_name={sample_name}")
                         act, ip, point, depth = self._create_activity_instantpoint_platform(
                                                             db_alias, platform_name, 
@@ -325,7 +421,6 @@ class ParentSamplesLoader(STOQS_Loader):
                                         volume = 100))
                         self.logger.info(f'Loaded Sample: {stuple}')
                         self.logger.debug(f"Setting sampling to False with row={row}")
-                        sampling = False
 
             if sampling:
                 self.logger.warn(f'Finished reading {syslog_url} while in a sampling state')
