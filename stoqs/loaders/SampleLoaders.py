@@ -17,6 +17,7 @@ from django.conf import settings
 from django.contrib.gis.geos import LineString, Point
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.db.models import Q, Min, Max, Avg
+from django.db.utils import IntegrityError
 
 from stoqs.models import (Activity, InstantPoint, Sample, SampleType, Resource,
                           SamplePurpose, SampleRelationship, Parameter, SampledParameter,
@@ -268,7 +269,7 @@ class ParentSamplesLoader(STOQS_Loader):
         et = url.split('/')[-1].split('_')[1]
         from_time = f"{st[0:4]}-{st[4:6]}-{st[6:8]}T{st[8:10]}:{st[10:12]}"
         to_time = f"{et[0:4]}-{et[4:6]}-{et[6:8]}T{et[8:10]}:{et[10:12]}"
-        td_url = f"https://okeanids.mbari.org/TethysDash/api/events?vehicles={platform_name}&from={from_time}&to={to_time}&eventTypes=logImportant"
+        td_url = f"https://okeanids.mbari.org/TethysDash/api/events?vehicles={platform_name}&from={from_time}&to={to_time}&eventTypes=logImportant&limit=100000"
 
         FILTERING = 'ESP sampling state: S_FILTERING'
         STOPPING = 'ESP sampling state: S_STOPPING'
@@ -297,14 +298,16 @@ class ParentSamplesLoader(STOQS_Loader):
         # Have both sample # and no_num versions of regular expressions so as to also get legacy samples
         no_num_sampling_start_re = 'ESP sampling state: S_FILTERING'
         no_num_sampling_end_re = 'ESP sampling state: S_STOPPING'
-        no_num_log_summary_report_re = (r'ESP log summary report \((?P<num_messages>\d+) messages\):\n'
-                                        r'.+Selecting Cartridge (?P<cartridge_number>\d+)\n'
-                                        r'.+Sampled\s+(?P<volume_num>[-+]?\d*\.\d+|\d+)(?P<volume_units>[a-z]{2})\n?'
-                                        r'(?P<esp_error_message>.*)')
         sample_prefix = '\[sample #(?P<seq_num>\d+)\] '
         sampling_start_re     = sample_prefix + no_num_sampling_start_re
         sampling_end_re       = sample_prefix + no_num_sampling_end_re
-        log_summary_report_re = sample_prefix + no_num_log_summary_report_re
+
+        # REs for log summary reports, to search the multi-line text with optional matches
+        lsr_seq_num_re          = r'\[sample #(?P<seq_num>\d+)\]'
+        lsr_num_messages_re     = r'ESP log summary report \((?P<num_messages>\d+) messages\)'
+        lsr_cartridge_number_re = r'Selecting Cartridge (?P<cartridge_number>\d+)'
+        lsr_volume_re           = r'Sampled\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
+        lsr_esp_error_msg_re    = r'(?P<esp_error_message>.+Error in PROCESSING.+)'
 
         # Loop through exctractions from syslog to build dictionary
         SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
@@ -315,26 +318,36 @@ class ParentSamplesLoader(STOQS_Loader):
                   re.match(no_num_sampling_start_re, filtering.text))
             me = (re.match(sampling_end_re, stopping.text) or
                   re.match(no_num_sampling_end_re, stopping.text))
-            mls = (re.match(log_summary_report_re, summary.text) or
-                   re.match(no_num_log_summary_report_re, summary.text))
+
+            lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
+            lsr_lsr_num_messages = re.search(lsr_num_messages_re, summary.text, re.MULTILINE)
+            lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE)
+            lsr_volume = re.search(lsr_volume_re, summary.text, re.MULTILINE)
+            lsr_esp_error_msg = re.search(lsr_esp_error_msg_re, summary.text, re.MULTILINE)
 
             # Ensure that sample # (seq) numbers match
-            if not (ms.groupdict().get('seq_num') == me.groupdict().get('seq_num') == mls.groupdict().get('seq_num')):
+            try:
+                if not (ms.groupdict().get('seq_num') == me.groupdict().get('seq_num') == lsr_seq_num.groupdict().get('seq_num')):
+                    raise AssertionError(f"Sample numbers do not match for {filtering.text}, {stopping.text}, and {summary.text}")
+            except AttributeError:
                 raise AssertionError(f"Sample numbers do not match for {filtering.text}, {stopping.text}, and {summary.text}")
 
-            sample_name = f"Cartridge {mls.groupdict().get('cartridge_number')}"
-            self.logger.info(f"sample_name = {sample_name}")
+            sample_name = f"Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')}"
+            self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}")
 
             # Convert volumes to ml and check for error in optional 3rd line of messages from ESP
-            if mls.groupdict().get('volume_units') == 'ml':
-                volume = float(mls.groupdict().get('volume_num'))
-            if mls.groupdict().get('esp_error_message'):
-                merr = re.match('.+actually (\d+)([a-z]+)', mls.groupdict().get('esp_error_message'))
-                if merr.group(2) == 'ul':
-                    volume = float(merr.group(1)) * 1.e-3
+            if lsr_volume:
+                if lsr_volume.groupdict().get('volume_units') == 'ml':
+                    volume = float(lsr_volume.groupdict().get('volume_num'))
+            if lsr_esp_error_msg:
+                if lsr_esp_error_msg.groupdict().get('esp_error_message'):
+                    merr = re.match('.+actually (\d+)([a-z]+)', lsr_esp_error_msg.groupdict().get('esp_error_message'))
+                    if merr.group(2) == 'ul':
+                        volume = float(merr.group(1)) * 1.e-3
                 
             sample_names[sample_name] = SampleInfo(filtering.esec, stopping.esec, volume, summary.text)
-            return sample_names
+
+        return sample_names
 
     def load_lrauv_samples(self, platform_name, activity_name, url, db_alias):
         '''
@@ -349,13 +362,18 @@ class ParentSamplesLoader(STOQS_Loader):
         (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_ARCHIVE)
         self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
 
-        # Load parent Samples
+        # Load Samples and sample.text as a Resource associated with the Sample
         for sample_name, sample in sample_names.items():
             self.logger.debug(f"Calling _create_activity_instantpoint_platform() for sample_name={sample_name}")
-            act, ip, point, depth = self._create_activity_instantpoint_platform(
+            try:
+                act, ip, point, depth = self._create_activity_instantpoint_platform(
                                                 db_alias, platform_name, 
                                                 activity_name, esp_archive_type, 
                                                 sample.start, sample.end, sample_name)
+            except IntegrityError as e:
+                self.logger.warn(f"Sample {sample_name} already loaded")
+                continue
+
             self.logger.info(f"Loading {ESP_ARCHIVE} Sample '{sample_name}' filtered for {sample.end-sample.start:.2f} seconds")
             stuple = (Sample.objects.using(db_alias).get_or_create( 
                             name = sample_name,
