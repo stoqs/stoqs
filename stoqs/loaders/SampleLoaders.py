@@ -284,10 +284,27 @@ class ParentSamplesLoader(STOQS_Loader):
             td_log_important = resp.json()['result']
 
         Log = namedtuple('Log', 'esec text')
-        esp_s_filtering   = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if FILTERING in d['text']]
-        esp_s_stopping    = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if STOPPING in d['text']]
-        esp_log_summaries = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if LOGSUMMARY in d['text']]
-        self.logger.debug(f"Parsed {len(esp_log_summaries)} Samples from {td_url}")
+        esp_s_filtering = []
+        esp_s_stopping = []
+        esp_log_summaries = []
+        
+        try:
+            esp_s_filtering = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if FILTERING in d['text']]
+        except KeyError:
+            self.logger.debug(f"No '{FILTERING}' messages found in {td_url}")
+        try:
+            esp_s_stopping = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if STOPPING in d['text']]
+        except KeyError:
+            self.logger.debug(f"No '{STOPPING}' messages found in {td_url}")
+        try:
+            esp_log_summaries = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if LOGSUMMARY in d['text']]
+        except KeyError:
+            self.logger.debug(f"No '{LOGSUMMARY}' messages found in {td_url}")
+
+        if esp_s_filtering and esp_s_stopping and esp_log_summaries:
+            self.logger.info(f"Parsed {len(esp_log_summaries)} Samples from {td_url}")
+        else:
+            self.logger.info(f"No Samples parsed from {td_url}")
         
         return esp_s_filtering, esp_s_stopping, esp_log_summaries 
 
@@ -359,9 +376,10 @@ class ParentSamplesLoader(STOQS_Loader):
         filterings, stoppings, summaries = self._samples_from_json(platform_name, url)
         sample_names = self._match_seq_to_cartridge(filterings, stoppings, summaries)
 
-        # Get or create SampleType for ESP Sample
-        (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_ARCHIVE)
-        self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
+        if sample_names:
+            # Get or create SampleType for ESP Sample
+            (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_ARCHIVE)
+            self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
 
         # Load Samples and sample.text as a Resource associated with the Sample
         for sample_name, sample in sample_names.items():
