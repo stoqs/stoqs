@@ -22,7 +22,8 @@ from django.db.utils import IntegrityError
 from stoqs.models import (Activity, InstantPoint, Sample, SampleType, Resource,
                           SamplePurpose, SampleRelationship, Parameter, SampledParameter,
                           MeasuredParameter, AnalysisMethod, Measurement, Campaign,
-                          Platform, PlatformType, ActivityType)
+                          Platform, PlatformType, ActivityType, ActivityResource,
+                          SampleResource)
 from loaders.seabird import get_year_lat_lon
 from loaders import STOQS_Loader, SkipRecord
 from collections import defaultdict, namedtuple
@@ -375,16 +376,19 @@ class ParentSamplesLoader(STOQS_Loader):
                 continue
 
             self.logger.info(f"Loading {ESP_ARCHIVE} Sample '{sample_name}' filtered for {sample.end-sample.start:.2f} seconds")
-            stuple = (Sample.objects.using(db_alias).get_or_create( 
+            samp, _ = (Sample.objects.using(db_alias).get_or_create( 
                             name = sample_name,
                             instantpoint = ip,
                             geom = point,
                             depth = depth,
                             sampletype = esp_archive_type,
                             volume = sample.volume))
-            self.logger.info(f'Loaded Sample: {stuple}')
+            self.logger.info(f'Loaded Sample: {samp}')
 
-
+            # Associate Resource (ESP log summary report text) with Sample
+            res, _ = Resource.objects.using(db_alias).get_or_create(name='ESP log summary report', value=sample.summary)
+            SampleResource.objects.using(db_alias).get_or_create(sample=samp, resource=res)
+            self.logger.info(f"Saved Resource {res}")
 
 class SeabirdLoader(STOQS_Loader):
     '''
