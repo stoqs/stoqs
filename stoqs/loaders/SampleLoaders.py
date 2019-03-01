@@ -209,6 +209,10 @@ class ParentSamplesLoader(STOQS_Loader):
         ip_qs = InstantPoint.objects.using(db_alias).filter(activity__name=activity_name,
                                                             timevalue__gte=sdt,
                                                             timevalue__lte=edt).order_by('timevalue')
+        if not ip_qs:
+            self.logger.warn(f"Likely doing a test load - skipping Sample {sample_name}")
+            return None, None, None, None, None
+
         m_qs = Measurement.objects.using(db_alias).filter(instantpoint__activity__name=activity_name,
                                                           instantpoint__timevalue__gte=sdt,
                                                           instantpoint__timevalue__lte=edt)
@@ -250,8 +254,12 @@ class ParentSamplesLoader(STOQS_Loader):
 
         # Time and location of Sample (a single value) is midpoint of start and end times
         sample_tv = ip_qs[int(len(ip_qs)/2)].timevalue
-        point = LineString([p for p in m_qs.values_list('geom', flat=True)]).centroid
-        maptrack = LineString([p for p in m_qs.values_list('geom', flat=True)]).simplify(tolerance=.001)
+        if len(m_qs.values_list('geom', flat=True)) > 1:
+            point = LineString([p for p in m_qs.values_list('geom', flat=True)]).centroid
+            maptrack = LineString([p for p in m_qs.values_list('geom', flat=True)]).simplify(tolerance=.001)
+        else:
+            point = m_qs.values_list('geom', flat=True)[0]
+            maptrack = LineString([m_qs.values_list('geom', flat=True)[0], m_qs.values_list('geom', flat=True)[0]])
         sample_ip, _ = InstantPoint.objects.using(db_alias).get_or_create(activity=sample_act, timevalue=sample_tv)
         depth = Decimal(str(round(m_qs[int(len(m_qs)/2)].depth, 2)))
 
@@ -408,6 +416,8 @@ class ParentSamplesLoader(STOQS_Loader):
                                                 sample.start, sample.end, sample_name)
             except IntegrityError as e:
                 self.logger.warn(f"Sample {sample_name} already loaded")
+                continue
+            if not act:
                 continue
 
             self.logger.info(f"Loading {ESP_ARCHIVE} Sample '{sample_name}' filtered for {sample.end-sample.start:.2f} seconds")
