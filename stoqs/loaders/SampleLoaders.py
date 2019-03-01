@@ -251,16 +251,16 @@ class ParentSamplesLoader(STOQS_Loader):
         # Time and location of Sample (a single value) is midpoint of start and end times
         sample_tv = ip_qs[int(len(ip_qs)/2)].timevalue
         point = LineString([p for p in m_qs.values_list('geom', flat=True)]).centroid
+        maptrack = LineString([p for p in m_qs.values_list('geom', flat=True)]).simplify(tolerance=.001)
         sample_ip, _ = InstantPoint.objects.using(db_alias).get_or_create(activity=sample_act, timevalue=sample_tv)
         depth = Decimal(str(round(m_qs[int(len(m_qs)/2)].depth, 2)))
 
         self.insertSimpleDepthTimeSeries(critSimpleDepthTime=sample_simplify_crit)
 
-        return sample_act, sample_ip, point, depth
+        return sample_act, sample_ip, point, depth, maptrack
 
     def _samples_from_json(self, platform_name, url):
-        '''
-        Retrieve Sample information that's available in the syslogurl from the TethysDash REST API
+        '''Retrieve Sample information that's available in the syslogurl from the TethysDash REST API
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
         Construct a TethysDash REST URL that looks like:
         https://okeanids.mbari.org/TethysDash/api/events?vehicles=tethys&from=2018-09-08T00:00&to=2018-09-08T06:00&eventTypes=logImportant&limit=1000
@@ -322,8 +322,7 @@ class ParentSamplesLoader(STOQS_Loader):
         return esp_s_filtering, esp_s_stopping, esp_log_summaries 
 
     def _match_seq_to_cartridge(self, filterings, stoppings, summaries):
-        '''
-        Take lists from parsing TethysDash log and build Sample names list with start and end times
+        '''Take lists from parsing TethysDash log and build Sample names list with start and end times
         '''
 
         # Have both sample # and no_num versions of regular expressions so as to also get legacy samples
@@ -403,7 +402,7 @@ class ParentSamplesLoader(STOQS_Loader):
         for sample_name, sample in sample_names.items():
             self.logger.debug(f"Calling _create_activity_instantpoint_platform() for sample_name={sample_name}")
             try:
-                act, ip, point, depth = self._create_activity_instantpoint_platform(
+                act, ip, point, depth, maptrack = self._create_activity_instantpoint_platform(
                                                 db_alias, platform_name, 
                                                 activity_name, esp_archive_type, 
                                                 sample.start, sample.end, sample_name)
@@ -420,6 +419,12 @@ class ParentSamplesLoader(STOQS_Loader):
                             sampletype = esp_archive_type,
                             volume = sample.volume))
             self.logger.info(f'Loaded Sample: {samp}')
+
+            # Update Activity with point and track of the Sampling event
+            act.mappoint = point
+            act.maptrack = maptrack
+            act.save(using=db_alias)
+            self.logger.info(f"Updated Activity with point={point} and maptrack={maptrack}")
 
             # Associate Resource (ESP log summary report text) with Sample
             res, _ = Resource.objects.using(db_alias).get_or_create(name='ESP log summary report', value=sample.summary)
