@@ -312,9 +312,9 @@ class ParentSamplesLoader(STOQS_Loader):
         elif esp_s_filtering and esp_s_stopping:
             # LOGSUMMARY messages were added halfway through 2018, before that create a "sequence number" for the Sample
             self.logger.info(f"No '{LOGSUMMARY}' messages found - will assign sequence numbers to the Samples")
-            for i, filtering in enumerate(esp_s_filtering):
-                self.logger.info(f"Assiging sequence number {i+1} to Sample that started filtering at {filtering.esec}") 
-                esp_log_summaries.append(Log(filtering.esec, f"Sequence {i+1}"))
+            for i, filtering in zip(range(len(esp_s_filtering), 0, -1), esp_s_filtering):
+                self.logger.info(f"Assiging sequence number {i} to Sample that started filtering at {filtering.esec}") 
+                esp_log_summaries.append(Log(filtering.esec, f"Sequence {i}"))
             self.logger.info(f"Parsed {len(esp_s_filtering)} Samples from {td_url} with no LOGSUMMARY reports")
         else:
             self.logger.info(f"No Samples parsed from {td_url}")
