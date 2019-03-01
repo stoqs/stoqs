@@ -266,10 +266,20 @@ class ParentSamplesLoader(STOQS_Loader):
         https://okeanids.mbari.org/TethysDash/api/events?vehicles=tethys&from=2018-09-08T00:00&to=2018-09-08T06:00&eventTypes=logImportant&limit=1000
         Query it to build information on each sample in the url.
         '''
+        esp_s_filtering = []
+        esp_s_stopping = []
+        esp_log_summaries = []
+        
         st = url.split('/')[-1].split('_')[0]
         et = url.split('/')[-1].split('_')[1]
         from_time = f"{st[0:4]}-{st[4:6]}-{st[6:8]}T{st[8:10]}:{st[10:12]}"
         to_time = f"{et[0:4]}-{et[4:6]}-{et[6:8]}T{et[8:10]}:{et[10:12]}"
+
+        # Sanity check the ending year
+        if int(et[0:4]) > datetime.now().year:
+            self.logger.warn(f"Not looking for Samples for url = {url} as the to date is > {datetime.now().year}")
+            return esp_s_filtering, esp_s_stopping, esp_log_summaries 
+            
         td_url = f"https://okeanids.mbari.org/TethysDash/api/events?vehicles={platform_name}&from={from_time}&to={to_time}&eventTypes=logImportant&limit=100000"
 
         FILTERING = 'ESP sampling state: S_FILTERING'
@@ -284,10 +294,6 @@ class ParentSamplesLoader(STOQS_Loader):
             td_log_important = resp.json()['result']
 
         Log = namedtuple('Log', 'esec text')
-        esp_s_filtering = []
-        esp_s_stopping = []
-        esp_log_summaries = []
-        
         try:
             esp_s_filtering = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if FILTERING in d['text']]
         except KeyError:
@@ -303,9 +309,16 @@ class ParentSamplesLoader(STOQS_Loader):
 
         if esp_s_filtering and esp_s_stopping and esp_log_summaries:
             self.logger.info(f"Parsed {len(esp_log_summaries)} Samples from {td_url}")
+        elif esp_s_filtering and esp_s_stopping:
+            # LOGSUMMARY messages were added halfway through 2018, before that create a "sequence number" for the Sample
+            self.logger.info(f"No '{LOGSUMMARY}' messages found - will assign sequence numbers to the Samples")
+            for i, filtering in enumerate(esp_s_filtering):
+                self.logger.info(f"Assiging sequence number {i+1} to Sample that started filtering at {filtering.esec}") 
+                esp_log_summaries.append(Log(filtering.esec, f"Sequence {i+1}"))
+            self.logger.info(f"Parsed {len(esp_s_filtering)} Samples from {td_url} with no LOGSUMMARY reports")
         else:
             self.logger.info(f"No Samples parsed from {td_url}")
-        
+       
         return esp_s_filtering, esp_s_stopping, esp_log_summaries 
 
     def _match_seq_to_cartridge(self, filterings, stoppings, summaries):
@@ -346,14 +359,19 @@ class ParentSamplesLoader(STOQS_Loader):
             # Ensure that sample # (seq) numbers match
             try:
                 if not (ms.groupdict().get('seq_num') == me.groupdict().get('seq_num') == lsr_seq_num.groupdict().get('seq_num')):
-                    raise AssertionError(f"Sample numbers do not match for {filtering.text}, {stopping.text}, and {summary.text}")
+                    raise AssertionError(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
             except AttributeError:
-                raise AssertionError(f"Sample numbers do not match for {filtering.text}, {stopping.text}, and {summary.text}")
-
-            sample_name = f"Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')}"
-            self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}")
+                if filtering and stopping and not lsr_seq_num:
+                    sample_name = summary.text
+                    self.logger.info(f"No ESP log summary report: Assigning sample_name = {sample_name}")
+                else:
+                    raise AssertionError(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
+            else:
+                sample_name = f"Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')}"
+                self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}")
 
             # Convert volumes to ml and check for error in optional 3rd line of messages from ESP
+            volume = None
             if lsr_volume:
                 if lsr_volume.groupdict().get('volume_units') == 'ml':
                     volume = float(lsr_volume.groupdict().get('volume_num'))
