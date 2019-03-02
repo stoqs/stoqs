@@ -320,8 +320,8 @@ class ParentSamplesLoader(STOQS_Loader):
         elif esp_s_filtering and esp_s_stopping:
             # LOGSUMMARY messages were added halfway through 2018, before that create a "sequence number" for the Sample
             self.logger.info(f"No '{LOGSUMMARY}' messages found - will assign sequence numbers to the Samples")
-            for i, filtering in zip(range(len(esp_s_filtering), 0, -1), esp_s_filtering):
-                self.logger.info(f"Assiging sequence number {i} to Sample that started filtering at {filtering.esec}") 
+            for i, filtering, stopping in zip(range(len(esp_s_filtering), 0, -1), esp_s_filtering, esp_s_stopping):
+                self.logger.info(f"Sequence {i} assigned to Sample that started filtering at {filtering.esec} and stopped at {stopping.esec}") 
                 esp_log_summaries.append(Log(filtering.esec, f"Sequence {i}"))
             self.logger.info(f"Parsed {len(esp_s_filtering)} Samples from {td_url} with no LOGSUMMARY reports")
         else:
@@ -346,6 +346,10 @@ class ParentSamplesLoader(STOQS_Loader):
         lsr_cartridge_number_re = r'Selecting Cartridge (?P<cartridge_number>\d+)'
         lsr_volume_re           = r'Sampled\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
         lsr_esp_error_msg_re    = r'(?P<esp_error_message>.+Error in PROCESSING.+)'
+
+        if len(filterings) != len(stoppings):
+            self.logger.warn(f"len(filterings) [{len(filterings)}] != len(stoppings) [{len(stoppings)}]")
+            self.logger.warn("An ESP error might have occurred, sample times may overlap - check syslog")
 
         # Loop through exctractions from syslog to build dictionary
         SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
