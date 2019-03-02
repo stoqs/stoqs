@@ -10,7 +10,7 @@ billiard==3.6.0.0
 binaryornot==0.4.4
 certifi==2018.11.29
 cookiecutter==1.6.0
-Cython==0.29.5
+Cython==0.29.6
 docutils==0.14
 ephem==3.7.6.0
 GDAL==2.4.0
@@ -19,7 +19,7 @@ h5py==2.9.0
 MarkupSafe==1.1.1
 netCDF4==1.4.2
 pandas==0.24.1
-numpy==1.16.1
+numpy==1.16.2
 pandas==0.24.1
 requests==2.21.0
 Pygments==2.3.1
@@ -30,4 +30,4 @@ python-coveralls==2.9.1
 Shapely==1.6.4.post2
 snowballstemmer==1.2.1
 thredds-crawler==1.5.4
-tornado==5.1.1
+tornado==6.0
