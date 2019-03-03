@@ -642,7 +642,7 @@ class STOQS_Loader(object):
                         m.ParameterResource.objects.using(self.dbAlias).get_or_create(
                                         parameter=self.getParameterByName(pn), resource=resource)
                     except ParameterNotFound as e:
-                        self.logger.warn('Could not add plotTimeSeriesDepth ParameterResource for v = %s: %s', v, e)
+                        self.logger.debug('Could not add plotTimeSeriesDepth ParameterResource for v = %s: %s', v, e)
                     try:
                         m.ActivityResource.objects.using(self.dbAlias).get_or_create(
                                         activity=self.activity, resource=resource)
