@@ -354,7 +354,7 @@ class ParentSamplesLoader(STOQS_Loader):
         # Loop through exctractions from syslog to build dictionary
         SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
         sample_names = defaultdict(SampleInfo)
-        for filtering, stopping, summary in zip(filterings, stoppings, summaries):
+        for filtering, stopping, summary in zip(reversed(filterings), reversed(stoppings), reversed(summaries)):
             self.logger.debug(f"summary = {summary}")
             ms = (re.match(sampling_start_re, filtering.text) or 
                   re.match(no_num_sampling_start_re, filtering.text))
@@ -376,7 +376,8 @@ class ParentSamplesLoader(STOQS_Loader):
                     sample_name = summary.text
                     self.logger.info(f"No ESP log summary report: Assigning sample_name = {sample_name}")
                 else:
-                    raise AssertionError(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
+                    self.logger.warn(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
+                    self.logger.warn(f"Skipping.")
             else:
                 sample_name = f"Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')}"
                 self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}")
@@ -432,7 +433,7 @@ class ParentSamplesLoader(STOQS_Loader):
                             depth = depth,
                             sampletype = esp_archive_type,
                             volume = sample.volume))
-            self.logger.info(f'Loaded Sample: {samp}')
+            self.logger.info(f'Loaded Sample: {samp} with volume = {sample.volume} ml')
 
             # Update Activity with point and track of the Sampling event
             act.mappoint = point
