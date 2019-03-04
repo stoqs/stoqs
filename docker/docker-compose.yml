@@ -12,14 +12,14 @@ services:
         context: .
         dockerfile: Dockerfile-postgis
     volumes:
-      - ${STOQS_VOLS_DIR}/pgdata:/var/lib/postgresql/data
-      - ${STOQS_VOLS_DIR}/pg_waldir:/var/lib/postgresql/waldir
+      - ${POSTGRES_DATA}:/var/lib/postgresql/data
+      - ${POSTGRES_WALDIR}:/var/lib/postgresql/waldir
       - ./postgres-stoqs.conf:/etc/postgresql.conf
     command: postgres -c config_file=/etc/postgresql.conf
     ports:
       - "${STOQS_PGHOST_PORT}:5432"
     # Set user for deployment on MacOS, assign HOST_ID=<result of `id -u`> in your .env file
-    ##user: ${HOST_UID}
+    user: ${HOST_UID}
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - STOQSADM_PASSWORD=${STOQSADM_PASSWORD}
@@ -84,9 +84,10 @@ services:
         context: .
         dockerfile: Dockerfile-nginx
     volumes:
+      - ${STOQS_VOLS_DIR}/html:/srv/html
+      - ${STOQS_VOLS_DIR}/pg_dumps:/srv/media-files/pg_dumps
       - static-files:/srv/static-files
       - media-files:/srv/media-files
-      - ${STOQS_VOLS_DIR}/html:/srv/html
     environment:
       - NGINX_TMPL=${NGINX_TMPL}
     container_name: stoqs-nginx
