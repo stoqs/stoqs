@@ -484,7 +484,7 @@ def showActivityParameter(request, fmt='html'):
 
     o = BaseOutputer(request, fmt, query_set, stoqs_object)
     o.fields = ['id', 'activity__name', 'parameter__name', 'activity__startdate', 'activity__enddate', 
-                'activity__mindepth', 'activity__maxdepth', 
+                'activity__mindepth', 'activity__maxdepth', 'activity__mappoint', 
                 'number', 'min', 'max', 'mean', 
                 'median', 'mode', 'p025', 'p975', 'p010', 'p990']
     return o.process_request()

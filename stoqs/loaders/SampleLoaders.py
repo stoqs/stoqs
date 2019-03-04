@@ -209,6 +209,10 @@ class ParentSamplesLoader(STOQS_Loader):
         ip_qs = InstantPoint.objects.using(db_alias).filter(activity__name=activity_name,
                                                             timevalue__gte=sdt,
                                                             timevalue__lte=edt).order_by('timevalue')
+        if not ip_qs:
+            self.logger.warn(f"Likely doing a test load - skipping Sample {sample_name}")
+            return None, None, None, None, None
+
         m_qs = Measurement.objects.using(db_alias).filter(instantpoint__activity__name=activity_name,
                                                           instantpoint__timevalue__gte=sdt,
                                                           instantpoint__timevalue__lte=edt)
@@ -250,17 +254,21 @@ class ParentSamplesLoader(STOQS_Loader):
 
         # Time and location of Sample (a single value) is midpoint of start and end times
         sample_tv = ip_qs[int(len(ip_qs)/2)].timevalue
-        point = LineString([p for p in m_qs.values_list('geom', flat=True)]).centroid
+        if len(m_qs.values_list('geom', flat=True)) > 1:
+            point = LineString([p for p in m_qs.values_list('geom', flat=True)]).centroid
+            maptrack = LineString([p for p in m_qs.values_list('geom', flat=True)]).simplify(tolerance=.001)
+        else:
+            point = m_qs.values_list('geom', flat=True)[0]
+            maptrack = LineString([m_qs.values_list('geom', flat=True)[0], m_qs.values_list('geom', flat=True)[0]])
         sample_ip, _ = InstantPoint.objects.using(db_alias).get_or_create(activity=sample_act, timevalue=sample_tv)
         depth = Decimal(str(round(m_qs[int(len(m_qs)/2)].depth, 2)))
 
         self.insertSimpleDepthTimeSeries(critSimpleDepthTime=sample_simplify_crit)
 
-        return sample_act, sample_ip, point, depth
+        return sample_act, sample_ip, point, depth, maptrack
 
     def _samples_from_json(self, platform_name, url):
-        '''
-        Retrieve Sample information that's available in the syslogurl from the TethysDash REST API
+        '''Retrieve Sample information that's available in the syslogurl from the TethysDash REST API
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
         Construct a TethysDash REST URL that looks like:
         https://okeanids.mbari.org/TethysDash/api/events?vehicles=tethys&from=2018-09-08T00:00&to=2018-09-08T06:00&eventTypes=logImportant&limit=1000
@@ -312,8 +320,8 @@ class ParentSamplesLoader(STOQS_Loader):
         elif esp_s_filtering and esp_s_stopping:
             # LOGSUMMARY messages were added halfway through 2018, before that create a "sequence number" for the Sample
             self.logger.info(f"No '{LOGSUMMARY}' messages found - will assign sequence numbers to the Samples")
-            for i, filtering in zip(range(len(esp_s_filtering), 0, -1), esp_s_filtering):
-                self.logger.info(f"Assiging sequence number {i} to Sample that started filtering at {filtering.esec}") 
+            for i, filtering, stopping in zip(range(len(esp_s_filtering), 0, -1), esp_s_filtering, esp_s_stopping):
+                self.logger.info(f"Sequence {i} assigned to Sample that started filtering at {filtering.esec} and stopped at {stopping.esec}") 
                 esp_log_summaries.append(Log(filtering.esec, f"Sequence {i}"))
             self.logger.info(f"Parsed {len(esp_s_filtering)} Samples from {td_url} with no LOGSUMMARY reports")
         else:
@@ -322,8 +330,7 @@ class ParentSamplesLoader(STOQS_Loader):
         return esp_s_filtering, esp_s_stopping, esp_log_summaries 
 
     def _match_seq_to_cartridge(self, filterings, stoppings, summaries):
-        '''
-        Take lists from parsing TethysDash log and build Sample names list with start and end times
+        '''Take lists from parsing TethysDash log and build Sample names list with start and end times
         '''
 
         # Have both sample # and no_num versions of regular expressions so as to also get legacy samples
@@ -340,10 +347,14 @@ class ParentSamplesLoader(STOQS_Loader):
         lsr_volume_re           = r'Sampled\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
         lsr_esp_error_msg_re    = r'(?P<esp_error_message>.+Error in PROCESSING.+)'
 
+        if len(filterings) != len(stoppings):
+            self.logger.warn(f"len(filterings) [{len(filterings)}] != len(stoppings) [{len(stoppings)}]")
+            self.logger.warn("An ESP error might have occurred, sample times may overlap - check syslog")
+
         # Loop through exctractions from syslog to build dictionary
         SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
         sample_names = defaultdict(SampleInfo)
-        for filtering, stopping, summary in zip(filterings, stoppings, summaries):
+        for filtering, stopping, summary in zip(reversed(filterings), reversed(stoppings), reversed(summaries)):
             self.logger.debug(f"summary = {summary}")
             ms = (re.match(sampling_start_re, filtering.text) or 
                   re.match(no_num_sampling_start_re, filtering.text))
@@ -365,7 +376,8 @@ class ParentSamplesLoader(STOQS_Loader):
                     sample_name = summary.text
                     self.logger.info(f"No ESP log summary report: Assigning sample_name = {sample_name}")
                 else:
-                    raise AssertionError(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
+                    self.logger.warn(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
+                    self.logger.warn(f"Skipping.")
             else:
                 sample_name = f"Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')}"
                 self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}")
@@ -403,12 +415,14 @@ class ParentSamplesLoader(STOQS_Loader):
         for sample_name, sample in sample_names.items():
             self.logger.debug(f"Calling _create_activity_instantpoint_platform() for sample_name={sample_name}")
             try:
-                act, ip, point, depth = self._create_activity_instantpoint_platform(
+                act, ip, point, depth, maptrack = self._create_activity_instantpoint_platform(
                                                 db_alias, platform_name, 
                                                 activity_name, esp_archive_type, 
                                                 sample.start, sample.end, sample_name)
             except IntegrityError as e:
                 self.logger.warn(f"Sample {sample_name} already loaded")
+                continue
+            if not act:
                 continue
 
             self.logger.info(f"Loading {ESP_ARCHIVE} Sample '{sample_name}' filtered for {sample.end-sample.start:.2f} seconds")
@@ -419,7 +433,13 @@ class ParentSamplesLoader(STOQS_Loader):
                             depth = depth,
                             sampletype = esp_archive_type,
                             volume = sample.volume))
-            self.logger.info(f'Loaded Sample: {samp}')
+            self.logger.info(f'Loaded Sample: {samp} with volume = {sample.volume} ml')
+
+            # Update Activity with point and track of the Sampling event
+            act.mappoint = point
+            act.maptrack = maptrack
+            act.save(using=db_alias)
+            self.logger.info(f"Updated Activity with point={point} and maptrack={maptrack}")
 
             # Associate Resource (ESP log summary report text) with Sample
             res, _ = Resource.objects.using(db_alias).get_or_create(name='ESP log summary report', value=sample.summary)
