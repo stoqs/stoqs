@@ -300,7 +300,7 @@ echo ">>> See CONTRIBUTING.md for how to configure your development system so th
 
 mkdir -p $STOQS_HOME
 git clone --depth=50 https://github.com/stoqs/stoqs.git $STOQS_HOME
-cd stoqsgit
+cd $STOQS_HOME
 git config core.preloadindex true
 export PATH="/usr/local/bin:$PATH"
 python3.6 -m venv venv-stoqs
