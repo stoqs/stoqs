@@ -1,7 +1,7 @@
 -r base.txt
 
 ephem==3.7.6.0
-netCDF4==1.4.3
+netCDF4==1.4.3.1
 pandas==0.24.1
 numpy==1.16.2
 requests==2.21.0
