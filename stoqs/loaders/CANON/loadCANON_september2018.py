@@ -441,7 +441,57 @@ cl.wfuctd_files = [
 cl.wfpctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.wfpctd_files = [
-                  'canon17sc01.nc',
+        'cn18fc01.nc',
+        'cn18fc02.nc',
+        'cn18fc03.nc',
+        'cn18fc04.nc',
+        'cn18fc05.nc',
+        'cn18fc06.nc',
+        'cn18fc07.nc',
+        'cn18fc08.nc',
+        'cn18fc09.nc',
+        'cn18fc10.nc',
+        'cn18fc11.nc',
+        'cn18fc12.nc',
+        'cn18fc13.nc',
+        'cn18fc14.nc',
+        'cn18fc15.nc',
+        'cn18fc16.nc',
+        'cn18fc17.nc',
+        'cn18fc18.nc',
+        'cn18fc19.nc',
+        'cn18fc20.nc',
+        'cn18fc21.nc',
+        'cn18fc22.nc',
+        'cn18fc23.nc',
+        'cn18fc24.nc',
+        'cn18fc25.nc',
+        'cn18fc26.nc',
+        'cn18fc27.nc',
+        'cn18fc28.nc',
+        'cn18fc29.nc',
+        'cn18fc30.nc',
+        'cn18fc31.nc',
+        'cn18fc32.nc',
+        'cn18fc33.nc',
+        'cn18fc34.nc',
+        'cn18fc35.nc',
+        'cn18fc36.nc',
+        'cn18fc37.nc',
+        'cn18fc38.nc',
+        'cn18fc39.nc',
+        'cn18fc40.nc',
+        'cn18fc41.nc',
+        'cn18fc42.nc',
+        'cn18fc43.nc',
+        'cn18fc44.nc',
+        'cn18fc45.nc',
+        'cn18fc46.nc',
+        'cn18fc47.nc',
+        'cn18fc48.nc',
+        'cn18fc49.nc',
+        'cn18fc50.nc',
+        'cn18fc51.nc',
                   ]
 
 ###################################################################################################
@@ -481,7 +531,7 @@ cl.loadLRAUV('tethys', startdate, enddate)
 ##cl.loadRCuctd()  ## not in this campaign
 ##cl.loadRCpctd()  ## not in this campaign
 ##cl.loadWFuctd()
-##cl.loadWFpctd()
+cl.loadWFpctd()
 
 #cl.loadSubSamples() ## no subSamples yet...
 
