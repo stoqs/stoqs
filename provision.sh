@@ -328,6 +328,7 @@ echo "(These commands are also found in $STOQS_HOME/README.md)"
 echo ---------------------------------------------------------------------
 echo vagrant ssh -- -X                        # Wait for [vagrant@localhost ~]$ prompt
 echo export STOQS_HOME=/vagrant/dev/stoqsgit  # Use STOQS_HOME=/home/vagrant/dev/stoqsgit if not using NFS mount
-echo cd $STOQS_HOME && source venv-stoqs/bin/activate
+echo cd $STOQS_HOME 
+echo source venv-stoqs/bin/activate
 echo export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
 echo ./test.sh CHANGEME load noextraload
