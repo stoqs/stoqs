@@ -1035,7 +1035,13 @@ class Base_Loader(STOQS_Loader):
                     # CF (nee COARDS) has tzyx coordinate ordering, time is at index [1] and depth is at [2]
                     # - times: Assume CF/COARDS, override if EPIC data detected
                     tindx = self.getTimeBegEndIndices(self.ds[list(self.ds[firstp].keys())[1]])
-                    times = self.ds[list(self.ds[firstp].maps.keys())[0]].data[tindx[0]:tindx[-1]:self.stride]
+                    try:
+                        times = self.ds[list(self.ds[firstp].maps.keys())[0]].data[tindx[0]:tindx[-1]:self.stride]
+                    except ValueError as e:
+                        # Likely 'not enough values to unpack' because of self.stride exceeding range
+                        self.logger.warn(f"{e}. Stride value of {self.stride} is likely too high.")
+                        self.logger.warn(f"Skipping all parameters in coor_group {ac}")
+                        continue
                     time_units = self.ds[list(self.ds[firstp].maps.keys())[0]].units.lower()
 
                     if time_units == 'true julian day': # pragma: no cover
@@ -1159,7 +1165,8 @@ class Base_Loader(STOQS_Loader):
                             latitudes = longitudes
                             longitudes = tmp_var
 
-                        points = [Point(longitudes, latitudes) for i in range(len(list(mtimes)))]
+                        self.logger.debug(f"Making points list from {(longitudes, latitudes)} for each {len(list(mtimes))} mtimes")
+                        points = [Point(float(longitudes), float(latitudes)) for i in range(len(list(mtimes)))]
 
                     # Need a set of points for all the timeseriesprofile depths
                     points = points * len(list(depths))
@@ -1246,7 +1253,13 @@ class Base_Loader(STOQS_Loader):
                 # End if i == 0 (loading coords for list of pnames)
  
                 constraint_string = f"using python slice: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
-                values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
+                try:
+                    values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
+                except ValueError as e:
+                    # Likely 'not enough values to unpack' because of self.stride exceeding range
+                    self.logger.warn(f"{e}. Stride value of {self.stride} is likely too high.")
+                    self.logger.warn(f"Skipping all parameters in coor_group {ac}")
+                    continue
                 if len(values.shape) == 1:
                     self.logger.info("len(values.shape) = 1; likely EPIC timeseries data - reshaping to add a 'depth' dimension")
                     values = values.reshape(values.shape[0], 1)
