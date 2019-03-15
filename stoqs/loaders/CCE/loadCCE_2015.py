@@ -271,10 +271,10 @@ class CCE_2015_Campaign:
         self.cl.ccems1_files = [ 
                            '20151006/ADCP300/MBCCE_MS1_ADCP300_20151006.nc',
                            '20151006/Aquadopp2000/MBCCE_MS1_Aquadopp2000_20151006.nc',
-                           '20151006/CTDOBSTrans9m/MBCCE_MS1_CTOBS9m_20151006.nc',
-                           '20151006/TD65/MBCCE_MS1_TD65m_20151006.nc',
-                           '20151006/TU35/MBCCE_MS1_TU35m_20151006.nc',
-                           '20151006/TU65/MBCCE_MS1_TU65m_20151006.nc',
+                           '20151006/CTDOBSTrans9m/MBCCE_MS1_CTOBSTrans9m_20151006.nc',
+                           '20151006/TD65m/MBCCE_MS1_TD65m_20151006.nc',
+                           '20151006/TU35m/MBCCE_MS1_TU35m_20151006.nc',
+                           '20151006/TU65m/MBCCE_MS1_TU65m_20151006.nc',
                           ]
         self.cl.ccems1_parms = [ 
                            'Hdg_1215', 'Ptch_1216', 'Roll_1217',
@@ -348,7 +348,7 @@ class CCE_2015_Campaign:
         self.cl.ccems5_nominal_depth = 1315
         self.cl.ccems5_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS5/'
         self.cl.ccems5_files = [ 
-                           '20151020/ADCP/MBCCE_MS5_ADCP300_20151020.nc',
+                           '20151020/ADCP300/MBCCE_MS5_ADCP300_20151020.nc',
                           ]
         self.cl.ccems5_parms = [ 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
@@ -356,7 +356,7 @@ class CCE_2015_Campaign:
         self.cl.ccems5_nominal_depth_ev = self.cl.ccems5_nominal_depth
         self.cl.ccems5_base_ev = self.cl.ccems5_base
         self.cl.ccems5_files_ev = [ 
-                           '20151020/ADCP/MBCCE_MS5_ADCP300_20151020.nc',
+                           '20151020/ADCP300/MBCCE_MS5_ADCP300_20151020.nc',
                           ]
         self.cl.ccems5_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
 
