@@ -267,14 +267,14 @@ class CCE_2015_Campaign:
 
         # MS1 ADCP data - timeseries data
         self.cl.ccems1_nominal_depth = 225
-        self.cl.ccems1_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS1/'
+        self.cl.ccems1_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS1/'
         self.cl.ccems1_files = [ 
                            '20151006/ADCP300/MBCCE_MS1_ADCP300_20151006.nc',
                            '20151006/Aquadopp2000/MBCCE_MS1_Aquadopp2000_20151006.nc',
-                           '20151006/CTOBSTrans9m/MBCCE_MS1_CTOBSTrans9m_20151006.nc',
-                           '20151006/TD65m/MBCCE_MS1_TD65m_20151006.nc',
-                           '20151006/TU35m/MBCCE_MS1_TU35m_20151006.nc',
-                           '20151006/TU65m/MBCCE_MS1_TU65m_20151006.nc',
+                           '20151006/CTDOBSTrans9m/MBCCE_MS1_CTOBS9m_20151006.nc',
+                           '20151006/TD65/MBCCE_MS1_TD65m_20151006.nc',
+                           '20151006/TU35/MBCCE_MS1_TU35m_20151006.nc',
+                           '20151006/TU65/MBCCE_MS1_TU65m_20151006.nc',
                           ]
         self.cl.ccems1_parms = [ 
                            'Hdg_1215', 'Ptch_1216', 'Roll_1217',
@@ -292,7 +292,7 @@ class CCE_2015_Campaign:
 
         # MS2 ADCP data - timeseries data
         self.cl.ccems2_nominal_depth = 462
-        self.cl.ccems2_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS2/'
+        self.cl.ccems2_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS2/'
         self.cl.ccems2_files = [ 
                            '20151005/ADCP300/MBCCE_MS2_ADCP300_20151005.nc',
                            '20151005/CTD9m/MBCCE_MS2_CTD9m_20151005.nc',
@@ -313,7 +313,7 @@ class CCE_2015_Campaign:
 
         # MS3 ADCP and CTD data - timeseries data
         self.cl.ccems3_nominal_depth = 764
-        self.cl.ccems3_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS3/'
+        self.cl.ccems3_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS3/'
         self.cl.ccems3_files = [ 
                            '20151005/ADCP300/MBCCE_MS3_ADCP300_20151005.nc',
                            '20151005/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20151005.nc',
@@ -346,9 +346,9 @@ class CCE_2015_Campaign:
 
         # MS5 ADCP data - timeseries data
         self.cl.ccems5_nominal_depth = 1315
-        self.cl.ccems5_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS5/'
+        self.cl.ccems5_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS5/'
         self.cl.ccems5_files = [ 
-                           '20151020/ADCP300/MBCCE_MS5_ADCP300_20151020.nc',
+                           '20151020/ADCP/MBCCE_MS5_ADCP300_20151020.nc',
                           ]
         self.cl.ccems5_parms = [ 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
@@ -356,7 +356,7 @@ class CCE_2015_Campaign:
         self.cl.ccems5_nominal_depth_ev = self.cl.ccems5_nominal_depth
         self.cl.ccems5_base_ev = self.cl.ccems5_base
         self.cl.ccems5_files_ev = [ 
-                           '20151020/ADCP300/MBCCE_MS5_ADCP300_20151020.nc',
+                           '20151020/ADCP/MBCCE_MS5_ADCP300_20151020.nc',
                           ]
         self.cl.ccems5_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
 
