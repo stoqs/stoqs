@@ -277,6 +277,32 @@ class CCE_2015_Campaign:
                             'chlor', 'ntu1', 'ntu2',
                             'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
+        # MS0 data - timeseries data
+        self.cl.ccems0_nominal_depth = 31.9
+        self.cl.ccems0_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS0/'
+        self.cl.ccems0_files = [ 
+                           '20151104/AWAC/MBCCE_MS0_AWAC_20151104.nc',
+                           '20151104/AWAC/MBCCE_MS0_AWAC_20151104_ProcessedWaves.nc',
+                           '20151104/CTDOXFLOBS/MBCCE_MS0_CTDOXFLOBS_20151104-trm.nc',
+                           '20151104/FLNTU/MBCCE_MS0_FLNTU_20151104.nc',
+                           '20160408/AWAC/MBCCE_MS0_AWAC_20160408.nc',
+                           '20160408/AWAC/MBCCE_MS0_AWAC_20160408_ProcessedWaves.nc',
+                           '20160408/CTDOXFLOBS/MBCCE_MS0_CTDOXFLOBS_20160408.nc',
+                           '20160408/FLNTU/MBCCE_MS0_FLNTU_20160408.nc',
+                           '20161024/AWAC/MBCCE_MS0_AWAC_20161024.nc',
+                           '20161024/AWAC/MBCCE_MS0_AWAC_20161024_Processed_Waves.nc',
+                           '20161024/CTDOXFLOBS/MBCCE_MS0_CTDOXFLOBS_20161024.nc',
+                          ]
+        self.cl.ccems0_parms = [ 
+                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
+                           'P_1', 'T_1211',
+                           'T_28', 'S_41', 'ST_70', 'tran_4010', 'ATTN_55', 'NEP_56', 'Trb_980',
+                           'Hmean', 'mwvdir','MeanAST', 'Trb1_980', 'Trb2_980', 'CA3',
+                           'turbidity1', 'turbidity2', 'chlorophylA',
+                          ]
+
+
+
         # MS1 ADCP data - timeseries data
         self.cl.ccems1_nominal_depth = 225
         self.cl.ccems1_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS1/'
@@ -405,7 +431,7 @@ class CCE_2015_Campaign:
         # Execute the load for trajectory representation
         self.cl.process_command_line()
 
-    def load_ccemoorings(self, stride=20, start_mooring=1, end_mooring=5):
+    def load_ccemoorings(self, stride=20, start_mooring=0, end_mooring=5):
         for mooring in range(start_mooring, end_mooring + 1):
             if hasattr(self.cl, f'ccems{mooring:d}_base'):
                 try:

@@ -1093,6 +1093,11 @@ class Base_Loader(STOQS_Loader):
                     elif depths.any() and nomLat and nomLon:
                         self.logger.info('Nominal position assigned from EPIC Convention global attributes')
                         nomDepths = depths
+                    elif depths.any():
+                        self.logger.info('Nominal depth assigned from EPIC Convention variable attributes')
+                        nomDepths = depths
+                        nom_loc = self.getNominalLocation()
+                        nomLat, nomLon = nom_loc[1][firstp], nom_loc[2][firstp]
                     else:
                         # Possible to have both precise and nominal locations with this approach
                         nom_loc = self.getNominalLocation()
