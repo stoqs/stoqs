@@ -226,10 +226,16 @@ class CCE_2015_Campaign:
                             '20160417/CTDOBSTrans/MBCCE_SIN_CTDOBSTrans_20160417_timecorrected.nc',
                             '20160417/OX/MBCCE_SIN_OX_20160417_timecorrected.nc',
                             '20160417/FLNTU/MBCCE_SIN_FLNTU_20160417_timecorrected.nc',
+                            '20160417/ADCP300/MBCCE_SIN_ADCP300_20160417.nc',
+                            '20160417/ADCP600/MBCCE_SIN_ADCP600_20160417.nc',
+                            '20160417/ADCP1200/MBCCE_SIN_ADCP1200_20160417.nc',
 
                             '20161018/CTDOBSTrans/MBCCE_SIN_CTDOBSTrans_20161018_timecorrected.nc',
                             '20161018/OX/MBCCE_SIN_OX_20161018_timecorrected.nc',
                             '20161018/FLNTU/MBCCE_SIN_FLNTU_20161018_timecorrected.nc',
+                            '20161018/ADCP300/MBCCE_SIN_ADCP300_20161018.nc',
+                            '20161018/ADCP600/MBCCE_SIN_ADCP600_20161018.nc',
+                            '20161018/ADCP1200/MBCCE_SIN_ADCP1200_20161018.nc',
                           ]
         self.cl.ccesin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'optical_backscatter',
                             'oxygen', 'saturation', 'optode_temperature',
@@ -244,6 +250,12 @@ class CCE_2015_Campaign:
                             '20151013/ADCP300/MBCCE_SIN_ADCP300_20151013.nc',
                             '20151013/ADCP600/MBCCE_SIN_ADCP600_20151013.nc',
                             '20151013/ADCP1200/MBCCE_SIN_ADCP1200_20151013.nc',
+                            '20160417/ADCP300/MBCCE_SIN_ADCP300_20160417.nc',
+                            '20160417/ADCP600/MBCCE_SIN_ADCP600_20160417.nc',
+                            '20160417/ADCP1200/MBCCE_SIN_ADCP1200_20160417.nc',
+                            '20161018/ADCP300/MBCCE_SIN_ADCP300_20161018.nc',
+                            '20161018/ADCP600/MBCCE_SIN_ADCP600_20161018.nc',
+                            '20161018/ADCP1200/MBCCE_SIN_ADCP1200_20161018.nc',
                           ]
         self.cl.ccesin_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
         # Just the timeseries data for the highres period
