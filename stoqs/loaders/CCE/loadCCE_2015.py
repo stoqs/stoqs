@@ -308,16 +308,30 @@ class CCE_2015_Campaign:
         self.cl.ccems1_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS1/'
         self.cl.ccems1_files = [ 
                            '20151006/ADCP300/MBCCE_MS1_ADCP300_20151006.nc',
+                           '20151006/Alt9m/MBCCE_MS1_Alt9m_20151006.nc',
                            '20151006/Aquadopp2000/MBCCE_MS1_Aquadopp2000_20151006.nc',
                            '20151006/CTDOBSTrans9m/MBCCE_MS1_CTOBSTrans9m_20151006.nc',
                            '20151006/TD65m/MBCCE_MS1_TD65m_20151006.nc',
                            '20151006/TU35m/MBCCE_MS1_TU35m_20151006.nc',
                            '20151006/TU65m/MBCCE_MS1_TU65m_20151006.nc',
+                           '20160404/ADCP300/MBCCE_MS1_ADCP300_20160404.nc',
+                           '20160404/CT9m/MBCCE_MS1_CT9m_20160404.nc',
+                           '20160404/TD65m/MBCCE_MS1_TD65m_20160404.nc',
+                           '20160404/TU9m/MBCCE_MS1_TU9m_20160404.nc',
+                           '20161006/ADCP300down/MBCCE_MS1_ADCP300down_20161006.nc',
+                           '20161006/ADCP300up/MBCCE_MS1_ADCP300up_20161006.nc',
+                           '20161006/Alt9m/MBCCE_MS1_Alt9m_20161006.nc',
+                           '20161006/Aquadopp2000/MBCCE_MS1_Aquadopp2000_20161006.nc',
+                           '20161006/CT9m/MBCCE_MS1_CT9m_20161006.nc',
+                           '20161006/TD65m/MBCCE_MS1_TD65m_20161006.nc',
+                           '20161006/TU35m/MBCCE_MS1_TU35m_20161006.nc',
+                           '20161006/TU65m/MBCCE_MS1_TU65m_20161006.nc',
                           ]
         self.cl.ccems1_parms = [ 
                            'Hdg_1215', 'Ptch_1216', 'Roll_1217',
                            'P_1', 'T_1211',
                            'T_28', 'S_41', 'ST_70', 'tran_4010', 'ATTN_55', 'NEP_56', 'Trb_980',
+                           'T_20',
                           ]
         # MS1 ADCP data - timeseriesprofile (ADCP) data
         self.cl.ccems1_nominal_depth_ev = self.cl.ccems1_nominal_depth

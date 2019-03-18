@@ -651,8 +651,15 @@ class Base_Loader(STOQS_Loader):
             end_day_indices = np.where(jed == timeAxis)[0]
             t2_indx_end = 0
             if end_day_indices.any():
-                time2_axis_end = self.ds['time2']['time2'][end_day_indices[0]:end_day_indices[-1]]
-                t2_indx_end = len(time2_axis_end) - np.where(ems >= time2_axis_end)[0][-1]
+                if end_day_indices[0] > 0 and (end_day_indices[0] == end_day_indices[-1]):
+                    time2_axis_end = self.ds['time2']['time2'][int(end_day_indices[0]) - 1:int(end_day_indices[-1])]
+                else:
+                    time2_axis_end = self.ds['time2']['time2'][int(end_day_indices[0]):int(end_day_indices[-1])]
+                try:
+                    t2_indx_end = len(time2_axis_end) - np.where(ems >= time2_axis_end)[0][-1]
+                except IndexError:
+                    # Likely ems ls less than the sampling interval, resulting in an empty np.where(ems >= time2_axis_end)
+                    t2_indx_end = len(time2_axis_end)
 
             indices = t_indx[0] + t2_indx_beg, t_indx[-1] - t2_indx_end
             return indices
