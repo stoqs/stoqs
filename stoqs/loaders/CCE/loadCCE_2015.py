@@ -454,13 +454,46 @@ class CCE_2015_Campaign:
                            'Trb_980',
                           ]
 
-        # MS3 ADCP data - timeseriesprofile (ADCP) data
+        # MS5 ADCP data - timeseriesprofile (ADCP) data
         self.cl.ccems5_nominal_depth_ev = self.cl.ccems5_nominal_depth
         self.cl.ccems5_base_ev = self.cl.ccems5_base
         self.cl.ccems5_files_ev = [ 
                            '20151020/ADCP300/MBCCE_MS5_ADCP300_20151020.nc',
                           ]
         self.cl.ccems5_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
+
+        # MS7 ADCP data - timeseries data
+        self.cl.ccems7_nominal_depth = 1849
+        self.cl.ccems7_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS7/'
+        self.cl.ccems7_files = [ 
+                           '20151027/ADCP300/MBCCE_MS7_ADCP300_20151027.nc',
+                           '20151027/FLNTU10m/MBCCE_MS7_FLNTU10m_20151027.nc',
+                           '20151027/FLNTU300m/MBCCE_MS7_FLNTU300m_20151027.nc',
+                           '20160420/ADCP300/MBCCE_MS7_ADCP300_20160420.nc',
+                           '20160420/FLNTU10m/MBCCE_MS7_FLNTU10m_20160420.nc',
+                           '20160420/FLNTU300m/MBCCE_MS7_FLNTU300m_20160420.nc',
+                           '20161019/ADCP300/MBCCE_MS7_ADCP300_20161019.nc',
+                           '20161019/FLNTU10m/MBCCE_MS7_FLNTU10m_20161019.nc',
+                           '20161019/FLNTU300m/MBCCE_MS7_FLNTU300m_20161019.nc',
+                          ]
+        self.cl.ccems7_parms = [ 
+                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
+                           'P_1', 'T_1211', 'NEP1_56',
+                           'T_28', 'S_41', 'ST_70',
+                           'tran_4010', 'ATTN_55',
+                           'Trb1_980', 'Trb2_980', 'CA3', 
+                           'Trb_980',
+                          ]
+
+
+        # MS7 ADCP data - timeseriesprofile (ADCP) data
+        self.cl.ccems7_nominal_depth_ev = self.cl.ccems7_nominal_depth
+        self.cl.ccems7_base_ev = self.cl.ccems7_base
+        self.cl.ccems7_files_ev = [ 
+                           '20151027/ADCP300/MBCCE_MS7_ADCP300_20151027.nc',
+                          ]
+        self.cl.ccems7_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
+
 
         # Full-deployment files, exatracted from SSDS with stride of 60
         ##self.cl.ccesin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccesin2015/201510/'
