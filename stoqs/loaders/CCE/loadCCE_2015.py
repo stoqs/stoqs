@@ -349,6 +349,12 @@ class CCE_2015_Campaign:
                            '20151005/ADCP300/MBCCE_MS2_ADCP300_20151005.nc',
                            '20151005/CTD9m/MBCCE_MS2_CTD9m_20151005.nc',
                            '20151005/TU9m/MBCCE_MS2_TU9m_20151005.nc',
+                           '20160407/ADCP300/MBCCE_MS2_ADCP300_20160407.nc',
+                           '20160407/CTD9m/MBCCE_MS2_CTD9m_20160407.nc',
+                           '20160407/TU9m/MBCCE_MS2_TU9m_20160407.nc',
+                           '20161006/ADCP300/MBCCE_MS2_ADCP300_20161006.nc',
+                           '20161006/CTD9m/MBCCE_MS2_CTD9m_20161006.nc',
+                           '20161006/TU9m/MBCCE_MS2_TU9m_20161006.nc',
                           ]
         self.cl.ccems2_parms = [ 
                            'Hdg_1215', 'Ptch_1216', 'Roll_1217',
@@ -371,6 +377,15 @@ class CCE_2015_Campaign:
                            '20151005/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20151005.nc',
                            '20151005/CT9m/MBCCE_MS3_CT9m_20151005.nc',
                            '20151005/TU9m/MBCCE_MS3_TU9m_20151005.nc',
+                           '20160407/ADCP300/MBCCE_MS3_ADCP300_20160407.nc',
+                           '20160407/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20160407.nc',
+                           '20160407/CT9m/MBCCE_MS3_CT9m_20160407.nc',
+                           '20160407/TU9m/MBCCE_MS3_TU9m_20160407.nc',
+                           '20161006/ADCP300/MBCCE_MS3_ADCP300_20161006.nc',
+                           '20161006/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20161006.nc',
+                           '20161006/CT9m/MBCCE_MS3_CT9m_20161006.nc',
+                           '20161006/TU10m/MBCCE_MS3_TU10m_20161006.nc',
+                           '20161006/TU35m/MBCCE_MS3_TU35m_20161006.nc',
                           ]
         self.cl.ccems3_parms = [ 
                            'Hdg_1215', 'Ptch_1216', 'Roll_1217',
@@ -389,11 +404,22 @@ class CCE_2015_Campaign:
 
 
         # MS4 ADCP - 20151005 data files are corrupted
-        ##self.cl.ccems4_nominal_depth = 462
-        ##self.cl.ccems4_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS4...'
-        ##self.cl.ccems4_files = [ '' ]
-        ##self.cl.ccems4_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', ]
-        ##self.cl.ccems4_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+        self.cl.ccems4_nominal_depth = 462
+        self.cl.ccems4_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS4/'
+        self.cl.ccems4_files = [
+                           '20151007/FLNTU10m/MBCCE_MS4_FLNTU10m_20151007.nc',
+                           '20160408/ADCP300/MBCCE_MS4_ADCP300_20160408.nc',
+                           '20160408/FLNTU10m/MBCCE_MS4_FLNTU10m_20160408.nc',
+                           '20161007/ADCP300/MBCCE_MS4_ADCP300_20161007.nc',
+                           '20161007/FLNTU10m/MBCCE_MS4_FLNTU10m_20161007.nc',
+                          ]
+        self.cl.ccems4_parms = [ 
+                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
+                           'P_1', 'T_1211', 'NEP1_56',
+                           'T_28', 'S_41', 'ST_70',
+                           'tran_4010', 'ATTN_55',
+                           'Trb1_980', 'Trb2_980', 'CA3',
+                          ]
 
 
         # MS5 ADCP data - timeseries data
@@ -401,8 +427,32 @@ class CCE_2015_Campaign:
         self.cl.ccems5_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS5/'
         self.cl.ccems5_files = [ 
                            '20151020/ADCP300/MBCCE_MS5_ADCP300_20151020.nc',
+                           '20151020/CT11m/MBCCE_MS5_CT11m_20151020_0138.nc',
+                           '20151020/TU/MBCCE_MS5_TU100m_20151020.nc',
+                           '20151020/TU/MBCCE_MS5_TU11m_20151020.nc',
+                           '20151020/TU/MBCCE_MS5_TU200m_20151020.nc',
+                           '20151020/TU/MBCCE_MS5_TU74m_20151020.nc',
+                           '20160408/ADCP300/MBCCE_MS5_ADCP300_20160408.nc',
+                           '20160408/CT70m/MBCCE_MS5_CT70m_20160408.nc',
+                           '20160408/TU/MBCCE_MS5_TU100m_20160408.nc',
+                           '20160408/TU/MBCCE_MS5_TU10m_20160408.nc',
+                           '20160408/TU/MBCCE_MS5_TU200m_20160408.nc',
+                           '20160408/TU/MBCCE_MS5_TU70m_20160408.nc',
+                           '20161007/ADCP300/MBCCE_MS5_ADCP300_20161007.nc',
+                           '20161007/CT10m/MBCCE_MS5_CT70m_20161007.nc',
+                           '20161007/TU/MBCCE_MS5_TU100m_20161007.nc',
+                           '20161007/TU/MBCCE_MS5_TU10m_20161007.nc',
+                           '20161007/TU/MBCCE_MS5_TU200m_20161007.nc',
+                           '20161007/TU/MBCCE_MS5_TU70m_20161007.nc',
                           ]
-        self.cl.ccems5_parms = [ 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+        self.cl.ccems5_parms = [ 
+                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
+                           'P_1', 'T_1211', 'NEP1_56',
+                           'T_28', 'S_41', 'ST_70',
+                           'tran_4010', 'ATTN_55',
+                           'Trb1_980', 'Trb2_980', 'CA3', 
+                           'Trb_980',
+                          ]
 
         # MS3 ADCP data - timeseriesprofile (ADCP) data
         self.cl.ccems5_nominal_depth_ev = self.cl.ccems5_nominal_depth
