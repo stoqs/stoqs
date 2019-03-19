@@ -294,6 +294,15 @@ class CCE_2015_Campaign:
                             'chlor', 'ntu1', 'ntu2',
                             'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
+        # MS- Mooring data - common parameters
+        time_series_parms = [
+                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
+                           'P_1', 'T_1211', 'T20', 'D_3', 'NEP1_56',
+                           'T_28', 'S_41', 'ST_70', 'tran_4010', 'ATTN_55', 'NEP_56', 'Trb_980',
+                           'Hmean', 'mwvdir','MeanAST', 'Trb1_980', 'Trb2_980', 'CA3', 'Trb_980',
+                           'turbidity1', 'turbidity2', 'chlorophylA',
+                            ]
+
         # MS0 data - timeseries data
         self.cl.ccems0_nominal_depth = 31.9
         self.cl.ccems0_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS0/'
@@ -310,14 +319,7 @@ class CCE_2015_Campaign:
                            '20161024/AWAC/MBCCE_MS0_AWAC_20161024_Processed_Waves.nc',
                            '20161024/CTDOXFLOBS/MBCCE_MS0_CTDOXFLOBS_20161024.nc',
                           ]
-        self.cl.ccems0_parms = [ 
-                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
-                           'P_1', 'T_1211',
-                           'T_28', 'S_41', 'ST_70', 'tran_4010', 'ATTN_55', 'NEP_56', 'Trb_980',
-                           'Hmean', 'mwvdir','MeanAST', 'Trb1_980', 'Trb2_980', 'CA3',
-                           'turbidity1', 'turbidity2', 'chlorophylA',
-                          ]
-
+        self.cl.ccems0_parms = time_series_parms
 
 
         # MS1 ADCP data - timeseries data
@@ -344,12 +346,8 @@ class CCE_2015_Campaign:
                            '20161006/TU35m/MBCCE_MS1_TU35m_20161006.nc',
                            '20161006/TU65m/MBCCE_MS1_TU65m_20161006.nc',
                           ]
-        self.cl.ccems1_parms = [ 
-                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
-                           'P_1', 'T_1211',
-                           'T_28', 'S_41', 'ST_70', 'tran_4010', 'ATTN_55', 'NEP_56', 'Trb_980',
-                           'T_20',
-                          ]
+        self.cl.ccems1_parms = time_series_parms
+
         # MS1 ADCP data - timeseriesprofile (ADCP) data
         self.cl.ccems1_nominal_depth_ev = self.cl.ccems1_nominal_depth
         self.cl.ccems1_base_ev = self.cl.ccems1_base
@@ -358,6 +356,7 @@ class CCE_2015_Campaign:
                            '20151006/Aquadopp2000/MBCCE_MS1_Aquadopp2000_20151006.nc',
                           ]
         self.cl.ccems1_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
+
 
         # MS2 ADCP data - timeseries data
         self.cl.ccems2_nominal_depth = 462
@@ -373,11 +372,8 @@ class CCE_2015_Campaign:
                            '20161006/CTD9m/MBCCE_MS2_CTD9m_20161006.nc',
                            '20161006/TU9m/MBCCE_MS2_TU9m_20161006.nc',
                           ]
-        self.cl.ccems2_parms = [ 
-                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
-                           'D_3', 'P_1', 'T_28', 'S_41',
-                           'NEP_56', 'Trb_980',
-                          ]
+        self.cl.ccems2_parms = time_series_parms
+
         # MS2 ADCP data - timeseriesprofile (ADCP) data
         self.cl.ccems2_nominal_depth_ev = self.cl.ccems2_nominal_depth
         self.cl.ccems2_base_ev = self.cl.ccems2_base
@@ -385,6 +381,7 @@ class CCE_2015_Campaign:
                            '20151005/ADCP300/MBCCE_MS2_ADCP300_20151005.nc',
                           ]
         self.cl.ccems2_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
+
 
         # MS3 ADCP and CTD data - timeseries data
         self.cl.ccems3_nominal_depth = 764
@@ -404,12 +401,8 @@ class CCE_2015_Campaign:
                            '20161006/TU10m/MBCCE_MS3_TU10m_20161006.nc',
                            '20161006/TU35m/MBCCE_MS3_TU35m_20161006.nc',
                           ]
-        self.cl.ccems3_parms = [ 
-                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
-                           'P_1', 'T_1211', 'NEP1_56',
-                           'T_28', 'S_41', 'ST_70',
-                           'tran_4010', 'ATTN_55',
-                          ]
+        self.cl.ccems3_parms = time_series_parms
+
         # MS3 ADCP data - timeseriesprofile (ADCP) data
         self.cl.ccems3_nominal_depth_ev = self.cl.ccems3_nominal_depth
         self.cl.ccems3_base_ev = self.cl.ccems3_base
@@ -430,13 +423,7 @@ class CCE_2015_Campaign:
                            '20161007/ADCP300/MBCCE_MS4_ADCP300_20161007.nc',
                            '20161007/FLNTU10m/MBCCE_MS4_FLNTU10m_20161007.nc',
                           ]
-        self.cl.ccems4_parms = [ 
-                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
-                           'P_1', 'T_1211', 'NEP1_56',
-                           'T_28', 'S_41', 'ST_70',
-                           'tran_4010', 'ATTN_55',
-                           'Trb1_980', 'Trb2_980', 'CA3',
-                          ]
+        self.cl.ccems4_parms = time_series_parms
 
 
         # MS5 ADCP data - timeseries data
@@ -462,14 +449,7 @@ class CCE_2015_Campaign:
                            '20161007/TU/MBCCE_MS5_TU200m_20161007.nc',
                            '20161007/TU/MBCCE_MS5_TU70m_20161007.nc',
                           ]
-        self.cl.ccems5_parms = [ 
-                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
-                           'P_1', 'T_1211', 'NEP1_56',
-                           'T_28', 'S_41', 'ST_70',
-                           'tran_4010', 'ATTN_55',
-                           'Trb1_980', 'Trb2_980', 'CA3', 
-                           'Trb_980',
-                          ]
+        self.cl.ccems5_parms = time_series_parms
 
         # MS5 ADCP data - timeseriesprofile (ADCP) data
         self.cl.ccems5_nominal_depth_ev = self.cl.ccems5_nominal_depth
@@ -478,6 +458,7 @@ class CCE_2015_Campaign:
                            '20151020/ADCP300/MBCCE_MS5_ADCP300_20151020.nc',
                           ]
         self.cl.ccems5_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
+
 
         # MS7 ADCP data - timeseries data
         self.cl.ccems7_nominal_depth = 1849
@@ -493,15 +474,7 @@ class CCE_2015_Campaign:
                            '20161019/FLNTU10m/MBCCE_MS7_FLNTU10m_20161019.nc',
                            '20161019/FLNTU300m/MBCCE_MS7_FLNTU300m_20161019.nc',
                           ]
-        self.cl.ccems7_parms = [ 
-                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
-                           'P_1', 'T_1211', 'NEP1_56',
-                           'T_28', 'S_41', 'ST_70',
-                           'tran_4010', 'ATTN_55',
-                           'Trb1_980', 'Trb2_980', 'CA3', 
-                           'Trb_980',
-                          ]
-
+        self.cl.ccems7_parms = time_series_parms
 
         # MS7 ADCP data - timeseriesprofile (ADCP) data
         self.cl.ccems7_nominal_depth_ev = self.cl.ccems7_nominal_depth
@@ -545,7 +518,7 @@ class CCE_2015_Campaign:
         # Execute the load for trajectory representation
         self.cl.process_command_line()
 
-    def load_ccemoorings(self, stride=20, start_mooring=0, end_mooring=5):
+    def load_ccemoorings(self, stride=20, start_mooring=0, end_mooring=7):
         for mooring in range(start_mooring, end_mooring + 1):
             if hasattr(self.cl, f'ccems{mooring:d}_base'):
                 try:
@@ -554,7 +527,7 @@ class CCE_2015_Campaign:
                     self.cl.logger.warn(str(e))
 
     def load_ccemoorings_ev(self, low_res_stride=20, high_res_stride=1,
-                                start_mooring=1, end_mooring=5):
+                                start_mooring=0, end_mooring=7):
         # DRY: for all moorings load all lo res and hi res data that have a .._base attribute
         for mooring in range(start_mooring, end_mooring + 1):
             if not hasattr(self.cl, f'ccems{mooring:d}_base_ev'):
@@ -613,7 +586,7 @@ if __name__ == '__main__':
     campaign = CCE_2015_Campaign()
     if campaign.cl.args.test:
         campaign.load_ccemoorings(stride=100, start_mooring=0, end_mooring=7)
-        campaign.load_ccemoorings_ev(low_res_stride=10, start_mooring=1, end_mooring=5)
+        campaign.load_ccemoorings_ev(low_res_stride=100, start_mooring=0, end_mooring=7)
         campaign.cl.loadCCESIN(stride=1000)    # Normal base class loader for entire time series
         campaign.load_ccesin_ev(low_res_stride=1000, high_res_stride=100)
         campaign.cl.bed_depths = [np.round(d, 1) for d in campaign.cl.get_start_bed_depths()]
