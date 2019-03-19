@@ -528,16 +528,16 @@ elif cl.args.stride:
     cl.stride = cl.args.stride
 
 cl.loadM1()  
-#cl.loadL_662a()
-#cl.load_NPS34a() 
-#cl.load_slocum_nemesis() 
-#cl.load_wg_Tiny()
-#cl.load_wg_Sparky()
-#cl.load_oa1()
-#cl.load_oa2()
-#cl.loadDorado(startdate, enddate, build_attrs=True)
-#cl.loadLRAUV('daphne', startdate, enddate)
-#cl.loadLRAUV('tethys', startdate, enddate)
+cl.loadL_662a()
+cl.load_NPS34a() 
+cl.load_slocum_nemesis() 
+cl.load_wg_Tiny()
+cl.load_wg_Sparky()
+cl.load_oa1()
+cl.load_oa2()
+cl.loadDorado(startdate, enddate, build_attrs=True)
+cl.loadLRAUV('daphne', startdate, enddate)
+cl.loadLRAUV('tethys', startdate, enddate)
 ##cl.loadRCuctd()  ## not in this campaign
 ##cl.loadRCpctd()  ## not in this campaign
 cl.loadWFuctd()
