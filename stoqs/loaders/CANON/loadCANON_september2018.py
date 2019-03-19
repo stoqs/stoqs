@@ -510,12 +510,12 @@ cl.subsample_csv_files = [
    'STOQS_CN18F_CHLA.csv',     'STOQS_CN18F_O2.csv',      'STOQS_CN18F_PHAEO_5U.csv',   'STOQS_CN18F_SIG_T.csv',
    'STOQS_CN18F_ALK.csv',         'STOQS_CN18F_CHL_GFF.csv',  'STOQS_CN18F_OXY_ML.csv',  'STOQS_CN18F_PHAEO_GFF.csv',  'STOQS_CN18F_TCO2.csv',
    'STOQS_CN18F_ALTIMETER.csv',
-## 'STOQS_CN18F_COND2.csv', ##error::  ValueError: could not convert string to float: 'CN18Fc01' 
+   'STOQS_CN18F_COND2.csv', 
    'STOQS_CN18F_OXY_PS.csv',  'STOQS_CN18F_POT_TMP2.csv',
-## 'STOQS_CN18F_TEMP2.csv', ##error: ValueError: could not convert string to float: 'CN18Fc01'
+   'STOQS_CN18F_TEMP2.csv', 
    'STOQS_CN18F_CARBON_GFF.csv',  'STOQS_CN18F_CONDUCT.csv',  'STOQS_CN18F_PAR4PI.csv',  'STOQS_CN18F_POT_TMP.csv',    'STOQS_CN18F_TMP.csv',
    'STOQS_CN18F_CHL_1U.csv',      'STOQS_CN18F_FLUOR.csv',    'STOQS_CN18F_PARCOS.csv',
-##'STOQS_CN18F_SAL2.csv', ##error: ValueError: could not convert string to float: 'CN18Fc01'
+   'STOQS_CN18F_SAL2.csv', 
    'STOQS_CN18F_TRANSBEAM.csv',
                           ]
 
