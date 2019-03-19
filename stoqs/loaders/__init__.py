@@ -1491,8 +1491,10 @@ class STOQS_Loader(object):
                 xmin, xmax = fh.variables['x_range'][:]
                 ymin, ymax = fh.variables['y_range'][:]
             except IOError as e:
-                self.logger.error(f'Cannot add {ALTITUDE}. Make sure file {self.grdTerrain} is present.')
-                self.logger.info(f'cd stoqs/loaders && wget https://stoqs.mbari.org/terrain/{self.grdTerrain}')
+                self.logger.error(f'Cannot add {ALTITUDE}. Make sure file {os.path.abspath(self.grdTerrain)} is present.')
+                self.logger.error(f'cd stoqs/loaders && wget https://stoqs.mbari.org/terrain/{os.path.basename(self.grdTerrain)}')
+                self.logger.error('Exiting with error')
+                sys.exit(-1)
             except KeyError as e:
                 try:
                     # New GMT format
@@ -1510,8 +1512,6 @@ class STOQS_Loader(object):
             except Exception as e:
                 self.logger.exception(e)
                 return
-            finally:
-                fh.close()
 
             bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
 

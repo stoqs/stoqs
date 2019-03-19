@@ -23,13 +23,30 @@ import timing
 # CCE event start and end times for loading timeseriesprofile mooring (ADCP) data
 Event = namedtuple('Event', ['start', 'end'])
 lores_event_times = [
-        Event(datetime(2016, 1, 15,  0,  0), datetime(2016, 1, 18,  0,  0)),
-        Event(datetime(2016, 3,  5,  0,  0), datetime(2016, 3,  8,  0,  0)),
-                     ]
+        Event(datetime(2015, 11, 30, 15, 37, 45), datetime(2015, 12, 3, 15, 37, 45)),
+        Event(datetime(2016, 1, 14, 21, 35, 52), datetime(2016, 1, 17, 21, 35, 52)),
+        Event(datetime(2016, 2, 16, 21, 53, 58), datetime(2016, 2, 19, 21, 53, 58)),
+        Event(datetime(2016, 3, 5, 9, 23, 36), datetime(2016, 3, 8, 9, 23, 36)),
+        Event(datetime(2016, 4, 6, 21, 28, 26), datetime(2016, 4, 9, 21, 28, 26)),
+        Event(datetime(2016, 8, 31, 1, 18, 57), datetime(2016, 9, 3, 1, 18, 57)),
+        Event(datetime(2016, 11, 23, 6, 36, 24), datetime(2016, 11, 26, 6, 36, 24)),
+        Event(datetime(2017, 1, 8, 5, 23, 5), datetime(2017, 1, 11, 5, 23, 5)),
+        Event(datetime(2017, 2, 2, 16, 14, 49), datetime(2017, 2, 5, 16, 14, 49)),
+        Event(datetime(2017, 2, 17, 16, 44, 47), datetime(2017, 2, 20, 16, 44, 47)),
+                    ]
 hires_event_times = [
-        Event(datetime(2016, 1, 15, 21,  0), datetime(2016, 1, 16,  2,  0)),
-        Event(datetime(2016, 3,  6,  0,  0), datetime(2016, 3,  7,  0,  0)),
-                     ]
+        Event(datetime(2015, 12, 1, 11, 37, 45), datetime(2015, 12, 2, 5, 37, 45)),
+        Event(datetime(2016, 1, 15, 17, 35, 52), datetime(2016, 1, 16, 11, 35, 52)),
+        Event(datetime(2016, 2, 17, 17, 53, 58), datetime(2016, 2, 18, 11, 53, 58)),
+        Event(datetime(2016, 3, 6, 5, 23, 36), datetime(2016, 3, 6, 23, 23, 36)),
+        Event(datetime(2016, 4, 7, 17, 28, 26), datetime(2016, 4, 8, 11, 28, 26)),
+        Event(datetime(2016, 8, 31, 21, 18, 57), datetime(2016, 9, 1, 15, 18, 57)),
+        Event(datetime(2016, 11, 24, 2, 36, 24), datetime(2016, 11, 24, 20, 36, 24)),
+        Event(datetime(2017, 1, 9, 1, 23, 5), datetime(2017, 1, 9, 19, 23, 5)),
+        Event(datetime(2017, 2, 3, 12, 14, 49), datetime(2017, 2, 4, 6, 14, 49)),
+        Event(datetime(2017, 2, 18, 12, 44, 47), datetime(2017, 2, 19, 6, 44, 47)),
+                    ]
+
 
 # Overall time period for the whole campaign
 #campaign_start_datetime = datetime(2015, 10, 13, 0,  0)
@@ -226,10 +243,16 @@ class CCE_2015_Campaign:
                             '20160417/CTDOBSTrans/MBCCE_SIN_CTDOBSTrans_20160417_timecorrected.nc',
                             '20160417/OX/MBCCE_SIN_OX_20160417_timecorrected.nc',
                             '20160417/FLNTU/MBCCE_SIN_FLNTU_20160417_timecorrected.nc',
+                            '20160417/ADCP300/MBCCE_SIN_ADCP300_20160417.nc',
+                            '20160417/ADCP600/MBCCE_SIN_ADCP600_20160417.nc',
+                            '20160417/ADCP1200/MBCCE_SIN_ADCP1200_20160417.nc',
 
                             '20161018/CTDOBSTrans/MBCCE_SIN_CTDOBSTrans_20161018_timecorrected.nc',
                             '20161018/OX/MBCCE_SIN_OX_20161018_timecorrected.nc',
                             '20161018/FLNTU/MBCCE_SIN_FLNTU_20161018_timecorrected.nc',
+                            '20161018/ADCP300/MBCCE_SIN_ADCP300_20161018.nc',
+                            '20161018/ADCP600/MBCCE_SIN_ADCP600_20161018.nc',
+                            '20161018/ADCP1200/MBCCE_SIN_ADCP1200_20161018.nc',
                           ]
         self.cl.ccesin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'optical_backscatter',
                             'oxygen', 'saturation', 'optode_temperature',
@@ -244,6 +267,12 @@ class CCE_2015_Campaign:
                             '20151013/ADCP300/MBCCE_SIN_ADCP300_20151013.nc',
                             '20151013/ADCP600/MBCCE_SIN_ADCP600_20151013.nc',
                             '20151013/ADCP1200/MBCCE_SIN_ADCP1200_20151013.nc',
+                            '20160417/ADCP300/MBCCE_SIN_ADCP300_20160417.nc',
+                            '20160417/ADCP600/MBCCE_SIN_ADCP600_20160417.nc',
+                            '20160417/ADCP1200/MBCCE_SIN_ADCP1200_20160417.nc',
+                            '20161018/ADCP300/MBCCE_SIN_ADCP300_20161018.nc',
+                            '20161018/ADCP600/MBCCE_SIN_ADCP600_20161018.nc',
+                            '20161018/ADCP1200/MBCCE_SIN_ADCP1200_20161018.nc',
                           ]
         self.cl.ccesin_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
         # Just the timeseries data for the highres period
@@ -265,100 +294,230 @@ class CCE_2015_Campaign:
                             'chlor', 'ntu1', 'ntu2',
                             'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
-        # MS1 ADCP data - timeseries data
+        # MS Mooring data - common parameters
+        time_series_parms = [
+                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
+                           'P_1', 'T_1211', 'T20', 'D_3', 'NEP1_56',
+                           'T_28', 'S_41', 'ST_70', 'tran_4010', 'ATTN_55', 'NEP_56', 'Trb_980',
+                           'Hmean', 'mwvdir','MeanAST', 'Trb1_980', 'Trb2_980', 'CA3', 'Trb_980',
+                           'turbidity1', 'turbidity2', 'chlorophylA',
+                            ]
+        time_series_profile_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
+
+        # MS0 - timeseries data
+        self.cl.ccems0_nominal_depth = 31.9
+        self.cl.ccems0_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS0/'
+        self.cl.ccems0_files = [ 
+                           '20151104/AWAC/MBCCE_MS0_AWAC_20151104.nc',
+                           '20151104/AWAC/MBCCE_MS0_AWAC_20151104_ProcessedWaves.nc',
+                           '20151104/CTDOXFLOBS/MBCCE_MS0_CTDOXFLOBS_20151104-trm.nc',
+                           '20151104/FLNTU/MBCCE_MS0_FLNTU_20151104.nc',
+                           '20160408/AWAC/MBCCE_MS0_AWAC_20160408.nc',
+                           '20160408/AWAC/MBCCE_MS0_AWAC_20160408_ProcessedWaves.nc',
+                           '20160408/CTDOXFLOBS/MBCCE_MS0_CTDOXFLOBS_20160408.nc',
+                           '20160408/FLNTU/MBCCE_MS0_FLNTU_20160408.nc',
+                           '20161024/AWAC/MBCCE_MS0_AWAC_20161024.nc',
+                           '20161024/AWAC/MBCCE_MS0_AWAC_20161024_Processed_Waves.nc',
+                           '20161024/CTDOXFLOBS/MBCCE_MS0_CTDOXFLOBS_20161024.nc',
+                          ]
+        self.cl.ccems0_parms = time_series_parms
+
+        # MS0 - timeseriesprofile (ADCP) data
+        self.cl.ccems0_nominal_depth_ev = self.cl.ccems0_nominal_depth
+        self.cl.ccems0_base_ev = self.cl.ccems0_base
+        self.cl.ccems0_files_ev = [ 
+                           '20151104/AWAC/MBCCE_MS0_AWAC_20151104.nc',
+                           '20160408/AWAC/MBCCE_MS0_AWAC_20160408.nc',
+                           '20161024/AWAC/MBCCE_MS0_AWAC_20161024.nc',
+                          ]
+        self.cl.ccems0_parms_ev = time_series_profile_parms
+
+
+        # MS1 - timeseries data
         self.cl.ccems1_nominal_depth = 225
-        self.cl.ccems1_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS1/'
+        self.cl.ccems1_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS1/'
         self.cl.ccems1_files = [ 
                            '20151006/ADCP300/MBCCE_MS1_ADCP300_20151006.nc',
+                           '20151006/Alt9m/MBCCE_MS1_Alt9m_20151006.nc',
                            '20151006/Aquadopp2000/MBCCE_MS1_Aquadopp2000_20151006.nc',
-                           '20151006/CTOBSTrans9m/MBCCE_MS1_CTOBSTrans9m_20151006.nc',
+                           '20151006/CTDOBSTrans9m/MBCCE_MS1_CTOBSTrans9m_20151006.nc',
                            '20151006/TD65m/MBCCE_MS1_TD65m_20151006.nc',
                            '20151006/TU35m/MBCCE_MS1_TU35m_20151006.nc',
                            '20151006/TU65m/MBCCE_MS1_TU65m_20151006.nc',
+                           '20160404/ADCP300/MBCCE_MS1_ADCP300_20160404.nc',
+                           '20160404/CT9m/MBCCE_MS1_CT9m_20160404.nc',
+                           '20160404/TD65m/MBCCE_MS1_TD65m_20160404.nc',
+                           '20160404/TU9m/MBCCE_MS1_TU9m_20160404.nc',
+                           '20161006/ADCP300down/MBCCE_MS1_ADCP300down_20161006.nc',
+                           '20161006/ADCP300up/MBCCE_MS1_ADCP300up_20161006.nc',
+                           '20161006/Alt9m/MBCCE_MS1_Alt9m_20161006.nc',
+                           '20161006/Aquadopp2000/MBCCE_MS1_Aquadopp2000_20161006.nc',
+                           '20161006/CT9m/MBCCE_MS1_CT9m_20161006.nc',
+                           '20161006/TD65m/MBCCE_MS1_TD65m_20161006.nc',
+                           '20161006/TU35m/MBCCE_MS1_TU35m_20161006.nc',
+                           '20161006/TU65m/MBCCE_MS1_TU65m_20161006.nc',
                           ]
-        self.cl.ccems1_parms = [ 
-                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
-                           'P_1', 'T_1211',
-                           'T_28', 'S_41', 'ST_70', 'tran_4010', 'ATTN_55', 'NEP_56', 'Trb_980',
-                          ]
-        # MS1 ADCP data - timeseriesprofile (ADCP) data
+        self.cl.ccems1_parms = time_series_parms
+
+        # MS1 - timeseriesprofile (ADCP) data
         self.cl.ccems1_nominal_depth_ev = self.cl.ccems1_nominal_depth
         self.cl.ccems1_base_ev = self.cl.ccems1_base
         self.cl.ccems1_files_ev = [ 
                            '20151006/ADCP300/MBCCE_MS1_ADCP300_20151006.nc',
                            '20151006/Aquadopp2000/MBCCE_MS1_Aquadopp2000_20151006.nc',
+                           '20160404/ADCP300/MBCCE_MS1_ADCP300_20160404.nc',
+                           '20161006/ADCP300down/MBCCE_MS1_ADCP300down_20161006.nc',
+                           '20161006/ADCP300up/MBCCE_MS1_ADCP300up_20161006.nc',
+                           '20161006/Aquadopp2000/MBCCE_MS1_Aquadopp2000_20161006.nc',
                           ]
-        self.cl.ccems1_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
+        self.cl.ccems1_parms_ev = time_series_profile_parms
 
-        # MS2 ADCP data - timeseries data
+
+        # MS2 - timeseries data
         self.cl.ccems2_nominal_depth = 462
-        self.cl.ccems2_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS2/'
+        self.cl.ccems2_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS2/'
         self.cl.ccems2_files = [ 
                            '20151005/ADCP300/MBCCE_MS2_ADCP300_20151005.nc',
                            '20151005/CTD9m/MBCCE_MS2_CTD9m_20151005.nc',
                            '20151005/TU9m/MBCCE_MS2_TU9m_20151005.nc',
+                           '20160407/ADCP300/MBCCE_MS2_ADCP300_20160407.nc',
+                           '20160407/CTD9m/MBCCE_MS2_CTD9m_20160407.nc',
+                           '20160407/TU9m/MBCCE_MS2_TU9m_20160407.nc',
+                           '20161006/ADCP300/MBCCE_MS2_ADCP300_20161006.nc',
+                           '20161006/CTD9m/MBCCE_MS2_CTD9m_20161006.nc',
+                           '20161006/TU9m/MBCCE_MS2_TU9m_20161006.nc',
                           ]
-        self.cl.ccems2_parms = [ 
-                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
-                           'D_3', 'P_1', 'T_28', 'S_41',
-                           'NEP_56', 'Trb_980',
-                          ]
-        # MS2 ADCP data - timeseriesprofile (ADCP) data
+        self.cl.ccems2_parms = time_series_parms
+
+        # MS2 - timeseriesprofile (ADCP) data
         self.cl.ccems2_nominal_depth_ev = self.cl.ccems2_nominal_depth
         self.cl.ccems2_base_ev = self.cl.ccems2_base
         self.cl.ccems2_files_ev = [ 
                            '20151005/ADCP300/MBCCE_MS2_ADCP300_20151005.nc',
+                           '20160407/ADCP300/MBCCE_MS2_ADCP300_20160407.nc',
+                           '20161006/ADCP300/MBCCE_MS2_ADCP300_20161006.nc',
                           ]
-        self.cl.ccems2_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
+        self.cl.ccems2_parms_ev = time_series_profile_parms
 
-        # MS3 ADCP and CTD data - timeseries data
+
+        # MS3 - timeseries data
         self.cl.ccems3_nominal_depth = 764
-        self.cl.ccems3_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS3/'
+        self.cl.ccems3_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS3/'
         self.cl.ccems3_files = [ 
                            '20151005/ADCP300/MBCCE_MS3_ADCP300_20151005.nc',
                            '20151005/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20151005.nc',
                            '20151005/CT9m/MBCCE_MS3_CT9m_20151005.nc',
                            '20151005/TU9m/MBCCE_MS3_TU9m_20151005.nc',
+                           '20160407/ADCP300/MBCCE_MS3_ADCP300_20160407.nc',
+                           '20160407/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20160407.nc',
+                           '20160407/CT9m/MBCCE_MS3_CT9m_20160407.nc',
+                           '20160407/TU9m/MBCCE_MS3_TU9m_20160407.nc',
+                           '20161006/ADCP300/MBCCE_MS3_ADCP300_20161006.nc',
+                           '20161006/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20161006.nc',
+                           '20161006/CT9m/MBCCE_MS3_CT9m_20161006.nc',
+                           '20161006/TU10m/MBCCE_MS3_TU10m_20161006.nc',
+                           '20161006/TU35m/MBCCE_MS3_TU35m_20161006.nc',
                           ]
-        self.cl.ccems3_parms = [ 
-                           'Hdg_1215', 'Ptch_1216', 'Roll_1217',
-                           'P_1', 'T_1211', 'NEP1_56',
-                           'T_28', 'S_41', 'ST_70',
-                           'tran_4010', 'ATTN_55',
-                          ]
-        # MS3 ADCP data - timeseriesprofile (ADCP) data
+        self.cl.ccems3_parms = time_series_parms
+
+        # MS3 - timeseriesprofile (ADCP) data
         self.cl.ccems3_nominal_depth_ev = self.cl.ccems3_nominal_depth
         self.cl.ccems3_base_ev = self.cl.ccems3_base
         self.cl.ccems3_files_ev = [ 
                            '20151005/ADCP300/MBCCE_MS3_ADCP300_20151005.nc',
                            '20151005/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20151005.nc',
+                           '20160407/ADCP300/MBCCE_MS3_ADCP300_20160407.nc',
+                           '20160407/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20160407.nc',
+                           '20161006/ADCP300/MBCCE_MS3_ADCP300_20161006.nc',
+                           '20161006/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20161006.nc',
                           ]
-        self.cl.ccems3_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
+        self.cl.ccems3_parms_ev = time_series_profile_parms
 
 
-        # MS4 ADCP - 20151005 data files are corrupted
-        ##self.cl.ccems4_nominal_depth = 462
-        ##self.cl.ccems4_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS4...'
-        ##self.cl.ccems4_files = [ '' ]
-        ##self.cl.ccems4_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', ]
-        ##self.cl.ccems4_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+        # MS4 ADCP - timeseries data
+        self.cl.ccems4_nominal_depth = 462
+        self.cl.ccems4_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS4/'
+        self.cl.ccems4_files = [
+                           '20151007/FLNTU10m/MBCCE_MS4_FLNTU10m_20151007.nc',
+                           '20160408/ADCP300/MBCCE_MS4_ADCP300_20160408.nc',
+                           '20160408/FLNTU10m/MBCCE_MS4_FLNTU10m_20160408.nc',
+                           '20161007/ADCP300/MBCCE_MS4_ADCP300_20161007.nc',
+                           '20161007/FLNTU10m/MBCCE_MS4_FLNTU10m_20161007.nc',
+                          ]
+        self.cl.ccems4_parms = time_series_parms
+
+        # MS4 ADCP data - timeseriesprofile (ADCP) data
+        self.cl.ccems4_nominal_depth_ev = self.cl.ccems4_nominal_depth
+        self.cl.ccems4_base_ev = self.cl.ccems4_base
+        self.cl.ccems4_files_ev = [ 
+                           '20160408/ADCP300/MBCCE_MS4_ADCP300_20160408.nc',
+                           '20161007/ADCP300/MBCCE_MS4_ADCP300_20161007.nc',
+                          ]
+        self.cl.ccems4_parms_ev = time_series_profile_parms
 
 
-        # MS5 ADCP data - timeseries data
+        # MS5 - timeseries data
         self.cl.ccems5_nominal_depth = 1315
-        self.cl.ccems5_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS5/'
+        self.cl.ccems5_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS5/'
         self.cl.ccems5_files = [ 
                            '20151020/ADCP300/MBCCE_MS5_ADCP300_20151020.nc',
+                           '20151020/CT11m/MBCCE_MS5_CT11m_20151020_0138.nc',
+                           '20151020/TU/MBCCE_MS5_TU100m_20151020.nc',
+                           '20151020/TU/MBCCE_MS5_TU11m_20151020.nc',
+                           '20151020/TU/MBCCE_MS5_TU200m_20151020.nc',
+                           '20151020/TU/MBCCE_MS5_TU74m_20151020.nc',
+                           '20160408/ADCP300/MBCCE_MS5_ADCP300_20160408.nc',
+                           '20160408/CT70m/MBCCE_MS5_CT70m_20160408.nc',
+                           '20160408/TU/MBCCE_MS5_TU100m_20160408.nc',
+                           '20160408/TU/MBCCE_MS5_TU10m_20160408.nc',
+                           '20160408/TU/MBCCE_MS5_TU200m_20160408.nc',
+                           '20160408/TU/MBCCE_MS5_TU70m_20160408.nc',
+                           '20161007/ADCP300/MBCCE_MS5_ADCP300_20161007.nc',
+                           '20161007/CT10m/MBCCE_MS5_CT70m_20161007.nc',
+                           '20161007/TU/MBCCE_MS5_TU100m_20161007.nc',
+                           '20161007/TU/MBCCE_MS5_TU10m_20161007.nc',
+                           '20161007/TU/MBCCE_MS5_TU200m_20161007.nc',
+                           '20161007/TU/MBCCE_MS5_TU70m_20161007.nc',
                           ]
-        self.cl.ccems5_parms = [ 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+        self.cl.ccems5_parms = time_series_parms
 
-        # MS3 ADCP data - timeseriesprofile (ADCP) data
+        # MS5 - timeseriesprofile (ADCP) data
         self.cl.ccems5_nominal_depth_ev = self.cl.ccems5_nominal_depth
         self.cl.ccems5_base_ev = self.cl.ccems5_base
         self.cl.ccems5_files_ev = [ 
                            '20151020/ADCP300/MBCCE_MS5_ADCP300_20151020.nc',
+                           '20160408/ADCP300/MBCCE_MS5_ADCP300_20160408.nc',
+                           '20161007/ADCP300/MBCCE_MS5_ADCP300_20161007.nc',
                           ]
-        self.cl.ccems5_parms_ev = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202' ]
+        self.cl.ccems5_parms_ev = time_series_profile_parms
+
+
+        # MS7 - timeseries data
+        self.cl.ccems7_nominal_depth = 1849
+        self.cl.ccems7_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/MS7/'
+        self.cl.ccems7_files = [ 
+                           '20151027/ADCP300/MBCCE_MS7_ADCP300_20151027.nc',
+                           '20151027/FLNTU10m/MBCCE_MS7_FLNTU10m_20151027.nc',
+                           '20151027/FLNTU300m/MBCCE_MS7_FLNTU300m_20151027.nc',
+                           '20160420/ADCP300/MBCCE_MS7_ADCP300_20160420.nc',
+                           '20160420/FLNTU10m/MBCCE_MS7_FLNTU10m_20160420.nc',
+                           '20160420/FLNTU300m/MBCCE_MS7_FLNTU300m_20160420.nc',
+                           '20161019/ADCP300/MBCCE_MS7_ADCP300_20161019.nc',
+                           '20161019/FLNTU10m/MBCCE_MS7_FLNTU10m_20161019.nc',
+                           '20161019/FLNTU300m/MBCCE_MS7_FLNTU300m_20161019.nc',
+                          ]
+        self.cl.ccems7_parms = time_series_parms
+
+        # MS7 - timeseriesprofile (ADCP) data
+        self.cl.ccems7_nominal_depth_ev = self.cl.ccems7_nominal_depth
+        self.cl.ccems7_base_ev = self.cl.ccems7_base
+        self.cl.ccems7_files_ev = [ 
+                           '20151027/ADCP300/MBCCE_MS7_ADCP300_20151027.nc',
+                           '20160420/ADCP300/MBCCE_MS7_ADCP300_20160420.nc',
+                           '20161019/ADCP300/MBCCE_MS7_ADCP300_20161019.nc',
+                          ]
+        self.cl.ccems7_parms_ev = time_series_profile_parms
+
 
         # Full-deployment files, exatracted from SSDS with stride of 60
         ##self.cl.ccesin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccesin2015/201510/'
@@ -393,7 +552,7 @@ class CCE_2015_Campaign:
         # Execute the load for trajectory representation
         self.cl.process_command_line()
 
-    def load_ccemoorings(self, stride=20, start_mooring=1, end_mooring=5):
+    def load_ccemoorings(self, stride=20, start_mooring=0, end_mooring=7):
         for mooring in range(start_mooring, end_mooring + 1):
             if hasattr(self.cl, f'ccems{mooring:d}_base'):
                 try:
@@ -402,7 +561,7 @@ class CCE_2015_Campaign:
                     self.cl.logger.warn(str(e))
 
     def load_ccemoorings_ev(self, low_res_stride=20, high_res_stride=1,
-                                start_mooring=1, end_mooring=5):
+                                start_mooring=0, end_mooring=7):
         # DRY: for all moorings load all lo res and hi res data that have a .._base attribute
         for mooring in range(start_mooring, end_mooring + 1):
             if not hasattr(self.cl, f'ccems{mooring:d}_base_ev'):
@@ -460,8 +619,8 @@ class CCE_2015_Campaign:
 if __name__ == '__main__':
     campaign = CCE_2015_Campaign()
     if campaign.cl.args.test:
-        campaign.load_ccemoorings(stride=100, start_mooring=1, end_mooring=5)
-        campaign.load_ccemoorings_ev(low_res_stride=10, start_mooring=1, end_mooring=5)
+        campaign.load_ccemoorings(stride=100, start_mooring=0, end_mooring=7)
+        campaign.load_ccemoorings_ev(low_res_stride=100, start_mooring=0, end_mooring=7)
         campaign.cl.loadCCESIN(stride=1000)    # Normal base class loader for entire time series
         campaign.load_ccesin_ev(low_res_stride=1000, high_res_stride=100)
         campaign.cl.bed_depths = [np.round(d, 1) for d in campaign.cl.get_start_bed_depths()]
