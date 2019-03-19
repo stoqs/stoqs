@@ -23,13 +23,30 @@ import timing
 # CCE event start and end times for loading timeseriesprofile mooring (ADCP) data
 Event = namedtuple('Event', ['start', 'end'])
 lores_event_times = [
-        Event(datetime(2016, 1, 15,  0,  0), datetime(2016, 1, 18,  0,  0)),
-        Event(datetime(2016, 3,  5,  0,  0), datetime(2016, 3,  8,  0,  0)),
-                     ]
+        Event(datetime(2015, 11, 30, 15, 37, 45), datetime(2015, 12, 3, 15, 37, 45))
+        Event(datetime(2016, 1, 14, 21, 35, 52), datetime(2016, 1, 17, 21, 35, 52))
+        Event(datetime(2016, 2, 16, 21, 53, 58), datetime(2016, 2, 19, 21, 53, 58))
+        Event(datetime(2016, 3, 5, 9, 23, 36), datetime(2016, 3, 8, 9, 23, 36))
+        Event(datetime(2016, 4, 6, 21, 28, 26), datetime(2016, 4, 9, 21, 28, 26))
+        Event(datetime(2016, 8, 31, 1, 18, 57), datetime(2016, 9, 3, 1, 18, 57))
+        Event(datetime(2016, 11, 23, 6, 36, 24), datetime(2016, 11, 26, 6, 36, 24))
+        Event(datetime(2017, 1, 8, 5, 23, 5), datetime(2017, 1, 11, 5, 23, 5))
+        Event(datetime(2017, 2, 2, 16, 14, 49), datetime(2017, 2, 5, 16, 14, 49))
+        Event(datetime(2017, 2, 17, 16, 44, 47), datetime(2017, 2, 20, 16, 44, 47))
+                    ]
 hires_event_times = [
-        Event(datetime(2016, 1, 15, 21,  0), datetime(2016, 1, 16,  2,  0)),
-        Event(datetime(2016, 3,  6,  0,  0), datetime(2016, 3,  7,  0,  0)),
-                     ]
+        Event(datetime(2015, 12, 1, 11, 37, 45), datetime(2015, 12, 2, 5, 37, 45))
+        Event(datetime(2016, 1, 15, 17, 35, 52), datetime(2016, 1, 16, 11, 35, 52))
+        Event(datetime(2016, 2, 17, 17, 53, 58), datetime(2016, 2, 18, 11, 53, 58))
+        Event(datetime(2016, 3, 6, 5, 23, 36), datetime(2016, 3, 6, 23, 23, 36))
+        Event(datetime(2016, 4, 7, 17, 28, 26), datetime(2016, 4, 8, 11, 28, 26))
+        Event(datetime(2016, 8, 31, 21, 18, 57), datetime(2016, 9, 1, 15, 18, 57))
+        Event(datetime(2016, 11, 24, 2, 36, 24), datetime(2016, 11, 24, 20, 36, 24))
+        Event(datetime(2017, 1, 9, 1, 23, 5), datetime(2017, 1, 9, 19, 23, 5))
+        Event(datetime(2017, 2, 3, 12, 14, 49), datetime(2017, 2, 4, 6, 14, 49))
+        Event(datetime(2017, 2, 18, 12, 44, 47), datetime(2017, 2, 19, 6, 44, 47))
+                    ]
+
 
 # Overall time period for the whole campaign
 #campaign_start_datetime = datetime(2015, 10, 13, 0,  0)
@@ -595,7 +612,7 @@ class CCE_2015_Campaign:
 if __name__ == '__main__':
     campaign = CCE_2015_Campaign()
     if campaign.cl.args.test:
-        campaign.load_ccemoorings(stride=100, start_mooring=1, end_mooring=5)
+        campaign.load_ccemoorings(stride=100, start_mooring=0, end_mooring=7)
         campaign.load_ccemoorings_ev(low_res_stride=10, start_mooring=1, end_mooring=5)
         campaign.cl.loadCCESIN(stride=1000)    # Normal base class loader for entire time series
         campaign.load_ccesin_ev(low_res_stride=1000, high_res_stride=100)
