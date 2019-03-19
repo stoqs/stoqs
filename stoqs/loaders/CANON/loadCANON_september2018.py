@@ -434,7 +434,13 @@ cl.rcpctd_files = [
 cl.wfuctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
-                  'canon17sm01.nc',
+                  'cn18fm01.nc',
+                  'cn18fm02.nc',
+                  'cn18fm03.nc',
+                  'cn18fm04.nc',
+                  'cn18fm05.nc',
+                  'cn18fm06.nc',
+                  'cn18fm07.nc',
                   ]
 
 # PCTD
@@ -496,18 +502,22 @@ cl.wfpctd_files = [
 
 ###################################################################################################
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/
-#   copied to local BOG_Data/CANON_OS2107 dir
+#   copied to local BOG_Data/N18F
 ###################################################################################################
-cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON_OS2017/bctd/')
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CN18F/CN18F/')
 cl.subsample_csv_files = [
-##   'STOQS_00917_OXY_PS.csv',
-##   'STOQS_00917_CARBON_GFF.csv',
-##   'STOQS_00917_CHL_1U.csv',    'STOQS_00917_FLUOR.csv',
-##   'STOQS_00917_CHL_5U.csv', 'STOQS_00917_NH4.csv', 'STOQS_00917_PHAEO_1U.csv',
-##   'STOQS_00917_CHLA.csv', 'STOQS_00917_O2.csv', 'STOQS_00917_PHAEO_5U.csv',
-##   'STOQS_00917_CHL_GFF.csv',
-##   'STOQS_00917_PHAEO_GFF.csv',
-                       ]
+   'STOQS_CN18F_CHL_5U.csv',   'STOQS_CN18F_NH4.csv',     'STOQS_CN18F_PHAEO_1U.csv',   'STOQS_CN18F_SAL.csv',        'STOQS_CN18F_TRANSMISS.csv',
+   'STOQS_CN18F_CHLA.csv',     'STOQS_CN18F_O2.csv',      'STOQS_CN18F_PHAEO_5U.csv',   'STOQS_CN18F_SIG_T.csv',
+   'STOQS_CN18F_ALK.csv',         'STOQS_CN18F_CHL_GFF.csv',  'STOQS_CN18F_OXY_ML.csv',  'STOQS_CN18F_PHAEO_GFF.csv',  'STOQS_CN18F_TCO2.csv',
+   'STOQS_CN18F_ALTIMETER.csv',
+## 'STOQS_CN18F_COND2.csv', ##error::  ValueError: could not convert string to float: 'CN18Fc01' 
+   'STOQS_CN18F_OXY_PS.csv',  'STOQS_CN18F_POT_TMP2.csv',
+## 'STOQS_CN18F_TEMP2.csv', ##error: ValueError: could not convert string to float: 'CN18Fc01'
+   'STOQS_CN18F_CARBON_GFF.csv',  'STOQS_CN18F_CONDUCT.csv',  'STOQS_CN18F_PAR4PI.csv',  'STOQS_CN18F_POT_TMP.csv',    'STOQS_CN18F_TMP.csv',
+   'STOQS_CN18F_CHL_1U.csv',      'STOQS_CN18F_FLUOR.csv',    'STOQS_CN18F_PARCOS.csv',
+##'STOQS_CN18F_SAL2.csv', ##error: ValueError: could not convert string to float: 'CN18Fc01'
+   'STOQS_CN18F_TRANSBEAM.csv',
+                          ]
 
 # Execute the load
 cl.process_command_line()
@@ -518,22 +528,22 @@ elif cl.args.stride:
     cl.stride = cl.args.stride
 
 cl.loadM1()  
-cl.loadL_662a()
-cl.load_NPS34a() 
-cl.load_slocum_nemesis() 
-cl.load_wg_Tiny()
-cl.load_wg_Sparky()
-cl.load_oa1()
-cl.load_oa2()
-cl.loadDorado(startdate, enddate, build_attrs=True)
-cl.loadLRAUV('daphne', startdate, enddate)
-cl.loadLRAUV('tethys', startdate, enddate)
+#cl.loadL_662a()
+#cl.load_NPS34a() 
+#cl.load_slocum_nemesis() 
+#cl.load_wg_Tiny()
+#cl.load_wg_Sparky()
+#cl.load_oa1()
+#cl.load_oa2()
+#cl.loadDorado(startdate, enddate, build_attrs=True)
+#cl.loadLRAUV('daphne', startdate, enddate)
+#cl.loadLRAUV('tethys', startdate, enddate)
 ##cl.loadRCuctd()  ## not in this campaign
 ##cl.loadRCpctd()  ## not in this campaign
-##cl.loadWFuctd()
+cl.loadWFuctd()
 cl.loadWFpctd()
 
-#cl.loadSubSamples() ## no subSamples yet...
+cl.loadSubSamples() ## no subSamples yet...
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
