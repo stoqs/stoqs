@@ -321,6 +321,14 @@ MAPSERVER_HOST = env('MAPSERVER_HOST', default='localhost:8080')
 MAPFILE_DIR = env('MAPFILE_DIR', default='/dev/shm')
 URL_MAPFILE_DIR = env('URL_MAPFILE_DIR', default='/dev/shm')
 
+# To allow running Jupyter notebooks in Vagrant's or Docker's host browser
+# See: https://fsdev.io/how-to-install-jupyter-notebook-in-a-dockerized-django-project/
+NOTEBOOK_ARGUMENTS = [
+    '--ip', '0.0.0.0',
+    '--port', '8888',
+    '--allow-root',
+    '--no-browser',
+]
 
 # STOQS specific logging
 LOGGING['formatters'] = {

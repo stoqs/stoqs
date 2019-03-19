@@ -77,10 +77,10 @@ class CCELoader(LoadScript):
     colors['ccesin'] = 'ff0000'
 
     # Colors for MS* moorings
-    num_ms = 8
+    num_ms = 7
     ms_names = [('ccems{:1d}').format(n) for n in range(num_ms+1)]
     oranges = plt.cm.Oranges
-    for b, c in zip(ms_names, oranges(np.arange(0, oranges.N, oranges.N/num_ms, dtype=int))):
+    for b, c in zip(ms_names, oranges(np.linspace(oranges.N/num_ms, oranges.N, num=num_ms+1, dtype=int))):
         colors[b] = rgb2hex(c)[1:]
 
     def get_start_bed_depths(self):
