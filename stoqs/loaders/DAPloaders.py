@@ -1440,7 +1440,11 @@ class Base_Loader(STOQS_Loader):
         self.updateCampaignStartEnd()
         self.assignParameterGroup(groupName=MEASUREDINSITU)
         if featureType == TRAJECTORY:
-            self.insertSimpleDepthTimeSeries()
+            if hasattr(self, 'critSimpleDepthTime'):
+                # Loader may have this attribute set, e.g. for BED that need less simplification
+                self.insertSimpleDepthTimeSeries(critSimpleDepthTime=self.critSimpleDepthTime)
+            else: 
+                self.insertSimpleDepthTimeSeries()
             self.saveBottomDepth()
             self.insertSimpleBottomDepthTimeSeries()
         elif featureType == TIMESERIES or featureType == TIMESERIESPROFILE:
@@ -1789,8 +1793,9 @@ class BED_Trajectory_Loader(Trajectory_Loader):
     '''
     include_names = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 'P', 'P_ADJUSTED', 'DEPTH']
 
-    def __init__(self, framegrab, *args, **kwargs):
+    def __init__(self, framegrab, critSimpleDepthTime, *args, **kwargs):
         self.framegrab = framegrab
+        self.critSimpleDepthTime = critSimpleDepthTime
         super(BED_Trajectory_Loader, self).__init__(*args, **kwargs)
 
     def addResources(self): # pragma: no cover
@@ -1855,7 +1860,7 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
 
 def runBEDTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName,
                            parmList, dbAlias, stride, plotTimeSeriesDepth=None,
-                           grdTerrain=None, framegrab=None): # pragma: no cover
+                           grdTerrain=None, framegrab=None, critSimpleDepthTime=1): # pragma: no cover
     '''
     Run the DAPloader for Benthic Event Detector trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1876,7 +1881,8 @@ def runBEDTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, a
             platformTypeName = pTypeName,
             stride = stride,
             grdTerrain = grdTerrain,
-            framegrab = framegrab)
+            framegrab = framegrab,
+            critSimpleDepthTime = critSimpleDepthTime)
 
     loader.include_names = parmList
 
