@@ -286,7 +286,10 @@ class BaseOutputer(object):
                 response = render(self.request, self.html_tmpl_file, context={'cols': fields})
             fh = open(self.html_tmpl_path, 'w')
             for line in response:
-                fh.write(line.decode("utf-8"))
+                # Override Django's default datetime formatting with ISO 8601 format that includes seconds
+                # See: https://docs.djangoproject.com/en/1.11/ref/templates/builtins/#date
+                line = line.decode("utf-8").replace('timevalue }', 'timevalue|date:"c" }')
+                fh.write(line)
             fh.close()
             return render(self.request, self.html_tmpl_path, context={'list': self.qs})
 
@@ -316,12 +319,7 @@ def showMeasurement(request, fmt='html'):
     o = BaseOutputer(request, fmt, query_set, stoqs_object)
     return o.process_request()
 
-def showMeasuredParameter(request, fmt='html'):
-    stoqs_object = mod.MeasuredParameter
-    query_set = stoqs_object.objects.all()
-
-    o = BaseOutputer(request, fmt, query_set, stoqs_object)
-    return o.process_request()
+#  showMeasuredParameter(request, fmt='html') implemented in app.py
 
 def showPlatform(request, fmt='html'):
     stoqs_object = mod.Platform
