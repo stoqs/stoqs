@@ -98,7 +98,7 @@ class CCELoader(LoadScript):
 
         return depths
 
-    def loadBEDS(self, stride=None, featureType='trajectory'):
+    def loadBEDS(self, stride=None, featureType='trajectory', critSimpleDepthTime=1):
         '''
         BEDS specific load functions; featureType can be 'trajectory' or 'timeSeries'.
         Use 'trajectory' for events that we've fudged into a trajectory netCDF file
@@ -193,6 +193,12 @@ def make_load_ccems_method(name):
 
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in files], files):
+            if '_ProcessedWaves' in f:
+                # Most files are high time frequency ADCP data, so accept the generic stride
+                # Override for files like MBCCE_MS0_AWAC_20160408_ProcessedWaves.nc, which are lower fequency
+                stride = 1
+                aName = f
+
             url = os.path.join(base, f)
 
             # Monkeypatch featureType depending on file name (or parms...)
