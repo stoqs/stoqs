@@ -27,7 +27,7 @@ import matplotlib as mpl
 mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 from loaders import LoadScript
 from DAPloaders import (Mooring_Loader, logger, runBEDTrajectoryLoader, runTimeSeriesLoader,
-                        OpendapError, InvalidSliceRequest)
+                        OpendapError, InvalidSliceRequest, NoValidData)
 import matplotlib.pyplot as plt
 from matplotlib.colors import rgb2hex
 import numpy as np
@@ -98,7 +98,7 @@ class CCELoader(LoadScript):
 
         return depths
 
-    def loadBEDS(self, stride=None, featureType='trajectory'):
+    def loadBEDS(self, stride=None, featureType='trajectory', critSimpleDepthTime=1):
         '''
         BEDS specific load functions; featureType can be 'trajectory' or 'timeSeries'.
         Use 'trajectory' for events that we've fudged into a trajectory netCDF file
@@ -167,7 +167,11 @@ class CCELoader(LoadScript):
             else:
                 Mooring_Loader.getFeatureType = lambda self: 'timeseries'
 
-            loader.process_data()
+            try:
+                loader.process_data()
+            except NoValidData as e:
+                self.logger.info(str(e))
+                continue
 
             # For timeseriesProfile data we need to pass the nominaldepth of the plaform
             # so that the model is put at the correct depth in the Spatial -> 3D view.
@@ -193,6 +197,13 @@ def make_load_ccems_method(name):
 
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in files], files):
+            if '_ProcessedWaves' in f:
+                # Most files are high time frequency ADCP data, so accept the generic stride
+                # Override for files like MBCCE_MS0_AWAC_20160408_ProcessedWaves.nc, which are lower fequency
+                stride = 1
+                aName = f
+                self.logger.info(f"Overriding stride -> = {stride} for file {f}")
+
             url = os.path.join(base, f)
 
             # Monkeypatch featureType depending on file name (or parms...)
@@ -234,7 +245,11 @@ def make_load_ccems_method(name):
                 else:
                     loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat',
                                            'longitude': 'lon', 'depth': 'depth'}
-            loader.process_data()
+            try:
+                loader.process_data()
+            except NoValidData as e:
+                self.logger.info(str(e))
+                continue
 
     return _generic_load_ccems
 

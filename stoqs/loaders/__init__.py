@@ -1223,6 +1223,7 @@ class STOQS_Loader(object):
                     line.append((ems,d,))
                     pklookup.append(pk)
             else:
+                self.logger.info('Loading depths in SimpleDepthTime for nomDepth=%s', nomDepth)
                 for dt,dd,pk in ndlqs:
                     ems = 1000 * to_udunits(dt, 'seconds since 1970-01-01')
                     d = float(dd)

@@ -1,6 +1,6 @@
 aiohttp==3.5.4
 beautifulsoup4==4.7.1
-celery==4.2.1
+celery==4.2.2
 cmocean==2.0
 coards==1.0.5
 coverage==4.5.3
@@ -59,4 +59,4 @@ sphinx-rtd-theme==0.4.3
 sqlparse==0.3.0
 thredds-crawler==1.5.4
 watchdog==0.9.0
-websocket-client==0.55.0
+websocket-client==0.56.0
