@@ -574,18 +574,13 @@ class CCE_2015_Campaign:
                 for event in self.lores_event_times:
                     setattr(self.cl, f'ccems{mooring:d}_start_datetime', event.start)
                     setattr(self.cl, f'ccems{mooring:d}_end_datetime', event.end)
-                    try:
-                        getattr(self.cl, f'load_ccems{mooring:d}')(stride=low_res_stride)
-                    except NoValidData as e:
-                        self.cl.logger.warn(str(e))
-
+                    self.cl.logger.info(f'Calling load_ccems{mooring:d} for lores event {event}')
+                    getattr(self.cl, f'load_ccems{mooring:d}')(stride=low_res_stride)
                 for event in self.hires_event_times:
                     setattr(self.cl, f'ccems{mooring:d}_start_datetime', event.start)
                     setattr(self.cl, f'ccems{mooring:d}_end_datetime', event.end)
-                    try:
-                        getattr(self.cl, f'load_ccems{mooring:d}')(stride=high_res_stride)
-                    except NoValidData as e:
-                        self.cl.logger.warn(str(e))
+                    self.cl.logger.info(f'Calling load_ccems{mooring:d} for hires event {event}')
+                    getattr(self.cl, f'load_ccems{mooring:d}')(stride=high_res_stride)
 
     def load_ccesin_ev(self, low_res_stride=300, high_res_stride=1):
         # Assign standard attributes with the data we want loaded just for the events
