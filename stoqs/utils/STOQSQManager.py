@@ -1813,6 +1813,7 @@ class STOQSQManager(object):
         '''
         netcdfHash = {}
         # Simple name/value attributes
+        logger.debug("Begining to loop though ActivityResource query to build netcdfHash...")
         for ar in models.ActivityResource.objects.using(self.dbname).filter(activity__in=self.qs
                         ,resource__name__in=['title', 'summary', 'opendap_url']
                         ).values('activity__platform__name', 'activity__name', 'activity__comment', 'resource__name', 'resource__value'):
@@ -1829,8 +1830,11 @@ class STOQSQManager(object):
                 netcdfHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__value']
                 netcdfHash[ar['activity__platform__name']][ar['activity__name']]['comment'] = ar['activity__comment']
 
+        logger.debug("Done building netcdfHash.")
+
         # Quick Look plots
         qlHash = {}
+        logger.debug("Begining to loop though ActivityResource query to build qlHash...")
         for ar in models.ActivityResource.objects.using(self.dbname).filter(activity__in=self.qs, resource__resourcetype__name='quick_look').values(
                         'activity__platform__name', 'activity__name', 'resource__name', 'resource__uristring'):
             try:
@@ -1844,11 +1848,15 @@ class STOQSQManager(object):
 
                 qlHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__uristring']
 
+        logger.debug("Done building qlHash.")
+
         # Campaign information
         c_hash = {}
-        for cr in models.CampaignResource.objects.using(self.dbname).filter(campaign__activity__in=self.qs):
+        logger.debug("Begining to loop though ActivityResource query to build c_hash...")
+        for cr in models.CampaignResource.objects.using(self.dbname).all():
             c_hash[cr.resource.name] = cr.resource.value
 
+        logger.debug("Done building c_hash.")
         return {'netcdf': netcdfHash, 'quick_look': qlHash, 'campaign': c_hash}
 
     def getAttributes(self):
