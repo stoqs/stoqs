@@ -12,6 +12,7 @@ STOQS Query manager for building ajax responses to selections made for QueryUI
 @license: GPL
 '''
 
+from collections import defaultdict
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q, Max, Min, Sum, Avg
@@ -239,6 +240,8 @@ class STOQSQManager(object):
         
         results = {}
         for k, v in list(self.options_functions.items()):
+            # A useful info message to measure query performance in production
+            logger.info(f"Building {k} by calling {str(v).split('.')[1].split(' ')[0]}()...")
             logger.debug('k, v = %s, %s', k, v)
             if self.kwargs['only'] != []:
                 if k not in self.kwargs['only']:
@@ -668,7 +671,8 @@ class STOQSQManager(object):
         # Use queryset that does not filter out platforms - so that Platform buttons work in the UI
         qs = self.qs_platform.values('platform__uuid', 'platform__name', 'platform__color', 
                                      'platform__platformtype__name').distinct().order_by('platform__name')
-        platformTypeHash = {}
+        platformTypeHash = defaultdict(list)
+        logger.debug(f"Begining to build platformTypeHash...")
         for row in qs:
             name=row['platform__name']
             id=row['platform__name']
@@ -689,31 +693,31 @@ class STOQSQManager(object):
                     logger.warn('More than one featureType returned for platform %s: %s.  Using the first one.', name, fts)
 
                 if 'trajectory' in featureType:
-                    try:
-                        platformTypeHash[platformType].append((name, id, color, featureType, ))
-                    except KeyError:
-                        platformTypeHash[platformType] = []
-                        platformTypeHash[platformType].append((name, id, color, featureType, ))
+                    platformTypeHash[platformType].append((name, id, color, featureType, ))
                 else:
+                    logger.debug(f"Seeing if Platform {name} has an x3dModel...")
                     x3dModel, x, y, z = self._getPlatformModel(name) 
-                    # Do not add stationary model for BEDs that have rotation data
-                    platforms_rotations = {ar.activity.platform for ar in models.ActivityResource.objects.using(
-                                           self.dbname).filter(activity__activityparameter__parameter__name='AXIS_X', 
-                                           activity__platform__name=name)}
-                   
-                    if x3dModel and not platforms_rotations:
-                        try:
-                            platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
-                        except KeyError:
-                            platformTypeHash[platformType] = []
-                            platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
-                    else:
-                        try:
-                            platformTypeHash[platformType].append((name, id, color, featureType, ))
-                        except KeyError:
-                            platformTypeHash[platformType] = []
-                            platformTypeHash[platformType].append((name, id, color, featureType, ))
+                    if not x3dModel:
+                        logger.debug("No x3dModel. Not adding x3dModel")
+                        platformTypeHash[platformType].append((name, id, color, featureType, ))
+                        continue
 
+                    # Only add stationary X3D model for platforms that don't have roll, pitch and yaw
+                    # Platforms with rotations have their X3D model added to the scene in stoqs/utils/Viz/animation.py
+                    logger.debug(f"Seeing if Platform {name} has roll, pitch, and yaw Parameters...")
+                    pr_qs = models.ActivityParameter.objects.using(self.dbname).filter(activity__platform__name=name)
+                    has_roll = pr_qs.filter(parameter__standard_name='platform_roll_angle')
+                    has_pitch = pr_qs.filter(parameter__standard_name='platform_pitch_angle')
+                    has_yaw = pr_qs.filter(parameter__standard_name='platform_yaw_angle')
+                    if not has_roll or not has_pitch or not has_yaw:
+                        logger.debug("No roll, pitch, or yaw. Not adding x3dModel")
+                        platformTypeHash[platformType].append((name, id, color, featureType, ))
+                        continue
+                  
+                    logger.debug("Has x3dModel, no rotations, adding x3dModel")
+                    platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
+
+        logger.debug(f"Done building platformTypeHash.")
         self.platformTypeHash = platformTypeHash
         return platformTypeHash
     
