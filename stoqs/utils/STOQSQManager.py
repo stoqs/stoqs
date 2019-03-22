@@ -794,7 +794,7 @@ class STOQSQManager(object):
         Based on the current selected query criteria for activities, return the associated SimpleDepth time series
         values as a 2-tuple list inside a 2 level hash of platform__name (with its color) and activity__name.
         '''
-        sdt = {}
+        sdt = defaultdict(dict)
         colors = {}
 
         trajectoryQ = self._trajectoryQ()
@@ -808,7 +808,7 @@ class STOQSQManager(object):
                 plq = Q(platform__name = p[0])
                 if self.kwargs.get('activitynames'):
                     plq = plq & Q(name__in=self.kwargs.get('activitynames'))
-                sdt[p[0]] = {}
+                sdt[p[0]] = defaultdict(list)
                 colors[p[0]] = p[2]
 
                 if p[3].lower() == 'trajectory':
@@ -819,16 +819,8 @@ class STOQSQManager(object):
                     # This will let flot plot the series with gaps between the surveys -- not connected
                     logger.debug('-trajectory, filling sdt[]')
                     for s in qs_traj:
-                        try:
-                            ##logger.debug('s[2] = %s', s[2])
+                        if s[1] is not None:
                             sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
-                        except KeyError:
-                            ##logger.debug('First time seeing activity__name = %s, making it a list in sdt', s[2])
-                            sdt[p[0]][s[2]] = []                                    # First time seeing activity__name, make it a list
-                            if s[1] is not None:
-                                sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )     # Append first value, even if it is 0.0
-                        except TypeError:
-                            continue                                                # Likely "float argument required, not NoneType"
                     logger.debug(' Done filling sdt[].')
 
                 elif p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile':
@@ -857,27 +849,11 @@ class STOQSQManager(object):
                         ##logger.debug('an_nd = %s', an_nd)
                         ##logger.debug('sd = %s', sd)
                         if 'simpledepthtime__epochmilliseconds' in sd:
-                            try:
-                                sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                            except KeyError:
-                                sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
-                                if sd['simpledepthtime__nominallocation__depth']:
-                                    sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                            except TypeError:
-                                continue                                                 # Likely "float argument required, not NoneType"
-    
+                            sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
                         else: # pragma: no cover
                             s_ems, e_ems = self.getTime()
-                            try:
-                                sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                                sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                            except KeyError:
-                                sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
-                                if sd['simpledepthtime__nominallocation__depth']:
-                                    sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                                    sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                            except TypeError:
-                                continue                                                 # Likely "float argument required, not NoneType"
+                            sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
+                            sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
                     logger.debug(' Done filling sdt[].')
 
                 elif p[3].lower() == 'trajectoryprofile': # pragma: no cover
@@ -902,14 +878,7 @@ class STOQSQManager(object):
                         an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
                         ##logger.debug('an_nd = %s', an_nd)
                         if 'simpledepthtime__epochmilliseconds' in sd:
-                            try:
-                                sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__depth']] )
-                            except KeyError:
-                                sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
-                                if sd['simpledepthtime__depth']:
-                                    sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__depth']] )
-                            except TypeError:
-                                continue                                                 # Likely "float argument required, not NoneType"
+                            sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__depth']] )
     
 
         return({'sdt': sdt, 'colors': colors})
