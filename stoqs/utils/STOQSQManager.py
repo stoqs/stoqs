@@ -794,7 +794,7 @@ class STOQSQManager(object):
         '''
         iptvq = Q()
         qs_tsp = None
-        logger.info(f"Building sdt for Platform {p}")
+        logger.debug(f"Building sdt for Platform {p}")
         qs_tsp = (self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ))
                          .select_related()
                          .values('simpledepthtime__epochmilliseconds', 
@@ -805,13 +805,13 @@ class STOQSQManager(object):
 
         if 'time' in self.kwargs:
             if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
-                logger.info(f"Querying beween {self.kwargs['time']}")
+                logger.debug(f"Querying beween {self.kwargs['time']}")
                 qs_tsp = qs_tsp.filter(Q(instantpoint__timevalue__gte = self.kwargs['time'][0]) &
                                        Q(instantpoint__timevalue__lte = self.kwargs['time'][1]))
 
         # Add to sdt hash date-time series organized by 
         # activity__name_nominallocation__depth key within a platform__name key
-        logger.info(' filling sdt[]')
+        logger.debug(' filling sdt[]')
         for sd in qs_tsp:
             an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
             if 'simpledepthtime__epochmilliseconds' in sd:
@@ -819,7 +819,7 @@ class STOQSQManager(object):
                             [sd['simpledepthtime__epochmilliseconds'], 
                             '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
 
-        logger.info(' Done filling sdt[].')
+        logger.debug(' Done filling sdt[].')
             
     def getSimpleDepthTime(self):
         '''
