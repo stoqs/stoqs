@@ -339,7 +339,7 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
             try:
                 items = FIND_ITEMS.search(q[beg_in:][:end_in]).groups()[0]
             except Exception as e:
-                logger.warn(e)
+                ##logger.warn(e)
                 continue
             else:
                 for item in items.split(','):

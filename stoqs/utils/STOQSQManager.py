@@ -240,24 +240,22 @@ class STOQSQManager(object):
         
         results = {}
         for k, v in list(self.options_functions.items()):
-            # A useful info message to measure query performance in production
-            logger.info(f"Building {k} by calling {str(v).split('.')[1].split(' ')[0]}()...")
-            logger.debug('k, v = %s, %s', k, v)
             if self.kwargs['only'] != []:
                 if k not in self.kwargs['only']:
                     continue
             if k in self.kwargs['except']:
                 continue
 
+            start_time = time.time()
             if k == 'measuredparametersgroup':
                 results[k] = v(MEASUREDINSITU)
             elif k == 'sampledparametersgroup':
                 results[k] = v(SAMPLED)
             else:
                 results[k] = v()
+
+            logger.info(f"Built in {1000*(time.time()-start_time):6.1f} ms {k} with {str(v).split('.')[1].split(' ')[0]}()")
         
-        ##logger.info('qs.query = %s', pprint.pformat(str(self.qs.query)))
-        ##logger.info('results = %s', pprint.pformat(results))
         return results
     
     #
@@ -390,13 +388,11 @@ class STOQSQManager(object):
 
     def getParameters(self, groupName=''):
         '''
-        Get a list of the unique parameters that are left based on the current query criteria.  Also
-        return the UUID's of those, since we need to return those to perform the query later.
-        Lastly, we assume here that the name is unique and is also used for the id - this is enforced on 
-        data load.
+        Get a list of the unique parameters that are left based on the current query criteria.
+        We assume here that the name is unique and is also used for the id
         '''
         # Django makes it easy to do sub-queries: Get Parameters from list of Activities matching current selection
-        p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs)).order_by('name')
+        p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
         if 'mplabels' in self.kwargs:
             if self.kwargs['mplabels']:
                 # Get all Parameters that have common Measurements given the filter of the selected labels
@@ -405,15 +401,12 @@ class STOQSQManager(object):
                                         resource__id__in=self.kwargs['mplabels']).values_list(
                                         'measuredparameter__measurement__id', flat=True)
                 p_qs = p_qs.filter(Q(id__in=models.MeasuredParameter.objects.using(self.dbname).filter(
-                        Q(measurement__id__in=commonMeasurements)).values_list('parameter__id', flat=True).distinct()))
+                        Q(measurement__id__in=commonMeasurements)).values_list('parameter__id', flat=True)))
 
         if groupName:
             p_qs = p_qs.filter(parametergroupparameter__parametergroup__name=groupName)
 
-        p_qs = p_qs.values('name', 'standard_name', 'id', 'units', 'long_name', 'description'
-                                    ).distinct().order_by('name')
-        # Odd: Trying to print the query gives "Can't do subqueries with queries on different DBs."
-        ##logger.debug('----------- p_qs.query (%s) = %s', groupName, str(p_qs.query))
+        p_qs = p_qs.values('name', 'standard_name', 'id', 'units', 'long_name', 'description').distinct()
 
         results=[]
         for row in p_qs:
@@ -436,11 +429,14 @@ class STOQSQManager(object):
             comment = ''
             comment_q = models.ParameterResource.objects.using(self.dbname).filter(
                                 parameter__id=id, resource__name='comment').values(
-                                'resource__value')
-            if comment_q:
-                for cq in comment_q:
-                    # Concatenate unique resource__values - all are shown in UI
-                    comment += "{}. ".format(cq.get('resource__value', ''))
+                                'resource__value', 'parameter__name')
+            if not comment_q:
+                pass
+            else:
+                comment = f"{comment_q[0].get('resource__value', '')}"
+                if comment_q.count() > 1:
+                    comment += f" ({(comment_q.count() -1)} comments for additional platforms not shown)"
+                comment += ". "
 
             description = row.get('description', '')
             if not description:
@@ -627,7 +623,7 @@ class STOQSQManager(object):
                     return modelInfo
 
                 if len(geom_list) > 1:
-                    logger.warn('More than one location for %s returned.'
+                    logger.debug('More than one location for %s returned.'
                                 'Using first one found: %s', platformName, geom)
 
                 # TimeseriesProfile data has multiple nominaldepths - look to 
