@@ -94,21 +94,24 @@ and edit it for your specific installation, then execute `docker-compose up`:
 git clone https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit/docker
 cp template.env .env
-chmod 600 .env      # Edit .env to customize (Ensure that STOQS_HOME is set to the full path of stoqsgit)
-docker-compose build
+chmod 600 .env      # You must then edit .env and change settings for your environment
 docker-compose up
 ```
-The `docker-compose build` and `docker-compose up` commands should each take about 15 minutes.
-The first time the latter is executed a default database is created and tests are executed.
+The first time you execute `docker-compose up` the latest images will be pulled from DockerHub.
+(If you would rather build the images locally you can execute `docker-compose build`.) If the
+directory set to the STOQS_VOLS_DIR variable in your .env file doesn't exist then the execution of
+`docker-compose up` will also create the postgresql database cluster, load a default stoqs 
+database, and execute the unit and functional tests of the stoqs application.
+
 Once you see `... [emperor] vassal /etc/uwsgi/django-uwsgi.ini is ready to accept requests`
 you can visit the site at https://localhost &mdash; it uses a self-signed certificate, so your
 browser will complain and you will need to add an exception. (The nginx service also delivers 
 the same app at http://localhost:8000 without the cerificate issue.)
 
 The default settings in `template.env` will run a production nginx/uwsgi/stoqs server configured
-for https://localhost.  To configure a server for intranet or public serving of
+for https://localhost in a Vagrant virtual machine. To configure a server for intranet or public serving of
 your data follow the instructions provided in the comments for the settings in your `.env` file.
-After editing your `.env` file you will need to rebuild your stoqs image and restart the Docker 
+After editing your `.env` file you will need to rebuild the images and restart the Docker 
 services, this time with the `-d` option to run the containers in the background:
 
 ```bash
@@ -119,19 +122,24 @@ docker-compose up -d
 The above commands should also be done following a `git pull` in order to deploy updated
 software on your server.
 
-See https://docs.docker.com/compose/production/ for more information about running in production.
-
-To load some existing MBARI campaign data edit your `.env` file to uncomment the line:
+One thing that's good to do is monitor logs, this can be done with:
 
 ```
-CAMPAIGNS_MODULE=stoqs/mbari_campaigns.py
+docker-compose logs -f
 ```
 
-and restart the stoqs service, then from the docker directory execute the load script for a campaign, e.g.:
+#### Using STOQS in Docker
+
+You can execute Python code in the stoqs server from your host by prefacing it with `docker-compose exec stoqs`
+(Use `docker-compose run stoqs` to launch another container for long-running processes), for 
+example to load some existing MBARI campaign data:
 
 ```bash
 docker-compose run stoqs stoqs/loaders/load.py --db stoqs_simz_aug2013
 ```
+
+(To load MBARI Campaigns you will need to have uncommented the `CAMPAIGNS_MODULE=stoqs/mbari_campaigns.py` 
+line in your .env file.)
 
 In another window monitor its output:
 
@@ -153,3 +161,4 @@ If you use STOQS for your research please cite this publication:
 > doi: 10.1109/AUV.2014.7054414
 
 ![STOQS logo](stoqs/static/images/STOQS_logo_gray1_689.png)
+
