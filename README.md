@@ -95,7 +95,6 @@ git clone https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit/docker
 cp template.env .env
 chmod 600 .env      # Edit .env to customize (Ensure that STOQS_HOME is set to the full path of stoqsgit)
-cd ../..
 docker-compose build
 docker-compose up
 ```
@@ -103,8 +102,8 @@ The `docker-compose build` and `docker-compose up` commands should each take abo
 The first time the latter is executed a default database is created and tests are executed.
 Once you see `... [emperor] vassal /etc/uwsgi/django-uwsgi.ini is ready to accept requests`
 you can visit the site at https://localhost &mdash; it uses a self-signed certificate, so your
-browser will complain. (The nginx service also delivers the same app at http://localhost:8000
-without the cerificate issue.)
+browser will complain and you will need to add an exception. (The nginx service also delivers 
+the same app at http://localhost:8000 without the cerificate issue.)
 
 The default settings in `template.env` will run a production nginx/uwsgi/stoqs server configured
 for https://localhost.  To configure a server for intranet or public serving of
@@ -142,6 +141,9 @@ docker-compose run stoqs tail -f /srv/stoqs/loaders/MolecularEcology/loadSIMZ_au
 tail -f stoqsgit/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
 ```
 
+You may also use pg_restore to more quickly load an existing Campaign database on your system.
+For instructions on doing that click on the Campaign name in the top bar of a Campaign on
+another STOQS server, for example on [MBARI's Public STOQS Server](https://stoqs.mbari.org).
 
 If you use STOQS for your research please cite this publication:
 
