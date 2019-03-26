@@ -409,7 +409,7 @@ class STOQSQManager(object):
         p_qs = p_qs.values('name', 'standard_name', 'id', 'units', 'long_name', 'description').distinct()
 
         results=[]
-        for row in p_qs:
+        for row in p_qs.order_by('name'):
             name = row['name']
             standard_name = row['standard_name']
             id = row['id']
