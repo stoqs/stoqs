@@ -2,9 +2,7 @@ Spatial Temporal Oceanographic Query System
 -------------------------------------------
 
 [![Build Status](https://travis-ci.org/stoqs/stoqs.svg)](https://travis-ci.org/stoqs/stoqs/branches)
-[![Coverage Status](https://coveralls.io/repos/stoqs/stoqs/badge.svg?branch=master&service=github)](https://coveralls.io/github/stoqs/stoqs?branch=master)
 [![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=master)](https://requires.io/github/stoqs/stoqs/requirements/?branch=master)
-[![Code Health](https://landscape.io/github/stoqs/stoqs/master/landscape.svg?style=flat)](https://landscape.io/github/stoqs/stoqs)
 [![DOI](https://zenodo.org/badge/20654/stoqs/stoqs.svg)](https://zenodo.org/badge/latestdoi/20654/stoqs/stoqs)
 
 STOQS is a geospatial database and web application designed to give oceanographers
@@ -94,22 +92,24 @@ and edit it for your specific installation, then execute `docker-compose up`:
 git clone https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit/docker
 cp template.env .env
-chmod 600 .env      # Edit .env to customize (Ensure that STOQS_HOME is set to the full path of stoqsgit)
-cd ../..
-docker-compose build
+chmod 600 .env      # You must then edit .env and change settings for your environment
 docker-compose up
 ```
-The `docker-compose build` and `docker-compose up` commands should each take about 15 minutes.
-The first time the latter is executed a default database is created and tests are executed.
+The first time you execute `docker-compose up` the latest images will be pulled from DockerHub.
+(If you would rather build the images locally you can execute `docker-compose build`.) If the
+directory set to the STOQS_VOLS_DIR variable in your .env file doesn't exist then the execution of
+`docker-compose up` will also create the postgresql database cluster, load a default stoqs 
+database, and execute the unit and functional tests of the stoqs application.
+
 Once you see `... [emperor] vassal /etc/uwsgi/django-uwsgi.ini is ready to accept requests`
 you can visit the site at https://localhost &mdash; it uses a self-signed certificate, so your
-browser will complain. (The nginx service also delivers the same app at http://localhost:8000
-without the cerificate issue.)
+browser will complain and you will need to add an exception. (The nginx service also delivers 
+the same app at http://localhost:8000 without the cerificate issue.)
 
 The default settings in `template.env` will run a production nginx/uwsgi/stoqs server configured
-for https://localhost.  To configure a server for intranet or public serving of
+for https://localhost in a Vagrant virtual machine. To configure a server for intranet or public serving of
 your data follow the instructions provided in the comments for the settings in your `.env` file.
-After editing your `.env` file you will need to rebuild your stoqs image and restart the Docker 
+After editing your `.env` file you will need to rebuild the images and restart the Docker 
 services, this time with the `-d` option to run the containers in the background:
 
 ```bash
@@ -120,19 +120,24 @@ docker-compose up -d
 The above commands should also be done following a `git pull` in order to deploy updated
 software on your server.
 
-See https://docs.docker.com/compose/production/ for more information about running in production.
-
-To load some existing MBARI campaign data edit your `.env` file to uncomment the line:
+One thing that's good to do is monitor logs, this can be done with:
 
 ```
-CAMPAIGNS_MODULE=stoqs/mbari_campaigns.py
+docker-compose logs -f
 ```
 
-and restart the stoqs service, then from the docker directory execute the load script for a campaign, e.g.:
+#### Using STOQS in Docker
+
+You can execute Python code in the stoqs server from your host by prefacing it with `docker-compose exec stoqs`
+(Use `docker-compose run stoqs` to launch another container for long-running processes), for 
+example to load some existing MBARI campaign data:
 
 ```bash
 docker-compose run stoqs stoqs/loaders/load.py --db stoqs_simz_aug2013
 ```
+
+(To load MBARI Campaigns you will need to have uncommented the `CAMPAIGNS_MODULE=stoqs/mbari_campaigns.py` 
+line in your .env file.)
 
 In another window monitor its output:
 
@@ -141,6 +146,11 @@ docker-compose run stoqs tail -f /srv/stoqs/loaders/MolecularEcology/loadSIMZ_au
 # Or (The stoqs code is bound as a volume in the container from the GitHub cloned location)
 tail -f stoqsgit/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
 ```
+
+You may also use `pg_restore` to more quickly load an existing Campaign database on your system.
+For instructions click on the Campaign name in the top bar of a Campaign on another STOQS server, 
+for example on [MBARI's Public STOQS Server](https://stoqs.mbari.org).
+
 
 
 If you use STOQS for your research please cite this publication:
@@ -151,3 +161,4 @@ If you use STOQS for your research please cite this publication:
 > doi: 10.1109/AUV.2014.7054414
 
 ![STOQS logo](stoqs/static/images/STOQS_logo_gray1_689.png)
+
