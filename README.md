@@ -2,9 +2,7 @@ Spatial Temporal Oceanographic Query System
 -------------------------------------------
 
 [![Build Status](https://travis-ci.org/stoqs/stoqs.svg)](https://travis-ci.org/stoqs/stoqs/branches)
-[![Coverage Status](https://coveralls.io/repos/stoqs/stoqs/badge.svg?branch=master&service=github)](https://coveralls.io/github/stoqs/stoqs?branch=master)
 [![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=master)](https://requires.io/github/stoqs/stoqs/requirements/?branch=master)
-[![Code Health](https://landscape.io/github/stoqs/stoqs/master/landscape.svg?style=flat)](https://landscape.io/github/stoqs/stoqs)
 [![DOI](https://zenodo.org/badge/20654/stoqs/stoqs.svg)](https://zenodo.org/badge/latestdoi/20654/stoqs/stoqs)
 
 STOQS is a geospatial database and web application designed to give oceanographers
@@ -149,9 +147,11 @@ docker-compose run stoqs tail -f /srv/stoqs/loaders/MolecularEcology/loadSIMZ_au
 tail -f stoqsgit/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
 ```
 
-You may also use pg_restore to more quickly load an existing Campaign database on your system.
-For instructions on doing that click on the Campaign name in the top bar of a Campaign on
-another STOQS server, for example on [MBARI's Public STOQS Server](https://stoqs.mbari.org).
+You may also use `pg_restore` to more quickly load an existing Campaign database on your system.
+For instructions click on the Campaign name in the top bar of a Campaign on another STOQS server, 
+for example on [MBARI's Public STOQS Server](https://stoqs.mbari.org).
+
+
 
 If you use STOQS for your research please cite this publication:
 
