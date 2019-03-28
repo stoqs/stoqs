@@ -646,7 +646,11 @@ class Base_Loader(STOQS_Loader):
             t2_indx_beg = 0
             if beg_day_indices.any():
                 time2_axis_beg = self.ds['time2']['time2'][beg_day_indices[0]:beg_day_indices[-1]]
-                t2_indx_beg = np.where(bms <= time2_axis_beg)[0][0]
+                try:
+                    t2_indx_beg = np.where(bms <= time2_axis_beg)[0][0]
+                except IndexError:
+                    # Likely no bms <= time2_axis_beg, leave t2_indx_beg = 0
+                    pass
 
             end_day_indices = np.where(jed == timeAxis)[0]
             t2_indx_end = 0
@@ -1397,7 +1401,7 @@ class Base_Loader(STOQS_Loader):
 
         # Update the Activity with information we now have following the load
         try:
-            varList = ', '.join(self.varsLoaded)
+            varList = ', '.join(set(list(self.ds.keys())) & set(self.varsLoaded))
         except AttributeError:
             # ROVCTDloader creates self.vSeen dictionary with counts of each parameter
             varList = ', '.join(list(self.vSeen.keys()))
