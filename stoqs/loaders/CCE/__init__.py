@@ -198,11 +198,14 @@ def make_load_ccems_method(name):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in files], files):
             if '_ProcessedWaves' in f:
-                # Most files are high time frequency ADCP data, so accept the generic stride
-                # Override for files like MBCCE_MS0_AWAC_20160408_ProcessedWaves.nc, which are lower fequency
-                stride = 1
-                aName = f
-                self.logger.info(f"Overriding stride -> = {stride} for file {f}")
+                if stride != 1:
+                    # Most files are high time frequency ADCP data, so accept the generic stride
+                    # Override for files like MBCCE_MS0_AWAC_20160408_ProcessedWaves.nc, which has 2 hour sampling
+                    stride = 1
+                    aName = f
+                    self.logger.info(f"Overriding stride -> = {stride} for file {f}")
+                else:
+                    self.logger.info(f"Skipping {f} with stride = 1 as the entire 2 hour data set is loaded")
 
             url = os.path.join(base, f)
 

@@ -35,7 +35,7 @@ ordereddict==1.1
 Paste==3.0.8
 PasteDeploy==2.0.1
 PasteScript==3.1.0
-pika==0.13.1
+pika==1.0.0
 Pillow==5.4.1
 pysher==1.0.4
 psycopg2-binary==2.7.7
@@ -54,7 +54,7 @@ seawater==3.3.4
 selenium==3.141.0
 simplejson==3.16.0
 slacker==0.12.0
-Sphinx==1.8.5
+Sphinx==2.0.0
 sphinx-rtd-theme==0.4.3
 sqlparse==0.3.0
 thredds-crawler==1.5.4
