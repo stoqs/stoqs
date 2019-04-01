@@ -71,8 +71,9 @@ services:
     depends_on:
       - mapserver
       - postgis
+    ports:
+      - "8888:8888"
     # Expose port 8000 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
-    ##ports:
     ##  - "8000:8000"
     env_file:
       - ./.env
