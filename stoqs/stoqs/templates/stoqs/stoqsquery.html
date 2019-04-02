@@ -2479,10 +2479,18 @@
 
     $('#show-standardnames-mp-checkbox').on('click', function (e) {
         if ( $('#show-standardnames-mp-checkbox').is(':checked') ) {
+            if ( ! $('#show-filtered-mp-checkbox').is(':checked') ) {
+                $('#show-filtered-mp-checkbox').click();
+                $('tr.disabled',$('#measuredparameter-table')).show();
+            }
             $('.mp-standardname-row-enabled').show();
             enableButton($('.parameterstandardname'));
         }
         else {
+            if ( $('#show-filtered-mp-checkbox').is(':checked') ) {
+                $('#show-filtered-mp-checkbox').click();
+                $('tr.disabled',$('#measuredparameter-table')).hide();
+            }
             $('.mp-standardname-row').hide();
             disableButton($('.parameterstandardname'));
         }
@@ -2490,10 +2498,18 @@
 
     $('#show-standardnames-sp-checkbox').on('click', function (e) {
         if ( $('#show-standardnames-sp-checkbox').is(':checked') ) {
+            if ( ! $('#show-filtered-sp-checkbox').is(':checked') ) {
+                $('#show-filtered-sp-checkbox').click();
+                $('tr.disabled',$('#sampledparameter-table')).show();
+            }
             $('.sp-standardname-row-enabled').show();
             enableButton($('.parameterstandardname'));
         }
         else {
+            if ( $('#show-filtered-sp-checkbox').is(':checked') ) {
+                $('#show-filtered-sp-checkbox').click();
+                $('tr.disabled',$('#sampledparameter-table')).hide();
+            }
             $('.sp-standardname-row').hide();
             disableButton($('.parameterstandardname'));
         }
