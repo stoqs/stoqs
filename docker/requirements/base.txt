@@ -1,6 +1,6 @@
 aiohttp==3.5.4
 beautifulsoup4==4.7.1
-celery==4.2.2
+celery==4.3.0
 cmocean==2.0
 coards==1.0.5
 coverage==4.5.3
@@ -22,9 +22,9 @@ GitPython==2.1.11
 httplib2==0.12.0
 ipython==7.4.0
 jdcal==1.4
-Jinja2==2.10
+Jinja2==2.10.1
 jupyter==1.0.0
-kombu==4.4.0
+kombu==4.5.0
 lxml==4.3.3
 mock==2.0.0
 matplotlib==3.0.3
@@ -36,9 +36,9 @@ Paste==3.0.8
 PasteDeploy==2.0.1
 PasteScript==3.1.0
 pika==1.0.0
-Pillow==5.4.1
+Pillow==6.0.0
 pysher==1.0.4
-psycopg2-binary==2.7.7
+psycopg2-binary==2.8.1
 pupynere==1.0.15
 Pydap==3.2.2
 python-dateutil==2.8.0

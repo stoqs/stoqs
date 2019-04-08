@@ -835,7 +835,7 @@
 
                             <ul id="temporalTabs" class="nav nav-tabs temporal-tab">
                                 <li class="active" id="temporal-depth-li"><a href="#temporal-depth" data-toggle="tab" id="temporal-depth-label">Depth</a></li>
-                                <li id="temporal-parameter-li" style="display:none" title="Hint: Plot a Measured Parameter in Depth tab first"><a href="#temporal-parameter" data-toggle="tab">Parameters</a></li>
+                                <li id="temporal-parameter-li" style="display:none" title="Protip: Plot a Measured Parameter in Depth tab first to reduce loading time"><a href="#temporal-parameter" data-toggle="tab">Parameters</a></li>
                             </ul>
 
                             <div class="tab-content">
@@ -2321,15 +2321,17 @@
         updateFromZoomFlag = false;
         if ( $(buttonClicked).hasClass('parameterstandardname') ) {
             var str = buttonClicked.textContent.toString();
-            $.each($('button:contains(' + str + ')'), function (index, button) {
-                if ($(button).hasClass('parameterstandardname')) {
-                    if ( ! buttonClicked.parentElement.isEqualNode(button.parentElement) ) {
-                         if ($(button).hasClass('btn-primary')) {
-                             $(button).removeClass('btn-primary');
-                         } else {
-                             $(button).addClass('btn-primary');
-                         }
-                    }
+            $.each($('button:contains(' + str + ')'), function (index, stdNameButton) {
+                // Find Parameter buttons associated with the standard_name buttons click all on or off
+                var parmToSelect = $(stdNameButton.parentElement.parentElement.previousSibling).find('button');
+                if ($(buttonClicked).hasClass('btn-primary')) {
+                    $(stdNameButton).addClass('btn-primary');
+                    $(parmToSelect).addClass('btn-primary');
+                    $(parmToSelect).removeClass('disabled');
+                }
+                else {
+                    $(stdNameButton).removeClass('btn-primary');
+                    $(parmToSelect).removeClass('btn-primary');
                 }
             });
         }
@@ -2479,10 +2481,18 @@
 
     $('#show-standardnames-mp-checkbox').on('click', function (e) {
         if ( $('#show-standardnames-mp-checkbox').is(':checked') ) {
+            if ( ! $('#show-filtered-mp-checkbox').is(':checked') ) {
+                $('#show-filtered-mp-checkbox').click();
+                $('tr.disabled',$('#measuredparameter-table')).show();
+            }
             $('.mp-standardname-row-enabled').show();
             enableButton($('.parameterstandardname'));
         }
         else {
+            if ( $('#show-filtered-mp-checkbox').is(':checked') ) {
+                $('#show-filtered-mp-checkbox').click();
+                $('tr.disabled',$('#measuredparameter-table')).hide();
+            }
             $('.mp-standardname-row').hide();
             disableButton($('.parameterstandardname'));
         }
@@ -2490,10 +2500,18 @@
 
     $('#show-standardnames-sp-checkbox').on('click', function (e) {
         if ( $('#show-standardnames-sp-checkbox').is(':checked') ) {
+            if ( ! $('#show-filtered-sp-checkbox').is(':checked') ) {
+                $('#show-filtered-sp-checkbox').click();
+                $('tr.disabled',$('#sampledparameter-table')).show();
+            }
             $('.sp-standardname-row-enabled').show();
             enableButton($('.parameterstandardname'));
         }
         else {
+            if ( $('#show-filtered-sp-checkbox').is(':checked') ) {
+                $('#show-filtered-sp-checkbox').click();
+                $('tr.disabled',$('#sampledparameter-table')).hide();
+            }
             $('.sp-standardname-row').hide();
             disableButton($('.parameterstandardname'));
         }
@@ -2675,10 +2693,8 @@
         if ( $('#clear-sampledparameter-button').hasClass('btn-primary')) {
             $("#clear-sampledparameter-button").removeClass('btn-primary');
             $("#clear-sampledparameter-button").addClass('disabled');
-            $('td',$('#sampledparameter-table')).each(function (index, element) {
-                if ($('.btn-primary', $(element)).length) {
-                    $('#' + element.id + ' > button').removeClass('btn-primary');
-                }
+            $('.btn-primary',$('#sampledparameter-table')).each(function (index, element) {
+                $(element).removeClass('btn-primary');
             });
             rebuildFilters();
             $('#sampledparameters-anchor').html('Sampled Parameters')
@@ -2689,10 +2705,8 @@
         if ( $('#clear-measuredparameter-button').hasClass('btn-primary')) {
             $("#clear-measuredparameter-button").removeClass('btn-primary');
             $("#clear-measuredparameter-button").addClass('disabled');
-            $('td',$('#measuredparameter-table')).each(function (index, element) {
-                if ($('.btn-primary', $(element)).length) {
-                    $('#' + element.id + ' > button').removeClass('btn-primary');
-                }
+            $('.btn-primary',$('#measuredparameter-table')).each(function (index, element) {
+                $(element).removeClass('btn-primary');
             });
             rebuildFilters();
             $('#measuredparameters-anchor').html('Measured Parameters')
@@ -4851,7 +4865,9 @@ function enable_cardboard(){
                 $('#sampledparameter-table > tbody > tr > td > button').each(function (index, elem) { 
                     if (elem.parentNode.id.length != 0) {
                         if ($.inArray(elem.parentNode.id.toString(), ids) == -1) {
-                            disableButton($(elem));                                                         // disable the button in the table row
+                            if ( ! $(elem).hasClass('parameterstandardname') ) {
+                                disableButton($(elem));                                                     // disable the button in the table row
+                            }
                             disableXYZColorPlot($('input:radio', $(elem).parent().parent()));               // disable the X, Y, Z, Color, Plot radio buttons in the row
                             disableXYZColorPlot($('input:checkbox', $(elem).parent().parent()));            // disable the Plot checkbox in the row
                             disableParameterRow('sp', $(elem).parent().parent());                           // disable the whole row and hide unless show-filtered-parameters is checked
@@ -4881,7 +4897,9 @@ function enable_cardboard(){
                 $('#measuredparameter-table > tbody > tr > td > button').each(function (index, elem) { 
                     if (elem.parentNode.id.length != 0) {
                         if ($.inArray(parseInt(elem.parentNode.id), ids) == -1) {
-                            disableButton($(elem));                                                         // disable the button in the table row
+                            if ( ! $(elem).hasClass('parameterstandardname') ) {
+                                disableButton($(elem));                                                     // disable the button in the table row
+                            }
                             disableXYZColorPlot($('input:radio', $(elem).parent().parent()));               // disable the X, Y, Z, Color radio buttons in the row
                             disableXYZColorPlot($('input:checkbox', $(elem).parent().parent()));            // disable the Plot checkbox in the row
                             disableParameterRow('mp', $(elem).parent().parent());                           // disable the whole row and hide unless show-filtered-parameters is checked
