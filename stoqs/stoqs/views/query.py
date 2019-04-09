@@ -29,6 +29,7 @@ import pprint
 import csv
 import random
 import string
+import time
 
 import logging 
 from .wms import ActivityView
@@ -211,7 +212,9 @@ def queryData(request, fmt=None):
         logger.error(str(e))
         return HttpResponseBadRequest('Bad request: Database "' + request.META['dbAlias'] + '" Does Not Exist')
     try:
+        start_time = time.time()
         options = json.dumps(qm.generateOptions(), cls=encoders.STOQSJSONEncoder)
+        logger.info(f"generateOptions() took {1000*(time.time()- start_time):6.1f} ms to build query/summary response")
     except ConnectionDoesNotExist as e:
         logger.warn(e)
         return HttpResponseNotFound('The database alias <b>%s</b> does not exist on this server.' % dbAlias)
@@ -250,8 +253,9 @@ def queryMap(request):
     logger.debug('Instantiating STOQSQManager with params = %s', params)
     qm = STOQSQManager(request, response, request.META['dbAlias'], **params)
     qm.buildQuerySets()
-    options = json.dumps(qm.generateOptions(),
-                               cls=encoders.STOQSJSONEncoder)
+    start_time = time.time()
+    options = json.dumps(qm.generateOptions(), cls=encoders.STOQSJSONEncoder)
+    logger.info(f"generateOptions() took {1000*(time.time()- start_time):7.1f} ms to build query/map response")
     ##logger.debug('options = %s', pprint.pformat(options))
     _buildMapFile(request, qm, options)
 

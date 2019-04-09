@@ -69,3 +69,6 @@ HOME_PAGE_LINK = env('HOME_PAGE_LINK', default='http://www.mbari.org')
 HOME_PAGE_LOGO = env('HOME_PAGE_LOGO', default='new_mbari_logo.png')
 HOME_PAGE_ALT = env('HOME_PAGE_LOGO', default='MBARI')
 
+LOGGING['loggers']['utils']['level'] = 'WARN'
+LOGGING['loggers']['stoqs']['level'] = 'WARN'
+

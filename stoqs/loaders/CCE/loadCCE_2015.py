@@ -557,6 +557,12 @@ class CCE_2015_Campaign:
             if hasattr(self.cl, f'ccems{mooring:d}_base'):
                 try:
                     getattr(self.cl, f'load_ccems{mooring:d}')(stride=stride)
+                    # Load all time_series_parms with stride=1 for the low resolution event periods
+                    for event in self.lores_event_times:
+                        setattr(self.cl, f'ccems{mooring:d}_start_datetime', event.start)
+                        setattr(self.cl, f'ccems{mooring:d}_end_datetime', event.end)
+                        self.cl.logger.info(f'Calling load_ccems{mooring:d} for lores event {event}')
+                        getattr(self.cl, f'load_ccems{mooring:d}')(stride=1)
                 except NoValidData as e:
                     self.cl.logger.warn(str(e))
 

@@ -34,7 +34,7 @@ services:
     volumes:
       - ${STOQS_VOLS_DIR}/maps:/maps:ro
     container_name: stoqs-mapserver
-    # Expose port 80 if PRODUCTION=false
+    # Expose port 80 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##ports:
     ##  - "80:80"
     env_file:
@@ -71,13 +71,14 @@ services:
     depends_on:
       - mapserver
       - postgis
-    # Expose port 8000 if PRODUCTION=false
-    ##ports:
+    ports:
+      - "8888:8888"
+    # Expose port 8000 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##  - "8000:8000"
     env_file:
       - ./.env
 
-  # Disable nginx service if PRODUCTION=false
+  # Disable nginx service if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
   nginx:
     image: mbari/stoqs-nginx
     build:

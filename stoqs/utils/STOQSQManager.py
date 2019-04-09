@@ -12,6 +12,7 @@ STOQS Query manager for building ajax responses to selections made for QueryUI
 @license: GPL
 '''
 
+from collections import defaultdict
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q, Max, Min, Sum, Avg
@@ -239,22 +240,22 @@ class STOQSQManager(object):
         
         results = {}
         for k, v in list(self.options_functions.items()):
-            logger.debug('k, v = %s, %s', k, v)
             if self.kwargs['only'] != []:
                 if k not in self.kwargs['only']:
                     continue
             if k in self.kwargs['except']:
                 continue
 
+            start_time = time.time()
             if k == 'measuredparametersgroup':
                 results[k] = v(MEASUREDINSITU)
             elif k == 'sampledparametersgroup':
                 results[k] = v(SAMPLED)
             else:
                 results[k] = v()
+
+            logger.info(f"Built in {1000*(time.time()-start_time):6.1f} ms {k} with {str(v).split('.')[1].split(' ')[0]}()")
         
-        ##logger.info('qs.query = %s', pprint.pformat(str(self.qs.query)))
-        ##logger.info('results = %s', pprint.pformat(results))
         return results
     
     #
@@ -387,13 +388,11 @@ class STOQSQManager(object):
 
     def getParameters(self, groupName=''):
         '''
-        Get a list of the unique parameters that are left based on the current query criteria.  Also
-        return the UUID's of those, since we need to return those to perform the query later.
-        Lastly, we assume here that the name is unique and is also used for the id - this is enforced on 
-        data load.
+        Get a list of the unique parameters that are left based on the current query criteria.
+        We assume here that the name is unique and is also used for the id
         '''
         # Django makes it easy to do sub-queries: Get Parameters from list of Activities matching current selection
-        p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs)).order_by('name')
+        p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
         if 'mplabels' in self.kwargs:
             if self.kwargs['mplabels']:
                 # Get all Parameters that have common Measurements given the filter of the selected labels
@@ -402,18 +401,15 @@ class STOQSQManager(object):
                                         resource__id__in=self.kwargs['mplabels']).values_list(
                                         'measuredparameter__measurement__id', flat=True)
                 p_qs = p_qs.filter(Q(id__in=models.MeasuredParameter.objects.using(self.dbname).filter(
-                        Q(measurement__id__in=commonMeasurements)).values_list('parameter__id', flat=True).distinct()))
+                        Q(measurement__id__in=commonMeasurements)).values_list('parameter__id', flat=True)))
 
         if groupName:
             p_qs = p_qs.filter(parametergroupparameter__parametergroup__name=groupName)
 
-        p_qs = p_qs.values('name', 'standard_name', 'id', 'units', 'long_name', 'description'
-                                    ).distinct().order_by('name')
-        # Odd: Trying to print the query gives "Can't do subqueries with queries on different DBs."
-        ##logger.debug('----------- p_qs.query (%s) = %s', groupName, str(p_qs.query))
+        p_qs = p_qs.values('name', 'standard_name', 'id', 'units', 'long_name', 'description').distinct()
 
         results=[]
-        for row in p_qs:
+        for row in p_qs.order_by('name'):
             name = row['name']
             standard_name = row['standard_name']
             id = row['id']
@@ -433,11 +429,14 @@ class STOQSQManager(object):
             comment = ''
             comment_q = models.ParameterResource.objects.using(self.dbname).filter(
                                 parameter__id=id, resource__name='comment').values(
-                                'resource__value')
-            if comment_q:
-                for cq in comment_q:
-                    # Concatenate unique resource__values - all are shown in UI
-                    comment += "{}. ".format(cq.get('resource__value', ''))
+                                'resource__value', 'parameter__name')
+            if not comment_q:
+                pass
+            else:
+                comment = f"{comment_q[0].get('resource__value', '')}"
+                if comment_q.count() > 1:
+                    comment += f" ({(comment_q.count() -1)} comments for additional platforms not shown)"
+                comment += ". "
 
             description = row.get('description', '')
             if not description:
@@ -624,7 +623,7 @@ class STOQSQManager(object):
                     return modelInfo
 
                 if len(geom_list) > 1:
-                    logger.warn('More than one location for %s returned.'
+                    logger.debug('More than one location for %s returned.'
                                 'Using first one found: %s', platformName, geom)
 
                 # TimeseriesProfile data has multiple nominaldepths - look to 
@@ -668,7 +667,8 @@ class STOQSQManager(object):
         # Use queryset that does not filter out platforms - so that Platform buttons work in the UI
         qs = self.qs_platform.values('platform__uuid', 'platform__name', 'platform__color', 
                                      'platform__platformtype__name').distinct().order_by('platform__name')
-        platformTypeHash = {}
+        platformTypeHash = defaultdict(list)
+        logger.debug(f"Begining to build platformTypeHash...")
         for row in qs:
             name=row['platform__name']
             id=row['platform__name']
@@ -689,31 +689,31 @@ class STOQSQManager(object):
                     logger.warn('More than one featureType returned for platform %s: %s.  Using the first one.', name, fts)
 
                 if 'trajectory' in featureType:
-                    try:
-                        platformTypeHash[platformType].append((name, id, color, featureType, ))
-                    except KeyError:
-                        platformTypeHash[platformType] = []
-                        platformTypeHash[platformType].append((name, id, color, featureType, ))
+                    platformTypeHash[platformType].append((name, id, color, featureType, ))
                 else:
+                    logger.debug(f"Seeing if Platform {name} has an x3dModel...")
                     x3dModel, x, y, z = self._getPlatformModel(name) 
-                    # Do not add stationary model for BEDs that have rotation data
-                    platforms_rotations = {ar.activity.platform for ar in models.ActivityResource.objects.using(
-                                           self.dbname).filter(activity__activityparameter__parameter__name='AXIS_X', 
-                                           activity__platform__name=name)}
-                   
-                    if x3dModel and not platforms_rotations:
-                        try:
-                            platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
-                        except KeyError:
-                            platformTypeHash[platformType] = []
-                            platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
-                    else:
-                        try:
-                            platformTypeHash[platformType].append((name, id, color, featureType, ))
-                        except KeyError:
-                            platformTypeHash[platformType] = []
-                            platformTypeHash[platformType].append((name, id, color, featureType, ))
+                    if not x3dModel:
+                        logger.debug("No x3dModel. Not adding x3dModel")
+                        platformTypeHash[platformType].append((name, id, color, featureType, ))
+                        continue
 
+                    # Only add stationary X3D model for platforms that don't have roll, pitch and yaw
+                    # Platforms with rotations have their X3D model added to the scene in stoqs/utils/Viz/animation.py
+                    logger.debug(f"Seeing if Platform {name} has roll, pitch, and yaw Parameters...")
+                    pr_qs = models.ActivityParameter.objects.using(self.dbname).filter(activity__platform__name=name)
+                    has_roll = pr_qs.filter(parameter__standard_name='platform_roll_angle')
+                    has_pitch = pr_qs.filter(parameter__standard_name='platform_pitch_angle')
+                    has_yaw = pr_qs.filter(parameter__standard_name='platform_yaw_angle')
+                    if not has_roll or not has_pitch or not has_yaw:
+                        logger.debug("No roll, pitch, or yaw. Not adding x3dModel")
+                        platformTypeHash[platformType].append((name, id, color, featureType, ))
+                        continue
+                  
+                    logger.debug("Has x3dModel, no rotations, adding x3dModel")
+                    platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
+
+        logger.debug(f"Done building platformTypeHash.")
         self.platformTypeHash = platformTypeHash
         return platformTypeHash
     
@@ -784,13 +784,45 @@ class STOQSQManager(object):
             return
         else:
             return depths
+
+    def _add_ts_tsp_to_sdt(self, p, plq, timeSeriesQ, timeSeriesProfileQ, sdt):
+        '''Add to the sdt hash a timeseries or timeseries structure
+        '''
+        iptvq = Q()
+        qs_tsp = None
+        logger.debug(f"Building sdt for Platform {p}")
+        qs_tsp = (self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ))
+                         .select_related()
+                         .values('simpledepthtime__epochmilliseconds', 
+                                 'simpledepthtime__depth', 'name', 
+                                 'simpledepthtime__nominallocation__depth')
+                         .order_by('simpledepthtime__epochmilliseconds')
+                         .distinct())
+
+        if 'time' in self.kwargs:
+            if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
+                logger.debug(f"Querying beween {self.kwargs['time']}")
+                qs_tsp = qs_tsp.filter(Q(instantpoint__timevalue__gte = self.kwargs['time'][0]) &
+                                       Q(instantpoint__timevalue__lte = self.kwargs['time'][1]))
+
+        # Add to sdt hash date-time series organized by 
+        # activity__name_nominallocation__depth key within a platform__name key
+        logger.debug(' filling sdt[]')
+        for sd in qs_tsp:
+            an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
+            if 'simpledepthtime__epochmilliseconds' in sd:
+                sdt[p[0]][an_nd].append( 
+                            [sd['simpledepthtime__epochmilliseconds'], 
+                            '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
+
+        logger.debug(' Done filling sdt[].')
             
     def getSimpleDepthTime(self):
         '''
         Based on the current selected query criteria for activities, return the associated SimpleDepth time series
         values as a 2-tuple list inside a 2 level hash of platform__name (with its color) and activity__name.
         '''
-        sdt = {}
+        sdt = defaultdict(dict)
         colors = {}
 
         trajectoryQ = self._trajectoryQ()
@@ -804,109 +836,68 @@ class STOQSQManager(object):
                 plq = Q(platform__name = p[0])
                 if self.kwargs.get('activitynames'):
                     plq = plq & Q(name__in=self.kwargs.get('activitynames'))
-                sdt[p[0]] = {}
+                sdt[p[0]] = defaultdict(list)
                 colors[p[0]] = p[2]
 
                 if p[3].lower() == 'trajectory':
-                    # Overkill to also filter on trajectoryQ too if p[3].lower() == 'trajectory' - old Tethys data does not have NC_GLOBAL featureType
-                    qs_traj = self.qs.filter(plq).values_list( 'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth',
-                                        'name').order_by('simpledepthtime__epochmilliseconds')
-                    # Add to sdt hash date-time series organized by activity__name key within a platform__name key
-                    # This will let flot plot the series with gaps between the surveys -- not connected
+                    # Overkill to also filter on trajectoryQ too if p[3].lower() == 'trajectory' 
+                    # - old Tethys data does not have NC_GLOBAL featureType
+                    qs_traj = (self.qs.filter(plq)
+                                      .values_list('simpledepthtime__epochmilliseconds', 
+                                                   'simpledepthtime__depth', 'name')
+                                      .order_by('simpledepthtime__epochmilliseconds'))
+                    # Add to sdt hash date-time series organized by activity__name key 
+                    # within a platform__name key. This will let flot plot the series with 
+                    # gaps between the surveys -- not connected
                     logger.debug('-trajectory, filling sdt[]')
                     for s in qs_traj:
-                        try:
-                            ##logger.debug('s[2] = %s', s[2])
+                        if s[1] is not None:
                             sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
-                        except KeyError:
-                            ##logger.debug('First time seeing activity__name = %s, making it a list in sdt', s[2])
-                            sdt[p[0]][s[2]] = []                                    # First time seeing activity__name, make it a list
-                            if s[1] is not None:
-                                sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )     # Append first value, even if it is 0.0
-                        except TypeError:
-                            continue                                                # Likely "float argument required, not NoneType"
                     logger.debug(' Done filling sdt[].')
 
                 elif p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile':
-                    iptvq = Q()
-                    qs_tsp = None
-                    logger.debug('-timeseries or timeseriesprofile')
-                    if 'time' in self.kwargs:
-                        if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
-                            iptvq = Q(instantpoint__timevalue__gte = self.kwargs['time'][0]) & Q(instantpoint__timevalue__lte = self.kwargs['time'][1])
-                            logger.debug(' building qs_tsp with time and depth constraints')
-                            qs_tsp = self.qs.filter(plq).select_related().values(
-                                    'name', 'simpledepthtime__nominallocation__depth').order_by(
-                                    'simpledepthtime__nominallocation__depth').distinct()
-                    # This can be an expensive check as qs_tsp will be instantiated if it's a valid QuerySet
-                    if not qs_tsp:
-                        logger.debug(' building qs_tsp')
-                        qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ)).select_related().values( 
-                                                'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth', 'name',
-                                                'simpledepthtime__nominallocation__depth').order_by('simpledepthtime__epochmilliseconds').distinct()
-
-                    # Add to sdt hash date-time series organized by activity__name_nominallocation__depth key within a platform__name key
-                    logger.debug(' filling sdt[]')
-                    for sd in qs_tsp:
-                        ##logger.debug('sd = %s', sd)
-                        an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
-                        ##logger.debug('an_nd = %s', an_nd)
-                        ##logger.debug('sd = %s', sd)
-                        if 'simpledepthtime__epochmilliseconds' in sd:
-                            try:
-                                sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                            except KeyError:
-                                sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
-                                if sd['simpledepthtime__nominallocation__depth']:
-                                    sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                            except TypeError:
-                                continue                                                 # Likely "float argument required, not NoneType"
-    
-                        else: # pragma: no cover
-                            s_ems, e_ems = self.getTime()
-                            try:
-                                sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                                sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                            except KeyError:
-                                sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
-                                if sd['simpledepthtime__nominallocation__depth']:
-                                    sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                                    sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                            except TypeError:
-                                continue                                                 # Likely "float argument required, not NoneType"
-                    logger.debug(' Done filling sdt[].')
+                    self._add_ts_tsp_to_sdt(p, plq, timeSeriesQ, timeSeriesProfileQ, sdt)
 
                 elif p[3].lower() == 'trajectoryprofile': # pragma: no cover
                     iptvq = Q()
                     qs_tp = None
                     if 'time' in self.kwargs:
                         if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
-                            s_ems = time.mktime(datetime.strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S').timetuple())*1000
-                            e_ems = time.mktime(datetime.strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S').timetuple())*1000
-                            iptvq = Q(simpledepthtime__epochmilliseconds__gte = s_ems) & Q(simpledepthtime__epochmilliseconds__lte = e_ems)
-                            qs_tp = self.qs.filter(plq & trajectoryProfileQ & iptvq).select_related().values( 'name', 'simpledepthtime__depth',
-                                                    'simpledepthtime__nominallocation__depth', 'simpledepthtime__epochmilliseconds').order_by(
-                                                    'simpledepthtime__nominallocation__depth', 'simpledepthtime__epochmilliseconds').distinct()
+                            s_ems = time.mktime(datetime
+                                                .strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S')
+                                                .timetuple())*1000
+                            e_ems = time.mktime(datetime
+                                                .strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S')
+                                                .timetuple())*1000
+                            iptvq = (Q(simpledepthtime__epochmilliseconds__gte = s_ems) & 
+                                     Q(simpledepthtime__epochmilliseconds__lte = e_ems))
+                            qs_tp = (self.qs.filter(plq & trajectoryProfileQ & iptvq)
+                                            .select_related()
+                                            .values('name', 'simpledepthtime__depth',
+                                                    'simpledepthtime__nominallocation__depth', 
+                                                    'simpledepthtime__epochmilliseconds')
+                                            .order_by('simpledepthtime__nominallocation__depth',
+                                                      'simpledepthtime__epochmilliseconds')
+                                            .distinct())
                     if not qs_tp:
-                        qs_tp = self.qs.filter(plq & trajectoryProfileQ).select_related().values( 'name', 'simpledepthtime__depth',
-                                                'simpledepthtime__nominallocation__depth', 'simpledepthtime__epochmilliseconds').order_by(
-                                                'simpledepthtime__nominallocation__depth', 'simpledepthtime__epochmilliseconds').distinct()
+                        qs_tp = (self.qs.filter(plq & trajectoryProfileQ).select_related()
+                                        .values('name', 'simpledepthtime__depth',
+                                                'simpledepthtime__nominallocation__depth',
+                                                'simpledepthtime__epochmilliseconds')
+                                        .order_by('simpledepthtime__nominallocation__depth',
+                                                  'simpledepthtime__epochmilliseconds')
+                                        .distinct())
 
-                    # Add to sdt hash date-time series organized by activity__name_nominallocation__depth key within a platform__name key - use real depths
+                    # Add to sdt hash date-time series organized by activity__name_nominallocation__depth 
+                    # key within a platform__name key - use real depths
                     for sd in qs_tp:
                         ##logger.debug('sd = %s', sd)
                         an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
                         ##logger.debug('an_nd = %s', an_nd)
                         if 'simpledepthtime__epochmilliseconds' in sd:
-                            try:
-                                sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__depth']] )
-                            except KeyError:
-                                sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
-                                if sd['simpledepthtime__depth']:
-                                    sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__depth']] )
-                            except TypeError:
-                                continue                                                 # Likely "float argument required, not NoneType"
-    
+                            sdt[p[0]][an_nd].append(
+                                        [sd['simpledepthtime__epochmilliseconds'], 
+                                        '%.2f' % sd['simpledepthtime__depth']])
 
         return({'sdt': sdt, 'colors': colors})
 
