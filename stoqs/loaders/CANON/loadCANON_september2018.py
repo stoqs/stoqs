@@ -338,7 +338,7 @@ cl.slocum_nemesis_endDatetime = enddate
 # WG Sparky - All instruments combined into one file - one time coordinate
 cl.wg_Sparky_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Sparky_files = [
-                      'wgSparky/20180821/realTime/20180821.nc',
+                      'wgSparky/20180905/QC/20180905_QC.nc',
                      ]
 
 cl.wg_Sparky_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  'water_temp_sub', 
@@ -350,7 +350,7 @@ cl.wg_Sparky_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20180730/realTime/20180730.nc',
+                      'wgTiny/20180829/QC/20180829_QC.nc',
                    ]
 
 
@@ -510,12 +510,12 @@ cl.subsample_csv_files = [
    'STOQS_CN18F_CHLA.csv',     'STOQS_CN18F_O2.csv',      'STOQS_CN18F_PHAEO_5U.csv',   'STOQS_CN18F_SIG_T.csv',
    'STOQS_CN18F_ALK.csv',         'STOQS_CN18F_CHL_GFF.csv',  'STOQS_CN18F_OXY_ML.csv',  'STOQS_CN18F_PHAEO_GFF.csv',  'STOQS_CN18F_TCO2.csv',
    'STOQS_CN18F_ALTIMETER.csv',
-## 'STOQS_CN18F_COND2.csv', ##error::  ValueError: could not convert string to float: 'CN18Fc01' 
+   'STOQS_CN18F_COND2.csv', 
    'STOQS_CN18F_OXY_PS.csv',  'STOQS_CN18F_POT_TMP2.csv',
-## 'STOQS_CN18F_TEMP2.csv', ##error: ValueError: could not convert string to float: 'CN18Fc01'
+   'STOQS_CN18F_TEMP2.csv', 
    'STOQS_CN18F_CARBON_GFF.csv',  'STOQS_CN18F_CONDUCT.csv',  'STOQS_CN18F_PAR4PI.csv',  'STOQS_CN18F_POT_TMP.csv',    'STOQS_CN18F_TMP.csv',
    'STOQS_CN18F_CHL_1U.csv',      'STOQS_CN18F_FLUOR.csv',    'STOQS_CN18F_PARCOS.csv',
-##'STOQS_CN18F_SAL2.csv', ##error: ValueError: could not convert string to float: 'CN18Fc01'
+   'STOQS_CN18F_SAL2.csv', 
    'STOQS_CN18F_TRANSBEAM.csv',
                           ]
 
