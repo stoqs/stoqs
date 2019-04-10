@@ -473,7 +473,7 @@ class CCE_2015_Campaign:
                            '20160408/TU/MBCCE_MS5_TU200m_20160408.nc',
                            '20160408/TU/MBCCE_MS5_TU70m_20160408.nc',
                            '20161007/ADCP300/MBCCE_MS5_ADCP300_20161007.nc',
-                           '20161007/CT10m/MBCCE_MS5_CT70m_20161007.nc',
+                           '20161007/CT10m/MBCCE_MS5_CT10m_20161007.nc',
                            '20161007/TU/MBCCE_MS5_TU100m_20161007.nc',
                            '20161007/TU/MBCCE_MS5_TU10m_20161007.nc',
                            '20161007/TU/MBCCE_MS5_TU200m_20161007.nc',
