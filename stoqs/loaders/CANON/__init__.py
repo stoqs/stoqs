@@ -35,6 +35,7 @@ import requests
 import urllib
 
 from SampleLoaders import SeabirdLoader, SubSamplesLoader, ParentSamplesLoader
+from bs4 import BeautifulSoup
 from loaders import LoadScript, FileNotFound
 from stoqs.models import InstantPoint
 from django.db.models import Max
@@ -44,6 +45,7 @@ from lxml import etree
 from nettow import NetTow
 from planktonpump import PlanktonPump
 from thredds_crawler.crawl import Crawl
+from urllib.request import urlopen, HTTPError
 import logging
 import matplotlib as mpl
 mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
@@ -190,14 +192,16 @@ class CANONLoader(LoadScript):
                     'pose_longitude_DeadReckonUsingMultipleVelocitySources',
                     'pose_latitude_DeadReckonUsingMultipleVelocitySources',
                     'pose_depth_DeadReckonUsingMultipleVelocitySources',],
-                  stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True):
+                  stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True, 
+                  dlist_str=None, err_on_missing_file=False):
         '''
         Loader for tethys, daphne, makai, ahi, aku, 
         '''
         psl = ParentSamplesLoader('', '', dbAlias=self.dbAlias)
-        if build_attrs:
-            self.logger.info(f'Building load parameter attributes from crawling TDS')
-            self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
+        if build_attrs or dlist_str:
+            self.logger.info(f'Building load parameter attributes crawling LRAUV dirs with dlist_str = {dlist_str}')
+            self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns, 
+                                   dlist_str, err_on_missing_file)
         else:
             self.logger.info(f'Using load {pname} attributes set in load script')
             parameters = getattr(self, f'{pname}_parms')
@@ -1158,7 +1162,43 @@ class CANONLoader(LoadScript):
 
         return urls
 
-    def build_lrauv_attrs(self, mission_year, platform, startdate, enddate, parameters, file_patterns):
+    def find_lrauv_urls_by_dlist_string(self, dlist_str, platform, start_year, end_year, nc_str='_2S_scieng.nc'):
+        '''Crawl web accessible directories and search for missions that have dlist_str.
+        Find all .dlist files and scan contents of the .dlist that has `dlist_str`.
+        Return a list of those urls.
+        '''
+        urls = []
+        for year in range(start_year, end_year + 1):
+            file_base = f'http://dods.mbari.org/data/lrauv/{platform}/missionlogs/{year}'
+            dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{year}'
+            self.logger.debug(f"Looking in {file_base}")
+            soup = BeautifulSoup(urlopen(file_base).read(), 'lxml')
+            for link in soup.find_all('a'):
+                if '.dlist' in link.get('href'):
+                    dlist_dir = link.get('href').split('/')[-1].split('.')[0]
+                    dlist_url = os.path.join(file_base, f"{dlist_dir}.dlist")
+                    self.logger.debug(f"Found a .dlist containing {dlist_str}")
+                    self.logger.debug(f"Searching uncommented directores in {dlist_url}")
+                    with requests.get(dlist_url) as resp:
+                        if resp.status_code != 200:
+                            self.logger.error(f"Cannot read {dlist_url}, resp.status_code = {resp.status_code}")
+                            return
+                        if dlist_str in resp.text:
+                            for line in (r.decode('utf-8') for r in resp.iter_lines()):
+                                if not line.startswith('#'):
+                                    mission_dir = os.path.join(file_base, dlist_dir, line)
+                                    mission_dods = os.path.join(dods_base, dlist_dir, line)
+                                    soup2 = BeautifulSoup(urlopen(mission_dir).read(), 'lxml')
+                                    for link2 in soup2.find_all('a'):
+                                        if nc_str in link2.get('href'):
+                                            mission_url = os.path.join(mission_dods, link2.get('href'))
+                                            self.logger.debug(f"Found mission {mission_url}")
+                                            urls.append(mission_url)
+                                            break
+        return urls
+
+    def build_lrauv_attrs(self, mission_year, platform, startdate, enddate, parameters, file_patterns,
+                          dlist_str=None, err_on_missing_file=False):
         '''Set loader attributes for each LRAUV platform
         '''
         base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{mission_year}/'
@@ -1169,7 +1209,12 @@ class CANONLoader(LoadScript):
 
         urls = []
         try:
-            urls += self.find_lrauv_urls(base, file_patterns, startdate, enddate)
+            if dlist_str:
+                urls += self.find_lrauv_urls_by_dlist_string(dlist_str, platform=platform,
+                                                             start_year=startdate.year,
+                                                             end_year=enddate.year)
+            else:
+                urls += self.find_lrauv_urls(base, file_patterns, startdate, enddate)
             files = []
             if len(urls) > 0 :
                 for url in sorted(urls):
@@ -1182,6 +1227,8 @@ class CANONLoader(LoadScript):
 
         except FileNotFound as e:
             self.logger.debug(f'{e}')
+            if err_on_missing_file:
+                raise
 
     def find_dorado_urls(self, base, search_str, startdate, enddate):
         '''Use Thredds Crawler to return a list of DAP urls.  Initially written for LRAUV data, for
