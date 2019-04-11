@@ -284,8 +284,13 @@ class ParentSamplesLoader(STOQS_Loader):
         to_time = f"{et[0:4]}-{et[4:6]}-{et[6:8]}T{et[8:10]}:{et[10:12]}"
 
         # Sanity check the ending year
-        if int(et[0:4]) > datetime.now().year:
-            self.logger.warn(f"Not looking for Samples for url = {url} as the to date is > {datetime.now().year}")
+        try:
+            if int(et[0:4]) > datetime.now().year:
+                self.logger.warn(f"Not looking for Samples for url = {url} as the to date is > {datetime.now().year}")
+                return esp_s_filtering, esp_s_stopping, esp_log_summaries 
+        except ValueError:
+            # Likely an old slate.nc4 file that got converted to a .nc file
+            self.logger.warn(f"Could not parse end date year from url = {url}")
             return esp_s_filtering, esp_s_stopping, esp_log_summaries 
             
         td_url = f"https://okeanids.mbari.org/TethysDash/api/events?vehicles={platform_name}&from={from_time}&to={to_time}&eventTypes=logImportant&limit=100000"
