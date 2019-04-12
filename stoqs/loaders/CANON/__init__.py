@@ -1162,6 +1162,14 @@ class CANONLoader(LoadScript):
 
         return urls
 
+    def _get_mission_url(self, nc_str, mission_dir, mission_dods):
+        soup = BeautifulSoup(urlopen(mission_dir).read(), 'lxml')
+        for link in soup.find_all('a'):
+            if nc_str in link.get('href'):
+                mission_url = os.path.join(mission_dods, link.get('href'))
+                self.logger.debug(f"Found mission {mission_url}")
+                return mission_url
+
     def find_lrauv_urls_by_dlist_string(self, dlist_str, platform, start_year, end_year, nc_str='_2S_scieng.nc'):
         '''Crawl web accessible directories and search for missions that have dlist_str.
         Find all .dlist files and scan contents of the .dlist that has `dlist_str`.
@@ -1188,13 +1196,9 @@ class CANONLoader(LoadScript):
                                 if not line.startswith('#'):
                                     mission_dir = os.path.join(file_base, dlist_dir, line)
                                     mission_dods = os.path.join(dods_base, dlist_dir, line)
-                                    soup2 = BeautifulSoup(urlopen(mission_dir).read(), 'lxml')
-                                    for link2 in soup2.find_all('a'):
-                                        if nc_str in link2.get('href'):
-                                            mission_url = os.path.join(mission_dods, link2.get('href'))
-                                            self.logger.debug(f"Found mission {mission_url}")
-                                            urls.append(mission_url)
-                                            break
+                                    url = self._get_mission_url(nc_str, mission_dir, mission_dods)
+                                    if url:
+                                        urls.append(url)
         return urls
 
     def build_lrauv_attrs(self, mission_year, platform, startdate, enddate, parameters, file_patterns,
