@@ -178,34 +178,8 @@ class CANONLoader(LoadScript):
         self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pname,
                                   scalefactor=2)
 
-    def loadLRAUV(self, pname, startdate=None, enddate=None, 
-                  parameters=['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
-                    'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
-                    'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
-                    'health_platform_battery_charge', 'health_platform_average_voltage',
-                    'health_platform_average_current','fix_latitude', 'fix_longitude',
-                    'fix_residual_percent_distance_traveled_DeadReckonUsingSpeedCalculator',
-                    'pose_longitude_DeadReckonUsingSpeedCalculator',
-                    'pose_latitude_DeadReckonUsingSpeedCalculator',
-                    'pose_depth_DeadReckonUsingSpeedCalculator',
-                    'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources',
-                    'pose_longitude_DeadReckonUsingMultipleVelocitySources',
-                    'pose_latitude_DeadReckonUsingMultipleVelocitySources',
-                    'pose_depth_DeadReckonUsingMultipleVelocitySources',],
-                  stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True, 
-                  dlist_str=None, err_on_missing_file=False):
-        '''
-        Loader for tethys, daphne, makai, ahi, aku, 
-        '''
+    def _execute_load(self, pname, parameters, stride):
         psl = ParentSamplesLoader('', '', dbAlias=self.dbAlias)
-        if build_attrs or dlist_str:
-            self.logger.info(f'Building load parameter attributes crawling LRAUV dirs with dlist_str = {dlist_str}')
-            self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns, 
-                                   dlist_str, err_on_missing_file)
-        else:
-            self.logger.info(f'Using load {pname} attributes set in load script')
-            parameters = getattr(self, f'{pname}_parms')
-
         stride = stride or self.stride
         files = getattr(self, f'{pname}_files')
         base = getattr(self, f'{pname}_base')
@@ -234,6 +208,42 @@ class CANONLoader(LoadScript):
 
         self.addPlatformResources(f'https://stoqs.mbari.org/x3d/lrauv/lrauv_{pname}.x3d', pname,
                                   scalefactor=2)
+
+    def loadLRAUV(self, pname, startdate=None, enddate=None, 
+                  parameters=['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
+                    'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
+                    'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
+                    'health_platform_battery_charge', 'health_platform_average_voltage',
+                    'health_platform_average_current','fix_latitude', 'fix_longitude',
+                    'fix_residual_percent_distance_traveled_DeadReckonUsingSpeedCalculator',
+                    'pose_longitude_DeadReckonUsingSpeedCalculator',
+                    'pose_latitude_DeadReckonUsingSpeedCalculator',
+                    'pose_depth_DeadReckonUsingSpeedCalculator',
+                    'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources',
+                    'pose_longitude_DeadReckonUsingMultipleVelocitySources',
+                    'pose_latitude_DeadReckonUsingMultipleVelocitySources',
+                    'pose_depth_DeadReckonUsingMultipleVelocitySources',],
+                  stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True, 
+                  dlist_str=None, err_on_missing_file=False):
+        '''
+        Loader for tethys, daphne, makai, ahi, aku, 
+        '''
+        if build_attrs and not dlist_str:
+            self.logger.info(f'Building load parameter attributes crawling LRAUV dirs')
+            self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
+            self._execute_load(pname, parameters, stride)
+        elif dlist_str:
+            for year in range(startdate.year, enddate.year + 1):
+                # Execute load for a year at a time in order to keep the Avtivity name shorter
+                # and because that is kind of how the LRAUV load is structured
+                self.logger.info(f'Building load parameter attributes crawling LRAUV dirs with dlist_str = {dlist_str} and year = {year}')
+                self.build_lrauv_attrs(year, pname, datetime(year, 1, 1), datetime(year, 12, 31), 
+                                       parameters, file_patterns, dlist_str, err_on_missing_file)
+                self._execute_load(pname, parameters, stride)
+        else:
+            self.logger.info(f'Using load {pname} attributes set in load script')
+            parameters = getattr(self, f'{pname}_parms')
+            self._execute_load(pname, parameters, stride)
 
     def loadMartin(self, stride=None):
         '''
@@ -1179,7 +1189,7 @@ class CANONLoader(LoadScript):
         for year in range(start_year, end_year + 1):
             file_base = f'http://dods.mbari.org/data/lrauv/{platform}/missionlogs/{year}'
             dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{year}'
-            self.logger.debug(f"Looking in {file_base}")
+            self.logger.info(f"Looking in {file_base} for .dlist files containing string '{dlist_str}'")
             soup = BeautifulSoup(urlopen(file_base).read(), 'lxml')
             for link in soup.find_all('a'):
                 if '.dlist' in link.get('href'):
@@ -1198,12 +1208,16 @@ class CANONLoader(LoadScript):
                                     mission_dods = os.path.join(dods_base, dlist_dir, line)
                                     url = self._get_mission_url(nc_str, mission_dir, mission_dods)
                                     if url:
+                                        self.logger.info(f"Adding {url} to urls list")
                                         urls.append(url)
         return urls
 
     def build_lrauv_attrs(self, mission_year, platform, startdate, enddate, parameters, file_patterns,
                           dlist_str=None, err_on_missing_file=False):
-        '''Set loader attributes for each LRAUV platform
+        '''Set loader attributes for each LRAUV platform. This is meant to be called for startdate
+        and enddate being within a single year. It will fail if startdate and enddate span multiple
+        years. We'd like to keep the files portion of the string short as it's the mouse-over text 
+        in the UI
         '''
         base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{mission_year}/'
         dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{mission_year}/'
