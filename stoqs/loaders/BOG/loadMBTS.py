@@ -52,7 +52,7 @@ elif cl.args.stride:
 for lrauv in ('tethys', 'daphne'):
     cl.loadLRAUV(lrauv, syear, eyear, dlist_str='MBTS', err_on_missing_file=True)
 
-cl.loadSubSamples()
+##cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
