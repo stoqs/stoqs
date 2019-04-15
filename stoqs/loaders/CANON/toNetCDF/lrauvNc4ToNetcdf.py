@@ -552,7 +552,7 @@ class InterpolatorWriter(BaseWriter):
             else:
                 # Check if there is just a few outliers
                 max_num_outliers = 2
-                if len(np.where(np.abs(da) > np.pi)) <= max_num_outliers:
+                if len(np.where(np.abs(da) > np.pi)[0]) <= max_num_outliers:
                     rad_to_deg = True
 
             logger.debug(f"{data_array.name}: rad_to_deg = {rad_to_deg}")
@@ -1028,6 +1028,13 @@ class InterpolatorWriter(BaseWriter):
                                 value = self.ac_lats
 
                 i = self.interpolate(value, t_resample.index)
+                if key == 'time':
+                    repeated_values = np.where(np.diff(i.values) <= 0)[0]
+                    if len(repeated_values) > 0:
+                        logger.warn(f"Interpolated 'time' variable has {len(repeated_values)} repeated values at indices {repeated_values}")
+                        logger.info(f"Overwriting interpolated repeated values with time's index values")
+                        i[repeated_values] = i[repeated_values].index.astype(np.int64)/1E9
+
                 self.all_sub_ts[key] = i
                 self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
             except (IndexError, ValueError) as e:
