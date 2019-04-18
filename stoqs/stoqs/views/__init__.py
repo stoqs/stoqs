@@ -100,6 +100,20 @@ class BaseOutputer(object):
             self.fields = fields
             return fields
 
+    def add_lon_lat_cols(self):
+        '''To be called after self.getFields() in order to add 'longitude' and 'latitude' columns to be 
+        in the response in addition to the WKT '*__geom' column.
+        '''
+        new_fields = []
+        for field in self.fields:
+            new_fields.append(field)
+            if field.endswith('geom'):
+                new_fields.append(f"{field}.x")
+                new_fields.append(f"{field}.y")
+
+        self.fields = new_fields
+        return new_fields
+
     def getGeomFields(self):
         '''
         Return list of any Geometry Field Types in the class - useful for knowing if we can append distanceLookups and spatialLookups.
@@ -210,6 +224,16 @@ class BaseOutputer(object):
         self.qs = self.query_set
         self.qs = self.qs.values(*fields)
 
+    def row_of_fields(self, row):
+        '''Properly deal with '.x' and '.y' for geom items
+        '''
+        for field in self.fields:
+            if field.endswith('geom.x'):
+                yield row[field[:-2]].x
+            elif field.endswith('geom.y'):
+                yield row[field[:-2]].y
+            else:
+                yield row[field]
 
     def process_request(self):
         '''
@@ -221,6 +245,9 @@ class BaseOutputer(object):
             self.assign_qs()
         except EmptyQuerySetException:
             raise Http404
+
+        # A terrible hack to add latitude and longitude columns to the response - must call following assign_qs()
+        fields = self.add_lon_lat_cols()
 
         if self.stoqs_object_name == 'measured_parameter':
             # Check if the query contains parametervalue constraints, in which case we need to wrap RawQuerySet in an MPQuerySet
@@ -246,7 +273,7 @@ class BaseOutputer(object):
                 writer = csv.writer(response)
             writer.writerow(fields)
             for obj in self.qs:
-                writer.writerow([obj[f] for f in fields])
+                writer.writerow(self.row_of_fields(obj))
 
             return response
         elif self.format == 'xml':
