@@ -4120,9 +4120,10 @@ function enable_cardboard(){
         function buildMetadataHtml(data, init) {
                 // Sort the Activities by platform and build HTML for NetCDF tab
                 var platforms = $.map(data.resources.netcdf, function(activities, plat) {return plat}).sort();
-                var platformActivitiesHtml = '<fieldset>';
-                platformActivitiesHtml += '<input type="checkbox" name="all_activity_select_cb" value="" class="activity-select-checkbox checkall_activity" />' +
-                                          ' Check/Uncheck all for Spatial Temporal plotting (leave this section open for selections to apply)'; 
+                var platformActivitiesHtml = 'Check/Uncheck Activities (leave this section open for selections to apply - collapse it otherwise)<br>';
+                platformActivitiesHtml += '<input type="checkbox" name="all_activity_select_cb" value="" class="activity-select-checkbox checkall_activity" /> All';
+                platformActivitiesHtml += '<div id="acts-by-stride"></div>';
+                var acts_by_stride = {};
                 $.each(platforms, function (index, plat) {
                     var activities = $.map(data.resources.netcdf[plat], function(activities, a) {return a}).sort();
                     platformActivitiesHtml += '<div id="' + plat + '-group" class="accordian-group">' +
@@ -4136,6 +4137,16 @@ function enable_cardboard(){
 
                     for (var i = 0; i < activities.length; i++) {
                         var activity = activities[i];
+                        // Save a hash list of activities by stride=value so the they can be selected / de-selected
+                        if ( ! $.isEmptyObject(activity.match(/\((.+)\)/)) ) {
+                            stride_val = activity.match(/\((.+)\)/)[1];
+                            if ( $.type(acts_by_stride[stride_val]) == "undefined" ) {
+                                    acts_by_stride[stride_val] = [];
+                            }
+                            else {
+                                acts_by_stride[stride_val].push(activity);
+                            }
+                        }
                         var attributes = data.resources.netcdf[plat][activity];
                         var dsLink = activity;
                         if (attributes.opendap_url) {
@@ -4158,7 +4169,7 @@ function enable_cardboard(){
                             '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + attributes.comment + '</span></div>' +
                             '</div>';
                     }
-                    platformActivitiesHtml += '</div></div></div></fieldset>';
+                    platformActivitiesHtml += '</div></div></div>';
                 });
                 $('#metadatanetcdf > div').html(platformActivitiesHtml);
 
@@ -4168,6 +4179,7 @@ function enable_cardboard(){
                     $('body').data()['activitycolors'] = {};
                     $('input[name=activity_select_cb]').prop('checked', true);
                     $('input[name=all_activity_select_cb]').prop('checked', true);
+                    $('.check_activity_stride').prop('checked', true);
                     $.each(data.resources.netcdf, function (plat, activities) {
                         $.each(activities, function (name, activity) {
                             $('body').data()['activitynames'][name] = true;
@@ -4225,22 +4237,53 @@ function enable_cardboard(){
                     $('#metadataquicklookplots > div').html(platformActivitiesHtml);
                 }
 
-                // Register event handler here as it is not recognized where the others are located in this file
+                // Register event handler for "all activities" checkbox
                 $('.checkall_activity').on('click', function () {
                     $.each(data.resources.netcdf, function (plat, activities) {
                         $.each(activities, function (name, activity) {
                             if ( $('.checkall_activity').is(':checked') ) {
                                 $('body').data()['activitynames'][name] = true;
                                 $('input[name=activity_select_cb][value="' + name + '"]').prop('checked', true);
+                                $('.check_activity_stride').prop('checked', true);
                             }
                             else {
                                 $('body').data()['activitynames'][name] = false;
                                 $('input[name=activity_select_cb][value="' + name + '"]').prop('checked', false);
+                                $('.check_activity_stride').prop('checked', false);
                             }
                         });
                     });
                     // 'change' event handler on .activity-select-checkbox handles calling rebuildFilters()
                 });
+
+                // Register event handler for activity strides checkboxes
+                $('.check_activity_stride').on('click', function () {
+                    $.each(data.resources.netcdf, function (plat, activities) {
+                        $.each(activities, function (name, activity) {
+                            if ( $('.checkall_activity').is(':checked') ) {
+                                $('body').data()['activitynames'][name] = true;
+                                $('input[name=activity_select_cb][value="' + name + '"]').prop('checked', true);
+                                $('.check_activity_stride').prop('checked', true);
+                            }
+                            else {
+                                $('body').data()['activitynames'][name] = false;
+                                $('input[name=activity_select_cb][value="' + name + '"]').prop('checked', false);
+                                $('.check_activity_stride').prop('checked', false);
+                            }
+                        });
+                    });
+                    // 'change' event handler on .activity-select-checkbox handles calling rebuildFilters()
+                });
+
+                // Add the stride value selection checkboxes
+                var acts_by_stride_html = '';
+                $.each(acts_by_stride, function(stride, activities) {
+                    acts_by_stride_html += '<input type="checkbox" name="activity_' + stride.replace('=', '') + 
+                                           '_cb" value="" class="check_activity_stride" /> (' + stride + ')<br>';
+                });
+                $('#acts-by-stride').html(acts_by_stride_html);
+
+
         } // End buildMetadataHtml()
 
         function saveBodyData(data) {
