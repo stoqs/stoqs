@@ -210,7 +210,7 @@ class ParentSamplesLoader(STOQS_Loader):
                                                             timevalue__gte=sdt,
                                                             timevalue__lte=edt).order_by('timevalue')
         if not ip_qs:
-            self.logger.warn(f"Likely doing a test load - skipping Sample {sample_name}")
+            self.logger.warn(f"Could not get InstantPoint - likely doing a high stride test load - skipping Sample {sample_name}")
             return None, None, None, None, None
 
         m_qs = Measurement.objects.using(db_alias).filter(instantpoint__activity__name=activity_name,
