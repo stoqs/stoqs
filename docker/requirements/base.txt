@@ -20,7 +20,7 @@ djangorestframework==3.9.2
 euclid==0.1
 GitPython==2.1.11
 httplib2==0.12.0
-ipython==7.4.0
+ipython==7.5.0
 jdcal==1.4
 Jinja2==2.10.1
 jupyter==1.0.0
