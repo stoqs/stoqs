@@ -4117,7 +4117,8 @@ function enable_cardboard(){
         var me = this;
 
         function buildMetadataHtml(data, init) {
-                // Sort the Activities by platform and build HTML for NetCDF tab - on update disable buttons as needed
+            if (init) {
+                // Sort the Activities by platform and build HTML for NetCDF tab
                 var platforms = $.map(data.resources.netcdf, function(activities, plat) {return plat}).sort();
                 var platformActivitiesHtml = 'Check/Uncheck Activities (leave this section open for selections to apply - collapse it otherwise)<br>';
                 platformActivitiesHtml += '<input type="checkbox" name="all_activity_select_cb" value="" class="checkall_activity" /> All';
@@ -4175,7 +4176,7 @@ function enable_cardboard(){
                         if ( $.isEmptyObject(summary) ) {
                             summary = '(No summary in NetCDF file)';
                         }
-                        platformActivitiesHtml += '<div class="row-fluid">' +
+                        platformActivitiesHtml += '<div id="' + activity + '" class="row-fluid">' +
                             '<div class="span3">' + dsLink + '</div>' +
                             '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + title + '</span></div>' +
                             '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + summary + '</span></div>' +
@@ -4187,121 +4188,124 @@ function enable_cardboard(){
                 $('#metadatanetcdf > div').html(platformActivitiesHtml);
 
                 // Check the Activities that need checking and initialize checkbox state in $('body').data()
-                if ( init ) {
-                    $('body').data()['activitynames'] = {};
-                    $('body').data()['activitycolors'] = {};
-                    $('input[name=activity_select_cb]').prop('checked', true);
-                    $('input[name=all_activity_select_cb]').prop('checked', true);
-                    $.each(data.resources.netcdf, function (plat, activities) {
-                        $.each(activities, function (name, activity) {
-                            $('body').data()['activitynames'][name] = true;
-                            $('body').data()['activitycolors'][name] = $('body').data()['platformColors'][plat];
-                        });
+                $('body').data()['activitynames'] = {};
+                $('body').data()['activitycolors'] = {};
+                $('input[name=activity_select_cb]').prop('checked', true);
+                $('input[name=all_activity_select_cb]').prop('checked', true);
+                $.each(data.resources.netcdf, function (plat, activities) {
+                    $.each(activities, function (name, activity) {
+                        $('body').data()['activitynames'][name] = true;
+                        $('body').data()['activitycolors'][name] = $('body').data()['platformColors'][plat];
                     });
+                });
 
-                    // Add the stride value selection checkboxes
-                    var acts_by_stride_html = '';
-                    $.each(acts_by_stride, function(stride, activities) {
-                        acts_by_stride_html += '<input type="checkbox" id="' + stride.replace('=', '') + '" name="activity_' + stride.replace('=', '') + 
-                                               '_cb" value="" class="check_activity_stride" /> (' + stride + ')<br>';
-                    });
-                    $('#acts-by-stride').html(acts_by_stride_html);
-                }
-                else {
-                    if ( ! $.isEmptyObject($('body').data()['activitynames']) ) {
-                        $.each($('body').data()['activitynames'], function (activityname, checked) {
-                            if (checked) {
-                                $('input[name=activity_select_cb][value="' + activityname + '"]').prop('checked', true);
-                            }
-                            else {
-                                $('input[name=activity_select_cb][value="' + activityname + '"]').prop('checked', false);
-                            }
-                        });
-                    }
+                // Add the stride value selection checkboxes
+                var acts_by_stride_html = '';
+                $.each(acts_by_stride, function(stride, activities) {
+                    acts_by_stride_html += '<input type="checkbox" id="' + stride.replace('=', '') + '" name="activity_' + stride.replace('=', '') + 
+                                           '_cb" value="" class="check_activity_stride" /> (' + stride + ')<br>';
+                });
+                $('#acts-by-stride').html(acts_by_stride_html);
 
-                    // Disable stride checkboxes that are not in the selection
-                    $('#acts-by-stride').each(function(index, elem) {
-                        if (elem.value in acts_by_stride) {
-                            $(elem).removeAttr('disabled');
+            }
+            else {
+                // On update disable elements (rows) that are not in the selection
+                if ( ! $.isEmptyObject($('body').data()['activitynames']) ) {
+                    $.each($('body').data()['activitynames'], function (activityname, checked) {
+                        if (checked) {
+                            $('input[name=activity_select_cb][value="' + activityname + '"]').prop('checked', true);
                         }
                         else {
-                            $(elem).attr('disabled', true);
+                            $('input[name=activity_select_cb][value="' + activityname + '"]').prop('checked', false);
                         }
                     });
                 }
 
-                // Sort the QuickLook plot URLs by platform and build HTML for Quick look plots tab
-                var platforms = $.map(data.resources.quick_look, function(activities, plat) {return plat}).sort();
-                var ql_plots_tab_html = '';
-                $.each(platforms, function (index, plat) {
-                    activities = $.map(data.resources.quick_look[plat], function(activities, a) {return a}).sort();
-                    ql_plots_tab_html += '<div id="' + plat + '-group" class="accordian-group">' +
-                    '<div class="accordian-heading">' + 
-                       '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
-                        plat + 
-                        '</a></h5>' + 
-                    '</div>' + 
-                    '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
-                        '<div class="accordion-inner" style="padding:0;">';
-                    ql_plots_tab_html += '<table class="table table-condensed"><tbody>';
-
-                    for (var i=0; i<activities.length; i++) {
-                        activity = activities[i];
-                        plots = data.resources.quick_look[plat][activity];
-                        ql_plots_tab_html += '<tr id="' + activity +'">' +
-                                '<td>' + activity + '</td>';
-                        $.each(plots, function (type, url) {
-                            if ( ! url == '' ) {
-                                ql_plots_tab_html += '<td><a target="_blank" href="' + url + '">' + type + '</a></td>';
-                            }
-                        });
-                        ql_plots_tab_html += '</tr>';
+                // Disable stride checkboxes that are not in the selection
+                $('#acts-by-stride').each(function(index, elem) {
+                    if (elem.value in acts_by_stride) {
+                        $(elem).removeAttr('disabled');
                     }
-                    ql_plots_tab_html += '</tbody></table></div></div></div>';
+                    else {
+                        $(elem).attr('disabled', true);
+                    }
                 });
-                if ( ql_plots_tab_html == '' ) {
-                    $('#metadata-qlp-li').hide()
+            }
+
+            // Sort the QuickLook plot URLs by platform and build HTML for Quick look plots tab
+            var platforms = $.map(data.resources.quick_look, function(activities, plat) {return plat}).sort();
+            var ql_plots_tab_html = '';
+            $.each(platforms, function (index, plat) {
+                activities = $.map(data.resources.quick_look[plat], function(activities, a) {return a}).sort();
+                ql_plots_tab_html += '<div id="' + plat + '-group" class="accordian-group">' +
+                '<div class="accordian-heading">' + 
+                   '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
+                    plat + 
+                    '</a></h5>' + 
+                '</div>' + 
+                '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
+                    '<div class="accordion-inner" style="padding:0;">';
+                ql_plots_tab_html += '<table class="table table-condensed"><tbody>';
+
+                for (var i=0; i<activities.length; i++) {
+                    activity = activities[i];
+                    plots = data.resources.quick_look[plat][activity];
+                    ql_plots_tab_html += '<tr id="' + activity +'">' +
+                            '<td>' + activity + '</td>';
+                    $.each(plots, function (type, url) {
+                        if ( ! url == '' ) {
+                            ql_plots_tab_html += '<td><a target="_blank" href="' + url + '">' + type + '</a></td>';
+                        }
+                    });
+                    ql_plots_tab_html += '</tr>';
+                }
+                ql_plots_tab_html += '</tbody></table></div></div></div>';
+            });
+            if ( ql_plots_tab_html == '' ) {
+                $('#metadata-qlp-li').hide()
+            }
+            else {
+                $('#metadata-qlp-li').show()
+                $('#metadataquicklookplots > div').html(ql_plots_tab_html);
+            }
+
+            // Register event handler for "all activities" checkbox
+            $('.checkall_activity').on('click', function () {
+                if ( $(this).is(':checked') ) {
+                    $('.activity-select-checkbox').prop('checked', true);
+                    $('.check_activity_stride').prop('checked', true);
+                    $('.activity-select-checkbox').each(function(index, elem) {
+                        $('body').data()['activitynames'][elem.value] = true;
+                    });
                 }
                 else {
-                    $('#metadata-qlp-li').show()
-                    $('#metadataquicklookplots > div').html(ql_plots_tab_html);
+                    $('.activity-select-checkbox').prop('checked', false);
+                    $('.check_activity_stride').prop('checked', false);
+                    $('.activity-select-checkbox').each(function(index, elem) {
+                        $('body').data()['activitynames'][elem.value] = false;
+                    });
                 }
+                rebuildFilters();
+            });
 
-                // Register event handler for "all activities" checkbox
-                $('.checkall_activity').on('click', function () {
-                    if ( $(this).is(':checked') ) {
-                        $('.activity-select-checkbox').prop('checked', true);
-                        $('.check_activity_stride').prop('checked', true);
-                        $('.activity-select-checkbox').each(function(index, elem) {
-                            $('body').data()['activitynames'][elem.value] = true;
-                        });
-                    }
-                    else {
-                        $('.activity-select-checkbox').prop('checked', false);
-                        $('.check_activity_stride').prop('checked', false);
-                        $('.activity-select-checkbox').each(function(index, elem) {
-                            $('body').data()['activitynames'][elem.value] = false;
-                        });
-                    }
-                    rebuildFilters();
-                });
+            // Register event handler for activity strides checkboxes
+            $('.check_activity_stride').on('click', function () {
+                if ( $(this).is(':checked') ) {
+                    $('.' + this.id).prop('checked', true);
+                    $('.' + this.id).each(function(index, elem) {
+                        $('body').data()['activitynames'][elem.value] = true;
+                    });
+                }
+                else {
+                    $('.' + this.id).prop('checked', false);
+                    $('.' + this.id).each(function(index, elem) {
+                        $('body').data()['activitynames'][elem.value] = false;
+                    });
+                }
+                rebuildFilters();
+            });
 
-                // Register event handler for activity strides checkboxes
-                $('.check_activity_stride').on('click', function () {
-                    if ( $(this).is(':checked') ) {
-                        $('.' + this.id).prop('checked', true);
-                        $('.' + this.id).each(function(index, elem) {
-                            $('body').data()['activitynames'][elem.value] = true;
-                        });
-                    }
-                    else {
-                        $('.' + this.id).prop('checked', false);
-                        $('.' + this.id).each(function(index, elem) {
-                            $('body').data()['activitynames'][elem.value] = false;
-                        });
-                    }
-                    rebuildFilters();
-                });
+
 
         } // End buildMetadataHtml()
 
