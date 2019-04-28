@@ -4124,6 +4124,7 @@ function enable_cardboard(){
                 platformActivitiesHtml += '<input type="checkbox" name="all_activity_select_cb" value="" class="checkall_activity" /> All';
                 platformActivitiesHtml += '<div id="acts-by-stride"></div>';
                 var acts_by_stride = {};
+                var ql_plots_tab_html = '';
                 $.each(platforms, function (index, plat) {
                     var activities = $.map(data.resources.netcdf[plat], function(activities, a) {return a}).sort();
                     platformActivitiesHtml += '<div id="' + plat + '-group" class="accordian-group">' +
@@ -4134,6 +4135,15 @@ function enable_cardboard(){
                     '</div>' + 
                     '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
                         '<div class="accordion-inner" style="padding:0;">';
+                    ql_plots_tab_html += '<div id="' + plat + '-group" class="accordian-group">' +
+                    '<div class="accordian-heading">' + 
+                       '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
+                        plat + 
+                        '</a></h5>' + 
+                    '</div>' + 
+                    '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
+                        '<div class="accordion-inner" style="padding:0;">';
+                    ql_plots_tab_html += '<table class="table table-condensed"><tbody>';
 
                     for (var i = 0; i < activities.length; i++) {
                         var activity = activities[i];
@@ -4182,10 +4192,31 @@ function enable_cardboard(){
                             '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + summary + '</span></div>' +
                             '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + attributes.comment + '</span></div>' +
                             '</div>';
+
+                        if ( ! $.isEmptyObject(data.resources.quick_look[plat]) ) {
+                            plots = data.resources.quick_look[plat][activity];
+                            ql_plots_tab_html += '<tr id="' + activity +'">' +
+                                    '<td>' + activity + '</td>';
+                            $.each(plots, function (type, url) {
+                                if ( ! url == '' ) {
+                                    ql_plots_tab_html += '<td><a target="_blank" href="' + url + '">' + type + '</a></td>';
+                                }
+                            });
+                            ql_plots_tab_html += '</tr>';
+                        }
                     }
                     platformActivitiesHtml += '</div></div></div>';
+                    ql_plots_tab_html += '</tbody></table></div></div></div>';
                 });
                 $('#metadatanetcdf > div').html(platformActivitiesHtml);
+
+                if ( ql_plots_tab_html == '' ) {
+                    $('#metadata-qlp-li').hide()
+                }
+                else {
+                    $('#metadata-qlp-li').show()
+                    $('#metadataquicklookplots > div').html(ql_plots_tab_html);
+                }
 
                 // Check the Activities that need checking and initialize checkbox state in $('body').data()
                 $('body').data()['activitynames'] = {};
@@ -4232,42 +4263,6 @@ function enable_cardboard(){
                 });
             }
 
-            // Sort the QuickLook plot URLs by platform and build HTML for Quick look plots tab
-            var platforms = $.map(data.resources.quick_look, function(activities, plat) {return plat}).sort();
-            var ql_plots_tab_html = '';
-            $.each(platforms, function (index, plat) {
-                activities = $.map(data.resources.quick_look[plat], function(activities, a) {return a}).sort();
-                ql_plots_tab_html += '<div id="' + plat + '-group" class="accordian-group">' +
-                '<div class="accordian-heading">' + 
-                   '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
-                    plat + 
-                    '</a></h5>' + 
-                '</div>' + 
-                '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
-                    '<div class="accordion-inner" style="padding:0;">';
-                ql_plots_tab_html += '<table class="table table-condensed"><tbody>';
-
-                for (var i=0; i<activities.length; i++) {
-                    activity = activities[i];
-                    plots = data.resources.quick_look[plat][activity];
-                    ql_plots_tab_html += '<tr id="' + activity +'">' +
-                            '<td>' + activity + '</td>';
-                    $.each(plots, function (type, url) {
-                        if ( ! url == '' ) {
-                            ql_plots_tab_html += '<td><a target="_blank" href="' + url + '">' + type + '</a></td>';
-                        }
-                    });
-                    ql_plots_tab_html += '</tr>';
-                }
-                ql_plots_tab_html += '</tbody></table></div></div></div>';
-            });
-            if ( ql_plots_tab_html == '' ) {
-                $('#metadata-qlp-li').hide()
-            }
-            else {
-                $('#metadata-qlp-li').show()
-                $('#metadataquicklookplots > div').html(ql_plots_tab_html);
-            }
 
             // Register event handler for "all activities" checkbox
             $('.checkall_activity').on('click', function () {
