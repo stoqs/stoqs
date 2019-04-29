@@ -4117,14 +4117,15 @@ function enable_cardboard(){
         var me = this;
 
         function buildMetadataHtml(data, init) {
+            var platforms = $.map(data.resources.netcdf, function(activities, plat) {return plat}).sort();
             if (init) {
                 // Sort the Activities by platform and build HTML for NetCDF tab
-                var platforms = $.map(data.resources.netcdf, function(activities, plat) {return plat}).sort();
                 var platformActivitiesHtml = 'Check/Uncheck Activities (leave this section open for selections to apply - collapse it otherwise)<br>';
                 platformActivitiesHtml += '<input type="checkbox" name="all_activity_select_cb" value="" class="checkall_activity" /> All';
                 platformActivitiesHtml += '<div id="acts-by-stride"></div>';
                 var acts_by_stride = {};
                 var ql_plots_tab_html = '';
+                platformActivitiesHtml += '<div id="netcdf-groups">'; 
                 $.each(platforms, function (index, plat) {
                     var activities = $.map(data.resources.netcdf[plat], function(activities, a) {return a}).sort();
                     platformActivitiesHtml += '<div id="' + plat + '-group" class="accordian-group">' +
@@ -4186,7 +4187,7 @@ function enable_cardboard(){
                         if ( $.isEmptyObject(summary) ) {
                             summary = '(No summary in NetCDF file)';
                         }
-                        platformActivitiesHtml += '<div id="' + activity + '" class="row-fluid">' +
+                        platformActivitiesHtml += '<div id="' + activity + '" class="row-fluid netcdf-activity-row">' +
                             '<div class="span3">' + dsLink + '</div>' +
                             '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + title + '</span></div>' +
                             '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + summary + '</span></div>' +
@@ -4208,6 +4209,8 @@ function enable_cardboard(){
                     platformActivitiesHtml += '</div></div></div>';
                     ql_plots_tab_html += '</tbody></table></div></div></div>';
                 });
+                platformActivitiesHtml += '</div>';
+
                 $('#metadatanetcdf > div').html(platformActivitiesHtml);
 
                 if ( ql_plots_tab_html == '' ) {
@@ -4237,34 +4240,26 @@ function enable_cardboard(){
                                            '_cb" value="" class="check_activity_stride" /> (' + stride + ')<br>';
                 });
                 $('#acts-by-stride').html(acts_by_stride_html);
-
+                $('#acts-by-stride :checkbox').each(function() {
+                    $(this).prop('checked', true);
+                });
             }
             else {
-                // On update disable elements (rows) that are not in the selection
-                if ( ! $.isEmptyObject($('body').data()['activitynames']) ) {
-                    $.each($('body').data()['activitynames'], function (activityname, checked) {
-                        if (checked) {
-                            $('input[name=activity_select_cb][value="' + activityname + '"]').prop('checked', true);
-                        }
-                        else {
-                            $('input[name=activity_select_cb][value="' + activityname + '"]').prop('checked', false);
-                        }
-                    });
-                }
+                // On update we need to reflect what is in the selection (platforms, MP, temporal/depth)
+                // First, hide all the rows
+                $('.netcdf-activity-row').each(function(index, elem) {
+                    $(elem).hide();
+                });
 
-                // Disable stride checkboxes that are not in the selection
-                $('#acts-by-stride').each(function(index, elem) {
-                    if (elem.value in acts_by_stride) {
-                        $(elem).removeAttr('disabled');
-                    }
-                    else {
-                        $(elem).attr('disabled', true);
-                    }
+                // Second, show the rows that are in the selection - lookup up from checkbox value, which can handle activity.name characters
+                $.each(data.resources.netcdf, function (plat, activities) {
+                    $.each(activities, function (activityname, activity) {
+                        $('input[name=activity_select_cb][value="' + activityname + '"]').parent().parent().show();
+                    });
                 });
             }
 
-
-            // Register event handler for "all activities" checkbox
+            // Register event handler for "all activities" checkbox - fires off a rebuildFilters()
             $('.checkall_activity').on('click', function () {
                 if ( $(this).is(':checked') ) {
                     $('.activity-select-checkbox').prop('checked', true);
@@ -4283,7 +4278,7 @@ function enable_cardboard(){
                 rebuildFilters();
             });
 
-            // Register event handler for activity strides checkboxes
+            // Register event handler for activity strides checkboxes - fires off a rebuildFilters()
             $('.check_activity_stride').on('click', function () {
                 if ( $(this).is(':checked') ) {
                     $('.' + this.id).prop('checked', true);
@@ -4299,8 +4294,6 @@ function enable_cardboard(){
                 }
                 rebuildFilters();
             });
-
-
 
         } // End buildMetadataHtml()
 
