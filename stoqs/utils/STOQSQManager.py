@@ -406,6 +406,9 @@ class STOQSQManager(object):
         if groupName:
             p_qs = p_qs.filter(parametergroupparameter__parametergroup__name=groupName)
 
+        if self.kwargs.get('activitynames'):
+            p_qs = p_qs.filter(activityparameter__activity__name__in=self.kwargs.get('activitynames'))
+
         p_qs = p_qs.values('name', 'standard_name', 'id', 'units', 'long_name', 'description').distinct()
 
         results=[]
@@ -667,6 +670,9 @@ class STOQSQManager(object):
         # Use queryset that does not filter out platforms - so that Platform buttons work in the UI
         qs = self.qs_platform.values('platform__uuid', 'platform__name', 'platform__color', 
                                      'platform__platformtype__name').distinct().order_by('platform__name')
+        if self.kwargs.get('activitynames'):
+            qs = qs.filter(name__in=self.kwargs.get('activitynames'))
+
         platformTypeHash = defaultdict(list)
         logger.debug(f"Begining to build platformTypeHash...")
         for row in qs:
@@ -1751,7 +1757,14 @@ class STOQSQManager(object):
         Retrun hash of parmameter ids (keys) and the platforms (a list) that measured/sampled them
         '''
         ppHash = {}
-        for ap in models.ActivityParameter.objects.using(self.dbname).filter(activity__in=self.qs).values('parameter__id', 'activity__platform__name').distinct():
+        pp_qs = (models.ActivityParameter.objects.using(self.dbname)
+                                         .filter(activity__in=self.qs)
+                                         .values('parameter__id', 'activity__platform__name')
+                                         .distinct())
+        if self.kwargs.get('activitynames'):
+            pp_qs = pp_qs.filter(activity__name__in=self.kwargs.get('activitynames'))
+
+        for ap in pp_qs:
             try:
                 ppHash[ap['parameter__id']].append(ap['activity__platform__name'])
             except KeyError:
