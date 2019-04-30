@@ -289,6 +289,29 @@ def find_matching_char(s, c1, c2):
             if pos == 0:
                 return i + 1
 
+def find_parens(s):
+    '''Cribbed from https://stackoverflow.com/questions/29991917/indices-of-matching-parentheses-in-python
+    Returns hash where keys are opening parens and values are the closing parens.
+    '''
+    toret = {}
+    pstack = []
+
+    for i, c in enumerate(s):
+        if c == '(':
+            pstack.append(i)
+        elif c == ')':
+            if len(pstack) == 0:
+                logger.debug("No matching opening parens at: " + str(i))
+                return toret
+
+            toret[pstack.pop()] = i
+
+    if len(pstack) > 0:
+        logger.debug("No matching closing parens at: " + str(pstack.pop()))
+        return toret
+
+    return toret
+
 def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False):
     '''
     Given a generic database agnostic Django query string modify it using regular expressions to work
@@ -329,21 +352,26 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
     # The IN ( ... ) clauses require special treatment: an IN SELECT subquery needs no quoting, only string values need quotes, and numbers need no quotes
     FIND_INS = re.compile('\sIN\s(?P<argument>.+)')
     items = ''
-    for m in FIND_INS.findall(q):
-        if m.find('SELECT') == -1:
-            logger.debug('line = %s', m)
+    for matched_ins in FIND_INS.findall(q):
+        if matched_ins.find('SELECT') == -1:
+            parens_hash = find_parens(matched_ins)
+            # The 0 key's value will be it's matching paren, pull contents of the IN, saving what follows
+            in_content = matched_ins[1:parens_hash[0]]
+            trailing_content = matched_ins[parens_hash[0]:]
             new_items = []
-            for item in m.split(','):
-                item = item.replace("'", "")
-                if item.startswith('('):
-                    item = item[1:]
-                # Allow for parenthesized stride values in Activity names
-                end_last_good_paren = find_matching_char(item, '(', ')')
-                new_items.append(f"'{item[:end_last_good_paren].strip()}'")
-    
+            if ',' in matched_ins:
+                # Handle multiple items in the IN clause
+                for item in in_content.split(','):
+                    item = item.replace("'", "")        # Remove QUOTE_DATES quotes
+                    new_items.append(f"'{item.strip()}'")
+            else: 
+                new_items.append(f"'{in_content.strip()}'")
+
             if new_items:
-                # Have closing parens for the WHERE and the IN
-                q = FIND_INS.sub(f" IN ({', '.join(new_items)}))", q)
+                # We lop off the opening paren in in_content and the closing paren is in trailing_content
+                q = FIND_INS.sub(f" IN ({', '.join(new_items)}", q) + trailing_content
+            else:
+                raise ValueError(f"Did not get any new_items from IN in {matched_ins}")
 
     # Remove all '::bytea' added to the geom fields
     q = q.replace(r'::bytea', r'')
