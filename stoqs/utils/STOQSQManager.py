@@ -1754,7 +1754,7 @@ class STOQSQManager(object):
 
     def getParameterPlatforms(self):
         '''
-        Retrun hash of parmameter ids (keys) and the platforms (a list) that measured/sampled them
+        Return hash of parmameter ids (keys) and the platforms (a list) that measured/sampled them
         '''
         ppHash = {}
         pp_qs = (models.ActivityParameter.objects.using(self.dbname)

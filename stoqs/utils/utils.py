@@ -327,34 +327,23 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
     q = QUOTE_DATES.sub(r"'\1'", q)
 
     # The IN ( ... ) clauses require special treatment: an IN SELECT subquery needs no quoting, only string values need quotes, and numbers need no quotes
-    FIND_INS = re.compile('\sIN\s\([^\)]+\)')
+    FIND_INS = re.compile('\sIN\s(?P<argument>.+)')
     items = ''
     for m in FIND_INS.findall(q):
         if m.find('SELECT') == -1:
             logger.debug('line = %s', m)
-            beg_in = q.find(m)
-            end_in = find_matching_char(q[beg_in:], '(', ')')
-            FIND_ITEMS = re.compile('\((?P<argument>[^\']+)\)')
-            new_items = ''
-            try:
-                items = FIND_ITEMS.search(q[beg_in:][:end_in]).groups()[0]
-            except Exception as e:
-                ##logger.warn(e)
-                continue
-            else:
-                for item in items.split(','):
-                    if not item.isdigit():
-                        new_items = new_items + "'" + item.strip() + "', "
-                    else:
-                        new_items = new_items + item.strip() + ", "
-
-                ##logger.debug('items = %s', items)
-            new_items = new_items[:-2]
-            ##logger.debug('new_items = %s', new_items)
-
+            new_items = []
+            for item in m.split(','):
+                item = item.replace("'", "")
+                if item.startswith('('):
+                    item = item[1:]
+                # Allow for parenthesized stride values in Activity names
+                end_last_good_paren = find_matching_char(item, '(', ')')
+                new_items.append(f"'{item[:end_last_good_paren].strip()}'")
+    
             if new_items:
-                ##logger.debug('Replacing items = %s with new_items = %s', items, new_items)
-                q = q.replace(r' IN (' + items, r' IN (' + new_items) 
+                # Have closing parens for the WHERE and the IN
+                q = FIND_INS.sub(f" IN ({', '.join(new_items)}))", q)
 
     # Remove all '::bytea' added to the geom fields
     q = q.replace(r'::bytea', r'')
