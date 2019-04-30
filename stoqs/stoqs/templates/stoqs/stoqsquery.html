@@ -3429,8 +3429,7 @@ function enable_cardboard(){
         rebuildFilters(['parameterparameterpng']);
     });
 
-    //$('body').on('change', '.activity-select-checkbox', function (e) {
-    $('.activity-select-checkbox :checkbox').change(function() {
+    $('body').on('change', '.activity-select-checkbox', function () {
         // Remember the selection
         if ( $(this).is(':checked') ) {
             $('body').data()['activitynames'][$(this).val()] = true;
