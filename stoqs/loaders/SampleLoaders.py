@@ -210,7 +210,7 @@ class ParentSamplesLoader(STOQS_Loader):
                                                             timevalue__gte=sdt,
                                                             timevalue__lte=edt).order_by('timevalue')
         if not ip_qs:
-            self.logger.warn(f"Likely doing a test load - skipping Sample {sample_name}")
+            self.logger.warn(f"Could not get InstantPoint - likely doing a high stride test load - skipping Sample {sample_name}")
             return None, None, None, None, None
 
         m_qs = Measurement.objects.using(db_alias).filter(instantpoint__activity__name=activity_name,
@@ -296,7 +296,7 @@ class ParentSamplesLoader(STOQS_Loader):
         td_url = f"https://okeanids.mbari.org/TethysDash/api/events?vehicles={platform_name}&from={from_time}&to={to_time}&eventTypes=logImportant&limit=100000"
 
         FILTERING = 'ESP sampling state: S_FILTERING'
-        STOPPING = 'ESP sampling state: S_STOPPING'
+        PROCESSING = 'ESP sampling state: S_PROCESSING'
         LOGSUMMARY = 'ESP log summary report'
 
         self.logger.debug(f"Opening td_url = {td_url}")
@@ -312,9 +312,9 @@ class ParentSamplesLoader(STOQS_Loader):
         except KeyError:
             self.logger.debug(f"No '{FILTERING}' messages found in {td_url}")
         try:
-            esp_s_stopping = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if STOPPING in d['text']]
+            esp_s_stopping = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if PROCESSING in d['text']]
         except KeyError:
-            self.logger.debug(f"No '{STOPPING}' messages found in {td_url}")
+            self.logger.debug(f"No '{PROCESSING}' messages found in {td_url}")
         try:
             esp_log_summaries = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if LOGSUMMARY in d['text']]
         except KeyError:
@@ -340,7 +340,7 @@ class ParentSamplesLoader(STOQS_Loader):
 
         # Have both sample # and no_num versions of regular expressions so as to also get legacy samples
         no_num_sampling_start_re = 'ESP sampling state: S_FILTERING'
-        no_num_sampling_end_re = 'ESP sampling state: S_STOPPING'
+        no_num_sampling_end_re = 'ESP sampling state: S_PROCESSING'
         sample_prefix = '\[sample #(?P<seq_num>\d+)\] '
         sampling_start_re     = sample_prefix + no_num_sampling_start_re
         sampling_end_re       = sample_prefix + no_num_sampling_end_re
