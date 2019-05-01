@@ -178,7 +178,7 @@ class CANONLoader(LoadScript):
         self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pname,
                                   scalefactor=2)
 
-    def _execute_load(self, pname, parameters, stride):
+    def _execute_load(self, pname, parameters, stride, critSimpleDepthTime):
         psl = ParentSamplesLoader('', '', dbAlias=self.dbAlias)
         stride = stride or self.stride
         files = getattr(self, f'{pname}_files')
@@ -201,7 +201,8 @@ class CANONLoader(LoadScript):
                                           pname, self.colors[pname], 'auv', 'AUV mission',
                                           parameters, self.dbAlias, stride, 
                                           grdTerrain=self.grdTerrain, command_line_args=self.args,
-                                          plotTimeSeriesDepth=0, auxCoords=aux_coords)
+                                          plotTimeSeriesDepth=0, auxCoords=aux_coords,
+                                          critSimpleDepthTime=critSimpleDepthTime)
                 psl.load_lrauv_samples(pname, aname, url, self.dbAlias)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
@@ -224,14 +225,14 @@ class CANONLoader(LoadScript):
                     'pose_latitude_DeadReckonUsingMultipleVelocitySources',
                     'pose_depth_DeadReckonUsingMultipleVelocitySources',],
                   stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True, 
-                  dlist_str=None, err_on_missing_file=False):
+                  dlist_str=None, err_on_missing_file=False, critSimpleDepthTime=10):
         '''
         Loader for tethys, daphne, makai, ahi, aku, 
         '''
         if build_attrs and not dlist_str:
             self.logger.info(f'Building load parameter attributes crawling LRAUV dirs')
             self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
-            self._execute_load(pname, parameters, stride)
+            self._execute_load(pname, parameters, stride, critSimpleDepthTime)
         elif dlist_str:
             for year in range(startdate.year, enddate.year + 1):
                 # Execute load for a year at a time in order to keep the Avtivity name shorter
@@ -239,11 +240,11 @@ class CANONLoader(LoadScript):
                 self.logger.info(f'Building load parameter attributes crawling LRAUV dirs with dlist_str = {dlist_str} and year = {year}')
                 self.build_lrauv_attrs(year, pname, datetime(year, 1, 1), datetime(year, 12, 31), 
                                        parameters, file_patterns, dlist_str, err_on_missing_file)
-                self._execute_load(pname, parameters, stride)
+                self._execute_load(pname, parameters, stride, critSimpleDepthTime)
         else:
             self.logger.info(f'Using load {pname} attributes set in load script')
             parameters = getattr(self, f'{pname}_parms')
-            self._execute_load(pname, parameters, stride)
+            self._execute_load(pname, parameters, stride, critSimpleDepthTime)
 
     def loadMartin(self, stride=None):
         '''

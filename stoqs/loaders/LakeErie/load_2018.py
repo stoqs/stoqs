@@ -50,7 +50,8 @@ elif cl.args.stride:
     cl.stride = cl.args.stride
 
 for lrauv in ('makai', ):
-    cl.loadLRAUV(lrauv, syear, eyear, dlist_str='Lake Erie', err_on_missing_file=True)
+    cl.loadLRAUV(lrauv, syear, eyear, dlist_str='Lake Erie', err_on_missing_file=True,
+                 critSimpleDepthTime=1)
 
 ##cl.loadSubSamples()
 
