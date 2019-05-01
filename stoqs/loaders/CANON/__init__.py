@@ -52,6 +52,7 @@ mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import matplotlib.pyplot as plt
 from matplotlib.colors import rgb2hex
 import numpy as np
+import re
 import webob
 
 def getStrideText(stride):
@@ -1181,6 +1182,27 @@ class CANONLoader(LoadScript):
                 self.logger.debug(f"Found mission {mission_url}")
                 return mission_url
 
+    def _scieng_file_state(self, log_url):
+        '''Check other contents the associated .log file to test whether there really should be a .nc file.
+        Return text indicating presence or reason why not. (Borrowed from lrauv-tools/handle-lrauv-logs/lrauv-data-file-audit.)
+        '''
+        not_creating_line = "ERROR .* Not creating"
+        no_start_and_end = "WARNING .* Can't get start and end date from .nc4"
+        with requests.get(log_url) as resp:
+            if resp.status_code != 200:
+                self.logger.error(f"Cannot read {log_url}, resp.status_code = {resp.status_code}")
+                return 'log_file_missing'
+            for line in (r.decode('utf-8') for r in resp.iter_lines()):
+                self.logger.debug(f"{line}")
+                if re.match(not_creating_line, line):
+                    # Likely no variables available in .nc4 to produce the scieng.nc file
+                    return 'missing_no_variables'
+                if re.match(no_start_and_end, line):
+                    # Likely no time_time variable in the scieng.nc file
+                    return 'missing_no_time_time'
+
+        return 'should_be_present'
+
     def find_lrauv_urls_by_dlist_string(self, dlist_str, platform, start_year, end_year, nc_str='_2S_scieng.nc'):
         '''Crawl web accessible directories and search for missions that have dlist_str.
         Find all .dlist files and scan contents of the .dlist that has `dlist_str`.
@@ -1196,7 +1218,7 @@ class CANONLoader(LoadScript):
                 if '.dlist' in link.get('href'):
                     dlist_dir = link.get('href').split('/')[-1].split('.')[0]
                     dlist_url = os.path.join(file_base, f"{dlist_dir}.dlist")
-                    self.logger.debug(f"Found a .dlist containing {dlist_str}")
+                    self.logger.debug(f"Found a .dlist containing {dlist_str}: {dlist_dir}")
                     self.logger.debug(f"Searching uncommented directores in {dlist_url}")
                     with requests.get(dlist_url) as resp:
                         if resp.status_code != 200:
@@ -1204,6 +1226,7 @@ class CANONLoader(LoadScript):
                             return
                         if dlist_str in resp.text:
                             for line in (r.decode('utf-8') for r in resp.iter_lines()):
+                                self.logger.debug(f"{line}")
                                 if not line.startswith('#'):
                                     mission_dir = os.path.join(file_base, dlist_dir, line)
                                     mission_dods = os.path.join(dods_base, dlist_dir, line)
@@ -1211,6 +1234,13 @@ class CANONLoader(LoadScript):
                                     if url:
                                         self.logger.info(f"Adding {url} to urls list")
                                         urls.append(url)
+                                    else:
+                                        # Check .log file contents to confirm that we expect a url (.nc file)
+                                        log_url = self._get_mission_url(nc_str[:-2] + 'log', mission_dir, mission_dods)
+                                        log_reason = self._scieng_file_state(log_url)
+                                        self.logger.debug(f"The .log file indication for .nc file: {log_reason}")
+                                        if log_reason == 'should_be_present':
+                                            self.logger.warn(f"Could not find {nc_str} file in {mission_dods}, it {log_reason}")
         return urls
 
     def build_lrauv_attrs(self, mission_year, platform, startdate, enddate, parameters, file_patterns,
