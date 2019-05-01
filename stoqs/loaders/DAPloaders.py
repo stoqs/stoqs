@@ -1690,9 +1690,10 @@ class Lrauv_Loader(Trajectory_Loader):
             'sea_water_temperature',
     ]
 
-    def __init__(self, contourUrl, timezone, *args, **kwargs):
+    def __init__(self, contourUrl, timezone, critSimpleDepthTime, *args, **kwargs):
         self.contourUrl = contourUrl
         self.timezone = timezone 
+        self.critSimpleDepthTime = critSimpleDepthTime
         super(Lrauv_Loader, self).__init__(*args, **kwargs)
 
     def addResources(self):
@@ -1996,7 +1997,7 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
 def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
                    stride=1, startDatetime=None, endDatetime=None, grdTerrain=None,
                    dataStartDatetime=None, contourUrl=None, auxCoords=None, timezone='America/Los_Angeles',
-                   command_line_args=None, plotTimeSeriesDepth=None): # pragma: no cover
+                   command_line_args=None, plotTimeSeriesDepth=None, critSimpleDepthTime=10): # pragma: no cover
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -2020,7 +2021,8 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
             contourUrl = contourUrl,
             auxCoords = auxCoords,
             timezone = timezone,
-            command_line_args = command_line_args)
+            command_line_args = command_line_args,
+            critSimpleDepthTime = critSimpleDepthTime)
 
     if parmList:
         loader.include_names = []
