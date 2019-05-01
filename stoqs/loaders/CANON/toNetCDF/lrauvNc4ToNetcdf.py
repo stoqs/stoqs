@@ -544,16 +544,11 @@ class InterpolatorWriter(BaseWriter):
                 md = np.ma.masked_greater(data_array, -2.0)     # Remove points in Utah
                 da = pd.Series(da[:][~md.mask], index=v_time)
  
-        rad_to_deg = False
         if angle:
             # Some universal positions are in degrees, some are in radians - make a guess based on mean values
+            rad_to_deg = False
             if np.max(np.abs(da)) <= np.pi:
                 rad_to_deg = True
-            else:
-                # Check if there is just a few outliers
-                max_num_outliers = 2
-                if len(np.where(np.abs(da) > np.pi)[0]) <= max_num_outliers:
-                    rad_to_deg = True
 
             logger.debug(f"{data_array.name}: rad_to_deg = {rad_to_deg}")
             if rad_to_deg:
