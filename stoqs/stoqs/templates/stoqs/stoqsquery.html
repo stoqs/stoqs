@@ -4242,6 +4242,10 @@ function enable_cardboard(){
                 $('#acts-by-stride :checkbox').each(function() {
                     $(this).prop('checked', true);
                 });
+
+                if ( $('.check_activity_stride').length < 2 ) {
+                    $('#acts-by-stride').hide();
+                }
             }
             else {
                 // On update we need to reflect what is in the selection (platforms, MP, temporal/depth)
@@ -4255,6 +4259,20 @@ function enable_cardboard(){
                     $.each(activities, function (activityname, activity) {
                         $('input[name=activity_select_cb][value="' + activityname + '"]').parent().parent().show();
                     });
+                });
+
+                if ( $('#acts-by-stride:checkbox').length < 2 ) {
+                    $('#acts-by-stride').hide();
+                }
+
+                // Hide groups that have no showing Activities
+                $('#netcdf-groups > div').each(function(index, elem) {
+                    $(elem).show();
+                });
+                $('#netcdf-groups > div').each(function(index, elem) {
+                    if ( $('.netcdf-activity-row:visible', elem).length == 0 ) {
+                        $(elem).hide();
+                    }
                 });
             }
 
