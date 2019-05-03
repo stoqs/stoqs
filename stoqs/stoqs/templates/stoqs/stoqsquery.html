@@ -2192,7 +2192,9 @@
                 // Metadata section is opened and NetCDF tab is active, offer selection of Activities
                 params['activitynames'] = [];
                 $('input:checked[name=activity_select_cb]').each(function (index, elem) {
-                    params['activitynames'].push(elem.value);
+                    if ( $(elem).parent().parent().is(':visible') ) {
+                        params['activitynames'].push(elem.value);
+                    }
                 });
             }
         }
@@ -4261,7 +4263,7 @@ function enable_cardboard(){
                     });
                 });
 
-                if ( $('#acts-by-stride:checkbox').length < 2 ) {
+                if ( $('.check_activity_stride').length < 2 ) {
                     $('#acts-by-stride').hide();
                 }
 
