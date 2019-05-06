@@ -383,9 +383,9 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
                 # Handle multiple items in the IN clause
                 for item in in_content.split(','):
                     item = item.replace("'", "")        # Remove QUOTE_DATES quotes
-                    new_items.append(f"'{item.strip()}'")
+                    new_items.append(f"'{item}'")
             else: 
-                new_items.append(f"'{in_content.strip()}'")
+                new_items.append(f"'{in_content}'")
 
             if new_items:
                 new_pgq += f"{INSTR}({', '.join(new_items)}" + trailing_content
