@@ -4279,7 +4279,7 @@ function enable_cardboard(){
             }
 
             // Register event handler for "all activities" checkbox - fires off a rebuildFilters()
-            $('.checkall_activity').on('click', function () {
+            $('.checkall_activity').unbind().on('click', function () {
                 if ( $(this).is(':checked') ) {
                     $('.activity-select-checkbox').prop('checked', true);
                     $('.check_activity_stride').prop('checked', true);
@@ -4298,7 +4298,7 @@ function enable_cardboard(){
             });
 
             // Register event handler for activity strides checkboxes - fires off a rebuildFilters()
-            $('.check_activity_stride').on('click', function () {
+            $('.check_activity_stride').unbind().on('click', function () {
                 if ( $(this).is(':checked') ) {
                     $('.' + this.id).prop('checked', true);
                     $('.' + this.id).each(function(index, elem) {
