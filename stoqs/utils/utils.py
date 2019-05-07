@@ -373,7 +373,7 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
             in_content = matched_ins[1:parens_hash[0]]
             # Capture intermediate and trailing SQL between the ' IN ' clauses 
             try:
-                end_index = all_ins[incount+1].start() - len(INSTR) - all_ins[incount].end() + parens_hash[0]
+                end_index = all_ins[incount+1].start() - len(INSTR) - all_ins[incount].end() + parens_hash[0] + 1
                 trailing_content = matched_ins[parens_hash[0]:end_index]
             except IndexError:
                 # Likely all_ins[incount+1] has failed on last in_match instance
@@ -383,9 +383,9 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
                 # Handle multiple items in the IN clause
                 for item in in_content.split(','):
                     item = item.replace("'", "")        # Remove QUOTE_DATES quotes
-                    new_items.append(f"'{item}'")
+                    new_items.append(f"'{item.lstrip()}'")
             else: 
-                new_items.append(f"'{in_content}'")
+                new_items.append(f"'{in_content.lstrip()}'")
 
             if new_items:
                 new_pgq += f"{INSTR}({', '.join(new_items)}" + trailing_content
