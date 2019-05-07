@@ -4119,12 +4119,39 @@ function enable_cardboard(){
 
         function buildMetadataHtml(data, init) {
             var platforms = $.map(data.resources.netcdf, function(activities, plat) {return plat}).sort();
+            // Build acts_by_stride for use by both init and update
+            var acts_by_stride = {};
+            $.each(platforms, function (index, plat) {
+                var activities = $.map(data.resources.netcdf[plat], function(activities, a) {return a}).sort();
+                $.each(activities, function(index, activity) {
+                    // Save a hash list of activities by stride=value so the they can be selected / de-selected
+                    var stride_val = 'stride=1';
+                    if ( ! $.isEmptyObject(activity.match(/\((.+)\)/)) ) {
+                        stride_val = activity.match(/\((.+)\)/)[1];
+                        if ( $.type(acts_by_stride[stride_val]) == "undefined" ) {
+                                acts_by_stride[stride_val] = [];
+                        }
+                        else {
+                            acts_by_stride[stride_val].push(activity);
+                        }
+                    }
+                    else {
+                        // Have a checkbox for (stride=1) even if that is not part of the Activity name
+                        if ( $.type(acts_by_stride[stride_val]) == "undefined" ) {
+                                acts_by_stride[stride_val] = [];
+                        }
+                        else {
+                            acts_by_stride[stride_val].push(activity);
+                        }
+                    }
+                });
+            });
+
             if (init) {
                 // Sort the Activities by platform and build HTML for NetCDF tab
                 var platformActivitiesHtml = 'Check/Uncheck Activities (leave this section open for selections to apply - collapse it otherwise)<br>';
                 platformActivitiesHtml += '<input type="checkbox" name="all_activity_select_cb" value="" class="checkall_activity" /> All';
                 platformActivitiesHtml += '<div id="acts-by-stride"></div>';
-                var acts_by_stride = {};
                 var ql_plots_tab_html = '';
                 platformActivitiesHtml += '<div id="netcdf-groups">'; 
                 $.each(platforms, function (index, plat) {
@@ -4149,34 +4176,15 @@ function enable_cardboard(){
 
                     for (var i = 0; i < activities.length; i++) {
                         var activity = activities[i];
-                        // Save a hash list of activities by stride=value so the they can be selected / de-selected
-                        var stride = 'stride1';
+                        var attributes = data.resources.netcdf[plat][activity];
+                        var dsLink = activity;
                         var stride_val = 'stride=1';
                         if ( ! $.isEmptyObject(activity.match(/\((.+)\)/)) ) {
                             stride_val = activity.match(/\((.+)\)/)[1];
-                            if ( $.type(acts_by_stride[stride_val]) == "undefined" ) {
-                                    acts_by_stride[stride_val] = [];
-                            }
-                            else {
-                                acts_by_stride[stride_val].push(activity);
-                            }
-                            stride = stride_val;
                         }
-                        else {
-                            // Have a checkbox for (stride=1) even if that is not part of the Activity name
-                            if ( $.type(acts_by_stride[stride_val]) == "undefined" ) {
-                                    acts_by_stride[stride_val] = [];
-                            }
-                            else {
-                                acts_by_stride[stride_val].push(activity);
-                            }
-                        }
-
-                        var attributes = data.resources.netcdf[plat][activity];
-                        var dsLink = activity;
                         if (attributes.opendap_url) {
                             dsLink = '<input type="checkbox" name="activity_select_cb" value="' + activity + '" class="activity-select-checkbox ' + 
-                                                                                                stride.replace('=', '') + '" style="margin:0px;"/> ';
+                                                                                                stride_val.replace('=', '') + '" style="margin:0px;"/> ';
                             dsLink += '<a target="_blank" href="' + attributes.opendap_url + '.html">';
                             dsLink += '<span style="overflow:hidden;text-overflow:ellipsis;display:block;">' + activity + '</span></a>';
                         }
@@ -4237,8 +4245,8 @@ function enable_cardboard(){
                 // Add the stride value selection checkboxes
                 var acts_by_stride_html = '';
                 $.each(acts_by_stride, function(stride, activities) {
-                    acts_by_stride_html += '<input type="checkbox" id="' + stride.replace('=', '') + '" name="activity_' + stride.replace('=', '') + 
-                                           '_cb" value="" class="check_activity_stride" /> (' + stride + ')<br>';
+                    acts_by_stride_html += '<div><input type="checkbox" id="' + stride.replace('=', '') + '" name="activity_' + stride.replace('=', '') + 
+                                           '_cb" value="" class="check_activity_stride" /> (' + stride + ')</div>';
                 });
                 $('#acts-by-stride').html(acts_by_stride_html);
                 $('#acts-by-stride :checkbox').each(function() {
@@ -4257,13 +4265,29 @@ function enable_cardboard(){
                 });
 
                 // Second, show the rows that are in the selection - lookup up from checkbox value, which can handle activity.name characters
+                var strides_to_show = {};
                 $.each(data.resources.netcdf, function (plat, activities) {
                     $.each(activities, function (activityname, activity) {
                         $('input[name=activity_select_cb][value="' + activityname + '"]').parent().parent().show();
+                        $.each(acts_by_stride, function(stride, activities_by_stride) {
+                            if ( $.inArray(activity, activities_by_stride) ) {
+                                strides_to_show[stride.replace('=', '')] = true;
+                            }
+                        });
                     });
                 });
 
-                if ( $('.check_activity_stride').length < 2 ) {
+                // Third, modify the Activities by stride checkboxes (and parent divs) according to what is in the selection
+                $('#acts-by-stride').show();
+                $('.check_activity_stride').each(function(index, elem) {
+                    $(elem).hide();
+                    $(elem).parent().hide();
+                    if ( strides_to_show[elem.id] ) {
+                        $(elem).show();
+                        $(elem).parent().show();
+                    }
+                });
+                if ( $('.check_activity_stride:visible').length < 2 ) {
                     $('#acts-by-stride').hide();
                 }
 
