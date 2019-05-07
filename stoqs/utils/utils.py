@@ -394,8 +394,9 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
             else:
                 raise ValueError(f"Did not get any new_items from IN in {matched_ins}")
 
-    # Remove all '::bytea' added to the geom fields
+    # Remove all '::bytea' added to the geom fields - and cleanup any mistakes 
     new_pgq = new_pgq.replace(r'::bytea', r'')
+    new_pgq = new_pgq.replace(r' IN IN', r' IN ')
 
     return new_pgq
 
