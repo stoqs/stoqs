@@ -165,6 +165,19 @@
       </div>
     </div>
 
+  <div id="collapse_metadata-popup" class="modal hide fade in" style="width:auto;">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">×</a>
+        <h3 id="collapse_metadata_header">Metadata Opened</h3>
+    </div>
+    <div class="modal-body">
+        <div id="collapse_metadata">The Metadata section has been closed to perform this selection.</div>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">Close</a>
+    </div>
+  </div>
+
   <div id="pg_dump-popup" class="modal hide fade in" style="width:auto;">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">×</a>
@@ -1857,6 +1870,11 @@
     function toggleField(element) {
         var $element=$(element);
         if (! $(element).is('.disabled')) { // If it's disabled, then don't bother toggling it.
+            if ( $('#collapseMetadata').hasClass('in') && $('#metadata-netcdf-li').hasClass('active') ) {
+                // Metadata section is opened and NetCDF tab is active, close it and give pop-up warning
+                $('#metadata-anchor').click();
+                $("#collapse_metadata-popup").modal("show");
+            }
             if ($element.is('.btn-primary')) {
                 $element.removeClass('btn-primary');
             } else {
@@ -2676,6 +2694,11 @@
 
     $("#clear-pp-button").click(function() {
         if ( $('#clear-pp-button').hasClass('btn-primary')) {
+            if ( $('#collapseMetadata').hasClass('in') && $('#metadata-netcdf-li').hasClass('active') ) {
+                // Metadata section is opened and NetCDF tab is active, close it and give pop-up warning
+                $('#metadata-anchor').click();
+                $("#collapse_metadata-popup").modal("show");
+            }
             $("#clear-pp-button").removeClass('btn-primary');
             $("#clear-pp-button").addClass('disabled');
             $('#parameter-parameter-anchor').html('Parameter-Parameter')
@@ -2693,6 +2716,11 @@
 
     $("#clear-sampledparameter-button").click(function() {
         if ( $('#clear-sampledparameter-button').hasClass('btn-primary')) {
+            if ( $('#collapseMetadata').hasClass('in') && $('#metadata-netcdf-li').hasClass('active') ) {
+                // Metadata section is opened and NetCDF tab is active, close it and give pop-up warning
+                $('#metadata-anchor').click();
+                $("#collapse_metadata-popup").modal("show");
+            }
             $("#clear-sampledparameter-button").removeClass('btn-primary');
             $("#clear-sampledparameter-button").addClass('disabled');
             $('.btn-primary',$('#sampledparameter-table')).each(function (index, element) {
@@ -2705,6 +2733,11 @@
 
     $("#clear-measuredparameter-button").click(function() {
         if ( $('#clear-measuredparameter-button').hasClass('btn-primary')) {
+            if ( $('#collapseMetadata').hasClass('in') && $('#metadata-netcdf-li').hasClass('active') ) {
+                // Metadata section is opened and NetCDF tab is active, close it and give pop-up warning
+                $('#metadata-anchor').click();
+                $("#collapse_metadata-popup").modal("show");
+            }
             $("#clear-measuredparameter-button").removeClass('btn-primary');
             $("#clear-measuredparameter-button").addClass('disabled');
             $('.btn-primary',$('#measuredparameter-table')).each(function (index, element) {
@@ -2717,6 +2750,11 @@
 
     $("#resetparametervaluesselections").click(function() {
         if ( $('#resetparametervaluesselections').hasClass('btn-primary')) {
+            if ( $('#collapseMetadata').hasClass('in') && $('#metadata-netcdf-li').hasClass('active') ) {
+                // Metadata section is opened and NetCDF tab is active, close it and give pop-up warning
+                $('#metadata-anchor').click();
+                $("#collapse_metadata-popup").modal("show");
+            }
             $("#resetparametervaluesselections").removeClass('btn-primary');
             $("#resetparametervaluesselections").addClass('disabled');
             parametervalues = {};
@@ -2726,6 +2764,11 @@
 
     $("#clear-attributes-button").click(function() {
         if ( $('#clear-attributes-button').hasClass('btn-primary')) {
+            if ( $('#collapseMetadata').hasClass('in') && $('#metadata-netcdf-li').hasClass('active') ) {
+                // Metadata section is opened and NetCDF tab is active, close it and give pop-up warning
+                $('#metadata-anchor').click();
+                $("#collapse_metadata-popup").modal("show");
+            }
             $("#clear-attributes-button").removeClass('btn-primary');
             $("#clear-attributes-button").addClass('disabled');
             $('.stoqs-attributes').each(function (index, element) {
@@ -2739,6 +2782,11 @@
     });
     $("#clear-platforms-button").click(function() {
         if ( $('#clear-platforms-button').hasClass('btn-primary')) {
+            if ( $('#collapseMetadata').hasClass('in') && $('#metadata-netcdf-li').hasClass('active') ) {
+                // Metadata section is opened and NetCDF tab is active, close it and give pop-up warning
+                $('#metadata-anchor').click();
+                $("#collapse_metadata-popup").modal("show");
+            }
             $("#clear-platforms-button").removeClass('btn-primary');
             $("#clear-platforms-button").addClass('disabled');
             $('tr',$('.stoqs-platform')).each(function (index, element) {
@@ -4149,7 +4197,7 @@ function enable_cardboard(){
 
             if (init) {
                 // Sort the Activities by platform and build HTML for NetCDF tab
-                var platformActivitiesHtml = 'Check/Uncheck Activities (leave this section open for selections to apply - collapse it otherwise)<br>';
+                var platformActivitiesHtml = 'Check/Uncheck Activities (leave this section open for selections to apply - <u>collapse it otherwise</u>)<br>';
                 platformActivitiesHtml += '<input type="checkbox" name="all_activity_select_cb" value="" class="checkall_activity" /> All';
                 platformActivitiesHtml += '<div id="acts-by-stride"></div>';
                 var ql_plots_tab_html = '';
