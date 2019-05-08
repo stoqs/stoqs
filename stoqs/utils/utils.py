@@ -396,7 +396,8 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
 
     # Remove all '::bytea' added to the geom fields - and cleanup any mistakes 
     new_pgq = new_pgq.replace(r'::bytea', r'')
-    new_pgq = new_pgq.replace(r' IN IN', r' IN ')
+    new_pgq = new_pgq.replace(r' IN IN ', r' IN ')
+    new_pgq = new_pgq.replace(r' IN  IN', r' IN ')
 
     return new_pgq
 
