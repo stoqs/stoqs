@@ -4222,11 +4222,13 @@ function enable_cardboard(){
                             plots = data.resources.quick_look[plat][activity];
                             ql_plots_tab_html += '<tr id="' + activity +'">' +
                                     '<td>' + activity + '</td>';
-                            $.each(plots, function (type, url) {
-                                if ( ! url == '' ) {
-                                    ql_plots_tab_html += '<td><a target="_blank" href="' + url + '">' + type + '</a></td>';
-                                }
-                            });
+                            if ( ! $.isEmptyObject(plots) ) {
+                                $.each(plots, function (type, url) {
+                                    if ( ! url == '' ) {
+                                        ql_plots_tab_html += '<td><a target="_blank" href="' + url + '">' + type + '</a></td>';
+                                    }
+                                });
+                            }
                             ql_plots_tab_html += '</tr>';
                         }
                     }
