@@ -528,7 +528,7 @@ class MeasuredParameter(BaseParameter):
             sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
         else:
             # Return silently with no error message - simply can't make a plot without a Parameter
-            return None, None, None
+            return None, None, None, self.cm_name
 
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
         
@@ -633,7 +633,7 @@ class MeasuredParameter(BaseParameter):
                         contourFlag = True
           
             if len(cz) == 0 and len(clz) == 0:
-                return None, None, 'No data returned from selection'
+                return None, None, 'No data returned from selection', self.cm_name
 
             if contourFlag:
                 try:
@@ -642,10 +642,10 @@ class MeasuredParameter(BaseParameter):
                     zi = griddata((cx, cy), cz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
                 except KeyError as e:
                     self.logger.exception('Got KeyError. Could not grid the data')
-                    return None, None, 'Got KeyError. Could not grid the data'
+                    return None, None, 'Got KeyError. Could not grid the data', self.cm_name
                 except Exception as e:
                     self.logger.exception('Could not grid the data')
-                    return None, None, 'Could not grid the data'
+                    return None, None, 'Could not grid the data', self.cm_name
 
                 self.logger.debug('zi = %s', zi)
 
@@ -692,7 +692,7 @@ class MeasuredParameter(BaseParameter):
                                 ax.plot(xs, ys, c=self._get_color(z, parm_info[1], parm_info[2]), lw=3)
                             except ZeroDivisionError:
                                 # Likely all data is same value and color lookup table can't be computed
-                                return None, None, "Can't plot identical data values of %f" % z
+                                return None, None, "Can't plot identical data values of %f" % z, self.cm_name
 
                 if self.sampleQS and SAMPLED not in self.parameterGroups:
                     # Sample markers for everything but Net Tows
@@ -741,19 +741,19 @@ class MeasuredParameter(BaseParameter):
                 plt.close()
             except Exception as e:
                 self.logger.exception('Could not plot the data')
-                return None, None, 'Could not plot the data'
+                return None, None, 'Could not plot the data', self.cm_name
 
             if self.colorbarPngFileFullPath:
                 try:
                     self.makeColorBar(self.colorbarPngFileFullPath, parm_info)
                 except Exception as e:
                     self.logger.exception('%s', e)
-                    return None, None, 'Could not plot the colormap'
+                    return None, None, 'Could not plot the colormap', self.cm_name
 
-            return sectionPngFile, self.colorbarPngFile, self.strideInfo
+            return sectionPngFile, self.colorbarPngFile, self.strideInfo, self.cm_name
         else:
             self.logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s', tmin, tmax, dmin, dmax)
-            return None, None, 'Select a time-depth range'
+            return None, None, 'Select a time-depth range', self.cm_name
 
     def dataValuesX3D(self, vert_ex=10.0):
         '''

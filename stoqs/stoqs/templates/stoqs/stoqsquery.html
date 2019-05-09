@@ -5047,6 +5047,10 @@ function enable_cardboard(){
                         if ( ! $.isEmptyObject(data['parameterplatformdatavaluepng']) ) {
                             if ( ! $.isEmptyObject(data['parameterplatformdatavaluepng'][0]) ) {
                                 var flotdata;
+                                // Check radio button for colormap used in plot and fire changed event to update colorbars in the UI
+                                var colormap = data['parameterplatformdatavaluepng'][3];
+                                $('input:radio[value=' + colormap + ']').prop('checked', true);
+                                $('input:radio[value=' + colormap + ']').change();
                                 var options = simpledepthtime_options_zoom;
                                 if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
                                     // Zoomed
