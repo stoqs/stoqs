@@ -75,19 +75,13 @@ def readCLT(fileName):
 class BaseParameter(object):
 
     def __init__(self):
-        self.jetplus_clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
-
-        # Default colormap - the legacy jetplus
-        self.cm_name = 'jetplus'
-        self.num_colors = 256
+        # Default colormap - a perceptually uniform, color blind safe one
+        self.cm_name = 'cividis'
+        self.num_colors = 512
         self.cmin = None
         self.cmax = None
-        # Original jetplus.txt file has just 128 colors, duplicate adjancents to make 256 colors
-        self.jetplus_clt_256 = []
-        for c in self.jetplus_clt:
-            self.jetplus_clt_256.extend([c, c])
-        self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt_256))
-        self.clt = self.jetplus_clt_256
+        self.cm = plt.get_cmap(self.cm_name)
+        self.clt = [self.cm(i) for i in range(256)]
     
     def set_colormap(self):
         '''Assign colormap as passed in from UI request
@@ -95,21 +89,14 @@ class BaseParameter(object):
         if hasattr(self.request, 'GET'):
             if self.request.GET.get('cm'):
                 self.cm_name = self.request.GET.get('cm')
-                if self.cm_name == 'jetplus':
-                    self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt_256))
-                    self.clt = self.jetplus_clt_256
-                elif self.cm_name == 'jetplus_r':
-                    self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt_256)[::-1])
-                    self.clt = self.jetplus_clt_256[::-1]
-                else:
-                    try:
-                        self.cm = plt.get_cmap(self.cm_name)
-                    except ValueError:
-                        # Likely a cmocean colormap
-                        self.cm = getattr(cmocean.cm, self.cm_name)
+                try:
+                    self.cm = plt.get_cmap(self.cm_name)
+                except ValueError:
+                    # Likely a cmocean colormap
+                    self.cm = getattr(cmocean.cm, self.cm_name)
 
-                    # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
-                    self.clt = [self.cm(i) for i in range(256)]
+                # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
+                self.clt = [self.cm(i) for i in range(256)]
 
             if self.request.GET.get('num_colors') is not None:
                 self.num_colors = int(self.request.GET.get('num_colors'))

@@ -388,8 +388,8 @@ class KML(BaseParameter):
                 clt_index = int(self.num_colors * float(clt_index) / len(self.clt))
             except ZeroDivisionError:
                 raise InvalidLimits('cmin and cmax are the same value')
-            except ValueError:
-                # Likely: 'cannot convert float NaN to integer' e.g. for altitude outside of terrain coverage
+            except (ValueError, TypeError):
+                # Likely: 'cannot convert float NaN or None to integer' e.g. for altitude outside of terrain coverage
                 continue
 
             if clt_index < 0:

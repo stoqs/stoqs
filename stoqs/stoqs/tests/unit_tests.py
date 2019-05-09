@@ -533,27 +533,6 @@ class BugsFoundTestCase(TestCase):
 
     # As bugs are discovered this class is a place to put tests
 
-    def test_jetplus_kmln_generation(self):
-        base = reverse('stoqs:show-measuredparmeter', kwargs={'fmt': '.kmln', 'dbAlias': 'default'})
-
-        # Discovered that jetplus.txt was just 128 points when the KML colormap generation code
-        # assumed 256 colors in the color lookup table. This test confirms that the correct color
-        # is generated from the jetplus color lookup table.
-        qstring = ('parameter__name__contains=temperature&measurement__instantpoint__activity__platform__name'
-                   '=dorado&measurement__instantpoint__timevalue__gt=2010-10-28%2002:10:19&'
-                   'measurement__instantpoint__timevalue__lt=2010-10-28%2003:43:39&'
-                   'measurement__depth__gte=20.1&measurement__depth__lte=35.72&cmin=11.53&'
-                   'cmax=14.06&cm=jetplus&num_colors=256')
-
-        req = base + '?' + qstring
-        response = self.client.get(req)
-        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-        kml_data = response.content
-        required_string = ('<coordinates>\n-121.934521, 36.868014,-29.8\n</coordinates>\n'
-                           '</Point>\n</Placemark> \n<Placemark>\n<styleUrl>#ffd10000') 
-        self.assertTrue(required_string in response.content.decode("utf-8"), 
-                        'required_string not found in response.content')
-
     def test_lopc_data_load(self):
         # Make sure 'sepCountList', 'mepCountList' are loaded into dataarray
 

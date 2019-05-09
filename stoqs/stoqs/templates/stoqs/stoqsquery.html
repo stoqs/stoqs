@@ -732,7 +732,7 @@
                                         <form style="text-align: center;" class="form-inline">
                                             <input id="sp-cmin" type="text" class="stoqs-color-limit-input" style="text-align:right;" title="Initial min value is 2.5 percentile" />
                                             <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
-                                                <img id="sp-kmlcolorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" alt="KML colormap" />
+                                                <img id="sp-kmlcolorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/cividis.png" alt="KML colormap" />
                                             </a>
                                             <input id="sp-cmax" type="text" class="stoqs-color-limit-input" title="Initial max value is 97.5 percentile" />
                                         </form>
@@ -795,7 +795,7 @@
                                         <form style="text-align: center;" class="form-inline">
                                             <input id="mp-cmin" type="text" class="stoqs-color-limit-input" style="text-align:right;" title="Initial min value is 2.5 percentile" />
                                             <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
-                                                <img id="mp-kmlcolorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" alt="KML colormap" />
+                                                <img id="mp-kmlcolorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/cividis.png" alt="KML colormap" />
                                             </a>
                                             <input id="mp-cmax" type="text" class="stoqs-color-limit-input" title="Initial max value is 97.5 percentile" />
                                         </form>
@@ -910,7 +910,7 @@
                             </h3></td><td>
                                 <input id="cm-cmin" type="text" class="stoqs-color-limit-input cm-activate" style="text-align:right;" title="Initial min value is 2.5 percentile" />
                             </td><td>
-                                <img id="cm-colorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" />
+                                <img id="cm-colorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/cividis.png" />
                             </td><td>
                                 <input id="cm-cmax" type="text" class="stoqs-color-limit-input cm-activate" title="Initial max value is 97.5 percentile" />
                                 <label class="stoqs-color-limit-input" for="cmincmax_lock" style="display:inline;"> Lock: </label>
@@ -1563,7 +1563,7 @@
 
     function updateKMLcmincmax(group) {
         var cmincmax;
-        var cm = 'jetplus';
+        var cm = 'cividis';
         if ( ! $.isEmptyObject($('input:radio[name=colormap_choice]:checked').val()) ) {
             cm = $('input:radio[name=colormap_choice]:checked').val();
         }
@@ -1622,7 +1622,7 @@
                         //sensortrackskml.attribution = '<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />';
                         // Dynamically set url for sensor tracks display in openlayers
                         //sensortrackskml.loaded = false;
-                        var cm = 'jetplus';
+                        var cm = 'cividis';
                         if ( ! $.isEmptyObject($('input:radio[name=colormap_choice]:checked').val()) ) {
                             var cm = $('input:radio[name=colormap_choice]:checked').val();
                         }
