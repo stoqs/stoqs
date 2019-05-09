@@ -874,7 +874,16 @@ class ParameterParameter(BaseParameter):
         self.pq = pq
 
         self.pMinMax = pMinMax
-        self.set_colormap()
+
+        standard_name = None
+        if self.pMinMax['c'][0]:
+            standard_name = (models.Parameter.objects.using(self.request.META['dbAlias'])
+                                             .get(id=int(self.pMinMax['c'][0])).standard_name)
+        if standard_name in cmocean_lookup.keys():
+            self.set_colormap(cmocean_lookup[standard_name])
+        else:
+            self.set_colormap()
+
         try:
             if self.kwargs['parameterparameter'][3] == self.kwargs['parameterplot'][0]:
                 # Set from UI values only if pc is the same as the Plot Data Parameter
@@ -1021,6 +1030,8 @@ class ParameterParameter(BaseParameter):
                 if counter % stride_val == 0:
                     # SampledParameter datavalues are Decimal, convert everything to a float for numpy
                     lrow = list(row)
+                    if not np.all(lrow):
+                        continue
                     if returnIDs:
                         self.x_id.append(int(lrow.pop(0)))
                         self.y_id.append(int(lrow.pop(0)))
@@ -1032,10 +1043,7 @@ class ParameterParameter(BaseParameter):
                     self.depth.append(float(lrow.pop(0)))
                     self.x.append(float(lrow.pop(0)))
                     self.y.append(float(lrow.pop(0)))
-                    try:
-                        self.c.append(float(lrow.pop(0)))
-                    except IndexError:
-                        pass
+                    self.c.append(float(lrow.pop(0)))
                 counter = counter + 1
                 if counter % 1000 == 0:
                     self.logger.debug('Made it through %d of %d points', counter, pp_count)
@@ -1261,15 +1269,14 @@ class ParameterParameter(BaseParameter):
                 cursor = connections[self.request.META['dbAlias']].cursor()
                 cursor.execute(sql)
                 for row in cursor:
+                    if not np.all(row):
+                        continue
                     # SampledParameter datavalues are Decimal, convert everything to a float for numpy, row[0] is depth
                     self.depth.append(float(row[0]))
                     self.x.append(float(row[1]))
                     self.y.append(float(row[2]))
                     self.z.append(float(row[3]))
-                    try:
-                        self.c.append(float(row[4]))
-                    except IndexError:
-                        pass
+                    self.c.append(float(row[4]))
 
                 if self.c:
                     self.c.reverse()    # Modifies self.c in place - needed for popping values off in loop below
