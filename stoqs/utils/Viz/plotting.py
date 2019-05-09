@@ -38,6 +38,16 @@ logger = logging.getLogger(__name__)
 MP_MAX_POINTS = 10000          # Set by visually examing high-res Tethys data for what looks good
 PA_MAX_POINTS = 10000000       # Set to avoid memory error on development system
 
+cmocean_lookup = {  'sea_water_temperature':                                'thermal',
+                    'sea_water_salinity':                                   'haline',
+                    'sea_water_sigma_t':                                    'dense',
+                    'mass_concentration_of_chlorophyll_in_sea_water':       'algae',
+                    'mass_concentration_of_oxygen_in_sea_water':            'oxy',
+                    'downwelling_photosynthetic_photon_flux_in_sea_water':  'solar',
+                    'platform_pitch_angle':                                 'balance',
+                    'platform_roll_angle':                                  'balance',
+                 }
+
 def _getCoordUnits(name):
     '''
     Assign units given a standard coordinate name
@@ -83,10 +93,20 @@ class BaseParameter(object):
         self.cm = plt.get_cmap(self.cm_name)
         self.clt = [self.cm(i) for i in range(256)]
     
-    def set_colormap(self):
-        '''Assign colormap as passed in from UI request
+    def set_colormap(self, cm_name='cividis'):
+        '''Assign colormap as passed as argument (via standard_name lookup) or from UI request
         '''
+        # May be called with a cm_name overriding the default - and it may be overridden from UI
+        self.cm_name = cm_name
+        try:
+            self.cm = plt.get_cmap(self.cm_name)
+        except ValueError:
+            # Likely a cmocean colormap
+            self.cm = getattr(cmocean.cm, self.cm_name)
+        self.clt = [self.cm(i) for i in range(256)]
+
         if hasattr(self.request, 'GET'):
+            # Override colormap with selection from the UI
             if self.request.GET.get('cm'):
                 self.cm_name = self.request.GET.get('cm')
                 try:
@@ -203,7 +223,15 @@ class MeasuredParameter(BaseParameter):
         self.contour_qs_mp = contour_qs_mp
 
         self.parameterMinMax = parameterMinMax
-        self.set_colormap()
+        standard_name = None
+        if parameterID:
+            standard_name = (models.Parameter.objects.using(self.request.META['dbAlias'])
+                                             .get(id=parameterID).standard_name)
+        if standard_name in cmocean_lookup.keys():
+            self.set_colormap(cmocean_lookup[standard_name])
+        else:
+            self.set_colormap()
+
         if self.cmin is not None:
             self.parameterMinMax[1] = self.cmin
         if self.cmax is not None:
