@@ -905,7 +905,7 @@
                     <!--<div class="accordian-group">-->
                     <div class="accordian-heading">
                         <table><tr style="white-space:nowrap;">
-                            <td style="width:30%;"><h3>
+                            <td style="width:20%;"><h3>
                             <a id="colormap-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseColormap">Colormaps</a>
                             </h3></td><td>
                                 <input id="cm-cmin" type="text" class="stoqs-color-limit-input cm-activate" style="text-align:right;" title="Initial min value is 2.5 percentile" />
@@ -949,6 +949,11 @@
                                 {% for category in colormaps %}
                                     {% if category.0 == "Ocean" %}
                                         <div class="tab-pane active" id="{{category.0}}">
+                                        <label class="stoqs-color-limit-input" for="sn_colormap" style="display:inline;"> Set colormap from standard_name: </label>
+                                        <input type="checkbox" id="sn_colormap"/>
+                                        <span title="" id="colormap-info">
+                                            <i class="icon-info-sign"></i>
+                                        </span>
                                     {% else %}
                                         <div class="tab-pane" id="{{category.0}}">
                                     {% endif %}
@@ -4031,6 +4036,9 @@ function enable_cardboard(){
         if ($('#showallparametervalues').is(':checked')) {
             qstring = qstring + '&showallparametervalues=1';
         }
+        if ($('#sn_colormap').is(':checked')) {
+            qstring = qstring + '&sn_colormap=1';
+        }
 
         // Plotting options are separate from the filters - so set them here rather than in rebuildFilters()
         // Add to query string if that tab is active, do one OR the other, not both
@@ -4383,6 +4391,8 @@ function enable_cardboard(){
             // Called from ajax on initial request
             initData = data;
             $('.p-info').tooltip('fixTitle').tooltip('hide');
+            $('#colormap-info').tooltip('fixTitle').tooltip('hide');
+            $('#sn_colormap').prop('checked', true);
             if (key == 'platforms') {
                 hasTrajectory = false;
                 hasTimeSeries = false;
@@ -5049,8 +5059,11 @@ function enable_cardboard(){
                                 var flotdata;
                                 // Check radio button for colormap used in plot and fire changed event to update colorbars in the UI
                                 var colormap = data['parameterplatformdatavaluepng'][3];
+                                $('#colormap-info').attr('data-original-title', "<p style='text-align:left; font-size:7px;'>" + data['parameterplatformdatavaluepng'][4] + "</p>");
                                 $('input:radio[value=' + colormap + ']').prop('checked', true);
-                                $('input:radio[value=' + colormap + ']').change();
+                                $('#sp-kmlcolorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + colormap + '.png');
+                                $('#mp-kmlcolorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + colormap + '.png');
+                                $('#cm-colorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + colormap + '.png');
                                 var options = simpledepthtime_options_zoom;
                                 if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
                                     // Zoomed

@@ -97,6 +97,7 @@ query_parms = {
                    'full_screen': 'full_screen',            # For making higher resolution graphics
                    'cmincmax_lock': 'cmincmax_lock',        # Preserve colormap min and max values from the UI
                    'speedup': 'speedup',                    # platformanimation speed factor
+                   'sn_colormap': 'sn_colormap',            # Flag value from checkbox
 }
 
 def _buildMapFile(request, qm, options):
