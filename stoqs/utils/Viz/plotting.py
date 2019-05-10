@@ -93,39 +93,32 @@ class BaseParameter(object):
         self.cm = plt.get_cmap(self.cm_name)
         self.clt = [self.cm(i) for i in range(256)]
     
-    def set_colormap(self, cm_name='cividis'):
+    def set_colormap(self):
         '''Assign colormap as passed as argument (via standard_name lookup) or from UI request
         '''
-        # May be called with a cm_name overriding the default - and it may be overridden from UI
-        self.cm_name = cm_name
-        try:
-            self.cm = plt.get_cmap(self.cm_name)
-        except ValueError:
-            # Likely a cmocean colormap
-            self.cm = getattr(cmocean.cm, self.cm_name)
-        self.clt = [self.cm(i) for i in range(256)]
-
         if hasattr(self.request, 'GET'):
-            # Use colormap choice from UI only if the 'Set colormap from standard_name' checkbox is not checked
-            if not self.kwargs.get('sn_colormap'):
-                # Override colormap with selection from the UI
-                if self.request.GET.get('cm'):
-                    self.cm_name = self.request.GET.get('cm')
-                    try:
-                        self.cm = plt.get_cmap(self.cm_name)
-                    except ValueError:
-                        # Likely a cmocean colormap
-                        self.cm = getattr(cmocean.cm, self.cm_name)
-
-                    # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
-                    self.clt = [self.cm(i) for i in range(256)]
-
+            # Override colormap with selection from the UI
+            if self.request.GET.get('cm'):
+                self.cm_name = self.request.GET.get('cm')
             if self.request.GET.get('num_colors') is not None:
                 self.num_colors = int(self.request.GET.get('num_colors'))
             if self.request.GET.get('cmin') is not None:
                 self.cmin = float(self.request.GET.get('cmin'))
             if self.request.GET.get('cmax') is not None:
                 self.cmax = float(self.request.GET.get('cmax'))
+
+        if self.request.GET.get('sn_colormap'):
+            if self.standard_name in cmocean_lookup.keys():
+                 self.cm_name = cmocean_lookup[self.standard_name]
+
+        try:
+            self.cm = plt.get_cmap(self.cm_name)
+        except ValueError:
+            # Likely a cmocean colormap
+            self.cm = getattr(cmocean.cm, self.cm_name)
+
+        # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
+        self.clt = [self.cm(i) for i in range(256)]
 
     def set_ticks_bounds_norm(self, parm_info, use_ui_cmincmax=True, use_ui_num_colors=True):
         '''Common parameters for colormap, scatter and countour plotting
@@ -225,14 +218,11 @@ class MeasuredParameter(BaseParameter):
         self.contour_qs_mp = contour_qs_mp
 
         self.parameterMinMax = parameterMinMax
-        standard_name = None
+        self.standard_name = None
         if parameterID:
-            standard_name = (models.Parameter.objects.using(self.request.META['dbAlias'])
+            self.standard_name = (models.Parameter.objects.using(self.request.META['dbAlias'])
                                              .get(id=parameterID).standard_name)
-        if standard_name in cmocean_lookup.keys():
-            self.set_colormap(cmocean_lookup[standard_name])
-        else:
-            self.set_colormap()
+        self.set_colormap()
 
         if self.cmin is not None:
             self.parameterMinMax[1] = self.cmin
@@ -534,7 +524,7 @@ class MeasuredParameter(BaseParameter):
             sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
         else:
             # Return silently with no error message - simply can't make a plot without a Parameter
-            return None, None, None, self.cm_name, cmocean_lookup_str
+            return None, None, None, self.cm_name, cmocean_lookup_str, self.standard_name
 
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
         
@@ -639,7 +629,7 @@ class MeasuredParameter(BaseParameter):
                         contourFlag = True
           
             if len(cz) == 0 and len(clz) == 0:
-                return None, None, 'No data returned from selection', self.cm_name, cmocean_lookup_str
+                return None, None, 'No data returned from selection', self.cm_name, cmocean_lookup_str, self.standard_name
 
             if contourFlag:
                 try:
@@ -648,10 +638,10 @@ class MeasuredParameter(BaseParameter):
                     zi = griddata((cx, cy), cz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
                 except KeyError as e:
                     self.logger.exception('Got KeyError. Could not grid the data')
-                    return None, None, 'Got KeyError. Could not grid the data', self.cm_name, cmocean_lookup_str
+                    return None, None, 'Got KeyError. Could not grid the data', self.cm_name, cmocean_lookup_str, self.standard_name
                 except Exception as e:
                     self.logger.exception('Could not grid the data')
-                    return None, None, 'Could not grid the data', self.cm_name, cmocean_lookup_str
+                    return None, None, 'Could not grid the data', self.cm_name, cmocean_lookup_str, self.standard_name
 
                 self.logger.debug('zi = %s', zi)
 
@@ -698,7 +688,7 @@ class MeasuredParameter(BaseParameter):
                                 ax.plot(xs, ys, c=self._get_color(z, parm_info[1], parm_info[2]), lw=3)
                             except ZeroDivisionError:
                                 # Likely all data is same value and color lookup table can't be computed
-                                return None, None, "Can't plot identical data values of %f" % z, self.cm_name, cmocean_lookup_str
+                                return None, None, "Can't plot identical data values of %f" % z, self.cm_name, cmocean_lookup_str, self.standard_name
 
                 if self.sampleQS and SAMPLED not in self.parameterGroups:
                     # Sample markers for everything but Net Tows
@@ -747,19 +737,19 @@ class MeasuredParameter(BaseParameter):
                 plt.close()
             except Exception as e:
                 self.logger.exception('Could not plot the data')
-                return None, None, 'Could not plot the data', self.cm_name, cmocean_lookup_str
+                return None, None, 'Could not plot the data', self.cm_name, cmocean_lookup_str, self.standard_name
 
             if self.colorbarPngFileFullPath:
                 try:
                     self.makeColorBar(self.colorbarPngFileFullPath, parm_info)
                 except Exception as e:
                     self.logger.exception('%s', e)
-                    return None, None, 'Could not plot the colormap', self.cm_name, cmocean_lookup_str
+                    return None, None, 'Could not plot the colormap', self.cm_name, cmocean_lookup_str, self.standard_name
 
-            return sectionPngFile, self.colorbarPngFile, self.strideInfo, self.cm_name, cmocean_lookup_str
+            return sectionPngFile, self.colorbarPngFile, self.strideInfo, self.cm_name, cmocean_lookup_str, self.standard_name
         else:
             self.logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s', tmin, tmax, dmin, dmax)
-            return None, None, 'Select a time-depth range', self.cm_name, cmocean_lookup_str
+            return None, None, 'Select a time-depth range', self.cm_name, cmocean_lookup_str, self.standard_name
 
     def dataValuesX3D(self, vert_ex=10.0):
         '''
@@ -881,14 +871,11 @@ class ParameterParameter(BaseParameter):
 
         self.pMinMax = pMinMax
 
-        standard_name = None
+        self.standard_name = None
         if self.pMinMax['c'][0]:
-            standard_name = (models.Parameter.objects.using(self.request.META['dbAlias'])
+            self.standard_name = (models.Parameter.objects.using(self.request.META['dbAlias'])
                                              .get(id=int(self.pMinMax['c'][0])).standard_name)
-        if standard_name in cmocean_lookup.keys():
-            self.set_colormap(cmocean_lookup[standard_name])
-        else:
-            self.set_colormap()
+        self.set_colormap()
 
         try:
             if self.kwargs['parameterparameter'][3] == self.kwargs['parameterplot'][0]:
