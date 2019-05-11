@@ -44,8 +44,13 @@ cmocean_lookup = {  'sea_water_temperature':                                'the
                     'mass_concentration_of_chlorophyll_in_sea_water':       'algae',
                     'mass_concentration_of_oxygen_in_sea_water':            'oxy',
                     'downwelling_photosynthetic_photon_flux_in_sea_water':  'solar',
+                    'surface_downwelling_shortwave_flux_in_air':            'solar',
                     'platform_pitch_angle':                                 'balance',
                     'platform_roll_angle':                                  'balance',
+                    'northward_sea_water_velocity':                         'balance',
+                    'eastward_sea_water_velocity':                          'balance',
+                    'northward_wind':                                       'balance',
+                    'eastward_wind':                                        'balance',
                  }
 
 def _getCoordUnits(name):
@@ -109,7 +114,12 @@ class BaseParameter(object):
 
         if self.request.GET.get('sn_colormap'):
             if self.standard_name in cmocean_lookup.keys():
-                 self.cm_name = cmocean_lookup[self.standard_name]
+                self.cm_name = cmocean_lookup[self.standard_name]
+                if self.cm_name in ('balance', 'curl', 'delta', 'diff', 'tarn'):
+                    # Center the colormap limits for the ones that are balanced
+                    bminmax = round_to_n(min(abs(self.pMinMax[1]), abs(self.pMinMax[2])), 2)
+                    self.cmin = -bminmax
+                    self.cmax = bminmax
 
         try:
             self.cm = plt.get_cmap(self.cm_name)
@@ -201,12 +211,12 @@ class MeasuredParameter(BaseParameter):
     Use matploptib to create nice looking contour plots
     '''
     logger = logging.getLogger(__name__)
-    def __init__(self, kwargs, request, qs, qs_mp, contour_qs_mp, parameterMinMax, sampleQS, 
+    def __init__(self, kwargs, request, qs, qs_mp, contour_qs_mp, pMinMax, sampleQS, 
                  platformName, parameterID=None, parameterGroups=(MEASUREDINSITU), 
                  contourPlatformName=None, contourParameterID=None, contourParameterGroups=(MEASUREDINSITU)):
         '''
         Save parameters that can be used by the different product generation methods here
-        parameterMinMax is like: (pName, pMin, pMax)
+        pMinMax is like: (pName, pMin, pMax)
         '''
         super(self.__class__, self).__init__()
 
@@ -217,7 +227,7 @@ class MeasuredParameter(BaseParameter):
         self.qs_mp = qs_mp
         self.contour_qs_mp = contour_qs_mp
 
-        self.parameterMinMax = parameterMinMax
+        self.pMinMax = pMinMax
         self.standard_name = None
         if parameterID:
             self.standard_name = (models.Parameter.objects.using(self.request.META['dbAlias'])
@@ -225,9 +235,9 @@ class MeasuredParameter(BaseParameter):
         self.set_colormap()
 
         if self.cmin is not None:
-            self.parameterMinMax[1] = self.cmin
+            self.pMinMax[1] = self.cmin
         if self.cmax is not None:
-            self.parameterMinMax[2] = self.cmax
+            self.pMinMax[2] = self.cmax
 
         self.sampleQS = sampleQS
         self.platformName = platformName
@@ -652,7 +662,7 @@ class MeasuredParameter(BaseParameter):
                 else:
                     coloredDotSize = 20
 
-            parm_info = self.parameterMinMax
+            parm_info = self.pMinMax
             full_screen = False
             if self.request.GET.get('full_screen'):
                 full_screen = True
@@ -775,13 +785,13 @@ class MeasuredParameter(BaseParameter):
                 for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
                     points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
                     try:
-                        cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
-                                        (float(self.parameterMinMax[2]) - float(self.parameterMinMax[1]))))
+                        cindx = int(round((value - float(self.pMinMax[1])) * (len(self.clt) - 1) / 
+                                        (float(self.pMinMax[2]) - float(self.pMinMax[1]))))
                     except ValueError as e:
                         # Likely: 'cannot convert float NaN to integer' as happens when rendering something like altitude outside of terrain coverage
                         continue
                     except ZeroDivisionError as e:
-                        logger.error("Can't make color lookup table with min and max being the same, self.parameterMinMax = %s", self.parameterMinMax)
+                        logger.error("Can't make color lookup table with min and max being the same, self.pMinMax = %s", self.pMinMax)
                         raise e
 
                     if cindx < 0:
@@ -807,13 +817,13 @@ class MeasuredParameter(BaseParameter):
                     points = points + '%.5f %.5f %.1f %.5f %.5f %.1f ' % (lats[0], lons[0],
                             -depths[0] * vert_ex, lats[1], lons[1], -depths[1] * vert_ex)
                     try:
-                        cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
-                                        (float(self.parameterMinMax[2]) - float(self.parameterMinMax[1]))))
+                        cindx = int(round((value - float(self.pMinMax[1])) * (len(self.clt) - 1) / 
+                                        (float(self.pMinMax[2]) - float(self.pMinMax[1]))))
                     except ValueError as e:
                         # Likely: 'cannot convert float NaN to integer' as happens when rendering something like altitude outside of terrain coverage
                         continue
                     except ZeroDivisionError as e:
-                        logger.error("Can't make color lookup table with min and max being the same, self.parameterMinMax = %s", self.parameterMinMax)
+                        logger.error("Can't make color lookup table with min and max being the same, self.pMinMax = %s", self.pMinMax)
                         raise e
 
                     if cindx < 0:
@@ -831,7 +841,7 @@ class MeasuredParameter(BaseParameter):
 
             if self.colorbarPngFileFullPath:
                 try:
-                    self.makeColorBar(self.colorbarPngFileFullPath, self.parameterMinMax)
+                    self.makeColorBar(self.colorbarPngFileFullPath, self.pMinMax)
                 except Exception as e:
                     self.logger.exception('Could not plot the colormap')
                     x3dResults = 'Could not plot the colormap'
