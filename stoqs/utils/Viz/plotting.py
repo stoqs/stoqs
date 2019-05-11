@@ -112,14 +112,14 @@ class BaseParameter(object):
             if self.request.GET.get('cmax') is not None:
                 self.cmax = float(self.request.GET.get('cmax'))
 
-        if self.request.GET.get('sn_colormap'):
-            if self.standard_name in cmocean_lookup.keys():
-                self.cm_name = cmocean_lookup[self.standard_name]
-                if self.cm_name in ('balance', 'curl', 'delta', 'diff', 'tarn'):
-                    # Center the colormap limits for the ones that are balanced
-                    bminmax = round_to_n(min(abs(self.pMinMax[1]), abs(self.pMinMax[2])), 2)
-                    self.cmin = -bminmax
-                    self.cmax = bminmax
+            if self.request.GET.get('sn_colormap'):
+                if self.standard_name in cmocean_lookup.keys():
+                    self.cm_name = cmocean_lookup[self.standard_name]
+                    if self.cm_name in ('balance', 'curl', 'delta', 'diff', 'tarn'):
+                        # Center the colormap limits for the ones that are balanced
+                        bminmax = round_to_n(min(abs(self.pMinMax[1]), abs(self.pMinMax[2])), 2)
+                        self.cmin = -bminmax
+                        self.cmax = bminmax
 
         try:
             self.cm = plt.get_cmap(self.cm_name)
