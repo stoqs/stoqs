@@ -882,9 +882,14 @@ class ParameterParameter(BaseParameter):
         self.pMinMax = pMinMax
 
         self.standard_name = None
-        if self.pMinMax['c'][0]:
-            self.standard_name = (models.Parameter.objects.using(self.request.META['dbAlias'])
-                                             .get(id=int(self.pMinMax['c'][0])).standard_name)
+        try:
+            if self.pMinMax['c'][0]:
+                self.standard_name = (models.Parameter.objects.using(self.request.META['dbAlias'])
+                                            .get(id=int(self.pMinMax['c'][0])).standard_name)
+        except IndexError:
+            # Likely list index out of range, no value for self.pMinMax['c'][0]
+            pass
+
         self.set_colormap()
 
         try:
