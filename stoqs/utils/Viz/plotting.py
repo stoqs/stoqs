@@ -1051,7 +1051,11 @@ class ParameterParameter(BaseParameter):
                     self.depth.append(float(lrow.pop(0)))
                     self.x.append(float(lrow.pop(0)))
                     self.y.append(float(lrow.pop(0)))
-                    self.c.append(float(lrow.pop(0)))
+                    try:
+                        self.c.append(float(lrow.pop(0)))
+                    except IndexError:
+                        # Permit x and y, without a c selected
+                        pass
                 counter = counter + 1
                 if counter % 1000 == 0:
                     self.logger.debug('Made it through %d of %d points', counter, pp_count)
@@ -1284,8 +1288,11 @@ class ParameterParameter(BaseParameter):
                     self.x.append(float(row[1]))
                     self.y.append(float(row[2]))
                     self.z.append(float(row[3]))
-                    self.c.append(float(row[4]))
-
+                    try:
+                        self.c.append(float(row[4]))
+                    except IndexError:
+                        # Permit x, y, and z without a c selected
+                        pass
                 if self.c:
                     self.c.reverse()    # Modifies self.c in place - needed for popping values off in loop below
 
