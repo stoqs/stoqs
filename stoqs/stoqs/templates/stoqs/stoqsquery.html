@@ -96,6 +96,18 @@
                 width: auto !important;
             }
         }
+        .fulltext p,
+        .less {
+            display: none;
+        }
+        .fulltext:target p,
+        .fulltext:target .less {
+            display: block;
+        }
+
+        .fulltext:target .more {
+            display: none;
+        }
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet"></link>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap.icon-large.min.css" rel="stylesheet"></link>
@@ -875,14 +887,17 @@
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="temporal-parameter">
-                                    <div class="row-fluid">
-                                        <div class="span6">
-                                            <em id="time-parameter-instr">Click and drag to zoom</em>
-                                            <a id="tp-zoom-rc-button" class="btn-mini zoom-rc-button"><i class="icon-resize-full" title="Full Screen"></i></a>
-                                        </div>
-                                        <div id="stride-info" class="span6"></div>
-                                    </div>
                                     <div class="row-fluid" id="time-parameter-plot" style="height:400px" class="disabled row-fluid">
+                                        <div class="row-fluid">
+                                            <div class="span2">
+                                                <em id="time-parameter-instr">Click and drag to zoom</em>
+                                                <a id="tp-zoom-rc-button" class="btn-mini zoom-rc-button"><i class="icon-resize-full" title="Full Screen"></i></a>
+                                            </div>
+                                            <div class="span1">
+                                                <button id="show-all-parameters" hidden><span class="text">Show all Parameters</span></button>&nbsp;
+                                            </div>
+                                            <div id="stride-info" class="span9"></div>
+                                        </div>
                                         <div id="time-parameter-flot" style="width:100%;height:90%;" class="disabled"></div>
                                         <div class="row-fluid">
                                             <div class="span5">
@@ -2374,6 +2389,19 @@
     $('#getactualcount').on('click', function (event) {
         // Don't need to get everything from queryData, only the count
         rebuildFilters(['counts']);
+    });
+
+    // See https://justmarkup.com/demos/toggle-content/showmore/with-jquery/
+    // add listener for 'See all Parameters' button
+    $(document).on('click', '#show-all-parameters', function () {
+        // change attributes and text if full text is shown/hidden
+        if ( ! $('#more-parameters').attr('hidden')) {
+            $('#show-all-parameters').text('Show all Parameters');
+            $('#more-parameters').attr('hidden', true);
+        } else {
+            $('#show-all-parameters').text('Show just 2 Parameters');
+            $('#more-parameters').removeAttr('hidden');
+        }
     });
 
     $('.pv-histogram-checkbox').on('click', function (event) {
@@ -4852,33 +4880,49 @@ function enable_cardboard(){
                 });
                 if ( ! $.isEmptyObject(data.parametertime.strides) ) {
                     // Sort by the Parameter names
-                    var k, parameters = [], ik, len;
+                    var k, parameters = [], ik;
                     for (k in data.parametertime.strides) {
                         if (data.parametertime.strides.hasOwnProperty(k)) {
                             parameters.push(k);
                         }
                     }
                     parameters.sort();
-                    len = parameters.length;
 
-                    $('#stride-info').html('');
-                    var i = 0;
-                    var not_listed = 0;
-                    for (ik = 0; ik < len; ik++) {
+                    var initial_parm_act_count = 2
+                    var initial_text_html = '<div>';
+                    var more_text_html = '<div class="fulltext" id="more-parameters" hidden>';
+                    var parm_act_count = 0;
+                    var parm_act_html = '';
+                    for (ik = 0; ik < parameters.length; ik++) {
                         act_value = data.parametertime.strides[parameters[ik]];
+                        if ( $.inArray(parameters[ik], ['Time', 'Depth', 'Latitude', 'Longitude']) != -1 ) {
+                            continue;
+                        }
                         $.each(act_value, function(act, value) {
-                            i = i + 1;
-                            if (i <= 3) {
-                                ordinal = getValueOrdinal(value);
-                                $('#stride-info').append('<b>' + parameters[ik] + '</b>: every ' + ordinal + ' point from ' + act + '<br>');
+                            parm_act_html = '<b>' + parameters[ik] + '</b>: every ' + getValueOrdinal(value) + ' point from ' + act + '<br>';
+                            parm_act_count += 1
+                            if ( parm_act_count <= initial_parm_act_count ) {
+                                initial_text_html += parm_act_html;
                             }
                             else {
-                                not_listed = not_listed + 1;
+                                more_text_html += parm_act_html;
                             }
                         });
                     }
-                    if (not_listed > 0) {
-                        $('#stride-info').append('...<b>' + not_listed + '</b> more parameters not listed...<br>');
+                    initial_text_html += '</div>';
+                    more_text_html += '</div>';
+                    
+                    if (parm_act_count > 0) {
+                        var stride_html = initial_text_html + more_text_html;
+                        if ( parm_act_count <= initial_parm_act_count ) {
+                            $('#show-all-parameters').attr('hidden', true);
+                        }
+                        else {
+                            $('#show-all-parameters').removeAttr('hidden');
+                            $('#show-all-parameters').text('Show all Parameters');
+                        }
+
+                        $('#stride-info').html(stride_html);
                     }
                 }
                 // Event data shown in plot may be inside original start-ems and end-ems bounds requested, update display with actual
