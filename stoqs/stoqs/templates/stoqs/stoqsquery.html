@@ -364,7 +364,7 @@
         <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
         <Group id='spatial-3d-root' render='true'>
           <Group id='spatial-3d-scene' def="spatial-3d-scene">
-            <Group id="mp-x3d-track"></Group>
+            <Group id="mp-x3d-track-group"></Group>
             <GeoOriginTransform containerField='children'>
               <Group id="mp-x3d-terrain">
               </Group>
@@ -5312,7 +5312,7 @@ function enable_cardboard(){
                 if (data[key]) {
                     if (data[key]['points']) {
                         if ( ! $.isEmptyObject(data.measuredparameterx3d.points) ) {
-                            $('#mp-x3d-track').replaceWith([
+                            $('#mp-x3d-track-group').html([
                                 '<Shape id="mp-x3d-track">',
                                     '<Appearance><LineProperties linewidthScaleFactor="5"></LineProperties></Appearance>',
                                     '<indexedlineset coordIndex="' + data.measuredparameterx3d.index + '">',
