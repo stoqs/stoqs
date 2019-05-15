@@ -71,9 +71,14 @@ class BaseTestCase(StaticLiveServerTestCase):
                         find_element_by_class_name('olControlLoadingPanel').
                         value_of_css_property('display') == 'none')
         except TimeoutException as e:
+            # We get flaky results, I think because the 'display' property switches quickly between 'none' and 'block, 
+            # then back to 'none'.
+            # TODO: Figure out a better way to detect mapserver_loading success
             return ('Mapserver images did not load after waiting ' +
                     str(delay) + ' seconds')
         else:
+            # For interactive visual confirmation MAPSERVER_DATABASE_URL must be set, e.g.:
+            # export MAPSERVER_DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs"
             return ''
 
     def _temporal_loading_panel_test(self, delay=2):
