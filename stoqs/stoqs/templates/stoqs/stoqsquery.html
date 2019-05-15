@@ -96,6 +96,18 @@
                 width: auto !important;
             }
         }
+        .fulltext p,
+        .less {
+            display: none;
+        }
+        .fulltext:target p,
+        .fulltext:target .less {
+            display: block;
+        }
+
+        .fulltext:target .more {
+            display: none;
+        }
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet"></link>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap.icon-large.min.css" rel="stylesheet"></link>
@@ -352,7 +364,7 @@
         <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
         <Group id='spatial-3d-root' render='true'>
           <Group id='spatial-3d-scene' def="spatial-3d-scene">
-            <Group id="mp-x3d-track"></Group>
+            <Group id="mp-x3d-track-group"></Group>
             <GeoOriginTransform containerField='children'>
               <Group id="mp-x3d-terrain">
               </Group>
@@ -732,7 +744,7 @@
                                         <form style="text-align: center;" class="form-inline">
                                             <input id="sp-cmin" type="text" class="stoqs-color-limit-input" style="text-align:right;" title="Initial min value is 2.5 percentile" />
                                             <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
-                                                <img id="sp-kmlcolorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" alt="KML colormap" />
+                                                <img id="sp-kmlcolorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/cividis.png" alt="KML colormap" />
                                             </a>
                                             <input id="sp-cmax" type="text" class="stoqs-color-limit-input" title="Initial max value is 97.5 percentile" />
                                         </form>
@@ -795,7 +807,7 @@
                                         <form style="text-align: center;" class="form-inline">
                                             <input id="mp-cmin" type="text" class="stoqs-color-limit-input" style="text-align:right;" title="Initial min value is 2.5 percentile" />
                                             <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
-                                                <img id="mp-kmlcolorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" alt="KML colormap" />
+                                                <img id="mp-kmlcolorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/cividis.png" alt="KML colormap" />
                                             </a>
                                             <input id="mp-cmax" type="text" class="stoqs-color-limit-input" title="Initial max value is 97.5 percentile" />
                                         </form>
@@ -875,14 +887,17 @@
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="temporal-parameter">
-                                    <div class="row-fluid">
-                                        <div class="span6">
-                                            <em id="time-parameter-instr">Click and drag to zoom</em>
-                                            <a id="tp-zoom-rc-button" class="btn-mini zoom-rc-button"><i class="icon-resize-full" title="Full Screen"></i></a>
-                                        </div>
-                                        <div id="stride-info" class="span6"></div>
-                                    </div>
                                     <div class="row-fluid" id="time-parameter-plot" style="height:400px" class="disabled row-fluid">
+                                        <div class="row-fluid">
+                                            <div class="span2">
+                                                <em id="time-parameter-instr">Click and drag to zoom</em>
+                                                <a id="tp-zoom-rc-button" class="btn-mini zoom-rc-button"><i class="icon-resize-full" title="Full Screen"></i></a>
+                                            </div>
+                                            <div class="span1">
+                                                <button id="show-all-parameters" hidden><span class="text">Show all Parameters</span></button>&nbsp;
+                                            </div>
+                                            <div id="stride-info" class="span9"></div>
+                                        </div>
                                         <div id="time-parameter-flot" style="width:100%;height:90%;" class="disabled"></div>
                                         <div class="row-fluid">
                                             <div class="span5">
@@ -905,12 +920,12 @@
                     <!--<div class="accordian-group">-->
                     <div class="accordian-heading">
                         <table><tr style="white-space:nowrap;">
-                            <td style="width:30%;"><h3>
+                            <td style="width:20%;"><h3>
                             <a id="colormap-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseColormap">Colormaps</a>
                             </h3></td><td>
                                 <input id="cm-cmin" type="text" class="stoqs-color-limit-input cm-activate" style="text-align:right;" title="Initial min value is 2.5 percentile" />
                             </td><td>
-                                <img id="cm-colorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" />
+                                <img id="cm-colorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/cividis.png" />
                             </td><td>
                                 <input id="cm-cmax" type="text" class="stoqs-color-limit-input cm-activate" title="Initial max value is 97.5 percentile" />
                                 <label class="stoqs-color-limit-input" for="cmincmax_lock" style="display:inline;"> Lock: </label>
@@ -949,6 +964,13 @@
                                 {% for category in colormaps %}
                                     {% if category.0 == "Ocean" %}
                                         <div class="tab-pane active" id="{{category.0}}">
+                                        <div>
+                                            <label id="sn_colormap_label" class="stoqs-color-limit-input" for="sn_colormap" style="display:inline;"> Set colormap from standard_name: </label>
+                                            <input type="checkbox" id="sn_colormap"/>
+                                            <span title="" id="colormap-info">
+                                                <i class="icon-info-sign"></i>
+                                            </span>
+                                        </div>
                                     {% else %}
                                         <div class="tab-pane" id="{{category.0}}">
                                     {% endif %}
@@ -1563,7 +1585,7 @@
 
     function updateKMLcmincmax(group) {
         var cmincmax;
-        var cm = 'jetplus';
+        var cm = 'cividis';
         if ( ! $.isEmptyObject($('input:radio[name=colormap_choice]:checked').val()) ) {
             cm = $('input:radio[name=colormap_choice]:checked').val();
         }
@@ -1622,7 +1644,7 @@
                         //sensortrackskml.attribution = '<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />';
                         // Dynamically set url for sensor tracks display in openlayers
                         //sensortrackskml.loaded = false;
-                        var cm = 'jetplus';
+                        var cm = 'cividis';
                         if ( ! $.isEmptyObject($('input:radio[name=colormap_choice]:checked').val()) ) {
                             var cm = $('input:radio[name=colormap_choice]:checked').val();
                         }
@@ -1857,6 +1879,7 @@
     function toggleField(element) {
         var $element=$(element);
         if (! $(element).is('.disabled')) { // If it's disabled, then don't bother toggling it.
+            closeMetadata();
             if ($element.is('.btn-primary')) {
                 $element.removeClass('btn-primary');
             } else {
@@ -2009,6 +2032,14 @@
         $('#end-' + type).val(max)
         if (updateTable) {
             rebuildFilters();
+        }
+    }
+
+    function closeMetadata() {
+        if ( $('#collapseMetadata').hasClass('in') && $('#metadata-netcdf-li').hasClass('active') ) {
+            // Metadata section is opened and NetCDF tab is active, close it and give pop-up warning
+            $('#metadata-anchor').attr('data-original-title', 'Keep Metadata closed unless making Activity selections').tooltip('fixTitle').tooltip('show');
+            $('#metadata-anchor').click();
         }
     }
     
@@ -2192,7 +2223,9 @@
                 // Metadata section is opened and NetCDF tab is active, offer selection of Activities
                 params['activitynames'] = [];
                 $('input:checked[name=activity_select_cb]').each(function (index, elem) {
-                    params['activitynames'].push(elem.value);
+                    if ( $(elem).parent().parent().is(':visible') ) {
+                        params['activitynames'].push(elem.value);
+                    }
                 });
             }
         }
@@ -2356,6 +2389,19 @@
     $('#getactualcount').on('click', function (event) {
         // Don't need to get everything from queryData, only the count
         rebuildFilters(['counts']);
+    });
+
+    // See https://justmarkup.com/demos/toggle-content/showmore/with-jquery/
+    // add listener for 'See all Parameters' button
+    $(document).on('click', '#show-all-parameters', function () {
+        // change attributes and text if full text is shown/hidden
+        if ( ! $('#more-parameters').attr('hidden')) {
+            $('#show-all-parameters').text('Show all Parameters');
+            $('#more-parameters').attr('hidden', true);
+        } else {
+            $('#show-all-parameters').text('Show just 2 Parameters');
+            $('#more-parameters').removeAttr('hidden');
+        }
     });
 
     $('.pv-histogram-checkbox').on('click', function (event) {
@@ -2674,6 +2720,7 @@
 
     $("#clear-pp-button").click(function() {
         if ( $('#clear-pp-button').hasClass('btn-primary')) {
+            closeMetadata();
             $("#clear-pp-button").removeClass('btn-primary');
             $("#clear-pp-button").addClass('disabled');
             $('#parameter-parameter-anchor').html('Parameter-Parameter')
@@ -2691,6 +2738,7 @@
 
     $("#clear-sampledparameter-button").click(function() {
         if ( $('#clear-sampledparameter-button').hasClass('btn-primary')) {
+            closeMetadata();
             $("#clear-sampledparameter-button").removeClass('btn-primary');
             $("#clear-sampledparameter-button").addClass('disabled');
             $('.btn-primary',$('#sampledparameter-table')).each(function (index, element) {
@@ -2703,6 +2751,7 @@
 
     $("#clear-measuredparameter-button").click(function() {
         if ( $('#clear-measuredparameter-button').hasClass('btn-primary')) {
+            closeMetadata();
             $("#clear-measuredparameter-button").removeClass('btn-primary');
             $("#clear-measuredparameter-button").addClass('disabled');
             $('.btn-primary',$('#measuredparameter-table')).each(function (index, element) {
@@ -2715,6 +2764,7 @@
 
     $("#resetparametervaluesselections").click(function() {
         if ( $('#resetparametervaluesselections').hasClass('btn-primary')) {
+            closeMetadata()
             $("#resetparametervaluesselections").removeClass('btn-primary');
             $("#resetparametervaluesselections").addClass('disabled');
             parametervalues = {};
@@ -2724,6 +2774,7 @@
 
     $("#clear-attributes-button").click(function() {
         if ( $('#clear-attributes-button').hasClass('btn-primary')) {
+            closeMetadata();
             $("#clear-attributes-button").removeClass('btn-primary');
             $("#clear-attributes-button").addClass('disabled');
             $('.stoqs-attributes').each(function (index, element) {
@@ -2737,6 +2788,7 @@
     });
     $("#clear-platforms-button").click(function() {
         if ( $('#clear-platforms-button').hasClass('btn-primary')) {
+            closeMetadata();
             $("#clear-platforms-button").removeClass('btn-primary');
             $("#clear-platforms-button").addClass('disabled');
             $('tr',$('.stoqs-platform')).each(function (index, element) {
@@ -3429,17 +3481,15 @@ function enable_cardboard(){
         rebuildFilters(['parameterparameterpng']);
     });
 
-    $('body').on('change', '.activity-select-checkbox', function (e) {
-        if ( ! $(this).hasClass('checkall_activity') ) {
-            // Remember the selection
-            if ( $(this).is(':checked') ) {
-                $('body').data()['activitynames'][$(this).val()] = true;
-            }
-            else {
-                $('body').data()['activitynames'][$(this).val()] = false;
-            }
-            rebuildFilters();
+    $('body').on('change', '.activity-select-checkbox', function () {
+        // Remember the selection
+        if ( $(this).is(':checked') ) {
+            $('body').data()['activitynames'][$(this).val()] = true;
         }
+        else {
+            $('body').data()['activitynames'][$(this).val()] = false;
+        }
+        rebuildFilters();
     });
 
 
@@ -4016,6 +4066,9 @@ function enable_cardboard(){
         if ($('#showallparametervalues').is(':checked')) {
             qstring = qstring + '&showallparametervalues=1';
         }
+        if ($('#sn_colormap').is(':checked')) {
+            qstring = qstring + '&sn_colormap=1';
+        }
 
         // Plotting options are separate from the filters - so set them here rather than in rebuildFilters()
         // Add to query string if that tab is active, do one OR the other, not both
@@ -4118,11 +4171,42 @@ function enable_cardboard(){
         var me = this;
 
         function buildMetadataHtml(data, init) {
+            var platforms = $.map(data.resources.netcdf, function(activities, plat) {return plat}).sort();
+            // Build acts_by_stride for use by both init and update
+            var acts_by_stride = {};
+            $.each(platforms, function (index, plat) {
+                var activities = $.map(data.resources.netcdf[plat], function(activities, a) {return a}).sort();
+                $.each(activities, function(index, activity) {
+                    // Save a hash list of activities by stride=value so the they can be selected / de-selected
+                    var stride_val = 'stride=1';
+                    if ( ! $.isEmptyObject(activity.match(/\((.+)\)/)) ) {
+                        stride_val = activity.match(/\((.+)\)/)[1];
+                        if ( $.type(acts_by_stride[stride_val]) == "undefined" ) {
+                                acts_by_stride[stride_val] = [];
+                        }
+                        else {
+                            acts_by_stride[stride_val].push(activity);
+                        }
+                    }
+                    else {
+                        // Have a checkbox for (stride=1) even if that is not part of the Activity name
+                        if ( $.type(acts_by_stride[stride_val]) == "undefined" ) {
+                                acts_by_stride[stride_val] = [];
+                        }
+                        else {
+                            acts_by_stride[stride_val].push(activity);
+                        }
+                    }
+                });
+            });
+
+            if (init) {
                 // Sort the Activities by platform and build HTML for NetCDF tab
-                var platforms = $.map(data.resources.netcdf, function(activities, plat) {return plat}).sort();
-                var platformActivitiesHtml = '<fieldset>';
-                platformActivitiesHtml += '<input type="checkbox" name="all_activity_select_cb" value="" class="activity-select-checkbox checkall_activity" />' +
-                                          ' Check/Uncheck all for Spatial Temporal plotting (leave this section open for selections to apply)'; 
+                var platformActivitiesHtml = 'Check/Uncheck Activities (leave this section open for selections to apply - <u>collapse it otherwise</u>)<br>';
+                platformActivitiesHtml += '<input type="checkbox" name="all_activity_select_cb" value="" class="checkall_activity" /> All';
+                platformActivitiesHtml += '<div id="acts-by-stride"></div>';
+                var ql_plots_tab_html = '';
+                platformActivitiesHtml += '<div id="netcdf-groups">'; 
                 $.each(platforms, function (index, plat) {
                     var activities = $.map(data.resources.netcdf[plat], function(activities, a) {return a}).sort();
                     platformActivitiesHtml += '<div id="' + plat + '-group" class="accordian-group">' +
@@ -4133,13 +4217,27 @@ function enable_cardboard(){
                     '</div>' + 
                     '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
                         '<div class="accordion-inner" style="padding:0;">';
+                    ql_plots_tab_html += '<div id="' + plat + '-group" class="accordian-group">' +
+                    '<div class="accordian-heading">' + 
+                       '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
+                        plat + 
+                        '</a></h5>' + 
+                    '</div>' + 
+                    '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
+                        '<div class="accordion-inner" style="padding:0;">';
+                    ql_plots_tab_html += '<table class="table table-condensed"><tbody>';
 
                     for (var i = 0; i < activities.length; i++) {
                         var activity = activities[i];
                         var attributes = data.resources.netcdf[plat][activity];
                         var dsLink = activity;
+                        var stride_val = 'stride=1';
+                        if ( ! $.isEmptyObject(activity.match(/\((.+)\)/)) ) {
+                            stride_val = activity.match(/\((.+)\)/)[1];
+                        }
                         if (attributes.opendap_url) {
-                            dsLink = '<input type="checkbox" name="activity_select_cb" value="' + activity + '" class="activity-select-checkbox" style="margin:0px;"/> ';
+                            dsLink = '<input type="checkbox" name="activity_select_cb" value="' + activity + '" class="activity-select-checkbox ' + 
+                                                                                                stride_val.replace('=', '') + '" style="margin:0px;"/> ';
                             dsLink += '<a target="_blank" href="' + attributes.opendap_url + '.html">';
                             dsLink += '<span style="overflow:hidden;text-overflow:ellipsis;display:block;">' + activity + '</span></a>';
                         }
@@ -4151,96 +4249,150 @@ function enable_cardboard(){
                         if ( $.isEmptyObject(summary) ) {
                             summary = '(No summary in NetCDF file)';
                         }
-                        platformActivitiesHtml += '<div class="row-fluid">' +
+                        platformActivitiesHtml += '<div id="' + activity + '" class="row-fluid netcdf-activity-row">' +
                             '<div class="span3">' + dsLink + '</div>' +
                             '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + title + '</span></div>' +
                             '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + summary + '</span></div>' +
                             '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + attributes.comment + '</span></div>' +
                             '</div>';
+
+                        if ( ! $.isEmptyObject(data.resources.quick_look[plat]) ) {
+                            plots = data.resources.quick_look[plat][activity];
+                            ql_plots_tab_html += '<tr id="' + activity +'">' +
+                                    '<td>' + activity + '</td>';
+                            if ( ! $.isEmptyObject(plots) ) {
+                                $.each(plots, function (type, url) {
+                                    if ( ! url == '' ) {
+                                        ql_plots_tab_html += '<td><a target="_blank" href="' + url + '">' + type + '</a></td>';
+                                    }
+                                });
+                            }
+                            ql_plots_tab_html += '</tr>';
+                        }
                     }
-                    platformActivitiesHtml += '</div></div></div></fieldset>';
+                    platformActivitiesHtml += '</div></div></div>';
+                    ql_plots_tab_html += '</tbody></table></div></div></div>';
                 });
+                platformActivitiesHtml += '</div>';
+
                 $('#metadatanetcdf > div').html(platformActivitiesHtml);
 
-                // Check the Activities that need checking and initialize checkbox state in $('body').data()
-                if ( init ) {
-                    $('body').data()['activitynames'] = {};
-                    $('body').data()['activitycolors'] = {};
-                    $('input[name=activity_select_cb]').prop('checked', true);
-                    $('input[name=all_activity_select_cb]').prop('checked', true);
-                    $.each(data.resources.netcdf, function (plat, activities) {
-                        $.each(activities, function (name, activity) {
-                            $('body').data()['activitynames'][name] = true;
-                            $('body').data()['activitycolors'][name] = $('body').data()['platformColors'][plat];
-                        });
-                    });
-                }
-                else {
-                    if ( ! $.isEmptyObject($('body').data()['activitynames']) ) {
-                        $.each($('body').data()['activitynames'], function (activityname, checked) {
-                            if (checked) {
-                                $('input[name=activity_select_cb][value="' + activityname + '"]').prop('checked', true);
-                            }
-                            else {
-                                $('input[name=activity_select_cb][value="' + activityname + '"]').prop('checked', false);
-                            }
-                        });
-                    }
-                }
-
-                // Sort the QuickLook plot URLs by platform and build HTML for Quick look plots tab
-                var platforms = $.map(data.resources.quick_look, function(activities, plat) {return plat}).sort();
-                var platformActivitiesHtml = '';
-                $.each(platforms, function (index, plat) {
-                    activities = $.map(data.resources.quick_look[plat], function(activities, a) {return a}).sort();
-                    platformActivitiesHtml += '<div id="' + plat + '-group" class="accordian-group">' +
-                    '<div class="accordian-heading">' + 
-                       '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
-                        plat + 
-                        '</a></h5>' + 
-                    '</div>' + 
-                    '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
-                        '<div class="accordion-inner" style="padding:0;">';
-                    platformActivitiesHtml += '<table class="table table-condensed"><tbody>';
-
-                    for (var i=0; i<activities.length; i++) {
-                        activity = activities[i];
-                        plots = data.resources.quick_look[plat][activity];
-                        platformActivitiesHtml += '<tr id="' + activity +'">' +
-                                '<td>' + activity + '</td>';
-                        $.each(plots, function (type, url) {
-                            if ( ! url == '' ) {
-                                platformActivitiesHtml += '<td><a target="_blank" href="' + url + '">' + type + '</a></td>';
-                            }
-                        });
-                        platformActivitiesHtml += '</tr>';
-                    }
-                    platformActivitiesHtml += '</tbody></table></div></div></div>';
-                });
-                if ( platformActivitiesHtml == '' ) {
+                if ( ql_plots_tab_html == '' ) {
                     $('#metadata-qlp-li').hide()
                 }
                 else {
                     $('#metadata-qlp-li').show()
-                    $('#metadataquicklookplots > div').html(platformActivitiesHtml);
+                    $('#metadataquicklookplots > div').html(ql_plots_tab_html);
                 }
 
-                // Register event handler here as it is not recognized where the others are located in this file
-                $('.checkall_activity').on('click', function () {
-                    $.each(data.resources.netcdf, function (plat, activities) {
-                        $.each(activities, function (name, activity) {
-                            if ( $('.checkall_activity').is(':checked') ) {
-                                $('body').data()['activitynames'][name] = true;
-                                $('input[name=activity_select_cb][value="' + name + '"]').prop('checked', true);
-                            }
-                            else {
-                                $('body').data()['activitynames'][name] = false;
-                                $('input[name=activity_select_cb][value="' + name + '"]').prop('checked', false);
+                // Check the Activities that need checking and initialize checkbox state in $('body').data()
+                $('body').data()['activitynames'] = {};
+                $('body').data()['activitycolors'] = {};
+                $('input[name=activity_select_cb]').prop('checked', true);
+                $('input[name=all_activity_select_cb]').prop('checked', true);
+                $.each(data.resources.netcdf, function (plat, activities) {
+                    $.each(activities, function (name, activity) {
+                        $('body').data()['activitynames'][name] = true;
+                        $('body').data()['activitycolors'][name] = $('body').data()['platformColors'][plat];
+                    });
+                });
+
+                // Add the stride value selection checkboxes
+                var acts_by_stride_html = '';
+                $.each(acts_by_stride, function(stride, activities) {
+                    acts_by_stride_html += '<div><input type="checkbox" id="' + stride.replace('=', '') + '" name="activity_' + stride.replace('=', '') + 
+                                           '_cb" value="" class="check_activity_stride" /> (' + stride + ')</div>';
+                });
+                $('#acts-by-stride').html(acts_by_stride_html);
+                $('#acts-by-stride :checkbox').each(function() {
+                    $(this).prop('checked', true);
+                });
+
+                if ( $('.check_activity_stride').length < 2 ) {
+                    $('#acts-by-stride').hide();
+                }
+            }
+            else {
+                // On update we need to reflect what is in the selection (platforms, MP, temporal/depth)
+                // First, hide all the rows
+                $('.netcdf-activity-row').each(function(index, elem) {
+                    $(elem).hide();
+                });
+
+                // Second, show the rows that are in the selection - lookup up from checkbox value, which can handle activity.name characters
+                var strides_to_show = {};
+                $.each(data.resources.netcdf, function (plat, activities) {
+                    $.each(activities, function (activityname, activity) {
+                        $('input[name=activity_select_cb][value="' + activityname + '"]').parent().parent().show();
+                        $.each(acts_by_stride, function(stride, activities_by_stride) {
+                            if ( $.inArray(activity, activities_by_stride) ) {
+                                strides_to_show[stride.replace('=', '')] = true;
                             }
                         });
                     });
-                    // 'change' event handler on .activity-select-checkbox handles calling rebuildFilters()
                 });
+
+                // Third, modify the Activities by stride checkboxes (and parent divs) according to what is in the selection
+                $('#acts-by-stride').show();
+                $('.check_activity_stride').each(function(index, elem) {
+                    $(elem).hide();
+                    $(elem).parent().hide();
+                    if ( strides_to_show[elem.id] ) {
+                        $(elem).show();
+                        $(elem).parent().show();
+                    }
+                });
+                if ( $('.check_activity_stride:visible').length < 2 ) {
+                    $('#acts-by-stride').hide();
+                }
+
+                // Hide groups that have no showing Activities
+                $('#netcdf-groups > div').each(function(index, elem) {
+                    $(elem).show();
+                });
+                $('#netcdf-groups > div').each(function(index, elem) {
+                    if ( $('.netcdf-activity-row:visible', elem).length == 0 ) {
+                        $(elem).hide();
+                    }
+                });
+            }
+
+            // Register event handler for "all activities" checkbox - fires off a rebuildFilters()
+            $('.checkall_activity').unbind().on('click', function () {
+                if ( $(this).is(':checked') ) {
+                    $('.activity-select-checkbox').prop('checked', true);
+                    $('.check_activity_stride').prop('checked', true);
+                    $('.activity-select-checkbox').each(function(index, elem) {
+                        $('body').data()['activitynames'][elem.value] = true;
+                    });
+                }
+                else {
+                    $('.activity-select-checkbox').prop('checked', false);
+                    $('.check_activity_stride').prop('checked', false);
+                    $('.activity-select-checkbox').each(function(index, elem) {
+                        $('body').data()['activitynames'][elem.value] = false;
+                    });
+                }
+                rebuildFilters();
+            });
+
+            // Register event handler for activity strides checkboxes - fires off a rebuildFilters()
+            $('.check_activity_stride').unbind().on('click', function () {
+                if ( $(this).is(':checked') ) {
+                    $('.' + this.id).prop('checked', true);
+                    $('.' + this.id).each(function(index, elem) {
+                        $('body').data()['activitynames'][elem.value] = true;
+                    });
+                }
+                else {
+                    $('.' + this.id).prop('checked', false);
+                    $('.' + this.id).each(function(index, elem) {
+                        $('body').data()['activitynames'][elem.value] = false;
+                    });
+                }
+                rebuildFilters();
+            });
+
         } // End buildMetadataHtml()
 
         function saveBodyData(data) {
@@ -4269,6 +4421,8 @@ function enable_cardboard(){
             // Called from ajax on initial request
             initData = data;
             $('.p-info').tooltip('fixTitle').tooltip('hide');
+            $('#colormap-info').tooltip('fixTitle').tooltip('hide');
+            $('#sn_colormap').prop('checked', true);
             if (key == 'platforms') {
                 hasTrajectory = false;
                 hasTimeSeries = false;
@@ -4726,33 +4880,49 @@ function enable_cardboard(){
                 });
                 if ( ! $.isEmptyObject(data.parametertime.strides) ) {
                     // Sort by the Parameter names
-                    var k, parameters = [], ik, len;
+                    var k, parameters = [], ik;
                     for (k in data.parametertime.strides) {
                         if (data.parametertime.strides.hasOwnProperty(k)) {
                             parameters.push(k);
                         }
                     }
                     parameters.sort();
-                    len = parameters.length;
 
-                    $('#stride-info').html('');
-                    var i = 0;
-                    var not_listed = 0;
-                    for (ik = 0; ik < len; ik++) {
+                    var initial_parm_act_count = 2
+                    var initial_text_html = '<div>';
+                    var more_text_html = '<div class="fulltext" id="more-parameters" hidden>';
+                    var parm_act_count = 0;
+                    var parm_act_html = '';
+                    for (ik = 0; ik < parameters.length; ik++) {
                         act_value = data.parametertime.strides[parameters[ik]];
+                        if ( $.inArray(parameters[ik], ['Time', 'Depth', 'Latitude', 'Longitude']) != -1 ) {
+                            continue;
+                        }
                         $.each(act_value, function(act, value) {
-                            i = i + 1;
-                            if (i <= 3) {
-                                ordinal = getValueOrdinal(value);
-                                $('#stride-info').append('<b>' + parameters[ik] + '</b>: every ' + ordinal + ' point from ' + act + '<br>');
+                            parm_act_html = '<b>' + parameters[ik] + '</b>: every ' + getValueOrdinal(value) + ' point from ' + act + '<br>';
+                            parm_act_count += 1
+                            if ( parm_act_count <= initial_parm_act_count ) {
+                                initial_text_html += parm_act_html;
                             }
                             else {
-                                not_listed = not_listed + 1;
+                                more_text_html += parm_act_html;
                             }
                         });
                     }
-                    if (not_listed > 0) {
-                        $('#stride-info').append('...<b>' + not_listed + '</b> more parameters not listed...<br>');
+                    initial_text_html += '</div>';
+                    more_text_html += '</div>';
+                    
+                    if (parm_act_count > 0) {
+                        var stride_html = initial_text_html + more_text_html;
+                        if ( parm_act_count <= initial_parm_act_count ) {
+                            $('#show-all-parameters').attr('hidden', true);
+                        }
+                        else {
+                            $('#show-all-parameters').removeAttr('hidden');
+                            $('#show-all-parameters').text('Show all Parameters');
+                        }
+
+                        $('#stride-info').html(stride_html);
                     }
                 }
                 // Event data shown in plot may be inside original start-ems and end-ems bounds requested, update display with actual
@@ -4933,6 +5103,29 @@ function enable_cardboard(){
                         if ( ! $.isEmptyObject(data['parameterplatformdatavaluepng']) ) {
                             if ( ! $.isEmptyObject(data['parameterplatformdatavaluepng'][0]) ) {
                                 var flotdata;
+                                // Check radio button for colormap used in plot and fire changed event to update colorbars in the UI
+                                var colormap = data['parameterplatformdatavaluepng'][3];
+                                var standard_name = data['parameterplatformdatavaluepng'][5];
+                                $('#colormap-info').attr('data-original-title', "<p style='text-align:left; font-size:7px;'>" + data['parameterplatformdatavaluepng'][4] + "</p>");
+                                $('#sn_colormap_label').attr('data-original-title', '').tooltip('fixTitle').tooltip('hide');
+                                $('#sectioncolorbarimg').attr('data-original-title', 'Click to toggle Colormap Section').tooltip('fixTitle').tooltip('hide');
+                                if ( $('#sn_colormap').is(':checked') ) {
+                                    if ( $('input:radio[name=colormap_choice]:checked').val() !== colormap ) {
+                                        if ( ! $.isEmptyObject(standard_name) ) {
+                                            $('#sn_colormap_label')
+                                                .attr('data-original-title', "<p style=font-size:9px;'>Colormap set to '" + colormap + "' based on standard_name '" + standard_name + "'</p>")
+                                                .tooltip('fixTitle').tooltip('show');
+                                            $('#sectioncolorbarimg')
+                                                .attr('data-original-title', "<p style=font-size:9px;'>Colormap set to '" + colormap + "' based on standard_name '" + standard_name + "'. Click to toggle Colormap Section.</p>")
+                                                .tooltip('fixTitle').tooltip('show');
+                                        }
+                                    }
+                                }
+                                $('input:radio[value=' + colormap + ']').prop('checked', true);
+                                $('#sp-kmlcolorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + colormap + '.png');
+                                $('#mp-kmlcolorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + colormap + '.png');
+                                $('#cm-colorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + colormap + '.png');
+
                                 var options = simpledepthtime_options_zoom;
                                 if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
                                     // Zoomed
@@ -4967,7 +5160,6 @@ function enable_cardboard(){
                                     // Show colorbar
                                     $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
                                     $('#sectioncolorbarimg').attr('href', '#collapseColormap');
-                                    $('#sectioncolorbarimg').attr('title', 'Click to modify colormap').tooltip('fixTitle').tooltip('hide');
                                 }
                                 else {
                                     plot_data_color = '';
@@ -5120,7 +5312,7 @@ function enable_cardboard(){
                 if (data[key]) {
                     if (data[key]['points']) {
                         if ( ! $.isEmptyObject(data.measuredparameterx3d.points) ) {
-                            $('#mp-x3d-track').replaceWith([
+                            $('#mp-x3d-track-group').html([
                                 '<Shape id="mp-x3d-track">',
                                     '<Appearance><LineProperties linewidthScaleFactor="5"></LineProperties></Appearance>',
                                     '<indexedlineset coordIndex="' + data.measuredparameterx3d.index + '">',

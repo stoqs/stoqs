@@ -289,6 +289,29 @@ def find_matching_char(s, c1, c2):
             if pos == 0:
                 return i + 1
 
+def find_parens(s):
+    '''Cribbed from https://stackoverflow.com/questions/29991917/indices-of-matching-parentheses-in-python
+    Returns hash where keys are opening parens and values are the closing parens.
+    '''
+    toret = {}
+    pstack = []
+
+    for i, c in enumerate(s):
+        if c == '(':
+            pstack.append(i)
+        elif c == ')':
+            if len(pstack) == 0:
+                logger.debug("No matching opening parens at: " + str(i))
+                return toret
+
+            toret[pstack.pop()] = i
+
+    if len(pstack) > 0:
+        logger.debug("No matching closing parens at: " + str(pstack.pop()))
+        return toret
+
+    return toret
+
 def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False):
     '''
     Given a generic database agnostic Django query string modify it using regular expressions to work
@@ -298,68 +321,85 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
     import re
 
     # Get text of query to quotify for Postgresql
-    q = str(query)
+    pgq = str(query)
 
     # Remove double quotes from around all table and colum names
-    q = q.replace('"', '')
+    pgq = pgq.replace('"', '')
 
     if not sampleFlag:
         # Add aliases for geom and gid - Activity
-        q = q.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
-        q = q.replace('= stoqs_activity.id as gid', '= stoqs_activity.id', 1)           # Fixes problem with above being applied to Sample query join
+        pgq = pgq.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
+        pgq = pgq.replace('= stoqs_activity.id as gid', '= stoqs_activity.id', 1)           # Fixes problem with above being applied to Sample query join
         if pointFlag:
-            q = q.replace('stoqs_activity.mappoint', 'stoqs_activity.mappoint as geom')
+            pgq = pgq.replace('stoqs_activity.mappoint', 'stoqs_activity.mappoint as geom')
         else:
-            q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
+            pgq = pgq.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
     else:
         # Add aliases for geom and gid - Sample
-        q = q.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
-        q = q.replace('stoqs_sample.geom', 'stoqs_sample.geom as geom')
+        pgq = pgq.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
+        pgq = pgq.replace('stoqs_sample.geom', 'stoqs_sample.geom as geom')
 
     if translateGeom:
-        q = q.replace('stoqs_measurement.geom', 'ST_X(stoqs_measurement.geom) as longitude, ST_Y(stoqs_measurement.geom) as latitude')
+        pgq = pgq.replace('stoqs_measurement.geom', 'ST_X(stoqs_measurement.geom) as longitude, ST_Y(stoqs_measurement.geom) as latitude')
     
     # Quotify simple things that need quotes
     QUOTE_NAMEEQUALS = re.compile('name\s+=\s+(?P<argument>[^\)\s)]+)')
     QUOTE_DATES = re.compile('(?P<argument>\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)')
 
-    q = QUOTE_NAMEEQUALS.sub(r"name = '\1'", q)
-    q = QUOTE_DATES.sub(r"'\1'", q)
+    pgq = QUOTE_NAMEEQUALS.sub(r"name = '\1'", pgq)
+    pgq = QUOTE_DATES.sub(r"'\1'", pgq)
 
     # The IN ( ... ) clauses require special treatment: an IN SELECT subquery needs no quoting, only string values need quotes, and numbers need no quotes
-    FIND_INS = re.compile('\sIN\s\([^\)]+\)')
+    FIND_INS = re.compile('\sIN\s(?P<argument>.+)')
+    INSTR = ' IN '
+    all_ins = [ai for ai in re.finditer(INSTR, pgq)]
     items = ''
-    for m in FIND_INS.findall(q):
-        if m.find('SELECT') == -1:
-            logger.debug('line = %s', m)
-            beg_in = q.find(m)
-            end_in = find_matching_char(q[beg_in:], '(', ')')
-            FIND_ITEMS = re.compile('\((?P<argument>[^\']+)\)')
-            new_items = ''
-            try:
-                items = FIND_ITEMS.search(q[beg_in:][:end_in]).groups()[0]
-            except Exception as e:
-                ##logger.warn(e)
-                continue
-            else:
-                for item in items.split(','):
-                    if not item.isdigit():
-                        new_items = new_items + "'" + item.strip() + "', "
-                    else:
-                        new_items = new_items + item.strip() + ", "
+    try:
+        new_pgq = pgq[:all_ins[0].start()]
+    except IndexError:
+        # Likely no INSTR string found
+        new_pgq = pgq
 
-                ##logger.debug('items = %s', items)
-            new_items = new_items[:-2]
-            ##logger.debug('new_items = %s', new_items)
+    for incount, in_match in enumerate(all_ins):
+        # Build up the new SQL by appending modified IN clauses and intermediate (trailing) content
+        matched_ins = FIND_INS.match(pgq[in_match.start():]).groups()[0]    # Could contain multiple INs, find_parens() fixes this
+        parens_hash = find_parens(matched_ins)                              # Get start and end indices for inside parens: IN (xxx)
+        if 'SELECT' in matched_ins:
+            # Subqueries don't need any special treatment
+            # The 0 key's value is the matching paren, pull contents of the IN, wrapping it with parens
+            new_pgq += f"({matched_ins[1:parens_hash[0]]})"
+        else:
+            # Need to unqote/quote the IN values for Postgres
+            in_content = matched_ins[1:parens_hash[0]]
+            # Capture intermediate and trailing SQL between the ' IN ' clauses 
+            try:
+                end_index = all_ins[incount+1].start() - len(INSTR) - all_ins[incount].end() + parens_hash[0] + 1
+                trailing_content = matched_ins[parens_hash[0]:end_index]
+            except IndexError:
+                # Likely all_ins[incount+1] has failed on last in_match instance
+                trailing_content = matched_ins[parens_hash[0]:]
+            new_items = []
+            if ',' in matched_ins:
+                # Handle multiple items in the IN clause
+                for item in in_content.split(','):
+                    item = item.replace("'", "")        # Remove QUOTE_DATES quotes
+                    new_items.append(f"'{item.lstrip()}'")
+            else: 
+                new_items.append(f"'{in_content.lstrip()}'")
 
             if new_items:
-                ##logger.debug('Replacing items = %s with new_items = %s', items, new_items)
-                q = q.replace(r' IN (' + items, r' IN (' + new_items) 
+                new_pgq += f"{INSTR}({', '.join(new_items)}" + trailing_content
+                # We lop off the opening paren in in_content and the closing paren is in trailing_content
+                ##new_pgq += FIND_INS.sub(f" IN ({', '.join(new_items)}", pgq) + trailing_content
+            else:
+                raise ValueError(f"Did not get any new_items from IN in {matched_ins}")
 
-    # Remove all '::bytea' added to the geom fields
-    q = q.replace(r'::bytea', r'')
+    # Remove all '::bytea' added to the geom fields - and cleanup any mistakes 
+    new_pgq = new_pgq.replace(r'::bytea', r'')
+    new_pgq = new_pgq.replace(r' IN IN ', r' IN ')
+    new_pgq = new_pgq.replace(r' IN  IN', r' IN ')
 
-    return q
+    return new_pgq
 
 def spiciness(t,s):
     """

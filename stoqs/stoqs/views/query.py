@@ -97,6 +97,7 @@ query_parms = {
                    'full_screen': 'full_screen',            # For making higher resolution graphics
                    'cmincmax_lock': 'cmincmax_lock',        # Preserve colormap min and max values from the UI
                    'speedup': 'speedup',                    # platformanimation speed factor
+                   'sn_colormap': 'sn_colormap',            # Flag value from checkbox
 }
 
 def _buildMapFile(request, qm, options):
@@ -118,8 +119,22 @@ def _buildMapFile(request, qm, options):
     # Add an item (a mapfile layer) for each platform - unioned up
     item_list = []      # Replicates queryset from an Activity query (needs name & id) with added geo_query & color attrbutes
 
+    if qm.kwargs['platforms']:
+        # Build only the layers of Platforms selected in the UI
+        platform_layer_types = []
+        for plat_selected in qm.kwargs['platforms']:
+            platform_layers = []
+            for plat_type, plats in json.loads(options)['platforms'].items():
+                for plat in plats:
+                    if plat[0] == plat_selected:
+                        platform_layers.append(plat) 
+            platform_layer_types.append(platform_layers)
+    else: 
+        # Build all the Platform layers
+        platform_layer_types =list(json.loads(options)['platforms'].values())
+
     trajectory_union_layer_string = ''
-    for plats in list(json.loads(options)['platforms'].values()):
+    for plats in platform_layer_types:
         for p in plats:
             # TODO: Test whether it's a point or track for trajectoryprofile data
             if p[3].lower() != 'trajectory':
@@ -135,7 +150,7 @@ def _buildMapFile(request, qm, options):
             item_list.append(item)
 
     station_union_layer_string = ''
-    for plats in list(json.loads(options)['platforms'].values()):
+    for plats in platform_layer_types:
         for p in plats:
             # First trajectoryprofile dataset is IMOS-EAC in which the trajectory is just variation in depth, so plot as a station
             # TODO: Test whether it's a point or track for trajectoryprofile data
