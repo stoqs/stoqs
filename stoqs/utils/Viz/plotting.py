@@ -14,6 +14,7 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from scipy.interpolate import griddata
+from scipy.stats import ttest_ind
 from matplotlib.colors import hex2color
 from pylab import polyval
 from collections import namedtuple
@@ -1223,10 +1224,10 @@ class ParameterParameter(BaseParameter):
                 ax.plot(self.x, yfit, color='k', linewidth=0.5)
                 c = np.corrcoef(self.x, self.y)[0,1]
                 pr = pearsonr(self.x, self.y)
-                ##test_pr = pearsonr([1,2,3], [1,5,7])
-                ##self.logger.debug('test_pr = %f (should be 0.981980506062)', test_pr)
-                infoText += '<br>Linear regression: %s = %s * %s + %s (r<sup>2</sup> = %s, p = %s)' % (yp.name, 
-                                round_to_n(m,4), xp.name, round_to_n(b,4), round_to_n(c**2,4), round_to_n(pr,4))
+                # See: https://www.tutorialspoint.com/python/python_p_value.htm
+                _, p_value = ttest_ind(self.x, self.y)
+                infoText += '<br>Linear regression: %s = %s * %s + %s (r<sup>2</sup> = %s, p-value = %s)' % (yp.name, 
+                                round_to_n(m,4), xp.name, round_to_n(b,4), round_to_n(c**2,4), round_to_n(p_value,4))
 
             # Add any sample locations
             if ppslFlag:
