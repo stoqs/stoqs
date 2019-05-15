@@ -312,6 +312,37 @@ def find_parens(s):
 
     return toret
 
+def _quote_ins(FIND_INS, pgq, all_ins, INSTR, incount, in_match):
+    # Build up the new SQL by appending modified IN clauses and intermediate (trailing) content
+    matched_ins = FIND_INS.match(pgq[in_match.start():]).groups()[0]    # Could contain multiple INs, find_parens() fixes this
+    parens_hash = find_parens(matched_ins)                              # Get start and end indices for inside parens: IN (xxx)
+
+    # Need to unqote/quote the IN values for Postgres
+    # The 0 key's value is the matching paren, pull contents of the IN, wrapping it with parens
+    in_content = matched_ins[1:parens_hash[0]]
+    # Capture intermediate and trailing SQL between the ' IN ' clauses 
+    try:
+        end_index = all_ins[incount+1].start() - len(INSTR) - all_ins[incount].end() + parens_hash[0] + 1
+        trailing_content = matched_ins[parens_hash[0]:end_index]
+    except IndexError:
+        # Likely all_ins[incount+1] has failed on last in_match instance
+        trailing_content = matched_ins[parens_hash[0]:]
+    new_items = []
+    if ',' in matched_ins:
+        # Handle multiple items in the IN clause
+        for item in in_content.split(','):
+            item = item.replace("'", "")        # Remove QUOTE_DATES quotes
+            new_items.append(f"'{item.lstrip()}'")
+    else: 
+        new_items.append(f"'{in_content.lstrip()}'")
+
+    if new_items:
+        quoted_in = f"{INSTR}({', '.join(new_items)}" + trailing_content
+    else:
+        raise ValueError(f"Did not get any new_items from IN in {matched_ins}")
+
+    return quoted_in
+
 def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False):
     '''
     Given a generic database agnostic Django query string modify it using regular expressions to work
@@ -360,39 +391,21 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
         # Likely no INSTR string found
         new_pgq = pgq
 
-    for incount, in_match in enumerate(all_ins):
-        # Build up the new SQL by appending modified IN clauses and intermediate (trailing) content
-        matched_ins = FIND_INS.match(pgq[in_match.start():]).groups()[0]    # Could contain multiple INs, find_parens() fixes this
-        parens_hash = find_parens(matched_ins)                              # Get start and end indices for inside parens: IN (xxx)
+    # Test for presence of a 'SELECT' in any part of the INs matched - as happens for Sample location queries
+    has_select = False
+    for in_match in all_ins:
+        matched_ins = FIND_INS.match(pgq[in_match.start():]).groups()[0]
         if 'SELECT' in matched_ins:
-            # Subqueries don't need any special treatment
-            # The 0 key's value is the matching paren, pull contents of the IN, wrapping it with parens
-            new_pgq += f"({matched_ins[1:parens_hash[0]]})"
-        else:
-            # Need to unqote/quote the IN values for Postgres
-            in_content = matched_ins[1:parens_hash[0]]
-            # Capture intermediate and trailing SQL between the ' IN ' clauses 
-            try:
-                end_index = all_ins[incount+1].start() - len(INSTR) - all_ins[incount].end() + parens_hash[0] + 1
-                trailing_content = matched_ins[parens_hash[0]:end_index]
-            except IndexError:
-                # Likely all_ins[incount+1] has failed on last in_match instance
-                trailing_content = matched_ins[parens_hash[0]:]
-            new_items = []
-            if ',' in matched_ins:
-                # Handle multiple items in the IN clause
-                for item in in_content.split(','):
-                    item = item.replace("'", "")        # Remove QUOTE_DATES quotes
-                    new_items.append(f"'{item.lstrip()}'")
-            else: 
-                new_items.append(f"'{in_content.lstrip()}'")
-
-            if new_items:
-                new_pgq += f"{INSTR}({', '.join(new_items)}" + trailing_content
-                # We lop off the opening paren in in_content and the closing paren is in trailing_content
-                ##new_pgq += FIND_INS.sub(f" IN ({', '.join(new_items)}", pgq) + trailing_content
-            else:
-                raise ValueError(f"Did not get any new_items from IN in {matched_ins}")
+            has_select = True
+            all_inner_ins = [ai for ai in re.finditer(INSTR, matched_ins)]
+            new_pgq += f"{INSTR}{matched_ins[:all_inner_ins[0].start()]}"
+            for incount, inner_in_match in enumerate(all_inner_ins):
+                new_pgq += _quote_ins(FIND_INS, matched_ins, all_inner_ins, INSTR, incount, inner_in_match)
+                break
+    
+    if not has_select:
+        for incount, in_match in enumerate(all_ins):
+            new_pgq += _quote_ins(FIND_INS, pgq, all_ins, INSTR, incount, in_match)
 
     # Remove all '::bytea' added to the geom fields - and cleanup any mistakes 
     new_pgq = new_pgq.replace(r'::bytea', r'')
