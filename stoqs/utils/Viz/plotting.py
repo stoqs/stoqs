@@ -12,6 +12,7 @@ mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import cmocean
 import math
 import matplotlib.pyplot as plt
+import statsmodels.api as sm
 from matplotlib import rcParams
 from scipy.interpolate import griddata
 from scipy.stats import ttest_ind
@@ -1221,13 +1222,15 @@ class ParameterParameter(BaseParameter):
                 m, b = polyfit(self.x, self.y, 1)
                 self.logger.debug('polyval')
                 yfit = polyval([m, b], self.x)
+                ##infoText += '<br>Polyfit linear regression: %s = %s * %s + %s' % (yp.name, round_to_n(m,4), xp.name, round_to_n(b,4))
                 ax.plot(self.x, yfit, color='k', linewidth=0.5)
-                c = np.corrcoef(self.x, self.y)[0,1]
-                pr = pearsonr(self.x, self.y)
-                # See: https://www.tutorialspoint.com/python/python_p_value.htm
-                _, p_value = ttest_ind(self.x, self.y)
-                infoText += '<br>Linear regression: %s = %s * %s + %s (r<sup>2</sup> = %s, p-value = %s)' % (yp.name, 
-                                round_to_n(m,4), xp.name, round_to_n(b,4), round_to_n(c**2,4), round_to_n(p_value,4))
+
+                # statsmodels.api provides the detail that Roberto suggested is good to have
+                # See: https://datatofish.com/statsmodels-linear-regression/
+                results = sm.OLS(self.y, sm.add_constant(self.x)).fit()
+                infoText += "<br><br>OLS linear regression: {} = {} * {} + {}".format(yp.name, round_to_n(results.params[1],4), 
+                                                                                      xp.name, round_to_n(results.params[0],4))
+                infoText += f"<br><br>{results.summary()}"
 
             # Add any sample locations
             if ppslFlag:
