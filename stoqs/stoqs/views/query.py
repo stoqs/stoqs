@@ -92,6 +92,7 @@ query_parms = {
                    'ppfr': 'ppfr',                          # Parameter-Parameter free range flag
                    'pplr': 'pplr',                          # Parameter-Parameter linear regression flag
                    'ppsl': 'ppsl',                          # Parameter-Parameter sample locations flag
+                   'ppns': 'ppns',                          # Parameter-Parameter no-stride flag
                    'mplabels': 'mplabels',                  # MeasuredParameter labels from Attributes selections
                    'activitynames': 'activitynames',        # Activities (NetCDF files) selected for plotting
                    'full_screen': 'full_screen',            # For making higher resolution graphics

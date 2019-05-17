@@ -1091,12 +1091,16 @@ class ParameterParameter(BaseParameter):
         pplrFlag = self.request.GET.get('pplr', False)
         ppfrFlag = self.request.GET.get('ppfr', False)
         ppslFlag = self.request.GET.get('ppsl', False)
+        ppnsFlag = self.request.GET.get('ppns', False)
      
         sql = ''
         try:
             # self.x and self.y may already be set for this instance by makeX3D()
             if not self.x and not self.y:
-                stride_val, sql, pp_count = self._getXYCData()
+                if ppnsFlag:
+                    stride_val, sql, pp_count = self._getXYCData(strideFlag=False)
+                else:
+                    stride_val, sql, pp_count = self._getXYCData(strideFlag=True)
 
             # If still no self.x and self.y then selection is not valid for the chosen x and y
             if self.x == [] or self.y == []:
@@ -1204,7 +1208,7 @@ class ParameterParameter(BaseParameter):
             Z = None
             infoText = 'n = %d' % len(self.x)
             if stride_val > 1:
-                infoText += ' (of %d, stride = %d)' % (pp_count, stride_val)
+                infoText += ' (of %d, stride = %d - Check No stride for unstrided plot)' % (pp_count, stride_val)
             infoText += '<br>%s ranges: fixed [%f, %f], actual [%f, %f]<br>%s ranges: fixed [%f, %f], actual [%f, %f]' % (
                             xp.name, self.pMinMax['x'][1], self.pMinMax['x'][2], np.min(self.x), np.max(self.x),
                             yp.name, self.pMinMax['y'][1], self.pMinMax['x'][2], np.min(self.y), np.max(self.y))
@@ -1217,17 +1221,11 @@ class ParameterParameter(BaseParameter):
                 plt.clabel(CS, inline=1, fontsize=10)
    
             if pplrFlag: 
-                # Do Linear regression and assemble additional information about the correlation
-                self.logger.debug('polyfit')
-                m, b = polyfit(self.x, self.y, 1)
-                self.logger.debug('polyval')
-                yfit = polyval([m, b], self.x)
-                ##infoText += '<br>Polyfit linear regression: %s = %s * %s + %s' % (yp.name, round_to_n(m,4), xp.name, round_to_n(b,4))
-                ax.plot(self.x, yfit, color='k', linewidth=0.5)
-
-                # statsmodels.api provides the detail that Roberto suggested is good to have
+                # Do linear regression with statsmodels.api which provides the summary detail that Roberto suggested is good to have
                 # See: https://datatofish.com/statsmodels-linear-regression/
-                results = sm.OLS(self.y, sm.add_constant(self.x)).fit()
+                X = sm.add_constant(self.x)
+                results = sm.OLS(self.y, X).fit()
+                ax.plot(self.x, results.predict(X), color='r', linewidth=0.5)
                 infoText += "<br><br>OLS linear regression: {} = {} * {} + {}".format(yp.name, round_to_n(results.params[1],4), 
                                                                                       xp.name, round_to_n(results.params[0],4))
                 infoText += f"<br><br>{results.summary()}"
