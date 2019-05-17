@@ -1176,10 +1176,10 @@ class ParameterParameter(BaseParameter):
             # Label the axes
             try:
                 xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
-                if xp.units in xp.name:
-                    ax.set_xlabel(xp.name)
-                else:
-                    ax.set_xlabel(f"{xp.name} ({xp.units})")
+                ax.set_xlabel(f"{xp.name} ({xp.units})")
+                if xp.units:
+                    if xp.units in xp.name:
+                        ax.set_xlabel(xp.name)
             except ValueError:
                 # Likely a coordinate variable
                 xp = models.Parameter
@@ -1190,10 +1190,10 @@ class ParameterParameter(BaseParameter):
 
             try:
                 yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
-                if yp.units in yp.name:
-                    ax.set_ylabel(yp.name)
-                else:
-                    ax.set_ylabel(f"{yp.name} ({yp.units})")
+                ax.set_ylabel(f"{yp.name} ({yp.units})")
+                if yp.units:
+                    if yp.units in yp.name:
+                        ax.set_ylabel(yp.name)
             except ValueError:
                 # Likely a coordinate variable
                 yp = models.Parameter
@@ -1225,6 +1225,7 @@ class ParameterParameter(BaseParameter):
                 # See: https://datatofish.com/statsmodels-linear-regression/
                 X = sm.add_constant(self.x)
                 results = sm.OLS(self.y, X).fit()
+                ax.axis('equal')
                 ax.plot(self.x, results.predict(X), color='r', linewidth=0.5)
                 infoText += "<br><br>OLS linear regression: {} = {} * {} + {}".format(yp.name, round_to_n(results.params[1],4), 
                                                                                       xp.name, round_to_n(results.params[0],4))
