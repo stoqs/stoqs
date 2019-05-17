@@ -532,6 +532,7 @@
                                         <input type="checkbox" id="pp-linear-regression" class="pp-options" checked="checked"> Linear regression
                                         <input type="checkbox" id="pp-free-range" class="pp-options" > Free range
                                         <input type="checkbox" id="pp-sample-locations" class="pp-options" checked="checked"> Samples
+                                        <input type="checkbox" id="pp-no-stride" class="pp-options"> No stride
                                         <a id="pp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap"><img src="" /></a>
                                         <pre class="prettyprint"></pre>
                                     </div>
@@ -4151,6 +4152,9 @@ function enable_cardboard(){
         }
         if ($('#pp-sample-locations').is(':checked')) {
             qstring = qstring + '&ppsl=1';
+        }
+        if ($('#pp-no-stride').is(':checked')) {
+            qstring = qstring + '&ppns=1';
         }
 
         if ($('.stoqs-zoom-width').hasClass('span12')) {
