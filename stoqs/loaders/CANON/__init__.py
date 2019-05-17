@@ -35,6 +35,7 @@ import requests
 import urllib
 
 from SampleLoaders import SeabirdLoader, SubSamplesLoader, ParentSamplesLoader
+from lrauv_support import MissionLoader
 from bs4 import BeautifulSoup
 from loaders import LoadScript, FileNotFound
 from stoqs.models import InstantPoint
@@ -181,6 +182,7 @@ class CANONLoader(LoadScript):
 
     def _execute_load(self, pname, parameters, stride, critSimpleDepthTime):
         psl = ParentSamplesLoader('', '', dbAlias=self.dbAlias)
+        lrauv_ml = MissionLoader('', '', dbAlias=self.dbAlias)
         stride = stride or self.stride
         files = getattr(self, f'{pname}_files')
         base = getattr(self, f'{pname}_base')
@@ -205,6 +207,7 @@ class CANONLoader(LoadScript):
                                           plotTimeSeriesDepth=0, auxCoords=aux_coords,
                                           critSimpleDepthTime=critSimpleDepthTime)
                 psl.load_lrauv_samples(pname, aname, url, self.dbAlias)
+                lrauv_ml.load_missions(pname, aname, url, self.dbAlias)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
