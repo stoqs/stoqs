@@ -1126,7 +1126,7 @@ class ParameterParameter(BaseParameter):
                     return None, 'Failed to create path for parameterparameter (%s) file' % ppPngFile, sql
 
             # Make the figure
-            fig = plt.figure()
+            fig = plt.figure(figsize=(7,7))
             plt.grid(True)
             ax = plt.gca()
             if not ppfrFlag:
@@ -1225,7 +1225,6 @@ class ParameterParameter(BaseParameter):
                 # See: https://datatofish.com/statsmodels-linear-regression/
                 X = sm.add_constant(self.x)
                 results = sm.OLS(self.y, X).fit()
-                ax.axis('equal')
                 ax.plot(self.x, results.predict(X), color='r', linewidth=0.5)
                 infoText += "<br><br>OLS linear regression: {} = {} * {} + {}".format(yp.name, round_to_n(results.params[1],4), 
                                                                                       xp.name, round_to_n(results.params[0],4))

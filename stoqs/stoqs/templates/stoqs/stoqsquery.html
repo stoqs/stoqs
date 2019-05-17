@@ -535,8 +535,10 @@
                                         <input type="checkbox" id="pp-sample-locations" class="pp-options" checked="checked"> Samples
                                         <input type="checkbox" id="pp-no-stride" class="pp-options"> No stride
                                         </div>
-                                        <div>
-                                        <a id="pp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap"><img src="" /></a>
+                                        <div id="pp-plot-div" style="overflow: auto; margin:0px auto;">
+                                        <a id="pp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
+                                            <img id="pp-plot" src="" />
+                                        </a>
                                         </div>
                                         <pre class="prettyprint"></pre>
                                     </div>
@@ -2733,7 +2735,7 @@
             $("input:radio[name='parameters_y'][value='']").prop('checked', true)
             $("input:radio[name='parameters_z'][value='']").prop('checked', true)
             $("input:radio[name='parameters_c'][value='']").prop('checked', true)
-            $('#parameter-parameter-2dplot > div a > img').removeAttr('src');
+            $('#pp-plot').removeAttr('src');
             $('#parameter-parameter-2dplot > pre').html('');
             //$('#pp2d').html('');
             //$('#pp3d').html('');
@@ -4957,7 +4959,7 @@ function enable_cardboard(){
         function startWaitIndicators() {
             $('#time-depth-flot').addClass('stoqs-background-ajax-loader-pulse ');
             $('#time-parameter-flot').addClass('stoqs-background-ajax-loader-pulse ');
-            $('#parameter-parameter-2dplot').addClass('stoqs-background-ajax-loader-pp ');
+            $('#pp-plot-div').addClass('stoqs-background-ajax-loader-pp ');
             $('#parameter-parameter-3dplot').addClass('stoqs-background-ajax-loader-3d ');
             $('#geo-3dplot').addClass('stoqs-background-ajax-loader-3d-topright ');
             $('#metadata-ajaxtime').css( { 'color': 'grey' } );
@@ -4967,7 +4969,7 @@ function enable_cardboard(){
         function resetWaitIndicators() {
             $('#time-depth-flot').removeClass('stoqs-background-ajax-loader-pulse ');
             $('#time-parameter-flot').removeClass('stoqs-background-ajax-loader-pulse ');
-            $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader-pp ');
+            $('#pp-plot-div').removeClass('stoqs-background-ajax-loader-pp ');
             $('#parameter-parameter-3dplot').removeClass('stoqs-background-ajax-loader-3d');
             $('#geo-3dplot').removeClass('stoqs-background-ajax-loader-3d-topright');
 
@@ -5258,7 +5260,7 @@ function enable_cardboard(){
                         $('#parameter-parameter-sql').html(data[key][2]);
                     }
                     if (data[key][0]) {
-                        $('#parameter-parameter-2dplot >div > a > img').attr('src', '{{MEDIA_URL}}parameterparameter/' + data[key][0]);
+                        $('#pp-plot').attr('src', '{{MEDIA_URL}}parameterparameter/' + data[key][0]);
 
                         if ( ! $('#collapseParameterParameter').hasClass('in') ) {
                             $('#parameter-parameter-anchor').click();
