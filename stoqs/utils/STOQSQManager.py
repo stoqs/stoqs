@@ -52,6 +52,7 @@ logger = logging.getLogger(__name__)
 LABEL = 'label'
 DESCRIPTION = 'description'
 COMMANDLINE = 'commandline'
+LRAUV_MISSION = 'LRAUV Mission'
 spherical_mercator_srid = 3857
 
 # Constants for parametertime coordinates
@@ -1867,6 +1868,7 @@ class STOQSQManager(object):
         '''
         Query for "Attributes" which are specific ResourceTypes or fields of other classes. Initially for tagged measurements
         and for finding comments about Samples, but can encompass any other way a STOQS database may be filtered os searched.
+        May 2019: Added LRAUV Missions -- shoe-horning into the mplabel scheme developed for machine learning, cause it mostly fits.
         '''
         measurementHash = {}
 
@@ -1876,9 +1878,18 @@ class STOQSQManager(object):
         if sources:
             logger.debug('Building commandlines element in measurementHash...')
             measurementHash['commandlines'] = dict((s[0], s[1]) for s in sources)
+        else:
+            # Check for LRAUV Missions
+            sources = (models.ResourceResource.objects.using(self.dbname)
+                                              .filter(toresource__name=LRAUV_MISSION)
+                                              .values_list('fromresource__resourcetype__name', 'toresource__value')
+                                              .distinct())
+            if sources:
+                logger.debug('Building "syslogs" element in measurementHash...')
+                measurementHash['commandlines'] = dict((s[0], s[1]) for s in sources)
 
         for mpr in models.MeasuredParameterResource.objects.using(self.dbname).filter(activity__in=self.qs
-                        ,resource__name__in=[LABEL]).values( 'resource__resourcetype__name', 'resource__value', 
+                        ,resource__name__in=[LABEL, LRAUV_MISSION]).values( 'resource__resourcetype__name', 'resource__value', 
                         'resource__id').distinct().order_by('resource__value'):
 
             # Include all description resources associated with this label
