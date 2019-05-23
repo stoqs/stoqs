@@ -900,10 +900,10 @@
                                                 <em id="time-parameter-instr">Click and drag to zoom</em>
                                                 <a id="tp-zoom-rc-button" class="btn-mini zoom-rc-button"><i class="icon-resize-full" title="Full Screen"></i></a>
                                             </div>
-                                            <div class="span1">
+                                            <div class="span2">
                                                 <button id="show-all-parameters" hidden><span class="text">Show all Parameters</span></button>&nbsp;
                                             </div>
-                                            <div id="stride-info" class="span9"></div>
+                                            <div id="stride-info" class="span8"></div>
                                         </div>
                                         <div id="time-parameter-flot" style="width:100%;height:90%;" class="disabled"></div>
                                         <div class="row-fluid">
@@ -3717,8 +3717,8 @@ function enable_cardboard(){
             $.each(platforms, function (index, platform_value) {
                 // Now add each activity for this platform - separated so that they are not connected with a line
                 //console.log('Getting sdt for ' + platform_value[0])
-                if ( ! $.isEmptyObject(data['simpledepthtime']['sdt'][platform_value[0]]) ) {
-                    $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
+                if ( ! $.isEmptyObject(data['simpledepthtime']['default']['sdt'][platform_value[0]]) ) {
+                    $.each(data['simpledepthtime']['default']['sdt'][platform_value[0]], function (label, depth_time_series) {
                         var rec = [];
                         //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
                         subset_dts = [];
@@ -3745,7 +3745,7 @@ function enable_cardboard(){
                                 platform_seen[platform_value[0]] = true;
                             }
                             //console.log('>>> ' + platform_value[0]);
-                            dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['colors'][platform_value[0]]});
+                            dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['default']['colors'][platform_value[0]]});
                             dataset.push({'data': bottomdepth_time_series, 'color': "#lightgrey", 'lines': {lineWidth: 0, fill: true}});
                          }
                     });
@@ -4459,7 +4459,7 @@ function enable_cardboard(){
                         platformTypeHtml += '<tr id="' + value[1] +'"><td style="text-align:center;width:15%;border-top-width:0;">' +
                                 '<div id="' + value[1] + '_icon" style="text-align: center;float:left;width:90%;height:20px;background-color: rgb(192, 211, 228)">' +
                                     '<div id="' + value[1] + '_color" style="border-bottom:2px solid;width:90%;height:9px;margin-left:auto;margin-right:auto;border-bottom-color:#' + 
-                                        data['simpledepthtime']['colors'][value[1]] + ';">' +
+                                        data['simpledepthtime']['default']['colors'][value[1]] + ';">' +
                                 '</div></div></td>' +
                                 '<td style="text-align:center;width:5%;border-top-width:0;">' +
                                     '<input type="checkbox" name="platforms_plot" value="' + value[1] + '" class="platform-plot-map-checkbox" style="display:none;" />' +
@@ -4832,7 +4832,8 @@ function enable_cardboard(){
         function redrawSimpleDepthTime(data) {
                 var theData;
                 // Redraw the plot given the saved values
-                if ( $.isEmptyObject(data.simpledepthtime.sdt) ) {
+                // TODO: Rework so as to account for selection of other ActivityTypes other than 'default'
+                if ( $.isEmptyObject(data.simpledepthtime.default.sdt) ) {
                     if (! $.isEmptyObject(data.parametertime.pt) ) {
                         // Show parameter-time data if no trajectory data shown 
                         // TODO: perhaps better to do with an event listener on presence of data in the flot object
@@ -5395,7 +5396,7 @@ function enable_cardboard(){
                     }
                 }
                 // Redraw the time series so that we have the crosshair option added and can call lockCrosshair()
-                if (data['simpledepthtime']) {
+                if ( ! $.isEmptyObject(data['simpledepthtime']) ) {
                     redrawSimpleDepthTime(data);
                 }
                 if (data['parametertime']) {
@@ -5560,20 +5561,6 @@ function enable_cardboard(){
 
     } // updateSummaryData()
    
-    function setCrosshair(eventObject) {
-        // Handle events from PlatformOrientation TimeSensor to update crosshair on Temporal flot plot
-        // See: http://doc.x3dom.org/tutorials/animationInteraction/onoutputchange/example.html
-        if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
-            return;
-        
-        var t = $('body').data()['po_start_time'] + eventObject.value * ($('body').data()['po_end_time'] - $('body').data()['po_start_time']);
-
-        timedepthplot.lockCrosshair({x: t, y:0});
-        if ( ! $.isEmptyObject(timeparameterplot) ) {
-            timeparameterplot.lockCrosshair({x: t, y:0});
-        }
-    }
-
     // Collect all the parameters on the page so we can generate our permalink.
     function collect_parameters_for_permalink() {
         var pl_params={'platform_clicks': [],

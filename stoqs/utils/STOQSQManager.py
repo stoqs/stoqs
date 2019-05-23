@@ -828,85 +828,95 @@ class STOQSQManager(object):
         '''
         Based on the current selected query criteria for activities, return the associated SimpleDepth time series
         values as a 2-tuple list inside a 2 level hash of platform__name (with its color) and activity__name.
+        Multiple simpledepthtimes may be created. There is always a 'default', which is the original concept with
+        the sdt items organized by Activities associated with the data sources -- usually NetCDF files.
+        SimpleDepthTimes may also be organized by some other criteria, for example LRAUV_MISSION type of 
+        Activities.  If these exist in the database, then additional top-level hashes with the ActivityType
+        as the key will be created.
         '''
-        sdt = defaultdict(dict)
-        colors = {}
 
         trajectoryQ = self._trajectoryQ()
         timeSeriesQ = self._timeSeriesQ()
         timeSeriesProfileQ = self._timeSeriesProfileQ()
         trajectoryProfileQ = self._trajectoryProfileQ()
 
-        for plats in list(self.getPlatforms().values()):
-            for p in plats:
-                logger.debug('Platform name: ' + p[0])
-                plq = Q(platform__name = p[0])
-                if self.kwargs.get('activitynames'):
-                    plq = plq & Q(name__in=self.kwargs.get('activitynames'))
-                sdt[p[0]] = defaultdict(list)
-                colors[p[0]] = p[2]
+        sdt_groups = defaultdict(dict)
+        # Always have a 'default' ActivityType, and can loop over any number of other ActivityTypes
+        for act_type in ('default', LRAUV_MISSION):
+            sdt_groups[act_type]['sdt'] = defaultdict(dict)
+            sdt_groups[act_type]['colors'] = defaultdict(dict)
+            for plats in list(self.getPlatforms().values()):
+                for p in plats:
+                    logger.debug('Platform name: ' + p[0])
+                    plq = Q(platform__name = p[0])
+                    if self.kwargs.get('activitynames'):
+                        plq = plq & Q(name__in=self.kwargs.get('activitynames'))
+                    sdt_groups[act_type]['sdt'][p[0]] = defaultdict(list)
+                    sdt_groups[act_type]['colors'][p[0]] = p[2]
 
-                if p[3].lower() == 'trajectory':
-                    # Overkill to also filter on trajectoryQ too if p[3].lower() == 'trajectory' 
-                    # - old Tethys data does not have NC_GLOBAL featureType
-                    qs_traj = (self.qs.filter(plq)
-                                      .values_list('simpledepthtime__epochmilliseconds', 
-                                                   'simpledepthtime__depth', 'name')
-                                      .order_by('simpledepthtime__epochmilliseconds'))
-                    # Add to sdt hash date-time series organized by activity__name key 
-                    # within a platform__name key. This will let flot plot the series with 
-                    # gaps between the surveys -- not connected
-                    logger.debug('-trajectory, filling sdt[]')
-                    for s in qs_traj:
-                        if s[1] is not None:
-                            sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
-                    logger.debug(' Done filling sdt[].')
+                    if p[3].lower() == 'trajectory':
+                        # Overkill to also filter on trajectoryQ too if p[3].lower() == 'trajectory' 
+                        # - old Tethys data does not have NC_GLOBAL featureType
+                        qs_traj = (self.qs.filter(plq)
+                                          .values_list('simpledepthtime__epochmilliseconds', 
+                                                       'simpledepthtime__depth', 'name')
+                                          .order_by('simpledepthtime__epochmilliseconds'))
+                        if act_type != 'default':
+                            qs_traj = qs_traj.filter(activitytype__name=act_type)
+                        # Add to sdt hash date-time series organized by activity__name key 
+                        # within a platform__name key. This will let flot plot the series with 
+                        # gaps between the surveys -- not connected
+                        logger.debug(f"-trajectory, filling sdt_groups[{act_type}]['sdt'][{p[0]}][]")
+                        for s in qs_traj:
+                            if s[1] is not None:
+                                sdt_groups[act_type]['sdt'][p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
+                        logger.debug(f" Done filling sdt_groups[{act_type}]['sdt'][{p[0]}][]")
 
-                elif p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile':
-                    self._add_ts_tsp_to_sdt(p, plq, timeSeriesQ, timeSeriesProfileQ, sdt)
+                    elif p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile':
+                        self._add_ts_tsp_to_sdt(p, plq, timeSeriesQ, timeSeriesProfileQ, sdt_groups[act_type]['sdt'])
 
-                elif p[3].lower() == 'trajectoryprofile': # pragma: no cover
-                    iptvq = Q()
-                    qs_tp = None
-                    if 'time' in self.kwargs:
-                        if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
-                            s_ems = time.mktime(datetime
-                                                .strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S')
-                                                .timetuple())*1000
-                            e_ems = time.mktime(datetime
-                                                .strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S')
-                                                .timetuple())*1000
-                            iptvq = (Q(simpledepthtime__epochmilliseconds__gte = s_ems) & 
-                                     Q(simpledepthtime__epochmilliseconds__lte = e_ems))
-                            qs_tp = (self.qs.filter(plq & trajectoryProfileQ & iptvq)
-                                            .select_related()
+                    elif p[3].lower() == 'trajectoryprofile': # pragma: no cover
+                        iptvq = Q()
+                        qs_tp = None
+                        if 'time' in self.kwargs:
+                            if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
+                                s_ems = time.mktime(datetime
+                                                    .strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S')
+                                                    .timetuple())*1000
+                                e_ems = time.mktime(datetime
+                                                    .strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S')
+                                                    .timetuple())*1000
+                                iptvq = (Q(simpledepthtime__epochmilliseconds__gte = s_ems) & 
+                                         Q(simpledepthtime__epochmilliseconds__lte = e_ems))
+                                qs_tp = (self.qs.filter(plq & trajectoryProfileQ & iptvq)
+                                                .select_related()
+                                                .values('name', 'simpledepthtime__depth',
+                                                        'simpledepthtime__nominallocation__depth', 
+                                                        'simpledepthtime__epochmilliseconds')
+                                                .order_by('simpledepthtime__nominallocation__depth',
+                                                          'simpledepthtime__epochmilliseconds')
+                                                .distinct())
+                        if not qs_tp:
+                            qs_tp = (self.qs.filter(plq & trajectoryProfileQ).select_related()
                                             .values('name', 'simpledepthtime__depth',
-                                                    'simpledepthtime__nominallocation__depth', 
+                                                    'simpledepthtime__nominallocation__depth',
                                                     'simpledepthtime__epochmilliseconds')
                                             .order_by('simpledepthtime__nominallocation__depth',
                                                       'simpledepthtime__epochmilliseconds')
                                             .distinct())
-                    if not qs_tp:
-                        qs_tp = (self.qs.filter(plq & trajectoryProfileQ).select_related()
-                                        .values('name', 'simpledepthtime__depth',
-                                                'simpledepthtime__nominallocation__depth',
-                                                'simpledepthtime__epochmilliseconds')
-                                        .order_by('simpledepthtime__nominallocation__depth',
-                                                  'simpledepthtime__epochmilliseconds')
-                                        .distinct())
 
-                    # Add to sdt hash date-time series organized by activity__name_nominallocation__depth 
-                    # key within a platform__name key - use real depths
-                    for sd in qs_tp:
-                        ##logger.debug('sd = %s', sd)
-                        an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
-                        ##logger.debug('an_nd = %s', an_nd)
-                        if 'simpledepthtime__epochmilliseconds' in sd:
-                            sdt[p[0]][an_nd].append(
-                                        [sd['simpledepthtime__epochmilliseconds'], 
-                                        '%.2f' % sd['simpledepthtime__depth']])
+                        # Add to sdt hash date-time series organized by activity__name_nominallocation__depth 
+                        # key within a platform__name key - use real depths
+                        for sd in qs_tp:
+                            ##logger.debug('sd = %s', sd)
+                            an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
+                            ##logger.debug('an_nd = %s', an_nd)
+                            if 'simpledepthtime__epochmilliseconds' in sd:
+                                sdt_groups[act_type]['sdt'][p[0]][an_nd].append(
+                                            [sd['simpledepthtime__epochmilliseconds'], 
+                                            '%.2f' % sd['simpledepthtime__depth']])
 
-        return({'sdt': sdt, 'colors': colors})
+        return sdt_groups 
 
     def getSimpleBottomDepthTime(self):
         '''
