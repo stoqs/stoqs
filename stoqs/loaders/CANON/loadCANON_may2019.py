@@ -279,6 +279,7 @@ cl.load_wg_New() ## new for this campaign
 cl.load_oa1()
 cl.load_oa2()
 cl.loadDorado(startdate, enddate, build_attrs=True)
+cl.loadLRAUV('makai', startdate, enddate)
 cl.loadLRAUV('daphne', startdate, enddate)
 cl.loadLRAUV('tethys', startdate, enddate)
 cl.loadRCuctd()
