@@ -9,9 +9,11 @@ from collections import defaultdict, namedtuple
 from datetime import datetime
 from loaders import STOQS_Loader
 from stoqs.models import (Activity, ResourceType, Resource, Measurement, MeasuredParameter,
-                          MeasuredParameterResource, ResourceResource)
+                          MeasuredParameterResource, ResourceResource, Campaign,
+                          SimpleDepthTime, ActivityType)
 from utils.STOQSQManager import LABEL, DESCRIPTION, LRAUV_MISSION
 
+import numpy as np
 import requests
 
 STARTED_MISSION = 'Started mission'
@@ -66,7 +68,8 @@ class MissionLoader(STOQS_Loader):
         return mission_starts
 
     def _make_starts_ends_names(self, mission_starts, activity, db_alias):
-        '''Make start and end datetimes for each mission name
+        '''Make start and end datetimes for each mission name.  TethysDash API response delivers most
+        recent first, so need to reverse the response.
         '''
         starts = []
         ends = []
@@ -77,9 +80,14 @@ class MissionLoader(STOQS_Loader):
                 ends.append(datetime.utcfromtimestamp(mission_starts[mc+1].esec))
             except IndexError:
                 ends.append(activity.enddate)
-            names.append(mission_starts[mc].text.replace(STARTED_MISSION, ''))
+            names.append(mission_starts[mc].text.replace(STARTED_MISSION, '').strip())
 
-        return starts, ends, names
+        return reversed(starts), reversed(ends), reversed(names)
+
+    def _update_mission_activity(self):
+        '''Update maptrack, num_measuredparameters, ...
+        '''
+        pass
 
     def load_missions(self, platform_name, activity_name, url, db_alias):
         '''Parse the syslog looking for messages that identify the starts of missions.
@@ -89,10 +97,15 @@ class MissionLoader(STOQS_Loader):
         syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
         self.logger.info(f"Getting Sample information from the TethysDash API that's also in {syslog_url}")
         mission_starts = self._missions_from_json(platform_name, url)
+        campaign = Campaign.objects.using(db_alias).get()
         activity = Activity.objects.using(db_alias).get(name=activity_name)
         starts, ends, names = self._make_starts_ends_names(mission_starts, activity, db_alias)
 
-        rt, _ = ResourceType.objects.using(db_alias).get_or_create(name=LRAUV_MISSION, description='LRAUV Mission name as retrieved from TethysDash api')
+        rt, _ = (ResourceType.objects.using(db_alias)
+                             .get_or_create(name=LRAUV_MISSION, 
+                                            description='LRAUV Mission name as retrieved from TethysDash api'))
+        activity_type, _ = (ActivityType.objects.using(db_alias)
+                                        .get_or_create(name=LRAUV_MISSION))
 
         # We can use the machinery of Labeled data to label the mission's Measured Parameters -- describe the source of it
         rdt, _ = ResourceType.objects.using(db_alias).get_or_create(name=LABEL, description='metadata')
@@ -102,21 +115,88 @@ class MissionLoader(STOQS_Loader):
                                                        uristring=syslog_url, 
                                                        resourcetype=rdt))
 
+        # Create the new Activities with the start and end times encompassing all the nemes in the set
+        MissionActivity = namedtuple('MissionActivity', 'start end count')
+        ma = {}
+        ma_count = defaultdict(int)
         for start, end, name in zip(starts, ends, names):
-            self.logger.info(f"Associating with MeasuredParameters LRAUV mission '{name}' in Activity {activity}")
+            ma_count[name] += 1
+            if name not in ma:
+                ma[name] = MissionActivity(start, end, ma_count[name])
+            else:
+                # Update the end value and count, retaining the initial start
+                ma[name] = MissionActivity(ma[name].start, end, ma_count[name])
+
+        activity_by_mission = {}
+        for name, mission_activity in ma.items():
+            self.logger.info(f"Creating {LRAUV_MISSION} Activity for mission: {name} ")
+            # LRAUV_MISSION Activity may exist from an earlier activity, try and get
+            # it from the DB by just its name, type, and platform in the campaign
+            try:
+                act = Activity.objects.using(db_alias).get(name=name, 
+                                                           activitytype=activity_type, 
+                                                           campaign=campaign, 
+                                                           platform=activity.platform)
+            except Activity.DoesNotExist:
+                comment = f"Created by stoqs/loaders/{__name__}.py load_missions():"
+                act = Activity(name=name, 
+                               activitytype=activity_type,
+                               campaign=campaign, 
+                               platform=activity.platform, 
+                               startdate=mission_activity.start,
+                               comment=comment)
+
+            # Always update the enddate and comment - save the Activity for use below
+            act.enddate = mission_activity.end
+            act.comment += f" {mission_activity.count} missions from {syslog_url}"
+            act.save(using=db_alias)
+            activity_by_mission[name] = act            
+
+        last_name = ''
+        for start, end, name in zip(starts, ends, names):
+            self.logger.info(f"LRAUV mission '{name}' in Activity {activity}: start={start}, end={end}")
+            self.logger.info(f"Associating with MeasuredParameters for Attribute selection in the UI")
             # This Resource name appears in the STOQS UI in blue text of the Attributes -> Measurement tab
             res, _ = Resource.objects.using(db_alias).get_or_create(name=LRAUV_MISSION, value=name, resourcetype=rt)
             # Associate with Resource that describes the source
             ResourceResource.objects.using(db_alias).get_or_create(fromresource=res, 
                                                                    toresource=lrauv_mission_res)
             # Create collections of MeasuredParameterResources for each Measurement in the Mission
-            for meas in (Measurement.objects.using(db_alias)
+            for count, meas in enumerate(Measurement.objects.using(db_alias)
                                     .filter(instantpoint__activity__name=activity_name, 
                                             instantpoint__timevalue__gte=start, 
                                             instantpoint__timevalue__lt=end)):
+                if not count % 100:
+                    self.logger.debug(f"{count:5d}: timevalue = {meas.instantpoint.timevalue}")
                 for mp in MeasuredParameter.objects.using(db_alias).filter(measurement=meas):
                     mpr, _ = (MeasuredParameterResource.objects.using(db_alias)
                                                        .get_or_create(measuredparameter=mp,
                                                                       resource=res,
                                                                       activity=activity))
+
+            # Associate copies of SimpleDepthTime with the mission Activity for overview data viz
+            self.logger.info(f"Associating with SimpleDepthTime copies with Activity {name}")
+            last_sdt = None
+            for count, sdt in enumerate(SimpleDepthTime.objects.using(db_alias)
+                                   .filter(instantpoint__timevalue__gte=start,
+                                           instantpoint__timevalue__lt=end)):
+                # Copy the object with a new foreign key reference to the additional activity
+                # See: https://docs.djangoproject.com/en/2.2/topics/db/queries/#copying-model-instances
+                if not count % 100:
+                    self.logger.debug(f"{count:5d}: timevalue = {sdt.instantpoint.timevalue}")
+                sdt.pk = None
+                sdt.activity = activity_by_mission[name]
+                sdt.save(using=db_alias)
+                last_sdt = sdt
+
+            if last_sdt:
+                if name != last_name:
+                    # Add a NaN value to the previous simpledepth time series to cause a break in the Flot plot
+                    sdt_break = SimpleDepthTime(instantpoint=last_sdt.instantpoint, 
+                                                depth=np.nan, 
+                                                activity=activity_by_mission[name],
+                                                epochmilliseconds=last_sdt.epochmilliseconds+1)
+                    sdt_break.save(using=db_alias)
+
+            last_name = name
 
