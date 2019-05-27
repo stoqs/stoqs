@@ -869,6 +869,10 @@
                                     <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
                                         <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled"></div>
                                         <div class="row-fluid">
+                                            <div id="activitytypes" class="span12">
+                                            </div>
+                                        </div>
+                                        <div class="row-fluid">
                                             <div class="span5">
                                                 <span id="temporalparameterplotinfo">&nbsp;</span>
                                                 <br>
@@ -3705,7 +3709,7 @@ function enable_cardboard(){
         }
     });
 
-    function getDepthDataset(data, x1, x2) {
+    function getDepthDataset(data, x1, x2, act_types) {
         // Return a dataset of simpledepthtime for flot for only the data between times x1 and x2
         var dataset = [];
         var platform_seen = [];
@@ -3717,39 +3721,46 @@ function enable_cardboard(){
             $.each(platforms, function (index, platform_value) {
                 // Now add each activity for this platform - separated so that they are not connected with a line
                 //console.log('Getting sdt for ' + platform_value[0])
-                if ( ! $.isEmptyObject(data['simpledepthtime']['default']['sdt'][platform_value[0]]) ) {
-                    $.each(data['simpledepthtime']['default']['sdt'][platform_value[0]], function (label, depth_time_series) {
-                        var rec = [];
-                        //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
-                        subset_dts = [];
-                        bottomdepth_time_series = [];
-                        if ( ! $.isEmptyObject(data.simplebottomdepthtime ) ) {
-                            if ( ! $.isEmptyObject(data.simplebottomdepthtime.sbdt[platform_value[0]][label]) ) {
-                                bottomdepth_time_series = data.simplebottomdepthtime.sbdt[platform_value[0]][label];
+                $.each(act_types, function(index, act_type) {
+                    if ( ! $.isEmptyObject(data['simpledepthtime'][act_type]['sdt'][platform_value[0]]) ) {
+                        $.each(data['simpledepthtime'][act_type]['sdt'][platform_value[0]], function (label, depth_time_series) {
+                            var rec = [];
+                            //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
+                            subset_dts = [];
+                            bottomdepth_time_series = [];
+                            if ( ! $.isEmptyObject(data.simplebottomdepthtime ) ) {
+                                if ( ! $.isEmptyObject(data.simplebottomdepthtime.sbdt[platform_value[0]][label]) ) {
+                                    bottomdepth_time_series = data.simplebottomdepthtime.sbdt[platform_value[0]][label];
+                                }
                             }
-                        }
-                        if ( ! $.isEmptyObject(depth_time_series) ) {
-                            // Test for overlap of zoom window with data; push an item to mark this dts being in zoom window
-                            d1 = depth_time_series[0][0];
-                            d2 = depth_time_series[depth_time_series.length-1][0];
-                            if ((x1 <= d2) && (d1 <= x2)){
-                                subset_dts.push(depth_time_series[0]);
+                            if ( ! $.isEmptyObject(depth_time_series) ) {
+                                // Test for overlap of zoom window with data; push an item to mark this dts being in zoom window
+                                d1 = depth_time_series[0][0];
+                                d2 = depth_time_series[depth_time_series.length-1][0];
+                                if ((x1 <= d2) && (d1 <= x2)){
+                                    subset_dts.push(depth_time_series[0]);
+                                }
                             }
-                        }
-                        if (subset_dts.length > 0) {
-                            if (subset_dts.length > maxLength) {
-                                maxLength = subset_dts.length;
-                            }
-                            if (! platform_seen[platform_value[0]]) {
-                                //rec["label"] = platform_value[0];
-                                platform_seen[platform_value[0]] = true;
-                            }
-                            //console.log('>>> ' + platform_value[0]);
-                            dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['default']['colors'][platform_value[0]]});
-                            dataset.push({'data': bottomdepth_time_series, 'color': "#lightgrey", 'lines': {lineWidth: 0, fill: true}});
-                         }
-                    });
-                }
+                            if (subset_dts.length > 0) {
+                                if (subset_dts.length > maxLength) {
+                                    maxLength = subset_dts.length;
+                                }
+                                if (! platform_seen[platform_value[0]]) {
+                                    //rec["label"] = platform_value[0];
+                                    platform_seen[platform_value[0]] = true;
+                                }
+                                //console.log('>>> ' + platform_value[0]);
+                                if ( act_type === 'default' ) {
+                                    dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime'][act_type]['colors'][platform_value[0]]});
+                                }
+                                else {
+                                    dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime'][act_type]['colors'][platform_value[0]]});
+                                }
+                                dataset.push({'data': bottomdepth_time_series, 'color': "#lightgrey", 'lines': {lineWidth: 0, fill: true}});
+                             }
+                        });
+                    }
+                });
             });
         });
 
@@ -4429,6 +4440,7 @@ function enable_cardboard(){
 
         function onInit(data, key) {
             // Called from ajax on initial request
+            $('body').data()['data'] = data;
             initData = data;
             $('.p-info').tooltip('fixTitle').tooltip('hide');
             $('#colormap-info').tooltip('fixTitle').tooltip('hide');
@@ -4633,12 +4645,30 @@ function enable_cardboard(){
                 });
             }
             else if (key == 'simpledepthtime') {
-                //flotPlot(data)
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
                 simpledepthtime_options_zoom = simpledepthtime_options;
-                timedepthplot = $.plot($("#time-depth-flot"), getDepthDataset(initData, start.getTime(), end.getTime()), 
+                // onInit: always display the default act_type
+                timedepthplot = $.plot($("#time-depth-flot"), getDepthDataset(initData, start.getTime(), end.getTime(), ['default']), 
                                                               simpledepthtime_options_zoom);
+
+                var activitytypes_html = 'Color by: ';
+                $.each(data['simpledepthtime'], function(act_type, sdt_data) {
+                    if ( act_type === 'default' ) {
+                        activitytypes_html += ' <input type="checkbox" name="activity-colors" value="default" checked/> Default Activity';
+                    }
+                    else {
+                        activitytypes_html += ' <input type="checkbox" name="activity-colors" value="' + act_type + '" /> ' + act_type;
+                    }
+                });
+                $('#activitytypes').html(activitytypes_html);
+                $('#activitytypes').hide()
+                if ( Object.keys(data['simpledepthtime']).length > 1) {
+                    $('#activitytypes').show()
+                    $('body').on('click', 'input:checkbox[name="activity-colors"]', function (e) {
+                        redrawSimpleDepthTime($('body').data()['data']);
+                    });
+                }
             }
             else if (key == 'parametertime') {
                 // Just check the count and enable tab if not 0
@@ -4844,13 +4874,19 @@ function enable_cardboard(){
                     }
                     return;
                 }
+                var act_types = [];
+                $('input:checked[name=activity-colors]').each(function (index, elem) {
+                    act_types.push(elem.value);
+                });
+                if ( $.isEmptyObject(act_types) ) {
+                    act_types = ['default'];
+                }
                 if ( $('#zoomed-button').hasClass('btn-primary') ) {
-                    theData = getDepthDataset(data, $('body').data()['start-ems'], $('body').data()['end-ems']);
+                    theData = getDepthDataset(data, $('body').data()['start-ems'], $('body').data()['end-ems'], act_types);
                 }
                 else {
-                    //theData = getDepthDataset(data, initData.time[0], initData.time[1]);
                     var zoom_sdt = zoom_simpledepthtime_stack[0];
-                    theData = getDepthDataset(data, zoom_sdt[0], zoom_sdt[1]);
+                    theData = getDepthDataset(data, zoom_sdt[0], zoom_sdt[1], act_types);
                 }
                 var options = simpledepthtime_options_zoom;
                 if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
@@ -4998,6 +5034,7 @@ function enable_cardboard(){
 
         function onUpdate(data, key) {
             // Called from ajax to update the selectors base on the new selection
+            $('body').data()['data'] = data;
             if (key == 'platforms') {
                 hasTrajectory = false;
                 hasTimeSeries = false;
