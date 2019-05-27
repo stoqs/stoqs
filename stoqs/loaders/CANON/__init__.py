@@ -201,7 +201,7 @@ class CANONLoader(LoadScript):
             try:
                 # Early LRAUV data had time coord of 'Time', override with auxCoords setting from load script
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aname, 
-                                          pname, self.colors[pname], 'auv', 'AUV mission',
+                                          pname, self.colors[pname], 'auv', 'LRAUV log',
                                           parameters, self.dbAlias, stride, 
                                           grdTerrain=self.grdTerrain, command_line_args=self.args,
                                           plotTimeSeriesDepth=0, auxCoords=aux_coords,
