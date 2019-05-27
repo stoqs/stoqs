@@ -842,7 +842,9 @@ class STOQSQManager(object):
 
         sdt_groups = defaultdict(dict)
         # Always have a 'default' ActivityType, and can loop over any number of other ActivityTypes
-        for act_type in ('default', LRAUV_MISSION):
+        # - As of May 2019 only 'trajectory's have other_activitytypes, skip for timeseries, etc.
+        other_activitytypes = (LRAUV_MISSION, )
+        for act_type in ('default', ) + other_activitytypes:
             sdt_groups[act_type]['sdt'] = defaultdict(dict)
             sdt_groups[act_type]['colors'] = defaultdict(dict)
             for plats in list(self.getPlatforms().values()):
@@ -852,7 +854,10 @@ class STOQSQManager(object):
                     if self.kwargs.get('activitynames'):
                         plq = plq & Q(name__in=self.kwargs.get('activitynames'))
                     sdt_groups[act_type]['sdt'][p[0]] = defaultdict(list)
-                    sdt_groups[act_type]['colors'][p[0]] = p[2]
+                    if act_type == 'default':
+                        sdt_groups[act_type]['colors'][p[0]] = p[2]
+                    else:
+                        sdt_groups[act_type]['colors'][p[0]] = {}
 
                     if p[3].lower() == 'trajectory':
                         # Overkill to also filter on trajectoryQ too if p[3].lower() == 'trajectory' 
@@ -861,21 +866,27 @@ class STOQSQManager(object):
                                           .values_list('simpledepthtime__epochmilliseconds', 
                                                        'simpledepthtime__depth', 'name')
                                           .order_by('simpledepthtime__epochmilliseconds'))
-                        if act_type != 'default':
+                        if act_type == 'default':
+                            # The default does not include the other ActivityTypes
+                            qs_traj = qs_traj.filter(~Q(activitytype__name__in=other_activitytypes))
+                        else:
                             qs_traj = qs_traj.filter(activitytype__name=act_type)
                         # Add to sdt hash date-time series organized by activity__name key 
                         # within a platform__name key. This will let flot plot the series with 
                         # gaps between the surveys -- not connected
-                        logger.debug(f"-trajectory, filling sdt_groups[{act_type}]['sdt'][{p[0]}][]")
+                        logger.debug(f"-trajectory, filling sdt_groups['{act_type}']['sdt']['{p[0]}'][]")
                         for s in qs_traj:
                             if s[1] is not None:
                                 sdt_groups[act_type]['sdt'][p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
-                        logger.debug(f" Done filling sdt_groups[{act_type}]['sdt'][{p[0]}][]")
+                        if act_type != 'default':
+                            for number, act_mission in enumerate(sdt_groups[act_type]['sdt'][p[0]].keys()):
+                                sdt_groups[act_type]['colors'][p[0]][act_mission] = number + 1
+                        logger.debug(f" Done filling sdt_groups['{act_type}']['sdt']['{p[0]}'][]")
 
-                    elif p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile':
+                    elif (p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile') and act_type == 'default':
                         self._add_ts_tsp_to_sdt(p, plq, timeSeriesQ, timeSeriesProfileQ, sdt_groups[act_type]['sdt'])
 
-                    elif p[3].lower() == 'trajectoryprofile': # pragma: no cover
+                    elif p[3].lower() == 'trajectoryprofile' and act_type == 'default': # pragma: no cover
                         iptvq = Q()
                         qs_tp = None
                         if 'time' in self.kwargs:
@@ -915,6 +926,15 @@ class STOQSQManager(object):
                                 sdt_groups[act_type]['sdt'][p[0]][an_nd].append(
                                             [sd['simpledepthtime__epochmilliseconds'], 
                                             '%.2f' % sd['simpledepthtime__depth']])
+
+                    # Cleanup - remove platforms that have no simpledepthtime data values
+                    if not sdt_groups[act_type]['sdt'][p[0]]:
+                        del sdt_groups[act_type]['sdt'][p[0]]
+                        del sdt_groups[act_type]['colors'][p[0]]
+
+            # Remove ActivityTypes that ave no simpledepthtime data
+            if not sdt_groups[act_type]['sdt']:
+                del sdt_groups[act_type]
 
         return sdt_groups 
 
