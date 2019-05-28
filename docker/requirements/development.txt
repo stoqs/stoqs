@@ -22,7 +22,7 @@ pandas==0.24.2
 numpy==1.16.3
 pandas==0.24.2
 requests==2.22.0
-Pygments==2.4.0
+Pygments==2.4.2
 pygraphviz==1.5
 pymssql==2.1.4
 pyparsing==2.4.0
