@@ -384,8 +384,15 @@ class ParentSamplesLoader(STOQS_Loader):
                     self.logger.warn(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
                     self.logger.warn(f"Skipping.")
             else:
-                sample_name = f"Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')}"
-                self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}")
+                try:
+                    sample_name = f"Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')}"
+                    self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}")
+                except AttributeError:
+                    # This should not happen. ESP log summary report should have a number of messages separated by newlines.
+                    # - the TethysDash should deliver these messages in summary.text
+                    # Remove ' ESP log summary report (2 messages)' text for sample_name
+                    sample_name = summary.text.split('ESP')[0].strip()
+                    self.logger.info(f"No ESP Cartridge number found: Assigning sample_name = {sample_name}")
 
             # Convert volumes to ml and check for error in optional 3rd line of messages from ESP
             volume = None
