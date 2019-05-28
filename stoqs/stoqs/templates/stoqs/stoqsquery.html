@@ -913,7 +913,7 @@
                                         <div class="row-fluid">
                                             <div class="span5">
                                                 Color by: 
-                                                <input type="radio" name="pt-colors" value="platform" /> Platform color
+                                                <input type="radio" name="pt-colors" value="platform" /> Platform
                                                 <input type="radio" name="pt-colors" value="activity" checked /> Activity
                                             </div>
                                         </div>
@@ -3754,7 +3754,8 @@ function enable_cardboard(){
                                     dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime'][act_type]['colors'][platform_value[0]]});
                                 }
                                 else {
-                                    dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime'][act_type]['colors'][platform_value[0]]});
+                                    // Let Flot pick the colors for the Misisons
+                                    dataset.push({'label': label, 'data': depth_time_series, 'color': undefined});
                                 }
                                 dataset.push({'data': bottomdepth_time_series, 'color': "#lightgrey", 'lines': {lineWidth: 0, fill: true}});
                              }
@@ -4655,7 +4656,7 @@ function enable_cardboard(){
                 var activitytypes_html = 'Color by: ';
                 $.each(data['simpledepthtime'], function(act_type, sdt_data) {
                     if ( act_type === 'default' ) {
-                        activitytypes_html += ' <input type="checkbox" name="activity-colors" value="default" checked/> Default Activity';
+                        activitytypes_html += ' <input type="checkbox" name="activity-colors" value="default" checked/> Platform';
                     }
                     else {
                         activitytypes_html += ' <input type="checkbox" name="activity-colors" value="' + act_type + '" /> ' + act_type;
