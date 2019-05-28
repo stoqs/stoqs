@@ -25,6 +25,7 @@ from django.http import HttpResponse
 from stoqs import models
 from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL
 from loaders.SampleLoaders import SAMPLED, NETTOW, PLANKTONPUMP, ESP_ARCHIVE, sample_simplify_crit
+from matplotlib.colors import rgb2hex
 from .utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
 from .utils import (getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, 
                    getShow_All_Parameter_Values, getShow_Parameter_Platform_Data)
@@ -37,6 +38,7 @@ from coards import to_udunits
 from datetime import datetime
 from django.contrib.gis import gdal
 import logging
+import matplotlib.pyplot as plt
 import pprint
 import calendar
 import re
@@ -840,10 +842,18 @@ class STOQSQManager(object):
         timeSeriesProfileQ = self._timeSeriesProfileQ()
         trajectoryProfileQ = self._trajectoryProfileQ()
 
-        sdt_groups = defaultdict(dict)
+        # Define colors for other_activitytypes - at some point these will also need to go into the Spatial panel
+        at_colors = defaultdict(dict)
+        other_activitytypes = (LRAUV_MISSION, )
+        gist_ncar = plt.cm.gist_ncar
+        for at in other_activitytypes:
+            acts = models.Activity.objects.using(self.request.META['dbAlias']).filter(activitytype__name=at)
+            for act, c in zip(acts, gist_ncar(np.linspace(0, gist_ncar.N, len(acts), dtype=int))):
+                at_colors[at][act.name] = rgb2hex(c)[1:]
+
         # Always have a 'default' ActivityType, and can loop over any number of other ActivityTypes
         # - As of May 2019 only 'trajectory's have other_activitytypes, skip for timeseries, etc.
-        other_activitytypes = (LRAUV_MISSION, )
+        sdt_groups = defaultdict(dict)
         for act_type in ('default', ) + other_activitytypes:
             sdt_groups[act_type]['sdt'] = defaultdict(dict)
             sdt_groups[act_type]['colors'] = defaultdict(dict)
@@ -880,7 +890,7 @@ class STOQSQManager(object):
                                 sdt_groups[act_type]['sdt'][p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
                         if act_type != 'default':
                             for number, act_mission in enumerate(sdt_groups[act_type]['sdt'][p[0]].keys()):
-                                sdt_groups[act_type]['colors'][p[0]][act_mission] = number + 1
+                                sdt_groups[act_type]['colors'][p[0]][act_mission] = at_colors[act_type][act_mission]
                         logger.debug(f" Done filling sdt_groups['{act_type}']['sdt']['{p[0]}'][]")
 
                     elif (p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile') and act_type == 'default':

@@ -3754,8 +3754,7 @@ function enable_cardboard(){
                                     dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime'][act_type]['colors'][platform_value[0]]});
                                 }
                                 else {
-                                    // Let Flot pick the colors for the Misisons
-                                    dataset.push({'label': label, 'data': depth_time_series, 'color': undefined});
+                                    dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime'][act_type]['colors'][platform_value[0]][label]});
                                 }
                                 dataset.push({'data': bottomdepth_time_series, 'color': "#lightgrey", 'lines': {lineWidth: 0, fill: true}});
                              }
