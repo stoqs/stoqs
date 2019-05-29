@@ -166,7 +166,7 @@ class MissionLoader(STOQS_Loader):
 
             act.save(using=db_alias)
 
-    def load_missions(self, platform_name, activity_name, url, db_alias):
+    def load_missions(self, platform_name, activity_name, url, db_alias, save_attributes=False):
         '''Parse the syslog looking for messages that identify the starts of missions.
         There's always a mission running on an LRAUV.  This method is rather big and could use some refactoring for readability sake.
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
@@ -181,13 +181,14 @@ class MissionLoader(STOQS_Loader):
                              .get_or_create(name=LRAUV_MISSION, 
                                             description='LRAUV Mission name as retrieved from TethysDash api'))
 
-        # We can use the machinery of Labeled data to label the mission's Measured Parameters -- describe the source of it
-        rdt, _ = ResourceType.objects.using(db_alias).get_or_create(name=LABEL, description='metadata')
-        lrauv_mission_res, _ = (Resource.objects.using(db_alias)
-                                        .get_or_create(name=LRAUV_MISSION, 
-                                                       value=f"{STARTED_MISSION} parsed from syslog", 
-                                                       uristring=syslog_url, 
-                                                       resourcetype=rdt))
+        if save_attributes:
+            # We can use the machinery of Labeled data to label the mission's Measured Parameters for Attribute display in the UI
+            rdt, _ = ResourceType.objects.using(db_alias).get_or_create(name=LABEL, description='metadata')
+            lrauv_mission_res, _ = (Resource.objects.using(db_alias)
+                                            .get_or_create(name=LRAUV_MISSION, 
+                                                           value=f"{STARTED_MISSION} parsed from syslog", 
+                                                           uristring=syslog_url, 
+                                                           resourcetype=rdt))
 
         ma, activity_by_mission = self._create_mission_activities(
                                        db_alias, orig_activity, starts, ends, names, syslog_url)
@@ -203,31 +204,32 @@ class MissionLoader(STOQS_Loader):
 
         last_name = ''
         for start, end, name in zip(starts, ends, names):
-            self.logger.info(f"LRAUV mission '{name}' in Activity {orig_activity}: start={start}, end={end}, duration={end-start}")
-            self.logger.info(f"Associating with MeasuredParameters for Attribute selection in the UI")
-            # This Resource name appears in the STOQS UI in blue text of the Attributes -> Measurement tab
-            res, _ = Resource.objects.using(db_alias).get_or_create(name=LRAUV_MISSION, value=name, resourcetype=rt)
-            # Associate with Resource that describes the source
-            ResourceResource.objects.using(db_alias).get_or_create(fromresource=res, 
-                                                                   toresource=lrauv_mission_res)
-            # Create collections of MeasuredParameterResources for each Measurement in the Mission
-            meas_qs = (Measurement.objects.using(db_alias)
-                                         .filter(instantpoint__activity=orig_activity,
-                                                 instantpoint__timevalue__gte=start,
-                                                 instantpoint__timevalue__lt=end))
-            for count, meas in enumerate(meas_qs):
-                if not count % 100:
-                    self.logger.debug(f"{count:5d}: timevalue = {meas.instantpoint.timevalue}")
-                if meas.depth < mindepths[name]:
-                    mindepths[name] = meas.depth
-                if meas.depth > maxdepths[name]:
-                    maxdepths[name] = meas.depth
-                for mp in MeasuredParameter.objects.using(db_alias).filter(measurement=meas):
-                    num_measuredparameters[name] += 1
-                    mpr, _ = (MeasuredParameterResource.objects.using(db_alias)
-                                                       .get_or_create(measuredparameter=mp,
-                                                                      resource=res,
-                                                                      activity=orig_activity))
+            if save_attributes:
+                self.logger.info(f"LRAUV mission '{name}' in Activity {orig_activity}: start={start}, end={end}, duration={end-start}")
+                self.logger.info(f"Associating with MeasuredParameters for Attribute selection in the UI")
+                # This Resource name appears in the STOQS UI in blue text of the Attributes -> Measurement tab
+                res, _ = Resource.objects.using(db_alias).get_or_create(name=LRAUV_MISSION, value=name, resourcetype=rt)
+                # Associate with Resource that describes the source
+                ResourceResource.objects.using(db_alias).get_or_create(fromresource=res, 
+                                                                       toresource=lrauv_mission_res)
+                # Create collections of MeasuredParameterResources for each Measurement in the Mission
+                meas_qs = (Measurement.objects.using(db_alias)
+                                             .filter(instantpoint__activity=orig_activity,
+                                                     instantpoint__timevalue__gte=start,
+                                                     instantpoint__timevalue__lt=end))
+                for count, meas in enumerate(meas_qs):
+                    if not count % 100:
+                        self.logger.debug(f"{count:5d}: timevalue = {meas.instantpoint.timevalue}")
+                    if meas.depth < mindepths[name]:
+                        mindepths[name] = meas.depth
+                    if meas.depth > maxdepths[name]:
+                        maxdepths[name] = meas.depth
+                    for mp in MeasuredParameter.objects.using(db_alias).filter(measurement=meas):
+                        num_measuredparameters[name] += 1
+                        mpr, _ = (MeasuredParameterResource.objects.using(db_alias)
+                                                           .get_or_create(measuredparameter=mp,
+                                                                          resource=res,
+                                                                          activity=orig_activity))
 
             # Associate copies of SimpleDepthTime with the mission Activity for overview data viz
             self.logger.info(f"Associating with SimpleDepthTime copies with Activity {name}")
