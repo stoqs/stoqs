@@ -5145,6 +5145,12 @@ function enable_cardboard(){
 
 
             else if (key == 'simpledepthtime') {
+                if ( Object.keys(data['simpledepthtime']).length > 1) {
+                    $('#activitytypes').show();
+                }
+                else {
+                    $('#activitytypes').hide();
+                }
                 redrawSimpleDepthTime(data);
             }
             else if (key == 'parameterplatformdatavaluepng') {
