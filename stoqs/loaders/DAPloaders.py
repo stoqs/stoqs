@@ -1569,7 +1569,7 @@ class Base_Loader(STOQS_Loader):
                         " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"
                         " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
             self.totalRecords = mps_loaded
-        except IntegrityError as e:
+        except (IntegrityError, DuplicateData) as e:
             # Likely duplicate key value violates unique constraint "stoqs_measuredparameter_measurement_id_parameter_1328c3fb_uniq"
             # Can't append data from source with bulk_create(), give appropriate warning
             self.logger.exception(str(e))
