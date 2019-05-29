@@ -241,7 +241,8 @@ class MissionLoader(STOQS_Loader):
             self.logger.info(f"Associating with SimpleDepthTime copies with Activity {name}")
             last_sdt = None
             for count, sdt in enumerate(SimpleDepthTime.objects.using(db_alias)
-                                   .filter(instantpoint__timevalue__gte=start,
+                                   .filter(activity=orig_activity,
+                                           instantpoint__timevalue__gte=start,
                                            instantpoint__timevalue__lt=end)):
                 # Copy the object with a new foreign key reference to the additional activity
                 # See: https://docs.djangoproject.com/en/2.2/topics/db/queries/#copying-model-instances
