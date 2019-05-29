@@ -70,6 +70,7 @@ class CANONLoader(LoadScript):
     '''
     Common routines for loading all CANON data
     '''
+
     brownish = {'dorado':       '8c510a',
                 'tethys':       'bf812d',
                 'daphne':       'dfc27d',
@@ -84,14 +85,8 @@ class CANONLoader(LoadScript):
                 'flyer':        '11665e',
                 'espdrift':     '21665e',
              }
-    colors = {  'dorado':       'ffeda0',
+    colors = { 
                 'other':        'ffeda0',
-                'tethys':       'fed976',
-                'daphne':       'feb24c',
-                'makai':        'feb34c',
-                'aku':          '4d4dff',
-                'ahi':          '339cff',
-                'opah':         '005cb3',
                 'fulmar':       'fd8d3c',
                 'waveglider':   'fc4e2a',
                 'nps_g29':      'e31a1c',
@@ -133,6 +128,12 @@ class CANONLoader(LoadScript):
                 'wg_Tiny':      '960000',
                 'wg_Sparky':    'FCDD00',
              }
+
+    # Distribute AUV colors along a yellor to brown palette
+    auv_names = ('dummy1', 'dorado', 'tethys', 'daphne', 'makai', 'aku', 'ahi', 'opah', 'whodhs', 'galene')
+    YlOrBr = plt.cm.YlOrBr
+    for auv_name, c in zip(auv_names, YlOrBr(np.linspace(0, YlOrBr.N, len(auv_names), dtype=int))):
+        colors[auv_name] = rgb2hex(c)[1:]
 
     # Colors for roms_* "platforms"
     roms_platforms = ('roms_spray', 'roms_sg621')
