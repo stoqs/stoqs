@@ -4639,6 +4639,24 @@ function enable_cardboard(){
                 simpledepthtime_options_zoom = simpledepthtime_options;
                 timedepthplot = $.plot($("#time-depth-flot"), getDepthDataset(initData, start.getTime(), end.getTime()), 
                                                               simpledepthtime_options_zoom);
+
+                var activitytypes_html = 'Color by: ';
+                $.each(data['simpledepthtime'], function(act_type, sdt_data) {
+                    if ( act_type === 'default' ) {
+                        activitytypes_html += ' <input type="checkbox" name="activity-colors" value="default" checked/> Platform';
+                    }
+                    else {
+                        activitytypes_html += ' <input type="checkbox" name="activity-colors" value="' + act_type + '" /> ' + act_type;
+                    }
+                });
+                $('#activitytypes').html(activitytypes_html);
+                $('#activitytypes').hide();
+                if ( Object.keys(data['simpledepthtime']).length > 1) {
+                    $('#activitytypes').show();
+                    $('body').on('click', 'input:checkbox[name="activity-colors"]', function (e) {
+                        redrawSimpleDepthTime($('body').data()['data']);
+                    });
+                }
             }
             else if (key == 'parametertime') {
                 // Just check the count and enable tab if not 0
@@ -5104,6 +5122,12 @@ function enable_cardboard(){
 
 
             else if (key == 'simpledepthtime') {
+                if ( Object.keys(data['simpledepthtime']).length > 1) {
+                    $('#activitytypes').show();
+                }
+                else {
+                    $('#activitytypes').hide();
+                }
                 redrawSimpleDepthTime(data);
             }
             else if (key == 'parameterplatformdatavaluepng') {
