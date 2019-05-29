@@ -875,7 +875,6 @@
                                         <div class="row-fluid">
                                             <div class="span5">
                                                 <span id="temporalparameterplotinfo">&nbsp;</span>
-                                                <br>
                                                 <span id="contour-scatter-buttons" style="visibility:hidden;">
                                                     <form class="form-inline">
                                                         <label>
@@ -886,7 +885,6 @@
                                                         </label>
                                                     </form>
                                                 </span>
-                                                <br>
                                                 <span id="temporalparameterplotinfo_lines">&nbsp;</span>
                                             </div>
                                             <div class="span7"><span style="float:right;">
@@ -2703,6 +2701,7 @@
             $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info']);
             $('#showsensortracks').removeAttr('disabled');
             $('#showgeox3dmeasurementtext').text($('#temporalparameterplotinfo').data()['info']);
+            $('#activitytypes').hide()
             rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
         }
         else {
@@ -2717,6 +2716,9 @@
             $('#sectioncolorbarimg').attr('src', '{{STATIC_URL}}images/dummy_colorbar.png');
             $('#sectioncolorbarimg').removeAttr('href');
             $('#temporalparameterstrideinfo').text('');
+            if ( Object.keys($('body').data().simpledepthtime).length > 1 ) {
+                $('#activitytypes').show()
+            }
         }
         if ( $('input:radio[name=parameters_contour_plot]:checked').val() ) {
             $('#temporalparameterplotinfo_lines').data('info', $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
@@ -4647,6 +4649,7 @@ function enable_cardboard(){
             else if (key == 'simpledepthtime') {
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
+                $('body').data()['simpledepthtime'] = data['simpledepthtime'];
                 simpledepthtime_options_zoom = simpledepthtime_options;
                 // onInit: always display the default act_type
                 timedepthplot = $.plot($("#time-depth-flot"), getDepthDataset(initData, start.getTime(), end.getTime(), ['default']), 
