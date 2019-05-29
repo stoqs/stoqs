@@ -127,6 +127,7 @@ class CANONLoader(LoadScript):
                 'wg_tex':       '9626ff',
                 'wg_Tiny':      '960000',
                 'wg_Sparky':    'FCDD00',
+                'wg_New':       '98FF26',
              }
 
     # Distribute AUV colors along a yellor to brown palette
@@ -598,6 +599,19 @@ class CANONLoader(LoadScript):
                                        'wg_Sparky_Glider', self.colors['wg_Sparky'], 'waveglider', 'Glider Mission',
                                        self.wg_Sparky_parms, self.dbAlias, stride, self.wg_Sparky_startDatetime,
                                        self.wg_Sparky_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+
+    def load_wg_New(self, stride=None):
+        '''
+        Glider specific load functions, sets plotTimeSeriesDepth=0 to get Parameter tab in UI
+        '''
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_New_files], self.wg_New_files):
+            url = self.wg_New_base + f
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+                                       'wg_New_Glider', self.colors['wg_New'], 'waveglider', 'Glider Mission',
+                                       self.wg_New_parms, self.dbAlias, stride, self.wg_New_startDatetime,
+                                       self.wg_New_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+
 
     def load_wg_oa(self, stride=None):
         '''
