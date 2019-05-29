@@ -4,6 +4,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../") )
 os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 from django.conf import settings
+from django.db.models import Max, Min
 
 from collections import defaultdict, namedtuple
 from datetime import datetime
@@ -204,6 +205,19 @@ class MissionLoader(STOQS_Loader):
 
         last_name = ''
         for start, end, name in zip(starts, ends, names):
+            # Need to find min and max depth across all Missions, collect them in hashes
+            meas_qs = (Measurement.objects.using(db_alias)
+                                         .filter(instantpoint__activity=orig_activity,
+                                                 instantpoint__timevalue__gte=start,
+                                                 instantpoint__timevalue__lt=end))
+            mm = meas_qs.aggregate(Min('depth'), Max('depth'))
+            if mm['depth__min']:
+                if mm['depth__min'] < mindepths[name]:
+                    mindepths[name] = mm['depth__min']
+            if mm['depth__max']:
+                if mm['depth__max'] > maxdepths[name]:
+                    maxdepths[name] = mm['depth__max']
+
             if save_attributes:
                 self.logger.info(f"LRAUV mission '{name}' in Activity {orig_activity}: start={start}, end={end}, duration={end-start}")
                 self.logger.info(f"Associating with MeasuredParameters for Attribute selection in the UI")
@@ -213,17 +227,9 @@ class MissionLoader(STOQS_Loader):
                 ResourceResource.objects.using(db_alias).get_or_create(fromresource=res, 
                                                                        toresource=lrauv_mission_res)
                 # Create collections of MeasuredParameterResources for each Measurement in the Mission
-                meas_qs = (Measurement.objects.using(db_alias)
-                                             .filter(instantpoint__activity=orig_activity,
-                                                     instantpoint__timevalue__gte=start,
-                                                     instantpoint__timevalue__lt=end))
                 for count, meas in enumerate(meas_qs):
                     if not count % 100:
                         self.logger.debug(f"{count:5d}: timevalue = {meas.instantpoint.timevalue}")
-                    if meas.depth < mindepths[name]:
-                        mindepths[name] = meas.depth
-                    if meas.depth > maxdepths[name]:
-                        maxdepths[name] = meas.depth
                     for mp in MeasuredParameter.objects.using(db_alias).filter(measurement=meas):
                         num_measuredparameters[name] += 1
                         mpr, _ = (MeasuredParameterResource.objects.using(db_alias)
