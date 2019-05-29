@@ -35,6 +35,7 @@ import requests
 import urllib
 
 from SampleLoaders import SeabirdLoader, SubSamplesLoader, ParentSamplesLoader
+from lrauv_support import MissionLoader
 from bs4 import BeautifulSoup
 from loaders import LoadScript, FileNotFound
 from stoqs.models import InstantPoint
@@ -69,6 +70,7 @@ class CANONLoader(LoadScript):
     '''
     Common routines for loading all CANON data
     '''
+
     brownish = {'dorado':       '8c510a',
                 'tethys':       'bf812d',
                 'daphne':       'dfc27d',
@@ -83,14 +85,8 @@ class CANONLoader(LoadScript):
                 'flyer':        '11665e',
                 'espdrift':     '21665e',
              }
-    colors = {  'dorado':       'ffeda0',
+    colors = { 
                 'other':        'ffeda0',
-                'tethys':       'fed976',
-                'daphne':       'feb24c',
-                'makai':        'feb34c',
-                'aku':          '4d4dff',
-                'ahi':          '339cff',
-                'opah':         '005cb3',
                 'fulmar':       'fd8d3c',
                 'waveglider':   'fc4e2a',
                 'nps_g29':      'e31a1c',
@@ -131,7 +127,14 @@ class CANONLoader(LoadScript):
                 'wg_tex':       '9626ff',
                 'wg_Tiny':      '960000',
                 'wg_Sparky':    'FCDD00',
+                'wg_New':       '98FF26',
              }
+
+    # Distribute AUV colors along a yellor to brown palette
+    auv_names = ('dummy1', 'dorado', 'tethys', 'daphne', 'makai', 'aku', 'ahi', 'opah', 'whodhs', 'galene')
+    YlOrBr = plt.cm.YlOrBr
+    for auv_name, c in zip(auv_names, YlOrBr(np.linspace(0, YlOrBr.N, len(auv_names), dtype=int))):
+        colors[auv_name] = rgb2hex(c)[1:]
 
     # Colors for roms_* "platforms"
     roms_platforms = ('roms_spray', 'roms_sg621')
@@ -181,6 +184,7 @@ class CANONLoader(LoadScript):
 
     def _execute_load(self, pname, parameters, stride, critSimpleDepthTime):
         psl = ParentSamplesLoader('', '', dbAlias=self.dbAlias)
+        lrauv_ml = MissionLoader('', '', dbAlias=self.dbAlias)
         stride = stride or self.stride
         files = getattr(self, f'{pname}_files')
         base = getattr(self, f'{pname}_base')
@@ -199,12 +203,13 @@ class CANONLoader(LoadScript):
             try:
                 # Early LRAUV data had time coord of 'Time', override with auxCoords setting from load script
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aname, 
-                                          pname, self.colors[pname], 'auv', 'AUV mission',
+                                          pname, self.colors[pname], 'auv', 'LRAUV log',
                                           parameters, self.dbAlias, stride, 
                                           grdTerrain=self.grdTerrain, command_line_args=self.args,
                                           plotTimeSeriesDepth=0, auxCoords=aux_coords,
                                           critSimpleDepthTime=critSimpleDepthTime)
                 psl.load_lrauv_samples(pname, aname, url, self.dbAlias)
+                lrauv_ml.load_missions(pname, aname, url, self.dbAlias)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
@@ -594,6 +599,19 @@ class CANONLoader(LoadScript):
                                        'wg_Sparky_Glider', self.colors['wg_Sparky'], 'waveglider', 'Glider Mission',
                                        self.wg_Sparky_parms, self.dbAlias, stride, self.wg_Sparky_startDatetime,
                                        self.wg_Sparky_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+
+    def load_wg_New(self, stride=None):
+        '''
+        Glider specific load functions, sets plotTimeSeriesDepth=0 to get Parameter tab in UI
+        '''
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_New_files], self.wg_New_files):
+            url = self.wg_New_base + f
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+                                       'wg_New_Glider', self.colors['wg_New'], 'waveglider', 'Glider Mission',
+                                       self.wg_New_parms, self.dbAlias, stride, self.wg_New_startDatetime,
+                                       self.wg_New_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+
 
     def load_wg_oa(self, stride=None):
         '''
