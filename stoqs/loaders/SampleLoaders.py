@@ -65,6 +65,9 @@ VERTICALNETTOW = 'VerticalNetTow'       # Must contain NETTOW string so that a f
 HORIZONTALNETTOW = 'VerticalNetTow'     # name__contains=NETTOW returns both vertical and horizontal net tows
 PLANKTONPUMP = 'PlanktonPump'
 ESP_ARCHIVE = 'ESP_Archive'
+SIPPER = 'Sipper'
+SIPPER_NUM_ERR = re.compile('Sample (?P<sipper_num>\d+), err_code=(?P<sipper_err>\d+)')
+SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
 
 class ClosestTimeNotFoundException(Exception):
     pass
@@ -357,7 +360,6 @@ class ParentSamplesLoader(STOQS_Loader):
             self.logger.warn("An ESP error might have occurred, sample times may overlap - check syslog")
 
         # Loop through exctractions from syslog to build dictionary
-        SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
         sample_names = defaultdict(SampleInfo)
         for filtering, stopping, summary in zip(reversed(filterings), reversed(stoppings), reversed(summaries)):
             self.logger.debug(f"summary = {summary}")
@@ -409,27 +411,88 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return sample_names
 
-    def load_lrauv_samples(self, platform_name, activity_name, url, db_alias):
+    def _sippers_from_json(self, platform_name, url):
+        '''Retrieve Sipper (CANONSampler) information that's available in the syslogurl from the TethysDash REST API
+        url looks like     'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2018/20180220_20180221/20180221T074336/201802210743_201802211832_2S_scieng.nc',
+        syslog_url is like 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2018/20180220_20180221/20180221T074336/syslog'
+        Construct a TethysDash REST URL that looks like:
+        https://okeanids.mbari.org/TethysDash/api/events?vehicles=daphne&from=2018-02-21T07:43&to=2018-02-21T18:32&eventTypes=logImportant&limit=100000
+        Query it to build information on each Sipper sample in the url.
         '''
-        url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
+        samplings_at = []
+        sample_num_errs = []
+        
+        st = url.split('/')[-1].split('_')[0]
+        et = url.split('/')[-1].split('_')[1]
+        from_time = f"{st[0:4]}-{st[4:6]}-{st[6:8]}T{st[8:10]}:{st[10:12]}"
+        to_time = f"{et[0:4]}-{et[4:6]}-{et[6:8]}T{et[8:10]}:{et[10:12]}"
+
+        # Sanity check the ending year
+        try:
+            if int(et[0:4]) > datetime.now().year:
+                self.logger.warn(f"Not looking for Samples for url = {url} as the to date is > {datetime.now().year}")
+                return samplings_at, samplings_log
+        except ValueError:
+            # Likely an old slate.nc4 file that got converted to a .nc file
+            self.logger.warn(f"Could not parse end date year from url = {url}")
+            return samplings_at, samplings_log
+            
+        td_url = f"https://okeanids.mbari.org/TethysDash/api/events?vehicles={platform_name}&from={from_time}&to={to_time}&eventTypes=logImportant&limit=100000"
+
+        SIPPERING = 'CANONSampler sampling at'
+
+        self.logger.debug(f"Opening td_url = {td_url}")
+        with requests.get(td_url) as resp:
+            if resp.status_code != 200:
+                self.logger.error('Cannot read %s, resp.status_code = %s', syslog_url, resp.status_code)
+                return
+            td_log_important = resp.json()['result']
+
+        Log = namedtuple('Log', 'esec text')
+        try:
+            samplings_at = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if SIPPERING in d['text']]
+        except KeyError:
+            self.logger.debug(f"No '{SIPPERING}' messages found in {td_url}")
+        try:
+            sample_num_errs = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if re.match(SIPPER_NUM_ERR, d['text'])]
+        except KeyError:
+            self.logger.debug(f"No '{SIPPERING}' messages found in {td_url}")
+
+        if samplings_at and sample_num_errs:
+            self.logger.info(f"Parsed {len(samplings_at)} '{SIPPERING}' strings and {len(sample_num_errs)} Sample numbers from {td_url}")
+        else:
+            self.logger.info(f"No Sippers (CANONSampler) parsed from {td_url}")
+       
+        return samplings_at, sample_num_errs
+
+    def _match_sippers(self, samplings_at, sample_num_errs):
+        '''Take lists from parsing TethysDash log and build Sipper names list with start and end times
         '''
-        syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
-        self.logger.info(f"Getting Sample information from the TethysDash API that's also in {syslog_url}")
-        filterings, stoppings, summaries = self._samples_from_json(platform_name, url)
-        sample_names = self._match_seq_to_cartridge(filterings, stoppings, summaries)
+        if len(samplings_at) != len(sample_num_errs):
+            self.logger.warn(f"len(samplings_at) [{len(samplings_at)}] != len(sample_num_errs) [{len(sample_num_errs)}]")
+            self.logger.warn("A Sipper logging error might have occurred -- check syslog")
 
-        if sample_names:
-            # Get or create SampleType for ESP Sample
-            (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_ARCHIVE)
-            self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
+        # Loop through exctractions from syslog to build dictionary
+        sipper_names = defaultdict(SampleInfo)
+        for sample_at, sample_num_err in zip(reversed(samplings_at), reversed(sample_num_errs)):
+            self.logger.debug(f"sample_at = {sample_at}")
+            sne = re.match(SIPPER_NUM_ERR, sample_num_err.text)
+            sample_name = f"Sipper {sne.groupdict().get('sipper_num')}"
 
+            # Sipper does not report volume
+            volume = None
+            sipper_names[sample_name] = SampleInfo(sample_at.esec, sample_num_err.esec, volume, sample_at.text)
+
+        return sipper_names
+
+    def _save_samples(self, db_alias, platform_name, activity_name, sampletype, samples, log_text):
         # Load Samples and sample.text as a Resource associated with the Sample
-        for sample_name, sample in sample_names.items():
+        for sample_name, sample in samples.items():
             self.logger.debug(f"Calling _create_activity_instantpoint_platform() for sample_name={sample_name}")
             try:
                 act, ip, point, depth, maptrack = self._create_activity_instantpoint_platform(
                                                 db_alias, platform_name, 
-                                                activity_name, esp_archive_type, 
+                                                activity_name, sampletype, 
                                                 sample.start, sample.end, sample_name)
             except IntegrityError as e:
                 self.logger.warn(f"Sample {sample_name} already loaded")
@@ -437,13 +500,13 @@ class ParentSamplesLoader(STOQS_Loader):
             if not act:
                 continue
 
-            self.logger.info(f"Loading {ESP_ARCHIVE} Sample '{sample_name}' filtered for {sample.end-sample.start:.2f} seconds")
+            self.logger.info(f"Loading {sampletype.name} Sample '{sample_name}' pumped/filtered for {sample.end-sample.start:.2f} seconds")
             samp, _ = (Sample.objects.using(db_alias).get_or_create( 
                             name = sample_name,
                             instantpoint = ip,
                             geom = point,
                             depth = depth,
-                            sampletype = esp_archive_type,
+                            sampletype = sampletype,
                             volume = sample.volume))
             self.logger.info(f'Loaded Sample: {samp} with volume = {sample.volume} ml')
 
@@ -454,9 +517,37 @@ class ParentSamplesLoader(STOQS_Loader):
             self.logger.info(f"Updated Activity with point={point} and maptrack={maptrack}")
 
             # Associate Resource (ESP log summary report text) with Sample
-            res, _ = Resource.objects.using(db_alias).get_or_create(name='ESP log summary report', value=sample.summary)
+            res, _ = Resource.objects.using(db_alias).get_or_create(name=log_text, value=sample.summary)
             SampleResource.objects.using(db_alias).get_or_create(sample=samp, resource=res)
             self.logger.info(f"Saved Resource {res}")
+
+
+    def load_lrauv_samples(self, platform_name, activity_name, url, db_alias):
+        '''
+        url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
+        '''
+        syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
+        self.logger.info(f"Getting ESP or Sipper Sample information from the TethysDash API that's also in {syslog_url}")
+
+        filterings, stoppings, summaries = self._samples_from_json(platform_name, url)
+        sample_names = self._match_seq_to_cartridge(filterings, stoppings, summaries)
+
+        samplings_at, sample_num_errs = self._sippers_from_json(platform_name, url)
+        sipper_names = self._match_sippers(samplings_at, sample_num_errs)
+
+        if sample_names:
+            (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_ARCHIVE)
+            self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
+            self._save_samples(db_alias, platform_name, activity_name, esp_archive_type, sample_names, 
+                               log_text='ESP log summary report')
+
+        if sipper_names:
+            (sipper_type, created) = SampleType.objects.using(db_alias).get_or_create(name=SIPPER)
+            self.logger.debug('sampletype %s, created = %s', sipper_type, created)
+            import pdb; pdb.set_trace()
+            self._save_samples(db_alias, platform_name, activity_name, sipper_type, sipper_names, 
+                               log_text='CANONSampler Sampled at message')
+
 
 class SeabirdLoader(STOQS_Loader):
     '''
