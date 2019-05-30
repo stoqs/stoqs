@@ -98,6 +98,14 @@ cl.nps34a_parms = ['temperature', 'salinity','fluorescence']
 cl.nps34a_startDatetime = startdate
 cl.nps34a_endDatetime = enddate
 
+# NPS_29 ##
+cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps29_files = [ 'OS_Glider_NPS_Glider_29_20120524_TS.nc' ]
+cl.nps29_parms = ['TEMP', 'PSAL']
+cl.nps29_startDatetime = startdate
+cl.nps29_endDatetime = enddate
+
+
 # Slocum Teledyne nemesis Glider
 ## from ioos site ## these files proved to be not compatible with python loader
 ## cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20170412T0000/'
@@ -122,17 +130,17 @@ cl.slocum_nemesis_endDatetime = enddate
 ##cl.wg_tex_startDatetime = startdate
 ##cl.wg_tex_endDatetime = enddate
 
-# WG New - All instruments combined into one file - one time coordinate
-cl.wg_New_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
-cl.wg_New_files = [
+# WG 272 - All instruments combined into one file - one time coordinate
+cl.wg_272_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
+cl.wg_272_files = [
                    'wgNew/20190522/realTime/20190522.nc',
                   ]
 
-cl.wg_New_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  'water_temp_sub',
+cl.wg_272_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  'water_temp_sub',
                      'sal_sub', 'bb_470', 'bb_650', 'chl', 'beta_470', 'beta_650', 'pH', 'O2_conc_float','O2_conc_sub' ] # two ctds (_float, _sub), no CO2
-cl.wg_New_depths = [ 0 ]
-cl.wg_New_startDatetime = startdate
-cl.wg_New_endDatetime = enddate
+cl.wg_272_depths = [ 0 ]
+cl.wg_272_startDatetime = startdate
+cl.wg_272_endDatetime = enddate
 
 
 # WG Sparky - All instruments combined into one file - one time coordinate
@@ -271,11 +279,12 @@ elif cl.args.stride:
 
 cl.loadM1()  
 cl.loadL_662a()
+cl.load_NPS29() 
 #cl.load_NPS34a() 
 #cl.load_slocum_nemesis() 
 cl.load_wg_Tiny()
 ##cl.load_wg_Sparky() ## not in this campaign
-cl.load_wg_New() ## new for this campaign 
+cl.load_wg_272() ## new for this campaign 
 cl.load_oa1()
 cl.load_oa2()
 cl.loadDorado(startdate, enddate, build_attrs=True)
