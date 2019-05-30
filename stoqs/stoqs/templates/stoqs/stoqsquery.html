@@ -5170,11 +5170,15 @@ function enable_cardboard(){
                                     if ( $('input:radio[name=colormap_choice]:checked').val() !== colormap ) {
                                         if ( ! $.isEmptyObject(standard_name) ) {
                                             $('#sn_colormap_label')
-                                                .attr('data-original-title', "<p style=font-size:9px;'>Colormap set to '" + colormap + "' based on standard_name '" + standard_name + "'</p>")
-                                                .tooltip('fixTitle').tooltip('show');
+                                                .attr('data-original-title', "<p style=font-size:9px;'>Colormap set to '" + colormap + "' based on standard_name '" + standard_name + "'</p>");
+                                            if ( $('#sn_colormap_label').is(':visible') ) {
+                                                $('#sn_colormap_label').tooltip('fixTitle').tooltip('show');
+                                            }
                                             $('#sectioncolorbarimg')
-                                                .attr('data-original-title', "<p style=font-size:9px;'>Colormap set to '" + colormap + "' based on standard_name '" + standard_name + "'. Click to toggle Colormap Section.</p>")
-                                                .tooltip('fixTitle').tooltip('show');
+                                                .attr('data-original-title', "<p style=font-size:9px;'>Colormap set to '" + colormap + "' based on standard_name '" + standard_name + "'. Click to toggle Colormap Section.</p>");
+                                            if ( $('#sectioncolorbarimg').is(':visible') ) {
+                                                $('#sectioncolorbarimg').tooltip('fixTitle').tooltip('show');
+                                            }
                                         }
                                     }
                                 }
