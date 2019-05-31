@@ -133,7 +133,7 @@ cl.slocum_nemesis_endDatetime = enddate
 # WG 272 - All instruments combined into one file - one time coordinate
 cl.wg_272_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_272_files = [
-                   'wgNew/20190522/realTime/20190522.nc',
+                   'wg272/20190522/realTime/20190522.nc',
                   ]
 
 cl.wg_272_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  'water_temp_sub',
@@ -279,24 +279,24 @@ elif cl.args.stride:
 
 cl.loadM1()  
 cl.loadL_662a()
-cl.load_NPS29() 
-#cl.load_NPS34a() 
-#cl.load_slocum_nemesis() 
+#cl.load_NPS29()  ## waiting for data to be made available by Fred Bahr 
+##cl.load_NPS34a() ## not in this campaign
+##cl.load_slocum_nemesis() ## not in this campaign
 cl.load_wg_Tiny()
 ##cl.load_wg_Sparky() ## not in this campaign
 cl.load_wg_272() ## new for this campaign 
-cl.load_oa1()
-cl.load_oa2()
-cl.loadDorado(startdate, enddate, build_attrs=True)
+#cl.load_oa1()  ## no data during this campaign
+cl.load_oa2() 
+#cl.loadDorado(startdate, enddate, build_attrs=True) ## waiting for first data
 cl.loadLRAUV('makai', startdate, enddate)
 cl.loadLRAUV('daphne', startdate, enddate)
 cl.loadLRAUV('tethys', startdate, enddate)
-cl.loadRCuctd()
-cl.loadRCpctd()
-cl.loadWFuctd()
-cl.loadWFpctd()
+#cl.loadRCuctd() ## waiting for first data
+#cl.loadRCpctd() ## waiting for first data
+#cl.loadWFuctd() ## waiting for first data
+#cl.loadWFpctd() ## waiting for first data
 
-cl.loadSubSamples() ##when subsamples ready to load...
+#cl.loadSubSamples() ##when subsamples ready to load...
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
