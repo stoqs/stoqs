@@ -82,7 +82,16 @@ class MissionLoader(STOQS_Loader):
             except IndexError:
                 ends.append(orig_activity.enddate)
 
-            names.append(mission_starts[mc].text.replace(STARTED_MISSION, '').strip())
+            name = mission_starts[mc].text.replace(STARTED_MISSION, '').strip()
+
+            # Prevent bad (too long with line feeds) name
+            if len(name) > 255:
+                self.logger.warn(f"Mission named parsed from TethysDash is too big with length of {len(name)}")
+                self.logger.warn(f"{name}")
+                name = name.split('\n')[0]
+                self.logger.info(f"Truncated at newline; name = {name}")
+
+            names.append(name)
 
         return starts, ends, names
 
