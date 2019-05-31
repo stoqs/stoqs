@@ -481,7 +481,9 @@ class ParentSamplesLoader(STOQS_Loader):
 
             # Sipper does not report volume
             volume = None
-            sipper_names[sample_name] = SampleInfo(sample_at.esec, sample_num_err.esec, volume, sample_at.text)
+            duration = sample_num_err.esec - sample_at.esec
+            summary = f"{sample_at.text} Then {duration:.2f} seconds later: {sample_num_err.text}"
+            sipper_names[sample_name] = SampleInfo(sample_at.esec, sample_num_err.esec, volume, summary)
 
         return sipper_names
 
@@ -500,7 +502,6 @@ class ParentSamplesLoader(STOQS_Loader):
             if not act:
                 continue
 
-            self.logger.info(f"Loading {sampletype.name} Sample '{sample_name}' pumped/filtered for {sample.end-sample.start:.2f} seconds")
             samp, _ = (Sample.objects.using(db_alias).get_or_create( 
                             name = sample_name,
                             instantpoint = ip,
@@ -508,18 +509,18 @@ class ParentSamplesLoader(STOQS_Loader):
                             depth = depth,
                             sampletype = sampletype,
                             volume = sample.volume))
-            self.logger.info(f'Loaded Sample: {samp} with volume = {sample.volume} ml')
 
             # Update Activity with point and track of the Sampling event
             act.mappoint = point
             act.maptrack = maptrack
+            self.logger.info(f"Saving {sampletype.name} Sample '{sample_name}': {sample.summary}, volume = {sample.volume} ml")
             act.save(using=db_alias)
-            self.logger.info(f"Updated Activity with point={point} and maptrack={maptrack}")
+            self.logger.debug(f"Updated Activity with point={point} and maptrack={maptrack}")
 
-            # Associate Resource (ESP log summary report text) with Sample
+            # Associate Resource (log summary report text) with Sample
             res, _ = Resource.objects.using(db_alias).get_or_create(name=log_text, value=sample.summary)
             SampleResource.objects.using(db_alias).get_or_create(sample=samp, resource=res)
-            self.logger.info(f"Saved Resource {res}")
+            self.logger.debug(f"Saved Resource {res}")
 
     def load_lrauv_samples(self, platform_name, activity_name, url, db_alias):
         '''
