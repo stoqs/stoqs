@@ -521,7 +521,6 @@ class ParentSamplesLoader(STOQS_Loader):
             SampleResource.objects.using(db_alias).get_or_create(sample=samp, resource=res)
             self.logger.info(f"Saved Resource {res}")
 
-
     def load_lrauv_samples(self, platform_name, activity_name, url, db_alias):
         '''
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
@@ -544,10 +543,8 @@ class ParentSamplesLoader(STOQS_Loader):
         if sipper_names:
             (sipper_type, created) = SampleType.objects.using(db_alias).get_or_create(name=SIPPER)
             self.logger.debug('sampletype %s, created = %s', sipper_type, created)
-            import pdb; pdb.set_trace()
             self._save_samples(db_alias, platform_name, activity_name, sipper_type, sipper_names, 
                                log_text='CANONSampler Sampled at message')
-
 
 class SeabirdLoader(STOQS_Loader):
     '''
