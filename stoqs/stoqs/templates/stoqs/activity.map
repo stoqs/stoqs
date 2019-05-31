@@ -5,8 +5,8 @@ MAP
   IMAGECOLOR 255 255 255
   NAME 'MBARI STOQS'
   UNITS dd
-  CONFIG "MS_ERRORFILE" "/tmp/mapserver_stoqshg.log"
-  DEBUG 5
+  CONFIG "MS_ERRORFILE" stderr
+  DEBUG 1
   WEB
     IMAGEPATH "{{ imagepath }}"
     METADATA
