@@ -49,6 +49,18 @@ if cl.args.test:
 elif cl.args.stride:
     cl.stride = cl.args.stride
 
+# Sipper loading tests
+#-cl.daphne_base = 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2018/20180220_20180221/20180221T074336/'
+#-cl.daphne_files = ['201802210743_201802211832_2S_scieng.nc']
+#-cl.daphne_parms = ['temperature']
+#-cl.loadLRAUV('daphne', datetime(2018, 2, 1), datetime(2018, 2, 20), build_attrs=False)
+
+# Error on load: value too long
+#-cl.tethys_base = 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2019/20190304_20190307/20190305T002713/'
+#-cl.tethys_files = ['201903050027_201903050636_2S_scieng.nc']
+#-cl.tethys_parms = ['temperature']
+#-cl.loadLRAUV('tethys', datetime(2018, 3, 1), datetime(2018, 3, 20), build_attrs=False)
+
 for lrauv in ('tethys', 'daphne'):
     cl.loadLRAUV(lrauv, syear, eyear, dlist_str='MBTS', err_on_missing_file=True)
 
