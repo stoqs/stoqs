@@ -100,11 +100,10 @@ cl.nps34a_endDatetime = enddate
 
 # NPS_29 ##
 cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.nps29_files = [ 'OS_Glider_NPS_Glider_29_20120524_TS.nc' ]
-cl.nps29_parms = ['TEMP', 'PSAL']
+cl.nps29_files = [ 'OS_Glider_NPS_G29_20190528_TS.nc' ]
+cl.nps29_parms = ['TEMP', 'PSAL', 'FLU2', 'OXYG']
 cl.nps29_startDatetime = startdate
 cl.nps29_endDatetime = enddate
-
 
 # Slocum Teledyne nemesis Glider
 ## from ioos site ## these files proved to be not compatible with python loader
@@ -279,7 +278,7 @@ elif cl.args.stride:
 
 cl.loadM1()  
 cl.loadL_662a()
-#cl.load_NPS29()  ## waiting for data to be made available by Fred Bahr 
+cl.load_NPS29()   
 ##cl.load_NPS34a() ## not in this campaign
 ##cl.load_slocum_nemesis() ## not in this campaign
 cl.load_wg_Tiny()
