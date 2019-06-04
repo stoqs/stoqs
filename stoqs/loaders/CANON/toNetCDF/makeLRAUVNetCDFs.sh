@@ -1,4 +1,7 @@
 #!/bin/bash
+# Script executed from cron. Need to occasionally tag the mbari/stoqs image with the image name used in the crontab, e.g.:
+# docker tag mbari/stoqs:latest docker_stoqs_lrauv
+
 if [ -z "$STOQS_HOME" ]; then
   echo "Set STOQS_HOME variable first, e.g. STOQS_HOME=/src/stoqsgit"
   exit 1

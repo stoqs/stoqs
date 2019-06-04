@@ -131,7 +131,7 @@ class CANONLoader(LoadScript):
              }
 
     # Distribute AUV colors along a yellor to brown palette
-    auv_names = ('dummy1', 'dorado', 'tethys', 'daphne', 'makai', 'aku', 'ahi', 'opah', 'whodhs', 'galene')
+    auv_names = ('dummy1', 'dorado', 'tethys', 'daphne', 'makai', 'aku', 'ahi', 'opah', 'whoidhs', 'galene')
     YlOrBr = plt.cm.YlOrBr
     for auv_name, c in zip(auv_names, YlOrBr(np.linspace(0, YlOrBr.N, len(auv_names), dtype=int))):
         colors[auv_name] = rgb2hex(c)[1:]

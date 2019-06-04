@@ -1,7 +1,7 @@
 -r base.txt
 
 alabaster==0.7.12
-amqp==2.4.2
+amqp==2.5.0
 amqplib==1.0.2
 anyjson==0.3.3
 Babel==2.7.0
@@ -10,7 +10,7 @@ billiard==3.6.0.0
 binaryornot==0.4.4
 certifi==2019.3.9
 cookiecutter==1.6.0
-Cython==0.29.9
+Cython==0.29.10
 docutils==0.14
 ephem==3.7.6.0
 GDAL==2.4.0

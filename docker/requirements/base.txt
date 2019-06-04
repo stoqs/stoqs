@@ -6,7 +6,7 @@ coards==1.0.5
 coverage==4.5.3
 datadiff==2.0.0
 dj-database-url==0.5.0
-Django==1.11.20
+Django==2.2.2
 django-cache-url==3.0.0
 django-celery==3.3.0
 django-configurations==2.1
@@ -24,7 +24,7 @@ ipython==7.5.0
 jdcal==1.4.1
 Jinja2==2.10.1
 jupyter==1.0.0
-kombu==4.5.0
+kombu==4.6.0
 lxml==4.3.3
 mock==3.0.5
 matplotlib==3.1.0
@@ -55,7 +55,7 @@ selenium==3.141.0
 simplejson==3.16.0
 slacker==0.13.0
 statsmodels==0.9.0
-Sphinx==2.0.1
+Sphinx==2.1.0
 sphinx-rtd-theme==0.4.3
 sqlparse==0.3.0
 thredds-crawler==1.5.4

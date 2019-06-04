@@ -17,8 +17,8 @@ from CANON import CANONLoader
 from datetime import datetime
 import timing
 
-cl = CANONLoader('stoqs_mbts', 'BOG - Monterey Bay Time Series',
-                 description='MBARI Biological Oceanography Group Monterey Bay Time Series data',
+cl = CANONLoader('$db_alias', '$title',
+                 description='$description',
                  x3dTerrains={
                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -33,13 +33,19 @@ cl = CANONLoader('stoqs_mbts', 'BOG - Monterey Bay Time Series',
                      'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                      'VerticalExaggeration': '1',
                    },
+                  'https://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
+                     'position': '14051448.48336 -15407886.51486 6184041.22775',
+                     'orientation': '0.83940 0.33030 0.43164 1.44880',
+                     'centerOfRotation': '0 0 0',
+                     'VerticalExaggeration': '10',
+                   },
                  },
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
 
 # Will likely need to adjust eyear as time goes on
-syear = datetime(2015, 1, 1)
-eyear = datetime(2019, 12, 31)
+syear = datetime($s_year, $s_month, $s_day)
+eyear = datetime($e_year, $e_month, $e_day)
 
 # Execute the load
 cl.process_command_line()
@@ -49,25 +55,13 @@ if cl.args.test:
 elif cl.args.stride:
     cl.stride = cl.args.stride
 
-# Sipper loading tests
-#-cl.daphne_base = 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2018/20180220_20180221/20180221T074336/'
-#-cl.daphne_files = ['201802210743_201802211832_2S_scieng.nc']
-#-cl.daphne_parms = ['temperature']
-#-cl.loadLRAUV('daphne', datetime(2018, 2, 1), datetime(2018, 2, 20), build_attrs=False)
+lrauvs = $lrauvs
 
-# Error on load: value too long
-#-cl.tethys_base = 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2019/20190304_20190307/20190305T002713/'
-#-cl.tethys_files = ['201903050027_201903050636_2S_scieng.nc']
-#-cl.tethys_parms = ['temperature']
-#-cl.loadLRAUV('tethys', datetime(2018, 3, 1), datetime(2018, 3, 20), build_attrs=False)
-
-for lrauv in ('tethys', 'daphne'):
-    cl.loadLRAUV(lrauv, syear, eyear, dlist_str='MBTS', err_on_missing_file=True)
-
-##cl.loadSubSamples()
+for lrauv in $lrauvs:
+    cl.loadLRAUV(lrauv, syear, eyear)
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
-print("All Done.")
+print("All Done loading $db_alias.")
 
