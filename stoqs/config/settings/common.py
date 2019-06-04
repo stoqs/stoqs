@@ -33,7 +33,7 @@ DJANGO_APPS = (
     # 'django.contrib.humanize',
 
     # Admin
-    'django.contrib.admin',
+    # 'django.contrib.admin',
 )
 THIRD_PARTY_APPS = (
     ##'crispy_forms',  # Form layouts
