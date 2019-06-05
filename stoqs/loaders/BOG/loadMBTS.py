@@ -61,6 +61,14 @@ elif cl.args.stride:
 #-cl.tethys_parms = ['temperature']
 #-cl.loadLRAUV('tethys', datetime(2018, 3, 1), datetime(2018, 3, 20), build_attrs=False)
 
+# File "/srv/stoqs/loaders/BOG/../../loaders/__init__.py", line 1582, in addAltitude
+#    bdepth = line.split()[2]
+# IndexError: list index out of range
+#-cl.tethys_base = 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2016/20160325_20160330/20160330T211745/'
+#-cl.tethys_files = ['201603302117_201604041633_2S_scieng.nc']
+#-cl.tethys_parms = ['temperature']
+#-cl.loadLRAUV('tethys', datetime(2016, 3, 29), datetime(2016, 4, 5), build_attrs=False)
+
 for lrauv in ('tethys', 'daphne'):
     cl.loadLRAUV(lrauv, syear, eyear, dlist_str='MBTS', err_on_missing_file=True)
 
