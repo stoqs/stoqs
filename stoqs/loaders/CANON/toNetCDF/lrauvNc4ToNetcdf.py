@@ -82,9 +82,14 @@ class InterpolatorWriter(BaseWriter):
         file_name = os.path.basename(os.path.abspath(os.path.join(log_dir, os.pardir))) + '.dlist'
         dlist_path = os.path.abspath(os.path.join(log_dir, os.pardir, os.pardir, file_name))
 
-        # This is how lrauv-tools/handle-lrauv-logs/*/scripts/dlist-tools.py parses the Name
-        with open(dlist_path, 'r') as d:
-            dlist_lines = [line.strip() for line in d]
+        try:
+            # This is how lrauv-tools/handle-lrauv-logs/*/scripts/dlist-tools.py parses the Name
+            with open(dlist_path, 'r') as d:
+                dlist_lines = [line.strip() for line in d]
+        except FileNotFoundError:
+            # Likely an sbd or cell log file with no associated .dlist file
+            deployment_name = ''
+            return deployment_name
 
         try:
             key, value = dlist_lines[0].split(': ', 1)
