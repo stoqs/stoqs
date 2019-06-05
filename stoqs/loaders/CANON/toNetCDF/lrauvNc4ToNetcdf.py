@@ -153,9 +153,9 @@ class InterpolatorWriter(BaseWriter):
 
         logger.debug("Adding in global metadata")
         self.add_global_metadata()
-        if getattr(self, 'segment_count') and getattr(self, 'segment_minsum'):
+        if getattr(self, 'segment_count', None) and getattr(self, 'segment_minsum', None):
             self.ncFile.summary += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward GPS fixes."
-        if getattr(self, 'trackingdb_values'):
+        if getattr(self, 'trackingdb_values', None):
             self.ncFile.comment = f"latitude and longitude values interpolated from {self.trackingdb_values} values retrieved from {self.trackingdb_url}"
             self.ncFile.summary += f" {self.trackingdb_values} acoustic navigation fixes retrieved from tracking database with {self.trackingdb_url}"
             self.ncFile.title += " with acoustic navigation data retrieved from Tracking Database"
