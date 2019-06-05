@@ -1579,7 +1579,11 @@ class STOQS_Loader(object):
             try:
                 with transaction.atomic():
                     for line in altFH:
-                        bdepth = line.split()[2]
+                        try:
+                            bdepth = line.split()[2]
+                        except IndexError:
+                            # Likely list index out of range
+                            continue
                         alt = -float(bdepth)-depthList.pop(0)
                         meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
                         mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
