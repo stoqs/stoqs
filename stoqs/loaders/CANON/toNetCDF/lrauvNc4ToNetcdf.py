@@ -574,10 +574,17 @@ class InterpolatorWriter(BaseWriter):
         logger.info(f"{in_file}")    
         
         # Produce Pandas time series from the NetCDF variables
-        lon_fix = self.var_series(in_file, ds['longitude_fix'], ds['longitude_fix_time'], angle=True)
-        lat_fix = self.var_series(in_file, ds['latitude_fix'], ds['latitude_fix_time'], angle=True)
         lon = self.var_series(in_file, ds['longitude'], ds['longitude_time'], angle=True)
         lat = self.var_series(in_file, ds['latitude'], ds['latitude_time'], angle=True)
+        try:
+            lon_fix = self.var_series(in_file, ds['longitude_fix'], ds['longitude_fix_time'], angle=True)
+            lat_fix = self.var_series(in_file, ds['latitude_fix'], ds['latitude_fix_time'], angle=True)
+        except IndexError:
+            # Encountered in http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2019/20190528_20190604/20190530T185218/201905301852_201905302040.nc4.html
+            # just 1 longitude_fix
+            logger.warning(f"Apparently only one GPS fix in this log: lons = {ds['longitude_fix'][:]}, lats = {ds['latitude_fix'][:]}")
+            logger.info("Returning from nudge_coords() with original coords")
+            return lon, lat
 
         logger.info(f"{'seg#':4s}  {'end_sec_diff':12s} {'end_lon_diff':12s} {'end_lat_diff':12s} {'len(segi)':9s} {'seg_min':7s} {'u_drift (cm/s)':14s} {'v_drift (cm/s)':14s}")
         
