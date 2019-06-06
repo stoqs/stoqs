@@ -10,13 +10,13 @@ fi
 cd "$STOQS_HOME/stoqs/loaders/CANON/realtime"
 post='--post'
 #post=''
-#debug=''
-debug='--debug'
+debug=''
+##debug='--debug'
 database='stoqs_lrauv_jun2019'
 urlbase='http://dods.mbari.org/thredds/catalog/LRAUV'
-##declare -a searchstr=("/realtime/sbdlogs/2019/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
+declare -a searchstr=("/realtime/sbdlogs/2019/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
 ##declare -a searchstr=("/realtime/cell-logs/.*Normal.nc4$")
-declare -a searchstr=("/realtime/sbdlogs/2019/.*shore.nc4$")
+##declare -a searchstr=("/realtime/sbdlogs/2019/.*shore.nc4$")
 declare -a platforms=("whoidhs")
 
 pos=$(( ${#searchstr[*]} - 1 ))
