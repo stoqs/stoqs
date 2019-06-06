@@ -31,7 +31,7 @@ import time
 import queue
 from threading import Thread
 
-from Contour import Contour
+##from Contour import Contour
 from coards import from_udunits
 from stoqs.models import InstantPoint
 from slacker import Slacker
