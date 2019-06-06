@@ -153,9 +153,9 @@ class InterpolatorWriter(BaseWriter):
 
         logger.debug("Adding in global metadata")
         self.add_global_metadata()
-        if getattr(self, 'segment_count') and getattr(self, 'segment_minsum'):
+        if getattr(self, 'segment_count', None) and getattr(self, 'segment_minsum', None):
             self.ncFile.summary += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward GPS fixes."
-        if getattr(self, 'trackingdb_values'):
+        if getattr(self, 'trackingdb_values', None):
             self.ncFile.comment = f"latitude and longitude values interpolated from {self.trackingdb_values} values retrieved from {self.trackingdb_url}"
             self.ncFile.summary += f" {self.trackingdb_values} acoustic navigation fixes retrieved from tracking database with {self.trackingdb_url}"
             self.ncFile.title += " with acoustic navigation data retrieved from Tracking Database"
@@ -166,6 +166,10 @@ class InterpolatorWriter(BaseWriter):
 
     def interpolate(self, data, times):
         x = np.asarray(times,dtype=np.float64)
+        if np.any(np.diff(x) <= 0):
+            x, counts = np.unique(x, return_counts=True)
+            logger.warning(f"Repeated values found in x array, counts = {counts}")
+
         xp = np.asarray(data.index,dtype=np.float64)
         fp = np.asarray(data)
         ts = pd.Series(index=times)
@@ -745,7 +749,8 @@ class InterpolatorWriter(BaseWriter):
 
         # create independent lat/lon/depth profiles for each parameter
         for key in parm_valid:
-            # Get independent parameter to interpolate on
+            # Get independent parameter to interpolate on - remove NaNs first
+            self.all_sub_ts[key] = self.all_sub_ts[key].dropna()
             t = pd.Series(index = self.all_sub_ts[key].index)
             self.all_coord[key] = { 'time': key+'_time', 'depth': key+'_depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
 

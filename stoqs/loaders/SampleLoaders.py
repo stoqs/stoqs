@@ -431,11 +431,11 @@ class ParentSamplesLoader(STOQS_Loader):
         try:
             if int(et[0:4]) > datetime.now().year:
                 self.logger.warn(f"Not looking for Samples for url = {url} as the to date is > {datetime.now().year}")
-                return samplings_at, samplings_log
+                return samplings_at, sample_num_errs
         except ValueError:
             # Likely an old slate.nc4 file that got converted to a .nc file
             self.logger.warn(f"Could not parse end date year from url = {url}")
-            return samplings_at, samplings_log
+            return samplings_at, sample_num_errs
             
         td_url = f"https://okeanids.mbari.org/TethysDash/api/events?vehicles={platform_name}&from={from_time}&to={to_time}&eventTypes=logImportant&limit=100000"
 

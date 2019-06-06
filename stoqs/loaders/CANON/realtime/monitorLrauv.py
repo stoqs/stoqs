@@ -27,7 +27,7 @@ import pydap
 import pytz
 import json
 
-from Contour import Contour
+##from Contour import Contour
 from thredds_crawler.crawl import Crawl
 from coards import from_udunits
 from stoqs.models import InstantPoint
@@ -280,6 +280,9 @@ if __name__ == '__main__':
     d = re.match(r'.*opah*',args.inUrl)
     if d:
         platformName = 'opah'
+    d = re.match(r'.*whoidhs*',args.inUrl)
+    if d:
+        platformName = 'whoidhs'
 
     if platformName is None:
         raise Exception('cannot find platformName from url %s' % args.inUrl)
