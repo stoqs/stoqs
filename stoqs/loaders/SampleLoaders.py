@@ -384,7 +384,7 @@ class ParentSamplesLoader(STOQS_Loader):
                         self.logger.warn(f"Summary {summary} number not found in filterings: {filterings}")
                         to_del.append(index)
 
-                for index in to_del:
+                for index in reversed(to_del):
                     self.logger.info(f"Deleting index {index} from summaries list")
                     del summaries[index]
 
