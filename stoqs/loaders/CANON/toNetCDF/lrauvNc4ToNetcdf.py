@@ -921,12 +921,17 @@ class InterpolatorWriter(BaseWriter):
         fh.setFormatter(frm)
         logger.addHandler(fh)
 
+        base_name = os.path.basename(in_file)
+        os.system(f"/bin/cp {in_file} /tmp/{base_name}")
         logger.info('Reading %s file...' % in_file)
-        self.df = netCDF4.Dataset(in_file, mode='r')
+        logger.info(f"After copying to /tmp/{base_name}")
+        self.df = netCDF4.Dataset(f"/tmp/{base_name}", mode='r')
+        logger.info(f'Read file {in_file}')
 
         coord_ts = self.createCoord(coord)
 
         # Get time parameter and align everything to this
+        logger.info(f'Creating t variable of the time indexes')
         t = pd.Series(index = coord_ts['time'].index)
 
         # resample
