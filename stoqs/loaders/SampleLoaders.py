@@ -376,15 +376,15 @@ class ParentSamplesLoader(STOQS_Loader):
 
             # Ensure that sample # (seq) numbers match
             try:
+                import pdb; pdb.set_trace()
                 if not (ms.groupdict().get('seq_num') == me.groupdict().get('seq_num') == lsr_seq_num.groupdict().get('seq_num')):
-                    raise AssertionError(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
+                    self.logger.warn(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
             except AttributeError:
                 if filtering and stopping and not lsr_seq_num:
                     sample_name = summary.text
                     self.logger.info(f"No ESP log summary report: Assigning sample_name = {sample_name}")
                 else:
                     self.logger.warn(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
-                    self.logger.warn(f"Skipping.")
             else:
                 try:
                     sample_name = f"Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')}"
@@ -395,6 +395,10 @@ class ParentSamplesLoader(STOQS_Loader):
                     # Remove ' ESP log summary report (2 messages)' text for sample_name
                     sample_name = summary.text.split('ESP')[0].strip()
                     self.logger.info(f"No ESP Cartridge number found: Assigning sample_name = {sample_name}")
+
+            if not sample_name:
+                self.logger.warn(f"Skipping this sample because of previous warning.")
+                continue
 
             # Convert volumes to ml and check for error in optional 3rd line of messages from ESP
             volume = None
