@@ -191,7 +191,7 @@ class CANONLoader(LoadScript):
         for (aname, f) in zip([ a + getStrideText(stride) for a in files], files):
             url = os.path.join(base, f)
             # shorten the activity names
-            if 'slate.nc' in aname:
+            if 'slate.nc' in aname or 'shore' in aname:
                 aname = '_'.join(aname.split('/')[-2:])
             else:
                 aname = aname.rsplit('/', 1)[-1]
