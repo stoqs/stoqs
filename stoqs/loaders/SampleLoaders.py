@@ -69,6 +69,20 @@ SIPPER = 'Sipper'
 SIPPER_NUM_ERR = re.compile('Sample (?P<sipper_num>\d+), err_code=(?P<sipper_err>\d+)')
 SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
 
+# Have both sample # and no_num versions of regular expressions so as to also get legacy samples
+no_num_sampling_start_re = 'ESP sampling state: S_FILTERING'
+no_num_sampling_end_re = 'ESP sampling state: S_PROCESSING'
+sample_prefix = '\[sample #(?P<seq_num>\d+)\] '
+sampling_start_re     = sample_prefix + no_num_sampling_start_re
+sampling_end_re       = sample_prefix + no_num_sampling_end_re
+
+# REs for ESP log summary reports, to search the multi-line text with optional matches
+lsr_seq_num_re          = r'\[sample #(?P<seq_num>\d+)\]'
+lsr_num_messages_re     = r'ESP log summary report \((?P<num_messages>\d+) messages\)'
+lsr_cartridge_number_re = r'Selecting Cartridge (?P<cartridge_number>\d+)'
+lsr_volume_re           = r'Sampled\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
+lsr_esp_error_msg_re    = r'(?P<esp_error_message>.+Error in PROCESSING.+)'
+
 class ClosestTimeNotFoundException(Exception):
     pass
 
@@ -324,7 +338,7 @@ class ParentSamplesLoader(STOQS_Loader):
             self.logger.debug(f"No '{LOGSUMMARY}' messages found in {td_url}")
 
         if esp_s_filtering and esp_s_stopping and esp_log_summaries:
-            self.logger.info(f"Parsed {len(esp_log_summaries)} Samples from {td_url}")
+            self.logger.info(f"Parsed {len(esp_log_summaries)} Samples (esp_log_summaries) from {td_url}")
         elif esp_s_filtering and esp_s_stopping:
             # LOGSUMMARY messages were added halfway through 2018, before that create a "sequence number" for the Sample
             self.logger.info(f"No '{LOGSUMMARY}' messages found - will assign sequence numbers to the Samples")
@@ -337,28 +351,48 @@ class ParentSamplesLoader(STOQS_Loader):
        
         return esp_s_filtering, esp_s_stopping, esp_log_summaries 
 
-    def _match_seq_to_cartridge(self, filterings, stoppings, summaries):
-        '''Take lists from parsing TethysDash log and build Sample names list with start and end times
+    def _validate_summaries(self, filterings, stoppings, summaries):
+        '''Ensure that there are the same number of items in filterings, stoppings, summaries and 
+        that the sample #s match.  If not then attempt to repair with appropriate warnings.
         '''
-
-        # Have both sample # and no_num versions of regular expressions so as to also get legacy samples
-        no_num_sampling_start_re = 'ESP sampling state: S_FILTERING'
-        no_num_sampling_end_re = 'ESP sampling state: S_PROCESSING'
-        sample_prefix = '\[sample #(?P<seq_num>\d+)\] '
-        sampling_start_re     = sample_prefix + no_num_sampling_start_re
-        sampling_end_re       = sample_prefix + no_num_sampling_end_re
-
-        # REs for log summary reports, to search the multi-line text with optional matches
-        lsr_seq_num_re          = r'\[sample #(?P<seq_num>\d+)\]'
-        lsr_num_messages_re     = r'ESP log summary report \((?P<num_messages>\d+) messages\)'
-        lsr_cartridge_number_re = r'Selecting Cartridge (?P<cartridge_number>\d+)'
-        lsr_volume_re           = r'Sampled\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
-        lsr_esp_error_msg_re    = r'(?P<esp_error_message>.+Error in PROCESSING.+)'
-
         if len(filterings) != len(stoppings):
             self.logger.warn(f"len(filterings) [{len(filterings)}] != len(stoppings) [{len(stoppings)}]")
             self.logger.warn("An ESP error might have occurred, sample times may overlap - check syslog")
 
+        if not (len(filterings) == len(stoppings) == len(summaries)):
+            self.logger.warn("Mismatch in the number of filterings, stoppings, summaries")
+            self.logger.warn(f"len(filterings) = {len(filterings)}, len(stoppings) = {len(stoppings)}")
+            self.logger.warn(f"len(summaries) = {len(summaries)}")
+
+            filter_nums = []
+            stop_nums = []
+            for filtering, stopping, summary in zip(filterings, stoppings, summaries):
+                self.logger.debug(f"summary = {summary}")
+                ms = (re.match(sampling_start_re, filtering.text) or 
+                      re.match(no_num_sampling_start_re, filtering.text))
+                me = (re.match(sampling_end_re, stopping.text) or
+                      re.match(no_num_sampling_end_re, stopping.text))
+                filter_nums.append(ms.groupdict().get('seq_num'))
+                stop_nums.append(me.groupdict().get('seq_num'))
+
+            # 1. Correct case where we have an extra summary
+            if len(summaries) > len(filterings):
+                to_del = []
+                for index, summary in enumerate(summaries):
+                    lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
+                    if lsr_seq_num.groupdict().get('seq_num') not in filter_nums:
+                        self.logger.warn(f"Summary {summary} number not found in filterings: {filterings}")
+                        to_del.append(index)
+
+                for index in to_del:
+                    self.logger.info(f"Deleting index {index} from summaries list")
+                    del summaries[index]
+
+        return filterings, stoppings, summaries
+
+    def _match_seq_to_cartridge(self, filterings, stoppings, summaries):
+        '''Take lists from parsing TethysDash log and build Sample names list with start and end times
+        '''
         # Loop through exctractions from syslog to build dictionary
         sample_names = defaultdict(SampleInfo)
         for filtering, stopping, summary in zip(reversed(filterings), reversed(stoppings), reversed(summaries)):
@@ -376,7 +410,6 @@ class ParentSamplesLoader(STOQS_Loader):
 
             # Ensure that sample # (seq) numbers match
             try:
-                import pdb; pdb.set_trace()
                 if not (ms.groupdict().get('seq_num') == me.groupdict().get('seq_num') == lsr_seq_num.groupdict().get('seq_num')):
                     self.logger.warn(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
             except AttributeError:
@@ -534,6 +567,7 @@ class ParentSamplesLoader(STOQS_Loader):
         self.logger.info(f"Getting ESP or Sipper Sample information from the TethysDash API that's also in {syslog_url}")
 
         filterings, stoppings, summaries = self._samples_from_json(platform_name, url)
+        filterings, stoppings, summaries = self._validate_summaries(filterings, stoppings, summaries)
         sample_names = self._match_seq_to_cartridge(filterings, stoppings, summaries)
 
         samplings_at, sample_num_errs = self._sippers_from_json(platform_name, url)
