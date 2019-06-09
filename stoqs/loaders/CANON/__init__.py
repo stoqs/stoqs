@@ -229,7 +229,12 @@ class CANONLoader(LoadScript):
                     'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources',
                     'pose_longitude_DeadReckonUsingMultipleVelocitySources',
                     'pose_latitude_DeadReckonUsingMultipleVelocitySources',
-                    'pose_depth_DeadReckonUsingMultipleVelocitySources',],
+                    'pose_depth_DeadReckonUsingMultipleVelocitySources',
+                    'chromophoric_dissolved_organic_matter',
+                    'BackscatteringCoeff700nm',
+                    'VolumeScatCoeff117deg700nm',
+                    'petroleum_hydrocarbons',
+                  ],
                   stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True, 
                   dlist_str=None, err_on_missing_file=False, critSimpleDepthTime=10):
         '''

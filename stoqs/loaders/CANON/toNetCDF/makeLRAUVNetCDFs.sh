@@ -54,6 +54,13 @@ parms_sci="{
             ],
             \"Aanderaa_O2\": [
             { \"name\":\"mass_concentration_of_oxygen_in_sea_water\", \"rename\":\"oxygen\" }
+            ],
+            \"WetLabsSeaOWL_UV_A\": [
+            { \"name\":\"concentration_of_chromophoric_dissolved_organic_matter_in_sea_water\", \"rename\":\"chromophoric_dissolved_organic_matter\" },
+            { \"name\":\"mass_concentration_of_chlorophyll_in_sea_water\", \"rename\":\"chlorophyll\" },
+            { \"name\":\"BackscatteringCoeff700nm\", \"rename\":\"BackscatteringCoeff700nm\" },
+            { \"name\":\"VolumeScatCoeff117deg700nm\", \"rename\":\"VolumeScatCoeff117deg700nm\" },
+            { \"name\":\"mass_concentration_of_petroleum_hydrocarbons_in_sea_water\", \"rename\":\"petroleum_hydrocarbons\" }
             ]
         }"
 
@@ -106,8 +113,8 @@ parms_scieng="{$sci_vars, $eng_vars}"
 
 for platform in "${platforms[@]}"
 do
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_scieng}" --resampleFreq '2S' -a 'scieng' --start "${start_datetime}" --end "${end_datetime}" --trackingdb --nudge
         python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_sci}" --resampleFreq '10S' -a 'sci' --start "${start_datetime}" --end "${end_datetime}" --trackingdb --nudge
         python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start "${start_datetime}" --end "${end_datetime}" --trackingdb --nudge
-        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_scieng}" --resampleFreq '2S' -a 'scieng' --start "${start_datetime}" --end "${end_datetime}" --trackingdb --nudge
 done
 
