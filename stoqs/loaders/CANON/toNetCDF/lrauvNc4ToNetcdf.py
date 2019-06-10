@@ -536,7 +536,8 @@ class InterpolatorWriter(BaseWriter):
         # Remove 0 values
         if 'longitude' in data_array.name or 'latitude' in data_array.name:
             md = np.ma.masked_equal(data_array, 0)
-            da = pd.Series(da[:][~md.mask], index=v_time)
+            if md.mask is not np.ma.nomask:
+                da = pd.Series(da[:][~md.mask], index=v_time)
 
         # Specific ad hoc QC fixes
         if ('daphne/missionlogs/2017/20171002_20171005/20171003T231731/201710032317_201710040517' in in_file or 
