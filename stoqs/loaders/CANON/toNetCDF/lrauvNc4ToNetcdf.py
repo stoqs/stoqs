@@ -572,7 +572,10 @@ class InterpolatorWriter(BaseWriter):
         '''
         ds = self.df
         logger.info(f"{in_file}")    
-        
+       
+        self.segment_count = None
+        self.segment_minsum = None
+ 
         # Produce Pandas time series from the NetCDF variables
         lon = self.var_series(in_file, ds['longitude'], ds['longitude_time'], angle=True)
         lat = self.var_series(in_file, ds['latitude'], ds['latitude_time'], angle=True)
