@@ -326,7 +326,8 @@ def showSample(request, fmt='html'):
     query_set = stoqs_object.objects.all().order_by('instantpoint__timevalue')
 
     o = BaseOutputer(request, fmt, query_set, stoqs_object)
-    o.fields = ['instantpoint__activity__name', 'name', 'instantpoint__timevalue', 'depth', 'geom', 
+    o.fields = ['instantpoint__activity__platform__name', 'instantpoint__activity__name',
+                'name', 'instantpoint__timevalue', 'depth', 'geom', 
                 'sampledparameter__parameter__name', 'sampledparameter__datavalue',
                 'sampletype__name', 'samplepurpose__name',
                 'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher']
@@ -508,7 +509,8 @@ def showActivityParameter(request, fmt='html'):
     query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, fmt, query_set, stoqs_object)
-    o.fields = ['id', 'activity__name', 'parameter__name', 'activity__startdate', 'activity__enddate', 
+    o.fields = ['id', 'activity__platform__name', 'activity__name', 'parameter__name', 
+                'activity__startdate', 'activity__enddate', 
                 'activity__mindepth', 'activity__maxdepth', 'activity__mappoint', 
                 'number', 'min', 'max', 'mean', 
                 'median', 'mode', 'p025', 'p975', 'p010', 'p990']
