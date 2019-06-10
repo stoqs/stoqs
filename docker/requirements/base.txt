@@ -55,7 +55,7 @@ selenium==3.141.0
 simplejson==3.16.0
 slacker==0.13.0
 statsmodels==0.9.0
-Sphinx==2.1.0
+Sphinx==2.1.1
 sphinx-rtd-theme==0.4.3
 sqlparse==0.3.0
 thredds-crawler==1.5.4
