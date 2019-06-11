@@ -257,7 +257,7 @@ class ParentSamplesLoader(STOQS_Loader):
         parameter_counts = defaultdict(lambda:0)
         for me in m_qs:
             measurement = self.createMeasurement(mtime=me.instantpoint.timevalue, 
-                                                 depth=me.depth, 
+                                                 depth=me.depth,
                                                  lon=me.geom.x,
                                                  lat=me.geom.y)
             for mp in MeasuredParameter.objects.using(db_alias).filter(measurement=me):
@@ -278,7 +278,7 @@ class ParentSamplesLoader(STOQS_Loader):
             point = m_qs.values_list('geom', flat=True)[0]
             maptrack = LineString([m_qs.values_list('geom', flat=True)[0], m_qs.values_list('geom', flat=True)[0]])
         sample_ip, _ = InstantPoint.objects.using(db_alias).get_or_create(activity=sample_act, timevalue=sample_tv)
-        depth = Decimal(str(round(m_qs[int(len(m_qs)/2)].depth, 2)))
+        depth = qs['depth__avg']
 
         self.insertSimpleDepthTimeSeries(critSimpleDepthTime=sample_simplify_crit)
 
@@ -319,7 +319,7 @@ class ParentSamplesLoader(STOQS_Loader):
         self.logger.debug(f"Opening td_url = {td_url}")
         with requests.get(td_url) as resp:
             if resp.status_code != 200:
-                self.logger.error('Cannot read %s, resp.status_code = %s', syslog_url, resp.status_code)
+                self.logger.error('Cannot read %s, resp.status_code = %s', td_url, resp.status_code)
                 return
             td_log_important = resp.json()['result']
 
@@ -481,7 +481,7 @@ class ParentSamplesLoader(STOQS_Loader):
         self.logger.debug(f"Opening td_url = {td_url}")
         with requests.get(td_url) as resp:
             if resp.status_code != 200:
-                self.logger.error('Cannot read %s, resp.status_code = %s', syslog_url, resp.status_code)
+                self.logger.error('Cannot read %s, resp.status_code = %s', td_url, resp.status_code)
                 return
             td_log_important = resp.json()['result']
 
