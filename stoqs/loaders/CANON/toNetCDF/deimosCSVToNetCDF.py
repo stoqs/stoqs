@@ -34,6 +34,15 @@ class ParserWriter(BaseWriter):
     dep_list = []
     sv_mean_list = []
 
+    def _save_data(self, dep_per_time, sv_mean_per_time):
+        dep = dep_per_time[0]
+        for dl in self.dep_list:
+            if dep > dl:
+                self.sv_mean_list.append(self._FillValue)
+            else:
+                dep = dep_per_time.pop(0)
+                self.sv_mean_list.append(sv_mean_per_time.pop(0))
+
     def process_deimos_csv_file(self):
         '''The .csv file looks like:
 Process_ID, Interval, Layer, Sv_mean, NASC, Height_mean, Depth_mean, Layer_depth_min, Layer_depth_max, Ping_S, Ping_E, Dist_M, Date_M, Time_M, Lat_M, Lon_M, Noise_Sv_1m, Minimum_Sv_threshold_applied, Maximum_Sv_threshold_applied, Standard_deviation, Thickness_mean, Range_mean, Exclude_below_line_range_mean, Exclude_above_line_range_mean
@@ -52,7 +61,7 @@ Process_ID, Interval, Layer, Sv_mean, NASC, Height_mean, Depth_mean, Layer_depth
                 dep = (float(rec['Layer_depth_min']) + float(rec['Layer_depth_max'])) / 2.0
                 depths[dep] += 1
         self.dep_list = sorted(depths.keys())
-        self.logger.info(f"Collected len(self.dep_list) from {self.dep_list[0]} m to {self.dep_list[-1]} m")
+        self.logger.info(f"Collected {len(self.dep_list)} from {self.dep_list[0]} m to {self.dep_list[-1]} m")
 
         dep_per_time = []
         sv_mean_per_time = []
@@ -64,28 +73,25 @@ Process_ID, Interval, Layer, Sv_mean, NASC, Height_mean, Depth_mean, Layer_depth
                 if dt != last_dt:
                     # A new time step encountered
                     self.logger.info(f"{dt}")
-                    es = (dt - datetime(1970, 1, 1)).total_seconds()
+                    es = (last_dt - datetime(1970, 1, 1)).total_seconds()
                     self.esec_list.append(es)
 
                     if not dep_per_time:
                         first_dt = dt
                     else:
-                        dep = dep_per_time[0]
-                        for dl in self.dep_list:
-                            if dep > dl:
-                                self.sv_mean_list.append(self._FillValue)
-                            else:
-                                dep = dep_per_time.pop(0)
-                                self.sv_mean_list.append(sv_mean_per_time.pop(0))
+                        self._save_data(dep_per_time, sv_mean_per_time)
 
                     dep_per_time = []
                     sv_mean_per_time = []
 
                 dep_per_time.append((float(rec['Layer_depth_min']) + float(rec['Layer_depth_max'])) / 2.0)
                 sv_mean_per_time.append(float(rec['Sv_mean'])) 
-
                 last_dt = dt
                 last_dep = dep
+
+            # Save the last set of depth and acoustic data
+            self.esec_list.append(es)
+            self._save_data(dep_per_time, sv_mean_per_time)
 
         self.logger.info(f"Collected len(self.esec_list) time steps, from {first_dt} to {dt}")
         self.write_sv()
@@ -149,7 +155,6 @@ Process_ID, Interval, Layer, Sv_mean, NASC, Height_mean, Depth_mean, Layer_depth
         sv_mean.coordinates = 'time depth latitude longitude'
         sv_mean.units = 'db'
         sv_mean.missing_value = self.missing_value
-        import pdb; pdb.set_trace()
         sv_mean_array = np.array(self.sv_mean_list)
         sv_mean[:,:,1,1] = sv_mean_array.reshape(len(self.esec_list), len(self.dep_list), 1, 1)
 
