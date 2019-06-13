@@ -159,7 +159,7 @@ Process_ID, Interval, Layer, Sv_mean, NASC, Height_mean, Depth_mean, Layer_depth
         sv_mean_array = np.array(self.sv_mean_list)
         sv_mean[:,:,:,:] = sv_mean_array.reshape(sv_mean_array.shape[0], sv_mean_array.shape[1], 1, 1)
 
-        self.add_global_metadata()
+        self.add_global_metadata(featureType='timeseriesProfile')
 
         self.ncFile.close()
         self.logger.info("Wrote %s" % outFile)
