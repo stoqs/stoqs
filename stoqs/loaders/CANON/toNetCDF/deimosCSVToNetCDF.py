@@ -36,12 +36,15 @@ class ParserWriter(BaseWriter):
 
     def _save_data(self, dep_per_time, sv_mean_per_time):
         dep = dep_per_time[0]
+        deps = []
         for dl in self.dep_list:
             if dep > dl:
-                self.sv_mean_list.append(self._FillValue)
+                deps.append(self._FillValue)
             else:
-                dep = dep_per_time.pop(0)
-                self.sv_mean_list.append(sv_mean_per_time.pop(0))
+                deps.append(sv_mean_per_time.pop(0))
+                dep = dep_per_time[0]
+
+        self.sv_mean_list.append(deps)
 
     def process_deimos_csv_file(self):
         '''The .csv file looks like:
@@ -61,24 +64,24 @@ Process_ID, Interval, Layer, Sv_mean, NASC, Height_mean, Depth_mean, Layer_depth
                 dep = (float(rec['Layer_depth_min']) + float(rec['Layer_depth_max'])) / 2.0
                 depths[dep] += 1
         self.dep_list = sorted(depths.keys())
-        self.logger.info(f"Collected {len(self.dep_list)} from {self.dep_list[0]} m to {self.dep_list[-1]} m")
+        self.logger.info(f"Collected {len(self.dep_list)} depth from {self.dep_list[0]} m to {self.dep_list[-1]} m")
 
         dep_per_time = []
         sv_mean_per_time = []
         self.logger.info(f"Opening file {self.args.inFile} to collect acoustic data")
         with open(self.args.inFile) as fh:
-            for rec in csv.DictReader(fh, skipinitialspace=True):
+            for count, rec in enumerate(csv.DictReader(fh, skipinitialspace=True)):
                 self.logger.debug(rec['Date_M'], rec['Time_M'], rec['Layer_depth_min'], rec['Depth_mean'], rec['Layer_depth_max'])
                 dt = datetime.strptime(rec['Date_M']+rec['Time_M'], "%Y%m%d%H:%M:%S.%f")
                 if dt != last_dt:
                     # A new time step encountered
-                    self.logger.info(f"{dt}")
-                    es = (last_dt - datetime(1970, 1, 1)).total_seconds()
-                    self.esec_list.append(es)
-
+                    if not count % (6 * 24):
+                        self.logger.info(f"{dt}")
                     if not dep_per_time:
                         first_dt = dt
+                        self.esec_list.append((dt - datetime(1970, 1, 1)).total_seconds())
                     else:
+                        self.esec_list.append((dt - datetime(1970, 1, 1)).total_seconds())
                         self._save_data(dep_per_time, sv_mean_per_time)
 
                     dep_per_time = []
@@ -90,15 +93,13 @@ Process_ID, Interval, Layer, Sv_mean, NASC, Height_mean, Depth_mean, Layer_depth
                 last_dep = dep
 
             # Save the last set of depth and acoustic data
-            self.esec_list.append(es)
             self._save_data(dep_per_time, sv_mean_per_time)
 
-        self.logger.info(f"Collected len(self.esec_list) time steps, from {first_dt} to {dt}")
+        self.logger.info(f"Collected {len(self.esec_list)} time steps, from {first_dt} to {dt}")
         self.write_sv()
 
     def write_sv(self):
-        '''
-        Write lists out as NetCDF.
+        '''Write lists out as NetCDF.
         '''
 
         # Create the NetCDF file
@@ -140,23 +141,23 @@ Process_ID, Interval, Layer, Sv_mean, NASC, Height_mean, Depth_mean, Layer_depth
         self.longitude = self.ncFile.createVariable('longitude', 'float64', ('longitude',))
         self.longitude.standard_name = 'longitude'
         self.longitude.units = 'degrees_east'
-        self.longitude = -122.18681000
+        self.longitude[:] = [-122.18681000]
 
         self.ncFile.createDimension('latitude', 1)
         self.latitude = self.ncFile.createVariable('latitude', 'float64', ('latitude',))
         self.latitude.standard_name = 'latitude'
         self.latitude.units = 'degrees_north'
-        self.latitude = 36.71137000
+        self.latitude[:] = [36.71137000]
 
 
         # Record Variables - Acoustic Data
-        sv_mean = self.ncFile.createVariable('Sv_mean', 'float64', ('time', 'depth'), fill_value=self._FillValue)
+        sv_mean = self.ncFile.createVariable('Sv_mean', 'float64', ('time', 'depth', 'latitude', 'longitude'), fill_value=self._FillValue)
         sv_mean.long_name = 'SV'
         sv_mean.coordinates = 'time depth latitude longitude'
         sv_mean.units = 'db'
         sv_mean.missing_value = self.missing_value
         sv_mean_array = np.array(self.sv_mean_list)
-        sv_mean[:,:,1,1] = sv_mean_array.reshape(len(self.esec_list), len(self.dep_list), 1, 1)
+        sv_mean[:,:,:,:] = sv_mean_array.reshape(sv_mean_array.shape[0], sv_mean_array.shape[1], 1, 1)
 
         self.add_global_metadata()
 
