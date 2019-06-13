@@ -60,10 +60,25 @@ class BaseWriter(object):
         self.ncFile.date_modified = iso_now
         self.ncFile.featureType = featureType
         self.ncFile.data_mode = 'R'
-        self.ncFile.geospatial_lat_min = np.min(self.latitude[:])
-        self.ncFile.geospatial_lat_max = np.max(self.latitude[:])
-        self.ncFile.geospatial_lon_min = np.min(self.longitude[:])
-        self.ncFile.geospatial_lon_max = np.max(self.longitude[:])
+
+        # Likely TypeError: 'float' object is not subscriptable
+        try:
+            self.ncFile.geospatial_lat_min = np.min(self.latitude[:])
+        except TypeError:
+            self.ncFile.geospatial_lat_min = self.latitude
+        try:
+            self.ncFile.geospatial_lat_max = np.max(self.latitude[:])
+        except TypeError:
+            self.ncFile.geospatial_lat_max = self.latitude
+        try:
+            self.ncFile.geospatial_lon_min = np.min(self.longitude[:])
+        except TypeError:
+            self.ncFile.geospatial_lon_min = self.longitude
+        try:
+            self.ncFile.geospatial_lon_max = np.max(self.longitude[:])
+        except TypeError:
+            self.ncFile.geospatial_lon_max = self.longitude
+
         self.ncFile.geospatial_lat_units = 'degree_north'
         self.ncFile.geospatial_lon_units = 'degree_east'
 
@@ -101,6 +116,7 @@ class BaseWriter(object):
                                          epilog='Examples:' + '\n\n' + exampleString + '\n\nOutput files are written to the input directory.')
         parser.add_argument('-i', '--inDir', action='store', default='.',
                             help='Directory where the input data files are located')
+        parser.add_argument('--inFile', action='store', default='.', help='Input data file')
         parser.add_argument('-d', '--depth', action='store', 
                             help='Nominal depth below the sea surface where the water is sampled - for uctd data')
         parser.add_argument('-t', '--title', action='store',
