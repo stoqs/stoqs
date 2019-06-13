@@ -768,6 +768,46 @@ class Base_Loader(STOQS_Loader):
 
         return count 
 
+    def _equal_coords(self, load_groups, coor_groups):
+        '''Peek at the data in the axes and consolidate identical ones.
+        This is a special fix for realtime LRAUV data from shore_i.nc files.
+        '''
+        coord_equals = {}
+        for count, (axes, ac) in enumerate(coor_groups.items()):
+            # Brute force compare each of item with the previous
+            variable = load_groups[axes]
+            if count > 0:
+                self.logger.info(f"Comparing coords with {last_variable}")
+                times_equal = np.equal(last_times, self.ds[ac[TIME]])
+                self.logger.info(f"  {variable} times: {times_equal}")
+                self.logger.debug(f"    {list(last_times[:])}")
+                self.logger.debug(f"    {list(self.ds[ac[TIME]])}")
+                depths_equal = np.equal(last_depths, self.ds[ac[DEPTH]][ac[DEPTH]])
+                self.logger.info(f"  {variable} depths: {depths_equal}")
+                self.logger.debug(f"    {list(last_depths[:])}")
+                self.logger.debug(f"    {list(self.ds[ac[DEPTH]][ac[DEPTH]])}")
+                latitudes_equal = np.equal(last_latitudes, self.ds[ac[LATITUDE]][ac[LATITUDE]])
+                self.logger.info(f"  {variable} latitudes: {latitudes_equal}")
+                self.logger.debug(f"    {list(last_latitudes[:])}")
+                self.logger.debug(f"    {list(self.ds[ac[LATITUDE]][ac[LATITUDE]])}")
+                longitudes_equal = np.equal(last_longitudes, self.ds[ac[LONGITUDE]][ac[LONGITUDE]])
+                self.logger.info(f"  {variable} longitudes: {longitudes_equal}")
+                self.logger.debug(f"    {list(last_longitudes[:])}")
+                self.logger.debug(f"    {list(self.ds[ac[LONGITUDE]][ac[LONGITUDE]])}")
+
+                import pdb; pdb.set_trace()
+                coord_equals[axes] = np.logical_and(np.logical_and(times_equal, depths_equal), 
+                                                    np.logical_and(latitudes_equal, longitudes_equal))
+                self.logger.info(f"  .logical_and of all coords: {coord_equals[axes]}")
+        
+            last_times = self.ds[ac[TIME]]
+            last_depths = self.ds[ac[DEPTH]][ac[DEPTH]]
+            last_latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]]
+            last_longitudes = self.ds[ac[LONGITUDE]][ac[LONGITUDE]]
+            last_variable = variable
+
+        return coord_equals
+
     def get_load_structure(self):
         '''Return data structure organized by Parameters with common coordinates.
         This supports the use of bulk_create() to speed the loading of data.
@@ -793,6 +833,11 @@ class Base_Loader(STOQS_Loader):
                 self.logger.debug(f'group_name = {group_name}')
                 load_groups[group_name].append(pname)
                 coor_groups[group_name] = ac[pname]
+
+        if 'shore' in self.url:
+            # Variables from same NetCDF4 group have different axis names, but same coord values
+            # find them to not load duplicate measurements
+            coords_equal = self._equal_coords(load_groups, coor_groups)
 
         return load_groups, coor_groups
 
@@ -1328,6 +1373,7 @@ class Base_Loader(STOQS_Loader):
         meass = self._measurement_with_instantpoint(self.ips, meas_to_load)
 
         self.logger.info(f'Calling bulk_create() for Measurements in meass generator')
+        import pdb; pdb.set_trace()
         meass = Measurement.objects.using(self.dbAlias).bulk_create(meass)
 
         return meass, mask
