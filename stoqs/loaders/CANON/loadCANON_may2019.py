@@ -249,6 +249,11 @@ cl.wfpctd_files = [
 #        'cn18fc01.nc',
                   ]
 
+# DEIMOS
+cl.deimos_base = cl.dodsBase + 'Other/routine/Platforms/DEIMOS/netcdf/'
+cl.deimos_parms = [ 'Sv_mean' ]
+cl.deimos_files = [ 'deimos-2019-CANON-Spring.nc' ]
+
 ###################################################################################################
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/
 #   copied to local BOG_Data/N18F
@@ -277,6 +282,7 @@ elif cl.args.stride:
     cl.stride = cl.args.stride
 
 cl.loadM1()  
+cl.loadDEIMOS()
 cl.loadL_662a()
 cl.load_NPS29()   
 ##cl.load_NPS34a() ## not in this campaign

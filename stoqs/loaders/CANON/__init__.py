@@ -842,7 +842,6 @@ class CANONLoader(LoadScript):
                                         platformName, self.colors['m1'], 'mooring', 'Mooring Deployment', 
                                         self.m1_parms, self.dbAlias, stride, start_datetime, 
                                         end_datetime, command_line_args=self.args) 
-                                        
     
         # For timeseriesProfile data we need to pass the nominaldepth of the plaform
         # so that the model is put at the correct depth in the Spatial -> 3D view.
@@ -899,6 +898,19 @@ class CANONLoader(LoadScript):
                                         self.m1met_parms, self.dbAlias, stride, 
                                         self.m1met_startDatetime, self.m1met_endDatetime)
 
+    def loadDEIMOS(self, stride=None):
+        '''
+        Mooring DEIMOS EK60 specific load functions
+        '''
+        platformName = 'DEIMOS'
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.deimos_files], self.deimos_files):
+            url = os.path.join(self.deimos_base, f)
+            DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
+                                        platformName, self.colors['m1'], 'mooring', 'Mooring Deployment', 
+                                        self.deimos_parms, self.dbAlias, stride,
+                                        command_line_args=self.args) 
+    
     def loadHeHaPe(self, stride=None):
         '''
         Glider specific load functions
