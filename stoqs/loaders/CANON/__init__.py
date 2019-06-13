@@ -128,6 +128,7 @@ class CANONLoader(LoadScript):
                 'wg_Tiny':      '960000',
                 'wg_Sparky':    'FCDD00',
                 'wg_272':       '98FF26',
+                'deimos':       '33D4FF',
              }
 
     # Distribute AUV colors along a yellor to brown palette
@@ -907,7 +908,7 @@ class CANONLoader(LoadScript):
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.deimos_files], self.deimos_files):
             url = os.path.join(self.deimos_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                        platformName, self.colors['m1'], 'mooring', 'Mooring Deployment', 
+                                        platformName, self.colors['deimos'], 'mooring', 'Mooring Deployment', 
                                         self.deimos_parms, self.dbAlias, stride,
                                         command_line_args=self.args) 
     
