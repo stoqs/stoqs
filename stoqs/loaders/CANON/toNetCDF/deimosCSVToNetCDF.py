@@ -77,13 +77,11 @@ Process_ID, Interval, Layer, Sv_mean, NASC, Height_mean, Depth_mean, Layer_depth
                     # A new time step encountered
                     if not count % (6 * 24):
                         self.logger.info(f"{dt}")
+                    self.esec_list.append((dt - datetime(1970, 1, 1)).total_seconds())
                     if not dep_per_time:
                         first_dt = dt
-                        self.esec_list.append((dt - datetime(1970, 1, 1)).total_seconds())
                     else:
-                        self.esec_list.append((dt - datetime(1970, 1, 1)).total_seconds())
                         self._save_data(dep_per_time, sv_mean_per_time)
-
                     dep_per_time = []
                     sv_mean_per_time = []
 
