@@ -769,15 +769,23 @@ class Base_Loader(STOQS_Loader):
         return count 
 
     def _equal_coords(self, load_groups, coor_groups):
-        '''Peek at the data in the axes and consolidate identical ones.
+        '''Peek at the data in the axes and mark with True values those elements that match.
         This is a special fix for realtime LRAUV data from shore_i.nc files.
+        Tested with http://dods.mbari.org/opendap/data/lrauv/whoidhs/realtime/sbdlogs/2019/201906/20190609T194744/shore_i.nc
         '''
         coord_equals = {}
         for count, (axes, ac) in enumerate(coor_groups.items()):
-            # Brute force compare each of item with the previous
-            variable = load_groups[axes]
+            self.logger.info(f"Initializing coord_equals to all False for axes {axes}")
+            coord_equals[axes] = np.full(len(self.ds[ac[TIME]]), False)
+
+            variable = load_groups[axes][0]
             if count > 0:
-                self.logger.info(f"Comparing coords with {last_variable}")
+                if len(last_times) != len(self.ds[ac[TIME]]):
+                    self.logger.info(f"len(last_times) ({len(last_times)}) != len(self.ds[ac[TIME]]) ({len(self.ds[ac[TIME]])})")
+                    self.logger.info(f"Setting coord_equals to all False")
+                    continue
+
+                self.logger.info(f"Comparing coords with those from {last_variables}")
                 times_equal = np.equal(last_times, self.ds[ac[TIME]])
                 self.logger.info(f"  {variable} times: {times_equal}")
                 self.logger.debug(f"    {list(last_times[:])}")
@@ -794,17 +802,17 @@ class Base_Loader(STOQS_Loader):
                 self.logger.info(f"  {variable} longitudes: {longitudes_equal}")
                 self.logger.debug(f"    {list(last_longitudes[:])}")
                 self.logger.debug(f"    {list(self.ds[ac[LONGITUDE]][ac[LONGITUDE]])}")
-
-                import pdb; pdb.set_trace()
-                coord_equals[axes] = np.logical_and(np.logical_and(times_equal, depths_equal), 
-                                                    np.logical_and(latitudes_equal, longitudes_equal))
-                self.logger.info(f"  .logical_and of all coords: {coord_equals[axes]}")
-        
+                coord_equals[axes] = np.logical_and(np.logical_and(times_equal, 
+                                                                   depths_equal), 
+                                                    np.logical_and(latitudes_equal, 
+                                                                   longitudes_equal))
+                self.logger.info(f"  {variable} .logical_and(): {coord_equals[axes]}")
+            
             last_times = self.ds[ac[TIME]]
             last_depths = self.ds[ac[DEPTH]][ac[DEPTH]]
             last_latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]]
             last_longitudes = self.ds[ac[LONGITUDE]][ac[LONGITUDE]]
-            last_variable = variable
+            last_variables = load_groups[axes]
 
         return coord_equals
 
@@ -834,11 +842,6 @@ class Base_Loader(STOQS_Loader):
                 load_groups[group_name].append(pname)
                 coor_groups[group_name] = ac[pname]
 
-        if 'shore' in self.url:
-            # Variables from same NetCDF4 group have different axis names, but same coord values
-            # find them to not load duplicate measurements
-            coords_equal = self._equal_coords(load_groups, coor_groups)
-
         return load_groups, coor_groups
 
     def _ips(self, mtimes):
@@ -856,7 +859,7 @@ class Base_Loader(STOQS_Loader):
             else:
                 yield None
 
-    def _load_coords_from_dsg_ds(self, tindx, ac, pnames, axes):
+    def _load_coords_from_dsg_ds(self, tindx, ac, pnames, axes, coords_equal=np.array([])):
         '''Pull coordinates from Discrete Sampling Geometry NetCDF dataset,
         (with accomodations made so that it works as well for EPIC conventions)
         and bulk create in the database. Retain None values for bad coordinates.
@@ -896,7 +899,7 @@ class Base_Loader(STOQS_Loader):
         self.logger.debug(f'Getting good_coords for {pnames}...')
         try:
             mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
-                                        pnames, mtimes, depths, latitudes, longitudes))
+                                        pnames, mtimes, depths, latitudes, longitudes, coords_equal))
         except TypeError:
             # When ac[DEPTH] is a number, convert one time value to a list
             self.logger.info(f'Assuming coords are single valued and converting to lists')
@@ -965,8 +968,13 @@ class Base_Loader(STOQS_Loader):
         '''Stream trajectory data directly from pydap proxies to generators fed to bulk_create() calls
         '''
         load_groups, coor_groups = self.get_load_structure()
+        if 'shore' in self.url:
+            # Variables from same NetCDF4 group have different axis names, but same coord values
+            # find them to not load duplicate measurements
+            coords_equal_hash = self._equal_coords(load_groups, coor_groups)
+
         total_loaded = 0   
-        for k, pnames in load_groups.items():
+        for axis_count, (k, pnames) in enumerate(load_groups.items()):
             ac = coor_groups[k]
             try:
                 tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
@@ -991,7 +999,11 @@ class Base_Loader(STOQS_Loader):
                         try:
                             # Expect CF Discrete Sampling Geometry or EPIC dataset
                             self.logger.info(f'Loading coordinates for axes {k}')
-                            meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k)
+                            if axis_count == 0:
+                                meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k)
+                            else:
+                                # For follow-on Parameters using same axes, don't load the equal coordinates
+                                meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k, coords_equal_hash[k])
                         except ValueError as e:
                             # Likely ValueError: not enough values to unpack (expected 5, got 0) from good_coords()
                             self.logger.debug(str(e))
@@ -1373,7 +1385,6 @@ class Base_Loader(STOQS_Loader):
         meass = self._measurement_with_instantpoint(self.ips, meas_to_load)
 
         self.logger.info(f'Calling bulk_create() for Measurements in meass generator')
-        import pdb; pdb.set_trace()
         meass = Measurement.objects.using(self.dbAlias).bulk_create(meass)
 
         return meass, mask

@@ -833,7 +833,7 @@ class STOQS_Loader(object):
 
         return False
 
-    def good_coords(self, pnames, mtimes, depths, latitudes, longitudes):
+    def good_coords(self, pnames, mtimes, depths, latitudes, longitudes, coords_equal=np.array([])):
         '''Use attributes to determine if coordinate values are good.  Yield None
         values for all coordinates if any are bad (e.g. _FillValue, time decreasing).
         Appropriate for trajectory data where there is one-to-one match of coordinates.
@@ -858,6 +858,12 @@ class STOQS_Loader(object):
                 de = None
                 la = None
                 lo = None
+            if coords_equal.any():
+                if coords_equal[i]:
+                    mt = None
+                    de = None
+                    la = None
+                    lo = None
 
             bad_time = False
             if known_dup_or_decr_time_problem:
