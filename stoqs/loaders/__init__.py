@@ -757,6 +757,10 @@ class STOQS_Loader(object):
                                          min_lat=-90, max_lat=90, min_lon=-720, max_lon=720):
         '''Return True if coordinate is missing or fill_value, or falls outside of reasonable bounds
         '''
+        # None depth rejections - Ideally a Trajectory file won't have any None-valued depths, but realtime LRAUV data do
+        if not depth:
+            return True
+
         # Missing value rejections
         ac = self.coord_dicts[key]
         if 'depth' in ac:   # Tolerate EPIC 'sensor_depth' type data
