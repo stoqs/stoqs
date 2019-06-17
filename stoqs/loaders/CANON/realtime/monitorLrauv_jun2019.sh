@@ -36,7 +36,7 @@ do
 
         # get everything before the last /  - this is used as the directory base for saving the interpolated .nc files
         directory=`echo ${search} | sed 's:/[^/]*$::'`
-        python monitorLrauv.py --start '20190602T000000' --end '20190610T000000' -d  'WHOIDHS Santa Barbara data - June 2019' --productDir '/mbari/ODSS/data/other/routine/Products/LRAUV' \
+        python monitorLrauv.py --start '20190602T000000' --end '20190620T000000' -d  'WHOIDHS Santa Barbara data - June 2019' --productDir '/mbari/ODSS/data/other/routine/Products/LRAUV' \
  	--contourDir '/mbari/LRAUV/stoqs' --contourUrl 'http://dods.mbari.org/opendap/data/lrauv/stoqs/' -o /mbari/LRAUV/${platform}/${directory}/ -i /mbari/LRAUV/${platform}/${directory} \
         -u ${urlbase}/${platform}/${search} -b ${database} -c 'WHOIDHS Santa Barbara data - June 2019'  --append --autoscale \
         --iparm depth \
