@@ -1370,7 +1370,7 @@
     <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/LoadingPanel.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/json2.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/purl.js"></script> 
-    <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string.js"></script> 
+    <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string-min.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}x3dom-1.7.1/x3dom-full.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/GeoOriginTransform.js"></script>
     <!--<script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom-full.js"></script>-->
@@ -5728,7 +5728,7 @@ function enable_cardboard(){
             // If it's longer than 32 characters, it is a client-side permalink
             if (permalink_id.length > 32) {
                 try {
-                    var parameters=JSON.parse(LZString.decompressFromBase64(permalink_id));
+                    var parameters=JSON.parse(LZString.decompressFromEncodedURIComponent(permalink_id));
                     $('body').data()['end-ems'] = parameters['end-ems'];
                     $('body').data()['start-ems'] = parameters['start-ems'];
                     $('body').data()['end-depth'] = parameters['end-depth'];
@@ -5837,7 +5837,7 @@ function enable_cardboard(){
             // If it's longer than 32 characters, it is a client-side permalink
             if (permalink_id.length > 32) {
                 try {
-                    var parameters=JSON.parse(LZString.decompressFromBase64(permalink_id));
+                    var parameters=JSON.parse(LZString.decompressFromEncodedURIComponent(permalink_id));
                     reset_parameters_from_permalink(parameters);
                 } catch (err) {
                     alert('Permalink loading failed: ' + err + ' (Perhaps the permalink_id value is invalid?)');
@@ -6170,7 +6170,7 @@ function enable_cardboard(){
                     (client_side_permalink)) {
                     var $url=$.url();
                     var params=$url.param();
-                    params['permalink_id']=LZString.compressToBase64(collect_parameters_for_permalink());
+                    params['permalink_id']=LZString.compressToEncodedURIComponent(collect_parameters_for_permalink());
                     var url=$url.attr('source').split('?')[0]+'?'+$.param(params)
                     $el.val(url);
                     $('#permalink-box').show();
