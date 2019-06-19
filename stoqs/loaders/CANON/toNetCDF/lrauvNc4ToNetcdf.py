@@ -194,8 +194,15 @@ class InterpolatorWriter(BaseWriter):
     def createSeries(self, subgroup, name, tname):
         v = subgroup[name]
         v_t = subgroup[tname]
-        v_time_epoch = v_t
-        v_time = pd.to_datetime(v_time_epoch[:],unit='s',errors = 'coerce')
+
+        # Discovered in /mbari/LRAUV/whoidhs/missionlogs/2019/20190610_20190613/20190611T165616/201906111656_201906111829.nc4
+        too_early_time_values = np.where(v_t[:] < 946684800.0)[0]
+        if too_early_time_values:
+            logger.info(f"{name}: v_t values found before 2000-01-01 = {too_early_time_values}")
+            logger.info(f"Removing them: {v_t[too_early_time_values]}")
+            v_t = np.delete(v_t, too_early_time_values)
+
+        v_time = pd.to_datetime(v_t[:],unit='s',errors = 'coerce')
         v_time_series = pd.Series(v[:],index=v_time)
         return v_time_series
         # End createSeries
