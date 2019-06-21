@@ -462,15 +462,34 @@ cl.rcpctd_files = [
 cl.wfuctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
-                  'canon17sm01.nc',
+                    'cn18sm01.nc', 'cn18sm02.nc', 'cn18sm03.nc', 'cn18sm04.nc', 'cn18sm05.nc',
+                    'cn18sm06.nc', 'cn18sm07.nc', 'cn18sm08.nc', 'cn18sm09hex.nc', 'cn18sm10hex.nc',
                   ]
 
 # PCTD
 cl.wfpctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.wfpctd_files = [
-                  'canon17sc01.nc',
+                    'cn18sc01.nc', 'cn18sc02.nc', 'cn18sc03.nc', 'cn18sc04.nc', 'cn18sc05.nc',
+                    'cn18sc06.nc', 'cn18sc07.nc', 'cn18sc08.nc', 'cn18sc09.nc', 'cn18sc10.nc',
+                    'cn18sc11.nc', 'cn18sc12.nc', 'cn18sc13.nc', 'cn18sc14.nc', 'cn18sc15.nc',
+                    'cn18sc16.nc', 'cn18sc17.nc', 'cn18sc18.nc', 'cn18sc19.nc', 'cn18sc20.nc',
+                    'cn18sc21.nc', 'cn18sc22.nc', 'cn18sc23.nc', 'cn18sc24.nc', 'cn18sc25.nc',
+                    'cn18sc26.nc', 'cn18sc27.nc', 'cn18sc28.nc', 'cn18sc29.nc', 'cn18sc30.nc',
+                    'cn18sc31.nc', 'cn18sc32.nc', 'cn18sc33.nc', 'cn18sc34.nc', 'cn18sc35.nc',
+                    'cn18sc36.nc', 'cn18sc37.nc', 'cn18sc38.nc', 'cn18sc39.nc', 'cn18sc40.nc',
+                    'cn18sc41.nc', 'cn18sc42.nc', 'cn18sc43.nc', 'cn18sc44.nc', 'cn18sc45.nc',
+                    'cn18sc46.nc', 'cn18sc47.nc', 'cn18sc48.nc',
                   ]
+
+# EK500
+cl.wfek500_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/EK500/'
+cl.wfek500_parms = [ 'Sv_mean' ]
+cl.wfek500_files = [
+                  'CN18S_EK500_200kHz.nc',
+                  ##'CN18S_EK500_38kHz.nc', 
+                  ]
+
 
 ###################################################################################################
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/
@@ -509,8 +528,9 @@ cl.loadLRAUV('makai', startdate, enddate)
 ##cl.loadRCuctd()  ## not in this campaign
 ##cl.loadRCpctd()  ## not in this campaign
 
-##cl.loadWFuctd()  # Settings above are for May 2017
-##cl.loadWFpctd()  # Settings above are for May 2017
+cl.loadWFuctd()
+cl.loadWFpctd()
+#-cl.loadWF_EK500()
 
 #cl.loadSubSamples() ## no subSamples yet...
 

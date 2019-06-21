@@ -53,8 +53,12 @@ def get_year_lat_lon(*args, **kwargs):
             raise HdrFileNotFound('Header file %s not found' % hdrFile)
 
     for line in FH:
-        ##print line
-        line = line.decode('utf-8')
+        ##print(line)
+        try:
+            line = line.decode('utf-8')
+        except AttributeError:
+            # line likely aleady a str object w/o the decode attribute
+            pass
         if line.find('NMEA Latitude') != -1:
             latD = int(line.split(' ')[4])
             latM = float(line.split(' ')[5])
