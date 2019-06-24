@@ -22,7 +22,9 @@ RH=odss.mbari.org
 #DIR=/data/canon/2015_Sep/Platforms/Ships/Western_Flyer/uctd
 #TITLE="Underway CTD data from R/V Western Flyer during CANON - September 2015"
 DIR=/data/other/routine/Platforms/Ships/WesternFlyer/uctd
-PATTERN="cn18*"
+##PATTERN="cn18s*"
+##TITLE="Underway CTD data from R/V Western Flyer during CANON - May 2018"
+PATTERN="cn18f*"
 TITLE="Underway CTD data from R/V Western Flyer during CANON - September 2018"
 
 # Set local processing directory
