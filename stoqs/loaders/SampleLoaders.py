@@ -138,7 +138,7 @@ def get_closest_instantpoint(aName, tv, dbAlias):
 class ParentSamplesLoader(STOQS_Loader):
     '''Holds methods customized for reading sample event information from mainly AUV syslog files
     '''
-    esp_cartridge_number = 61       # One more than capacity of the ESP
+    esp_cartridge_number = 57       # Special for stoqs_canon_may2018
 
     def load_gulps(self, activityName, auv_file, dbAlias):
         '''
