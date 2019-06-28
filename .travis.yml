@@ -20,7 +20,7 @@ before_install:
 env:
   - DJANGO=1.10
 install:
-  - conda install --yes -c conda-forge --verbose python=3.6 hdf4 hdf5 netcdf4 atlas numpy scipy matplotlib nose python-dateutil statsmodels gdal
+  - conda install --yes --verbose python=3.6 hdf4 hdf5 netcdf4 numpy scipy matplotlib nose python-dateutil statsmodels gdal
   - conda install --yes -c omnia python-coveralls=2.9.0
   - pip install --upgrade pip
   - pip install -r requirements/travis-ci.txt
