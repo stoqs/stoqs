@@ -138,6 +138,8 @@ def get_closest_instantpoint(aName, tv, dbAlias):
 class ParentSamplesLoader(STOQS_Loader):
     '''Holds methods customized for reading sample event information from mainly AUV syslog files
     '''
+    esp_cartridge_number = 57       # Special for stoqs_canon_may2018
+
     def load_gulps(self, activityName, auv_file, dbAlias):
         '''
         auv_file looks like 'Dorado389_2011_111_00_111_00_decim.nc'.  From hard-coded knowledge of MBARI's filesystem
@@ -284,7 +286,7 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return sample_act, sample_ip, point, depth, maptrack
 
-    def _samples_from_json(self, platform_name, url):
+    def _samples_from_json(self, platform_name, url, db_alias):
         '''Retrieve Sample information that's available in the syslogurl from the TethysDash REST API
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
         Construct a TethysDash REST URL that looks like:
@@ -341,10 +343,19 @@ class ParentSamplesLoader(STOQS_Loader):
             self.logger.info(f"Parsed {len(esp_log_summaries)} Samples (esp_log_summaries) from {td_url}")
         elif esp_s_filtering and esp_s_stopping:
             # LOGSUMMARY messages were added halfway through 2018, before that create a "sequence number" for the Sample
-            self.logger.info(f"No '{LOGSUMMARY}' messages found - will assign sequence numbers to the Samples")
-            for i, filtering, stopping in zip(range(len(esp_s_filtering), 0, -1), esp_s_filtering, esp_s_stopping):
-                self.logger.info(f"Sequence {i} assigned to Sample that started filtering at {filtering.esec} and stopped at {stopping.esec}") 
-                esp_log_summaries.append(Log(filtering.esec, f"Sequence {i}"))
+            self.logger.info(f"No '{LOGSUMMARY}' messages found")
+            if 'stoqs_canon_may2018' in db_alias:
+                self.logger.info(f"Will assign Cartridge numbers for the Campaign to the Samples - a special fix for stoqs_canon_may2018")
+                numbers = range(self.esp_cartridge_number - len(esp_s_filtering), self.esp_cartridge_number)
+                for i, filtering, stopping in zip(numbers, esp_s_filtering, esp_s_stopping):
+                    self.logger.info(f"Cartridge {i} assigned to Sample that started filtering at {filtering.esec} and stopped at {stopping.esec}") 
+                    esp_log_summaries.append(Log(filtering.esec, f"Cartridge {i}"))
+                    self.esp_cartridge_number -= 1
+            else:
+                self.logger.info(f"Will assign sequence numbers per log file to the Samples")
+                for i, filtering, stopping in zip(range(len(esp_s_filtering), 0, -1), esp_s_filtering, esp_s_stopping):
+                    self.logger.info(f"Sequence {i} assigned to Sample that started filtering at {filtering.esec} and stopped at {stopping.esec}") 
+                    esp_log_summaries.append(Log(filtering.esec, f"Sequence {i}"))
             self.logger.info(f"Parsed {len(esp_s_filtering)} Samples from {td_url} with no LOGSUMMARY reports")
         else:
             self.logger.info(f"No Samples parsed from {td_url}")
@@ -566,7 +577,7 @@ class ParentSamplesLoader(STOQS_Loader):
         syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
         self.logger.info(f"Getting ESP or Sipper Sample information from the TethysDash API that's also in {syslog_url}")
 
-        filterings, stoppings, summaries = self._samples_from_json(platform_name, url)
+        filterings, stoppings, summaries = self._samples_from_json(platform_name, url, db_alias)
         filterings, stoppings, summaries = self._validate_summaries(filterings, stoppings, summaries)
         sample_names = self._match_seq_to_cartridge(filterings, stoppings, summaries)
 

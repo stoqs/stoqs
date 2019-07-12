@@ -1311,7 +1311,7 @@ class CANONLoader(LoadScript):
             setattr(self, platform + '_endDatetime', enddate)
 
         except FileNotFound as e:
-            self.logger.debug(f'{e}')
+            self.logger.warn(f'{e}')
             if err_on_missing_file:
                 raise
 
