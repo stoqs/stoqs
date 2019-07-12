@@ -6,7 +6,7 @@ coards==1.0.5
 coverage==4.5.3
 datadiff==2.0.0
 dj-database-url==0.5.0
-Django==1.11.21
+Django==1.11.22
 django-cache-url==3.0.0
 django-celery==3.3.0
 django-configurations==2.1
