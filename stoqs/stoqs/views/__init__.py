@@ -107,7 +107,7 @@ class BaseOutputer(object):
         new_fields = []
         for field in self.fields:
             new_fields.append(field)
-            if field.endswith('geom'):
+            if field.endswith('geom') or field.endswith('mappoint'):
                 new_fields.append(f"{field}.x")
                 new_fields.append(f"{field}.y")
 
@@ -314,8 +314,10 @@ class BaseOutputer(object):
             fh = open(self.html_tmpl_path, 'w')
             for line in response:
                 # Override Django's default datetime formatting with ISO 8601 format that includes seconds
+                # STOQS model field names ending in 'timevalue' and 'date' are convertable datetimes
                 # See: https://docs.djangoproject.com/en/1.11/ref/templates/builtins/#date
                 line = line.decode("utf-8").replace('timevalue }', 'timevalue|date:"c" }')
+                line = line.replace('date }', 'date|date:"c" }')
                 fh.write(line)
             fh.close()
             return render(self.request, self.html_tmpl_path, context={'list': self.qs})
