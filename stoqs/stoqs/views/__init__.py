@@ -228,10 +228,18 @@ class BaseOutputer(object):
         '''Properly deal with '.x' and '.y' for geom items
         '''
         for field in self.fields:
-            if field.endswith('geom.x'):
-                yield row[field[:-2]].x
-            elif field.endswith('geom.y'):
-                yield row[field[:-2]].y
+            if field.endswith('geom.x') or field.endswith('mappoint.x'):
+                try:
+                    yield row[field[:-2]].x
+                except AttributeError:
+                    # Likely None mappoint
+                    yield None
+            elif field.endswith('geom.y') or field.endswith('mappoint.y'):
+                try:
+                    yield row[field[:-2]].y
+                except AttributeError:
+                    # Likely None mappoint
+                    yield None
             else:
                 yield row[field]
 
