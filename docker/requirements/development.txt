@@ -29,6 +29,6 @@ pymssql==2.1.4
 pyparsing==2.4.0
 python-coveralls==2.9.2
 scikit-bio==0.5.5
-snowballstemmer==1.2.1
+snowballstemmer==1.9.0
 thredds-crawler==1.5.4
 tornado==6.0.3
