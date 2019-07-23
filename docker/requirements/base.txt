@@ -35,7 +35,7 @@ ordereddict==1.1
 Paste==3.0.8
 PasteDeploy==2.0.1
 PasteScript==3.1.0
-pika==1.0.1
+pika==1.1.0
 Pillow==6.1.0
 pysher==1.0.4
 psycopg2-binary==2.8.3
