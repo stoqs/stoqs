@@ -891,6 +891,9 @@ class ParameterParameter(BaseParameter):
         except (IndexError, KeyError):
             # No value for self.pMinMax['c'][0], let self.standard_name = None
             pass
+        except ValueError:
+            # Likely self.pMinMax['c'][0] is a coordinate name string
+            self.standard_name = self.pMinMax['c'][0]
 
         self.set_colormap()
 
