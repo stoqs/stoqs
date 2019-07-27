@@ -285,9 +285,9 @@ class MeasuredParameter(BaseParameter):
         '''
         if sampled:
             if self.scale_factor:
-                self.x.append(time.mktime(mp['sample__instantpoint__timevalue'].timetuple()) / self.scale_factor)
+                self.x.append(mp['sample__instantpoint__timevalue'].timestamp() / self.scale_factor)
             else:
-                self.x.append(time.mktime(mp['sample__instantpoint__timevalue'].timetuple()))
+                self.x.append(mp['sample__instantpoint__timevalue'].timestamp())
             self.y.append(mp['sample__depth'])
             self.depth_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(float(mp['sample__depth']))
             self.z.append(mp['datavalue'])
@@ -303,13 +303,13 @@ class MeasuredParameter(BaseParameter):
                 # Save a (start, end) tuple for each coordinate/value, VERTICALNETTOWs start at maxdepth
                 if self.scale_factor:
                     self.xspan.append(
-                            (time.mktime(mp['sample__instantpoint__activity__startdate'].timetuple()) / self.scale_factor,
-                             time.mktime(mp['sample__instantpoint__activity__enddate'].timetuple()) / self.scale_factor)
+                            (mp['sample__instantpoint__activity__startdate'].timestamp() / self.scale_factor,
+                             mp['sample__instantpoint__activity__enddate'].timestamp() / self.scale_factor)
                                      )
                 else:
                     self.xspan.append(
-                            (time.mktime(mp['sample__instantpoint__activity__startdate'].timetuple()),
-                             time.mktime(mp['sample__instantpoint__activity__enddate'].timetuple()))
+                            (mp['sample__instantpoint__activity__startdate'].timestamp(),
+                             mp['sample__instantpoint__activity__enddate'].timestamp())
                                      )
                 self.yspan.append(
                         (mp['sample__instantpoint__activity__maxdepth'],
@@ -336,9 +336,9 @@ class MeasuredParameter(BaseParameter):
                 
         else:
             if self.scale_factor:
-                self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
+                self.x.append(mp['measurement__instantpoint__timevalue'].timestamp() / self.scale_factor)
             else:
-                self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
+                self.x.append(mp['measurement__instantpoint__timevalue'].timestamp())
             self.y.append(mp['measurement__depth'])
             self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
             self.z.append(mp['datavalue'])
@@ -432,9 +432,9 @@ class MeasuredParameter(BaseParameter):
 
         for s in qs:
             if self.scale_factor:
-                xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()) / self.scale_factor)
+                xsamp.append(s['instantpoint__timevalue'].timestamp() / self.scale_factor)
             else:
-                xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()))
+                xsamp.append(s['instantpoint__timevalue'].timestamp())
             ysamp.append(s['depth'])
             if act_type_name:
                 # Convention is to use Activity information for things like NetTows
@@ -452,11 +452,11 @@ class MeasuredParameter(BaseParameter):
                            'instantpoint__activity__name', 'name').distinct()
             for s in qs:
                 if self.scale_factor:
-                    xsamp.append((time.mktime(s['instantpoint__activity__startdate'].timetuple()) / self.scale_factor,
-                                  time.mktime(s['instantpoint__activity__enddate'].timetuple()) / self.scale_factor))
+                    xsamp.append((s['instantpoint__activity__startdate'].timestamp() / self.scale_factor,
+                                  s['instantpoint__activity__enddate'].timestamp() / self.scale_factor))
                 else:
-                    xsamp.append((time.mktime(s['instantpoint__activity__startdate'].timetuple()),
-                                  time.mktime(s['instantpoint__activity__enddate'].timetuple())))
+                    xsamp.append((s['instantpoint__activity__startdate'].timestamp(),
+                                  s['instantpoint__activity__enddate'].timestamp()))
 
                 ysamp.append((s['instantpoint__activity__maxdepth'], s['instantpoint__activity__mindepth']))
                 sname.append(s['instantpoint__activity__name'])
@@ -551,8 +551,8 @@ class MeasuredParameter(BaseParameter):
             if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
                 dstart = datetime.strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S') 
                 dend = datetime.strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S') 
-                tmin = time.mktime(dstart.timetuple())
-                tmax = time.mktime(dend.timetuple())
+                tmin = dstart.timestamp()
+                tmax = dend.timestamp()
 
         if not tmin and not tmax:
             if self.kwargs['flotlimits'][0] is not None and self.kwargs['flotlimits'][1] is not None:
@@ -891,6 +891,9 @@ class ParameterParameter(BaseParameter):
         except (IndexError, KeyError):
             # No value for self.pMinMax['c'][0], let self.standard_name = None
             pass
+        except ValueError:
+            # Likely self.pMinMax['c'][0] is a coordinate name string
+            self.standard_name = self.pMinMax['c'][0]
 
         self.set_colormap()
 
@@ -1040,7 +1043,7 @@ class ParameterParameter(BaseParameter):
                 if counter % stride_val == 0:
                     # SampledParameter datavalues are Decimal, convert everything to a float for numpy
                     lrow = list(row)
-                    if not np.all(lrow):
+                    if None in lrow or np.nan in lrow:
                         continue
                     if returnIDs:
                         self.x_id.append(int(lrow.pop(0)))
@@ -1283,7 +1286,7 @@ class ParameterParameter(BaseParameter):
                 cursor = connections[self.request.META['dbAlias']].cursor()
                 cursor.execute(sql)
                 for row in cursor:
-                    if not np.all(row):
+                    if None in row or np.nan in row:
                         continue
                     # SampledParameter datavalues are Decimal, convert everything to a float for numpy, row[0] is depth
                     self.depth.append(float(row[0]))

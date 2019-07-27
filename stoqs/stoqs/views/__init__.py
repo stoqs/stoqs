@@ -516,7 +516,7 @@ def showActivityResource(request, fmt='html'):
 
 def showActivityParameter(request, fmt='html'):
     stoqs_object = mod.ActivityParameter
-    query_set = stoqs_object.objects.all()
+    query_set = stoqs_object.objects.all().order_by('activity__startdate')
 
     o = BaseOutputer(request, fmt, query_set, stoqs_object)
     o.fields = ['id', 'activity__platform__name', 'activity__name', 'parameter__name', 
