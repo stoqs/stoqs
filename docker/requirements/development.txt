@@ -10,7 +10,7 @@ billiard==3.6.0.0
 binaryornot==0.4.4
 certifi==2019.6.16
 cookiecutter==1.6.0
-docutils==0.15
+docutils==0.15.1
 Cython==0.29.12
 ephem==3.7.6.0
 GDAL==2.4.0
@@ -26,7 +26,7 @@ requests==2.22.0
 Pygments==2.4.2
 pygraphviz==1.5
 pymssql==2.1.4
-pyparsing==2.4.1
+pyparsing==2.4.1.1
 python-coveralls==2.9.2
 scikit-bio==0.5.5
 snowballstemmer==1.9.0
