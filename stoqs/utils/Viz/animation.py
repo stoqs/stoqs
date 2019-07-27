@@ -256,7 +256,7 @@ class PlatformAnimation(object):
             self.axis_y_by_plat[platform.name].append(mp['datavalue'])
         for mp in pqs.filter(parameter__name='AXIS_Z'):
             self.axis_z_by_plat[platform.name].append(mp['datavalue'])
-        for mp in pqs.filter(parameter__name='ANGLE'):
+        for mp in pqs.filter(parameter__name='ANGLE (radian)'):
             self.angle_by_plat[platform.name].append(mp['datavalue'])
 
     def compute_rot_axis(self):
