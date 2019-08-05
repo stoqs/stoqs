@@ -239,14 +239,57 @@ cl.rcpctd_files = [
 cl.wfuctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
-#                  'cn18fm01.nc',
+                  'CN19SM01.nc',
+                  'CN19SM02.nc',
+                  'CN19SM03.nc',
+                  'CN19SM04.nc',
+                  'CN19SM05.nc',
+                  'CN19SM06.nc',
                   ]
 
 # PCTD
 cl.wfpctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.wfpctd_files = [
-#        'cn18fc01.nc',
+                  'CN19SC01.nc',
+                  'CN19SC02.nc',
+                  'CN19SC03.nc',
+                  'CN19SC04.nc',
+                  'CN19SC05.nc',
+                  'CN19SC06.nc',
+                  'CN19SC07.nc',
+                  'CN19SC08.nc',
+                  'CN19SC09.nc',
+                  'CN19SC10.nc',
+                  'CN19SC11.nc',
+                  'CN19SC12.nc',
+                  'CN19SC13.nc',
+                  'CN19SC14.nc',
+                  'CN19SC15.nc',
+                  'CN19SC16.nc',
+                  'CN19SC17.nc',
+                  'CN19SC18.nc',
+                  'CN19SC19.nc',
+                  'CN19SC20.nc',
+                  'CN19SC21.nc',
+                  'CN19SC22.nc',
+                  'CN19SC23.nc',
+                  'CN19SC24.nc',
+                  'CN19SC25.nc',
+                  'CN19SC26.nc',
+                  'CN19SC27.nc',
+                  'CN19SC28.nc',
+                  'CN19SC29.nc',
+                  'CN19SC30.nc',
+                  'CN19SC31.nc',
+                  'CN19SC32.nc',
+                  'CN19SC33.nc',
+                  'CN19SC34.nc',
+                  'CN19SC35.nc',
+                  'CN19SC36.nc',
+                  'CN19SC37.nc',
+                  'CN19SC38.nc',
+                  'CN19SC39.nc',                  
                   ]
 
 # DEIMOS
@@ -260,18 +303,31 @@ cl.deimos_files = [ 'deimos-2019-CANON-Spring.nc' ]
 ###################################################################################################
 cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CN18F/CN18F/')
 cl.subsample_csv_files = [
-   'STOQS_CN18F_CHL_5U.csv',   'STOQS_CN18F_NH4.csv',     'STOQS_CN18F_PHAEO_1U.csv',   'STOQS_CN18F_SAL.csv',        'STOQS_CN18F_TRANSMISS.csv',
-   'STOQS_CN18F_CHLA.csv',     'STOQS_CN18F_O2.csv',      'STOQS_CN18F_PHAEO_5U.csv',   'STOQS_CN18F_SIG_T.csv',
-   'STOQS_CN18F_ALK.csv',         'STOQS_CN18F_CHL_GFF.csv',  'STOQS_CN18F_OXY_ML.csv',  'STOQS_CN18F_PHAEO_GFF.csv',  'STOQS_CN18F_TCO2.csv',
-   'STOQS_CN18F_ALTIMETER.csv',
-   'STOQS_CN18F_COND2.csv', 
-   'STOQS_CN18F_OXY_PS.csv',  'STOQS_CN18F_POT_TMP2.csv',
-   'STOQS_CN18F_TEMP2.csv', 
-   'STOQS_CN18F_CARBON_GFF.csv',  'STOQS_CN18F_CONDUCT.csv',  'STOQS_CN18F_PAR4PI.csv',  'STOQS_CN18F_POT_TMP.csv',    'STOQS_CN18F_TMP.csv',
-   'STOQS_CN18F_CHL_1U.csv',      'STOQS_CN18F_FLUOR.csv',    'STOQS_CN18F_PARCOS.csv',
-   'STOQS_CN18F_SAL2.csv', 
-   'STOQS_CN18F_TRANSBEAM.csv',
-                          ]
+                         'STOQS_CN19S_CARBON_GFF.csv',
+                         'STOQS_CN19S_ALK.csv',
+                         'STOQS_CN19S_TCO2.csv',
+                         'STOQS_CN19S_TRANSBEAM.csv',
+                         'STOQS_CN19S_COND2.csv',
+                         'STOQS_CN19S_TEMP2.csv',
+                         'STOQS_CN19S_SAL2.csv',
+                         'STOQS_CN19S_OXY_PS.csv',
+                         'STOQS_CN19S_OXY_ML.csv',
+                         'STOQS_CN19S_NH4.csv',
+                         'STOQS_CN19S_PHAEO_5U.csv',
+                         'STOQS_CN19S_CHL_1U.csv',
+                         'STOQS_CN19S_CHL_5U.csv',
+                         'STOQS_CN19S_O2.csv',
+                         'STOQS_CN19S_PHAEO_1U.csv',
+                         'STOQS_CN19S_TRANSMISS.csv',
+                         'STOQS_CN19S_CHLA.csv',
+                         'STOQS_CN19S_FLUOR.csv',
+                         'STOQS_CN19S_CONDUCT.csv',
+                         'STOQS_CN19S_SIG_T.csv',
+                         'STOQS_CN19S_SAL.csv',
+                         'STOQS_CN19S_TMP.csv',
+                         'STOQS_CN19S_PHAEO_GFF.csv',
+                         'STOQS_CN19S_CHL_GFF.csv',                          
+                         ]
 
 # Execute the load
 cl.process_command_line()
@@ -298,10 +354,10 @@ cl.loadLRAUV('daphne', startdate, enddate)
 cl.loadLRAUV('tethys', startdate, enddate)
 #cl.loadRCuctd() ## waiting for first data
 #cl.loadRCpctd() ## waiting for first data
-#cl.loadWFuctd() ## waiting for first data
-#cl.loadWFpctd() ## waiting for first data
+cl.loadWFuctd() 
+cl.loadWFpctd() 
 
-#cl.loadSubSamples() ##when subsamples ready to load...
+cl.loadSubSamples() 
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
