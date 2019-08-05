@@ -26,6 +26,8 @@ DIR=/data/other/routine/Platforms/Ships/WesternFlyer/pctd
 ##TITLE="Profile CTD data from R/V Western Flyer during CANON - May 2018"
 PATTERN="cn18f*"
 TITLE="Profile CTD data from R/V Western Flyer during CANON - September 2018"
+PATTERN="CN19SC*"
+TITLE="Profile CTD data from R/V Western Flyer during CANON - May 2019"
 
 # Set local processing directory
 LOCALDIR=`basename $DIR`
