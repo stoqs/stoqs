@@ -714,13 +714,12 @@ class STOQSQManager(object):
                     has_roll = pr_qs.filter(parameter__standard_name='platform_roll_angle')
                     has_pitch = pr_qs.filter(parameter__standard_name='platform_pitch_angle')
                     has_yaw = pr_qs.filter(parameter__standard_name='platform_yaw_angle')
-                    if not has_roll or not has_pitch or not has_yaw:
-                        logger.debug("No roll, pitch, or yaw. Not adding x3dModel")
+                    if has_roll or has_pitch or has_yaw:
+                        logger.debug("Has roll, pitch, or yaw. Not adding x3dModel")
                         platformTypeHash[platformType].append((name, id, color, featureType, ))
-                        continue
-                  
-                    logger.debug("Has x3dModel, no rotations, adding x3dModel")
-                    platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
+                    else: 
+                        logger.debug("Has x3dModel, no rotations, adding x3dModel")
+                        platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
 
         logger.debug(f"Done building platformTypeHash.")
         self.platformTypeHash = platformTypeHash
