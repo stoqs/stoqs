@@ -142,6 +142,9 @@ class CCE_2015_Campaign:
                         # Uncomment to test 3D replay of BED motion - it should rotate only around the X-Axis
                         ##('BED00/Simulated/netcdf/BED00_SIM_rolling_trajectory.nc',
                         ##    ''),
+                        # Uncomment to load data from Bench orientation video
+                        ##('BED00/2013_04_29_Bench_Orientation/BED00092.nc',
+                        ##    ''),
                         ] + [
                         (f'BED09/MBCCE_BED09_20160408_Event20161124/netcdf/901001{n}_full_traj.nc', '') for n in (
                             list(range(56, 63)) + list(range(64, 65)))
@@ -154,9 +157,11 @@ class CCE_2015_Campaign:
                             ''),
                         ('BED04/MBCCE_BED04_20151004_Event20161124/netcdf/40200014_decim_traj.nc',
                             ''),
+                        ('BED11/MBCCE_BED11_20161010_Event20161124/netcdf/B0100012_decim_traj.nc',
+                            ''),
                         ] 
         self.cl.bed_files_framegrabs_2017 = [
-                        (f'BED09/MBCCE_BED09_20160408_Watch/netcdf/9010000{n}.nc', '') for n in range(4, 8)
+                        (f'BED09W/MBCCE_BED09_20160408_Watch/netcdf/9010000{n}.nc', '') for n in range(4, 8)
                         ] + [
                         ('BED09/MBCCE_BED09_20160408_Event20170109/netcdf/90100196_full_traj.nc',
                             ''),
