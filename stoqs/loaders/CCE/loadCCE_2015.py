@@ -149,7 +149,7 @@ class CCE_2015_Campaign:
                         (f'BED09/MBCCE_BED09_20160408_Event20161124/netcdf/901001{n}_full_traj.nc', '') for n in (
                             list(range(56, 63)) + list(range(64, 65)))
                         ] + [
-                        ('BED09/MBCCE_BED09_20160408_Event20161124/netcdf/90100165_full.nc',
+                        ('BED09S/MBCCE_BED09_20160408_Event20161124/netcdf/90100165_full.nc',
                             ''),
                         ('BED03/MBCCE_BED03_20161005_Event20161124/netcdf/30400015_decim_traj.nc',
                             ''),
@@ -161,13 +161,13 @@ class CCE_2015_Campaign:
                             ''),
                         ] 
         self.cl.bed_files_framegrabs_2017 = [
-                        (f'BED09W/MBCCE_BED09_20160408_Watch/netcdf/9010000{n}.nc', '') for n in range(4, 8)
+                        (f'BED09S/MBCCE_BED09_20160408_Watch/netcdf/9010000{n}.nc', '') for n in range(4, 8)
                         ] + [
                         ('BED09/MBCCE_BED09_20160408_Event20170109/netcdf/90100196_full_traj.nc',
                             ''),
                         ('BED11/MBCCE_BED11_20161010_Event20170109/netcdf/B0100026_full_traj.nc',
                             ''),
-                        ('BED11/MBCCE_BED11_20161010_Event20170109/netcdf/B0100027_full.nc',
+                        ('BED11S/MBCCE_BED11_20161010_Event20170109/netcdf/B0100027_full.nc',
                             ''),
                         ('BED11/MBCCE_BED11_20161010_Event20170109/netcdf/B0100028_full_traj.nc',
                             ''),
@@ -215,7 +215,7 @@ class CCE_2015_Campaign:
                             ''),
                         ('BED11/MBCCE_BED11_20161010_Event20170203/netcdf/B0100036_full_traj.nc',
                             ''),
-                        ('BED11/MBCCE_BED11_20161010_Event20170203/netcdf/B0100037_full.nc',
+                        ('BED11S/MBCCE_BED11_20161010_Event20170203/netcdf/B0100037_full.nc',
                             ''),
                         ]
         self.cl.bed_files_framegrabs = self.cl.bed_files_framegrabs_2015 + self.cl.bed_files_framegrabs_2016 + self.cl.bed_files_framegrabs_2017
