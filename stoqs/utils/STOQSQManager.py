@@ -688,14 +688,15 @@ class STOQSQManager(object):
                 fts = models.ActivityResource.objects.using(self.dbname).filter(resource__name='featureType', 
                                activity__platform__name=name).values_list('resource__value', flat=True).distinct()
                 # Make all lower case
-                fts = {ft.lower() for ft in fts}
+                fts = [ft.lower() for ft in fts]
+                if len(fts) > 1:
+                    logger.warn('More than one featureType returned for platform %s: %s.', name, fts)
+                    logger.warn(f"Using '{fts[0]}'.  Consider using a different Platform name for the other featureType(s).")
                 try:
-                    featureType = fts.pop()
+                    featureType = fts[0]
                 except KeyError:
                     logger.warn('No featureType returned for platform name = %s.  Setting it to "trajectory".', name)
                     featureType = 'trajectory'
-                if len(fts) > 1:
-                    logger.warn('More than one featureType returned for platform %s: %s.  Using the first one.', name, fts)
 
                 if 'trajectory' in featureType:
                     platformTypeHash[platformType].append((name, id, color, featureType, ))

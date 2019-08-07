@@ -62,6 +62,7 @@ class CCELoader(LoadScript):
     # Override with Roberto's Kaleidagraph colors - from email on 29 November 2017
     colors['bed09'] = 'D3F33C'
     colors['bed09t'] = 'D3F33C'
+    colors['bed09s'] = 'D3F33C'
     colors['bed08'] = 'D94C7B'
     colors['bed08t'] = 'D94C7B'
     colors['bed04'] = 'F0660F'
@@ -72,6 +73,7 @@ class CCELoader(LoadScript):
     colors['bed10t'] = 'BC8FD9'
     colors['bed11'] = 'A4A4A4'
     colors['bed11t'] = 'A4A4A4'
+    colors['bed11s'] = 'A4A4A4'
 
     # color for SIN
     colors['ccesin'] = 'ff0000'
