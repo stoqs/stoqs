@@ -58,11 +58,13 @@ class PlatformAnimation(object):
                         </Shape>
                     </Billboard>
                 </Transform>
+                {bed_transform_beg}
                 <Transform id="{pName}_AAROT" DEF="{pName}_AAROT">
                     <Transform scale="{plat_scale} {plat_scale} {plat_scale}">
                         <Inline nameSpaceName="{pName}_AAROT_model" mapDEFToID="true" url="{pURL}"></Inline>
                     </Transform>
                 </Transform>
+                {bed_transform_end}
                 <Transform>
                     <Shape> 
                         <IndexedLineSet coordIndex="0 1">
@@ -461,6 +463,13 @@ class PlatformAnimation(object):
             # Count on JavaScript code to add <GeoOrgin DEF="GO" ... > to the scene
             geoorigin_use = '<GeoOrigin use="GO"></GeoOrigin>'
 
+        bed_transform_beg = ''
+        bed_transform_end = ''
+        if platform.name.startswith('BED'):
+            # Rotate so that BEDs are oriented like the Bench_Orientation video
+            bed_transform_beg = '<Transform rotation="1 0 0 -1.57079">'
+            bed_transform_end = '</Transform>'
+
         pName = platform.name
         pColor = ' '.join(str(c) for c in hex2color('#' + platform.color))
 
@@ -485,7 +494,8 @@ class PlatformAnimation(object):
                     pURL=self.getX3DPlatformModel(pName), pKeys=self.keys[:-1], 
                     posValues=self.points, oKeys=self.keys[:-1], aaRotValues=self.aaRotValues, 
                     axisValues=self.axisValues, pColor=pColor, scale=scale,
-                    geoOriginStr=geoorigin_use)
+                    geoOriginStr=geoorigin_use, bed_transform_beg=bed_transform_beg,
+                    bed_transform_end=bed_transform_end )
         elif self.xRotValues and self.yRotValues and self.zRotValues:
             x3d = self.position_orientation_template.format(pName=pName,
                     plat_scale=self.getX3DPlatformModelScale(pName),
