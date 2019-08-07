@@ -1908,8 +1908,11 @@ class BED_Trajectory_Loader(Trajectory_Loader):
                         name='quick_look', description='Video framegrab of BED located on sea floor')
 
         self.logger.debug("Getting or Creating Resource with framegrab = self.framegrab")
+        link_text = 'framegrab'
+        if self.framegrab.endswith('.m4v') or self.framegrab.endswith('.mov'):
+            link_text = 'video'
         resource, _ = Resource.objects.using(self.dbAlias).get_or_create(
-                    name='framegrab', uristring=self.framegrab, resourcetype=resourceType)
+                    name=link_text, uristring=self.framegrab, resourcetype=resourceType)
         ActivityResource.objects.using(self.dbAlias).get_or_create(
                     activity=self.activity, resource=resource)
 
