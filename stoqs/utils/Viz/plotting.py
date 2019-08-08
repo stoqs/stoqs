@@ -1276,6 +1276,18 @@ class ParameterParameter(BaseParameter):
             Produce X3D XML text and return it
             '''
             x3dResults = {}
+
+            if ((models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x'])).name == 'AXIS_X' and
+                 models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y'])).name == 'AXIS_Y' and
+                 models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z'])).name == 'AXIS_Z') or
+                (models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x'])).name == 'ROT_X' and
+                 models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y'])).name == 'ROT_Y' and
+                 models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z'])).name == 'ROT_Z')):
+                # Override axis limits for BED rotational data to always make a sphere
+                self.pMinMax['x'] = [self.pMinMax['x'][0], -1, 1]
+                self.pMinMax['y'] = [self.pMinMax['y'][0], -1, 1]
+                self.pMinMax['z'] = [self.pMinMax['z'][0], -1, 1]
+                
             try:
                 # Construct special SQL for P-P plot that returns up to 4 data values for the up to 4 Parameters requested for a 3D plot
                 sql = str(self.pq.qs_mp.query)
@@ -1324,10 +1336,13 @@ class ParameterParameter(BaseParameter):
                 # Label the axes
                 try:
                     xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
-                    if xp.units in xp.name:
-                        self.pMinMax['x'].append(('%s' % (xp.name, )))
+                    if xp.units:
+                        if xp.units in xp.name:
+                            self.pMinMax['x'].append(('%s' % (xp.name, )))
+                        else:
+                            self.pMinMax['x'].append(('%s (%s)' % (xp.name, xp.units)))
                     else:
-                        self.pMinMax['x'].append(('%s (%s)' % (xp.name, xp.units)))
+                        self.pMinMax['x'].append(('%s' % (xp.name, )))
                 except ValueError:
                     # Likely a coordinate variable
                     xp = models.Parameter
@@ -1338,10 +1353,13 @@ class ParameterParameter(BaseParameter):
 
                 try:
                     yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
-                    if yp.units in yp.name:
-                        self.pMinMax['y'].append(('%s' % (yp.name, )))
+                    if yp.units:
+                        if yp.units in yp.name:
+                            self.pMinMax['y'].append(('%s' % (yp.name, )))
+                        else:
+                            self.pMinMax['y'].append(('%s (%s)' % (yp.name, yp.units)))
                     else:
-                        self.pMinMax['y'].append(('%s (%s)' % (yp.name, yp.units)))
+                        self.pMinMax['y'].append(('%s' % (yp.name, )))
                 except ValueError:
                     # Likely a coordinate variable
                     yp = models.Parameter
@@ -1352,10 +1370,13 @@ class ParameterParameter(BaseParameter):
 
                 try:
                     zp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z']))
-                    if zp.units in zp.name:
-                        self.pMinMax['z'].append(('%s' % (zp.name, )))
+                    if zp.units:
+                        if zp.units in zp.name:
+                            self.pMinMax['z'].append(('%s' % (zp.name, )))
+                        else:
+                            self.pMinMax['z'].append(('%s (%s)' % (zp.name, zp.units)))
                     else:
-                        self.pMinMax['z'].append(('%s (%s)' % (zp.name, zp.units)))
+                        self.pMinMax['z'].append(('%s' % (zp.name, )))
                 except ValueError:
                     # Likely a coordinate variable
                     zp = models.Parameter
