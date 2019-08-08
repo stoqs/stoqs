@@ -1282,7 +1282,10 @@ class ParameterParameter(BaseParameter):
                  models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z'])).name == 'AXIS_Z') or
                 (models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x'])).name == 'ROT_X' and
                  models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y'])).name == 'ROT_Y' and
-                 models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z'])).name == 'ROT_Z')):
+                 models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z'])).name == 'ROT_Z') or
+                (models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x'])).name == 'XA (g)' and
+                 models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y'])).name == 'YA (g)' and
+                 models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z'])).name == 'ZA (g)')):
                 # Override axis limits for BED rotational data to always make a sphere
                 self.pMinMax['x'] = [self.pMinMax['x'][0], -1, 1]
                 self.pMinMax['y'] = [self.pMinMax['y'][0], -1, 1]
