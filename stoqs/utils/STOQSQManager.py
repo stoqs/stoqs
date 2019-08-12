@@ -679,6 +679,7 @@ class STOQSQManager(object):
         platformTypeHash = defaultdict(list)
         logger.debug(f"Begining to build platformTypeHash...")
         for row in qs:
+            logger.debug(f"Checking row = {row}")
             name=row['platform__name']
             id=row['platform__name']
             color=row['platform__color']
@@ -694,7 +695,7 @@ class STOQSQManager(object):
                     logger.warn(f"Using '{fts[0]}'.  Consider using a different Platform name for the other featureType(s).")
                 try:
                     featureType = fts[0]
-                except KeyError:
+                except IndexError:
                     logger.warn('No featureType returned for platform name = %s.  Setting it to "trajectory".', name)
                     featureType = 'trajectory'
 
