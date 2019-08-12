@@ -55,8 +55,6 @@ if cl.args.test:
 elif cl.args.stride:
     cl.stride = cl.args.stride
 
-lrauvs = $lrauvs
-
 for lrauv in $lrauvs:
     cl.loadLRAUV(lrauv, syear, eyear)
 

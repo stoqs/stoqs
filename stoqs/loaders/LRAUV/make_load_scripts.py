@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 '''
 Routine loading of all LRUAV data available on a DAP server
-This script writes load scripts for months worth of LRAUV data,
-enters a line into the lruav_campaigns.py file.
+This script writes load scripts for month's worth of LRAUV data.
+It also enters lines into the lruav_campaigns.py file.
 
 Executing the load is accomplished with another step, e.g.:
 
@@ -23,9 +23,11 @@ from string import Template
 campaign_template = 'mbari_lrauv_campaigns.template'
 campaign_file_name = 'mbari_lrauv_campaigns.py'
 campaign_items = ''
-
 script_template = 'load_lrauv.template'
-lrauvs = ('whoidhs', 'tethys')
+
+# Construct list of lrauvs with: ls -d /mbari/LRAUV/*/missionlogs | cut -d/ -f4
+lrauvs = ('ahi', 'aku', 'brezo', 'daphne', 'galene', 'makai', 'opah', 'pontus', 
+          'sim', 'tethys', 'triton', 'whoidhs', )
 
 title_base = 'LRAUV - Routine Operational data'
 description_base='MBARI Long Range Autonomous Vehicle data'
@@ -59,7 +61,7 @@ for year in range(2019, 2020):
             lf.write(script)
 
         os.chmod(os.path.join(this_dir, load_file_name), 0o755)
-        print(f"Done making {os.path.join(this_dir, load_file_name)}.")
+        print(f"Done making: {os.path.join(this_dir, load_file_name)}")
 
         campaign_items += f"    ('{db_alias}', '{os.path.join(os.path.basename(this_dir), load_file_name)}'),\n"
 
