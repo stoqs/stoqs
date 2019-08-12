@@ -305,10 +305,11 @@ local   all             all                                     peer
                 if nothing_printed:
                     print(f"{db:30s} {'--- ':>20}")
 
-            ans = input('\nAre you sure you want to drop these database(s) and reload them? [y/N] ')
-            if ans.lower() != 'y':
-                print('Exiting')
-                sys.exit()
+            if not self.args.noinput:
+                ans = input('\nAre you sure you want to drop these database(s) and reload them? [y/N] ')
+                if ans.lower() != 'y':
+                    print('Exiting')
+                    sys.exit()
 
         # That user wants to load all the production databases (no command line arguments)
         if not sys.argv[1:]:
@@ -750,6 +751,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
         parser.add_argument('--grant_everyone_select', action='store_true', help='Grant everyone role select privileges on all relations')
         parser.add_argument('--drop_indexes', action='store_true', help='Before load drop indexes and create them following the load')
         parser.add_argument('--pg_dump', action='store_true', help='Store a pg_dump(1) with "-Fc" option file on the server')
+        parser.add_argument('--noinput', action='store_true', help='Execute without asking for a response, e.g. for --clobber')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
     
