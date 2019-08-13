@@ -239,6 +239,7 @@ class ParentSamplesLoader(STOQS_Loader):
         self.logger.info(f"Between {sdt} and {edt} depth__min={qs['depth__min']}, depth__max={qs['depth__max']}")
         duration = edt - sdt
         max_hours = 2
+        self.logger.info(f"Sample duration: {duration}")
         if duration > timedelta(hours=max_hours):
             self.logger.warn(f"Time duration of this Sample is longer than {max_hours} hours: duration = {duration}")
 
