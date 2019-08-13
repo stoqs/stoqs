@@ -239,9 +239,9 @@ class ParentSamplesLoader(STOQS_Loader):
         self.logger.info(f"Between {sdt} and {edt} depth__min={qs['depth__min']}, depth__max={qs['depth__max']}")
         duration = edt - sdt
         max_hours = 2
-        self.logger.info(f"Sample duration: {duration}")
+        self.logger.info(f"Sample '{sample_name}' duration: {duration}")
         if duration > timedelta(hours=max_hours):
-            self.logger.warn(f"Time duration of this Sample is longer than {max_hours} hours: duration = {duration}")
+            self.logger.warn(f"Time duration of Sample '{sample_name}' is longer than {max_hours} hours: duration = {duration}")
 
         short_activity_name = '_'.join(activity_name.split('_')[:2])
         sample_act, _ = Activity.objects.using(db_alias).get_or_create(
