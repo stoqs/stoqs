@@ -796,6 +796,11 @@ class Base_Loader(STOQS_Loader):
                     last_latitudes = np.pad(last_latitudes, [(0, num_pad)], mode='constant', constant_values=0)
                     last_longitudes = np.pad(last_longitudes, [(0, num_pad)], mode='constant', constant_values=0)
 
+                if len(last_times) > len(self.ds[ac[TIME]]):
+                    self.logger.warn(f"len(last_times) ({len(last_times)}) > len(self.ds[ac[TIME]]) ({len(self.ds[ac[TIME]])})")
+                    self.logger.warn(f"Not Padding self.ds arrays")
+                    return
+
                 self.logger.info(f"Comparing coords with those from {last_variables}")
                 times_equal = np.equal(last_times, self.ds[ac[TIME]])
                 self.logger.info(f"  {variable} times: {times_equal}")
