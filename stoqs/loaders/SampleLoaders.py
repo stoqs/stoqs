@@ -236,6 +236,12 @@ class ParentSamplesLoader(STOQS_Loader):
                                                           instantpoint__timevalue__gte=sdt,
                                                           instantpoint__timevalue__lte=edt)
         qs = m_qs.aggregate(Min('depth'), Max('depth'), Avg('depth'))
+        self.logger.info(f"Between {sdt} and {edt} depth__min={qs['depth__min']}, depth__max={qs['depth__max']}")
+        duration = edt - sdt
+        max_hours = 2
+        self.logger.info(f"Sample '{sample_name}' duration: {duration}")
+        if duration > timedelta(hours=max_hours):
+            self.logger.warn(f"Time duration of Sample '{sample_name}' is longer than {max_hours} hours: duration = {duration}")
 
         short_activity_name = '_'.join(activity_name.split('_')[:2])
         sample_act, _ = Activity.objects.using(db_alias).get_or_create(
@@ -250,6 +256,7 @@ class ParentSamplesLoader(STOQS_Loader):
                             maxdepth = qs['depth__max'],
                        )
         # Update loaded_date after get_or_create() so that we can get the old record if script is re-executed
+        self.logger.debug(f"sample_act = {sample_act}")
         sample_act.loaded_date = datetime.utcnow()
         sample_act.save(using=db_alias)
 
@@ -257,6 +264,7 @@ class ParentSamplesLoader(STOQS_Loader):
         # and statistics of the MeasuredParameters for the Sample
         self.activity = sample_act
         parameter_counts = defaultdict(lambda:0)
+        self.logger.info(f"Creating {len(m_qs)} Measurements for a time series of this Sample Activity")
         for me in m_qs:
             measurement = self.createMeasurement(mtime=me.instantpoint.timevalue, 
                                                  depth=me.depth,
@@ -279,9 +287,11 @@ class ParentSamplesLoader(STOQS_Loader):
         else:
             point = m_qs.values_list('geom', flat=True)[0]
             maptrack = LineString([m_qs.values_list('geom', flat=True)[0], m_qs.values_list('geom', flat=True)[0]])
+        self.logger.debug(f"Creating a single point for this Sample with timevalue = {sample_tv} at location {point}")
         sample_ip, _ = InstantPoint.objects.using(db_alias).get_or_create(activity=sample_act, timevalue=sample_tv)
         depth = qs['depth__avg']
 
+        self.logger.debug(f"Creating SimpleDepthTimeSeries for this Sample")
         self.insertSimpleDepthTimeSeries(critSimpleDepthTime=sample_simplify_crit)
 
         return sample_act, sample_ip, point, depth, maptrack

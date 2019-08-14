@@ -213,6 +213,8 @@ class CANONLoader(LoadScript):
                 lrauv_ml.load_missions(pname, aname, url, self.dbAlias)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
+            except webob.exc.HTTPError as e:
+                self.logger.warn(f"{e}")
 
         self.addPlatformResources(f'https://stoqs.mbari.org/x3d/lrauv/lrauv_{pname}.x3d', pname,
                                   scalefactor=2)
