@@ -392,6 +392,14 @@ def process_command_line():
                                  '{ "name":"bin_mean_sea_water_temperature" , "rename":"temperature" }, ' \
                                  '{ "name":"bin_median_sea_water_temperature" , "rename":"temperature" } ' \
                                  '],' \
+                                 '"CTD_Seabird": [ ' \
+                                 '{ "name":"sea_water_salinity" , "rename":"salinity" }, ' \
+                                 '{ "name":"bin_mean_sea_water_salinity" , "rename":"salinity" }, ' \
+                                 '{ "name":"bin_median_sea_water_salinity" , "rename":"salinity" }, ' \
+                                 '{ "name":"sea_water_temperature" , "rename":"temperature" }, ' \
+                                 '{ "name":"bin_mean_sea_water_temperature" , "rename":"temperature" }, ' \
+                                 '{ "name":"bin_median_sea_water_temperature" , "rename":"temperature" } ' \
+                                 '],' \
                                  '"WetLabsBB2FL": [ ' \
                                  '{ "name":"mass_concentration_of_chlorophyll_in_sea_water", "rename":"chlorophyll" }, ' \
                                  '{ "name":"bin_mean_mass_concentration_of_chlorophyll_in_sea_water", "rename":"chlorophyll" }, ' \
