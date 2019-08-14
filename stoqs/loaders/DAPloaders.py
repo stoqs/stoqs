@@ -801,28 +801,28 @@ class Base_Loader(STOQS_Loader):
                     self.logger.warn(f"Not Padding self.ds arrays")
                     return
 
-                self.logger.info(f"Comparing coords with those from {last_variables}")
+                self.logger.debug(f"Comparing coords with those from {last_variables}")
                 times_equal = np.equal(last_times, self.ds[ac[TIME]])
-                self.logger.info(f"  {variable} times: {times_equal}")
+                self.logger.debug(f"  {variable} times: {times_equal}")
                 self.logger.debug(f"    {list(last_times[:])}")
                 self.logger.debug(f"    {list(self.ds[ac[TIME]])}")
                 depths_equal = np.equal(last_depths, self.ds[ac[DEPTH]][ac[DEPTH]])
-                self.logger.info(f"  {variable} depths: {depths_equal}")
+                self.logger.debug(f"  {variable} depths: {depths_equal}")
                 self.logger.debug(f"    {list(last_depths[:])}")
                 self.logger.debug(f"    {list(self.ds[ac[DEPTH]][ac[DEPTH]])}")
                 latitudes_equal = np.equal(last_latitudes, self.ds[ac[LATITUDE]][ac[LATITUDE]])
-                self.logger.info(f"  {variable} latitudes: {latitudes_equal}")
+                self.logger.debug(f"  {variable} latitudes: {latitudes_equal}")
                 self.logger.debug(f"    {list(last_latitudes[:])}")
                 self.logger.debug(f"    {list(self.ds[ac[LATITUDE]][ac[LATITUDE]])}")
                 longitudes_equal = np.equal(last_longitudes, self.ds[ac[LONGITUDE]][ac[LONGITUDE]])
-                self.logger.info(f"  {variable} longitudes: {longitudes_equal}")
+                self.logger.debug(f"  {variable} longitudes: {longitudes_equal}")
                 self.logger.debug(f"    {list(last_longitudes[:])}")
                 self.logger.debug(f"    {list(self.ds[ac[LONGITUDE]][ac[LONGITUDE]])}")
                 coord_equals[axes] = np.logical_and(np.logical_and(times_equal, 
                                                                    depths_equal), 
                                                     np.logical_and(latitudes_equal, 
                                                                    longitudes_equal))
-                self.logger.info(f"  {variable} .logical_and(): {coord_equals[axes]}")
+                self.logger.debug(f"  {variable} .logical_and(): {coord_equals[axes]}")
             
             last_times = self.ds[ac[TIME]]
             last_depths = self.ds[ac[DEPTH]][ac[DEPTH]]
