@@ -32,9 +32,21 @@ if cl.args.test:
 elif cl.args.stride:
     cl.stride = cl.args.stride
 
-for lrauv in ('makai', ):
-    cl.loadLRAUV(lrauv, syear, eyear, dlist_str='Lake Erie', err_on_missing_file=True,
-                 critSimpleDepthTime=1)
+cl.tethys_base = 'http://dods.mbari.org/opendap/data/lrauv//tethys/realtime/sbdlogs/2019/201908/' 
+cl.tethys_files = [
+                    '20190813T193351/shore_i.nc',
+                    '20190814T135842/shore_i.nc',
+                    '20190814T154007/shore_i.nc',
+                  ]
+##cl.tethys_parms = [ 'platform_battery_charge', 'chlorophyll', 'temperatue', 'salinity' ]
+cl.tethys_parms = [ 'chlorophyll', ]
+##cl.tethys_parms = [ 'temperatue', 'salinity' ]
+cl.loadLRAUV('tethys', syear, eyear, build_attrs=False, critSimpleDepthTime=0.1)
+
+
+##for lrauv in ('makai', ):
+##    cl.loadLRAUV(lrauv, syear, eyear, dlist_str='Lake Erie', err_on_missing_file=True,
+##                 critSimpleDepthTime=1)
 
 ##cl.loadSubSamples()
 
