@@ -1,0 +1,4 @@
+sut:
+  build: stoqs
+  command: /bin/bash
+  

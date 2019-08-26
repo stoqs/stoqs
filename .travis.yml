@@ -2,8 +2,12 @@ language: python
 python:
   - "3.6"
 addons:
-  postgresql: "9.6"
+  postgresql: "10"
   firefox: "49.0"
+  apt:
+    packages:
+      - postgresql-10
+      - postgresql-10-postgis-2.4
 services:
   - xvfb
 before_install: 
@@ -25,8 +29,8 @@ install:
   - pip install --upgrade pip
   - pip install -r requirements/travis-ci.txt
 before_script:
-  - sudo apt-get install -y postgresql-9.6-postgis-2.4
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
+  - psql -U postgres -c "create extension postgis"
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
   - wget http://ftp.mozilla.org/pub/firefox/releases/52.0/linux-x86_64/en-US/firefox-52.0.tar.bz2
   - tar xvjf firefox-52.0.tar.bz2

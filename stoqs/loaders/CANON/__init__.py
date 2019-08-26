@@ -237,28 +237,34 @@ class CANONLoader(LoadScript):
                     'BackscatteringCoeff700nm',
                     'VolumeScatCoeff117deg700nm',
                     'petroleum_hydrocarbons',
+                    'mass_concentration_of_oxygen_in_sea_water',
                   ],
                   stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True, 
-                  dlist_str=None, err_on_missing_file=False, critSimpleDepthTime=10):
+                  dlist_str=None, err_on_missing_file=False, critSimpleDepthTime=10,
+                  sbd_logs=False, cell_logs=False):
         '''
         Loader for tethys, daphne, makai, ahi, aku, 
         '''
         if build_attrs and not dlist_str:
-            self.logger.info(f'Building load parameter attributes crawling LRAUV dirs')
-            self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
-            self._execute_load(pname, parameters, stride, critSimpleDepthTime)
+            if sbd_logs:
+                self.logger.info(f'Building load parameter attributes crawling LRAUV sbdlogs dirs')
+                file_patterns=('.*shore_i.nc$')
+                self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns, sbd_logs=True)
+            else:
+                self.logger.info(f'Building load parameter attributes crawling LRAUV missionlogs dirs')
+                self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
         elif dlist_str:
             for year in range(startdate.year, enddate.year + 1):
-                # Execute load for a year at a time in order to keep the Avtivity name shorter
+                # Execute load for a year at a time in order to keep the Activity name shorter
                 # and because that is kind of how the LRAUV load is structured
                 self.logger.info(f'Building load parameter attributes crawling LRAUV dirs with dlist_str = {dlist_str} and year = {year}')
                 self.build_lrauv_attrs(year, pname, datetime(year, 1, 1), datetime(year, 12, 31), 
                                        parameters, file_patterns, dlist_str, err_on_missing_file)
-                self._execute_load(pname, parameters, stride, critSimpleDepthTime)
         else:
             self.logger.info(f'Using load {pname} attributes set in load script')
             parameters = getattr(self, f'{pname}_parms')
-            self._execute_load(pname, parameters, stride, critSimpleDepthTime)
+
+        self._execute_load(pname, parameters, stride, critSimpleDepthTime)
 
     def loadMartin(self, stride=None):
         '''
@@ -1206,6 +1212,14 @@ class CANONLoader(LoadScript):
                     for url in d:
                         self.logger.debug(f'{url}')
                         urls.append(url)
+            else:
+                # Likely a realtime log
+                catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
+                c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
+                d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+                for url in d:
+                    self.logger.debug(f'{url}')
+                    urls.append(url)
 
         if not urls:
             raise FileNotFound('No urls matching "{}" found in {}'.format(search_str, os.path.join(base, 'catalog.html')))
@@ -1282,7 +1296,7 @@ class CANONLoader(LoadScript):
         return urls
 
     def build_lrauv_attrs(self, mission_year, platform, startdate, enddate, parameters, file_patterns,
-                          dlist_str=None, err_on_missing_file=False):
+                          dlist_str=None, err_on_missing_file=False, sbd_logs=False, cell_logs=False):
         '''Set loader attributes for each LRAUV platform. This is meant to be called for startdate
         and enddate being within a single year. It will fail if startdate and enddate span multiple
         years. We'd like to keep the files portion of the string short as it's the mouse-over text 
@@ -1290,6 +1304,12 @@ class CANONLoader(LoadScript):
         '''
         base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{mission_year}/'
         dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{mission_year}/'
+        if sbd_logs:
+            # TODO: check for enddate being in a different month
+            yrmo = startdate.strftime('%Y%m')
+            base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/realtime/sbdlogs/{mission_year}/{yrmo}/'
+            dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/realtime/sbdlogs/{mission_year}/{yrmo}/'
+        # TODO: Add case for cell_logs
         setattr(self, platform + '_files', [])
         setattr(self, platform + '_base', dods_base)
         setattr(self, platform + '_parms' , parameters)
@@ -1305,7 +1325,10 @@ class CANONLoader(LoadScript):
             files = []
             if len(urls) > 0 :
                 for url in sorted(urls):
-                    file = '/'.join(url.split('/')[-3:])
+                    if 'shore_i' in url:
+                        file = '/'.join(url.split('/')[-2:])
+                    else:
+                        file = '/'.join(url.split('/')[-3:])
                     files.append(file)
                 setattr(self, platform + '_files', files)
 

@@ -468,7 +468,7 @@ class STOQS_Loader(object):
             try:
                 self.getParameterByName(parameter_name)
             except ParameterNotFound as e:
-                self.logger.info("Parameter not found in local cache. Getting from database.")
+                self.logger.debug("Parameter not found in local cache. Getting from database.")
                 vattr = ds[variable].attributes
                 self.parameter_dict[parameter_name], created = (m.Parameter.objects
                              .using(self.dbAlias).get_or_create(
@@ -522,16 +522,25 @@ class STOQS_Loader(object):
         if hasattr(self, 'getActivityName'):
             self.activityName = self.getActivityName()
 
-        # Get or create Activity based on unique identifiers
-        self.activity, created = m.Activity.objects.using(self.dbAlias).get_or_create(    
-                                        name__contains = self.activityName,
-                                        platform = self.platform,
-                                        campaign = self.campaign,
-                                        activitytype = self.activityType,
-                                        startdate = self.startDatetime)
+        # Get or create Activity based on unique identifiers - respect initial startdate
+        created = False
+        try:
+            self.activity = m.Activity.objects.using(self.dbAlias).get(    
+                                            name__contains = self.activityName,
+                                            platform = self.platform,
+                                            campaign = self.campaign,
+                                            activitytype = self.activityType)
+        except m.Activity.DoesNotExist:
+            self.activity, created = m.Activity.objects.using(self.dbAlias).get_or_create(    
+                                                name__contains = self.activityName,
+                                                platform = self.platform,
+                                                campaign = self.campaign,
+                                                activitytype = self.activityType,
+                                                startdate = self.startDatetime)
 
         if created:
             self.activity.name = self.activityName
+            self.activity.startdate = self.startDatetime
             self.activity.save(using=self.dbAlias)
             self.logger.info("Created activity %s in database %s with startDate=%s, endDate = %s",
                     self.activity.name, self.dbAlias, self.activity.startdate, self.activity.enddate)
