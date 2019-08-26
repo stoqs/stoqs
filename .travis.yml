@@ -31,8 +31,8 @@ install:
   - pip install --upgrade pip
   - pip install -r requirements/travis-ci.txt
 before_script:
-  - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
-  - psql -U postgres -c "create extension postgis"
+  - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres -p $PGPORT
+  - psql -U postgres -c "create extension postgis" -p $PGPORT
   - export DATABASE_URL="postgis://travis:@127.0.0.1:$PGPORT/stoqs"
   - wget http://ftp.mozilla.org/pub/firefox/releases/52.0/linux-x86_64/en-US/firefox-52.0.tar.bz2
   - tar xvjf firefox-52.0.tar.bz2
