@@ -765,7 +765,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
                 print('If using --slack must set SLACKTOKEN environment variable. [Never share your token!]')
                 sys.exit(-1)
 
-        if self.args.verbose > 1:
+        if self.args.verbose >= 1:
             self.logger.setLevel(logging.DEBUG)
         elif self.args.verbose > 0:
             self.logger.setLevel(logging.INFO)
