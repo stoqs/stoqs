@@ -5,7 +5,9 @@ addons:
   postgresql: "10"
   firefox: "49.0"
   apt:
-    packages: postgresql-10.0-postgis-2.4
+    packages:
+      - postgresql-10
+      - postgresql-10-postgis-2.4
 services:
   - xvfb
 before_install: 
