@@ -22,7 +22,9 @@ before_install:
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.11.1/geckodriver-v0.11.1-linux64.tar.gz
   - tar -xzf geckodriver-v0.11.1-linux64.tar.gz --directory /home/travis/miniconda3/bin
 env:
-  - DJANGO=1.10
+  global:
+    - DJANGO=1.10
+    - PGPORT=5433
 install:
   - conda install --yes --verbose python=3.6 hdf4 hdf5 netcdf4 numpy scipy matplotlib nose python-dateutil statsmodels gdal
   - conda install --yes -c omnia python-coveralls=2.9.0
@@ -31,7 +33,7 @@ install:
 before_script:
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
   - psql -U postgres -c "create extension postgis"
-  - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
+  - export DATABASE_URL="postgis://travis:@127.0.0.1:$PGPORT/stoqs"
   - wget http://ftp.mozilla.org/pub/firefox/releases/52.0/linux-x86_64/en-US/firefox-52.0.tar.bz2
   - tar xvjf firefox-52.0.tar.bz2
   - wget https://github.com/mozilla/geckodriver/releases/download/v0.11.1/geckodriver-v0.11.1-linux64.tar.gz
