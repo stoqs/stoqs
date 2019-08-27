@@ -94,4 +94,6 @@ services:
 
   # Autotest on hub.docker.com - test.sh executed on first start by stoqs-start.sh
   sut:
+    build:
+      context: .
     command: /bin/bash
