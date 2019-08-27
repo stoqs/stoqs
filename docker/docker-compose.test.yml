@@ -26,8 +26,6 @@ services:
       - PGDATA=/var/lib/postgresql/data
       - POSTGRES_INITDB_WALDIR=/var/lib/postgresql/waldir
     container_name: stoqs-postgis
-    env_file:
-      - ./test.env
 
   mapserver:
     image: geodata/mapserver:7.0.1
@@ -37,8 +35,6 @@ services:
     # Expose port 80 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##ports:
     ##  - "80:80"
-    env_file:
-      - ./test.env
 
   stoqs:
     image: mbari/stoqs
@@ -66,7 +62,6 @@ services:
       - MEDIA_ROOT=/srv/media-files
       - NGINX_SERVER_NAME=${NGINX_SERVER_NAME}
       - DJANGO_DEBUG=${DJANGO_DEBUG}
-      - USER=${USER}
     container_name: stoqs
     depends_on:
       - mapserver
@@ -75,8 +70,6 @@ services:
       - "8888:8888"
     # Expose port 8000 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##  - "8000:8000"
-    env_file:
-      - ./test.env
 
   # Disable nginx service if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
   nginx:
@@ -98,8 +91,6 @@ services:
       - "443:443"
     depends_on:
       - stoqs
-    env_file:
-      - ./test.env
 
   # Autotest on hub.docker.com - test.sh executed on first start by stoqs-start.sh
   sut:
