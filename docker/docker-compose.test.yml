@@ -96,4 +96,5 @@ services:
   sut:
     build:
       context: .
+      dockerfile: Dockerfile-stoqs
     command: /bin/bash
