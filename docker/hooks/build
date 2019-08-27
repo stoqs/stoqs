@@ -1,6 +1,11 @@
 #!/bin/bash
-STOQS_HOME=`pwd`/stoqs
+echo "Parent of Home directory listing:"
+ls -l ..
+echo "Home directory listing:"
+ls -l 
+STOQS_HOME=`pwd`
 echo "STOQS_HOME set to $STOQS_HOME"
+echo "STOQS_HOME listing"
 ls -l $STOQS_HOME
 echo "Adding this setting to $STOQS_HOME/docker/test.env..."
 cat <<EOT >> $STOQS_HOME/docker/test.env
