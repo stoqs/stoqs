@@ -4,9 +4,13 @@ STOQS_HOME=$(dirname `pwd`)
 echo "STOQS_HOME set to $STOQS_HOME"
 echo "STOQS_HOME listing"
 ls -l $STOQS_HOME
+echo "Original $STOQS_HOME/docker/test.env"
+cat $STOQS_HOME/docker/test.env
 echo "Adding this setting to $STOQS_HOME/docker/test.env..."
 cat <<EOT >> $STOQS_HOME/docker/test.env
 STOQS_HOME=$STOQS_HOME
 
 EOT
+echo "Current $STOQS_HOME/docker/test.env"
+cat $STOQS_HOME/docker/test.env
 docker-compose -f docker-compose.test.yml build
