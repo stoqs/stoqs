@@ -1,6 +1,9 @@
 #!/bin/bash
-cat <<EOT >> stoqs/docker/test.env
-STOQS_HOME=`pwd`/stoqs 
+STOQS_HOME=`pwd`/stoqs
+echo "STOQS_HOME set to $STOQS_HOME"
+echo "Adding this setting to $STOQS_HOME/docker/test.env..."
+cat <<EOT >> $STOQS_HOME/docker/test.env
+STOQS_HOME=$STOQS_HOME
 
 EOT
 docker-compose -f docker-compose.test.yml build
