@@ -1,6 +1,2 @@
 #!/bin/bash
-cat <<EOT >> stoqs/docker/test.env
-STOQS_HOME=`pwd`/stoqs 
-
-EOT
 docker-compose -f docker-compose.test.yml up
