@@ -1,3 +1,2 @@
 #!/bin/bash
-export STOQS_HOME=`pwd`/stoqs
-docker-compose -f docker-compose.test.yml build
+env STOQS_HOME=`pwd`/stoqs docker-compose -f docker-compose.test.yml build
