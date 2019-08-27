@@ -1,9 +1,6 @@
 #!/bin/bash
-echo "Parent of Home directory listing:"
-ls -l ..
-echo "Home directory listing:"
-ls -l 
-STOQS_HOME=`pwd`
+# The working directory in docker cloud is $STOQS_HOME/docker
+STOQS_HOME=$(dirname `pwd`)
 echo "STOQS_HOME set to $STOQS_HOME"
 echo "STOQS_HOME listing"
 ls -l $STOQS_HOME
