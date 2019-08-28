@@ -4819,7 +4819,8 @@ function enable_cardboard(){
 
                 if ( ! $.isEmptyObject(data.resources.campaign.pg_dump_date_gmt) ) {
                     $('#dump_or_restore_header').html("<h3>Restore this database on your system</h3>");
-                    restore_text = "To load this database (" + formatBytes(data.resources.campaign.pg_dump_size) + " compressed) on your Docker-based STOQS system first create it:\n";
+                    restore_text = "To load this database (" + formatBytes(data.resources.campaign.pg_dump_size) + " compressed) on your "
+                    restore_text += "<a href='https://github.com/stoqs/stoqs#production-deployment-with-docker' target='_blank'>Docker-based STOQS system</a> first create it:\n";
                     restore_text += "<pre>cd $STOQS_HOME/docker\ndocker-compose exec stoqs createdb -U postgres {{request.META.dbAlias}}</pre>\n";
                     restore_text += "Then restore it from this server using either curl:\n";
                     restore_text += "<pre>curl -k {{site_uri}}" + data.resources.campaign.pg_dump_file + " | \\\n";

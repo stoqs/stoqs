@@ -1,10 +1,12 @@
 #!/bin/bash
 # The working directory in docker cloud is $STOQS_HOME/docker
-echo "Parent of PWD directory listing"
+echo "==> hooks/build"
+echo "*** Parent of PWD directory listing"
 ls -l $(dirname `pwd`)
-echo "PWD listing"
+echo "*** PWD listing"
 ls -l 
-echo "env:"
+echo "*** env"
 env
 # Use /src/${BUILD_CODE} for STOQS_HOME in docker-compose.test.yml
+echo "*** docker-compose -f docker-compose.test.yml build"
 docker-compose -f docker-compose.test.yml build
