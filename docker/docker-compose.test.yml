@@ -50,7 +50,7 @@ services:
       - ${STOQS_VOLS_DIR}/stoqs_root:/root
       - ${STOQS_VOLS_DIR}/nginx:/usr/share/nginx
       - ${STOQS_VOLS_DIR}/pg_dumps:/srv/media-files/pg_dumps
-      - ${STOQS_HOME}:/srv
+      - /src/${BUILD_CODE}:/srv
       - static-files:/srv/static-files
       - media-files:/srv/media-files
     environment:
