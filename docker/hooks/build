@@ -5,8 +5,23 @@ echo "*** Parent of PWD directory listing"
 ls -l $(dirname `pwd`)
 echo "*** PWD listing"
 ls -l 
-echo "*** env"
-env
 # Use /src/${BUILD_CODE} for STOQS_HOME in docker-compose.test.yml
 echo "*** docker-compose -f docker-compose.test.yml build"
 docker-compose -f docker-compose.test.yml build
+
+echo "*** docker-compose -f docker-compose.test.yml up -d"
+docker-compose -f docker-compose.test.yml up -d
+
+# Wait for test.sh to start, then check that it finishes before stopping the services
+ps -ef | grep test.sh | grep -v grep
+while [[ $? == 1 ]] ; do
+    sleep 30; echo "*** Waiting for test.sh to start ..."
+    ps -ef | grep test.sh | grep -v grep
+done
+while [[ $? == 0 ]] ; do
+    sleep 30; echo "*** Waiting for test.sh to complete ..."
+    ps -ef | grep test.sh | grep -v grep
+done
+
+echo "*** docker-compose stop"
+docker-compose stop
