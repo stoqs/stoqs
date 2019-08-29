@@ -99,3 +99,10 @@ services:
       - stoqs
     env_file:
       - ./test.env
+
+    sut:
+      build: .
+      command: test.sh
+      environment:
+        - SOURCE_BRANCH
+
