@@ -31,7 +31,6 @@ python monitorLrauvEvents.py \
 --booleanPlotGroup front \
 --plotDotParmName vertical_temperature_homogeneity_index \
 --parms depth \
-oxygen  \
 temperature \
 salinity \
 chlorophyll \
