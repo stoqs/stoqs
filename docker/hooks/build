@@ -8,9 +8,6 @@ ls -l $(dirname `pwd`)
 echo "*** PWD listing"
 ls -l 
 
-echo "*** rm /tmp/docker_stoqs_vols"
-rm /tmp/docker_stoqs_vols
-
 echo "*** docker-compose -f docker-compose.test.yml build"
 docker-compose -f docker-compose.test.yml build
 
