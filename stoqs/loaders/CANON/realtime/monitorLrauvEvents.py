@@ -307,7 +307,7 @@ class Loader(Thread):
                                                   pTypeName = 'auv',
                                                   pColor = self.cl.colors[self.vehicle],
                                                   url = url_dest,
-                                                  parmList = self.args.plotparms,
+                                                  parmList = self.args.parms,
                                                   dbAlias = self.args.database,
                                                   stride = int(self.args.stride),
                                                   startDatetime = start,

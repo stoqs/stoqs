@@ -466,7 +466,7 @@ class STOQS_Loader(object):
 
             self.logger.info(f"variable: {variable}, parameter_name: {parameter_name}")
             try:
-                self.getParameterByName(parameter_name)
+                parm = self.getParameterByName(parameter_name)
             except ParameterNotFound as e:
                 self.logger.debug("Parameter not found in local cache. Getting from database.")
                 vattr = ds[variable].attributes
@@ -480,8 +480,14 @@ class STOQS_Loader(object):
                                         description =  vattr.get('description'),
                                         origin = self.activityName 
                                     )) 
+                parm = self.parameter_dict[parameter_name]
                 if created:
                     self.logger.debug(f"Added parameter {parameter_name} from {self.url} to database {self.dbAlias}")
+
+            if not parm.standard_name and ds[variable].attributes.get('standard_name'):
+                # Add standard_name if found in a later Activity (dataset)
+                parm.standard_name = ds[variable].attributes.get('standard_name')
+                parm.save(using=self.dbAlias)
 
     def createCampaign(self):
         '''Create Campaign in the database ensuring that there is only one Campaign

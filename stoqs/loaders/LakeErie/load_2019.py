@@ -18,35 +18,29 @@ from datetime import datetime
 import timing
 
 cl = CANONLoader('stoqs_erie2019', 'Lake Erie ESP 2019',
-                 description='Lake Erie Makai ESP DEployments in 2019',
+                 description='Lake Erie Makai ESP Deployments in 2019',
                  )
 
-syear = datetime(2019, 8, 13)
-eyear = datetime(2019, 9, 30)
+sdate = datetime(2019, 8, 13)
+edate = datetime(2019, 8, 30)
 
-# Execute the load
 cl.process_command_line()
 
 if cl.args.test:
-    cl.stride = 10000
+    cl.stride = 1000
 elif cl.args.stride:
     cl.stride = cl.args.stride
 
-cl.tethys_base = 'http://dods.mbari.org/opendap/data/lrauv//tethys/realtime/sbdlogs/2019/201908/' 
-cl.tethys_files = [
-                    '20190813T193351/shore_i.nc',
-                    '20190814T135842/shore_i.nc',
-                    '20190814T154007/shore_i.nc',
-                  ]
-##cl.tethys_parms = [ 'platform_battery_charge', 'chlorophyll', 'temperatue', 'salinity' ]
-cl.tethys_parms = [ 'chlorophyll', ]
-##cl.tethys_parms = [ 'temperatue', 'salinity' ]
-cl.loadLRAUV('tethys', syear, eyear, build_attrs=False, critSimpleDepthTime=0.1)
+# Realtime data load - Loads files produced by stoqs/loaders/CANON/realtime/monitorLrauv_erie2019.sh
+# Need small critSimpleDepthTime for the 1-2 m shallow yo-yos done
+for lrauv in ('makai', 'tethys'):
+    cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True,
+                 parameters=['chlorophyll', 'temperature', 'salinity', 
+                             'mass_concentration_of_oxygen_in_sea_water'])
 
-
-##for lrauv in ('makai', ):
-##    cl.loadLRAUV(lrauv, syear, eyear, dlist_str='Lake Erie', err_on_missing_file=True,
-##                 critSimpleDepthTime=1)
+# Post recovery missionlogs load
+for lrauv in ('makai', 'tethys'):
+    cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1)
 
 ##cl.loadSubSamples()
 
