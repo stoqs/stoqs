@@ -100,11 +100,11 @@ services:
     env_file:
       - ./test.env
 
-  sut:
-    build:
-      context: .
-      dockerfile: Dockerfile-stoqs
-    command: test.sh
-    environment:
-      - SOURCE_BRANCH
+  ##sut:
+  ##  build:
+  ##    context: .
+  ##    dockerfile: Dockerfile-stoqs
+  ##  command: test.sh
+  ##  environment:
+  ##    - SOURCE_BRANCH
 
