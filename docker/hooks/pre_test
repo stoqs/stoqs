@@ -1,0 +1,7 @@
+#!/bin/bash
+
+echo "==> hooks/pre_test"
+
+# Need to install for Travis-CI too
+wget https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
+tar -xzf geckodriver-v0.11.1-linux64.tar.gz --directory /usr/bin

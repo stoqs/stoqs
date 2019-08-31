@@ -56,7 +56,8 @@ elif cl.args.stride:
     cl.stride = cl.args.stride
 
 for lrauv in $lrauvs:
-    cl.loadLRAUV(lrauv, syear, eyear)
+    cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1, sbd_logs=True)
+    cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1)
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
