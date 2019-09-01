@@ -21,6 +21,7 @@ before_install:
   - conda update --yes conda
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
   - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/miniconda3/
+  - export PATH=$PATH:/home/travis/miniconda3/
 env:
   - DJANGO=1.10
 install:
