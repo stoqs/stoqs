@@ -1191,7 +1191,11 @@ class CANONLoader(LoadScript):
         urls = []
         # Get an etree object
         r = requests.get(url)
-        tree = etree.XML(r.text.encode('utf-8'))
+        if r.status_code == 200:
+            tree = etree.XML(r.text.encode('utf-8'))
+        else:
+            self.logger.debug(f"status_code != 200, Skipping {url}")
+            return urls
 
         # Crawl the catalogRefs:
         for ref in tree.findall('.//{%s}catalogRef' % INV_NS):
