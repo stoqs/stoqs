@@ -3,7 +3,7 @@ python:
   - "3.6"
 addons:
   postgresql: "10"
-  firefox: "49.0"
+  firefox: "68.0"
   apt:
     packages:
       - postgresql-10
