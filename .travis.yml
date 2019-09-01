@@ -3,7 +3,7 @@ python:
   - "3.6"
 addons:
   postgresql: "10"
-  firefox: "49.0"
+  firefox: "68.0"
   apt:
     packages:
       - postgresql-10
@@ -19,8 +19,9 @@ before_install:
   - export NETCDF4_DIR=/home/travis/miniconda3/
   - export TERM=xterm
   - conda update --yes conda
-  - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.11.1/geckodriver-v0.11.1-linux64.tar.gz
-  - tar -xzf geckodriver-v0.11.1-linux64.tar.gz --directory /home/travis/miniconda3/bin
+  - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
+  - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/miniconda3/
+  - export PATH=$PATH:/home/travis/miniconda3/
 env:
   - DJANGO=1.10
 install:
@@ -32,12 +33,6 @@ before_script:
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
   - psql -U postgres -c "create extension postgis"
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
-  - wget http://ftp.mozilla.org/pub/firefox/releases/52.0/linux-x86_64/en-US/firefox-52.0.tar.bz2
-  - tar xvjf firefox-52.0.tar.bz2
-  - wget https://github.com/mozilla/geckodriver/releases/download/v0.11.1/geckodriver-v0.11.1-linux64.tar.gz
-  - mkdir geckodriver
-  - tar -xzf geckodriver-v0.11.1-linux64.tar.gz -C geckodriver  
-  - export PATH=$PWD/firefox:$PATH:$PWD/geckodriver
 script:  
   - ./test.sh CHANGEME load noextraload
 after_script:
