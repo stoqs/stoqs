@@ -19,8 +19,8 @@ before_install:
   - export NETCDF4_DIR=/home/travis/miniconda3/
   - export TERM=xterm
   - conda update --yes conda
-  - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz -O /tmp/geckodriver.tgz
-  - tar -xzf /tmp/geckodriver.tgz --directory /usr/bin
+  - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
+  - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /usr/bin
 env:
   - DJANGO=1.10
 install:
