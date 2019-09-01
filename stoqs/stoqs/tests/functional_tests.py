@@ -27,6 +27,7 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.firefox.options import Options
 from stoqs.models import Parameter
 
 import logging
@@ -58,7 +59,15 @@ class BaseTestCase(StaticLiveServerTestCase):
     multi_db = False
 
     def setUp(self):
-        self.browser = webdriver.Firefox()
+        headless = True
+        if not headless:
+            # Needs X-Server - opens browser windows
+            self.browser = webdriver.Firefox()
+        else:
+            # The defaule - for running on CI servers
+            options = Options()
+            options.headless = True
+            self.browser = webdriver.Firefox(options=options)
 
     def tearDown(self):
         self.browser.quit()
