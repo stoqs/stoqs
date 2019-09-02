@@ -6,9 +6,9 @@ echo "==> hooks/test"
 
 if [ $GIT_BRANCH == 'MBARIMike:master' ] 
 then
-    $YML = 'docker-compose.test.mbarimike.yml'
+    $YML='docker-compose.test.mbarimike.yml'
 else
-    $YML = 'docker-compose.test.yml'
+    $YML='docker-compose.test.yml'
 fi
 
 echo "*** docker-compose -f $YML up -d"
