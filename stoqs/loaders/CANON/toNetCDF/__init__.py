@@ -29,6 +29,7 @@ import logging
 import urllib.request, urllib.error, urllib.parse
 import datetime
 import numpy as np
+from git import Repo
 from pupynere import netcdf_file
 
 class BaseWriter(object):
@@ -60,6 +61,13 @@ class BaseWriter(object):
         self.ncFile.date_modified = iso_now
         self.ncFile.featureType = featureType
         self.ncFile.data_mode = 'R'
+        self.ncFile.user = os.environ['USER']
+        self.ncFile.hostname = os.environ['HOSTNAME']
+
+        # Record source of the software producing this file
+        repo = Repo(app_dir, search_parent_directories=True)
+        self.ncFile.gitorigin = repo.remotes.origin.url
+        self.ncFile.gitcommit = repo.head.commit.hexsha
 
         # Likely TypeError: 'float' object is not subscriptable
         try:
