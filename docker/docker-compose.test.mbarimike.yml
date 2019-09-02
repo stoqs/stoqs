@@ -1,4 +1,5 @@
 version: '2'
+# Environment variables hard coded for exection in mbari account on DockerHub
 
 volumes:
     static-files:
@@ -12,33 +13,29 @@ services:
         context: .
         dockerfile: Dockerfile-postgis
     volumes:
-      - ${POSTGRES_DATA}:/var/lib/postgresql/data
-      - ${POSTGRES_WALDIR}:/var/lib/postgresql/waldir
+      - /tmp/docker_stoqs_vols/pgdata:/var/lib/postgresql/data
+      - /tmp/docker_stoqs_vols/pg_waldir:/var/lib/postgresql/waldir
       - ./postgres-stoqs.conf:/etc/postgresql.conf
     command: postgres -c config_file=/etc/postgresql.conf
     ports:
-      - "${STOQS_PGHOST_PORT}:5432"
+      - "5432:5432"
     # Set user for deployment on MacOS, assign HOST_ID=<result of `id -u`> in your .env file
     ##user: ${HOST_UID}
     environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - STOQSADM_PASSWORD=${STOQSADM_PASSWORD}
+      - POSTGRES_PASSWORD=changeme
+      - STOQSADM_PASSWORD=CHANGEME
       - PGDATA=/var/lib/postgresql/data
       - POSTGRES_INITDB_WALDIR=/var/lib/postgresql/waldir
     container_name: stoqs-postgis
-    env_file:
-      - ./test.env
 
   mapserver:
     image: geodata/mapserver:7.0.1
     volumes:
-      - ${STOQS_VOLS_DIR}/maps:/maps:ro
+      - /tmp/docker_stoqs_vols/maps:/maps:ro
     container_name: stoqs-mapserver
     # Expose port 80 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##ports:
     ##  - "80:80"
-    env_file:
-      - ./test.env
 
   stoqs:
     image: mbarimike/stoqs
@@ -46,26 +43,26 @@ services:
         context: .
         dockerfile: Dockerfile-stoqs
     volumes:
-      - ${STOQS_VOLS_DIR}/maps:/dev/shm
-      - ${STOQS_VOLS_DIR}/stoqs_root:/root
-      - ${STOQS_VOLS_DIR}/nginx:/usr/share/nginx
-      - ${STOQS_VOLS_DIR}/pg_dumps:/srv/media-files/pg_dumps
+      - /tmp/docker_stoqs_vols/maps:/dev/shm
+      - /tmp/docker_stoqs_vols/stoqs_root:/root
+      - /tmp/docker_stoqs_vols/nginx:/usr/share/nginx
+      - /tmp/docker_stoqs_vols/pg_dumps:/srv/media-files/pg_dumps
       - /src/${BUILD_CODE}:/srv
       - static-files:/srv/static-files
       - media-files:/srv/media-files
     environment:
-      - DATABASE_URL=postgis://${STOQSADM_USER}:${STOQSADM_PASSWORD}@${STOQS_PGHOST}:${STOQS_PGHOST_PORT}/stoqs
-      - DATABASE_SUPERUSER_URL=postgis://postgres:${POSTGRES_PASSWORD}@${STOQS_PGHOST}:${STOQS_PGHOST_PORT}/stoqs
-      - PGHOST=${STOQS_PGHOST}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - MAPSERVER_HOST=${MAPSERV_SERVER_NAME}
+      - DATABASE_URL=postgis://stoqsadm:CHANGEME@stoqs-postgis:5432/stoqs
+      - DATABASE_SUPERUSER_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
+      - PGHOST=stoqs-postgis
+      - POSTGRES_PASSWORD=changeme
+      - MAPSERVER_HOST=localhost
       - URL_MAPFILE_DIR=/maps
       - STATIC_URL=/static/
       - STATIC_ROOT=/srv/static-files
       - MEDIA_URL=/media/
       - MEDIA_ROOT=/srv/media-files
-      - NGINX_SERVER_NAME=${NGINX_SERVER_NAME}
-      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - NGINX_SERVER_NAME=localhost
+      - DJANGO_DEBUG=false
     container_name: stoqs
     depends_on:
       - mapserver
@@ -74,8 +71,6 @@ services:
       - "8888:8888"
     # Expose port 8000 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##  - "8000:8000"
-    env_file:
-      - ./test.env
 
   # Disable nginx service if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
   nginx:
@@ -84,12 +79,12 @@ services:
         context: .
         dockerfile: Dockerfile-nginx
     volumes:
-      - ${STOQS_VOLS_DIR}/html:/srv/html
-      - ${STOQS_VOLS_DIR}/pg_dumps:/srv/media-files/pg_dumps
+      - /tmp/docker_stoqs_vols/html:/srv/html
+      - /tmp/docker_stoqs_vols/pg_dumps:/srv/media-files/pg_dumps
       - static-files:/srv/static-files
       - media-files:/srv/media-files
     environment:
-      - NGINX_TMPL=${NGINX_TMPL}
+      - NGINX_TMPL=nginx.tmpl
     container_name: stoqs-nginx
     ports:
       - "80:80"
@@ -97,14 +92,4 @@ services:
       - "443:443"
     depends_on:
       - stoqs
-    env_file:
-      - ./test.env
-
-  ##sut:
-  ##  build:
-  ##    context: .
-  ##    dockerfile: Dockerfile-stoqs
-  ##  command: test.sh
-  ##  environment:
-  ##    - SOURCE_BRANCH
 
