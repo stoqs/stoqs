@@ -4,10 +4,18 @@
 
 echo "==> hooks/test"
 
-echo "*** docker-compose -f docker-compose.test.yml up -d"
-docker-compose -f docker-compose.test.yml up -d
+if [ $GIT_BRANCH == 'MBARIMike:master' ] 
+then
+    $YML = 'docker-compose.test.mbarimike.yml'
+else
+    $YML = 'docker-compose.test.yml'
+fi
+
+echo "*** docker-compose -f $YML up -d"
+docker-compose -f $YML up -d
 
 # Wait for test.sh to start, then check that it finishes before stopping the services
+echo
 docker exec stoqs ps -ef | grep test.sh | grep -v grep
 while [[ $? == 1 ]] ; do
     sleep 30; echo "*** Waiting for test.sh to start ..."
@@ -20,8 +28,8 @@ while [[ $? == 0 ]] ; do
     docker exec stoqs ps -ef | grep test.sh | grep -v grep
 done
 
-echo "*** docker-compose -f docker-compose.test.yml logs"
-docker-compose -f docker-compose.test.yml logs
+echo "*** docker-compose -f $YML logs"
+docker-compose -f $YML logs
 
-echo "*** docker-compose -f docker-compose.test.yml stop"
-docker-compose -f docker-compose.test.yml stop
+echo "*** docker-compose -f $YML stop"
+docker-compose -f $YML stop
