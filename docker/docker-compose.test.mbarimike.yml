@@ -1,0 +1,95 @@
+version: '2'
+# Environment variables hard coded for exection in mbari account on DockerHub
+
+volumes:
+    static-files:
+    media-files:
+
+services:
+
+  postgis:
+    image: mbarimike/stoqs-postgis
+    build:
+        context: .
+        dockerfile: Dockerfile-postgis
+    volumes:
+      - /tmp/docker_stoqs_vols/pgdata:/var/lib/postgresql/data
+      - /tmp/docker_stoqs_vols/pg_waldir:/var/lib/postgresql/waldir
+      - ./postgres-stoqs.conf:/etc/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql.conf
+    ports:
+      - "5432:5432"
+    # Set user for deployment on MacOS, assign HOST_ID=<result of `id -u`> in your .env file
+    ##user: ${HOST_UID}
+    environment:
+      - POSTGRES_PASSWORD=changeme
+      - STOQSADM_PASSWORD=CHANGEME
+      - PGDATA=/var/lib/postgresql/data
+      - POSTGRES_INITDB_WALDIR=/var/lib/postgresql/waldir
+    container_name: stoqs-postgis
+
+  mapserver:
+    image: geodata/mapserver:7.0.1
+    volumes:
+      - /tmp/docker_stoqs_vols/maps:/maps:ro
+    container_name: stoqs-mapserver
+    # Expose port 80 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
+    ##ports:
+    ##  - "80:80"
+
+  stoqs:
+    image: mbarimike/stoqs
+    build:
+        context: .
+        dockerfile: Dockerfile-stoqs
+    volumes:
+      - /tmp/docker_stoqs_vols/maps:/dev/shm
+      - /tmp/docker_stoqs_vols/stoqs_root:/root
+      - /tmp/docker_stoqs_vols/nginx:/usr/share/nginx
+      - /tmp/docker_stoqs_vols/pg_dumps:/srv/media-files/pg_dumps
+      - /src/${BUILD_CODE}:/srv
+      - static-files:/srv/static-files
+      - media-files:/srv/media-files
+    environment:
+      - DATABASE_URL=postgis://stoqsadm:CHANGEME@stoqs-postgis:5432/stoqs
+      - DATABASE_SUPERUSER_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
+      - PGHOST=stoqs-postgis
+      - POSTGRES_PASSWORD=changeme
+      - MAPSERVER_HOST=localhost
+      - URL_MAPFILE_DIR=/maps
+      - STATIC_URL=/static/
+      - STATIC_ROOT=/srv/static-files
+      - MEDIA_URL=/media/
+      - MEDIA_ROOT=/srv/media-files
+      - NGINX_SERVER_NAME=localhost
+      - DJANGO_DEBUG=false
+    container_name: stoqs
+    depends_on:
+      - mapserver
+      - postgis
+    ports:
+      - "8888:8888"
+    # Expose port 8000 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
+    ##  - "8000:8000"
+
+  # Disable nginx service if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
+  nginx:
+    image: mbarimike/stoqs-nginx
+    build:
+        context: .
+        dockerfile: Dockerfile-nginx
+    volumes:
+      - /tmp/docker_stoqs_vols/html:/srv/html
+      - /tmp/docker_stoqs_vols/pg_dumps:/srv/media-files/pg_dumps
+      - static-files:/srv/static-files
+      - media-files:/srv/media-files
+    environment:
+      - NGINX_TMPL=nginx.tmpl
+    container_name: stoqs-nginx
+    ports:
+      - "80:80"
+      - "8000:8000"
+      - "443:443"
+    depends_on:
+      - stoqs
+

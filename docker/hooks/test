@@ -3,11 +3,19 @@
 # The working directory for this script in docker cloud is $STOQS_HOME/docker
 
 echo "==> hooks/test"
+env
 
-echo "*** docker-compose -f docker-compose.test.yml up -d"
-docker-compose -f docker-compose.test.yml up -d
+if [ $GIT_BRANCH == 'MBARIMike:master' ] 
+then
+    echo "*** docker-compose -f docker-compose.test.mbarimike.yml up -d"
+    docker-compose -f docker-compose.test.mbarimike.yml up -d
+else
+    echo "*** docker-compose -f docker-compose.test.yml up -d"
+    docker-compose -f docker-compose.test.yml up -d
+fi
 
 # Wait for test.sh to start, then check that it finishes before stopping the services
+echo
 docker exec stoqs ps -ef | grep test.sh | grep -v grep
 while [[ $? == 1 ]] ; do
     sleep 30; echo "*** Waiting for test.sh to start ..."
@@ -20,8 +28,21 @@ while [[ $? == 0 ]] ; do
     docker exec stoqs ps -ef | grep test.sh | grep -v grep
 done
 
-echo "*** docker-compose -f docker-compose.test.yml logs"
-docker-compose -f docker-compose.test.yml logs
+if [ $GIT_BRANCH == 'MBARIMike:master' ] 
+then
+    echo "*** docker-compose -f docker-compose.test.mbarimike.yml logs"
+    docker-compose -f docker-compose.test.mbarimike.yml logs
+else
+    echo "*** docker-compose -f docker-compose.test.yml logs"
+    docker-compose -f docker-compose.test.yml logs
+fi
 
-echo "*** docker-compose -f docker-compose.test.yml stop"
-docker-compose -f docker-compose.test.yml stop
+if [ $GIT_BRANCH == 'MBARIMike:master' ] 
+then
+    echo "*** docker-compose -f docker-compose.test.mbarimike.yml stop"
+    docker-compose -f docker-compose.test.mbarimike.yml stop
+else
+    echo "*** docker-compose -f docker-compose.test.yml stop"
+    docker-compose -f docker-compose.test.yml stop
+fi
+

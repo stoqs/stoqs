@@ -8,5 +8,11 @@ ls -l $(dirname `pwd`)
 echo "*** PWD listing"
 ls -l 
 
-echo "*** docker-compose -f docker-compose.test.yml build"
-docker-compose -f docker-compose.test.yml build
+if [ $GIT_BRANCH == 'MBARIMike:master' ] 
+then
+    echo "*** docker-compose -f docker-compose.test.mbarimike.yml build"
+    docker-compose -f docker-compose.test.mbarimike.yml build
+else
+    echo "*** docker-compose -f docker-compose.test.yml build"
+    docker-compose -f docker-compose.test.yml build
+fi
