@@ -3,6 +3,7 @@
 # The working directory for this script in docker cloud is $STOQS_HOME/docker
 
 echo "==> hooks/test"
+env
 
 if [ $GIT_BRANCH == 'MBARIMike:master' ] 
 then
