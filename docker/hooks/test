@@ -5,7 +5,7 @@
 echo "==> hooks/test"
 env
 
-if [ $GIT_BRANCH == 'MBARIMike:master' ] 
+if [ $GIT_BRANCH == 'MBARIMike:master' ] || [ $SOURCE_REPOSITORY_URL == 'https://github.com/MBARIMike/stoqs' ] 
 then
     echo "*** docker-compose -f docker-compose.test.mbarimike.yml up -d"
     docker-compose -f docker-compose.test.mbarimike.yml up -d
@@ -28,7 +28,7 @@ while [[ $? == 0 ]] ; do
     docker exec stoqs ps -ef | grep test.sh | grep -v grep
 done
 
-if [ $GIT_BRANCH == 'MBARIMike:master' ] 
+if [ $GIT_BRANCH == 'MBARIMike:master' ] || [ $SOURCE_REPOSITORY_URL == 'https://github.com/MBARIMike/stoqs' ] 
 then
     echo "*** docker-compose -f docker-compose.test.mbarimike.yml logs"
     docker-compose -f docker-compose.test.mbarimike.yml logs
@@ -37,7 +37,7 @@ else
     docker-compose -f docker-compose.test.yml logs
 fi
 
-if [ $GIT_BRANCH == 'MBARIMike:master' ] 
+if [ $GIT_BRANCH == 'MBARIMike:master' ] || [ $SOURCE_REPOSITORY_URL == 'https://github.com/MBARIMike/stoqs' ] 
 then
     echo "*** docker-compose -f docker-compose.test.mbarimike.yml stop"
     docker-compose -f docker-compose.test.mbarimike.yml stop
