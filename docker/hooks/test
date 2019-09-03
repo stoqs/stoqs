@@ -16,6 +16,14 @@ fi
 
 # Wait for test.sh to start, then check that it finishes before stopping the services
 echo
+echo "*** docker images"
+docker images
+echo "*** docker ps"
+docker ps
+echo "*** docker exec stoqs ps -ef"
+docker exec stoqs ps -ef
+
+echo "*** docker exec stoqs ps -ef | grep test.sh | grep -v grep ..."
 docker exec stoqs ps -ef | grep test.sh | grep -v grep
 while [[ $? == 1 ]] ; do
     sleep 30; echo "*** Waiting for test.sh to start ..."
