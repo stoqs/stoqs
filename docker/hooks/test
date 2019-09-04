@@ -25,7 +25,8 @@ docker exec stoqs ps -ef
 
 echo "*** docker exec stoqs ps -ef | grep test.sh | grep -v grep ..."
 docker exec stoqs ps -ef | grep test.sh | grep -v grep
-while [[ $? == 1 ]] ; do
+##while [[ $? == 1 ]] ; do
+for i in {1..10} ; do
     sleep 30; echo "*** Waiting for test.sh to start ..."
     echo "*** docker exec stoqs ps -ef"
     docker exec stoqs ps -ef
@@ -37,11 +38,11 @@ while [[ $? == 1 ]] ; do
     docker exec stoqs ps -ef | grep test.sh | grep -v grep
 done
 
-docker exec stoqs ps -ef | grep test.sh | grep -v grep
-while [[ $? == 0 ]] ; do
-    sleep 30; echo "*** Waiting for test.sh to complete ..."
-    docker exec stoqs ps -ef | grep test.sh | grep -v grep
-done
+##docker exec stoqs ps -ef | grep test.sh | grep -v grep
+##while [[ $? == 0 ]] ; do
+##    sleep 30; echo "*** Waiting for test.sh to complete ..."
+##    docker exec stoqs ps -ef | grep test.sh | grep -v grep
+##done
 
 if [ $GIT_BRANCH == 'MBARIMike:master' ] || [ $SOURCE_REPOSITORY_URL == 'https://github.com/MBARIMike/stoqs' ] 
 then
