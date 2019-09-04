@@ -27,6 +27,13 @@ echo "*** docker exec stoqs ps -ef | grep test.sh | grep -v grep ..."
 docker exec stoqs ps -ef | grep test.sh | grep -v grep
 while [[ $? == 1 ]] ; do
     sleep 30; echo "*** Waiting for test.sh to start ..."
+    echo "*** docker exec stoqs ps -ef"
+    docker exec stoqs ps -ef
+    echo "*** docker exec stoqs ps -ef | grep test.sh"
+    docker exec stoqs ps -ef | grep test.sh 
+    echo "*** docker exec stoqs ps -ef | grep test.sh | grep -v grep"
+    docker exec stoqs ps -ef | grep test.sh | grep -v grep
+    echo "status = $?"
     docker exec stoqs ps -ef | grep test.sh | grep -v grep
 done
 
