@@ -7,7 +7,8 @@ STOQS_SRVPROJ=/srv/stoqs
 POSTGRES_DB=postgres python ${STOQS_SRVHOME}/docker/database-check.py > /dev/null 2>&1
 while [[ $? != 0 ]] ; do
     sleep 5; echo "*** Waiting for postgis container ..."
-    POSTGRES_DB=postgres python ${STOQS_SRVHOME}/docker/database-check.py > /dev/null 2>&1
+    ##POSTGRES_DB=postgres python ${STOQS_SRVHOME}/docker/database-check.py > /dev/null 2>&1
+    POSTGRES_DB=postgres python ${STOQS_SRVHOME}/docker/database-check.py
 done
 
 # Allow for psql execution (used for database creation) without a password
