@@ -50,7 +50,7 @@ done
 ##done
 
 echo "*** docker-compose exec nginx cat /etc/nginx/nginx.conf"
-docker-compose exec nginx cat /etc/nginx/nginx.conf
+docker-compose -f docker-compose.test.mbarimike.yml exec nginx cat /etc/nginx/nginx.conf
 
 
 if [ $GIT_BRANCH == 'MBARIMike:master' ] || [ $SOURCE_REPOSITORY_URL == 'https://github.com/MBARIMike/stoqs' ] 
