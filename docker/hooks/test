@@ -8,11 +8,6 @@ env
 if [ $GIT_BRANCH == 'MBARIMike:master' ] || [ $SOURCE_REPOSITORY_URL == 'https://github.com/MBARIMike/stoqs' ] 
 then
     echo "*** docker-compose -f docker-compose.test.mbarimike.yml up -d"
-    # The database-check.py program does not get these env vars from docker-compose.test.mbarimike.yml
-    STOQSADM_USER=stoqsadm
-    STOQSADM_PASSWORD=CHANGEME
-    STOQS_PGHOST=stoqs-postgis
-    STOQS_PGHOST_PORT=5432
     docker-compose -f docker-compose.test.mbarimike.yml up -d
 else
     echo "*** docker-compose -f docker-compose.test.yml up -d"
@@ -21,36 +16,21 @@ fi
 
 # Wait for test.sh to start, then check that it finishes before stopping the services
 echo
-echo "*** docker images"
-docker images
-echo "*** docker ps"
-docker ps
-echo "*** docker exec stoqs ps -ef"
-docker exec stoqs ps -ef
-
 echo "*** docker exec stoqs ps -ef | grep test.sh | grep -v grep ..."
 docker exec stoqs ps -ef | grep test.sh | grep -v grep
-##while [[ $? == 1 ]] ; do
-for i in {1..5} ; do
+while [[ $? == 1 ]] ; do
     sleep 30; echo "*** Waiting for test.sh to start ..."
-    echo "*** docker exec stoqs ps -ef"
-    docker exec stoqs ps -ef
-    echo "*** docker exec stoqs ps -ef | grep test.sh"
-    docker exec stoqs ps -ef | grep test.sh 
-    echo "*** docker exec stoqs ps -ef | grep test.sh | grep -v grep"
-    docker exec stoqs ps -ef | grep test.sh | grep -v grep
-    echo "status = $?"
     docker exec stoqs ps -ef | grep test.sh | grep -v grep
 done
 
-##docker exec stoqs ps -ef | grep test.sh | grep -v grep
-##while [[ $? == 0 ]] ; do
-##    sleep 30; echo "*** Waiting for test.sh to complete ..."
-##    docker exec stoqs ps -ef | grep test.sh | grep -v grep
-##done
+docker exec stoqs ps -ef | grep test.sh | grep -v grep
+while [[ $? == 0 ]] ; do
+    sleep 30; echo "*** Waiting for test.sh to complete ..."
+    docker exec stoqs ps -ef | grep test.sh | grep -v grep
+done
 
-echo "*** docker-compose exec nginx cat /etc/nginx/nginx.conf"
-docker-compose -f docker-compose.test.mbarimike.yml exec nginx cat /etc/nginx/nginx.conf
+echo "*** docker-compose exec stoqs-nginx cat /etc/nginx/nginx.conf"
+docker-compose -f docker-compose.test.mbarimike.yml exec stoqs-nginx cat /etc/nginx/nginx.conf
 
 
 if [ $GIT_BRANCH == 'MBARIMike:master' ] || [ $SOURCE_REPOSITORY_URL == 'https://github.com/MBARIMike/stoqs' ] 
