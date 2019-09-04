@@ -20,6 +20,16 @@ def database_check():
     host = os.environ.get('STOQS_PGHOST')
     port = os.environ.get('STOQS_PGHOST_PORT')
 
+    if user and password and host and port:
+        # All O.K. - variables defined in environment
+        pass
+    else:
+        # Likely being run by DockerHub Autotest - set with defaults
+        user = 'stoqsadm'
+        password = 'CHANGEME'
+        host = 'stoqs-postgis'
+        port = '5432'
+
     print("HOST: {host}:{port}, DB: {dbname}, USER: {user}".format(
         dbname=dbname,
         user=user,
