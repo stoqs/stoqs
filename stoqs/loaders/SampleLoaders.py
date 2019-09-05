@@ -80,7 +80,10 @@ sampling_end_re       = sample_prefix + no_num_sampling_end_re
 lsr_seq_num_re          = r'\[sample #(?P<seq_num>\d+)\]'
 lsr_num_messages_re     = r'ESP log summary report \((?P<num_messages>\d+) messages\)'
 lsr_cartridge_number_re = r'Selecting Cartridge (?P<cartridge_number>\d+)'
+# E.g.: Sampled  1000.0ml
 lsr_volume_re           = r'Sampled\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
+# E.g.: Cmd::Paused in FILTERING --  during Sample Pump (SP) move after sampling 486.135m
+lsr_volume_re_paused    = r'.*sampling\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
 lsr_esp_error_msg_re    = r'(?P<esp_error_message>.+Error in PROCESSING.+)'
 
 class ClosestTimeNotFoundException(Exception):
@@ -427,6 +430,10 @@ class ParentSamplesLoader(STOQS_Loader):
             lsr_lsr_num_messages = re.search(lsr_num_messages_re, summary.text, re.MULTILINE)
             lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE)
             lsr_volume = re.search(lsr_volume_re, summary.text, re.MULTILINE)
+            if not lsr_volume:
+                self.logger.debug(f"Could not parse lsr_volume from '{summary.text}'")
+                self.logger.debug(f"Attempting with lsr_volume_re_paused regex: {lsr_volume_re_paused}")
+                lsr_volume = re.search(lsr_volume_re_paused, summary.text, re.MULTILINE)
             lsr_esp_error_msg = re.search(lsr_esp_error_msg_re, summary.text, re.MULTILINE)
 
             # Ensure that sample # (seq) numbers match
