@@ -3,7 +3,6 @@
 # The working directory for this script in docker cloud is $STOQS_HOME/docker
 
 echo "==> hooks/test"
-env
 
 if [ $GIT_BRANCH == 'MBARIMike:master' ] || [ $SOURCE_REPOSITORY_URL == 'https://github.com/MBARIMike/stoqs' ] 
 then
@@ -28,9 +27,6 @@ while [[ $? == 0 ]] ; do
     sleep 30; echo "*** Waiting for test.sh to complete ..."
     docker exec stoqs ps -ef | grep test.sh | grep -v grep
 done
-
-echo "*** docker-compose -f docker-compose.test.mbarimike.yml exec nginx cat /etc/nginx/nginx.conf"
-docker-compose -f docker-compose.test.mbarimike.yml exec nginx cat /etc/nginx/nginx.conf
 
 
 if [ $GIT_BRANCH == 'MBARIMike:master' ] || [ $SOURCE_REPOSITORY_URL == 'https://github.com/MBARIMike/stoqs' ] 
