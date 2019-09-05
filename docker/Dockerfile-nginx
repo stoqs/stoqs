@@ -1,7 +1,6 @@
 FROM nginx:1.13
 
 ARG NGINX_TMPL
-ARG NGINX_SERVER_NAME
 
 # Add start script
 ADD nginx-start.sh /
