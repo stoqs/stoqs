@@ -104,7 +104,7 @@ database, and execute the unit and functional tests of the stoqs application.
 Once you see `... [emperor] vassal /etc/uwsgi/django-uwsgi.ini is ready to accept requests`
 you can visit the site at https://localhost &mdash; it uses a self-signed certificate, so your
 browser will complain and you will need to add an exception. (The nginx service also delivers 
-the same app at http://localhost:8000 without the cerificate issue.)
+the same app at http://localhost:8000 without the certificate issue.)
 
 The default settings in `template.env` will run a production nginx/uwsgi/stoqs server configured
 for https://localhost in a Vagrant virtual machine. To configure a server for intranet or public serving of
