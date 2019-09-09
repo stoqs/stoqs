@@ -86,20 +86,19 @@ git pull
 
 First, install [Docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/install/)
 on your system.  Then clone the repository; in the docker directory copy the `template.env` file to `.env` 
-and edit it for your specific installation, then execute `docker-compose up`:
+and edit it for your specific installation, then execute `docker-compose pull` and `docker-compose up`:
 
 ```bash
 git clone https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit/docker
 cp template.env .env
 chmod 600 .env      # You must then edit .env and change settings for your environment
+docker-compose pull
 docker-compose up
 ```
-The first time you execute `docker-compose up` the latest images will be pulled from DockerHub.
-(If you would rather build the images locally you can execute `docker-compose build`.) If the
-directory set to the STOQS_VOLS_DIR variable in your .env file doesn't exist then the execution of
-`docker-compose up` will also create the postgresql database cluster, load a default stoqs 
-database, and execute the unit and functional tests of the stoqs application.
+If the directory set to the STOQS_VOLS_DIR variable in your .env file doesn't exist then the 
+execution of `docker-compose up` will create the postgresql database cluster, load a default 
+stoqs database, and execute the unit and functional tests of the stoqs application.
 
 Once you see `... [emperor] vassal /etc/uwsgi/django-uwsgi.ini is ready to accept requests`
 you can visit the site at https://localhost &mdash; it uses a self-signed certificate, so your
