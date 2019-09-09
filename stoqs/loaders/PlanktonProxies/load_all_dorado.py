@@ -43,11 +43,13 @@ enddate = datetime.datetime(2019, 12, 31)
 cl.process_command_line()
 
 if cl.args.test:
-    cl.stride = 100
+    cl.stride = 1
+    startdate = datetime.datetime(2003, 12, 5)
+    enddate = datetime.datetime(2003, 12, 7)
+    cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
 elif cl.args.stride:
     cl.stride = cl.args.stride
-
-cl.loadDorado(startdate, enddate, build_attrs=True)
+    cl.loadDorado(startdate, enddate, build_attrs=True)
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
