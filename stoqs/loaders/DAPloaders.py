@@ -2002,8 +2002,108 @@ def runBEDTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, a
     loader.process_data()
     loader.logger.debug("Loaded Activity with name = %s", aName)
 
+def _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain):
+    # Construct LOPC data url that looks like:
+    # http://dods.mbari.org/opendap/data/ssdsdata/ssds/generated/netcdf/files/ssds.shore.mbari.org/auvctd/missionlogs/2010/2010300/2010.300.00/lopc.nc
+    # from url that looks like: http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/Dorado389_2010_300_00_300_00_decim.nc
+    #                  or like: http://odss.mbari.org/thredds/dodsC/CANON_march2013/dorado/Dorado389_2013_074_02_074_02_decim.nc
+    # TODO: Handle multiple missions that compose a survey
+    survey = url[url.find('Dorado389'):]
+    yr = survey.split('_')[1]
+    yd = survey.split('_')[2]
+    mn = survey.split('_')[3]
+    lopc_url = ('http://dods.mbari.org/opendap/data/ssdsdata/ssds/generated/netcdf/'
+                  'files/ssds.shore.mbari.org/auvctd/missionlogs/{}/{}/{}.{}.{}/'
+                  'lopc.nc').format(yr, yr + yd, yr, yd, mn)
+
+    lopc_aName = '{} (stride={})'.format(lopc_url, stride)
+
+    loader.logger.debug("Instantiating Dorado_Loader for url = %s", lopc_url)
+    try:
+        lopc_loader = Dorado_Loader(url = lopc_url, campaignName = cName,
+                                    campaignDescription = cDesc, dbAlias = dbAlias,
+                                    activityName = lopc_aName, activitytypeName = aTypeName,
+                                    platformName = pName, platformColor = pColor,
+                                    platformTypeName = pTypeName, stride = stride,
+                                    grdTerrain = grdTerrain)
+    except Exception:
+        loader.logger.warn('No LOPC data to load at %s', lopc_url)
+        return
+
+    lopc_loader.include_names = ['sepCountList', 'mepCountList']
+
+    # These get added to ignored_names on previous .process_data(), remove them
+    if 'sepCountList' in lopc_loader.ignored_names:
+        lopc_loader.ignored_names.remove('sepCountList')
+    if 'mepCountList' in lopc_loader.ignored_names:
+        lopc_loader.ignored_names.remove('mepCountList')
+
+    lopc_loader.associatedActivityName = loader.activityName
+
+    # Auxillary coordinates are the same for all include_names
+    lopc_loader.auxCoords = {}
+    for v in lopc_loader.include_names:
+        lopc_loader.auxCoords[v] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+
+    Dorado_Loader.getFeatureType = lambda self: TRAJECTORY
+    try:
+        # Specify featureType so that non-CF LOPC data can be loaded
+        lopc_loader.process_data(featureType=TRAJECTORY)
+    except VariableMissingCoordinatesAttribute as e:
+        loader.logger.exception(str(e))
+    except NoValidData as e:
+        loader.logger.warn(str(e))
+    except KeyError as e:
+        loader.logger.warn(str(e))
+    else:
+        loader.logger.debug("Loaded Activity with name = %s", lopc_loader.activityName)
+
+def _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain):
+    survey = url[url.find('Dorado389'):]
+    yr = survey.split('_')[1]
+    yd = survey.split('_')[2]
+    mn = survey.split('_')[3]
+
+    # http://odss.mbari.org/thredds/dodsC/Other/routine/Products/Dorado/netcdf_proxies/2003/Dorado_2003_340_02_proxies.nc
+    pp_url = ('http://odss.mbari.org/thredds/dodsC/Other/routine/Products/Dorado/'
+              'netcdf_proxies/{}/Dorado_{}_{}_{}_proxies.nc').format(yr, yr, yd, mn)
+
+    pp_aName = '{} (stride={})'.format(pp_url, stride)
+
+    loader.logger.debug("Instantiating Trajectory_Loader for url = %s", pp_url)
+    try:
+        pp_loader = Trajectory_Loader(url = pp_url, campaignName = cName,
+                                    campaignDescription = cDesc, dbAlias = dbAlias,
+                                    activityName = pp_aName, activitytypeName = aTypeName,
+                                    platformName = pName, platformColor = pColor,
+                                    platformTypeName = pTypeName, stride = stride,
+                                    grdTerrain = grdTerrain)
+    except Exception:
+        loader.logger.warn('No plankton proxy data to load at %s', pp_url)
+        return
+
+    pp_loader.include_names = ['diatoms', 'adinos']
+
+    # Auxillary coordinates are the same for all include_names
+    pp_loader.auxCoords = {}
+    for v in pp_loader.include_names:
+        pp_loader.auxCoords[v] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+
+    Trajectory_Loader.getFeatureType = lambda self: TRAJECTORY
+    try:
+        # Specify featureType so that non-CF LOPC data can be loaded
+        pp_loader.process_data(featureType=TRAJECTORY)
+    except VariableMissingCoordinatesAttribute as e:
+        loader.logger.exception(str(e))
+    except NoValidData as e:
+        loader.logger.warn(str(e))
+    except KeyError as e:
+        loader.logger.warn(str(e))
+    else:
+        loader.logger.debug("Loaded Activity with name = %s", pp_loader.activityName)
+
 def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
-                    dbAlias, stride, grdTerrain=None, plotTimeSeriesDepth=None):
+                    dbAlias, stride, grdTerrain=None, plotTimeSeriesDepth=None, plankton_proxies=False):
     '''
     Run the DAPloader for Dorado AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -2042,60 +2142,10 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         loader.logger.debug("Loaded Activity with name = %s", aName)
 
     if 'sepCountList' in loader.include_names or 'mepCountList' in loader.include_names:
-        # Construct LOPC data url that looks like:
-        # http://dods.mbari.org/opendap/data/ssdsdata/ssds/generated/netcdf/files/ssds.shore.mbari.org/auvctd/missionlogs/2010/2010300/2010.300.00/lopc.nc
-        # from url that looks like: http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/Dorado389_2010_300_00_300_00_decim.nc
-        #                  or like: http://odss.mbari.org/thredds/dodsC/CANON_march2013/dorado/Dorado389_2013_074_02_074_02_decim.nc
-        # TODO: Handle multiple missions that compose a survey
-        survey = url[url.find('Dorado389'):]
-        yr = survey.split('_')[1]
-        yd = survey.split('_')[2]
-        mn = survey.split('_')[3]
-        lopc_url = ('http://dods.mbari.org/opendap/data/ssdsdata/ssds/generated/netcdf/'
-                      'files/ssds.shore.mbari.org/auvctd/missionlogs/{}/{}/{}.{}.{}/'
-                      'lopc.nc').format(yr, yr + yd, yr, yd, mn)
+        _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain)
 
-        lopc_aName = '{} (stride={})'.format(lopc_url, stride)
-
-        loader.logger.debug("Instantiating Dorado_Loader for url = %s", lopc_url)
-        try:
-            lopc_loader = Dorado_Loader(url = lopc_url, campaignName = cName,
-                                        campaignDescription = cDesc, dbAlias = dbAlias,
-                                        activityName = lopc_aName, activitytypeName = aTypeName,
-                                        platformName = pName, platformColor = pColor,
-                                        platformTypeName = pTypeName, stride = stride,
-                                        grdTerrain = grdTerrain)
-        except Exception:
-            loader.logger.warn('No LOPC data to load at %s', lopc_url)
-            return
-
-        lopc_loader.include_names = ['sepCountList', 'mepCountList']
-
-        # These get added to ignored_names on previous .process_data(), remove them
-        if 'sepCountList' in lopc_loader.ignored_names:
-            lopc_loader.ignored_names.remove('sepCountList')
-        if 'mepCountList' in lopc_loader.ignored_names:
-            lopc_loader.ignored_names.remove('mepCountList')
-
-        lopc_loader.associatedActivityName = loader.activityName
-
-        # Auxillary coordinates are the same for all include_names
-        lopc_loader.auxCoords = {}
-        for v in lopc_loader.include_names:
-            lopc_loader.auxCoords[v] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
-
-        Dorado_Loader.getFeatureType = lambda self: TRAJECTORY
-        try:
-            # Specify featureType so that non-CF LOPC data can be loaded
-            lopc_loader.process_data(featureType=TRAJECTORY)
-        except VariableMissingCoordinatesAttribute as e:
-            loader.logger.exception(str(e))
-        except NoValidData as e:
-            loader.logger.warn(str(e))
-        except KeyError as e:
-            loader.logger.warn(str(e))
-        else:
-            loader.logger.debug("Loaded Activity with name = %s", lopc_loader.activityName)
+    if plankton_proxies:
+        _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain)
 
 
 def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
