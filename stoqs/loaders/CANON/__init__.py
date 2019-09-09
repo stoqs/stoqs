@@ -148,7 +148,7 @@ class CANONLoader(LoadScript):
                    parameters=[ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
                     'sepCountList', 'mepCountList', 'roll', 'pitch', 'yaw', ], stride=None,
-                    file_patterns=('.*_decim.nc$'), build_attrs=False):
+                    file_patterns=('.*_decim.nc$'), build_attrs=False, plankton_proxies=False):
         '''
         Support legacy use of loadDorad() and permit wider use by specifying startdate and endate
         '''
@@ -174,7 +174,7 @@ class CANONLoader(LoadScript):
                 DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aname, 
                                            pname, self.colors[pname], 'auv', 'AUV mission', 
                                            self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                           plotTimeSeriesDepth=0.0)
+                                           plotTimeSeriesDepth=0.0, plankton_proxies=plankton_proxies)
                 psl.load_gulps(aname, dfile, self.dbAlias)
             except DAPloaders.DuplicateData as e:
                 self.logger.warn(str(e))
