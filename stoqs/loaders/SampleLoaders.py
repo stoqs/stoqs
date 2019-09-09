@@ -83,7 +83,7 @@ lsr_cartridge_number_re = r'Selecting Cartridge (?P<cartridge_number>\d+)'
 # E.g.: Sampled  1000.0ml
 lsr_volume_re           = r'Sampled\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
 # E.g.: Cmd::Paused in FILTERING --  during Sample Pump (SP) move after sampling 486.135m
-lsr_volume_re_paused    = r'.*sampling\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
+lsr_volume_re_paused    = r'.*[Ss]ampl.+\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
 lsr_esp_error_msg_re    = r'(?P<esp_error_message>.+Error in PROCESSING.+)'
 
 class ClosestTimeNotFoundException(Exception):
@@ -468,9 +468,18 @@ class ParentSamplesLoader(STOQS_Loader):
                     volume = float(lsr_volume.groupdict().get('volume_num'))
             if lsr_esp_error_msg:
                 if lsr_esp_error_msg.groupdict().get('esp_error_message'):
+                    # Instance of 'Slide::Error in PROCESSING -- Archive Syringe positionErr at 54ul (actually 72ul)' in:
+                    # http://dods.mbari.org/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/syslog
                     merr = re.match('.+actually (\d+)([a-z]+)', lsr_esp_error_msg.groupdict().get('esp_error_message'))
-                    if merr.group(2) == 'ul':
-                        volume = float(merr.group(1)) * 1.e-3
+                    if merr:
+                        if merr.group(2) == 'ul':
+                            self.logger.info(f"Saving 'actually' volume following from {lsr_esp_error_msg.groupdict().get('esp_error_message')}")
+                            volume = float(merr.group(1)) * 1.e-3
+                    else:
+                        # Instance of 'Syringe::PressureError in PROCESSING -- 24.5psi is out of 11.0..22.5 range -- Skipping SPR' in:
+                        # http://dods.mbari.org/data/lrauv/makai/missionlogs/2019/20190822_20190827/20190822T194106/syslog
+                        self.logger.info(f"Error encountered: {lsr_esp_error_msg.groupdict().get('esp_error_message')}")
+
                 
             sample_names[sample_name] = SampleInfo(filtering.esec, stopping.esec, volume, summary.text)
 
