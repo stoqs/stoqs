@@ -478,7 +478,6 @@ class ParentSamplesLoader(STOQS_Loader):
                     else:
                         # Instance of 'Syringe::PressureError in PROCESSING -- 24.5psi is out of 11.0..22.5 range -- Skipping SPR' in:
                         # http://dods.mbari.org/data/lrauv/makai/missionlogs/2019/20190822_20190827/20190822T194106/syslog
-                        import pdb; pdb.set_trace()
                         self.logger.info(f"Error encountered: {lsr_esp_error_msg.groupdict().get('esp_error_message')}")
 
                 
