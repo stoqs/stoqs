@@ -33,12 +33,19 @@ cl = CANONLoader('$db_alias', '$title',
                      'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                      'VerticalExaggeration': '1',
                    },
-                  'https://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
+                   'https://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
                      'position': '14051448.48336 -15407886.51486 6184041.22775',
                      'orientation': '0.83940 0.33030 0.43164 1.44880',
                      'centerOfRotation': '0 0 0',
                      'VerticalExaggeration': '10',
                    },
+                   'https://stoqs.mbari.org/x3d/erie_lld_10x/erie_lld_10x_scene.x3d': {
+                     'position': '557315.50014 -4777725.37774 4229154.62985',
+                     'orientation': '0.99936 -0.02525 -0.02534 1.59395',
+                     'centerOfRotation': '555524.3673806359 -4734293.352168839 4223218.342988144',
+                     'VerticalExaggeration': '10',
+                     'speed': '0.1',
+                    },
                  },
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
