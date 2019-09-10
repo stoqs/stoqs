@@ -18,7 +18,17 @@ from datetime import datetime
 import timing
 
 cl = CANONLoader('stoqs_erie2019', 'Lake Erie ESP 2019',
-                 description='Lake Erie Makai ESP Deployments in 2019',
+                    description='Lake Erie Makai ESP Deployments in 2019',
+                    x3dTerrains = {
+                                    'https://stoqs.mbari.org/x3d/erie_lld_10x/erie_lld_10x_scene.x3d': {
+                                        'position': '557315.50014 -4777725.37774 4229154.62985',
+                                        'orientation': '0.99936 -0.02525 -0.02534 1.59395',
+                                        'centerOfRotation': '555524.3673806359 -4734293.352168839 4223218.342988144',
+                                        'VerticalExaggeration': '10',
+                                        'speed': '0.1',
+                                    }
+                    },
+                    grdTerrain = os.path.join(parentDir, 'erie_lld.grd')
                  )
 
 sdate = datetime(2019, 8, 13)
