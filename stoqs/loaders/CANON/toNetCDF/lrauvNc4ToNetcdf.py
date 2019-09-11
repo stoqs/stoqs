@@ -62,6 +62,9 @@ sh.setFormatter(f)
 logger.addHandler(sh)
 logger.setLevel(logging.DEBUG)
 
+class MissingCoordinate(Exception):
+    pass
+
 
 class InterpolatorWriter(BaseWriter):
 
@@ -788,8 +791,13 @@ class InterpolatorWriter(BaseWriter):
             # key looks like sea_water_temperature_depth, sea_water_temperature_lat, sea_water_temperature_lon, etc.
             for c in coord:
 
-                # get coordinate
-                ts = coord_ts[c]
+                try:
+                    # get coordinate
+                    ts = coord_ts[c]
+                except KeyError as e:
+                    msg = f"Required coordinate {c} missing from {url}"
+                    logger.warn(msg)
+                    raise MissingCoordinate(msg)
 
                 # and interpolate using parameter time
                 if not ts.empty:
