@@ -49,6 +49,10 @@ sn_lookup = {
              'bin_mean_temperature': 'sea_water_temperature',
              'bin_mean_salinity': 'sea_water_salinity',
              'bin_mean_chlorophyll': 'mass_concentration_of_chlorophyll_in_sea_water', 
+             'temperature': 'sea_water_temperature',
+             'salinity': 'sea_water_salinity',
+             'chlorophyll': 'mass_concentration_of_chlorophyll_in_sea_water', 
+             'oxygen': 'mass_concentration_of_oxygen_in_sea_water',
             }
 
 logger = logging.getLogger(__name__)
@@ -56,7 +60,7 @@ sh = logging.StreamHandler()
 f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
 sh.setFormatter(f)
 logger.addHandler(sh)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 
 class InterpolatorWriter(BaseWriter):
@@ -273,8 +277,6 @@ class InterpolatorWriter(BaseWriter):
             elif key in sn_lookup.keys():
                 rc.standard_name = sn_lookup[key]
 
-                rc.standard_name = key
-
             rc.coordinates = ' '.join(list(c.values()))
 
             if units is None:
@@ -484,8 +486,11 @@ class InterpolatorWriter(BaseWriter):
                         ##logger.debug(f'For variable {v:>20} creating coordinate {c:>20}')
                         ts = self.createSeries(self.df.variables, c, c+'_'+'time')
                         all_ts[c] = ts
+                    except KeyError:
+                        # Likely the variable c is not in the NetCDF file
+                        logger.warn(f"Could not create coord {c}.  It's likely not in the file")
                     except Exception as e:
-                        logger.error('Error in creating coord {} {}'.format(c, e))
+                        logger.error('Could not create coord {}: {}'.format(c, str(e)))
                         continue
 
         return all_ts
@@ -675,6 +680,7 @@ class InterpolatorWriter(BaseWriter):
 
     def processNc4FileDecimated(self, url, in_file, out_file, parms, group_parms, interp_key):
         self.reset()
+        self.group_parms = group_parms
         parm_valid = []
         coord =  ['latitude','longitude','depth']
 
@@ -685,12 +691,17 @@ class InterpolatorWriter(BaseWriter):
         for key in parms:
           try:
             ts = self.createSeriesPydap(key, key + '_time')
+          except IndexError as e:
+            logger.warn(e)
+            continue
+          try:
             if ts.size == 0:
                 logger.info('Variable ' + key + ' empty so skipping')
                 continue
 
             attr = {}
             for name in self.df[key].ncattrs(): 
+                logger.debug(f"Getting attributes for {name}")
                 attr[name]=getattr(self.df[key],name)
             self.all_attrib[key] = attr
             self.all_coord[key] = {'time': 'time', 'depth': 'depth', 'latitude': 'latitude', 'longitude': 'longitude'}
@@ -698,7 +709,8 @@ class InterpolatorWriter(BaseWriter):
             self.all_sub_ts[key] = ts
             logger.info('Found parameter ' + key)
           except Exception as e:
-            logger.error(e)
+            # Likely no variable in the netCDF file
+            logger.warn(e)
             continue
 
         # Create pandas time series for each parameter in each group and store attributes
@@ -1171,10 +1183,13 @@ if __name__ == '__main__':
     nc4_file='/home/vagrant/LRAUV/daphne/missionlogs/2015/20150930_20151008/20151006T201728/201510062017_201510062027.nc4'
     nc4_file='/mbari/LRAUV/opah/missionlogs/2017/20170502_20170508/20170508T185643/201705081856_201705090002.nc4'
     nc4_file='/mbari/LRAUV/makai/missionlogs/2018/20180802_20180806/20180805T004113/201808050041_201808051748.nc4'
+    nc4_file='/mbari/LRAUV/makai/realtime/sbdlogs/2019/201908/20190820T055043/shore.nc4'
+    url_src='http://dods.mbari.org/opendap/data/lrauv/makai/realtime/sbdlogs/2019/201908/20190820T055043/shore.nc4'
     outDir = '/tmp/'
     resample_freq='10S'
     rad_to_deg = True
-    parm = '{' \
+    parms = ['chlorophyll', 'temperature', 'oxygen', ]
+    groupparms = '{' \
            '"CTD_NeilBrown": [ ' \
            '{ "name":"sea_water_salinity" , "rename":"salinity" }, ' \
            '{ "name":"sea_water_temperature" , "rename":"temperature" } ' \
@@ -1199,6 +1214,8 @@ if __name__ == '__main__':
     # with resample appended to indicate it has resampled data and is now in .nc format
     f = nc4_file.rsplit('/',1)[1]
     out_file = outDir + '.'.join(f.split('.')[:-1]) + '_' + resample_freq + '.nc'
-    pw.processResampleNc4File(nc4_file, out_file, json.loads(parm),resample_freq, rad_to_deg, args)
+    ##pw.processResampleNc4File(nc4_file, out_file, json.loads(parms),resample_freq, rad_to_deg, args)
+    logger.debug(f"Testing processNc4FileDecimated() to create {out_file}...")
+    pw.processNc4FileDecimated(url_src, nc4_file, out_file, parms, json.loads(groupparms), 'depth')
 
     print('Done.')
