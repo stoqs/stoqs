@@ -26,6 +26,7 @@ import re
 import pydap
 import pytz
 import json
+import webob
 
 ##from Contour import Contour
 from thredds_crawler.crawl import Crawl
@@ -57,7 +58,7 @@ class ServerError(Exception):
     pass
 
 
-class BadFileName(Exception):
+class FileNotInYear(Exception):
     pass
 
 
@@ -97,6 +98,9 @@ def getNcStartEnd(urlNcDap, timeAxisName):
         endDatetime = from_udunits(df[timeAxisName][-1][0].data, timeAxisUnits)
     except pydap.exceptions.ServerError as e:
         logger.warning(e)
+        raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
+    except webob.exc.HTTPError as e:
+        logger.warning(e.comment)
         raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
     except ValueError as e:
         logger.warning(e)
@@ -310,7 +314,7 @@ if __name__ == '__main__':
     url, files = args.inUrl.rsplit('/',1)
     logger.info("Crawling %s for %s files", url, files)
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$", ".*.js$", ".*.kml$",  ".*.log$"]
-    c = Crawl(os.path.join(url, 'catalog.xml'), select=[files], debug=True, skip=skips, workers=1)
+    c = Crawl(os.path.join(url, 'catalog.xml'), select=[files], debug=False, skip=skips)
 
     for d in c.datasets:
         logger.debug('Found %s', d.id)
@@ -331,20 +335,22 @@ if __name__ == '__main__':
         try:
             year_str = '{}'.format(start.year)
             logger.info('Looking for {} in {}'.format(year_str, url))
-            if '{}'.format(start.year) in url:
+            if year_str in url:
                 (url_src, startDatetime, endDatetime) = processDecimated(args, pw, url, lastDatetime, start, end)
             else:
-              raise BadFileName('{} not in search year'.format(url))
+                logger.warn('{} not in search year'.format(url))
+                continue
+                ##raise FileNotInYear('{} not in search year'.format(url))
         except ServerError as e:
             logger.warning(e)
             continue
-        ##except Exception as e:
-        ##    logger.warning(e)
-        ##    continue
+        except lrauvNc4ToNetcdf.MissingCoordinate as e:
+            logger.warning(e)
+            continue
 
         lastDatetime = endDatetime
 
-        if url_src:
+        if url_src and args.database:
             logger.info("Received new %s file ending at %s in %s", platformName, lastDatetime, url_src)
             aName = url_src.split('/')[-2] + '_' + url_src.split('/')[-1].split('.')[0]
             dataStartDatetime = None
