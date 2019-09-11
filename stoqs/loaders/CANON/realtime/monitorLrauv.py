@@ -46,14 +46,20 @@ logger.setLevel(logging.DEBUG)
 class NoNewHotspotData(Exception):
     pass
 
+  
 class NcFileMissing(Exception):
     def __init__(self, value):
         self.nc4FileUrl = value
     def __str__(self):
         return repr(self.nc4FileUrl)
-
+ 
 class ServerError(Exception):
     pass
+
+
+class BadFileName(Exception):
+    pass
+
 
 def abbreviate(parms):
     '''Return the shortened string that represents the list of parameters. This is used in both activity and file naming conventions'''
@@ -134,8 +140,8 @@ def processDecimated(args, pw, url, lastDatetime, start, end):
             logger.warning('Assuming data are invalid and skipping')
         except IndexError:
             logger.warning('Problem interpolating data from %s', url)
-        except KeyError:
-            raise ServerError("Key error - can't read parameters from %s" % (url))
+        ##except KeyError:
+        ##    raise ServerError("Key error - can't read parameters from %s" % (url))
         except ValueError:
             raise ServerError("Value error - can't read parameters from %s" % (url))
 
@@ -266,34 +272,13 @@ def check_file(delay, old_filename, new_filename):
 
 if __name__ == '__main__':
     args = process_command_line()
+    lrauv_names = ('ahi', 'aku', 'brezo', 'daphne', 'galene', 'makai', 'opah', 'pontus', 
+                   'tethys', 'triton', 'whoidhs')
 
-    platformName = None
-
-    # Url name for logs indicates what vehicle logs are being monitored; use this to determine the platform name
-    d = re.match(r'.*tethys*',args.inUrl)
-    if d:
-        platformName = 'tethys'
-    d = re.match(r'.*daphne*',args.inUrl)
-    if d:
-        platformName = 'daphne'
-    d = re.match(r'.*makai*',args.inUrl)
-    if d:
-        platformName = 'makai'
-    d = re.match(r'.*aku*',args.inUrl)
-    if d:
-        platformName = 'aku'
-    d = re.match(r'.*ahi*',args.inUrl)
-    if d:
-        platformName = 'ahi'
-    d = re.match(r'.*opah*',args.inUrl)
-    if d:
-        platformName = 'opah'
-    d = re.match(r'.*whoidhs*',args.inUrl)
-    if d:
-        platformName = 'whoidhs'
-
-    if platformName is None:
-        raise Exception('cannot find platformName from url %s' % args.inUrl)
+    platformName = args.inUrl.split('/')[6]
+    if platformName not in lrauv_names:
+        logger.warn(f"Platform name {platformName} parsed from {args.inUrl} is not in {lrauv_names}")
+        sys.exit(1)
 
     # Start back a week from now to load in old data
     lastDatetime = datetime.utcnow() - timedelta(days=7)
@@ -322,12 +307,10 @@ if __name__ == '__main__':
     cl.campaignName = args.campaign
 
     # Get directory list from sites
-    s = args.inUrl.rsplit('/',1)
-    files = s[1]
-    url = s[0]
+    url, files = args.inUrl.rsplit('/',1)
     logger.info("Crawling %s for %s files", url, files)
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$", ".*.js$", ".*.kml$",  ".*.log$"]
-    c = Crawl(os.path.join(url, 'catalog.xml'), select=[files], debug=False, skip=skips)
+    c = Crawl(os.path.join(url, 'catalog.xml'), select=[files], debug=True, skip=skips, workers=1)
 
     for d in c.datasets:
         logger.debug('Found %s', d.id)
@@ -351,13 +334,13 @@ if __name__ == '__main__':
             if '{}'.format(start.year) in url:
                 (url_src, startDatetime, endDatetime) = processDecimated(args, pw, url, lastDatetime, start, end)
             else:
-              raise Exception('{} not in search year'.format(url))
+              raise BadFileName('{} not in search year'.format(url))
         except ServerError as e:
             logger.warning(e)
             continue
-        except Exception as e:
-            logger.warning(e)
-            continue
+        ##except Exception as e:
+        ##    logger.warning(e)
+        ##    continue
 
         lastDatetime = endDatetime
 
