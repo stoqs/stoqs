@@ -55,7 +55,7 @@ if settings.DEBUG:
 
 # Constants for utils/STOQSQmanager.py to use
 SAMPLED = 'Sampled'
-sample_simplify_crit = 0.5
+sample_simplify_crit = 0.1
 
 # SampleTypes
 GULPER = 'Gulper'
