@@ -23,7 +23,7 @@ from stoqs.models import (Activity, InstantPoint, Sample, SampleType, Resource,
                           SamplePurpose, SampleRelationship, Parameter, SampledParameter,
                           MeasuredParameter, AnalysisMethod, Measurement, Campaign,
                           Platform, PlatformType, ActivityType, ActivityResource,
-                          SampleResource)
+                          SampleResource, ResourceType, ParameterResource)
 from loaders.seabird import get_year_lat_lon
 from loaders import STOQS_Loader, SkipRecord
 from collections import defaultdict, namedtuple
@@ -263,7 +263,7 @@ class ParentSamplesLoader(STOQS_Loader):
         sample_act.loaded_date = datetime.utcnow()
         sample_act.save(using=db_alias)
 
-        # Add deep copies of original Activity Measurments to the new Sample Activity to have accurate time and locations
+        # Add deep copies of original Activity Measurements to the new Sample Activity to have accurate time and locations
         # and statistics of the MeasuredParameters for the Sample
         self.activity = sample_act
         parameter_counts = defaultdict(lambda:0)
@@ -296,6 +296,22 @@ class ParentSamplesLoader(STOQS_Loader):
 
         self.logger.debug(f"Creating SimpleDepthTimeSeries for this Sample")
         self.insertSimpleDepthTimeSeries(critSimpleDepthTime=sample_simplify_crit)
+
+        # Associate Resources so that data can be plotted in the Paramter tab of the UI
+        self.logger.info(f"Associating Resources for UI display of Parameters tab for sample_act = {sample_act}")
+        ncg_res_type, _ = ResourceType.objects.using(self.dbAlias).get_or_create(name='nc_global')
+        ui_res_type, _ = ResourceType.objects.using(self.dbAlias).get_or_create(name='ui_instruction')
+        ft_res, _ = Resource.objects.using(self.dbAlias).get_or_create(name='featureType',
+                                                                       value='trajectory', resourcetype=ncg_res_type)
+        ptsd_res, _ = Resource.objects.using(self.dbAlias).get_or_create(name='plotTimeSeriesDepth',
+                                                                         value=0, resourcetype=ui_res_type)
+        ar, _ = ActivityResource.objects.using(self.dbAlias).get_or_create(activity=sample_act, resource=ft_res)
+        self.logger.info(f"ActivityResource.resource = {ar.resource}")
+        ar, _ = ActivityResource.objects.using(self.dbAlias).get_or_create(activity=sample_act, resource=ptsd_res)
+        self.logger.info(f"ActivityResource.resource = {ar.resource}")
+        for parm in parameter_counts:
+            pr, _ = ParameterResource.objects.using(self.dbAlias).get_or_create(parameter=parm, resource=ptsd_res)
+            self.logger.info(f"parm = {parm}, ParameterResource.resource = {pr.resource}")
 
         return sample_act, sample_ip, point, depth, maptrack
 
