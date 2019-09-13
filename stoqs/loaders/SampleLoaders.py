@@ -64,7 +64,7 @@ NETTOW = 'NetTow'
 VERTICALNETTOW = 'VerticalNetTow'       # Must contain NETTOW string so that a filter for
 HORIZONTALNETTOW = 'VerticalNetTow'     # name__contains=NETTOW returns both vertical and horizontal net tows
 PLANKTONPUMP = 'PlanktonPump'
-ESP_ARCHIVE = 'ESP_Archive'
+ESP_FILTERING = 'ESP_filtering'
 SIPPER = 'Sipper'
 SIPPER_NUM_ERR = re.compile('Sample (?P<sipper_num>\d+), err_code=(?P<sipper_err>\d+)')
 SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
@@ -224,7 +224,7 @@ class ParentSamplesLoader(STOQS_Loader):
         campaign = Campaign.objects.using(db_alias).filter(activity__name=activity_name)[0]
         lrauv_platform = Platform.objects.using(db_alias).filter(activity__name=activity_name)[0]
         platform = self._get_lrauv_esp_sample_platform(db_alias, lrauv_platform, sample_type)
-        at, _ = ActivityType.objects.using(db_alias).get_or_create(name=ESP_ARCHIVE)
+        at, _ = ActivityType.objects.using(db_alias).get_or_create(name=ESP_FILTERING)
 
         sdt = datetime.fromtimestamp(ses)
         edt = datetime.fromtimestamp(ees)
@@ -627,7 +627,7 @@ class ParentSamplesLoader(STOQS_Loader):
         sipper_names = self._match_sippers(samplings_at, sample_num_errs)
 
         if sample_names:
-            (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_ARCHIVE)
+            (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_FILTERING)
             self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
             self._save_samples(db_alias, platform_name, activity_name, esp_archive_type, sample_names, 
                                log_text='ESP log summary report')
