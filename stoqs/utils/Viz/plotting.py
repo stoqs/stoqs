@@ -24,7 +24,7 @@ from django.db import connections, DatabaseError, transaction
 from datetime import datetime
 from stoqs import models
 from utils.utils import pearsonr, round_to_n, EPOCH_STRING
-from loaders.SampleLoaders import SAMPLED, NETTOW, VERTICALNETTOW, PLANKTONPUMP, ESP_ARCHIVE
+from loaders.SampleLoaders import SAMPLED, NETTOW, VERTICALNETTOW, PLANKTONPUMP, ESP_FILTERING
 from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL, X3D_MODEL_SCALEFACTOR
 import seawater.eos80 as sw
 import numpy as np
@@ -461,7 +461,7 @@ class MeasuredParameter(BaseParameter):
                 ysamp.append((s['instantpoint__activity__maxdepth'], s['instantpoint__activity__mindepth']))
                 sname.append(s['instantpoint__activity__name'])
 
-        if spanned and (act_type_name == ESP_ARCHIVE):
+        if spanned and (act_type_name == ESP_FILTERING):
             xsamp = []
             ysamp = []
             sname = []
@@ -732,7 +732,7 @@ class MeasuredParameter(BaseParameter):
                         ax.scatter([xs[1]], [ys[1]], marker='o', c='w', s=15, zorder=10, edgecolors='k')
 
                     # Sample markers for ESP Archives - thick transparent lines
-                    xspan, yspan, sname = self._get_samples_for_markers(act_type_name=ESP_ARCHIVE, spanned=True)
+                    xspan, yspan, sname = self._get_samples_for_markers(act_type_name=ESP_FILTERING, spanned=True)
                     self.logger.debug(f"Sample markers for ESP Archives: {len(xspan)} samples")
                     for xs,ys in zip(xspan, yspan):
                         ax.plot(xs, ys, c='k', lw=1, alpha=0.5)
