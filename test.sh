@@ -128,7 +128,11 @@ tools/removeTmpFiles.sh > /dev/null 2>&1
 cd ..
 
 # Save tests_status to /tmp for Dockerclud and return it for Travis-CI 
+echo "unit_tests_status = $unit_tests_status"
+echo "Executing echo $unit_tests_status > /tmp/unit_tests_status..."
 echo $unit_tests_status > /tmp/unit_tests_status
+echo "Executing cat /tmp/unit_tests_status..."
+cat /tmp/unit_tests_status
 ##exit $(($unit_tests_status + $loading_tests_status + $functional_tests_status))
 exit $unit_tests_status
 
