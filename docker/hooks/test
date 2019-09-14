@@ -46,4 +46,5 @@ else
     echo "*** docker-compose -f docker-compose.test.yml stop"
     docker-compose -f docker-compose.test.yml stop
 fi
+exit `cat /tmp/unit_tests_status`
 
