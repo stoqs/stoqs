@@ -46,8 +46,8 @@ else
     echo "*** docker-compose -f docker-compose.test.yml stop"
     docker-compose -f docker-compose.test.yml stop
 fi
-echo "*** cat /tmp/unit_tests_status"
-cat /tmp/unit_tests_status
-echo "*** Exiting with return code that's in /tmp/unit_tests_status"
-exit `cat /tmp/unit_tests_status`
+echo "*** cat ../stoqs/stoqs/tests/unit_tests_status"
+cat ../stoqs/stoqs/tests/unit_tests_status
+echo "*** Exiting with return code that's in ../stoqs/stoqs/tests/unit_tests_status"
+exit `cat ../stoqs/stoqs/tests/unit_tests_status`
 
