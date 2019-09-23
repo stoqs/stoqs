@@ -34,6 +34,7 @@ import string
 import random
 import time
 import re
+import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -1174,6 +1175,7 @@ class ParameterParameter(BaseParameter):
                     cb.set_label('%s (%s)' % (cp.name, cp.units))
             else:
                 self.logger.debug('Making scatter plot of %d points', len(self.x))
+                warnings.filterwarnings("ignore", message="omni_normtest is not valid with less than 8 observations; 6 samples were given")
                 ax.scatter(self.x, self.y, marker='.', s=10, c='k', lw = 0, clip_on=False)
 
             # Label the axes
