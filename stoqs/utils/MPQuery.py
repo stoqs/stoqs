@@ -646,7 +646,7 @@ class MPQuery(object):
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*values_list)
 
         if orderedFlag:
-            qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
+            qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue', 'parameter__name')
 
         # Save ordered queryset with no parameter in the filter for X3D display to get roll, pitch, and yaw
         self.qs_mp_no_parm = qs_mp
@@ -668,7 +668,7 @@ class MPQuery(object):
                     qs_mp = qs_mp.filter(parameter__id=int(self.parameterID))
 
                 if orderedFlag:
-                    qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
+                    qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue', 'parameter__name')
 
                 sql = postgresifySQL(str(qs_mp.query))
                 logger.debug('\n\nsql before query = %s\n\n', sql)
@@ -719,7 +719,7 @@ class MPQuery(object):
             qs_sp = qs_sp.filter(parameter__id=int(self.parameterID))
 
         if orderedFlag:
-            qs_sp = qs_sp.order_by('sample__instantpoint__activity__name', 'sample__instantpoint__timevalue')
+            qs_sp = qs_sp.order_by('sample__instantpoint__activity__name', 'sample__instantpoint__timevalue', 'parameter__name')
 
         # Wrap SPQuerySet around either RawQuerySet or QuerySet to control the __iter__() items for lat/lon etc.
         if 'parametervalues' in self.kwargs:
@@ -728,7 +728,7 @@ class MPQuery(object):
                 qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).select_related(
                             'sample__instantpoint__activity__platform').filter(**qparams)
                 if orderedFlag:
-                    qs_sp = qs_sp.order_by('sample__instantpoint__activity__name', 'sample__instantpoint__timevalue')
+                    qs_sp = qs_sp.order_by('sample__instantpoint__activity__name', 'sample__instantpoint__timevalue', 'parameter__name')
                 sql = postgresifySQL(str(qs_sp.query))
                 logger.debug('\n\nsql before query = %s\n\n', sql)
                 pq = PQuery(self.request)
