@@ -1,0 +1,46 @@
+From: Brent Roman <brent@mbari.org>
+Subject: trimSTOQS utility
+Date: September 17, 2019 at 5:45:00 PM PDT
+To: "McCann, Mike" <mccann@mbari.org>
+
+Hi Mike,
+
+I just wrote a fairly generic utility that compacts the TSV or CSV output from STOQS.
+It also makes it more appropriate for importing into spreadsheet applications.
+The basic idea is to replace:
+
+context0   sample0parameter1
+context0   sample0parameter2
+context0   sample0parameter3
+
+context1   sample1parameter1
+context1   sample1parameter2
+context1   sample1parameter3
+...
+
+with:
+
+context0  sample0parameter1,sample0parameter2,sample0parameter3
+context1  sample1parameter1,sample1parameter2,sample1parameter3
+
+The utility is called trimSTOQS
+
+In the case of my ESP roll and pitch data request, the STOQS TSV outputted 140MB
+The trimSTOQS utility converted that to a 32MB  CSV file with the following command:
+
+$  trimSTOQS name <makai2019erie.tsv  >makai2019erie.csv
+
+It's written in 'C.  The above run took only 0.6 seconds on my desktop.
+
+I've put the data files and the 'C' utility up in:
+
+/tempbox/brent/erie2019
+
+You can build it under Linux with the included Makefile or the command:
+
+$  gcc -o trimSTOQS -O2 trimSTOQS.c
+
+or on the Vagrant VM used for STOQS development:
+
+$  gcc -std=gnu99 -o trimSTOQS -O2 trimSTOQS.c
+
