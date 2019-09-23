@@ -131,7 +131,7 @@ class CANONLoader(LoadScript):
                 'deimos':       '33D4FF',
              }
 
-    # Distribute AUV colors along a yellor to brown palette
+    # Distribute AUV colors along a yellow to brown palette
     auv_names = ('dummy1', 'dorado', 'tethys', 'daphne', 'makai', 'aku', 'ahi', 'opah', 'whoidhs', 'galene', 'pontus', 'triton')
     YlOrBr = plt.cm.YlOrBr
     for auv_name, c in zip(auv_names, YlOrBr(np.linspace(0, YlOrBr.N, len(auv_names), dtype=int))):

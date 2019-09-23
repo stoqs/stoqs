@@ -2002,7 +2002,8 @@ def runBEDTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, a
     loader.process_data()
     loader.logger.debug("Loaded Activity with name = %s", aName)
 
-def _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain):
+def _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, 
+              pColor, pTypeName, grdTerrain, plotTimeSeriesDepth):
     # Construct LOPC data url that looks like:
     # http://dods.mbari.org/opendap/data/ssdsdata/ssds/generated/netcdf/files/ssds.shore.mbari.org/auvctd/missionlogs/2010/2010300/2010.300.00/lopc.nc
     # from url that looks like: http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/Dorado389_2010_300_00_300_00_decim.nc
@@ -2031,6 +2032,8 @@ def _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pCol
         return
 
     lopc_loader.include_names = ['sepCountList', 'mepCountList']
+    if plotTimeSeriesDepth is not None:
+        lopc_loader.plotTimeSeriesDepth = dict.fromkeys(lopc_loader.include_names, plotTimeSeriesDepth)
 
     # These get added to ignored_names on previous .process_data(), remove them
     if 'sepCountList' in lopc_loader.ignored_names:
@@ -2058,7 +2061,8 @@ def _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pCol
     else:
         loader.logger.debug("Loaded Activity with name = %s", lopc_loader.activityName)
 
-def _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain):
+def _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, 
+                           pColor, pTypeName, grdTerrain, plotTimeSeriesDepth):
     survey = url[url.find('Dorado389'):]
     yr = survey.split('_')[1]
     yd = survey.split('_')[2]
@@ -2083,6 +2087,8 @@ def _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName
         return
 
     pp_loader.include_names = ['diatoms', 'adinos']
+    if plotTimeSeriesDepth is not None:
+        pp_loader.plotTimeSeriesDepth = dict.fromkeys(pp_loader.include_names, plotTimeSeriesDepth)
 
     # Auxillary coordinates are the same for all include_names
     pp_loader.auxCoords = {}
@@ -2142,10 +2148,10 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         loader.logger.debug("Loaded Activity with name = %s", aName)
 
     if 'sepCountList' in loader.include_names or 'mepCountList' in loader.include_names:
-        _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain)
+        _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain, plotTimeSeriesDepth)
 
     if plankton_proxies:
-        _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain)
+        _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain, plotTimeSeriesDepth)
 
 
 def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
