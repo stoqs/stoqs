@@ -187,7 +187,7 @@ class BrowserTestCase(BaseTestCase):
         # Finds <tr> for 'dorado' then gets the button for clicking
         dorado_button = self.browser.find_element_by_id('dorado'
                             ).find_element_by_tag_name('button')
-        self._wait_until_visible_then_click(dorado_button)
+        self._wait_until_visible_then_click(dorado_button, delay=4)
 
         # Test that Mapserver returns images
         self.assertEqual('', self._mapserver_loading_panel_test())
@@ -197,7 +197,7 @@ class BrowserTestCase(BaseTestCase):
         self._wait_until_visible_then_click(spatial_3d_anchor)
         # - Measurement data
         measuredparameters_anchor = self.browser.find_element_by_id('measuredparameters-anchor')
-        self._wait_until_visible_then_click(measuredparameters_anchor)
+        self._wait_until_visible_then_click(measuredparameters_anchor, delay=4)
         altitude_id = Parameter.objects.get(name__contains='altitude').id
         altitude_plot_button = self.browser.find_element(By.XPATH,
                 "//input[@name='parameters_plot' and @value='{}']".format(altitude_id))
