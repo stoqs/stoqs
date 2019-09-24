@@ -36,7 +36,7 @@ from django.db import transaction, connections
 from slacker import Slacker
 from stoqs.models import ResourceType, Resource, Campaign, CampaignResource, MeasuredParameter, \
                          SampledParameter, Activity, Parameter, Platform
-from timing import MINUTES
+from loaders.timing import MINUTES
 
 def tail(f, n):
     return subprocess.getoutput(f"tail -{n} {f}")
@@ -311,8 +311,8 @@ local   all             all                                     peer
                     print('Exiting')
                     sys.exit()
 
-        # That user wants to load all the production databases (no command line arguments)
-        if not sys.argv[1:]:
+        # That user wants to load all the production databases (no --db argument)
+        if not self.args.db:
             print(("On the server running on port =", settings.DATABASES['default']['PORT']))
             print("You are about to load all these databases:")
             print((' '.join(list(campaigns.campaigns.keys()))))
