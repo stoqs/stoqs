@@ -22,6 +22,13 @@ Mike McCann
 MBARI 24 September 2019
 '''
 
-from make_load_scripts import create_load_scripts
+from make_load_scripts import create_load_scripts, update_lrauv_campaigns
 
-create_load_scripts(start_year=2018)
+items = create_load_scripts(2017)
+update_lrauv_campaigns(items)
+
+#items = create_load_scripts(2018)
+#update_lrauv_campaigns(items)
+
+#items = create_load_scripts()
+#update_lrauv_campaigns(items)
