@@ -235,6 +235,11 @@ class Loader(object):
                     print(line, end='')
 
     def checks(self):
+        if self.args.verbose >= 1:
+            self.logger.setLevel(logging.DEBUG)
+        elif self.args.verbose > 0:
+            self.logger.setLevel(logging.INFO)
+
         # That stoqs/campaigns.py file can be loaded
         try:
             campaigns = importlib.import_module(self.args.campaigns)
@@ -765,12 +770,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
                 print('If using --slack must set SLACKTOKEN environment variable. [Never share your token!]')
                 sys.exit(-1)
 
-        if self.args.verbose >= 1:
-            self.logger.setLevel(logging.DEBUG)
-        elif self.args.verbose > 0:
-            self.logger.setLevel(logging.INFO)
-   
- 
+
 if __name__ == '__main__':
     l = Loader()
 
