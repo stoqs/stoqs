@@ -29,6 +29,7 @@ import logging
 
 from argparse import ArgumentParser, Namespace
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from make_load_scripts import LoaderMaker
 from loaders.load import Loader
 
@@ -44,8 +45,11 @@ class AutoLoad():
         self.loader.args.db = (f"stoqs_lrauv_{monyyyy}", )
         self.logger.debug(f"--db arg set to {self.loader.args.db}")
         self.loader.checks()
+        self.logger.debug(f"Executing self.loader.load()...")
         self.loader.load()
+        self.logger.debug(f"Executing self.loader.updateprovenance()...")
         self.loader.updateprovenance()
+        self.logger.debug(f"Executing self.loader.pg_dump()...")
         self.loader.pg_dump()
 
     def execute(self):
@@ -56,7 +60,7 @@ class AutoLoad():
 
         self.loader = Loader()
 
-        # Start with default arguments for Loader
+        # Start with default arguments for Loader - set args to force reload databases
         self.loader.args = Namespace(background=False, campaigns='campaigns', clobber=False, db=None, 
                                 drop_indexes=False, email=None, grant_everyone_select=False, 
                                 list=False, noinput=False, pg_dump=False, removetest=False, 
@@ -74,7 +78,7 @@ class AutoLoad():
 
         elif self.args.start_YYYYMM and self.args.end_YYYYMM:
             for year in range(int(self.args.start_YYYYMM[:4]), int(self.args.end_YYYYMM[:4]) + 1):
-                # Ensure that we have load script and campaign created for the year requested
+                # Ensure that we have load scripts and campaigns created for the year requested
                 items = lm.create_load_scripts(year)
                 lm.update_lrauv_campaigns(items)
                 if year == int(self.args.start_YYYYMM[:4]):
@@ -87,6 +91,21 @@ class AutoLoad():
                     for month in range(1, int(self.args.end_YYYYMM[4:])):
                         self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
 
+        elif self.args.previous_month:
+            prev_mon = datetime.today() - relativedelta(months=1)
+            # Ensure that we have load script and campaign created for the year requested
+            YYYYMM = prev_mon.strftime("%Y%m")
+            items = lm.create_load_scripts(int(YYYYMM[4:]))
+            lm.update_lrauv_campaigns(items)
+            self._do_the_load(self._YYYYMM_to_monyyyy(YYYYMM))
+
+        elif self.args.current_month:
+            curr_mon = datetime.today()
+            # Ensure that we have load script and campaign created for the year requested
+            YYYYMM = curr_mon.strftime("%Y%m")
+            items = lm.create_load_scripts(int(YYYYMM[4:]))
+            lm.update_lrauv_campaigns(items)
+            self._do_the_load(self._YYYYMM_to_monyyyy(YYYYMM))
 
     def process_command_line(self):
         parser = ArgumentParser()
