@@ -95,7 +95,7 @@ class AutoLoad():
             prev_mon = datetime.today() - relativedelta(months=1)
             # Ensure that we have load script and campaign created for the year requested
             YYYYMM = prev_mon.strftime("%Y%m")
-            items = lm.create_load_scripts(int(YYYYMM[4:]))
+            items = lm.create_load_scripts(int(YYYYMM[:4]))
             lm.update_lrauv_campaigns(items)
             self._do_the_load(self._YYYYMM_to_monyyyy(YYYYMM))
 
@@ -103,7 +103,7 @@ class AutoLoad():
             curr_mon = datetime.today()
             # Ensure that we have load script and campaign created for the year requested
             YYYYMM = curr_mon.strftime("%Y%m")
-            items = lm.create_load_scripts(int(YYYYMM[4:]))
+            items = lm.create_load_scripts(int(YYYYMM[:4]))
             lm.update_lrauv_campaigns(items)
             self._do_the_load(self._YYYYMM_to_monyyyy(YYYYMM))
 
