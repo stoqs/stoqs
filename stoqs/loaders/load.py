@@ -83,17 +83,12 @@ class Loader(object):
             'psql -p {port} -c \"GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;\" -d {db} -U postgres'))
 
         createdb = commands.format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
-        if self.args.clobber:
-            createdb = ('psql -p {port} -c \"DROP DATABASE {db};\" -U postgres && '
-                    ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db}) + createdb
-
         self.logger.info('Creating database %s', db)
         self.logger.debug('createdb = %s', createdb)
         ret = os.system(createdb)
         self.logger.debug('ret = %s', ret)
 
         if ret != 0:
-            # Try again without DROP command if --clobber is specified
             if self.args.clobber:
                 createdb = commands.format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
                 self.logger.debug('createdb = %s', createdb)
@@ -101,7 +96,7 @@ class Loader(object):
                 self.logger.debug('ret = %s', ret)
                 if ret != 0:
                     raise DatabaseCreationError((
-                        'Failed to create {} even after trying without DROP command').format(db))
+                        'Failed to create {}').format(db))
                 else:
                     return
 
@@ -567,7 +562,7 @@ local   all             all                                     peer
                 settings.DATABASES[db]['NAME'] = db
 
 
-            if not self._db_exists(db) and self.args.clobber:
+            if self._db_exists(db) and self.args.clobber and self.args.noinput:
                 self._dropdb(db)
 
             try:
