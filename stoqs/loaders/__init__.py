@@ -229,7 +229,11 @@ class LoadScript(object):
             
         self.logger.info('Adding to ResourceType: %s', resourceType)
         self.logger.debug('Looking in database %s for Campaign name = %s', self.dbAlias, self.campaignName)
-        campaign = m.Campaign.objects.using(self.dbAlias).get(name=self.campaignName)
+        try:
+            campaign = m.Campaign.objects.using(self.dbAlias).get(name=self.campaignName)
+        except m.Campaign.DoesNotExist:
+            self.logger.error(f"Could not find Campaign record in {self.dbAlias} at end of load. Perhaps no data was loaded?")
+            sys.exit(-1)
         
         for url, viewpoint in list(self.x3dTerrains.items()):
             self.logger.debug('url = %s, viewpoint = %s', url, viewpoint)
