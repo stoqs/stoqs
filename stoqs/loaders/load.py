@@ -663,6 +663,8 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
                 
             if ret != 0:
                 self.logger.error(f'Non-zero return code from load script. Check {log_file}')
+                if self._db_exists(db):
+                    self._dropdb(db)
                 raise DatabaseLoadError(f'Non-zero return code from load script. Check {log_file}')
 
             if self.args.drop_indexes:
