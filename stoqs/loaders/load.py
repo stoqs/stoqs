@@ -95,8 +95,7 @@ class Loader(object):
                 ret = os.system(createdb)
                 self.logger.debug('ret = %s', ret)
                 if ret != 0:
-                    raise DatabaseCreationError((
-                        'Failed to create {}').format(db))
+                    raise DatabaseCreationError(('Failed to create {}').format(db))
                 else:
                     return
 
@@ -294,10 +293,13 @@ local   all             all                                     peer
             print((('{:30s} {:>15s}').format('Database', 'Last Load time (min)')))
             print((('{:30s} {:>15s}').format('-'*25, '-'*20)))
             nothing_printed = True
+            dbs_to_drop = []
             for db,load_command in list(campaigns.campaigns.items()):
                 if self.args.db:
                     if db not in self.args.db:
                         continue
+                    else:
+                        dbs_to_drop.append(db)
 
                 script = os.path.join(app_dir, 'loaders', load_command)
                 try:
@@ -321,7 +323,11 @@ local   all             all                                     peer
 
             if not self.args.noinput:
                 ans = input('\nAre you sure you want to drop these database(s) and reload them? [y/N] ')
-                if ans.lower() != 'y':
+                if ans.lower() == 'y':
+                    for db_to_drop in dbs_to_drop:
+                        if self._db_exists(db_to_drop):
+                            self._dropdb(db_to_drop)
+                else:
                     print('Exiting')
                     sys.exit()
 
