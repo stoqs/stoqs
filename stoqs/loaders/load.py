@@ -377,7 +377,7 @@ local   all             all                                     peer
                             'Check log_file for errors: {}').format(sec_wait * max_iter, log_file))
                 else:
                     self.logger.error(f'Could not find Campaign record for {db} in the database.')
-                    raise
+                    raise DatabaseLoadError()
 
     def recordprovenance(self, db, load_command, log_file):
         '''Add Resources to the Campaign that describe what loaded it
@@ -663,6 +663,7 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
                 
             if ret != 0:
                 self.logger.error(f'Non-zero return code from load script. Check {log_file}')
+                raise DatabaseLoadError(f'Non-zero return code from load script. Check {log_file}')
 
             if self.args.drop_indexes:
                 self.logger.info('Creating indexes...')
