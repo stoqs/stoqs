@@ -92,11 +92,14 @@ class LoaderMaker():
         #     ('stoqs_lrauv_jan2018', 'LRAUV/load_lrauv_jan2018.py'),\n
         CAMPAIGN_ITEM = re.compile(r".*\('stoqs_lrauv_(.*)', 'LRAUV\/load_lrauv_(.*).py'\),")
         monyyyy_in_file = []
-        with open(os.path.join(stoqs_dir, campaign_file_name)) as cf:
-            for line in cf:
-                c_match = re.match(CAMPAIGN_ITEM, line)
-                if c_match:
-                    monyyyy_in_file.append(c_match.group(1))
+        try:
+            with open(os.path.join(stoqs_dir, campaign_file_name)) as cf:
+                for line in cf:
+                    c_match = re.match(CAMPAIGN_ITEM, line)
+                    if c_match:
+                        monyyyy_in_file.append(c_match.group(1))
+        except FileNotFoundError as e:
+            self.logger.debug(str(e))
 
         # Rewrite the file with existing and new campaigns
         campaign_items_str = ''
