@@ -25,13 +25,14 @@ import os
 import sys
 stoqs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 sys.path.insert(0, stoqs_dir)
+import django
 import logging
 
 from argparse import ArgumentParser, Namespace
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from make_load_scripts import LoaderMaker
-from loaders.load import Loader
+from loaders.load import Loader, DatabaseLoadError
 
 class AutoLoad():
 
@@ -45,8 +46,13 @@ class AutoLoad():
         self.loader.args.db = (f"stoqs_lrauv_{monyyyy}", )
         self.logger.debug(f"--db arg set to {self.loader.args.db}")
         self.loader.checks()
-        self.logger.debug(f"Executing self.loader.load()...")
-        self.loader.load()
+        try:
+            self.logger.debug(f"Executing self.loader.load()...")
+            self.loader.load()
+        except DatabaseLoadError:
+            self.logger.warn(f"Failed to load {self.loader.args.db}")
+            return
+
         self.logger.debug(f"Executing self.loader.updateprovenance()...")
         self.loader.updateprovenance()
         self.logger.debug(f"Executing self.loader.pg_dump()...")
@@ -74,7 +80,7 @@ class AutoLoad():
             # Ensure that we have load script and campaign created for the year requested
             items = lm.create_load_scripts(int(self.args.YYYYMM[:4]))
             lm.update_lrauv_campaigns(items)
-            self._do_the_load(self._YYYYMM_to_monyyyy(YYYYMM))
+            self._do_the_load(self._YYYYMM_to_monyyyy(self.args.YYYYMM))
 
         elif self.args.start_YYYYMM and self.args.end_YYYYMM:
             for year in range(int(self.args.start_YYYYMM[:4]), int(self.args.end_YYYYMM[:4]) + 1):
@@ -130,5 +136,9 @@ class AutoLoad():
 if __name__ == '__main__':
     autoload = AutoLoad()
     autoload.process_command_line()
-    autoload.execute()
+    try:
+        autoload.execute()
+    except django.db.utils.ConnectionDoesNotExist as e:
+        autoload.logger.error(str(e))
+        autoload.logger.info(f"Perhaps stoqs/campaigns.py doesn't contain the db_aliases you are trying to load?")
 
