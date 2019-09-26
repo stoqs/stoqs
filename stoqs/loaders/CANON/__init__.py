@@ -1217,13 +1217,15 @@ class CANONLoader(LoadScript):
                         self.logger.debug(f'{url}')
                         urls.append(url)
             else:
-                # Likely a realtime log
+                # Likely a realtime log - add to urls if only url date is greater than startdate
                 catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                 c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
                 d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
                 for url in d:
-                    self.logger.debug(f'{url}')
-                    urls.append(url)
+                    dir_start =  datetime.strptime(url.split('/')[11], '%Y%m%dT%H%M%S')
+                    if dir_start >= startdate:
+                        self.logger.debug(f'{url}')
+                        urls.append(url)
 
         if not urls:
             raise FileNotFound('No urls matching "{}" found in {}'.format(search_str, os.path.join(base, 'catalog.html')))
