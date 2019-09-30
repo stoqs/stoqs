@@ -1,11 +1,4 @@
 #!/usr/bin/env python
-'''
-MBARI Biological Oceanography Group
-Master loader for Monterey Bay Time Series data
-
-Mike McCann, Duane Edgington, Danelle Cline
-MBARI 8 April 2019
-'''
 
 import os
 import sys
@@ -13,6 +6,7 @@ import sys
 parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
+from argparse import ArgumentParser
 from CANON import CANONLoader
 from datetime import datetime
 import timing
@@ -55,7 +49,8 @@ cl = CANONLoader('$db_alias', '$title',
 syear = datetime($s_year, $s_month, $s_day)
 eyear = datetime($e_year, $e_month, $e_day)
 
-# Execute the load
+cl.parser.add_argument('--realtime', action='store_true', help='Load realtime data')
+cl.parser.add_argument('--missionlogs', action='store_true', help='Load delayed mode (missionlogs) data')
 cl.process_command_line()
 
 if cl.args.test:
@@ -64,8 +59,13 @@ elif cl.args.stride:
     cl.stride = cl.args.stride
 
 for lrauv in $lrauvs:
-    cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1, sbd_logs=True)
-    cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1)
+    if cl.args.realtime:
+        cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1, sbd_logs=True)
+    if cl.args.missionlogs:
+        cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1)
+    if not cl.args.realtime and not cl.args.missionlogs:
+        cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1, sbd_logs=True)
+        cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1)
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 try:
