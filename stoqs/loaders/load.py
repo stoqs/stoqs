@@ -32,7 +32,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import ConnectionDoesNotExist, OperationalError, ProgrammingError
-from django.db import transaction, connections
+from django.db import transaction, connections, close_old_connections
 from slacker import Slacker
 from stoqs.models import ResourceType, Resource, Campaign, CampaignResource, MeasuredParameter, \
                          SampledParameter, Activity, Parameter, Platform
@@ -69,6 +69,13 @@ class Loader(object):
             return True
         else:
             return False
+
+    def _show_activity(self, db):
+        command = r'''echo "\x \\\\ SELECT * from pg_stat_activity where datname = '{db}';" | psql -p {port} -U postgres'''.format(
+                        **{'port': settings.DATABASES[db]['PORT'], 'db': db})
+        self.logger.info('command = %s', command)
+        output = subprocess.getoutput(command)
+        self.logger.info('output = %s', output)
 
     def _create_db(self, db):
         '''Create database. Invoking user should have privileges to connect to 
@@ -473,15 +480,17 @@ local   all             all                                     peer
                 self.logger.info('Resource uristring="%s", name="%s", value="%s"', '', name, value)
 
     def _dropdb(self, db):
-        dropdb = ('psql -p {port} -c \"DROP DATABASE {db};\" -U postgres').format(
-                **{'port': settings.DATABASES['default']['PORT'], 'db': db})
+        dropdb = '''psql -p {port} -U postgres -c \"DROP DATABASE {db};\"'''.format(
+                    **{'port': settings.DATABASES['default']['PORT'], 'db': db})
 
         self.logger.info('Dropping database %s', db)
         self.logger.debug('dropdb = %s', dropdb)
+        close_old_connections()
         ret = os.system(dropdb)
         self.logger.debug('ret = %s', ret)
         if ret != 0:
             self.logger.warn('Failed to drop %s', db)
+            self._show_activity(db)
 
     def removetest(self):
         self.logger.info('Removing test databases from sever running on port %s', 
@@ -628,6 +637,7 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
             if self.args.background:
                 cmd = '({}) &'.format(cmd)
 
+            # Execute as system call - Allows for repeatable loading and output captue by executing the load script in cmd
             self.logger.info('Executing: %s', cmd)
             ret = os.system(cmd)
             self.logger.debug(f'ret = {ret}')
