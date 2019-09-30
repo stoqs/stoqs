@@ -39,6 +39,8 @@ class AutoLoad():
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
 
+    lm = LoaderMaker()
+
     def _YYYYMM_to_monyyyy(self, YYYYMM):
         return datetime(int(YYYYMM[:4]), int(YYYYMM[4:]), 1).strftime("%b%Y").lower()
 
@@ -58,11 +60,18 @@ class AutoLoad():
         self.logger.debug(f"Executing self.loader.pg_dump()...")
         self.loader.pg_dump()
 
+    def _update_campaigns(self, year):
+            # Ensure that we have load script and campaign created for the year requested
+            items = self.lm.create_load_scripts(year)
+            num_new_campaigns = self.lm.update_lrauv_campaigns(items)
+            if num_new_campaigns:
+                self.logger.info(f"{num_new_campaigns} campaigns added to campaigns.py file")
+                self.logger.warn(f"If you are running in a Docker container you you need to restart the stoqs service with this file before executing the loads.")
+
     def execute(self):
-        lm = LoaderMaker()
         if self.args.verbose:
             self.logger.setLevel(logging.DEBUG)
-            lm.logger.setLevel(logging.DEBUG)
+            self.lm.logger.setLevel(logging.DEBUG)
 
         self.loader = Loader()
 
@@ -77,16 +86,12 @@ class AutoLoad():
         self.loader.args.verbose = self.args.verbose
 
         if self.args.YYYYMM:
-            # Ensure that we have load script and campaign created for the year requested
-            items = lm.create_load_scripts(int(self.args.YYYYMM[:4]))
-            lm.update_lrauv_campaigns(items)
+            self._update_campaigns(int(self.args.YYYYMM[:4]))
             self._do_the_load(self._YYYYMM_to_monyyyy(self.args.YYYYMM))
 
         elif self.args.start_YYYYMM and self.args.end_YYYYMM:
             for year in range(int(self.args.start_YYYYMM[:4]), int(self.args.end_YYYYMM[:4]) + 1):
-                # Ensure that we have load scripts and campaigns created for the year requested
-                items = lm.create_load_scripts(year)
-                lm.update_lrauv_campaigns(items)
+                self._update_campaigns(year)
                 if year == int(self.args.start_YYYYMM[:4]):
                     for month in range(int(self.args.start_YYYYMM[4:]), 13):
                         self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
@@ -99,18 +104,15 @@ class AutoLoad():
 
         elif self.args.previous_month:
             prev_mon = datetime.today() - relativedelta(months=1)
-            # Ensure that we have load script and campaign created for the year requested
             YYYYMM = prev_mon.strftime("%Y%m")
-            items = lm.create_load_scripts(int(YYYYMM[:4]))
-            lm.update_lrauv_campaigns(items)
+            self._update_campaigns(int(self.args.YYYYMM[:4]))
             self._do_the_load(self._YYYYMM_to_monyyyy(YYYYMM))
 
         elif self.args.current_month:
             curr_mon = datetime.today()
             # Ensure that we have load script and campaign created for the year requested
             YYYYMM = curr_mon.strftime("%Y%m")
-            items = lm.create_load_scripts(int(YYYYMM[:4]))
-            lm.update_lrauv_campaigns(items)
+            self._update_campaigns(int(self.args.YYYYMM[:4]))
             self._do_the_load(self._YYYYMM_to_monyyyy(YYYYMM))
 
     def process_command_line(self):
