@@ -58,14 +58,19 @@ if cl.args.test:
 elif cl.args.stride:
     cl.stride = cl.args.stride
 
-for lrauv in $lrauvs:
-    if cl.args.realtime:
-        cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1, sbd_logs=True)
-    if cl.args.missionlogs:
-        cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1)
-    if not cl.args.realtime and not cl.args.missionlogs:
-        cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1, sbd_logs=True)
-        cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1)
+try:
+    for lrauv in $lrauvs:
+        if cl.args.realtime:
+            cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1, sbd_logs=True)
+        if cl.args.missionlogs:
+            cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1)
+        if not cl.args.realtime and not cl.args.missionlogs:
+            cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1, sbd_logs=True)
+            cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1)
+except KeyboardInterrupt:
+    # Likely purposfully terminated return with 0 return code so that we don't drop the database
+    print("KeyboardInterrupt: exiting with 0 return code")
+    sys.exit(0)
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 try:
