@@ -50,7 +50,7 @@ class AutoLoad():
         self.loader.checks()
         try:
             self.logger.debug(f"Executing self.loader.load()...")
-            self.loader.load()
+            self.loader.load(cl_args=self.args)
         except DatabaseLoadError:
             self.logger.warn(f"Failed to load {self.loader.args.db}")
             return
@@ -126,6 +126,8 @@ class AutoLoad():
         parser.add_argument('--previous_month', action='store_true', help='Recreate the database for the previous month')
         parser.add_argument('--current_month', action='store_true', help='Recreate the database for the current month')
         parser.add_argument('--test', action='store_true', help='Load test database(s)')
+        parser.add_argument('--realtime', action='store_true', help='Load realtime data')
+        parser.add_argument('--missionlogs', action='store_true', help='Load delayed mode (missionlogs) data')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, 
                             help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
 
