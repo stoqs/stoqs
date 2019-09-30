@@ -39,6 +39,7 @@ from utils.utils import percentile, median, mode, simplify_points, spiciness
 from tempfile import NamedTemporaryFile
 import pprint
 from netCDF4 import Dataset
+from argparse import ArgumentParser, RawTextHelpFormatter
 
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
@@ -104,6 +105,22 @@ class LoadScript(object):
         self.x3dTerrains = x3dTerrains
         self.grdTerrain = grdTerrain
 
+        exampleString = ''
+        for dbType in ('', '_t', '_o', '_s10'):
+            if dbType == '':
+                exampleString = exampleString + '  %s       \t# Load full resolution data into %s\n' % (
+                                    sys.argv[0], self.base_dbAlias)
+            elif dbType == '_s10':
+                exampleString = exampleString + '  %s -%s 10\t# Load data into %s\n' % (
+                                    sys.argv[0], dbType[1], self.base_dbAlias + dbType)
+            else:
+                exampleString = exampleString + '  %s -%s    \t# Load data into %s\n' % (
+                                    sys.argv[0], dbType[1], self.base_dbAlias + dbType)
+        self.parser = ArgumentParser(formatter_class=RawTextHelpFormatter,
+                                     description='STOQS load script for "%s"' % self.base_campaignName,
+                                     epilog='Examples:' + '\n\n' + exampleString + '\n' +
+                                            '(Databases must be created, synced and defined in privateSettings - see INSTALL instructions)')
+
     def process_command_line(self):
         '''
         The argparse library is included in Python 2.7 and is an added package for STOQS. 
@@ -139,41 +156,23 @@ class LoadScript(object):
 
         '''
 
-        import argparse
-        from argparse import RawTextHelpFormatter
 
-        exampleString = ''
-        for dbType in ('', '_t', '_o', '_s10'):
-            if dbType == '':
-                exampleString = exampleString + '  %s       \t# Load full resolution data into %s\n' % (
-                                    sys.argv[0], self.base_dbAlias)
-            elif dbType == '_s10':
-                exampleString = exampleString + '  %s -%s 10\t# Load data into %s\n' % (
-                                    sys.argv[0], dbType[1], self.base_dbAlias + dbType)
-            else:
-                exampleString = exampleString + '  %s -%s    \t# Load data into %s\n' % (
-                                    sys.argv[0], dbType[1], self.base_dbAlias + dbType)
-
-        parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
-                                         description='STOQS load script for "%s"' % self.base_campaignName,
-                                         epilog='Examples:' + '\n\n' + exampleString + '\n' +
-                                            '(Databases must be created, synced and defined in privateSettings - see INSTALL instructions)')
-        parser.add_argument('--dbAlias', action='store',
+        self.parser.add_argument('--dbAlias', action='store',
                             help='Database alias (default = %s)' % self.base_dbAlias)
-        parser.add_argument('--campaignName', action='store',
+        self.parser.add_argument('--campaignName', action='store',
                             help='Campaign Name (default = "%s")' % self.base_campaignName)
-        parser.add_argument('-o', '--optimal_stride', action='store_true',
+        self.parser.add_argument('-o', '--optimal_stride', action='store_true',
                             help='Run load for optimal stride configuration as defined in \n"if cl.args.optimal_stride:" section of load script')
-        parser.add_argument('-t', '--test', action='store_true',
+        self.parser.add_argument('-t', '--test', action='store_true',
                             help='Run load for test configuration as defined in \n"if cl.args.test:" section of load script')
-        parser.add_argument('-s', '--stride', action='store', type=int, default=1,
+        self.parser.add_argument('-s', '--stride', action='store', type=int, default=1,
                             help='Stride value (default=1)')
-        parser.add_argument('-a', '--append', action='store_true', 
+        self.parser.add_argument('-a', '--append', action='store_true', 
                             help='Append data to existing activity - for use in repetative runs')
-        parser.add_argument('-v', '--verbose', action='store_true', 
+        self.parser.add_argument('-v', '--verbose', action='store_true', 
                             help='Turn on DEBUG level logging output')
 
-        self.args = parser.parse_args()
+        self.args = self.parser.parse_args()
 
         # Modify base dbAlias with conventional suffix if dbAlias not specified on command line
         if not self.args.dbAlias:
