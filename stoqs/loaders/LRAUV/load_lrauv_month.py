@@ -90,8 +90,11 @@ class AutoLoad():
             self._do_the_load(self._YYYYMM_to_monyyyy(self.args.YYYYMM))
 
         elif self.args.start_YYYYMM and self.args.end_YYYYMM:
+            # First, create the campaigns.py file for the whole duration
             for year in range(int(self.args.start_YYYYMM[:4]), int(self.args.end_YYYYMM[:4]) + 1):
                 self._update_campaigns(year)
+            # Second, execute the loads
+            for year in range(int(self.args.start_YYYYMM[:4]), int(self.args.end_YYYYMM[:4]) + 1):
                 if year == int(self.args.start_YYYYMM[:4]):
                     for month in range(int(self.args.start_YYYYMM[4:]), 13):
                         self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
