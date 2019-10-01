@@ -1,0 +1,73 @@
+Instructions for producing Lake Erie bathymetry for STOQS databases using gmt-5.4.4, Meshlab, and InstantReality
+----------------------------------------------------------------------------------------------------------------
+
+0. Download erie_lld.grd from https://www.ngdc.noaa.gov/mgg/greatlakes/erie.html
+
+    wget https://www.ngdc.noaa.gov/mgg/greatlakes/erie/data/netcdf/erie_lld.grd.gz
+    gunzip erie_lld.grd.gz
+
+1. Create point cloud .asc file with 10x vertical exaggeration:
+
+    grd2xyz erie_lld.grd ----FORMAT_FLOAT_OUT=%f | sed '/NaN/d' | awk '{print $1, $2, 10 * $3}' | mapproject -E --FORMAT_FLOAT_OUT=%f > erie_lld_10x.asc
+
+2. Process in Meshlab:
+
+    Copy erie_lld_10x.asc file locally to machine that has Meshlab
+        File -> Import Mesh...
+        Filters -> Point Set -> Compute normals for point sets (defaults)
+        Filters -> Remeshing, Simplification and Reconstruction -> Screened Poisson Surface Reconstruction 
+                                                                   (Reconstruction depth: 8, Minimum Number of Samples: 1.5, Interpolation Weight: 0)
+        Filters -> Remeshing, Simplification and Reconstruction -> Simplification: Quadric Edge Collapse Decimation:
+            - Target number of faces: 1,000,000
+            - Preserve Normal
+            - Preseve Topology
+            - Optimal Position of Simplified Vertices
+            - Planar Simplification
+            - Post-simplification cleaning
+        Filters -> Normals, Curvatures and Orientation -> Invert Faces Orientation
+        * Cleanup - use editing tools (with plenty of intermediate saves)
+        Filters -> Smoothing, Fairing and Deformation -> Laplacian smooth (surface preserve)
+        File -> Export Mesh As... (save as file erie_lld_10x.ply)
+
+3. Process with aopt:
+
+    cd <working_dir>
+    # On Mac aopt is in /Applications/Instant\ Player.app/Contents/MacOS/
+    aopt -i erie_lld_10x.ply -F Scene -b erie_lld_10x.x3db
+    aopt -i erie_lld_10x.x3db -f PrimitiveSet:creaseAngle:4 -V -Y "nodeType(Geometry)" -N erie_lld_10x.html
+
+4. Copy to tmp directory on public stoqs server:
+
+    scp erie_lld_10x.html stoqs.mbari.org:/tmp
+    scp src*.src stoqs.mbari.org:/tmp
+
+5. Log into stoqs.mbari.org, copy to new directory in html/x3d:
+
+    mkdir /opt/docker_stoqs_vols/html/x3d/erie_lld_10x
+    cd /opt/docker_stoqs_vols/html/x3d/erie_lld_10x
+    cp /tmp/erie_lld_10x.html .
+    cp /tmp/src*.src .
+
+6. Edit /opt/docker_stoqs_vols/html/x3d/erie_lld_10x/erie_lld_10x.html to change material and https:
+
+    <material diffuseColor='0.7 0.7 0.7' specularColor='0.1 0.1 0.1'></material>
+    :%s#http:#https:#
+
+7. View it at:
+
+    http://stoqs.mbari.org/x3d/erie_lld_10x/erie_lld_10x.html
+
+8. Create X3D scene file for inclusion in web apps:
+
+    cp erie_lld_10x.html erie_lld_10x_scene.x3d
+
+    - Edit erie_lld_10x_scene.x3d to remove all elements outside of the <scene>...</scene> element
+    - For STOQS/Django to serve the .src files via AJAX the urls must be fully qualified:
+
+    :%s#url='"src#url='"http://stoqs.mbari.org/x3d/erie_lld_10x/src#
+
+
+--
+Mike McCann
+10 September 2019
+

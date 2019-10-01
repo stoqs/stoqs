@@ -127,7 +127,13 @@ coverage report -m --omit utils/geo.py,utils/utils.py
 tools/removeTmpFiles.sh > /dev/null 2>&1
 cd ..
 
-# Return code used by Travis-CI 
+# Save tests_status to ${STOQS_HOME}/stoqs/stoqs/tests for Dockerclud and return it for Travis-CI 
+echo "unit_tests_status = $unit_tests_status"
+echo "Executing echo $unit_tests_status > stoqs/stoqs/tests/unit_tests_status..."
+echo $unit_tests_status > stoqs/stoqs/tests/unit_tests_status
+echo "Executing cat stoqs/stoqs/tests/unit_tests_status..."
+cat stoqs/stoqs/tests/unit_tests_status
+# For when we're confident that all tests will pass in CI - for now, rely on just unit tests
 ##exit $(($unit_tests_status + $loading_tests_status + $functional_tests_status))
 exit $unit_tests_status
 

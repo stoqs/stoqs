@@ -190,14 +190,14 @@ class BrowserTestCase(BaseTestCase):
         self._wait_until_visible_then_click(dorado_button)
 
         # Test that Mapserver returns images
-        self.assertEqual('', self._mapserver_loading_panel_test())
+        self.assertEqual('', self._mapserver_loading_panel_test(delay=4))
 
         # Test Spatial 3D - provides test coverage in utils/Viz
         spatial_3d_anchor = self.browser.find_element_by_id('spatial-3d-anchor')
         self._wait_until_visible_then_click(spatial_3d_anchor)
         # - Measurement data
         measuredparameters_anchor = self.browser.find_element_by_id('measuredparameters-anchor')
-        self._wait_until_visible_then_click(measuredparameters_anchor)
+        self._wait_until_visible_then_click(measuredparameters_anchor, delay=4)
         altitude_id = Parameter.objects.get(name__contains='altitude').id
         altitude_plot_button = self.browser.find_element(By.XPATH,
                 "//input[@name='parameters_plot' and @value='{}']".format(altitude_id))

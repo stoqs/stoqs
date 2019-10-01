@@ -23,7 +23,7 @@ from stoqs.models import (Activity, InstantPoint, Sample, SampleType, Resource,
                           SamplePurpose, SampleRelationship, Parameter, SampledParameter,
                           MeasuredParameter, AnalysisMethod, Measurement, Campaign,
                           Platform, PlatformType, ActivityType, ActivityResource,
-                          SampleResource)
+                          SampleResource, ResourceType, ParameterResource)
 from loaders.seabird import get_year_lat_lon
 from loaders import STOQS_Loader, SkipRecord
 from collections import defaultdict, namedtuple
@@ -55,7 +55,7 @@ if settings.DEBUG:
 
 # Constants for utils/STOQSQmanager.py to use
 SAMPLED = 'Sampled'
-sample_simplify_crit = 0.5
+sample_simplify_crit = 0.1
 
 # SampleTypes
 GULPER = 'Gulper'
@@ -64,7 +64,7 @@ NETTOW = 'NetTow'
 VERTICALNETTOW = 'VerticalNetTow'       # Must contain NETTOW string so that a filter for
 HORIZONTALNETTOW = 'VerticalNetTow'     # name__contains=NETTOW returns both vertical and horizontal net tows
 PLANKTONPUMP = 'PlanktonPump'
-ESP_ARCHIVE = 'ESP_Archive'
+ESP_FILTERING = 'ESP_filtering'
 SIPPER = 'Sipper'
 SIPPER_NUM_ERR = re.compile('Sample (?P<sipper_num>\d+), err_code=(?P<sipper_err>\d+)')
 SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
@@ -83,7 +83,7 @@ lsr_cartridge_number_re = r'Selecting Cartridge (?P<cartridge_number>\d+)'
 # E.g.: Sampled  1000.0ml
 lsr_volume_re           = r'Sampled\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
 # E.g.: Cmd::Paused in FILTERING --  during Sample Pump (SP) move after sampling 486.135m
-lsr_volume_re_paused    = r'.*sampling\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
+lsr_volume_re_paused    = r'.*[Ss]ampl.+\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
 lsr_esp_error_msg_re    = r'(?P<esp_error_message>.+Error in PROCESSING.+)'
 
 class ClosestTimeNotFoundException(Exception):
@@ -224,7 +224,7 @@ class ParentSamplesLoader(STOQS_Loader):
         campaign = Campaign.objects.using(db_alias).filter(activity__name=activity_name)[0]
         lrauv_platform = Platform.objects.using(db_alias).filter(activity__name=activity_name)[0]
         platform = self._get_lrauv_esp_sample_platform(db_alias, lrauv_platform, sample_type)
-        at, _ = ActivityType.objects.using(db_alias).get_or_create(name=ESP_ARCHIVE)
+        at, _ = ActivityType.objects.using(db_alias).get_or_create(name=ESP_FILTERING)
 
         sdt = datetime.fromtimestamp(ses)
         edt = datetime.fromtimestamp(ees)
@@ -263,7 +263,7 @@ class ParentSamplesLoader(STOQS_Loader):
         sample_act.loaded_date = datetime.utcnow()
         sample_act.save(using=db_alias)
 
-        # Add deep copies of original Activity Measurments to the new Sample Activity to have accurate time and locations
+        # Add deep copies of original Activity Measurements to the new Sample Activity to have accurate time and locations
         # and statistics of the MeasuredParameters for the Sample
         self.activity = sample_act
         parameter_counts = defaultdict(lambda:0)
@@ -296,6 +296,22 @@ class ParentSamplesLoader(STOQS_Loader):
 
         self.logger.debug(f"Creating SimpleDepthTimeSeries for this Sample")
         self.insertSimpleDepthTimeSeries(critSimpleDepthTime=sample_simplify_crit)
+
+        # Associate Resources so that data can be plotted in the Paramter tab of the UI
+        self.logger.info(f"Associating Resources for UI display of Parameters tab for sample_act = {sample_act}")
+        ncg_res_type, _ = ResourceType.objects.using(self.dbAlias).get_or_create(name='nc_global')
+        ui_res_type, _ = ResourceType.objects.using(self.dbAlias).get_or_create(name='ui_instruction')
+        ft_res, _ = Resource.objects.using(self.dbAlias).get_or_create(name='featureType',
+                                                                       value='trajectory', resourcetype=ncg_res_type)
+        ptsd_res, _ = Resource.objects.using(self.dbAlias).get_or_create(name='plotTimeSeriesDepth',
+                                                                         value=0, resourcetype=ui_res_type)
+        ar, _ = ActivityResource.objects.using(self.dbAlias).get_or_create(activity=sample_act, resource=ft_res)
+        self.logger.info(f"ActivityResource.resource = {ar.resource}")
+        ar, _ = ActivityResource.objects.using(self.dbAlias).get_or_create(activity=sample_act, resource=ptsd_res)
+        self.logger.info(f"ActivityResource.resource = {ar.resource}")
+        for parm in parameter_counts:
+            pr, _ = ParameterResource.objects.using(self.dbAlias).get_or_create(parameter=parm, resource=ptsd_res)
+            self.logger.info(f"parm = {parm}, ParameterResource.resource = {pr.resource}")
 
         return sample_act, sample_ip, point, depth, maptrack
 
@@ -468,9 +484,18 @@ class ParentSamplesLoader(STOQS_Loader):
                     volume = float(lsr_volume.groupdict().get('volume_num'))
             if lsr_esp_error_msg:
                 if lsr_esp_error_msg.groupdict().get('esp_error_message'):
+                    # Instance of 'Slide::Error in PROCESSING -- Archive Syringe positionErr at 54ul (actually 72ul)' in:
+                    # http://dods.mbari.org/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/syslog
                     merr = re.match('.+actually (\d+)([a-z]+)', lsr_esp_error_msg.groupdict().get('esp_error_message'))
-                    if merr.group(2) == 'ul':
-                        volume = float(merr.group(1)) * 1.e-3
+                    if merr:
+                        if merr.group(2) == 'ul':
+                            self.logger.info(f"Saving 'actually' volume following from {lsr_esp_error_msg.groupdict().get('esp_error_message')}")
+                            volume = float(merr.group(1)) * 1.e-3
+                    else:
+                        # Instance of 'Syringe::PressureError in PROCESSING -- 24.5psi is out of 11.0..22.5 range -- Skipping SPR' in:
+                        # http://dods.mbari.org/data/lrauv/makai/missionlogs/2019/20190822_20190827/20190822T194106/syslog
+                        self.logger.info(f"Error encountered: {lsr_esp_error_msg.groupdict().get('esp_error_message')}")
+
                 
             sample_names[sample_name] = SampleInfo(filtering.esec, stopping.esec, volume, summary.text)
 
@@ -602,7 +627,7 @@ class ParentSamplesLoader(STOQS_Loader):
         sipper_names = self._match_sippers(samplings_at, sample_num_errs)
 
         if sample_names:
-            (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_ARCHIVE)
+            (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_FILTERING)
             self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
             self._save_samples(db_alias, platform_name, activity_name, esp_archive_type, sample_names, 
                                log_text='ESP log summary report')

@@ -3736,43 +3736,45 @@ function enable_cardboard(){
                 // Now add each activity for this platform - separated so that they are not connected with a line
                 //console.log('Getting sdt for ' + platform_value[0])
                 $.each(act_types, function(index, act_type) {
-                    if ( ! $.isEmptyObject(data['simpledepthtime'][act_type]['sdt'][platform_value[0]]) ) {
-                        $.each(data['simpledepthtime'][act_type]['sdt'][platform_value[0]], function (label, depth_time_series) {
-                            var rec = [];
-                            //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
-                            subset_dts = [];
-                            bottomdepth_time_series = [];
-                            if ( ! $.isEmptyObject(data.simplebottomdepthtime ) ) {
-                                if ( ! $.isEmptyObject(data.simplebottomdepthtime.sbdt[platform_value[0]][label]) ) {
-                                    bottomdepth_time_series = data.simplebottomdepthtime.sbdt[platform_value[0]][label];
+                    if ( ! $.isEmptyObject(data['simpledepthtime'][act_type]) ) {
+                        if ( ! $.isEmptyObject(data['simpledepthtime'][act_type]['sdt'][platform_value[0]]) ) {
+                            $.each(data['simpledepthtime'][act_type]['sdt'][platform_value[0]], function (label, depth_time_series) {
+                                var rec = [];
+                                //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
+                                subset_dts = [];
+                                bottomdepth_time_series = [];
+                                if ( ! $.isEmptyObject(data.simplebottomdepthtime ) ) {
+                                    if ( ! $.isEmptyObject(data.simplebottomdepthtime.sbdt[platform_value[0]][label]) ) {
+                                        bottomdepth_time_series = data.simplebottomdepthtime.sbdt[platform_value[0]][label];
+                                    }
                                 }
-                            }
-                            if ( ! $.isEmptyObject(depth_time_series) ) {
-                                // Test for overlap of zoom window with data; push an item to mark this dts being in zoom window
-                                d1 = depth_time_series[0][0];
-                                d2 = depth_time_series[depth_time_series.length-1][0];
-                                if ((x1 <= d2) && (d1 <= x2)){
-                                    subset_dts.push(depth_time_series[0]);
+                                if ( ! $.isEmptyObject(depth_time_series) ) {
+                                    // Test for overlap of zoom window with data; push an item to mark this dts being in zoom window
+                                    d1 = depth_time_series[0][0];
+                                    d2 = depth_time_series[depth_time_series.length-1][0];
+                                    if ((x1 <= d2) && (d1 <= x2)){
+                                        subset_dts.push(depth_time_series[0]);
+                                    }
                                 }
-                            }
-                            if (subset_dts.length > 0) {
-                                if (subset_dts.length > maxLength) {
-                                    maxLength = subset_dts.length;
-                                }
-                                if (! platform_seen[platform_value[0]]) {
-                                    //rec["label"] = platform_value[0];
-                                    platform_seen[platform_value[0]] = true;
-                                }
-                                //console.log('>>> ' + platform_value[0]);
-                                if ( act_type === 'default' ) {
-                                    dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime'][act_type]['colors'][platform_value[0]]});
-                                }
-                                else {
-                                    dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime'][act_type]['colors'][platform_value[0]][label]});
-                                }
-                                dataset.push({'data': bottomdepth_time_series, 'color': "#lightgrey", 'lines': {lineWidth: 0, fill: true}});
-                             }
-                        });
+                                if (subset_dts.length > 0) {
+                                    if (subset_dts.length > maxLength) {
+                                        maxLength = subset_dts.length;
+                                    }
+                                    if (! platform_seen[platform_value[0]]) {
+                                        //rec["label"] = platform_value[0];
+                                        platform_seen[platform_value[0]] = true;
+                                    }
+                                    //console.log('>>> ' + platform_value[0]);
+                                    if ( act_type === 'default' ) {
+                                        dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime'][act_type]['colors'][platform_value[0]]});
+                                    }
+                                    else {
+                                        dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime'][act_type]['colors'][platform_value[0]][label]});
+                                    }
+                                    dataset.push({'data': bottomdepth_time_series, 'color': "#lightgrey", 'lines': {lineWidth: 0, fill: true}});
+                                 }
+                            });
+                        }
                     }
                 });
             });

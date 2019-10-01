@@ -26,6 +26,7 @@ import re
 import pydap
 import pytz
 import json
+import webob
 
 ##from Contour import Contour
 from thredds_crawler.crawl import Crawl
@@ -46,14 +47,20 @@ logger.setLevel(logging.DEBUG)
 class NoNewHotspotData(Exception):
     pass
 
+  
 class NcFileMissing(Exception):
     def __init__(self, value):
         self.nc4FileUrl = value
     def __str__(self):
         return repr(self.nc4FileUrl)
-
+ 
 class ServerError(Exception):
     pass
+
+
+class FileNotInYear(Exception):
+    pass
+
 
 def abbreviate(parms):
     '''Return the shortened string that represents the list of parameters. This is used in both activity and file naming conventions'''
@@ -91,6 +98,9 @@ def getNcStartEnd(urlNcDap, timeAxisName):
         endDatetime = from_udunits(df[timeAxisName][-1][0].data, timeAxisUnits)
     except pydap.exceptions.ServerError as e:
         logger.warning(e)
+        raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
+    except webob.exc.HTTPError as e:
+        logger.warning(e.comment)
         raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
     except ValueError as e:
         logger.warning(e)
@@ -134,8 +144,8 @@ def processDecimated(args, pw, url, lastDatetime, start, end):
             logger.warning('Assuming data are invalid and skipping')
         except IndexError:
             logger.warning('Problem interpolating data from %s', url)
-        except KeyError:
-            raise ServerError("Key error - can't read parameters from %s" % (url))
+        ##except KeyError:
+        ##    raise ServerError("Key error - can't read parameters from %s" % (url))
         except ValueError:
             raise ServerError("Value error - can't read parameters from %s" % (url))
 
@@ -266,34 +276,13 @@ def check_file(delay, old_filename, new_filename):
 
 if __name__ == '__main__':
     args = process_command_line()
+    lrauv_names = ('ahi', 'aku', 'brezo', 'daphne', 'galene', 'makai', 'opah', 'pontus', 
+                   'tethys', 'triton', 'whoidhs')
 
-    platformName = None
-
-    # Url name for logs indicates what vehicle logs are being monitored; use this to determine the platform name
-    d = re.match(r'.*tethys*',args.inUrl)
-    if d:
-        platformName = 'tethys'
-    d = re.match(r'.*daphne*',args.inUrl)
-    if d:
-        platformName = 'daphne'
-    d = re.match(r'.*makai*',args.inUrl)
-    if d:
-        platformName = 'makai'
-    d = re.match(r'.*aku*',args.inUrl)
-    if d:
-        platformName = 'aku'
-    d = re.match(r'.*ahi*',args.inUrl)
-    if d:
-        platformName = 'ahi'
-    d = re.match(r'.*opah*',args.inUrl)
-    if d:
-        platformName = 'opah'
-    d = re.match(r'.*whoidhs*',args.inUrl)
-    if d:
-        platformName = 'whoidhs'
-
-    if platformName is None:
-        raise Exception('cannot find platformName from url %s' % args.inUrl)
+    platformName = args.inUrl.split('/')[6]
+    if platformName not in lrauv_names:
+        logger.warn(f"Platform name {platformName} parsed from {args.inUrl} is not in {lrauv_names}")
+        sys.exit(1)
 
     # Start back a week from now to load in old data
     lastDatetime = datetime.utcnow() - timedelta(days=7)
@@ -322,9 +311,7 @@ if __name__ == '__main__':
     cl.campaignName = args.campaign
 
     # Get directory list from sites
-    s = args.inUrl.rsplit('/',1)
-    files = s[1]
-    url = s[0]
+    url, files = args.inUrl.rsplit('/',1)
     logger.info("Crawling %s for %s files", url, files)
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$", ".*.js$", ".*.kml$",  ".*.log$"]
     c = Crawl(os.path.join(url, 'catalog.xml'), select=[files], debug=False, skip=skips)
@@ -348,20 +335,22 @@ if __name__ == '__main__':
         try:
             year_str = '{}'.format(start.year)
             logger.info('Looking for {} in {}'.format(year_str, url))
-            if '{}'.format(start.year) in url:
+            if year_str in url:
                 (url_src, startDatetime, endDatetime) = processDecimated(args, pw, url, lastDatetime, start, end)
             else:
-              raise Exception('{} not in search year'.format(url))
+                logger.warn('{} not in search year'.format(url))
+                continue
+                ##raise FileNotInYear('{} not in search year'.format(url))
         except ServerError as e:
             logger.warning(e)
             continue
-        except Exception as e:
+        except lrauvNc4ToNetcdf.MissingCoordinate as e:
             logger.warning(e)
             continue
 
         lastDatetime = endDatetime
 
-        if url_src:
+        if url_src and args.database:
             logger.info("Received new %s file ending at %s in %s", platformName, lastDatetime, url_src)
             aName = url_src.split('/')[-2] + '_' + url_src.split('/')[-1].split('.')[0]
             dataStartDatetime = None

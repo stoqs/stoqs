@@ -61,10 +61,13 @@ class BaseWriter(object):
         self.ncFile.date_modified = iso_now
         self.ncFile.featureType = featureType
         self.ncFile.data_mode = 'R'
-        self.ncFile.user = os.environ['USER']
-        self.ncFile.hostname = os.environ['HOSTNAME']
+        if os.environ.get('USER'):
+            self.ncFile.user = os.environ.get('USER')
+        if os.environ.get('HOSTNAME'):
+            self.ncFile.hostname = os.environ.get('HOSTNAME')
 
         # Record source of the software producing this file
+        app_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
         repo = Repo(app_dir, search_parent_directories=True)
         self.ncFile.gitorigin = repo.remotes.origin.url
         self.ncFile.gitcommit = repo.head.commit.hexsha

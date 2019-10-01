@@ -176,6 +176,7 @@ def showActivityParameterHistogram(request, fmt='png'):
 @cache_page(60 * 15)
 def showMeasuredParameter(request, fmt='json'):
     stoqs_object = mod.MeasuredParameter
+    # Note: This order_by is also done for qs_mp in stoqs/utils/MPQuery.py, so this is redundant, but harmless
     query_set = stoqs_object.objects.all().order_by('measurement__instantpoint__timevalue')
 
     mp = MeasuredParameter(request, fmt, query_set, stoqs_object)
@@ -183,6 +184,7 @@ def showMeasuredParameter(request, fmt='json'):
 
 def showSampledParameter(request, fmt='json'):
     stoqs_object = mod.SampledParameter
+    # Note: This order_by is also done for qs_sp in stoqs/utils/MPQuery.py, so this is redundant, but harmless
     query_set = stoqs_object.objects.all().order_by('sample__instantpoint__timevalue')
 
     sp = SampledParameter(request, fmt, query_set, stoqs_object)

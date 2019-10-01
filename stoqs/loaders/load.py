@@ -32,11 +32,11 @@ from django.conf import settings
 from django.core.management import call_command
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import ConnectionDoesNotExist, OperationalError, ProgrammingError
-from django.db import transaction, connections
+from django.db import transaction, connections, close_old_connections
 from slacker import Slacker
 from stoqs.models import ResourceType, Resource, Campaign, CampaignResource, MeasuredParameter, \
                          SampledParameter, Activity, Parameter, Platform
-from timing import MINUTES
+from loaders.timing import MINUTES
 
 def tail(f, n):
     return subprocess.getoutput(f"tail -{n} {f}")
@@ -56,6 +56,27 @@ class Loader(object):
     logger.setLevel(logging.INFO)
     prov = {}
 
+    def _db_exists(self, db):
+        '''Return true is the database db exists on the server
+        '''
+
+        command = '''psql -p {port} -U postgres -c \"SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower('{db}');\"'''.format(
+                        **{'port': settings.DATABASES[db]['PORT'], 'db': db})
+        self.logger.debug('command = %s', command)
+        output = subprocess.getoutput(command)
+        self.logger.debug('output = %s', output)
+        if db in output:
+            return True
+        else:
+            return False
+
+    def _show_activity(self, db):
+        command = r'''echo "\x \\\\ SELECT * from pg_stat_activity where datname = '{db}';" | psql -p {port} -U postgres'''.format(
+                        **{'port': settings.DATABASES[db]['PORT'], 'db': db})
+        self.logger.info('command = %s', command)
+        output = subprocess.getoutput(command)
+        self.logger.info('output = %s', output)
+
     def _create_db(self, db):
         '''Create database. Invoking user should have privileges to connect to 
         the database server as user postgres. Only the port number from the 
@@ -69,25 +90,19 @@ class Loader(object):
             'psql -p {port} -c \"GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;\" -d {db} -U postgres'))
 
         createdb = commands.format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
-        if self.args.clobber:
-            createdb = ('psql -p {port} -c \"DROP DATABASE {db};\" -U postgres && '
-                    ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db}) + createdb
-
         self.logger.info('Creating database %s', db)
         self.logger.debug('createdb = %s', createdb)
         ret = os.system(createdb)
         self.logger.debug('ret = %s', ret)
 
         if ret != 0:
-            # Try again without DROP command if --clobber is specified
             if self.args.clobber:
                 createdb = commands.format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
                 self.logger.debug('createdb = %s', createdb)
                 ret = os.system(createdb)
                 self.logger.debug('ret = %s', ret)
                 if ret != 0:
-                    raise DatabaseCreationError((
-                        'Failed to create {} even after trying without DROP command').format(db))
+                    raise DatabaseCreationError(('Failed to create {}').format(db))
                 else:
                     return
 
@@ -235,6 +250,11 @@ class Loader(object):
                     print(line, end='')
 
     def checks(self):
+        if self.args.verbose >= 1:
+            self.logger.setLevel(logging.DEBUG)
+        elif self.args.verbose > 0:
+            self.logger.setLevel(logging.INFO)
+
         # That stoqs/campaigns.py file can be loaded
         try:
             campaigns = importlib.import_module(self.args.campaigns)
@@ -280,10 +300,13 @@ local   all             all                                     peer
             print((('{:30s} {:>15s}').format('Database', 'Last Load time (min)')))
             print((('{:30s} {:>15s}').format('-'*25, '-'*20)))
             nothing_printed = True
+            dbs_to_drop = []
             for db,load_command in list(campaigns.campaigns.items()):
                 if self.args.db:
                     if db not in self.args.db:
                         continue
+                    else:
+                        dbs_to_drop.append(db)
 
                 script = os.path.join(app_dir, 'loaders', load_command)
                 try:
@@ -307,12 +330,16 @@ local   all             all                                     peer
 
             if not self.args.noinput:
                 ans = input('\nAre you sure you want to drop these database(s) and reload them? [y/N] ')
-                if ans.lower() != 'y':
+                if ans.lower() == 'y':
+                    for db_to_drop in dbs_to_drop:
+                        if self._db_exists(db_to_drop):
+                            self._dropdb(db_to_drop)
+                else:
                     print('Exiting')
                     sys.exit()
 
-        # That user wants to load all the production databases (no command line arguments)
-        if not sys.argv[1:]:
+        # That user wants to load all the production databases (no --db argument)
+        if not self.args.db:
             print(("On the server running on port =", settings.DATABASES['default']['PORT']))
             print("You are about to load all these databases:")
             print((' '.join(list(campaigns.campaigns.keys()))))
@@ -357,7 +384,7 @@ local   all             all                                     peer
                             'Check log_file for errors: {}').format(sec_wait * max_iter, log_file))
                 else:
                     self.logger.error(f'Could not find Campaign record for {db} in the database.')
-                    raise
+                    raise DatabaseLoadError()
 
     def recordprovenance(self, db, load_command, log_file):
         '''Add Resources to the Campaign that describe what loaded it
@@ -452,7 +479,18 @@ local   all             all                                     peer
                                 campaign=self.campaign, resource=r)
                 self.logger.info('Resource uristring="%s", name="%s", value="%s"', '', name, value)
 
+    def _dropdb(self, db):
+        dropdb = '''psql -p {port} -U postgres -c \"DROP DATABASE {db};\"'''.format(
+                    **{'port': settings.DATABASES['default']['PORT'], 'db': db})
 
+        self.logger.info('Dropping database %s', db)
+        self.logger.debug('dropdb = %s', dropdb)
+        close_old_connections()
+        ret = os.system(dropdb)
+        self.logger.debug('ret = %s', ret)
+        if ret != 0:
+            self.logger.warn('Failed to drop %s', db)
+            self._show_activity(db)
 
     def removetest(self):
         self.logger.info('Removing test databases from sever running on port %s', 
@@ -467,15 +505,7 @@ local   all             all                                     peer
                     continue
 
             db += '_t'
-            dropdb = ('psql -p {port} -c \"DROP DATABASE {db};\" -U postgres').format(
-                    **{'port': settings.DATABASES['default']['PORT'], 'db': db})
-
-            self.logger.info('Dropping database %s', db)
-            self.logger.debug('dropdb = %s', dropdb)
-            ret = os.system(dropdb)
-            self.logger.debug('ret = %s', ret)
-            if ret != 0:
-                self.logger.warn('Failed to drop %s', db)
+            self._dropdb(db)
 
     def list(self):
         stoqs_campaigns = []
@@ -517,7 +547,7 @@ local   all             all                                     peer
 
         return matching_lines
 
-    def load(self, campaigns=None, create_only=False):
+    def load(self, campaigns=None, create_only=False, cl_args=None):
         if not campaigns:
             campaigns = importlib.import_module(self.args.campaigns)
 
@@ -546,6 +576,10 @@ local   all             all                                     peer
                 settings.DATABASES[db] = settings.DATABASES.get('default').copy()
                 settings.DATABASES[db]['NAME'] = db
 
+
+            if self._db_exists(db) and self.args.clobber and self.args.noinput:
+                self._dropdb(db)
+
             try:
                 self._create_db(db)
             except DatabaseCreationError as e:
@@ -573,6 +607,12 @@ local   all             all                                     peer
 
             if create_only:
                 return
+
+            if cl_args:
+                if cl_args.realtime:
+                    load_command += ' --realtime'
+                if cl_args.missionlogs:
+                    load_command += ' --missionlogs'
 
             if hasattr(self.args, 'verbose') and not load_command.endswith('.sh'):
                 if self.args.verbose > 2:
@@ -603,6 +643,7 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
             if self.args.background:
                 cmd = '({}) &'.format(cmd)
 
+            # Execute as system call - Allows for repeatable loading and output captue by executing the load script in cmd
             self.logger.info('Executing: %s', cmd)
             ret = os.system(cmd)
             self.logger.debug(f'ret = {ret}')
@@ -638,6 +679,9 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
                 
             if ret != 0:
                 self.logger.error(f'Non-zero return code from load script. Check {log_file}')
+                if self._db_exists(db):
+                    self._dropdb(db)
+                raise DatabaseLoadError(f'Non-zero return code from load script. Check {log_file}')
 
             if self.args.drop_indexes:
                 self.logger.info('Creating indexes...')
@@ -765,12 +809,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
                 print('If using --slack must set SLACKTOKEN environment variable. [Never share your token!]')
                 sys.exit(-1)
 
-        if self.args.verbose >= 1:
-            self.logger.setLevel(logging.DEBUG)
-        elif self.args.verbose > 0:
-            self.logger.setLevel(logging.INFO)
-   
- 
+
 if __name__ == '__main__':
     l = Loader()
 
