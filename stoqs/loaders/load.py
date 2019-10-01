@@ -547,7 +547,7 @@ local   all             all                                     peer
 
         return matching_lines
 
-    def load(self, campaigns=None, create_only=False):
+    def load(self, campaigns=None, create_only=False, cl_args=None):
         if not campaigns:
             campaigns = importlib.import_module(self.args.campaigns)
 
@@ -607,6 +607,12 @@ local   all             all                                     peer
 
             if create_only:
                 return
+
+            if cl_args:
+                if cl_args.realtime:
+                    load_command += ' --realtime'
+                if cl_args.missionlogs:
+                    load_command += ' --missionlogs'
 
             if hasattr(self.args, 'verbose') and not load_command.endswith('.sh'):
                 if self.args.verbose > 2:
