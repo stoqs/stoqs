@@ -25,18 +25,21 @@ import os
 import sys
 stoqs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 sys.path.insert(0, stoqs_dir)
+import django
 import logging
 
 from argparse import ArgumentParser, Namespace
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from make_load_scripts import LoaderMaker
-from loaders.load import Loader
+from loaders.load import Loader, DatabaseLoadError
 
 class AutoLoad():
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
+
+    lm = LoaderMaker()
 
     def _YYYYMM_to_monyyyy(self, YYYYMM):
         return datetime(int(YYYYMM[:4]), int(YYYYMM[4:]), 1).strftime("%b%Y").lower()
@@ -45,18 +48,30 @@ class AutoLoad():
         self.loader.args.db = (f"stoqs_lrauv_{monyyyy}", )
         self.logger.debug(f"--db arg set to {self.loader.args.db}")
         self.loader.checks()
-        self.logger.debug(f"Executing self.loader.load()...")
-        self.loader.load()
+        try:
+            self.logger.debug(f"Executing self.loader.load()...")
+            self.loader.load(cl_args=self.args)
+        except DatabaseLoadError:
+            self.logger.warn(f"Failed to load {self.loader.args.db}")
+            return
+
         self.logger.debug(f"Executing self.loader.updateprovenance()...")
         self.loader.updateprovenance()
         self.logger.debug(f"Executing self.loader.pg_dump()...")
         self.loader.pg_dump()
 
+    def _update_campaigns(self, year):
+            # Ensure that we have load script and campaign created for the year requested
+            items = self.lm.create_load_scripts(year)
+            num_new_campaigns = self.lm.update_lrauv_campaigns(items)
+            if num_new_campaigns:
+                self.logger.info(f"{num_new_campaigns} campaigns added to campaigns.py file")
+                self.logger.warn(f"If you are running in a Docker container you you need to restart the stoqs service with this file before executing the loads.")
+
     def execute(self):
-        lm = LoaderMaker()
         if self.args.verbose:
             self.logger.setLevel(logging.DEBUG)
-            lm.logger.setLevel(logging.DEBUG)
+            self.lm.logger.setLevel(logging.DEBUG)
 
         self.loader = Loader()
 
@@ -71,16 +86,15 @@ class AutoLoad():
         self.loader.args.verbose = self.args.verbose
 
         if self.args.YYYYMM:
-            # Ensure that we have load script and campaign created for the year requested
-            items = lm.create_load_scripts(int(self.args.YYYYMM[:4]))
-            lm.update_lrauv_campaigns(items)
-            self._do_the_load(self._YYYYMM_to_monyyyy(YYYYMM))
+            self._update_campaigns(int(self.args.YYYYMM[:4]))
+            self._do_the_load(self._YYYYMM_to_monyyyy(self.args.YYYYMM))
 
         elif self.args.start_YYYYMM and self.args.end_YYYYMM:
+            # First, create the campaigns.py file for the whole duration
             for year in range(int(self.args.start_YYYYMM[:4]), int(self.args.end_YYYYMM[:4]) + 1):
-                # Ensure that we have load scripts and campaigns created for the year requested
-                items = lm.create_load_scripts(year)
-                lm.update_lrauv_campaigns(items)
+                self._update_campaigns(year)
+            # Second, execute the loads
+            for year in range(int(self.args.start_YYYYMM[:4]), int(self.args.end_YYYYMM[:4]) + 1):
                 if year == int(self.args.start_YYYYMM[:4]):
                     for month in range(int(self.args.start_YYYYMM[4:]), 13):
                         self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
@@ -93,18 +107,15 @@ class AutoLoad():
 
         elif self.args.previous_month:
             prev_mon = datetime.today() - relativedelta(months=1)
-            # Ensure that we have load script and campaign created for the year requested
             YYYYMM = prev_mon.strftime("%Y%m")
-            items = lm.create_load_scripts(int(YYYYMM[:4]))
-            lm.update_lrauv_campaigns(items)
+            self._update_campaigns(int(self.args.YYYYMM[:4]))
             self._do_the_load(self._YYYYMM_to_monyyyy(YYYYMM))
 
         elif self.args.current_month:
             curr_mon = datetime.today()
             # Ensure that we have load script and campaign created for the year requested
             YYYYMM = curr_mon.strftime("%Y%m")
-            items = lm.create_load_scripts(int(YYYYMM[:4]))
-            lm.update_lrauv_campaigns(items)
+            self._update_campaigns(int(self.args.YYYYMM[:4]))
             self._do_the_load(self._YYYYMM_to_monyyyy(YYYYMM))
 
     def process_command_line(self):
@@ -115,6 +126,8 @@ class AutoLoad():
         parser.add_argument('--previous_month', action='store_true', help='Recreate the database for the previous month')
         parser.add_argument('--current_month', action='store_true', help='Recreate the database for the current month')
         parser.add_argument('--test', action='store_true', help='Load test database(s)')
+        parser.add_argument('--realtime', action='store_true', help='Load realtime data')
+        parser.add_argument('--missionlogs', action='store_true', help='Load delayed mode (missionlogs) data')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, 
                             help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
 
@@ -130,5 +143,9 @@ class AutoLoad():
 if __name__ == '__main__':
     autoload = AutoLoad()
     autoload.process_command_line()
-    autoload.execute()
+    try:
+        autoload.execute()
+    except django.db.utils.ConnectionDoesNotExist as e:
+        autoload.logger.error(str(e))
+        autoload.logger.info(f"Perhaps stoqs/campaigns.py doesn't contain the db_aliases you are trying to load?")
 

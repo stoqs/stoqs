@@ -92,11 +92,14 @@ class LoaderMaker():
         #     ('stoqs_lrauv_jan2018', 'LRAUV/load_lrauv_jan2018.py'),\n
         CAMPAIGN_ITEM = re.compile(r".*\('stoqs_lrauv_(.*)', 'LRAUV\/load_lrauv_(.*).py'\),")
         monyyyy_in_file = []
-        with open(os.path.join(stoqs_dir, campaign_file_name)) as cf:
-            for line in cf:
-                c_match = re.match(CAMPAIGN_ITEM, line)
-                if c_match:
-                    monyyyy_in_file.append(c_match.group(1))
+        try:
+            with open(os.path.join(stoqs_dir, campaign_file_name)) as cf:
+                for line in cf:
+                    c_match = re.match(CAMPAIGN_ITEM, line)
+                    if c_match:
+                        monyyyy_in_file.append(c_match.group(1))
+        except FileNotFoundError as e:
+            self.logger.debug(str(e))
 
         # Rewrite the file with existing and new campaigns
         campaign_items_str = ''
@@ -104,8 +107,10 @@ class LoaderMaker():
             load_file_name = f"load_lrauv_{monyyyy}.py"
             campaign_items_str += f"    ('stoqs_lrauv_{monyyyy}', '{os.path.join(os.path.basename(this_dir), load_file_name)}'),\n"
 
+        num_new_campaigns = 0
         for monyyyy in monyyyys:
             if monyyyy not in monyyyy_in_file:
+                num_new_campaigns += 1
                 load_file_name = f"load_lrauv_{monyyyy}.py"
                 campaign_items_str += f"    ('stoqs_lrauv_{monyyyy}', '{os.path.join(os.path.basename(this_dir), load_file_name)}'),\n"
 
@@ -116,8 +121,9 @@ class LoaderMaker():
         with open(os.path.join(stoqs_dir, campaign_file_name), 'w') as cf:
             cf.write(script)
 
-        print(f"Done writing {os.path.join(stoqs_dir, campaign_file_name)}")
-        self.logger.info(f"Done writing {os.path.join(stoqs_dir, campaign_file_name)}")
+        print(f"Done writing {os.path.join(stoqs_dir, campaign_file_name)} with {num_new_campaigns} new campaign entries")
+        self.logger.info(f"Done writing {os.path.join(stoqs_dir, campaign_file_name)} with {num_new_campaigns} new campaign entries")
+        return num_new_campaigns
 
 
 if __name__ == '__main__':
