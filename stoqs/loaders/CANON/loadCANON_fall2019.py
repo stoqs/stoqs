@@ -42,7 +42,7 @@ cl = CANONLoader('stoqs_canon_fall2019', 'CANON - Fall 2019',
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
 
-startdate = datetime.datetime(2019, 9, 25)
+startdate = datetime.datetime(2019, 9, 27)
 enddate = datetime.datetime(2019, 10, 15)
 
 cl.tdsBase = 'http://odss.mbari.org/thredds/'

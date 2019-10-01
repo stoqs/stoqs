@@ -84,6 +84,7 @@ class AutoLoad():
         self.loader.args.clobber = True
         self.loader.args.test = self.args.test
         self.loader.args.verbose = self.args.verbose
+        self.loader.args.drop_if_fail = True
 
         if self.args.YYYYMM:
             self._update_campaigns(int(self.args.YYYYMM[:4]))
@@ -108,14 +109,14 @@ class AutoLoad():
         elif self.args.previous_month:
             prev_mon = datetime.today() - relativedelta(months=1)
             YYYYMM = prev_mon.strftime("%Y%m")
-            self._update_campaigns(int(self.args.YYYYMM[:4]))
+            self._update_campaigns(int(YYYYMM[:4]))
             self._do_the_load(self._YYYYMM_to_monyyyy(YYYYMM))
 
         elif self.args.current_month:
             curr_mon = datetime.today()
             # Ensure that we have load script and campaign created for the year requested
             YYYYMM = curr_mon.strftime("%Y%m")
-            self._update_campaigns(int(self.args.YYYYMM[:4]))
+            self._update_campaigns(int(YYYYMM[:4]))
             self._do_the_load(self._YYYYMM_to_monyyyy(YYYYMM))
 
     def process_command_line(self):
