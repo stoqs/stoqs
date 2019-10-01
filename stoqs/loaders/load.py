@@ -679,7 +679,7 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
                 
             if ret != 0:
                 self.logger.error(f'Non-zero return code from load script. Check {log_file}')
-                if self._db_exists(db):
+                if self._db_exists(db) and self.args.drop_if_fail:
                     self._dropdb(db)
                 raise DatabaseLoadError(f'Non-zero return code from load script. Check {log_file}')
 
@@ -796,6 +796,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
         parser.add_argument('--drop_indexes', action='store_true', help='Before load drop indexes and create them following the load')
         parser.add_argument('--pg_dump', action='store_true', help='Store a pg_dump(1) with "-Fc" option file on the server')
         parser.add_argument('--noinput', action='store_true', help='Execute without asking for a response, e.g. for --clobber')
+        parser.add_argument('--drop_if_fail', action='store_true', help='Drop database if fail to load data')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
     

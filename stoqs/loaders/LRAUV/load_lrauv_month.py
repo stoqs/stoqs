@@ -84,6 +84,7 @@ class AutoLoad():
         self.loader.args.clobber = True
         self.loader.args.test = self.args.test
         self.loader.args.verbose = self.args.verbose
+        self.loader.args.drop_if_fail = True
 
         if self.args.YYYYMM:
             self._update_campaigns(int(self.args.YYYYMM[:4]))
