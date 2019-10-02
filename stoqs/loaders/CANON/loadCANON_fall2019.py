@@ -158,6 +158,18 @@ cl.wg_Tiny_depths = [ 0 ]
 cl.wg_Tiny_startDatetime = startdate
 cl.wg_Tiny_endDatetime = enddate
 
+# WG Hansen - All instruments combined into one file - one time coordinate
+cl.wg_Hansen_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
+cl.wg_Hansen_files = [
+                      'wgHansen/20190927/realTime/20190927.nc',
+                   ]
+
+cl.wg_Hansen_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
+                    'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
+cl.wg_Hansen_depths = [ 0 ]
+cl.wg_Hansen_startDatetime = startdate
+cl.wg_Hansen_endDatetime = enddate
+
 # WG OA - All instruments combined into one file - one time coordinate
 ##cl.wg_oa_base = cl.dodsBase + 'CANON/2015_OffSeason/Platforms/Waveglider/wgOA/'
 ##cl.wg_oa_files = [ 'Sept_2013_OAWaveglider_final.nc' ]
@@ -293,8 +305,9 @@ cl.loadL_662a()
 ##cl.load_slocum_nemesis() ## not in this campaign
 #-cl.load_wg_Tiny()
 ##cl.load_wg_Sparky() ## not in this campaign
-#-cl.load_wg_272() ## new for this campaign 
-#cl.load_oa1()  ## no data during this campaign
+#-cl.load_wg_272() ##  
+cl.load_wg_Hansen() ## 
+#cl.load_oa1()  
 #-cl.load_oa2() 
 #cl.loadDorado(startdate, enddate, build_attrs=True) ## waiting for first data
 #-cl.loadLRAUV('makai', startdate, enddate)

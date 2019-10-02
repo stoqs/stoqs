@@ -128,6 +128,7 @@ class CANONLoader(LoadScript):
                 'wg_Tiny':      '960000',
                 'wg_Sparky':    'FCDD00',
                 'wg_272':       '98FF26',
+                'wg_Hansen':    '9AD484',
                 'deimos':       '33D4FF',
              }
 
@@ -625,6 +626,18 @@ class CANONLoader(LoadScript):
                                        'wg_272_Glider', self.colors['wg_272'], 'waveglider', 'Glider Mission',
                                        self.wg_272_parms, self.dbAlias, stride, self.wg_272_startDatetime,
                                        self.wg_272_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+
+    def load_wg_Hansen(self, stride=None):
+        '''
+        Glider specific load functions, sets plotTimeSeriesDepth=0 to get Parameter tab in UI
+        '''
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_Hansen_files], self.wg_Hansen_files):
+            url = self.wg_Hansen_base + f
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+                                       'wg_Hansen_Glider', self.colors['wg_Hansen'], 'waveglider', 'Glider Mission',
+                                       self.wg_Hansen_parms, self.dbAlias, stride, self.wg_Hansen_startDatetime,
+                                       self.wg_Hansen_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
 
 
     def load_wg_oa(self, stride=None):
