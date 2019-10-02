@@ -1311,10 +1311,8 @@ class CANONLoader(LoadScript):
         base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{mission_year}/'
         dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{mission_year}/'
         if sbd_logs:
-            # TODO: check for enddate being in a different month
-            yrmo = startdate.strftime('%Y%m')
-            base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/realtime/sbdlogs/{mission_year}/{yrmo}/'
-            dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/realtime/sbdlogs/{mission_year}/{yrmo}/'
+            base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/realtime/sbdlogs/{mission_year}/'
+            dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/realtime/sbdlogs/{mission_year}/'
         # TODO: Add case for cell_logs
         setattr(self, platform + '_files', [])
         setattr(self, platform + '_base', dods_base)
@@ -1332,7 +1330,7 @@ class CANONLoader(LoadScript):
             if len(urls) > 0 :
                 for url in sorted(urls):
                     if 'shore_i' in url:
-                        file = '/'.join(url.split('/')[-2:])
+                        file = '/'.join(url.split('/')[-3:])
                     else:
                         file = '/'.join(url.split('/')[-3:])
                     files.append(file)
