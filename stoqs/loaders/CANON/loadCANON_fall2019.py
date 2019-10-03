@@ -148,7 +148,7 @@ cl.wg_Sparky_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20190513/realTime/20190513.nc',
+                      'wgTiny/20191001/realTime/20191001.nc',
                    ]
 
 
@@ -303,12 +303,12 @@ cl.loadL_662a()
 #-cl.load_NPS29()   
 ##cl.load_NPS34a() ## not in this campaign
 ##cl.load_slocum_nemesis() ## not in this campaign
-#-cl.load_wg_Tiny()
+cl.load_wg_Tiny()
 ##cl.load_wg_Sparky() ## not in this campaign
 #-cl.load_wg_272() ##  
 cl.load_wg_Hansen() ## 
-#cl.load_oa1()  
-#-cl.load_oa2() 
+cl.load_oa1()  
+cl.load_oa2() 
 #cl.loadDorado(startdate, enddate, build_attrs=True) ## waiting for first data
 #-cl.loadLRAUV('makai', startdate, enddate)
 
