@@ -36,7 +36,7 @@ import urllib
 
 from SampleLoaders import SeabirdLoader, SubSamplesLoader, ParentSamplesLoader
 from lrauv_support import MissionLoader
-from LRAUV.make_load_scripts import lrauvs as auv_names
+from LRAUV.make_load_scripts import lrauvs
 from bs4 import BeautifulSoup
 from loaders import LoadScript, FileNotFound
 from stoqs.models import InstantPoint
@@ -135,6 +135,7 @@ class CANONLoader(LoadScript):
 
     # Distribute AUV colors along a yellow to brown palette, auv_names imported from LRAUV/make_load_scripts.py
     YlOrBr = plt.cm.YlOrBr
+    auv_names = ['dorado'] + lrauvs
     for auv_name, c in zip(auv_names, YlOrBr(np.linspace(0, YlOrBr.N, len(auv_names), dtype=int))):
         colors[auv_name] = rgb2hex(c)[1:]
 
