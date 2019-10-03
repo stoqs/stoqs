@@ -6,15 +6,20 @@ __contact__ = 'duane at mbari.org'
 
 __doc__ = '''
 
-Master loader for all CANON Fall (September-October) Campaign 2019
+Master loader for all CANON May-June Campaign 2019
 
 Mike McCann, Duane Edgington, Danelle Cline
-MBARI 26 September 2019
+MBARI 22 May 2019
+
+@var __date__: Date of last svn commit
+@undocumented: __doc__ parser
+@status: production
+@license: GPL
 '''
 
 import os
 import sys
-import datetime
+import datetime  # needed for glider data
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
@@ -23,7 +28,7 @@ from CANON import CANONLoader
 import timing
 
 cl = CANONLoader('stoqs_canon_fall2019', 'CANON - Fall 2019',
-                 description='Fall 2019 coordinated campaign observations centered on DEIMOS in Monterey Bay',
+                 description='Fall 2019 coordinated campaign observations in Monterey Bay',
                  x3dTerrains={
                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -42,9 +47,13 @@ cl = CANONLoader('stoqs_canon_fall2019', 'CANON - Fall 2019',
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
 
-startdate = datetime.datetime(2019, 9, 27)
-enddate = datetime.datetime(2019, 10, 15)
+# Set start and end dates for all loads from sources that contain data
+# beyond the temporal bounds of the campaign
+#
+startdate = datetime.datetime(2019, 9, 26)  # Fixed start. Sept 26, 2019
+enddate = datetime.datetime(2019, 10, 10)  # Fixed end. Oct 10, 2019.
 
+# default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
 cl.dodsBase = cl.tdsBase + 'dodsC/'
 
@@ -75,6 +84,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # L_662a updated parameter names in netCDF file
 cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662a_files = [
+#                   'OS_Glider_L_662_20190328_TS.nc',
                    'OS_Glider_L_662_20190717_TS.nc',
                   ]
 cl.l_662a_parms = ['temperature', 'salinity', 'fluorescence','oxygen']
@@ -148,9 +158,8 @@ cl.wg_Sparky_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20190513/realTime/20190513.nc',
+                      'wgTiny/20190909/realTime/20190909.nc',
                    ]
-
 
 cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
                     'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
@@ -158,10 +167,10 @@ cl.wg_Tiny_depths = [ 0 ]
 cl.wg_Tiny_startDatetime = startdate
 cl.wg_Tiny_endDatetime = enddate
 
-# WG Hansen - All instruments combined into one file - one time coordinate
+# Wi Hansen - All instruments combined into one file - one time coordinate
 cl.wg_Hansen_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Hansen_files = [
-                      'wgHansen/20190927/realTime/20190927.nc',
+                      'wgHansen/20190909/realTime/20190909.nc',
                    ]
 
 cl.wg_Hansen_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
@@ -183,14 +192,11 @@ cl.wg_Hansen_endDatetime = enddate
 ######################################################################
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
 cl.m1_files = [
-  '201907/OS_M1_20190729hourly_CMSTV.nc',
-##  '201907/m1_hs2_20190730.nc',
-              ]
+  '201907/OS_M1_20190729hourly_CMSTV.nc',]
 cl.m1_parms = [
   'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
   'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
-  'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR',
-##  'bb470', 'bb676', 'fl676',
+  'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
 ]
 
 cl.m1_startDatetime = startdate
@@ -245,24 +251,57 @@ cl.rcpctd_files = [
 cl.wfuctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
-##                    'cn18sm01.nc', 'cn18sm02.nc', 'cn18sm03.nc', 'cn18sm04.nc', 'cn18sm05.nc',
-##                    'cn18sm06.nc', 'cn18sm07.nc', 'cn18sm08.nc', 'cn18sm09hex.nc', 'cn18sm10hex.nc',
+                  'CN19SM01.nc',
+                  'CN19SM02.nc',
+                  'CN19SM03.nc',
+                  'CN19SM04.nc',
+                  'CN19SM05.nc',
+                  'CN19SM06.nc',
                   ]
 
 # PCTD
 cl.wfpctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.wfpctd_files = [
-##                    'cn18sc01.nc', 'cn18sc02.nc', 'cn18sc03.nc', 'cn18sc04.nc', 'cn18sc05.nc',
-##                    'cn18sc06.nc', 'cn18sc07.nc', 'cn18sc08.nc', 'cn18sc09.nc', 'cn18sc10.nc',
-##                    'cn18sc11.nc', 'cn18sc12.nc', 'cn18sc13.nc', 'cn18sc14.nc', 'cn18sc15.nc',
-##                    'cn18sc16.nc', 'cn18sc17.nc', 'cn18sc18.nc', 'cn18sc19.nc', 'cn18sc20.nc',
-##                    'cn18sc21.nc', 'cn18sc22.nc', 'cn18sc23.nc', 'cn18sc24.nc', 'cn18sc25.nc',
-##                    'cn18sc26.nc', 'cn18sc27.nc', 'cn18sc28.nc', 'cn18sc29.nc', 'cn18sc30.nc',
-##                    'cn18sc31.nc', 'cn18sc32.nc', 'cn18sc33.nc', 'cn18sc34.nc', 'cn18sc35.nc',
-##                    'cn18sc36.nc', 'cn18sc37.nc', 'cn18sc38.nc', 'cn18sc39.nc', 'cn18sc40.nc',
-##                    'cn18sc41.nc', 'cn18sc42.nc', 'cn18sc43.nc', 'cn18sc44.nc', 'cn18sc45.nc',
-##                    'cn18sc46.nc', 'cn18sc47.nc', 'cn18sc48.nc',
+                  'CN19SC01.nc',
+                  'CN19SC02.nc',
+                  'CN19SC03.nc',
+                  'CN19SC04.nc',
+                  'CN19SC05.nc',
+                  'CN19SC06.nc',
+                  'CN19SC07.nc',
+                  'CN19SC08.nc',
+                  'CN19SC09.nc',
+                  'CN19SC10.nc',
+                  'CN19SC11.nc',
+                  'CN19SC12.nc',
+                  'CN19SC13.nc',
+                  'CN19SC14.nc',
+                  'CN19SC15.nc',
+                  'CN19SC16.nc',
+                  'CN19SC17.nc',
+                  'CN19SC18.nc',
+                  'CN19SC19.nc',
+                  'CN19SC20.nc',
+                  'CN19SC21.nc',
+                  'CN19SC22.nc',
+                  'CN19SC23.nc',
+                  'CN19SC24.nc',
+                  'CN19SC25.nc',
+                  'CN19SC26.nc',
+                  'CN19SC27.nc',
+                  'CN19SC28.nc',
+                  'CN19SC29.nc',
+                  'CN19SC30.nc',
+                  'CN19SC31.nc',
+                  'CN19SC32.nc',
+                  'CN19SC33.nc',
+                  'CN19SC34.nc',
+                  'CN19SC35.nc',
+                  'CN19SC36.nc',
+                  'CN19SC37.nc',
+                  'CN19SC38.nc',
+                  'CN19SC39.nc',                  
                   ]
 
 # DEIMOS
@@ -276,52 +315,63 @@ cl.deimos_files = [ 'deimos-2019-CANON-Spring.nc' ]
 ###################################################################################################
 cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CN18F/CN18F/')
 cl.subsample_csv_files = [
-   'STOQS_CN18F_CHL_5U.csv',   'STOQS_CN18F_NH4.csv',     'STOQS_CN18F_PHAEO_1U.csv',   'STOQS_CN18F_SAL.csv',        'STOQS_CN18F_TRANSMISS.csv',
-   'STOQS_CN18F_CHLA.csv',     'STOQS_CN18F_O2.csv',      'STOQS_CN18F_PHAEO_5U.csv',   'STOQS_CN18F_SIG_T.csv',
-   'STOQS_CN18F_ALK.csv',         'STOQS_CN18F_CHL_GFF.csv',  'STOQS_CN18F_OXY_ML.csv',  'STOQS_CN18F_PHAEO_GFF.csv',  'STOQS_CN18F_TCO2.csv',
-   'STOQS_CN18F_ALTIMETER.csv',
-   'STOQS_CN18F_COND2.csv', 
-   'STOQS_CN18F_OXY_PS.csv',  'STOQS_CN18F_POT_TMP2.csv',
-   'STOQS_CN18F_TEMP2.csv', 
-   'STOQS_CN18F_CARBON_GFF.csv',  'STOQS_CN18F_CONDUCT.csv',  'STOQS_CN18F_PAR4PI.csv',  'STOQS_CN18F_POT_TMP.csv',    'STOQS_CN18F_TMP.csv',
-   'STOQS_CN18F_CHL_1U.csv',      'STOQS_CN18F_FLUOR.csv',    'STOQS_CN18F_PARCOS.csv',
-   'STOQS_CN18F_SAL2.csv', 
-   'STOQS_CN18F_TRANSBEAM.csv',
-                          ]
+                         'STOQS_CN19S_CARBON_GFF.csv',
+                         'STOQS_CN19S_ALK.csv',
+                         'STOQS_CN19S_TCO2.csv',
+                         'STOQS_CN19S_TRANSBEAM.csv',
+                         'STOQS_CN19S_COND2.csv',
+                         'STOQS_CN19S_TEMP2.csv',
+                         'STOQS_CN19S_SAL2.csv',
+                         'STOQS_CN19S_OXY_PS.csv',
+                         'STOQS_CN19S_OXY_ML.csv',
+                         'STOQS_CN19S_NH4.csv',
+                         'STOQS_CN19S_PHAEO_5U.csv',
+                         'STOQS_CN19S_CHL_1U.csv',
+                         'STOQS_CN19S_CHL_5U.csv',
+                         'STOQS_CN19S_O2.csv',
+                         'STOQS_CN19S_PHAEO_1U.csv',
+                         'STOQS_CN19S_TRANSMISS.csv',
+                         'STOQS_CN19S_CHLA.csv',
+                         'STOQS_CN19S_FLUOR.csv',
+                         'STOQS_CN19S_CONDUCT.csv',
+                         'STOQS_CN19S_SIG_T.csv',
+                         'STOQS_CN19S_SAL.csv',
+                         'STOQS_CN19S_TMP.csv',
+                         'STOQS_CN19S_PHAEO_GFF.csv',
+                         'STOQS_CN19S_CHL_GFF.csv',                          
+                         ]
 
 # Execute the load
 cl.process_command_line()
 
 if cl.args.test:
-    cl.stride = 1
+    cl.stride = 100
 elif cl.args.stride:
     cl.stride = cl.args.stride
 
 cl.loadM1()  
-#-cl.loadDEIMOS()
+#cl.loadDEIMOS()
 cl.loadL_662a()
-#-cl.load_NPS29()   
+#cl.load_NPS29()   
 ##cl.load_NPS34a() ## not in this campaign
 ##cl.load_slocum_nemesis() ## not in this campaign
-#-cl.load_wg_Tiny()
+#cl.load_wg_Tiny()
+#cl.load_wg_Hansen() ## update after deployment
 ##cl.load_wg_Sparky() ## not in this campaign
-#-cl.load_wg_272() ##  
-cl.load_wg_Hansen() ## 
+#cl.load_wg_272() ## not in this campaign 
 #cl.load_oa1()  
-#-cl.load_oa2() 
+#cl.load_oa2() 
 #cl.loadDorado(startdate, enddate, build_attrs=True) ## waiting for first data
-#-cl.loadLRAUV('makai', startdate, enddate)
-
-for lrauv in ('daphne', 'makai', 'pontus', 'triton',):
-    cl.loadLRAUV(lrauv, startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
-    cl.loadLRAUV(lrauv, startdate, enddate, critSimpleDepthTime=0.1)
-
+#cl.loadLRAUV('makai', startdate, enddate)
+#cl.loadLRAUV('daphne', startdate, enddate)
+#cl.loadLRAUV('triton', startdate, enddate)
+#cl.loadLRAUV('tethys', startdate, enddate)
 #cl.loadRCuctd() ## waiting for first data
 #cl.loadRCpctd() ## waiting for first data
 #cl.loadWFuctd() ## waiting for first data
 #cl.loadWFpctd() ## waiting for first data
 
-#cl.loadSubSamples() ##when subsamples ready to load...
+#cl.loadSubSamples() ## waiting for first data
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
