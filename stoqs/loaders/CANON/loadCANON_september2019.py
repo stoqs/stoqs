@@ -27,8 +27,8 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 from CANON import CANONLoader
 import timing
 
-cl = CANONLoader('stoqs_canon_may2019', 'CANON - May 2019',
-                 description='May 2019 coordinated campaign observations in Monterey Bay',
+cl = CANONLoader('stoqs_canon_fall2019', 'CANON - Fall 2019',
+                 description='Fall 2019 coordinated campaign observations in Monterey Bay',
                  x3dTerrains={
                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -50,8 +50,8 @@ cl = CANONLoader('stoqs_canon_may2019', 'CANON - May 2019',
 # Set start and end dates for all loads from sources that contain data
 # beyond the temporal bounds of the campaign
 #
-startdate = datetime.datetime(2019, 5, 20)  # Fixed start.May 20, 2019
-enddate = datetime.datetime(2019, 6, 8)  # Fixed end. June 8, 2019.
+startdate = datetime.datetime(2019, 9, 26)  # Fixed start. Sept 26, 2019
+enddate = datetime.datetime(2019, 10, 10)  # Fixed end. Oct 10, 2019.
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -84,7 +84,8 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # L_662a updated parameter names in netCDF file
 cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662a_files = [
-                   'OS_Glider_L_662_20190328_TS.nc',
+#                   'OS_Glider_L_662_20190328_TS.nc',
+                   'OS_Glider_L_662_20190717_TS.nc',
                   ]
 cl.l_662a_parms = ['temperature', 'salinity', 'fluorescence','oxygen']
 cl.l_662a_startDatetime = startdate
@@ -157,15 +158,26 @@ cl.wg_Sparky_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20190513/realTime/20190513.nc',
+                      'wgTiny/20190909/realTime/20190909.nc',
                    ]
-
 
 cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
                     'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
 cl.wg_Tiny_depths = [ 0 ]
 cl.wg_Tiny_startDatetime = startdate
 cl.wg_Tiny_endDatetime = enddate
+
+# Wi Hansen - All instruments combined into one file - one time coordinate
+cl.wg_Hansen_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
+cl.wg_Hansen_files = [
+                      'wgHansen/20190909/realTime/20190909.nc',
+                   ]
+
+cl.wg_Hansen_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
+                    'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
+cl.wg_Hansen_depths = [ 0 ]
+cl.wg_Hansen_startDatetime = startdate
+cl.wg_Hansen_endDatetime = enddate
 
 # WG OA - All instruments combined into one file - one time coordinate
 ##cl.wg_oa_base = cl.dodsBase + 'CANON/2015_OffSeason/Platforms/Waveglider/wgOA/'
@@ -180,7 +192,7 @@ cl.wg_Tiny_endDatetime = enddate
 ######################################################################
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
 cl.m1_files = [
-  '201808/OS_M1_20180806hourly_CMSTV.nc',]
+  '201907/OS_M1_20190729hourly_CMSTV.nc',]
 cl.m1_parms = [
   'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
   'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
@@ -338,26 +350,28 @@ elif cl.args.stride:
     cl.stride = cl.args.stride
 
 cl.loadM1()  
-cl.loadDEIMOS()
+#cl.loadDEIMOS()
 cl.loadL_662a()
-cl.load_NPS29()   
+#cl.load_NPS29()   
 ##cl.load_NPS34a() ## not in this campaign
 ##cl.load_slocum_nemesis() ## not in this campaign
-cl.load_wg_Tiny()
+#cl.load_wg_Tiny()
+#cl.load_wg_Hansen() ## update after deployment
 ##cl.load_wg_Sparky() ## not in this campaign
-cl.load_wg_272() ## new for this campaign 
-#cl.load_oa1()  ## no data during this campaign
-cl.load_oa2() 
+#cl.load_wg_272() ## not in this campaign 
+#cl.load_oa1()  
+#cl.load_oa2() 
 #cl.loadDorado(startdate, enddate, build_attrs=True) ## waiting for first data
-cl.loadLRAUV('makai', startdate, enddate)
-cl.loadLRAUV('daphne', startdate, enddate)
-cl.loadLRAUV('tethys', startdate, enddate)
+#cl.loadLRAUV('makai', startdate, enddate)
+#cl.loadLRAUV('daphne', startdate, enddate)
+#cl.loadLRAUV('triton', startdate, enddate)
+#cl.loadLRAUV('tethys', startdate, enddate)
 #cl.loadRCuctd() ## waiting for first data
 #cl.loadRCpctd() ## waiting for first data
-cl.loadWFuctd() 
-cl.loadWFpctd() 
+#cl.loadWFuctd() ## waiting for first data
+#cl.loadWFpctd() ## waiting for first data
 
-cl.loadSubSamples() 
+#cl.loadSubSamples() ## waiting for first data
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
