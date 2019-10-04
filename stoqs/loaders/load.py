@@ -578,7 +578,7 @@ local   all             all                                     peer
                 settings.DATABASES[db]['NAME'] = db
 
 
-            if self._db_exists(db) and self.args.clobber and self.args.noinput:
+            if self._db_exists(db) and self.args.clobber and (self.args.noinput or self.args.test):
                 self._dropdb(db)
 
             try:
