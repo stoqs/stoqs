@@ -126,6 +126,8 @@ class InterpolatorWriter(BaseWriter):
         if deployment_name:
             self.ncFile.title = deployment_name + ' - LRAUV interpolated data'
             self.ncFile.deployment_name = deployment_name
+        elif 'shore' in out_file:
+            self.ncFile.title = 'LRAUV interpolated realtime data'
         else:
             self.ncFile.title = 'LRAUV interpolated data'
 
