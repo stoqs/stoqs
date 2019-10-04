@@ -135,7 +135,7 @@ class CANONLoader(LoadScript):
 
     # Distribute AUV colors along a yellow to brown palette, auv_names imported from LRAUV/make_load_scripts.py
     YlOrBr = plt.cm.YlOrBr
-    auv_names = ['dorado'] + lrauvs
+    auv_names = ['dorado'] + list(lrauvs)
     for auv_name, c in zip(auv_names, YlOrBr(np.linspace(0, YlOrBr.N, len(auv_names), dtype=int))):
         colors[auv_name] = rgb2hex(c)[1:]
 
