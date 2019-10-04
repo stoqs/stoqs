@@ -23,7 +23,7 @@ do
     do
         directory=`echo ${search} | sed 's:/[^/]*$::'`
         echo "Executing monitorLrauv.py for directory = ${directory}"
-        python monitorLrauv.py --start '20190901T000000' --end '20190930T000000' \
+        python monitorLrauv.py --start '20191001T000000' --end '20191031T000000' \
  	                           -o /mbari/LRAUV/${platform}/${directory}/ -i /mbari/LRAUV/${platform}/${directory} \
         -u ${urlbase}/${platform}${search} \
         --iparm depth \
