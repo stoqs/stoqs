@@ -341,7 +341,7 @@ local   all             all                                     peer
                     sys.exit()
 
         # That user wants to load all the production databases (no --db argument)
-        if not self.args.db and not self.args.list:
+        if not self.args.db and not self.args.list and not self.args.updateprovenance:
             print(("On the server running on port =", settings.DATABASES['default']['PORT']))
             print("You are about to load all these databases:")
             print((' '.join(list(campaigns.campaigns.keys()))))
@@ -444,7 +444,7 @@ local   all             all                                     peer
             self.logger.debug('grant = %s', grant)
             ret = os.system(grant)
             self.logger.debug('ret = %s', ret)
-                
+
     def pg_dump(self):
         campaigns = importlib.import_module(self.args.campaigns)
         for db,load_command in list(campaigns.campaigns.items()):
@@ -578,7 +578,7 @@ local   all             all                                     peer
                 settings.DATABASES[db]['NAME'] = db
 
 
-            if self._db_exists(db) and self.args.clobber and self.args.noinput:
+            if self._db_exists(db) and self.args.clobber and (self.args.noinput or self.args.test):
                 self._dropdb(db)
 
             try:

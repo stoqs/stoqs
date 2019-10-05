@@ -118,6 +118,10 @@ class DuplicateData(Exception):
     pass
 
 
+class CoordNotEqual(Exception):
+    pass
+
+
 class Base_Loader(STOQS_Loader):
     '''
     A base class for data load operations.  This shouldn't be instantiated directly,
@@ -291,10 +295,14 @@ class Base_Loader(STOQS_Loader):
             self.platform = self.getPlatform(self.platformName, self.platformTypeName)
             self.add_parameters(self.ds)
 
-            # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
-            if not self.startDatetime or not self.endDatetime:
-                self.startDatetime, self.endDatetime = self._getStartAndEndTimeFromDS()
-            self.createActivity()
+            if hasattr(self, 'activity'):
+                # Allow use of existing Activity for loading additional data, e.g. Dorado plankton_proxies
+                self.logger.info(f"Will load these data under Activity {self.activity}")
+            else:
+                # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
+                if not self.startDatetime or not self.endDatetime:
+                    self.startDatetime, self.endDatetime = self._getStartAndEndTimeFromDS()
+                self.createActivity()
         else:
             raise NoValidData('No valid data in url %s' % (self.url))
 
@@ -889,11 +897,14 @@ class Base_Loader(STOQS_Loader):
 
         return coords_equal
 
-    def _load_coords_from_dsg_ds(self, tindx, ac, pnames, axes, coords_equal=np.array([])):
-        '''Pull coordinates from Discrete Sampling Geometry NetCDF dataset,
-        (with accomodations made so that it works as well for EPIC conventions)
-        and bulk create in the database. Retain None values for bad coordinates.
+    def _all_coords_equal(self, tindx, ac, pnames, axes, coords_equal=np.array([])):
+        '''If duplicate coordinant found in database then this is for testing whether
+        all the coordinates in the data to be loaded are identical with an Activity
+        already in the database.  Initially implemented to add plankton_proxy data
+        to an existing Dorado Activity.
         '''
+
+    def _read_coords_from_ds(self, tindx, ac):
         times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
@@ -926,6 +937,14 @@ class Base_Loader(STOQS_Loader):
         else:
             longitudes = self.ds[ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
 
+        return mtimes, depths, latitudes, longitudes
+
+    def _load_coords_from_dsg_ds(self, tindx, ac, pnames, axes, coords_equal=np.array([])):
+        '''Pull coordinates from Discrete Sampling Geometry NetCDF dataset,
+        (with accomodations made so that it works as well for EPIC conventions)
+        and bulk create in the database. Retain None values for bad coordinates.
+        '''
+        mtimes, depths, latitudes, longitudes = self._read_coords_from_ds(tindx, ac)
         self.logger.debug(f'Getting good_coords for {pnames}...')
         try:
             mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
@@ -944,8 +963,9 @@ class Base_Loader(STOQS_Loader):
             meass, mask = self._bulk_load_coordinates(self._ips(mtimes), self._meass(
                                                       depths, longitudes, latitudes), 
                                                       dup_times, ac, axes)
-        except (UniqueViolation, IntegrityError):
+        except (UniqueViolation, IntegrityError) as e:
             # Likely a realtime LRAUV load with a coord already loaded - add the dup to coords_equal
+            self.logger.info(f"{e}: Trying _bulk_load_coordinates() again after _find_dup_coords()")
             coords_equal = self._find_dup_coords(self._ips(mtimes), self._meass(
                                                  depths, longitudes, latitudes), 
                                                  coords_equal)
@@ -1006,13 +1026,35 @@ class Base_Loader(STOQS_Loader):
 
             yield value
 
-    def load_trajectory(self):
+    def _meass_from_activity(self, add_to_activity, tindx, ac):
+        '''Retreive Measurements from existing Activity and confirm that the coordinates
+        are identical to what's in the netCDF we are loading from.  Initially developed
+        for Dorado plankton_proxies data.
+        '''
+        meass = (Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=add_to_activity)
+                                                        .order_by('instantpoint__timevalue'))
+        dup_times = [False] * meass.count()
+        mask = [False] * meass.count()
+
+        for meas, mt, de, la, lo in zip(meass, *self._read_coords_from_ds(tindx, ac)):
+            if meas.instantpoint.timevalue != mt:
+                raise CoordNotEqual(f"Existing timevalue ({meas.instantpoint.timevalue}) != mt ({mt})")
+            if not np.isclose(meas.depth, de):
+                raise CoordNotEqual(f"Existing depth ({meas.depth}) != de ({de})")
+            if meas.geom.y != la:
+                raise CoordNotEqualwarn(f"Existing latitude ({meas.geom.y}) != la ({la})")
+            if meas.geom.x != lo:
+                raise CoordNotEqualwarn(f"Existing longitude ({meas.geom.x}) != lo ({lo})")
+
+        return meass, dup_times, mask
+
+    def load_trajectory(self, add_to_activity=None):
         '''Stream trajectory data directly from pydap proxies to generators fed to bulk_create() calls
         '''
         load_groups, coor_groups = self.get_load_structure()
         coords_equal_hash = {}
         if 'shore_i.nc' in self.url:
-            # Variables from same NetCDF4 group in reqaltime LRAUV data have different axis names,
+            # Variables from same NetCDF4 group in realtime LRAUV data have different axis names,
             # but same coord values. Find them to not load duplicate measurements.
             coords_equal_hash = self._equal_coords(load_groups, coor_groups)
 
@@ -1043,11 +1085,17 @@ class Base_Loader(STOQS_Loader):
                             # Expect CF Discrete Sampling Geometry or EPIC dataset
                             self.logger.info(f'Loading coordinates for axes {k}')
                             if axis_count == 0:
-                                meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k)
+                                if add_to_activity:
+                                    meass, dup_times, mask = self._meass_from_activity(add_to_activity, tindx, ac)
+                                else:
+                                    meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k)
                             else:
                                 if coords_equal_hash:
                                     # For follow-on Parameters using same axes, pass in equal coordinates boolean array
                                     meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k, coords_equal_hash[k])
+                        except CoordNotEqual as e:
+                            self.logger.exception(e)
+                            sys.exit(-1)
                         except ValueError as e:
                             # Likely ValueError: not enough values to unpack (expected 5, got 0) from good_coords()
                             self.logger.debug(str(e))
@@ -1609,7 +1657,7 @@ class Base_Loader(STOQS_Loader):
 
         return mps_loaded, path, self.parameter_counts
 
-    def process_data(self, featureType=''): 
+    def process_data(self, featureType='', add_to_activity=None): 
         '''Bulk copy measurement data into database
         '''
 
@@ -1658,7 +1706,7 @@ class Base_Loader(STOQS_Loader):
         mps_loaded = 0
         try:
             if featureType== TRAJECTORY:
-                mps_loaded = self.load_trajectory()
+                mps_loaded = self.load_trajectory(add_to_activity=add_to_activity)
             elif featureType == TIMESERIES:
                 mps_loaded = self.load_timeseriesprofile()
             elif featureType == TIMESERIESPROFILE:
@@ -2087,6 +2135,8 @@ def _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName
         return
 
     pp_loader.include_names = ['diatoms', 'adinos']
+    loader.logger.info(f"Setting pp_loader.activity to {loader.activity}")
+    pp_loader.activity = loader.activity
     if plotTimeSeriesDepth is not None:
         pp_loader.plotTimeSeriesDepth = dict.fromkeys(pp_loader.include_names, plotTimeSeriesDepth)
 
@@ -2098,7 +2148,7 @@ def _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName
     Trajectory_Loader.getFeatureType = lambda self: TRAJECTORY
     try:
         # Specify featureType so that non-CF LOPC data can be loaded
-        pp_loader.process_data(featureType=TRAJECTORY)
+        pp_loader.process_data(featureType=TRAJECTORY, add_to_activity=loader.activity)
     except VariableMissingCoordinatesAttribute as e:
         loader.logger.exception(str(e))
     except NoValidData as e:

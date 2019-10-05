@@ -43,7 +43,7 @@ enddate = datetime.datetime(2019, 12, 31)
 cl.process_command_line()
 
 if cl.args.test:
-    cl.stride = 1
+    cl.stride = 100
     startdate = datetime.datetime(2003, 12, 5)
     enddate = datetime.datetime(2003, 12, 7)
     cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
