@@ -776,7 +776,7 @@ class STOQS_Loader(object):
         '''Return True if coordinate is missing or fill_value, or falls outside of reasonable bounds
         '''
         # None depth rejections - Ideally a Trajectory file won't have any None-valued depths, but realtime LRAUV data do
-        if not depth:
+        if depth is None:
             return True
 
         # Missing value rejections
@@ -784,7 +784,9 @@ class STOQS_Loader(object):
         if 'depth' in ac:   # Tolerate EPIC 'sensor_depth' type data
             try:
                 if self.mv_by_key[ac['depth']]:
-                    if np.isclose(depth, self.mv_by_key[ac['depth']]):
+                    if depth == 0.0:
+                        pass
+                    elif np.isclose(depth, self.mv_by_key[ac['depth']]):
                         return True
             except KeyError:
                 # Tolerate ac[DEPTH] == 0.0, or other value given in auxCoords
@@ -803,7 +805,9 @@ class STOQS_Loader(object):
         # fill_value rejections
         if 'depth' in ac:   # Tolerate EPIC 'sensor_depth' type data
             try:
-                if self.fv_by_key[ac['depth']]:
+                if depth == 0.0:
+                    pass
+                elif self.fv_by_key[ac['depth']]:
                     if np.isclose(depth, self.fv_by_key[ac['depth']]):
                         return True
             except KeyError:
@@ -876,6 +880,7 @@ class STOQS_Loader(object):
         previous_times = []
         for i, (mt, de, la, lo) in enumerate(zip(mtimes, depths, latitudes, longitudes)):
             if self.is_coordinate_bad(pnames[0], mt, de, la, lo):
+                self.logger.debug(f"Marked coordinate bad: i = {i}, mt = {mt}, de = {de}, la = {la}, lo = {lo}")
                 mt = None
                 de = None
                 la = None
