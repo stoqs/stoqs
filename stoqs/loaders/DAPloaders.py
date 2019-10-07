@@ -869,10 +869,11 @@ class Base_Loader(STOQS_Loader):
         return load_groups, coor_groups
 
     def _ips(self, mtimes):
-        for mt in mtimes:
+        for i, mt in enumerate(mtimes):
             if mt:
                 yield InstantPoint(activity=self.activity, timevalue=mt)
             else:
+                self.logger.debug(f"Bad timevalue from {self.url} at index {i}")
                 yield None
 
     def _meass(self, depths, longitudes, latitudes):
@@ -1036,15 +1037,25 @@ class Base_Loader(STOQS_Loader):
         dup_times = [False] * meass.count()
         mask = [False] * meass.count()
 
+        unequal_coords = 0
         for meas, mt, de, la, lo in zip(meass, *self._read_coords_from_ds(tindx, ac)):
             if meas.instantpoint.timevalue != mt:
-                raise CoordNotEqual(f"Existing timevalue ({meas.instantpoint.timevalue}) != mt ({mt})")
+                self.logger.warn(f"Existing timevalue ({meas.instantpoint.timevalue}) != mt ({mt})")
+                unequal_coords += 1
             if not np.isclose(meas.depth, de):
-                raise CoordNotEqual(f"Existing depth ({meas.depth}) != de ({de})")
-            if meas.geom.y != la:
-                raise CoordNotEqualwarn(f"Existing latitude ({meas.geom.y}) != la ({la})")
-            if meas.geom.x != lo:
-                raise CoordNotEqualwarn(f"Existing longitude ({meas.geom.x}) != lo ({lo})")
+                self.logger.warn(f"Existing depth ({meas.depth}) != de ({de})")
+                unequal_coords += 1
+            if not np.isclose(meas.geom.y, la):
+                self.logger.warn(f"Existing latitude ({meas.geom.y}) != la ({la})")
+                unequal_coords += 1
+            if not np.isclose(meas.geom.x, lo):
+                self.logger.warn(f"Existing longitude ({meas.geom.x}) != lo ({lo})")
+                unequal_coords += 1
+
+        if unequal_coords:
+            self.logger.error(f"Encountered {unequal_coords} when adding data from {self.url} to Activity {add_to_activity}")
+            import pdb; pdb.set_trace()
+            pass
 
         return meass, dup_times, mask
 
@@ -1112,7 +1123,6 @@ class Base_Loader(STOQS_Loader):
                         # Expect instrument (time-coordinate-only) dataset
                         self.logger.warn(f'{pname} has no {ac[DEPTH]} coordinate - processing as time-coordinate-only, e.g. LOPC')
                         meass = self._load_coords_from_instr_ds(tindx, ac)
-
                 try:
                     if isinstance(self.ds[pname], pydap.model.GridType):
                         constraint_string = f"using python slice: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
@@ -1496,7 +1506,7 @@ class Base_Loader(STOQS_Loader):
         if num:
             self.logger.info(f'Deleted {num} inf {pname} MeasuredParameters')
 
-    def _post_process_updates(self, mps_loaded, featureType=''):
+    def _post_process_updates(self, mps_loaded, featureType='', add_to_activity=None):
 
         #
         # Query database to a path for trajectory or stationPoint for timeSeriesProfile and timeSeries
@@ -1556,21 +1566,19 @@ class Base_Loader(STOQS_Loader):
             varList = ', '.join(list(self.vSeen.keys()))
 
         # Construct a meaningful comment that looks good in the UI Metadata->NetCDF area
-        fmt_comment = 'Loaded variables {} from {}'
-        comment_vars = [varList, self.url.split('/')[-1]]
+        load_comment = f"Loaded variables {varList} from {self.url.split('/')[-1]}"
+        if add_to_activity:
+            load_comment += f" (added to variables from {add_to_activity.name})"
         if hasattr(self, 'requested_startDatetime') and hasattr(self, 'requested_endDatetime'):
             if self.requested_startDatetime and self.requested_endDatetime:
-                fmt_comment += ' between {} and {}'
-                comment_vars.extend([self.requested_startDatetime, self.requested_endDatetime])
-        fmt_comment += ' with a stride of {} on {}Z'
-        comment_vars.extend([self.stride, str(datetime.utcnow()).split('.')[0]])
-        newComment = fmt_comment.format(*comment_vars)
+                load_comment += f" between {self.requested_startDatetime} and {self.requested_endDatetime}"
+        load_comment += f" with a stride of {self.stride} on {str(datetime.utcnow()).split('.')[0]}Z"
 
-        self.logger.debug("Updating its comment with newComment = %s", newComment)
+        self.logger.debug("Updating its comment with load_comment = %s", load_comment)
 
         num_updated = Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
                         name=self.getActivityName(),
-                        comment=newComment,
+                        comment=load_comment,
                         maptrack=path,
                         mappoint=stationPoint,
                         num_measuredparameters=mps_loaded,
@@ -1736,7 +1744,7 @@ class Base_Loader(STOQS_Loader):
         if mps_loaded:
             # Bulk loading may introduce None values, remove them
             MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
-            path = self._post_process_updates(mps_loaded, featureType)
+            path = self._post_process_updates(mps_loaded, featureType, add_to_activity=add_to_activity)
 
         return mps_loaded, path, parmCount
 
@@ -2134,7 +2142,7 @@ def _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName
         loader.logger.warn('No plankton proxy data to load at %s', pp_url)
         return
 
-    pp_loader.include_names = ['diatoms', 'adinos']
+    pp_loader.include_names = ['adinos', 'bg_biolum', 'diatoms', 'fluo', 'hdinos', 'intflash', 'nbflash_high', 'nbflash_low', 'profile']
     loader.logger.info(f"Setting pp_loader.activity to {loader.activity}")
     pp_loader.activity = loader.activity
     if plotTimeSeriesDepth is not None:
