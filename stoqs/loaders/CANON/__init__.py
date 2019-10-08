@@ -1204,19 +1204,23 @@ class CANONLoader(LoadScript):
 
         for (aName, f) in zip([ a.split('.')[0] + getStrideText(stride) for a in self.saildrone_files], self.saildrone_files):
             url = self.saildrone_base + f
-            loader = DAPloaders.Trajectory_Loader(url = url,
-                                campaignName = self.campaignName,
-                                campaignDescription = self.campaignDescription,
-                                dbAlias = self.dbAlias,
-                                activityName = aName,
-                                activitytypeName = activity_type_name,
-                                platformName = platform_name,
-                                platformColor = self.colors[platform_name],
-                                platformTypeName = 'glider',
-                                stride = stride,
-                                startDatetime = startdate,
-                                endDatetime = enddate,
-                                dataStartDatetime = None)
+            try:
+                loader = DAPloaders.Trajectory_Loader(url = url,
+                                    campaignName = self.campaignName,
+                                    campaignDescription = self.campaignDescription,
+                                    dbAlias = self.dbAlias,
+                                    activityName = aName,
+                                    activitytypeName = activity_type_name,
+                                    platformName = platform_name,
+                                    platformColor = self.colors[platform_name],
+                                    platformTypeName = 'glider',
+                                    stride = stride,
+                                    startDatetime = startdate,
+                                    endDatetime = enddate,
+                                    dataStartDatetime = None)
+            except webob.exc.HTTPError as e:
+                self.logger.warn(f"Skipping over {url}")
+
             loader.include_names = parameters
             loader.auxCoords = {}
             for parm in parameters:
@@ -1224,8 +1228,8 @@ class CANONLoader(LoadScript):
                 loader.plotTimeSeriesDepth = dict.fromkeys(parameters + [ALTITUDE, SIGMAT, SPICE], 0.0)
             try:
                 loader.process_data()
-            except DAPloaders.OpendapError as e:
-                self.logger.warn(f"Skipping over {url}")
+            except (DAPloaders.OpendapError, IndexError) as e:
+                self.logger.warn(f"Skipping over {url} due to Execption: {e}")
 
     def loadSubSamples(self):
         '''
