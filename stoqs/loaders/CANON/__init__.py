@@ -38,7 +38,7 @@ from SampleLoaders import SeabirdLoader, SubSamplesLoader, ParentSamplesLoader
 from lrauv_support import MissionLoader
 from LRAUV.make_load_scripts import lrauvs
 from bs4 import BeautifulSoup
-from loaders import LoadScript, FileNotFound
+from loaders import LoadScript, FileNotFound, SIGMAT, SPICE, SPICINESS, ALTITUDE
 from stoqs.models import InstantPoint
 from django.db.models import Max
 from datetime import datetime, timedelta
@@ -1178,16 +1178,22 @@ class CANONLoader(LoadScript):
         setattr(self, platform_name  + '_startDatetime', startdate)
         setattr(self, platform_name + '_endDatetime', enddate)
 
-    def loadSaildrone(self, startdate=None, enddate=None,
-                      parameters=[ 'TEMP_AIR_MEAN', ],
-                      ##parameters=[ 'TEMP_AIR_MEAN', 'SAL_SBE37_MEAN', 'TEMP_CTD_RBR_MEAN',
-                      ##             'O2_CONC_SBE37_MEAN', ],
+    def loadSaildrone(self, startdate=None, enddate=None, parameters=['SOG_FILTERED_MEAN',
+                        'COG_FILTERED_MEAN', 'HDG_FILTERED_MEAN', 'ROLL_FILTERED_MEAN',
+                        'PITCH_FILTERED_MEAN', 'UWND_MEAN', 'VWND_MEAN', 'WWND_MEAN',
+                        'TEMP_AIR_MEAN', 'RH_MEAN', 'BARO_PRES_MEAN', 'PAR_AIR_MEAN',
+                        'WAVE_DOMINANT_PERIOD', 'WAVE_SIGNIFICANT_HEIGHT', 'TEMP_SBE37_MEAN',
+                        'SAL_SBE37_MEAN', 'O2_CONC_SBE37_MEAN', 'O2_SAT_SBE37_MEAN',
+                        'CHLOR_WETLABS_MEAN',],
                       stride=None, file_patterns=('.*montereybay_mbari_2019_001-sd1046.*nc$'), build_attrs=False):
         '''First deployed for CANON May 2019 for DEIMOS campaigns
         '''
         platform_name = 'saildrone'
         activity_type_name = 'Saildrone Deployment'
         stride = stride or self.stride
+        # Save these here in case we want to add them
+        rbr_parms = ['TEMP_CTD_RBR_MEAN', 'SAL_RBR_MEAN', 'O2_CONC_RBR_MEAN', 'O2_SAT_RBR_MEAN',
+                     'CHLOR_RBR_MEAN']
 
         if build_attrs:
             self.logger.info(f'Building load parameter attributes from crawling TDS')
@@ -1215,7 +1221,11 @@ class CANONLoader(LoadScript):
             loader.auxCoords = {}
             for parm in parameters:
                 loader.auxCoords[parm] = {'latitude': 'latitude', 'longitude': 'longitude', 'time': 'time', 'depth': 0.0}
-            loader.process_data()
+                loader.plotTimeSeriesDepth = dict.fromkeys(parameters + [ALTITUDE, SIGMAT, SPICE], 0.0)
+            try:
+                loader.process_data()
+            except DAPloaders.OpendapError as e:
+                self.logger.warn(f"Skipping over {url}")
 
     def loadSubSamples(self):
         '''
