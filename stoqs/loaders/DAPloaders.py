@@ -461,7 +461,7 @@ class Base_Loader(STOQS_Loader):
     def getAuxCoordinates(self, variable):
         '''
         Return a dictionary of a variable's auxilary coordinates mapped to the standard_names of 'time', 'latitude',
-        'longitude', and 'depth'.  Accomodate previous ways of associating these variables and convert to the new
+        'longitude', and 'depth'.  Accommodate previous ways of associating these variables and convert to the new
         CF-1.6 conventions as outlined in Chapter 5 of the document.  If an auxCoord dictionary is passed to the
         Loader then that dictionary will be returned for variables that do not have a valid coordinates attribute;
         this is handy for datasets that are not yet compliant.
@@ -488,7 +488,10 @@ class Base_Loader(STOQS_Loader):
                     self.logger.debug(snCoord)
                     coord_dict[coordSN[coord]] = coord
                 except KeyError as e:
-                    raise AuxCoordMissingStandardName(e)
+                    if coord == 'trajectory':
+                        self.logger.info(f"Found 'trajectory' in coordinates attribute. Likely a Saildrone or GliderDAC trajectory file.")
+                    else:
+                        raise AuxCoordMissingStandardName(e)
         else:
             self.logger.debug('Variable %s is missing coordinates attribute, checking if loader has specified it in auxCoords', variable)
             if variable in self.auxCoords:
@@ -512,7 +515,7 @@ class Base_Loader(STOQS_Loader):
 
         self.logger.debug('coord_dict = %s', coord_dict)
 
-        if not coord_dict: # pragma: no cover
+        if not coord_dict or set(coord_dict.keys()) != reqCoords: # pragma: no cover
             if self.auxCoords:
                 if variable in self.auxCoords:
                     # Simply return self.auxCoords if specified in the constructor
@@ -905,8 +908,20 @@ class Base_Loader(STOQS_Loader):
         to an existing Dorado Activity.
         '''
 
-    def _read_coords_from_ds(self, tindx, ac):
-        times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
+    def _read_coords_from_ds(self, tindx, ac, multidim_trajectory=False):
+        '''Initial implementations assume a single trajectory in each netCDF file.
+        With adoption of CF-1.7 " It is strongly recommended that there always be a 
+        trajectory variable (of any data type) with the attribute cf_role=”trajectory_id” 
+        attribute, whose values uniquely identify the trajectories." 
+        http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.html#trajectory-data
+        The multidim_trajectory flag is for indicating a netCDF file that has a
+        Multidimensional array representation of trajectories.
+        '''
+        if multidim_trajectory:
+            # TODO: Deal with (as yet unseen) case where multiple trajectories exist in a netCDF file
+            times = self.ds[ac[TIME]][0][0][tindx[0]:tindx[-1]:self.stride]
+        else:
+            times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
             time_units = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
@@ -925,27 +940,37 @@ class Base_Loader(STOQS_Loader):
             else:
                 self.logger.warn(f'No depth coordinate {ac[DEPTH]} in {self.ds}')
                 if isinstance(ac[DEPTH], (int, float)):
-                    self.logger.info('Overridden in auxCoords: ac[DEPTH] = {ac[DEPTH]}, setting depths to [{ac[DEPTH]}]')
-                    depths = [ac[DEPTH]]
+                    if multidim_trajectory:
+                        self.logger.info('Overridden in auxCoords: ac[DEPTH] = {ac[DEPTH]}, setting depths to [{ac[DEPTH]}] * len(times)')
+                        depths = [ac[DEPTH]] * len(times)
+                    else:
+                        self.logger.info('Overridden in auxCoords: ac[DEPTH] = {ac[DEPTH]}, setting depths to [{ac[DEPTH]}]')
+                        depths = [ac[DEPTH]]
 
         if isinstance(self.ds[ac[LATITUDE]], pydap.model.GridType):
             latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
+        elif multidim_trajectory:
+            # TODO: Deal with (as yet unseen) case where multiple trajectories exist in a netCDF file
+            latitudes = self.ds[ac[LATITUDE]][0][0][tindx[0]:tindx[-1]:self.stride]
         else:
             latitudes = self.ds[ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
 
         if isinstance(self.ds[ac[LONGITUDE]], pydap.model.GridType):
             longitudes = self.ds[ac[LONGITUDE]][ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
+        elif multidim_trajectory:
+            # TODO: Deal with (as yet unseen) case where multiple trajectories exist in a netCDF file
+            longitudes = self.ds[ac[LONGITUDE]][0][0][tindx[0]:tindx[-1]:self.stride]
         else:
             longitudes = self.ds[ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
 
         return mtimes, depths, latitudes, longitudes
 
-    def _load_coords_from_dsg_ds(self, tindx, ac, pnames, axes, coords_equal=np.array([])):
+    def _load_coords_from_dsg_ds(self, tindx, ac, pnames, axes, coords_equal=np.array([]), multidim_trajectory=False):
         '''Pull coordinates from Discrete Sampling Geometry NetCDF dataset,
         (with accomodations made so that it works as well for EPIC conventions)
         and bulk create in the database. Retain None values for bad coordinates.
         '''
-        mtimes, depths, latitudes, longitudes = self._read_coords_from_ds(tindx, ac)
+        mtimes, depths, latitudes, longitudes = self._read_coords_from_ds(tindx, ac, multidim_trajectory=multidim_trajectory)
         self.logger.debug(f'Getting good_coords for {pnames}...')
         try:
             mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
@@ -1054,7 +1079,6 @@ class Base_Loader(STOQS_Loader):
 
         if unequal_coords:
             self.logger.error(f"Encountered {unequal_coords} when adding data from {self.url} to Activity {add_to_activity}")
-            import pdb; pdb.set_trace()
             pass
 
         return meass, dup_times, mask
@@ -1062,6 +1086,7 @@ class Base_Loader(STOQS_Loader):
     def load_trajectory(self, add_to_activity=None):
         '''Stream trajectory data directly from pydap proxies to generators fed to bulk_create() calls
         '''
+        multidim_trajectory = False
         load_groups, coor_groups = self.get_load_structure()
         coords_equal_hash = {}
         if 'shore_i.nc' in self.url:
@@ -1073,7 +1098,12 @@ class Base_Loader(STOQS_Loader):
         for axis_count, (k, pnames) in enumerate(load_groups.items()):
             ac = coor_groups[k]
             try:
-                tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
+                if len(self.ds[ac[TIME]].shape) == 2:
+                    multidim_trajectory = True
+                    # TODO: Deal with (as yet unseen) case where multiple trajectories exist in a netCDF file
+                    tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]][0][0])
+                else:
+                    tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
             except InvalidSliceRequest:
                 self.logger.warn(f'Failed to getTimeBegEndIndices() for axes {k} from {self.url}')
                 continue
@@ -1090,7 +1120,7 @@ class Base_Loader(STOQS_Loader):
                         self.logger.info(f'{self.param_by_key[pname]} does not have {DEPTH} in {self.url}.')
                         self.logger.info(f'ac[DEPTH] = {ac[DEPTH]}. Assume that this depth coordinate was provided in auxCoords')
                         self.logger.info(f'Loading coordinates for axes {k}')
-                        meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k)
+                        meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k, multidim_trajectory=multidim_trajectory)
                     elif ac[DEPTH] in self.ds and ac[LATITUDE] in self.ds and ac[LONGITUDE] in self.ds:
                         try:
                             # Expect CF Discrete Sampling Geometry or EPIC dataset
@@ -1127,6 +1157,11 @@ class Base_Loader(STOQS_Loader):
                     if isinstance(self.ds[pname], pydap.model.GridType):
                         constraint_string = f"using python slice: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                         values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
+                    elif multidim_trajectory:
+                        self.logger.info(f"Loading {pname} from multidimensional trajectory file")
+                        constraint_string = f"using python slice: ds['{pname}'][0][0][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        # TODO: Deal with (as yet unseen) case where multiple trajectories exist in a netCDF file
+                        values = self.ds[pname].data[0][0][tindx[0]:tindx[-1]:self.stride]
                     else:
                         constraint_string = f"using python slice: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                         values = self.ds[pname].data[tindx[0]:tindx[-1]:self.stride]
