@@ -310,8 +310,7 @@ cl.load_wg_Hansen() ##
 cl.load_oa1()  
 cl.load_oa2() 
 cl.loadDorado(startdate, enddate, build_attrs=True)
-#-cl.loadLRAUV('makai', startdate, enddate)
-
+cl.loadSaildrone(startdate, enddate, build_attrs=True)
 for lrauv in ('daphne', 'makai', 'pontus', 'triton',):
     cl.loadLRAUV(lrauv, startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
     cl.loadLRAUV(lrauv, startdate, enddate, critSimpleDepthTime=0.1)
