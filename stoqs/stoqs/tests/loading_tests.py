@@ -37,7 +37,7 @@ class MeasuredParameterTestCase(TestCase):
 
         # Expected number of records for the timeseries Parameters from 
         # the MS moorings
-        parm_counts = dict(D_3=6, Hdg_1215=12, P_1=6, Ptch_1216=12, 
+        parm_counts = dict(Hdg_1215=12, P_1=6, Ptch_1216=12, 
                            Roll_1217=12, S_41=6, T_28=6)
 
         # Use last day of the 2nd event from CCE.loadCCE_2015 - March 2016
@@ -54,7 +54,7 @@ class MeasuredParameterTestCase(TestCase):
     def test_epic_timeseries_full(self):
 
         # Expected number of records 
-        parm_counts = dict(NEP_56=1, Trb_980=1)
+        parm_counts = dict(NEP_56=1, T_28=9)
 
         for parm in list(parm_counts.keys()):
             mp_count = MeasuredParameter.objects.filter(parameter__name__contains=parm).count()

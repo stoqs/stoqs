@@ -38,7 +38,7 @@ from SampleLoaders import SeabirdLoader, SubSamplesLoader, ParentSamplesLoader
 from lrauv_support import MissionLoader
 from LRAUV.make_load_scripts import lrauvs
 from bs4 import BeautifulSoup
-from loaders import LoadScript, FileNotFound
+from loaders import LoadScript, FileNotFound, SIGMAT, SPICE, SPICINESS, ALTITUDE
 from stoqs.models import InstantPoint
 from django.db.models import Max
 from datetime import datetime, timedelta
@@ -131,6 +131,7 @@ class CANONLoader(LoadScript):
                 'wg_272':       '98FF26',
                 'wg_Hansen':    '9AD484',
                 'deimos':       '33D4FF',
+                'saildrone':    'ff0c0c',   # CSS button color on https://www.saildrone.com/
              }
 
     # Distribute AUV colors along a yellow to brown palette, auv_names imported from LRAUV/make_load_scripts.py
@@ -1128,6 +1129,107 @@ class CANONLoader(LoadScript):
                     loader.process_data()
 
         return _generic_load_roms
+
+    def find_saildrone_urls(self, base, search_str, startdate, enddate):
+        '''Use Thredds Crawler to return a list of DAP urls.  Initially written for LRAUV data, for
+        which we don't initially know the urls.
+        '''
+        urls = []
+        catalog_url = os.path.join(base, 'catalog.xml')
+        c = Crawl(catalog_url, select=[search_str])
+        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+        for url in d:
+            file_dt = datetime.strptime(url.split('-')[-4], '%Y%m%dT%H%M%S')
+            if startdate < file_dt and file_dt < enddate:
+                urls.append(url)
+                self.logger.debug(f'* {url}')
+            else:
+                self.logger.debug(f'{url}')
+
+        if not urls:
+            raise FileNotFound('No urls matching "{search_str}" found in {catalog_url}')
+
+        return urls
+
+    def build_saildrone_attrs(self, platform_name, startdate, enddate, parameters, file_patterns):
+        '''Set loader attributes for saildrone data
+        '''
+        setattr(self, platform_name + '_parms' , parameters)
+
+        urls = []
+        for year in range(startdate.year, enddate.year+1):
+            base = f'http://odss.mbari.org/thredds/catalog/Other/routine/Platforms/Saildrone/1046/netcdf/'
+            dods_base = f'http://odss.mbari.org/thredds/dodsC/Other/routine/Platforms/Saildrone/1046/netcdf/'
+            try:
+                urls += self.find_saildrone_urls(base, file_patterns, startdate, enddate)
+                files = []
+                for url in sorted(urls):
+                    files.append(url.split('/')[-1])
+            except FileNotFound as e:
+                self.logger.debug(f'{e}')
+
+        # Send signal that urls span years by not setting dorado_base so that dorado_urls is used instead
+        if startdate.year == enddate.year:
+            setattr(self, platform_name + '_base', dods_base)
+        else:
+            setattr(self, platform_name + '_urls', sorted(urls))
+
+        setattr(self, platform_name + '_files', files)
+        setattr(self, platform_name  + '_startDatetime', startdate)
+        setattr(self, platform_name + '_endDatetime', enddate)
+
+    def loadSaildrone(self, startdate=None, enddate=None, parameters=['SOG_FILTERED_MEAN',
+                        'COG_FILTERED_MEAN', 'HDG_FILTERED_MEAN', 'ROLL_FILTERED_MEAN',
+                        'PITCH_FILTERED_MEAN', 'UWND_MEAN', 'VWND_MEAN', 'WWND_MEAN',
+                        'TEMP_AIR_MEAN', 'RH_MEAN', 'BARO_PRES_MEAN', 'PAR_AIR_MEAN',
+                        'WAVE_DOMINANT_PERIOD', 'WAVE_SIGNIFICANT_HEIGHT', 'TEMP_SBE37_MEAN',
+                        'SAL_SBE37_MEAN', 'O2_CONC_SBE37_MEAN', 'O2_SAT_SBE37_MEAN',
+                        'CHLOR_WETLABS_MEAN',],
+                      stride=None, file_patterns=('.*montereybay_mbari_2019_001-sd1046.*nc$'), build_attrs=False):
+        '''First deployed for CANON May 2019 for DEIMOS campaigns
+        '''
+        platform_name = 'saildrone'
+        activity_type_name = 'Saildrone Deployment'
+        stride = stride or self.stride
+        # Save these here in case we want to add them
+        rbr_parms = ['TEMP_CTD_RBR_MEAN', 'SAL_RBR_MEAN', 'O2_CONC_RBR_MEAN', 'O2_SAT_RBR_MEAN',
+                     'CHLOR_RBR_MEAN']
+
+        if build_attrs:
+            self.logger.info(f'Building load parameter attributes from crawling TDS')
+            self.build_saildrone_attrs(platform_name, startdate, enddate, parameters, file_patterns)
+        else:
+            self.logger.info(f'Using load {pname} attributes set in load script')
+            parameters = getattr(self, f'{platform_name}_parms')
+
+        for (aName, f) in zip([ a.split('.')[0] + getStrideText(stride) for a in self.saildrone_files], self.saildrone_files):
+            url = self.saildrone_base + f
+            try:
+                loader = DAPloaders.Trajectory_Loader(url = url,
+                                    campaignName = self.campaignName,
+                                    campaignDescription = self.campaignDescription,
+                                    dbAlias = self.dbAlias,
+                                    activityName = aName,
+                                    activitytypeName = activity_type_name,
+                                    platformName = platform_name,
+                                    platformColor = self.colors[platform_name],
+                                    platformTypeName = 'glider',
+                                    stride = stride,
+                                    startDatetime = startdate,
+                                    endDatetime = enddate,
+                                    dataStartDatetime = None)
+            except webob.exc.HTTPError as e:
+                self.logger.warn(f"Skipping over {url}")
+
+            loader.include_names = parameters
+            loader.auxCoords = {}
+            for parm in parameters:
+                loader.auxCoords[parm] = {'latitude': 'latitude', 'longitude': 'longitude', 'time': 'time', 'depth': 0.0}
+                loader.plotTimeSeriesDepth = dict.fromkeys(parameters + [ALTITUDE, SIGMAT, SPICE], 0.0)
+            try:
+                loader.process_data()
+            except (DAPloaders.OpendapError, IndexError) as e:
+                self.logger.warn(f"Skipping over {url} due to Execption: {e}")
 
     def loadSubSamples(self):
         '''

@@ -37,8 +37,13 @@ loader.args.test = False
 loader.args.clobber = True
 loader.args.db = db_alias
 loader.args.drop_indexes = False
+loader.args.noinput = False
 
 campaigns.campaigns = {db_alias: 'CCE/loadCCE_2015.py'}
+try:
+    loader._dropdb(db_alias)
+except KeyError:
+    pass
 loader.load(campaigns, create_only=True)
 
 # Load only the March 2016 event lores Mooring data for ms2
