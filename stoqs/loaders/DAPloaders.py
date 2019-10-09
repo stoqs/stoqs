@@ -1188,9 +1188,12 @@ class Base_Loader(STOQS_Loader):
 
                 self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
                 if hasattr(values[0], '__iter__'):
-                    # For data like LOPC data - expect all values to be non-nan
+                    # For data like LOPC data - expect all values to be non-nan, load array and the sum of it
+                    self.param_by_key[pname].description = 'Sum of counts saved in datavalue, spectrum of counts saves in dataarray'
+                    self.param_by_key[pname].save(using=self.dbAlias)
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
-                                                dataarray=list(va)) for me, va in zip(meass, values))
+                                                dataarray=list(va), datavalue=sum(va)) 
+                                                for me, va in zip(meass, values))
                 else:
                     # Need to bulk_create() all values, set bad ones to None and remove them after insert
                     values = self._good_value_generator(pname, values)
@@ -2121,13 +2124,17 @@ def _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName,
 
     loader.logger.debug("Instantiating Dorado_Loader for url = %s", lopc_url)
     try:
+        # As we use the Measurements from the original Activity, associate the LOPC 
+        # MeasuredParameters with it as well so that we can compare them in the UI
         lopc_loader = Dorado_Loader(url = lopc_url, campaignName = cName,
                                     campaignDescription = cDesc, dbAlias = dbAlias,
-                                    activityName = lopc_aName, activitytypeName = aTypeName,
+                                    activityName = loader.activity.name, 
+                                    activitytypeName = loader.activity.activitytype.name,
                                     platformName = pName, platformColor = pColor,
                                     platformTypeName = pTypeName, stride = stride,
                                     grdTerrain = grdTerrain)
     except Exception:
+        # Fail somewhat silently
         loader.logger.warn('No LOPC data to load at %s', lopc_url)
         return
 
@@ -2149,6 +2156,7 @@ def _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName,
         lopc_loader.auxCoords[v] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
     Dorado_Loader.getFeatureType = lambda self: TRAJECTORY
+
     try:
         # Specify featureType so that non-CF LOPC data can be loaded
         lopc_loader.process_data(featureType=TRAJECTORY)
