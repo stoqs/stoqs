@@ -1021,21 +1021,35 @@ class Base_Loader(STOQS_Loader):
             timeUnits = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
         mtimes = (from_udunits(mt, time_units) for mt in times)
 
-        max_secs_diff = 2
+        warn_secs_diff = 2
+        noload_secs_diff = 30
         ips = []
         meass = []
-        i = 0
+        warn_count = 0
+        noload_count = 0
         for mt in mtimes:
             try:
                 ip, secs_diff = get_closest_instantpoint(self.associatedActivityName, mt, self.dbAlias)
             except ClosestTimeNotFoundException as e:
                 self.logger.error('Could not find corresponding measurment for LOPC data measured at %s', tv)
             else:
-                if secs_diff > max_secs_diff:
-                    i += 1
-                    self.logger.warn(f"{i:3d}. LOPC data at {mt.strftime('%Y-%m-%d %H:%M:%S')} more than {max_secs_diff} secs away from existing measurement: {secs_diff}")
+                if secs_diff > noload_secs_diff:
+                    noload_count += 1
+                    self.logger.debug(f"{noload_count:3d}. LOPC data at {mt.strftime('%Y-%m-%d %H:%M:%S')} not loaded - more than "
+                                      f"{noload_secs_diff} secs away from existing measurement: {secs_diff}")
+                    continue
+                if secs_diff > warn_secs_diff:
+                    warn_count += 1
+                    self.logger.warn(f"{warn_count:3d}. LOPC data at {mt.strftime('%Y-%m-%d %H:%M:%S')} more than "
+                                     f"{warn_secs_diff} secs away from existing measurement: {secs_diff}")
 
                 meass.append(Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
+
+        self.logger.warn(f"{warn_count} of {len(meass)} collected LOPC measurements were more than {noload_secs_diff} seconds away from an existing measurement")
+        self.logger.warn(f"{noload_count} of {len(times)} original LOPC measurements not loaded because they were more than {noload_secs_diff} seconds away from an existing measurement")
+
+        if not meass:
+            return meass_nodups
 
         # Remove duplicates leaving the meass_nodups ordered in time
         duplicates_removed = -1
@@ -1613,13 +1627,16 @@ class Base_Loader(STOQS_Loader):
             varList = ', '.join(list(self.vSeen.keys()))
 
         # Construct a meaningful comment that looks good in the UI Metadata->NetCDF area
-        load_comment = f"Loaded variables {varList} from {self.url.split('/')[-1]}"
+        load_comment = Activity.objects.using(self.dbAlias).get(id=self.activity.id).comment
+        load_comment += f"Loaded variables {varList} from {self.url.split('/')[-1]}"
         if add_to_activity:
-            load_comment += f" (added to variables from {add_to_activity.name})"
+            load_comment += f" (added to Activity {add_to_activity.name})"
+        if hasattr(self, 'associatedActivityName'):
+            load_comment += f" (added to Activity {self.associatedActivityName})"
         if hasattr(self, 'requested_startDatetime') and hasattr(self, 'requested_endDatetime'):
             if self.requested_startDatetime and self.requested_endDatetime:
                 load_comment += f" between {self.requested_startDatetime} and {self.requested_endDatetime}"
-        load_comment += f" with a stride of {self.stride} on {str(datetime.utcnow()).split('.')[0]}Z"
+        load_comment += f" with a stride of {self.stride} on {str(datetime.utcnow()).split('.')[0]}Z "
 
         self.logger.debug("Updating its comment with load_comment = %s", load_comment)
 
