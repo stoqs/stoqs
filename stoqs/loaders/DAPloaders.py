@@ -1008,13 +1008,13 @@ class Base_Loader(STOQS_Loader):
         lookup matching Measurment (containing depth, latitude, and longitude) and bulk create 
         Instantpoints and Measurements in the database.
         '''
-        meass_set = set([])
+        meass_nodups = []
         try:
             times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
         except ValueError:
             self.logger.warn(f'Stride of {self.stride} likely greater than range of data: {tindx[0]}:{tindx[-1]}')
             self.logger.warn(f'Skipping load of {self.url}')
-            return meass_set
+            return meass_nodups
     
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
@@ -1037,11 +1037,20 @@ class Base_Loader(STOQS_Loader):
 
                 meass.append(Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
 
-        meass_set = set(meass)
-        if len(meass_set) != len(meass):
-            self.logger.info(f'{len(meass) - len(meass_set)} duplicate Measurements removed')
+        # Remove duplicates leaving the meass_nodups ordered in time
+        duplicates_removed = -1
+        meass_nodups.append(meass[0])
+        last_meas = meass[0]
+        for meas in meass:
+            if meas.instantpoint.timevalue > last_meas.instantpoint.timevalue:
+                meass_nodups.append(meas)
+            else:
+                duplicates_removed += 1
+            last_meas = meas
 
-        return meass_set
+        self.logger.info(f'{duplicates_removed} duplicate Measurements removed')
+
+        return meass_nodups
 
     def _good_value_generator(self, pname, values):
         '''Generate good data values where bad values and nans are replaced consistently with None

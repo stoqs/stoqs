@@ -1006,7 +1006,7 @@ class STOQS_Loader(object):
             self.logger.warn(e)
 
     @staticmethod
-    def update_ap_stats(dbAlias, activity, parameters, sampledFlag=False):
+    def update_ap_stats(dbAlias, activity, parameters, sampledFlag=False, assoc_act_name=None):
         '''Update the database with descriptive statistics for parameters
         belonging to the activity.
         '''
@@ -1022,7 +1022,21 @@ class STOQS_Loader(object):
 
             # Just don't create an ActivityParameter for data that don't exist
             if len(data) == 0:
-                continue
+                if assoc_act_name:
+                    # Assume data is like LOPC - get dataarray values
+                    data_array = m.MeasuredParameter.objects.using(dbAlias).filter(parameter=p, 
+                                    measurement__instantpoint__activity__name=assoc_act_name
+                                    ).values_list('dataarray', flat=True)
+                    try:
+                        data = [item for sublist in data_array for item in sublist]
+                    except TypeError:
+                        # Likely 'NoneType' object is not iterable because p is altitude of LOPC data
+                        data = []
+
+                    if len(data) == 0:
+                        continue
+                else:
+                    continue
 
             ap, _ = m.ActivityParameter.objects.using(dbAlias).get_or_create(
                             parameter=p, activity=activity)
@@ -1074,11 +1088,12 @@ class STOQS_Loader(object):
                         binlo=bins[i], binhi=bins[i+1])
 
     @classmethod
-    def update_activityparameter_stats(cls, dbAlias, activity, parameters, sampledFlag=False):
+    def update_activityparameter_stats(cls, dbAlias, activity, parameters, sampledFlag=False,
+                                       assoc_act_name=None):
         '''Class method for update_ap_stats() so that subclasses can call it via
         updateActivityParameterStats()
         '''
-        cls.update_ap_stats(dbAlias, activity, parameters, sampledFlag)
+        cls.update_ap_stats(dbAlias, activity, parameters, sampledFlag, assoc_act_name)
 
     def updateActivityParameterStats(self, sampledFlag=False):
         ''' 
@@ -1090,10 +1105,16 @@ class STOQS_Loader(object):
         else:
             raise Exception('Must have an activity defined in self.activity')
 
+        if hasattr(self, 'associatedActivityName'):
+            assoc_act_name = self.associatedActivityName
+        else:
+            assoc_act_name = None
+
         try:
-            self.update_activityparameter_stats(self.dbAlias, act, self.parameter_counts, sampledFlag)
+            self.update_activityparameter_stats(self.dbAlias, act, self.parameter_counts, sampledFlag,
+                                                assoc_act_name)
         except ValueError as e:
-            self.logger.warn('%s. Likely a dataarray as from LOPC data', e)
+            self.logger.error('%s. Likely a dataarray as from LOPC data', e)
         except IntegrityError as e:
             self.logger.warn('IntegrityError(%s): Cannot create ActivityParameter and '
                              'updated statistics for Activity %s.', (e, act))
