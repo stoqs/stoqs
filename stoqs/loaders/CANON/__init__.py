@@ -153,7 +153,7 @@ class CANONLoader(LoadScript):
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
                     'bbp470', 'bbp676', 'fl676_uncorr',
                     'sepCountList', 'mepCountList', 'roll', 'pitch', 'yaw', ], stride=None,
-                    file_patterns=('.*_decim.nc$'), build_attrs=False, plankton_proxies=True):
+                    file_patterns=('.*_decim.nc$'), build_attrs=False, plankton_proxies=False):
         '''
         Support legacy use of loadDorad() and permit wider use by specifying startdate and endate
         '''
