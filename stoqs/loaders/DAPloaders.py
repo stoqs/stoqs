@@ -1008,40 +1008,65 @@ class Base_Loader(STOQS_Loader):
         lookup matching Measurment (containing depth, latitude, and longitude) and bulk create 
         Instantpoints and Measurements in the database.
         '''
-        meass_set = set([])
+        meass_nodups = []
         try:
             times = self.ds[ac[TIME]][tindx[0]:tindx[-1]:self.stride]
         except ValueError:
             self.logger.warn(f'Stride of {self.stride} likely greater than range of data: {tindx[0]}:{tindx[-1]}')
             self.logger.warn(f'Skipping load of {self.url}')
-            return meass_set
+            return meass_nodups
     
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
             timeUnits = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
         mtimes = (from_udunits(mt, time_units) for mt in times)
 
-        max_secs_diff = 2
+        warn_secs_diff = 2
+        noload_secs_diff = 60
         ips = []
         meass = []
-        i = 0
+        warn_count = 0
+        noload_count = 0
         for mt in mtimes:
             try:
                 ip, secs_diff = get_closest_instantpoint(self.associatedActivityName, mt, self.dbAlias)
             except ClosestTimeNotFoundException as e:
                 self.logger.error('Could not find corresponding measurment for LOPC data measured at %s', tv)
             else:
-                if secs_diff > max_secs_diff:
-                    i += 1
-                    self.logger.warn(f"{i:3d}. LOPC data at {mt.strftime('%Y-%m-%d %H:%M:%S')} more than {max_secs_diff} secs away from existing measurement: {secs_diff}")
+                if secs_diff > noload_secs_diff:
+                    noload_count += 1
+                    self.logger.debug(f"{noload_count:3d}. LOPC data at {mt.strftime('%Y-%m-%d %H:%M:%S')} not loaded - more than "
+                                      f"{noload_secs_diff} secs away from existing measurement: {secs_diff}")
+                    continue
+                if secs_diff > warn_secs_diff:
+                    warn_count += 1
+                    self.logger.debug(f"{warn_count:3d}. LOPC data at {mt.strftime('%Y-%m-%d %H:%M:%S')} more than "
+                                     f"{warn_secs_diff} secs away from existing measurement: {secs_diff}")
 
                 meass.append(Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
 
-        meass_set = set(meass)
-        if len(meass_set) != len(meass):
-            self.logger.info(f'{len(meass) - len(meass_set)} duplicate Measurements removed')
+        self.logger.warn(f"{noload_count} of {len(times)} original LOPC measurements not loaded because they "
+                         f"were more than {noload_secs_diff} seconds away from an existing measurement")
+        self.logger.warn(f"{warn_count} of {len(meass)} collected LOPC measurements were more than "
+                         f"{noload_secs_diff} seconds away from an existing measurement")
 
-        return meass_set
+        if not meass:
+            return meass_nodups
+
+        # Remove duplicates leaving the meass_nodups ordered in time
+        duplicates_removed = -1
+        meass_nodups.append(meass[0])
+        last_meas = meass[0]
+        for meas in meass:
+            if meas.instantpoint.timevalue > last_meas.instantpoint.timevalue:
+                meass_nodups.append(meas)
+            else:
+                duplicates_removed += 1
+            last_meas = meas
+
+        self.logger.info(f'{duplicates_removed} duplicate Measurements removed')
+
+        return meass_nodups
 
     def _good_value_generator(self, pname, values):
         '''Generate good data values where bad values and nans are replaced consistently with None
@@ -1179,9 +1204,12 @@ class Base_Loader(STOQS_Loader):
 
                 self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
                 if hasattr(values[0], '__iter__'):
-                    # For data like LOPC data - expect all values to be non-nan
+                    # For data like LOPC data - expect all values to be non-nan, load array and the sum of it
+                    self.param_by_key[pname].description = 'Sum of counts saved in datavalue, spectrum of counts saves in dataarray'
+                    self.param_by_key[pname].save(using=self.dbAlias)
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
-                                                dataarray=list(va)) for me, va in zip(meass, values))
+                                                dataarray=list(va), datavalue=sum(va)) 
+                                                for me, va in zip(meass, values))
                 else:
                     # Need to bulk_create() all values, set bad ones to None and remove them after insert
                     values = self._good_value_generator(pname, values)
@@ -1601,13 +1629,16 @@ class Base_Loader(STOQS_Loader):
             varList = ', '.join(list(self.vSeen.keys()))
 
         # Construct a meaningful comment that looks good in the UI Metadata->NetCDF area
-        load_comment = f"Loaded variables {varList} from {self.url.split('/')[-1]}"
+        load_comment = Activity.objects.using(self.dbAlias).get(id=self.activity.id).comment
+        load_comment += f"Loaded variables {varList} from {self.url}"
         if add_to_activity:
-            load_comment += f" (added to variables from {add_to_activity.name})"
+            load_comment += f" (added to Activity {add_to_activity.name})"
+        if hasattr(self, 'associatedActivityName'):
+            load_comment += f" (added to Activity {self.associatedActivityName})"
         if hasattr(self, 'requested_startDatetime') and hasattr(self, 'requested_endDatetime'):
             if self.requested_startDatetime and self.requested_endDatetime:
                 load_comment += f" between {self.requested_startDatetime} and {self.requested_endDatetime}"
-        load_comment += f" with a stride of {self.stride} on {str(datetime.utcnow()).split('.')[0]}Z"
+        load_comment += f" with a stride of {self.stride} on {str(datetime.utcnow()).split('.')[0]}Z "
 
         self.logger.debug("Updating its comment with load_comment = %s", load_comment)
 
@@ -2112,13 +2143,17 @@ def _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName,
 
     loader.logger.debug("Instantiating Dorado_Loader for url = %s", lopc_url)
     try:
+        # As we use the Measurements from the original Activity, associate the LOPC 
+        # MeasuredParameters with it as well so that we can compare them in the UI
         lopc_loader = Dorado_Loader(url = lopc_url, campaignName = cName,
                                     campaignDescription = cDesc, dbAlias = dbAlias,
-                                    activityName = lopc_aName, activitytypeName = aTypeName,
+                                    activityName = loader.activity.name, 
+                                    activitytypeName = loader.activity.activitytype.name,
                                     platformName = pName, platformColor = pColor,
                                     platformTypeName = pTypeName, stride = stride,
                                     grdTerrain = grdTerrain)
     except Exception:
+        # Fail somewhat silently
         loader.logger.warn('No LOPC data to load at %s', lopc_url)
         return
 
@@ -2140,6 +2175,7 @@ def _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName,
         lopc_loader.auxCoords[v] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
     Dorado_Loader.getFeatureType = lambda self: TRAJECTORY
+
     try:
         # Specify featureType so that non-CF LOPC data can be loaded
         lopc_loader.process_data(featureType=TRAJECTORY)
