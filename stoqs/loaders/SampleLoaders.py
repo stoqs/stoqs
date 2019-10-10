@@ -1205,7 +1205,7 @@ class SubSamplesLoader(STOQS_Loader):
             else:
                 if parameter and subCount and parentSample not in loadedParentSamples:
                     # Useful logger output when parentSample changes - more useful when spreadsheet is sorted by parentSample
-                    self.logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
+                    self.logger.info('%d subsamples loaded of %s from %s', subCount, parameter.name, os.path.basename(fileName))
 
                     self.logger.info('Loading subsamples of parentSample (activity, bottle/name) = (%s, %s)', aName, sample_name)
                     subCount = 0
@@ -1219,9 +1219,9 @@ class SubSamplesLoader(STOQS_Loader):
                 else:
                     subCount = subCount + 1
                     try:
-                        self.parameter_counts[p] += 1
+                        self.parameter_counts[parameter] += 1
                     except KeyError:
-                        self.parameter_counts[p] = 0
+                        self.parameter_counts[parameter] = 0
 
                     loadedParentSamples.append(parentSample)
    
