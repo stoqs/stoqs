@@ -1090,20 +1090,20 @@ class Base_Loader(STOQS_Loader):
         unequal_coords = 0
         for meas, mt, de, la, lo in zip(meass, *self._read_coords_from_ds(tindx, ac)):
             if meas.instantpoint.timevalue != mt:
-                self.logger.warn(f"Existing timevalue ({meas.instantpoint.timevalue}) != mt ({mt})")
+                self.logger.debug(f"Existing timevalue ({meas.instantpoint.timevalue}) != mt ({mt})")
                 unequal_coords += 1
             if not np.isclose(meas.depth, de):
-                self.logger.warn(f"Existing depth ({meas.depth}) != de ({de})")
+                self.logger.debug(f"Existing depth ({meas.depth}) != de ({de})")
                 unequal_coords += 1
             if not np.isclose(meas.geom.y, la):
-                self.logger.warn(f"Existing latitude ({meas.geom.y}) != la ({la})")
+                self.logger.debug(f"Existing latitude ({meas.geom.y}) != la ({la})")
                 unequal_coords += 1
             if not np.isclose(meas.geom.x, lo):
-                self.logger.warn(f"Existing longitude ({meas.geom.x}) != lo ({lo})")
+                self.logger.debug(f"Existing longitude ({meas.geom.x}) != lo ({lo})")
                 unequal_coords += 1
 
         if unequal_coords:
-            self.logger.error(f"Encountered {unequal_coords} when adding data from {self.url} to Activity {add_to_activity}")
+            self.logger.error(f"Encountered {unequal_coords} unequal_coords when adding data from {self.url} to Activity {add_to_activity}")
             pass
 
         return meass, dup_times, mask
@@ -1655,7 +1655,7 @@ class Base_Loader(STOQS_Loader):
         # Add resources after loading data to capture additional metadata that may be added
         #
         try:
-            self.addResources() 
+            self.addResources()
         except IntegrityError as e:
             self.logger.error('Failed to properly addResources: %s', e)
 
@@ -2214,8 +2214,6 @@ def _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName
         return
 
     pp_loader.include_names = ['adinos', 'bg_biolum', 'diatoms', 'fluo', 'hdinos', 'intflash', 'nbflash_high', 'nbflash_low', 'profile']
-    loader.logger.info(f"Setting pp_loader.activity to {loader.activity}")
-    pp_loader.activity = loader.activity
     if plotTimeSeriesDepth is not None:
         pp_loader.plotTimeSeriesDepth = dict.fromkeys(pp_loader.include_names, plotTimeSeriesDepth)
 
@@ -2227,6 +2225,7 @@ def _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName
     Trajectory_Loader.getFeatureType = lambda self: TRAJECTORY
     try:
         # Specify featureType so that non-CF LOPC data can be loaded
+        pp_loader.add_to_activity=loader.activity
         pp_loader.process_data(featureType=TRAJECTORY, add_to_activity=loader.activity)
     except VariableMissingCoordinatesAttribute as e:
         loader.logger.exception(str(e))
