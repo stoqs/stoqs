@@ -1144,7 +1144,7 @@ class SubSamplesLoader(STOQS_Loader):
         If @unloadFlag is True then delete the subsamples from @fileName from the database.  This is useful for testing.
         '''
         subCount = 0
-        p = None
+        parameter = None
         loadedParentSamples = []
         self.parameter_counts = {}
         for r in csv.DictReader(open(fileName, encoding='latin-1')):
@@ -1203,31 +1203,31 @@ class SubSamplesLoader(STOQS_Loader):
                 # Unload subsample
                 self.delete_subsample(parentSample, r)
             else:
-                if p and subCount and parentSample not in loadedParentSamples:
+                if parameter and subCount and parentSample not in loadedParentSamples:
                     # Useful logger output when parentSample changes - more useful when spreadsheet is sorted by parentSample
-                    self.logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
+                    self.logger.info('%d subsamples loaded of %s from %s', subCount, parameter.name, os.path.basename(fileName))
 
                     self.logger.info('Loading subsamples of parentSample (activity, bottle/name) = (%s, %s)', aName, sample_name)
                     subCount = 0
 
                 try:
                     # Load subsample
-                    p = self.load_subsample(parentSample, r)
+                    parameter = self.load_subsample(parentSample, r)
                 except SubSampleLoadError as e:
                     self.logger.warn(e)
                     continue
                 else:
                     subCount = subCount + 1
                     try:
-                        self.parameter_counts[p] += 1
+                        self.parameter_counts[parameter] += 1
                     except KeyError:
-                        self.parameter_counts[p] = 0
+                        self.parameter_counts[parameter] = 0
 
                     loadedParentSamples.append(parentSample)
    
-        if not unloadFlag: 
+        if not unloadFlag and parameter: 
             # Last logger info message and finish up the loading for this file
-            self.logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
+            self.logger.info('%d subsamples loaded of %s from %s', subCount, parameter.name, os.path.basename(fileName))
 
             self.assignParameterGroup(groupName=SAMPLED)
             self.postProcess()

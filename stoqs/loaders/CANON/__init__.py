@@ -151,6 +151,7 @@ class CANONLoader(LoadScript):
     def loadDorado(self, startdate=None, enddate=None,
                    parameters=[ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
+                    'bbp470', 'bbp676', 'fl676_uncorr',
                     'sepCountList', 'mepCountList', 'roll', 'pitch', 'yaw', ], stride=None,
                     file_patterns=('.*_decim.nc$'), build_attrs=False, plankton_proxies=False):
         '''

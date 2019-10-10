@@ -164,8 +164,9 @@ cl.wg_Hansen_files = [
                       'wgHansen/20190927/realTime/20190927.nc',
                    ]
 
-cl.wg_Hansen_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
-                    'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
+cl.wg_Hansen_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 
+                       'water_temp_float', 'water_temp_sub', 'sal_float', 'sal_sub', 'bb_470', 'bb_650', 'chl',
+                       'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc_float', 'O2_conc_sub' ]
 cl.wg_Hansen_depths = [ 0 ]
 cl.wg_Hansen_startDatetime = startdate
 cl.wg_Hansen_endDatetime = enddate
