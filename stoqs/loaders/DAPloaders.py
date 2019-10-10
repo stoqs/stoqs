@@ -1040,13 +1040,15 @@ class Base_Loader(STOQS_Loader):
                     continue
                 if secs_diff > warn_secs_diff:
                     warn_count += 1
-                    self.logger.warn(f"{warn_count:3d}. LOPC data at {mt.strftime('%Y-%m-%d %H:%M:%S')} more than "
+                    self.logger.debug(f"{warn_count:3d}. LOPC data at {mt.strftime('%Y-%m-%d %H:%M:%S')} more than "
                                      f"{warn_secs_diff} secs away from existing measurement: {secs_diff}")
 
                 meass.append(Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
 
-        self.logger.warn(f"{warn_count} of {len(meass)} collected LOPC measurements were more than {noload_secs_diff} seconds away from an existing measurement")
-        self.logger.warn(f"{noload_count} of {len(times)} original LOPC measurements not loaded because they were more than {noload_secs_diff} seconds away from an existing measurement")
+        self.logger.warn(f"{noload_count} of {len(times)} original LOPC measurements not loaded because they "
+                         f"were more than {noload_secs_diff} seconds away from an existing measurement")
+        self.logger.warn(f"{warn_count} of {len(meass)} collected LOPC measurements were more than "
+                         f"{noload_secs_diff} seconds away from an existing measurement")
 
         if not meass:
             return meass_nodups
@@ -1628,7 +1630,7 @@ class Base_Loader(STOQS_Loader):
 
         # Construct a meaningful comment that looks good in the UI Metadata->NetCDF area
         load_comment = Activity.objects.using(self.dbAlias).get(id=self.activity.id).comment
-        load_comment += f"Loaded variables {varList} from {self.url.split('/')[-1]}"
+        load_comment += f"Loaded variables {varList} from {self.url}"
         if add_to_activity:
             load_comment += f" (added to Activity {add_to_activity.name})"
         if hasattr(self, 'associatedActivityName'):
