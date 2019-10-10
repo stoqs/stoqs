@@ -49,7 +49,7 @@ if cl.args.test:
     cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
 elif cl.args.stride:
     cl.stride = cl.args.stride
-    cl.loadDorado(startdate, enddate, build_attrs=True)
+    cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()

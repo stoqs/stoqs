@@ -1069,7 +1069,7 @@
                                     </tr>
                                 </thead> 
                                 <tbody>
-                                    <tr>
+                                    <tr style="background-color: #eeeeee;">
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
@@ -1177,7 +1177,7 @@
                                     </tr>
                                 </thead>                             
                                 <tbody>
-                                    <tr>
+                                    <tr style="background-color: #eeeeee;">
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
@@ -2060,6 +2060,9 @@
         if ( $('#collapseMetadata').hasClass('in') && $('#metadata-netcdf-li').hasClass('active') ) {
             // Metadata section is opened and NetCDF tab is active, close it and give pop-up warning
             $('#metadata-anchor').attr('data-original-title', 'Keep Metadata closed unless making Activity selections').tooltip('fixTitle').tooltip('show');
+            setTimeout(function(){
+                $('#metadata-anchor').tooltip('hide');
+            }, 3000);
             $('#metadata-anchor').click();
         }
     }
@@ -5193,6 +5196,9 @@ function enable_cardboard(){
                                                 .attr('data-original-title', "<p style=font-size:9px;'>Colormap set to '" + colormap + "' based on standard_name '" + standard_name + "'. Click to toggle Colormap Section.</p>");
                                             if ( $('#sectioncolorbarimg').is(':visible') ) {
                                                 $('#sectioncolorbarimg').tooltip('fixTitle').tooltip('show');
+                                                setTimeout(function(){
+                                                    $('#sectioncolorbarimg').tooltip('hide');
+                                                }, 3000);
                                             }
                                         }
                                     }
