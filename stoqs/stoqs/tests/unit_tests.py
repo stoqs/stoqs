@@ -537,7 +537,7 @@ class BugsFoundTestCase(TestCase):
         # Make sure 'sepCountList', 'mepCountList' are loaded into dataarray
 
         # Expected number of records and bins in dataarrat
-        parm_counts = dict(sepCountList=7, mepCountList=7)
+        parm_counts = dict(sepCountList=1, mepCountList=1)
         bin_counts = dict(sepCountList=994, mepCountList=994)
 
         for parm in list(parm_counts.keys()):

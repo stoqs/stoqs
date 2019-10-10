@@ -1022,7 +1022,7 @@ class Base_Loader(STOQS_Loader):
         mtimes = (from_udunits(mt, time_units) for mt in times)
 
         warn_secs_diff = 2
-        noload_secs_diff = 30
+        noload_secs_diff = 60
         ips = []
         meass = []
         warn_count = 0
