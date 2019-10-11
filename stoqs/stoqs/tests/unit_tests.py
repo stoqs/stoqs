@@ -87,11 +87,11 @@ class BaseAndMeasurementViewsTestCase(TestCase):
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_activity(self):
-       for fmt in self.format_types:
-           req = reverse('stoqs:show-activity', kwargs={'fmt': fmt,
+        for fmt in self.format_types:
+            req = reverse('stoqs:show-activity', kwargs={'fmt': fmt,
                                                   'dbAlias': 'default'})
-           response = self.client.get(req)
-           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_activityType(self):
        for fmt in self.format_types:
@@ -549,4 +549,8 @@ class BugsFoundTestCase(TestCase):
             logger.debug(f'{parm:10s}({parm_counts[parm]:2d}) mp_count: {mp_count} bin_count: {bin_count}')
             self.assertEqual(mp_count, parm_counts[parm], f'Expected {parm_counts[parm]} MeasuredParameter values for {parm}')
             self.assertEqual(bin_count, bin_counts[parm], f'Expected {bin_counts[parm]} dataarray bins for {parm}')
+
+    def test_activity_has_attributes(self):
+        act = Activity.objects.get(name__contains='Dorado')
+        self.assertIsNotNone(act.maptrack, 'dorado activity should have maptrack set')
 
