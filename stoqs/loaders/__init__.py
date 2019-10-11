@@ -666,10 +666,12 @@ class STOQS_Loader(object):
 
         # Save the NC_GLOBAL attributes from the OPeNDAP URL - But only if the Activity name is in the url
         if hasattr(self, 'add_to_activity'):
-            if self.add_to_activity.name not in self.url:
+            if self.add_to_activity.name.split(' (')[0] not in self.url:
+                self.logger.info(f"Not adding NC_GLOBAL attributes from {self.url} as we are adding to Activity {self.add_to_activity.name}")
                 return
         if hasattr(self, 'associatedActivityName'):
             if self.associatedActivityName.split(' (')[0] not in self.url:
+                self.logger.info(f"Not adding NC_GLOBAL attributes from {self.url} as we are associatined with Activity {self.associatedActivityName}")
                 return
         if hasattr(self, 'ds'):
             if 'NC_GLOBAL' in self.ds.attributes:
@@ -1016,7 +1018,7 @@ class STOQS_Loader(object):
             self.logger.warn(e)
 
     @staticmethod
-    def update_ap_stats(dbAlias, activity, parameters, sampledFlag=False, assoc_act_name=None):
+    def update_ap_stats(dbAlias, activity, parameters, sampledFlag=False, assoc_act_name=None, add_to_activity=None):
         '''Update the database with descriptive statistics for parameters
         belonging to the activity.
         '''
@@ -1045,6 +1047,10 @@ class STOQS_Loader(object):
 
                     if len(data) == 0:
                         continue
+                elif add_to_activity:
+                    data = m.MeasuredParameter.objects.using(dbAlias).filter(
+                                    parameter=p, measurement__instantpoint__activity=add_to_activity
+                                    ).values_list('datavalue', flat=True)
                 else:
                     continue
 
@@ -1099,11 +1105,11 @@ class STOQS_Loader(object):
 
     @classmethod
     def update_activityparameter_stats(cls, dbAlias, activity, parameters, sampledFlag=False,
-                                       assoc_act_name=None):
+                                       assoc_act_name=None, add_to_activity=None):
         '''Class method for update_ap_stats() so that subclasses can call it via
         updateActivityParameterStats()
         '''
-        cls.update_ap_stats(dbAlias, activity, parameters, sampledFlag, assoc_act_name)
+        cls.update_ap_stats(dbAlias, activity, parameters, sampledFlag, assoc_act_name, add_to_activity)
 
     def updateActivityParameterStats(self, sampledFlag=False):
         ''' 
@@ -1119,10 +1125,14 @@ class STOQS_Loader(object):
             assoc_act_name = self.associatedActivityName
         else:
             assoc_act_name = None
+        if hasattr(self, 'add_to_activity'):
+            add_to_activity = self.add_to_activity
+        else:
+            add_to_activity = None
 
         try:
             self.update_activityparameter_stats(self.dbAlias, act, self.parameter_counts, sampledFlag,
-                                                assoc_act_name)
+                                                assoc_act_name, add_to_activity)
         except ValueError as e:
             self.logger.error('%s. Likely a dataarray as from LOPC data', e)
         except IntegrityError as e:

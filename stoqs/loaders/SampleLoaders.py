@@ -68,6 +68,7 @@ ESP_FILTERING = 'ESP_filtering'
 SIPPER = 'Sipper'
 SIPPER_NUM_ERR = re.compile('Sample (?P<sipper_num>\d+), err_code=(?P<sipper_err>\d+)')
 SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
+NOWATER = 'no water'
 
 # Have both sample # and no_num versions of regular expressions so as to also get legacy samples
 no_num_sampling_start_re = 'ESP sampling state: S_FILTERING'
@@ -159,7 +160,13 @@ class ParentSamplesLoader(STOQS_Loader):
         except MultipleObjectsReturned:
             self.logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', activityName)
             activity = Activity.objects.using(dbAlias).filter(name__contains=activityName)[0]
-            
+
+        if NOWATER in (ActivityResource.objects.using(dbAlias)
+                                          .get(activity=activity, resource__name='title', 
+                                               resource__resourcetype__name='nc_global')
+                                          .resource.value.lower()):
+            self.logger.warn(f"Found '{NOWATER}' text in title of {activity.name}, not adding Gulpers")
+            return
 
         # Use the dods server to read over http - works from outside of MBARI's Intranet
         baseUrl = 'http://dods.mbari.org/data/auvctd/surveys/'
