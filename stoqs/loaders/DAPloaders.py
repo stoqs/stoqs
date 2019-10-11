@@ -1629,27 +1629,27 @@ class Base_Loader(STOQS_Loader):
             varList = ', '.join(list(self.vSeen.keys()))
 
         # Construct a meaningful comment that looks good in the UI Metadata->NetCDF area
-        load_comment = Activity.objects.using(self.dbAlias).get(id=self.activity.id).comment
-        load_comment += f"Loaded variables {varList} from {self.url}"
-        if add_to_activity:
-            load_comment += f" (added to Activity {add_to_activity.name})"
-        if hasattr(self, 'associatedActivityName'):
+        if hasattr(self, 'add_to_activity'):
+            act = Activity.objects.using(self.dbAlias).get(id=self.add_to_activity.id)
+            load_comment = f"{act.comment} - Loaded variables {varList} from {self.url}"
+            load_comment += f" (added to Activity {self.add_to_activity.name})"
+            act.save(using=self.dbAlias)
+        elif hasattr(self, 'associatedActivityName'):
+            act = Activity.objects.using(self.dbAlias).get(name=self.associatedActivityName.name)
+            load_comment = f"{act.comment} - Loaded variables {varList} from {self.url}"
             load_comment += f" (added to Activity {self.associatedActivityName})"
+        else:
+            act = Activity.objects.using(self.dbAlias).get(id=self.activity.id)
+            load_comment = f"Loaded variables {varList} from {self.url}"
+
         if hasattr(self, 'requested_startDatetime') and hasattr(self, 'requested_endDatetime'):
             if self.requested_startDatetime and self.requested_endDatetime:
                 load_comment += f" between {self.requested_startDatetime} and {self.requested_endDatetime}"
         load_comment += f" with a stride of {self.stride} on {str(datetime.utcnow()).split('.')[0]}Z "
 
         self.logger.debug("Updating its comment with load_comment = %s", load_comment)
-
-        num_updated = Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
-                        name=self.getActivityName(),
-                        comment=load_comment,
-                        maptrack=path,
-                        mappoint=stationPoint,
-                        num_measuredparameters=mps_loaded,
-                        loaded_date=datetime.utcnow())
-        self.logger.debug("%d activitie(s) updated with new attributes.", num_updated)
+        act.comment = load_comment
+        act.save(using=self.dbAlias)
 
         #
         # Add resources after loading data to capture additional metadata that may be added
