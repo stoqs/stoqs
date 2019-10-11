@@ -1648,8 +1648,19 @@ class Base_Loader(STOQS_Loader):
         load_comment += f" with a stride of {self.stride} on {str(datetime.utcnow()).split('.')[0]}Z "
 
         self.logger.debug("Updating its comment with load_comment = %s", load_comment)
-        act.comment = load_comment
-        act.save(using=self.dbAlias)
+        if hasattr(self, 'add_to_activity') or hasattr(self, 'associatedActivityName'):
+            num_updated = Activity.objects.using(self.dbAlias).filter(id=act.id).update(
+                            comment=load_comment,
+                            num_measuredparameters=mps_loaded + act.num_measuredparameters)
+        else:
+            num_updated = Activity.objects.using(self.dbAlias).filter(id=act.id).update(
+                            name=self.getActivityName(),
+                            comment=load_comment,
+                            maptrack=path,
+                            mappoint=stationPoint,
+                            num_measuredparameters=mps_loaded,
+                            loaded_date=datetime.utcnow())
+        self.logger.debug("%d activitie(s) updated with new attributes.", num_updated)
 
         #
         # Add resources after loading data to capture additional metadata that may be added
