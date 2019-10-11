@@ -294,7 +294,7 @@ cl.subsample_csv_files = [
 cl.process_command_line()
 
 if cl.args.test:
-    cl.stride = 1
+    cl.stride = 100
 elif cl.args.stride:
     cl.stride = cl.args.stride
 
@@ -310,7 +310,7 @@ cl.load_wg_Tiny()
 cl.load_wg_Hansen() ## 
 cl.load_oa1()  
 cl.load_oa2() 
-cl.loadDorado(startdate, enddate, build_attrs=True)
+cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
 cl.loadSaildrone(startdate, enddate, build_attrs=True)
 for lrauv in ('daphne', 'makai', 'pontus', 'triton',):
     cl.loadLRAUV(lrauv, startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
