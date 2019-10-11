@@ -1635,7 +1635,7 @@ class Base_Loader(STOQS_Loader):
             load_comment += f" (added to Activity {self.add_to_activity.name})"
             act.save(using=self.dbAlias)
         elif hasattr(self, 'associatedActivityName'):
-            act = Activity.objects.using(self.dbAlias).get(name=self.associatedActivityName.name)
+            act = Activity.objects.using(self.dbAlias).get(name=self.associatedActivityName)
             load_comment = f"{act.comment} - Loaded variables {varList} from {self.url}"
             load_comment += f" (added to Activity {self.associatedActivityName})"
         else:
