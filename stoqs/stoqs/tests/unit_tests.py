@@ -552,5 +552,5 @@ class BugsFoundTestCase(TestCase):
 
     def test_activity_has_attributes(self):
         act = Activity.objects.get(name__contains='Dorado')
-        self.assertIsNotNone(act.maptrack, 'dorado activity should have maptrack set')
+        self.assertIsNotNone(act.maptrack, 'Dorado activity should have maptrack set')
 
