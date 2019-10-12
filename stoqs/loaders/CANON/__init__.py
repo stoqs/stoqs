@@ -176,11 +176,12 @@ class CANONLoader(LoadScript):
             dfile = url.split('/')[-1]
             aname = dfile + getStrideText(stride)
             try:
-                DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aname, 
+                mps_loaded = DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aname, 
                                            pname, self.colors[pname], 'auv', 'AUV mission', 
                                            self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
                                            plotTimeSeriesDepth=0.0, plankton_proxies=plankton_proxies)
-                psl.load_gulps(aname, dfile, self.dbAlias)
+                if mps_loaded:
+                    psl.load_gulps(aname, dfile, self.dbAlias)
             except DAPloaders.DuplicateData as e:
                 self.logger.warn(str(e))
                 self.logger.info(f"Skipping load of {url}")

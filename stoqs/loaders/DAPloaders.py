@@ -2280,17 +2280,22 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         loader.plotTimeSeriesDepth = dict.fromkeys(parmList + [ALTITUDE, SIGMAT, SPICE], plotTimeSeriesDepth)
 
     try:
-        loader.process_data()
+        mps_loaded, _, _ = loader.process_data()
     except VariableMissingCoordinatesAttribute as e:
         loader.logger.exception(str(e))
+
+    loader.logger.info(f"Loaded Activity {aName} with {mps_loaded} MeasuredParameters")
+
+    if mps_loaded:
+        if 'sepCountList' in loader.include_names or 'mepCountList' in loader.include_names:
+            _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain, plotTimeSeriesDepth)
+
+        if plankton_proxies:
+            _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain, plotTimeSeriesDepth)
     else:
-        loader.logger.debug("Loaded Activity with name = %s", aName)
-
-    if 'sepCountList' in loader.include_names or 'mepCountList' in loader.include_names:
-        _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain, plotTimeSeriesDepth)
-
-    if plankton_proxies:
-        _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain, plotTimeSeriesDepth)
+        loader.logger.warn(f"Did not load any MeasuredParameters from {loader.url}")
+    import pdb; pdb.set_trace
+    return mps_loaded
 
 
 def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
