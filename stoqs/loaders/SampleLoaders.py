@@ -161,12 +161,15 @@ class ParentSamplesLoader(STOQS_Loader):
             self.logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', activityName)
             activity = Activity.objects.using(dbAlias).filter(name__contains=activityName)[0]
 
-        if NOWATER in (ActivityResource.objects.using(dbAlias)
-                                          .get(activity=activity, resource__name='title', 
-                                               resource__resourcetype__name='nc_global')
-                                          .resource.value.lower()):
-            self.logger.warn(f"Found '{NOWATER}' text in title of {activity.name}, not adding Gulpers")
-            return
+        try:
+            if NOWATER in (ActivityResource.objects.using(dbAlias)
+                                           .get(activity=activity, resource__name='title', 
+                                                resource__resourcetype__name='nc_global')
+                                           .resource.value.lower()):
+                self.logger.warn(f"Found '{NOWATER}' text in title of {activity.name}, not adding Gulpers")
+                return
+        except ActivityResource.DoesNotExist:
+            self.logger.warn(f"Could not find 'title' nc_global attribute in ActivityResource for Activity {activity}")
 
         # Use the dods server to read over http - works from outside of MBARI's Intranet
         baseUrl = 'http://dods.mbari.org/data/auvctd/surveys/'
