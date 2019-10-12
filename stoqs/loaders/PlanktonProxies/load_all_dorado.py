@@ -44,9 +44,15 @@ cl.process_command_line()
 
 if cl.args.test:
     cl.stride = 1
-    startdate = datetime.datetime(2003, 12, 5)
-    enddate = datetime.datetime(2003, 12, 7)
-    cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
+    ##startdate = datetime.datetime(2003, 12, 5)
+    ##enddate = datetime.datetime(2003, 12, 7)
+    ##cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
+
+    # Survey with 0 mps_loaded
+    cl.dorado_base = 'http://dods.mbari.org/thredds/dodsC/auv/dorado/2004/netcdf/'
+    cl.dorado_files = ['Dorado389_2004_251_00_251_00_decim.nc']
+    cl.dorado_parms = ['temperature']
+    cl.loadDorado(startdate, enddate, build_attrs=False, plankton_proxies=True)
 elif cl.args.stride:
     cl.stride = cl.args.stride
     cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
