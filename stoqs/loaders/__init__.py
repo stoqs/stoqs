@@ -1100,11 +1100,13 @@ class STOQS_Loader(object):
         '''
         cls.update_ap_stats(dbAlias, activity, parameters, sampledFlag)
 
-    def updateActivityParameterStats(self, act_to_update, sampledFlag=False):
+    def updateActivityParameterStats(self, act_to_update=None, sampledFlag=False):
         ''' 
         Examine the data for the Activity, compute and update some statistics on the measuredparameters
         for this activity.  Store the histogram in the associated table.
-        '''                 
+        '''
+        if not act_to_update:
+            act_to_update = self.activity
         try:
             self.update_activityparameter_stats(self.dbAlias, act_to_update, self.parameter_counts, sampledFlag)
         except ValueError as e:
