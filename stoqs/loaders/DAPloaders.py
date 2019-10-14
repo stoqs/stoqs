@@ -1630,16 +1630,15 @@ class Base_Loader(STOQS_Loader):
 
         # Construct a meaningful comment that looks good in the UI Metadata->NetCDF area
         if hasattr(self, 'add_to_activity'):
-            act = Activity.objects.using(self.dbAlias).get(id=self.add_to_activity.id)
-            load_comment = f"{act.comment} - Loaded variables {varList} from {self.url}"
+            act_to_update = Activity.objects.using(self.dbAlias).get(id=self.add_to_activity.id)
+            load_comment = f"{act_to_update.comment} - Loaded variables {varList} from {self.url}"
             load_comment += f" (added to Activity {self.add_to_activity.name})"
-            act.save(using=self.dbAlias)
         elif hasattr(self, 'associatedActivityName'):
-            act = Activity.objects.using(self.dbAlias).get(name=self.associatedActivityName)
-            load_comment = f"{act.comment} - Loaded variables {varList} from {self.url}"
+            act_to_update = Activity.objects.using(self.dbAlias).get(name=self.associatedActivityName)
+            load_comment = f"{act_to_update.comment} - Loaded variables {varList} from {self.url}"
             load_comment += f" (added to Activity {self.associatedActivityName})"
         else:
-            act = Activity.objects.using(self.dbAlias).get(id=self.activity.id)
+            act_to_update = Activity.objects.using(self.dbAlias).get(id=self.activity.id)
             load_comment = f"Loaded variables {varList} from {self.url}"
 
         if hasattr(self, 'requested_startDatetime') and hasattr(self, 'requested_endDatetime'):
@@ -1649,11 +1648,11 @@ class Base_Loader(STOQS_Loader):
 
         self.logger.debug("Updating its comment with load_comment = %s", load_comment)
         if hasattr(self, 'add_to_activity') or hasattr(self, 'associatedActivityName'):
-            num_updated = Activity.objects.using(self.dbAlias).filter(id=act.id).update(
+            num_updated = Activity.objects.using(self.dbAlias).filter(id=act_to_update.id).update(
                             comment=load_comment,
-                            num_measuredparameters=mps_loaded + act.num_measuredparameters)
+                            num_measuredparameters=mps_loaded + act_to_update.num_measuredparameters)
         else:
-            num_updated = Activity.objects.using(self.dbAlias).filter(id=act.id).update(
+            num_updated = Activity.objects.using(self.dbAlias).filter(id=act_to_update.id).update(
                             name=self.getActivityName(),
                             comment=load_comment,
                             maptrack=path,
@@ -1673,8 +1672,8 @@ class Base_Loader(STOQS_Loader):
         # 
         # Update the stats and store simple line values
         #
-        self.updateActivityMinMaxDepth()
-        self.updateActivityParameterStats()
+        self.updateActivityMinMaxDepth(act_to_update)
+        self.updateActivityParameterStats(act_to_update)
         self.updateCampaignStartEnd()
         self.assignParameterGroup(groupName=MEASUREDINSITU)
         if featureType == TRAJECTORY:
@@ -2294,7 +2293,6 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
             _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain, plotTimeSeriesDepth)
     else:
         loader.logger.warn(f"Did not load any MeasuredParameters from {loader.url}")
-    import pdb; pdb.set_trace
     return mps_loaded
 
 

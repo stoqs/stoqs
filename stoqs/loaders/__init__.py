@@ -671,7 +671,7 @@ class STOQS_Loader(object):
                 return
         if hasattr(self, 'associatedActivityName'):
             if self.associatedActivityName.split(' (')[0] not in self.url:
-                self.logger.info(f"Not adding NC_GLOBAL attributes from {self.url} as we are associatined with Activity {self.associatedActivityName}")
+                self.logger.info(f"Not adding NC_GLOBAL attributes from {self.url} as we are associated with Activity {self.associatedActivityName}")
                 return
         if hasattr(self, 'ds'):
             if 'NC_GLOBAL' in self.ds.attributes:
@@ -1018,7 +1018,7 @@ class STOQS_Loader(object):
             self.logger.warn(e)
 
     @staticmethod
-    def update_ap_stats(dbAlias, activity, parameters, sampledFlag=False, assoc_act_name=None, add_to_activity=None):
+    def update_ap_stats(dbAlias, activity, parameters, sampledFlag=False):
         '''Update the database with descriptive statistics for parameters
         belonging to the activity.
         '''
@@ -1034,25 +1034,15 @@ class STOQS_Loader(object):
 
             # Just don't create an ActivityParameter for data that don't exist
             if len(data) == 0:
-                if assoc_act_name:
-                    # Assume data is like LOPC - get dataarray values
-                    data_array = m.MeasuredParameter.objects.using(dbAlias).filter(parameter=p, 
-                                    measurement__instantpoint__activity__name=assoc_act_name
-                                    ).values_list('dataarray', flat=True)
-                    try:
-                        data = [item for sublist in data_array for item in sublist]
-                    except TypeError:
-                        # Likely 'NoneType' object is not iterable because p is altitude of LOPC data
-                        data = []
-
-                    if len(data) == 0:
-                        continue
-                elif add_to_activity:
-                    data = m.MeasuredParameter.objects.using(dbAlias).filter(
-                                    parameter=p, measurement__instantpoint__activity=add_to_activity
-                                    ).values_list('datavalue', flat=True)
-                else:
-                    continue
+                # Assume data is like LOPC - get dataarray values
+                data_array = m.MeasuredParameter.objects.using(dbAlias).filter(parameter=p, 
+                                measurement__instantpoint__activity__name=assoc_act_name
+                                ).values_list('dataarray', flat=True)
+                try:
+                    data = [item for sublist in data_array for item in sublist]
+                except TypeError:
+                    # Likely 'NoneType' object is not iterable because p is altitude of LOPC data
+                    data = []
 
             ap, _ = m.ActivityParameter.objects.using(dbAlias).get_or_create(
                             parameter=p, activity=activity)
@@ -1104,42 +1094,26 @@ class STOQS_Loader(object):
                         binlo=bins[i], binhi=bins[i+1])
 
     @classmethod
-    def update_activityparameter_stats(cls, dbAlias, activity, parameters, sampledFlag=False,
-                                       assoc_act_name=None, add_to_activity=None):
+    def update_activityparameter_stats(cls, dbAlias, activity, parameters, sampledFlag=False):
         '''Class method for update_ap_stats() so that subclasses can call it via
         updateActivityParameterStats()
         '''
-        cls.update_ap_stats(dbAlias, activity, parameters, sampledFlag, assoc_act_name, add_to_activity)
+        cls.update_ap_stats(dbAlias, activity, parameters, sampledFlag)
 
-    def updateActivityParameterStats(self, sampledFlag=False):
+    def updateActivityParameterStats(self, act_to_update, sampledFlag=False):
         ''' 
         Examine the data for the Activity, compute and update some statistics on the measuredparameters
         for this activity.  Store the histogram in the associated table.
         '''                 
-        if self.activity:
-            act = self.activity
-        else:
-            raise Exception('Must have an activity defined in self.activity')
-
-        if hasattr(self, 'associatedActivityName'):
-            assoc_act_name = self.associatedActivityName
-        else:
-            assoc_act_name = None
-        if hasattr(self, 'add_to_activity'):
-            add_to_activity = self.add_to_activity
-        else:
-            add_to_activity = None
-
         try:
-            self.update_activityparameter_stats(self.dbAlias, act, self.parameter_counts, sampledFlag,
-                                                assoc_act_name, add_to_activity)
+            self.update_activityparameter_stats(self.dbAlias, act_to_update, self.parameter_counts, sampledFlag)
         except ValueError as e:
             self.logger.error('%s. Likely a dataarray as from LOPC data', e)
         except IntegrityError as e:
             self.logger.warn('IntegrityError(%s): Cannot create ActivityParameter and '
-                             'updated statistics for Activity %s.', (e, act))
+                             'updated statistics for Activity %s.', (e, act_to_update))
 
-        self.logger.info('Updated statistics for activity.name = %s', act.name)
+        self.logger.info('Updated statistics for act_to_update.name = %s', act_to_update.name)
 
     def insertSimpleDepthTimeSeries(self, critSimpleDepthTime=10):
         '''
@@ -1366,14 +1340,14 @@ class STOQS_Loader(object):
 
             self.logger.debug('Inserted %d values into SimpleDepthTime for nomDepth = %f', len(simple_line), nomDepth)
 
-    def updateActivityMinMaxDepth(self):
+    def updateActivityMinMaxDepth(self, act_to_update):
         '''
         Pull the min & max depth from Measurement and set the Activity mindepth and maxdepth
         '''
         m_qs = (m.Measurement.objects.using(self.dbAlias)
-                        .filter(instantpoint__activity__id=self.activity.id)
+                        .filter(instantpoint__activity__id=act_to_update.id)
                         .aggregate(Max('depth'), Min('depth')))
-        m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
+        m.Activity.objects.using(self.dbAlias).filter(id=act_to_update.id).update(
                                                         mindepth = m_qs['depth__min'],
                                                         maxdepth = m_qs['depth__max'])
     def updateCampaignStartEnd(self):
