@@ -290,7 +290,10 @@ class ParentSamplesLoader(STOQS_Loader):
                                             datavalue=mp.datavalue)
                 samp_mp.save(using=db_alias)
 
-        self.update_activityparameter_stats(db_alias, sample_act, parameter_counts)
+        try:
+            self.update_activityparameter_stats(db_alias, sample_act, parameter_counts)
+        except ValueError as e:
+            self.logger.warn(f"{e}")
 
         # Time and location of Sample (a single value) is midpoint of start and end times
         sample_tv = ip_qs[int(len(ip_qs)/2)].timevalue
