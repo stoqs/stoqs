@@ -19,7 +19,7 @@ import timing
 cl = CANONLoader('stoqs_all_dorado', 'Plankton Proxies - All Dorado Data',
                  description='All Dorado survey data from 2003 through 2019 and beyond',
                  x3dTerrains={
-                   'https://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                   'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
                      'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                      'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
@@ -43,10 +43,17 @@ enddate = datetime.datetime(2019, 12, 31)
 cl.process_command_line()
 
 if cl.args.test:
-    cl.stride = 1
-    ##startdate = datetime.datetime(2003, 12, 5)
-    ##enddate = datetime.datetime(2003, 12, 7)
-    ##cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
+    cl.stride = 10
+
+    # Initial short survey to test plankton_proxies loading
+    startdate = datetime.datetime(2003, 12, 5)
+    enddate = datetime.datetime(2003, 12, 7)
+    cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
+
+    # One of the early (short) surveys with LOPC data
+    startdate = datetime.datetime(2008, 10, 21, 16)
+    enddate = datetime.datetime(2008, 10, 22, 16)
+    cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
 
     # Survey with 0 mps_loaded
     cl.dorado_base = 'http://dods.mbari.org/thredds/dodsC/auv/dorado/2004/netcdf/'
