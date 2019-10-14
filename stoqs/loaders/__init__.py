@@ -1036,7 +1036,7 @@ class STOQS_Loader(object):
             if len(data) == 0:
                 # Assume data is like LOPC - get dataarray values
                 data_array = m.MeasuredParameter.objects.using(dbAlias).filter(parameter=p, 
-                                measurement__instantpoint__activity__name=assoc_act_name
+                                measurement__instantpoint__activity__name=activity
                                 ).values_list('dataarray', flat=True)
                 try:
                     data = [item for sublist in data_array for item in sublist]
