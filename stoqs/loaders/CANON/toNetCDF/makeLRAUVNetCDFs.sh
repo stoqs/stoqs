@@ -16,7 +16,7 @@ end_datetime='20171231T000000'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 dir='/mbari/LRAUV'
 year='2018'
-declare -a platforms=("tethys" "makai" "daphne" "aku" "ahi" "opah" "whoidhs")
+declare -a platforms=("ahi" "aku" "brezo" "daphne" "galene" "makai" "opah" "pontus" "tethys" "triton" "whoidhs")
 
 while getopts "s:e:y:" opt; do
     case "$opt" in
