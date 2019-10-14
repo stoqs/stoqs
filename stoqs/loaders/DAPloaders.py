@@ -1129,7 +1129,8 @@ class Base_Loader(STOQS_Loader):
                     tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]][0][0])
                 else:
                     tindx = self.getTimeBegEndIndices(self.ds[ac[TIME]])
-            except InvalidSliceRequest:
+            except (InvalidSliceRequest, NoValidData) as e:
+                self.logger.warn(f"{e}")
                 self.logger.warn(f'Failed to getTimeBegEndIndices() for axes {k} from {self.url}')
                 continue
 
