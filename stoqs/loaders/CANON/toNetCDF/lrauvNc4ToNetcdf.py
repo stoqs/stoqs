@@ -205,11 +205,14 @@ class InterpolatorWriter(BaseWriter):
         v_t = subgroup[tname]
 
         # Discovered in /mbari/LRAUV/whoidhs/missionlogs/2019/20190610_20190613/20190611T165616/201906111656_201906111829.nc4
+        # Also in http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20191001_20191010/20191007T152538/201910071525_201910080007.nc4.ascii?latitude[13618:1:13622]
         too_early_time_values = np.where(v_t[:] < 946684800.0)[0]
-        if too_early_time_values:
+        if too_early_time_values.any():
             logger.info(f"{name}: v_t values found before 2000-01-01 = {too_early_time_values}")
-            logger.info(f"Removing them: {v_t[too_early_time_values]}")
+            logger.info(f"Their times:  {[time.ctime(ti) for ti in v_t[too_early_time_values]]}")
+            logger.info(f"Removing them: {v_t[too_early_time_values]} for variable {name}")
             v_t = np.delete(v_t, too_early_time_values)
+            v = np.delete(v, too_early_time_values)
 
         v_time = pd.to_datetime(v_t[:],unit='s',errors = 'coerce')
         v_time_series = pd.Series(v[:],index=v_time)
@@ -494,7 +497,7 @@ class InterpolatorWriter(BaseWriter):
                     except KeyError:
                         # Likely the variable c is not in the NetCDF file
                         logger.warn(f"Could not create coord {c}.  It's likely not in the file")
-                    except Exception as e:
+                    except ValueError as e:
                         logger.error('Could not create coord {}: {}'.format(c, str(e)))
                         continue
 
