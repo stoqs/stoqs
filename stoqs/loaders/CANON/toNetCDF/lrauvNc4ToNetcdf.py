@@ -1082,7 +1082,10 @@ class InterpolatorWriter(BaseWriter):
 
                 i = self.interpolate(value, t_resample.index)
                 if key == 'time':
-                    repeated_values = np.where(np.diff(i.values) <= 0)[0]
+                    # Strange set of small increasing time values in:
+                    # http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20191001_20191010/20191003T161931/201910031619_201910061529_2S_scieng.nc
+                    # Relax criteria for repeated values to 0.1 sec (10 Hz)
+                    repeated_values = np.where(np.diff(i.values) <= 0.1)[0]
                     if len(repeated_values) > 0:
                         logger.warn(f"Interpolated 'time' variable has {len(repeated_values)} repeated values at indices {repeated_values}")
                         logger.info(f"Overwriting interpolated repeated values with time's index values")
