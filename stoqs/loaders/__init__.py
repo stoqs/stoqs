@@ -1110,7 +1110,7 @@ class STOQS_Loader(object):
         try:
             self.update_activityparameter_stats(self.dbAlias, act_to_update, self.parameter_counts, sampledFlag)
         except ValueError as e:
-            self.logger.error('%s. Likely a dataarray as from LOPC data', e)
+            self.logger.warn(f"{e}")
         except IntegrityError as e:
             self.logger.warn('IntegrityError(%s): Cannot create ActivityParameter and '
                              'updated statistics for Activity %s.', (e, act_to_update))
