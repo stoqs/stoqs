@@ -200,22 +200,32 @@ class InterpolatorWriter(BaseWriter):
         return v_time_series
         # End createSeriesPydap
 
+    def _file_start_end(self):
+        '''Return datetimes of the start and end of in_file based on its name
+        '''
+        fstart = dt.datetime.strptime(os.path.basename(self.in_file).split('_')[0], '%Y%m%d%H%M')
+        fend = dt.datetime.strptime(os.path.basename(self.in_file).split('_')[1].split('.nc4')[0], '%Y%m%d%H%M')
+        return fstart, fend 
+
     def createSeries(self, subgroup, name, tname):
         v = subgroup[name]
         v_t = subgroup[tname]
 
         # Discovered in /mbari/LRAUV/whoidhs/missionlogs/2019/20190610_20190613/20190611T165616/201906111656_201906111829.nc4
         # Also in http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20191001_20191010/20191007T152538/201910071525_201910080007.nc4.ascii?latitude[13618:1:13622]
-        too_early_time_values = np.where(v_t[:] < 946684800.0)[0]
-        if too_early_time_values.any():
-            logger.info(f"{name}: v_t values found before 2000-01-01 = {too_early_time_values}")
-            logger.info(f"Their times:  {[time.ctime(ti) for ti in v_t[too_early_time_values]]}")
-            logger.info(f"Removing them: {v_t[too_early_time_values]} for variable {name}")
-            v_t = np.delete(v_t, too_early_time_values)
-            v = np.delete(v, too_early_time_values)
+        # Also http://dods.mbari.org/opendap/hyrax/data/lrauv/triton/missionlogs/2019/20191005_20191010/20191007T230214/201910072302_201910090436.nc4
+        # raised the need to make a closer chop of the data based in file name start and end datetimes
+        fstart, fend = self._file_start_end()
+        out_of_file_time_values = np.where((v_t[:] < fstart.timestamp()) | (v_t[:] > fend.timestamp()))[0]
+        if out_of_file_time_values.any():
+            logger.info(f"{name}: v_t values found before {fstart} and after {fend}: {out_of_file_time_values}")
+            logger.info(f"Their times:  {[time.ctime(ti) for ti in v_t[out_of_file_time_values]]}")
+            logger.info(f"Removing them: {v_t[out_of_file_time_values]} for variable {name}")
+            v_t = np.delete(v_t, out_of_file_time_values)
+            v = np.delete(v, out_of_file_time_values)
 
-        v_time = pd.to_datetime(v_t[:],unit='s',errors = 'coerce')
-        v_time_series = pd.Series(v[:],index=v_time)
+        v_time = pd.to_datetime(v_t[:], unit='s', errors = 'coerce')
+        v_time_series = pd.Series(v[:], index=v_time)
         return v_time_series
         # End createSeries
 
@@ -648,7 +658,8 @@ class InterpolatorWriter(BaseWriter):
                         / (lat.index[segi][-1] - lat.index[segi][0]).total_seconds())
             v_drift = (end_lat_diff * 60 * 185300 
                         / (lat.index[segi][-1] - lat.index[segi][0]).total_seconds())
-            logger.info(f"{i:4d}: {end_sec_diff:12.3f} {end_lon_diff:12.7f} {end_lat_diff:12.7f} {len(segi):-9d} {seg_min:7.2f} {u_drift:14.2f} {v_drift:14.2f}")
+            ##logger.info(f"{i:4d}: {end_sec_diff:12.3f} {end_lon_diff:12.7f} {end_lat_diff:12.7f} {len(segi):-9d} {seg_min:7.2f} {u_drift:14.2f} {v_drift:14.2f}")
+            logger.info(f"{i:4d}: {end_sec_diff:12.3f} {end_lon_diff:12.7f} {end_lat_diff:12.7f} {len(segi):-9d} {seg_min:7.2f} {u_drift:14.2f} {v_drift:14.2f} {lat.index[segi][-1]}")
 
             # Start with zero adjustment at begining and linearly ramp up to the diff at the end
             lon_nudge = np.interp( lon.index[segi].astype(np.int64), 
@@ -957,6 +968,7 @@ class InterpolatorWriter(BaseWriter):
         fh.setFormatter(frm)
         logger.addHandler(fh)
 
+        self.in_file = in_file
         base_name = os.path.basename(in_file)
         os.system(f"/bin/cp {in_file} /tmp/{base_name}")
         logger.info('Reading %s file...' % in_file)
@@ -1082,13 +1094,15 @@ class InterpolatorWriter(BaseWriter):
 
                 i = self.interpolate(value, t_resample.index)
                 if key == 'time':
-                    # Strange set of small increasing time values in:
-                    # http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20191001_20191010/20191003T161931/201910031619_201910061529_2S_scieng.nc
-                    # Relax criteria for repeated values to 0.1 sec (10 Hz)
                     repeated_values = np.where(np.diff(i.values) <= 0.1)[0]
                     if len(repeated_values) > 0:
                         logger.warn(f"Interpolated 'time' variable has {len(repeated_values)} repeated values at indices {repeated_values}")
                         logger.info(f"Overwriting interpolated repeated values with time's index values")
+                        # Useful debugging code for verifying proper interpolation, e.g. no wild outliers in time
+                        ##for counter, (rv, indxv) in enumerate(zip(i[repeated_values], i[repeated_values].index.astype(np.int64)/1E9)):
+                        ##    print(f"{str(dt.datetime.fromtimestamp(rv))} <= {str(dt.datetime.fromtimestamp(indxv))}")
+                        ##    if not counter % 10000:
+                        ##        import pdb; pdb.set_trace()
                         i[repeated_values] = i[repeated_values].index.astype(np.int64)/1E9
 
                 self.all_sub_ts[key] = i
