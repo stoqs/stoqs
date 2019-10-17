@@ -620,7 +620,7 @@ class InterpolatorWriter(BaseWriter):
             logger.info("Returning from nudge_coords() with original coords")
             return lon, lat
 
-        logger.info(f"{'seg#':4s}  {'end_sec_diff':12s} {'end_lon_diff':12s} {'end_lat_diff':12s} {'len(segi)':9s} {'seg_min':7s} {'u_drift (cm/s)':14s} {'v_drift (cm/s)':14s}")
+        logger.info(f"{'seg#':4s}  {'end_sec_diff':12s} {'end_lon_diff':12s} {'end_lat_diff':12s} {'len(segi)':9s} {'seg_min':>9s} {'u_drift (cm/s)':14s} {'v_drift (cm/s)':14s} {'start datetime of segment':>29}")
         
         # Any dead reckoned points before first GPS fix - usually empty as GPS fix happens before dive
         segi = np.where(lat.index < lat_fix.index[0])[0]
@@ -636,7 +636,7 @@ class InterpolatorWriter(BaseWriter):
             seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
         else:
             seg_min = 0
-        logger.info(f"{' ':4}  {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
+        logger.info(f"{' ':4}  {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:9.2f} {'-':>14} {'-':>14} {'-':>29}")
        
         seg_count = 0 
         seg_minsum = 0
@@ -658,8 +658,7 @@ class InterpolatorWriter(BaseWriter):
                         / (lat.index[segi][-1] - lat.index[segi][0]).total_seconds())
             v_drift = (end_lat_diff * 60 * 185300 
                         / (lat.index[segi][-1] - lat.index[segi][0]).total_seconds())
-            ##logger.info(f"{i:4d}: {end_sec_diff:12.3f} {end_lon_diff:12.7f} {end_lat_diff:12.7f} {len(segi):-9d} {seg_min:7.2f} {u_drift:14.2f} {v_drift:14.2f}")
-            logger.info(f"{i:4d}: {end_sec_diff:12.3f} {end_lon_diff:12.7f} {end_lat_diff:12.7f} {len(segi):-9d} {seg_min:7.2f} {u_drift:14.2f} {v_drift:14.2f} {lat.index[segi][-1]}")
+            logger.info(f"{i:4d}: {end_sec_diff:12.3f} {end_lon_diff:12.7f} {end_lat_diff:12.7f} {len(segi):-9d} {seg_min:9.2f} {u_drift:14.2f} {v_drift:14.2f} {lat.index[segi][-1]}")
 
             # Start with zero adjustment at begining and linearly ramp up to the diff at the end
             lon_nudge = np.interp( lon.index[segi].astype(np.int64), 
@@ -689,7 +688,7 @@ class InterpolatorWriter(BaseWriter):
             dt_nudged = np.append(dt_nudged, lon.index[segi])
             seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
        
-        logger.info(f"{seg_count+1:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:7.2f} {'-':>14} {'-':>14}")
+        logger.info(f"{seg_count+1:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:9.2f} {'-':>14} {'-':>14}")
         self.segment_count = seg_count
         self.segment_minsum = seg_minsum
 
