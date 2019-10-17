@@ -891,6 +891,10 @@ class STOQS_Loader(object):
         # for .is_coordinate_bad() check
         previous_times = []
         for i, (mt, de, la, lo) in enumerate(zip(mtimes, depths, latitudes, longitudes)):
+            # Useful for LRAUV data load debugging, e.g. from bad interpolation by lrauvNc4ToNetcdf.py
+            ##self.logger.info(f"{i}: {mt}, {de}, {la}, {lo}")
+            ##if not i % 100:
+            ##    import pdb; pdb.set_trace()
             if self.is_coordinate_bad(pnames[0], mt, de, la, lo):
                 self.logger.debug(f"Marked coordinate bad: i = {i}, mt = {mt}, de = {de}, la = {la}, lo = {lo}")
                 mt = None
@@ -1110,7 +1114,7 @@ class STOQS_Loader(object):
         try:
             self.update_activityparameter_stats(self.dbAlias, act_to_update, self.parameter_counts, sampledFlag)
         except ValueError as e:
-            self.logger.error('%s. Likely a dataarray as from LOPC data', e)
+            self.logger.warn(f"{e}")
         except IntegrityError as e:
             self.logger.warn('IntegrityError(%s): Cannot create ActivityParameter and '
                              'updated statistics for Activity %s.', (e, act_to_update))
