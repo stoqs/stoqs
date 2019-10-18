@@ -3447,7 +3447,6 @@ function enable_cardboard(){
 
 
 
-
     $('.temporal-tab > li').on('click', function (event) {
         // Show the tab then plot the data so that axes are properly drawn
         $('a', event.delegateTarget).tab('show');
@@ -3471,6 +3470,15 @@ function enable_cardboard(){
             }
             $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent().hide();
             rebuildFilters(['parametertime', 'platformanimation', 'measuredparameterx3d']);
+            if (permalink_bypass) {
+                // ZoomIn if being loaded from a permalink
+                var ranges={xaxis: {  to: $('body').data()['end-ems'],
+                                    from: $('body').data()['start-ems']},
+                            yaxis: {  to: $('body').data()['end-depth'],
+                                    from: $('body').data()['start-depth']}
+                            };
+                ZoomIn(event, ranges);    // Calls rebuildFilters() for everything
+            }
         }
         else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
             $('.parameter-plot-radio').show();
