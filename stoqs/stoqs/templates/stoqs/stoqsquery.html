@@ -1392,6 +1392,7 @@
     var summaryQuery='{{site_uri}}{% url 'stoqs:stoqs-query-summary' dbAlias=request.META.dbAlias %}';
     var mapQuery='{{site_uri}}{% url 'stoqs:stoqs-query-map' dbAlias=request.META.dbAlias %}';
     var params={}
+    var param_names={}
     var initData;
     var lcZoomed = false;
     var rcZoomed = false;
@@ -1727,7 +1728,7 @@
         var mp_param = '?';
         if (typeof params[group_name1 + 'parametersgroup'] != 'undefined') {
             for (var i=0; i<params[group_name1 + 'parametersgroup'].length; i++) {
-                mp_param = mp_param + 'parameter__id=' + params[group_name1 + 'parametersgroup'][i] + '&';
+                mp_param = mp_param + 'parameter__name=' + param_names[group_name1 + 'parametersgroup'][i] + '&';
             }
         }
         if (typeof params['parameterstandardname'] != 'undefined') {
@@ -2091,10 +2092,12 @@
         }
 
         params['sampledparametersgroup']=[]
+        param_names['sampledparametersgroup']=[]
         $('td',$('#sampledparameter-table > tbody')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 if ( $('.sampledparametersgroup', $(element)).length) {
                     params['sampledparametersgroup'].push(element.id);
+                    param_names['sampledparametersgroup'].push(element.innerText);
                 }
             }
         });
@@ -2108,24 +2111,23 @@
         }
 
         params['measuredparametersgroup']=[]
+        param_names['measuredparametersgroup']=[]
         params['parameterstandardname']=[]
         var regExp = new RegExp('--.+-sn');
-        var mpnames = [];
         $('td',$('#measuredparameter-table > tbody')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 if ( $('.measuredparametersgroup', $(element)).length) {
                     params['measuredparametersgroup'].push(element.id);
-                    mpnames.push(element.innerText);
+                    param_names['measuredparametersgroup'].push(element.innerText);
                 }
                 if ( $('.parameterstandardname', $(element)).length) {
                     params['parameterstandardname'].push(element.id.replace(regExp,''));
-                    mpnames.push(element.innerText);
                 }
             }
         });
         $('#measuredparameters-anchor').html('Measured Parameter: ')
         if (params['measuredparametersgroup'].length) {
-            $('#measuredparameters-anchor').append('name(s): ' + mpnames.join())
+            $('#measuredparameters-anchor').append('name(s): ' + param_names['measuredparametersgroup'].join())
         }
         if (params['parameterstandardname'].length) {
             $('#measuredparameters-anchor').append('standard name(s): ' + params['parameterstandardname'].join())
@@ -3445,7 +3447,6 @@ function enable_cardboard(){
 
 
 
-
     $('.temporal-tab > li').on('click', function (event) {
         // Show the tab then plot the data so that axes are properly drawn
         $('a', event.delegateTarget).tab('show');
@@ -3469,6 +3470,15 @@ function enable_cardboard(){
             }
             $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent().hide();
             rebuildFilters(['parametertime', 'platformanimation', 'measuredparameterx3d']);
+            if (permalink_bypass) {
+                // ZoomIn if being loaded from a permalink
+                var ranges={xaxis: {  to: $('body').data()['end-ems'],
+                                    from: $('body').data()['start-ems']},
+                            yaxis: {  to: $('body').data()['end-depth'],
+                                    from: $('body').data()['start-depth']}
+                            };
+                ZoomIn(event, ranges);    // Calls rebuildFilters() for everything
+            }
         }
         else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
             $('.parameter-plot-radio').show();
