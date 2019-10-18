@@ -5737,16 +5737,16 @@ function enable_cardboard(){
             }
         });
        
-        if ( $('#parametervalues-data').val() ) { 
-            // Grab any parametervalues selections that have been put into the hidden element
-            pl_params['histograms'] = $('#parametervalues-data').val();
-            $.each(JSON.parse($('#parametervalues-data').val()), function(parameter, data) {
-                if (typeof data.xmin != 'undefined' && typeof data.xmax != 'undefined') {
-                    pl_params[parameter + '_MIN'] = data.xmin.toPrecision(4);
-                    pl_params[parameter + '_MAX'] = data.xmax.toPrecision(4);
-                }
-            });
-        }
+        //if ( $('#parametervalues-data').val() ) { 
+        //    // Grab any parametervalues selections that have been put into the hidden element
+        //    pl_params['histograms'] = $('#parametervalues-data').val();
+        //    $.each(JSON.parse($('#parametervalues-data').val()), function(parameter, data) {
+        //        if (typeof data.xmin != 'undefined' && typeof data.xmax != 'undefined') {
+        //            pl_params[parameter + '_MIN'] = data.xmin.toPrecision(4);
+        //            pl_params[parameter + '_MAX'] = data.xmax.toPrecision(4);
+        //        }
+        //    });
+        //}
 
         return JSON.stringify(pl_params);
         
