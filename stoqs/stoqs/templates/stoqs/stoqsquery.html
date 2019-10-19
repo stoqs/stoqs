@@ -4265,7 +4265,7 @@ function enable_cardboard(){
                         plat + 
                         '</a></h5>' + 
                     '</div>' + 
-                    '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
+                    '<div id="collapse-' + plat + '" class="accordion-body">' + 
                         '<div class="accordion-inner" style="padding:0;">';
                     ql_plots_tab_html += '<div id="' + plat + '-group" class="accordian-group">' +
                     '<div class="accordian-heading">' + 
@@ -4273,7 +4273,7 @@ function enable_cardboard(){
                         plat + 
                         '</a></h5>' + 
                     '</div>' + 
-                    '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
+                    '<div id="collapse-' + plat + '" class="accordion-body">' + 
                         '<div class="accordion-inner" style="padding:0;">';
                     ql_plots_tab_html += '<table class="table table-condensed"><tbody>';
 
@@ -5662,9 +5662,12 @@ function enable_cardboard(){
                     pl_params['clicks'].push('input[type="radio"][name="'+ item.name +'"][value="'+ item.value +'"]');
                 }
             });
-            // Grab all the checked checkboxes
+            // Grab all the checked checkboxes, except for OpenLayers and terrain_choice items - to reduce URL length
             $('input:checked[type="checkbox"]', divcol).each(function(key, item) {
                 if ( ! $.isEmptyObject(item.id) && item.id != '' ) {
+                    if ( item.id.indexOf('OpenLayers') >= 0 ) {
+                        return true;
+                    }
                     if ( $(item).parent().css('display') != 'none' ) {
                         pl_params['clicks'].push('input[type="checkbox"][id="' + item.id + '"]'); 
                     }
@@ -5676,6 +5679,9 @@ function enable_cardboard(){
                         }
                     }
                     else {
+                        if ( item.name == 'terrain_choice' ) {
+                            return true;
+                        }
                         pl_params['clicks'].push('input[type="checkbox"][name="'+ item.name +'"][value="'+ item.value +'"]');
                     }
                 }
