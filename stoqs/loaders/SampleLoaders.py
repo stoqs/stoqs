@@ -68,6 +68,7 @@ ESP_FILTERING = 'ESP_filtering'
 SIPPER = 'Sipper'
 SIPPER_NUM_ERR = re.compile('Sample (?P<sipper_num>\d+), err_code=(?P<sipper_err>\d+)')
 SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
+NOWATER = 'no water'
 
 # Have both sample # and no_num versions of regular expressions so as to also get legacy samples
 no_num_sampling_start_re = 'ESP sampling state: S_FILTERING'
@@ -159,7 +160,16 @@ class ParentSamplesLoader(STOQS_Loader):
         except MultipleObjectsReturned:
             self.logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', activityName)
             activity = Activity.objects.using(dbAlias).filter(name__contains=activityName)[0]
-            
+
+        try:
+            if NOWATER in (ActivityResource.objects.using(dbAlias)
+                                           .get(activity=activity, resource__name='title', 
+                                                resource__resourcetype__name='nc_global')
+                                           .resource.value.lower()):
+                self.logger.warn(f"Found '{NOWATER}' text in title of {activity.name}, not adding Gulpers")
+                return
+        except ActivityResource.DoesNotExist:
+            self.logger.warn(f"Could not find 'title' nc_global attribute in ActivityResource for Activity {activity}")
 
         # Use the dods server to read over http - works from outside of MBARI's Intranet
         baseUrl = 'http://dods.mbari.org/data/auvctd/surveys/'
@@ -280,7 +290,10 @@ class ParentSamplesLoader(STOQS_Loader):
                                             datavalue=mp.datavalue)
                 samp_mp.save(using=db_alias)
 
-        self.update_activityparameter_stats(db_alias, sample_act, parameter_counts)
+        try:
+            self.update_activityparameter_stats(db_alias, sample_act, parameter_counts)
+        except ValueError as e:
+            self.logger.warn(f"{e}")
 
         # Time and location of Sample (a single value) is midpoint of start and end times
         sample_tv = ip_qs[int(len(ip_qs)/2)].timevalue
@@ -1144,7 +1157,7 @@ class SubSamplesLoader(STOQS_Loader):
         If @unloadFlag is True then delete the subsamples from @fileName from the database.  This is useful for testing.
         '''
         subCount = 0
-        p = None
+        parameter = None
         loadedParentSamples = []
         self.parameter_counts = {}
         for r in csv.DictReader(open(fileName, encoding='latin-1')):
@@ -1203,31 +1216,31 @@ class SubSamplesLoader(STOQS_Loader):
                 # Unload subsample
                 self.delete_subsample(parentSample, r)
             else:
-                if p and subCount and parentSample not in loadedParentSamples:
+                if parameter and subCount and parentSample not in loadedParentSamples:
                     # Useful logger output when parentSample changes - more useful when spreadsheet is sorted by parentSample
-                    self.logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
+                    self.logger.info('%d subsamples loaded of %s from %s', subCount, parameter.name, os.path.basename(fileName))
 
                     self.logger.info('Loading subsamples of parentSample (activity, bottle/name) = (%s, %s)', aName, sample_name)
                     subCount = 0
 
                 try:
                     # Load subsample
-                    p = self.load_subsample(parentSample, r)
+                    parameter = self.load_subsample(parentSample, r)
                 except SubSampleLoadError as e:
                     self.logger.warn(e)
                     continue
                 else:
                     subCount = subCount + 1
                     try:
-                        self.parameter_counts[p] += 1
+                        self.parameter_counts[parameter] += 1
                     except KeyError:
-                        self.parameter_counts[p] = 0
+                        self.parameter_counts[parameter] = 0
 
                     loadedParentSamples.append(parentSample)
    
-        if not unloadFlag: 
+        if not unloadFlag and parameter: 
             # Last logger info message and finish up the loading for this file
-            self.logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
+            self.logger.info('%d subsamples loaded of %s from %s', subCount, parameter.name, os.path.basename(fileName))
 
             self.assignParameterGroup(groupName=SAMPLED)
             self.postProcess()

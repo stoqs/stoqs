@@ -36,8 +36,9 @@ import urllib
 
 from SampleLoaders import SeabirdLoader, SubSamplesLoader, ParentSamplesLoader
 from lrauv_support import MissionLoader
+from LRAUV.make_load_scripts import lrauvs
 from bs4 import BeautifulSoup
-from loaders import LoadScript, FileNotFound
+from loaders import LoadScript, FileNotFound, SIGMAT, SPICE, SPICINESS, ALTITUDE
 from stoqs.models import InstantPoint
 from django.db.models import Max
 from datetime import datetime, timedelta
@@ -128,12 +129,15 @@ class CANONLoader(LoadScript):
                 'wg_Tiny':      '960000',
                 'wg_Sparky':    'FCDD00',
                 'wg_272':       '98FF26',
+                'wg_Hansen':    '9AD484',
                 'deimos':       '33D4FF',
+                'saildrone':    'ff0c0c',   # CSS button color on https://www.saildrone.com/
              }
 
-    # Distribute AUV colors along a yellow to brown palette
-    auv_names = ('dummy1', 'dorado', 'tethys', 'daphne', 'makai', 'aku', 'ahi', 'opah', 'whoidhs', 'galene', 'pontus', 'triton')
+    # Distribute AUV colors along a yellow to brown palette, auv_names imported from LRAUV/make_load_scripts.py
     YlOrBr = plt.cm.YlOrBr
+    # Have dummy1 take up the first blackish color
+    auv_names = ['dummy1', 'dorado'] + list(lrauvs)
     for auv_name, c in zip(auv_names, YlOrBr(np.linspace(0, YlOrBr.N, len(auv_names), dtype=int))):
         colors[auv_name] = rgb2hex(c)[1:]
 
@@ -147,6 +151,7 @@ class CANONLoader(LoadScript):
     def loadDorado(self, startdate=None, enddate=None,
                    parameters=[ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
+                    'bbp470', 'bbp676', 'fl676_uncorr',
                     'sepCountList', 'mepCountList', 'roll', 'pitch', 'yaw', ], stride=None,
                     file_patterns=('.*_decim.nc$'), build_attrs=False, plankton_proxies=False):
         '''
@@ -171,11 +176,12 @@ class CANONLoader(LoadScript):
             dfile = url.split('/')[-1]
             aname = dfile + getStrideText(stride)
             try:
-                DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aname, 
+                mps_loaded = DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aname, 
                                            pname, self.colors[pname], 'auv', 'AUV mission', 
                                            self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
                                            plotTimeSeriesDepth=0.0, plankton_proxies=plankton_proxies)
-                psl.load_gulps(aname, dfile, self.dbAlias)
+                if mps_loaded:
+                    psl.load_gulps(aname, dfile, self.dbAlias)
             except DAPloaders.DuplicateData as e:
                 self.logger.warn(str(e))
                 self.logger.info(f"Skipping load of {url}")
@@ -625,6 +631,18 @@ class CANONLoader(LoadScript):
                                        'wg_272_Glider', self.colors['wg_272'], 'waveglider', 'Glider Mission',
                                        self.wg_272_parms, self.dbAlias, stride, self.wg_272_startDatetime,
                                        self.wg_272_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+
+    def load_wg_Hansen(self, stride=None):
+        '''
+        Glider specific load functions, sets plotTimeSeriesDepth=0 to get Parameter tab in UI
+        '''
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_Hansen_files], self.wg_Hansen_files):
+            url = self.wg_Hansen_base + f
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+                                       'wg_Hansen_Glider', self.colors['wg_Hansen'], 'waveglider', 'Glider Mission',
+                                       self.wg_Hansen_parms, self.dbAlias, stride, self.wg_Hansen_startDatetime,
+                                       self.wg_Hansen_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
 
 
     def load_wg_oa(self, stride=None):
@@ -1114,6 +1132,107 @@ class CANONLoader(LoadScript):
 
         return _generic_load_roms
 
+    def find_saildrone_urls(self, base, search_str, startdate, enddate):
+        '''Use Thredds Crawler to return a list of DAP urls.  Initially written for LRAUV data, for
+        which we don't initially know the urls.
+        '''
+        urls = []
+        catalog_url = os.path.join(base, 'catalog.xml')
+        c = Crawl(catalog_url, select=[search_str])
+        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+        for url in d:
+            file_dt = datetime.strptime(url.split('-')[-4], '%Y%m%dT%H%M%S')
+            if startdate < file_dt and file_dt < enddate:
+                urls.append(url)
+                self.logger.debug(f'* {url}')
+            else:
+                self.logger.debug(f'{url}')
+
+        if not urls:
+            raise FileNotFound('No urls matching "{search_str}" found in {catalog_url}')
+
+        return urls
+
+    def build_saildrone_attrs(self, platform_name, startdate, enddate, parameters, file_patterns):
+        '''Set loader attributes for saildrone data
+        '''
+        setattr(self, platform_name + '_parms' , parameters)
+
+        urls = []
+        for year in range(startdate.year, enddate.year+1):
+            base = f'http://odss.mbari.org/thredds/catalog/Other/routine/Platforms/Saildrone/1046/netcdf/'
+            dods_base = f'http://odss.mbari.org/thredds/dodsC/Other/routine/Platforms/Saildrone/1046/netcdf/'
+            try:
+                urls += self.find_saildrone_urls(base, file_patterns, startdate, enddate)
+                files = []
+                for url in sorted(urls):
+                    files.append(url.split('/')[-1])
+            except FileNotFound as e:
+                self.logger.debug(f'{e}')
+
+        # Send signal that urls span years by not setting dorado_base so that dorado_urls is used instead
+        if startdate.year == enddate.year:
+            setattr(self, platform_name + '_base', dods_base)
+        else:
+            setattr(self, platform_name + '_urls', sorted(urls))
+
+        setattr(self, platform_name + '_files', files)
+        setattr(self, platform_name  + '_startDatetime', startdate)
+        setattr(self, platform_name + '_endDatetime', enddate)
+
+    def loadSaildrone(self, startdate=None, enddate=None, parameters=['SOG_FILTERED_MEAN',
+                        'COG_FILTERED_MEAN', 'HDG_FILTERED_MEAN', 'ROLL_FILTERED_MEAN',
+                        'PITCH_FILTERED_MEAN', 'UWND_MEAN', 'VWND_MEAN', 'WWND_MEAN',
+                        'TEMP_AIR_MEAN', 'RH_MEAN', 'BARO_PRES_MEAN', 'PAR_AIR_MEAN',
+                        'WAVE_DOMINANT_PERIOD', 'WAVE_SIGNIFICANT_HEIGHT', 'TEMP_SBE37_MEAN',
+                        'SAL_SBE37_MEAN', 'O2_CONC_SBE37_MEAN', 'O2_SAT_SBE37_MEAN',
+                        'CHLOR_WETLABS_MEAN',],
+                      stride=None, file_patterns=('.*montereybay_mbari_2019_001-sd1046.*nc$'), build_attrs=False):
+        '''First deployed for CANON May 2019 for DEIMOS campaigns
+        '''
+        platform_name = 'saildrone'
+        activity_type_name = 'Saildrone Deployment'
+        stride = stride or self.stride
+        # Save these here in case we want to add them
+        rbr_parms = ['TEMP_CTD_RBR_MEAN', 'SAL_RBR_MEAN', 'O2_CONC_RBR_MEAN', 'O2_SAT_RBR_MEAN',
+                     'CHLOR_RBR_MEAN']
+
+        if build_attrs:
+            self.logger.info(f'Building load parameter attributes from crawling TDS')
+            self.build_saildrone_attrs(platform_name, startdate, enddate, parameters, file_patterns)
+        else:
+            self.logger.info(f'Using load {pname} attributes set in load script')
+            parameters = getattr(self, f'{platform_name}_parms')
+
+        for (aName, f) in zip([ a.split('.')[0] + getStrideText(stride) for a in self.saildrone_files], self.saildrone_files):
+            url = self.saildrone_base + f
+            try:
+                loader = DAPloaders.Trajectory_Loader(url = url,
+                                    campaignName = self.campaignName,
+                                    campaignDescription = self.campaignDescription,
+                                    dbAlias = self.dbAlias,
+                                    activityName = aName,
+                                    activitytypeName = activity_type_name,
+                                    platformName = platform_name,
+                                    platformColor = self.colors[platform_name],
+                                    platformTypeName = 'glider',
+                                    stride = stride,
+                                    startDatetime = startdate,
+                                    endDatetime = enddate,
+                                    dataStartDatetime = None)
+            except webob.exc.HTTPError as e:
+                self.logger.warn(f"Skipping over {url}")
+
+            loader.include_names = parameters
+            loader.auxCoords = {}
+            for parm in parameters:
+                loader.auxCoords[parm] = {'latitude': 'latitude', 'longitude': 'longitude', 'time': 'time', 'depth': 0.0}
+                loader.plotTimeSeriesDepth = dict.fromkeys(parameters + [ALTITUDE, SIGMAT, SPICE], 0.0)
+            try:
+                loader.process_data()
+            except (DAPloaders.OpendapError, IndexError) as e:
+                self.logger.warn(f"Skipping over {url} due to Execption: {e}")
+
     def loadSubSamples(self):
         '''
         Load water sample analysis Sampled data values from spreadsheets (.csv files).  Expects to have the subsample_csv_base and
@@ -1311,10 +1430,8 @@ class CANONLoader(LoadScript):
         base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{mission_year}/'
         dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{mission_year}/'
         if sbd_logs:
-            # TODO: check for enddate being in a different month
-            yrmo = startdate.strftime('%Y%m')
-            base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/realtime/sbdlogs/{mission_year}/{yrmo}/'
-            dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/realtime/sbdlogs/{mission_year}/{yrmo}/'
+            base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/realtime/sbdlogs/{mission_year}/'
+            dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/realtime/sbdlogs/{mission_year}/'
         # TODO: Add case for cell_logs
         setattr(self, platform + '_files', [])
         setattr(self, platform + '_base', dods_base)
@@ -1332,7 +1449,7 @@ class CANONLoader(LoadScript):
             if len(urls) > 0 :
                 for url in sorted(urls):
                     if 'shore_i' in url:
-                        file = '/'.join(url.split('/')[-2:])
+                        file = '/'.join(url.split('/')[-3:])
                     else:
                         file = '/'.join(url.split('/')[-3:])
                     files.append(file)

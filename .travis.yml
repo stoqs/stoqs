@@ -18,6 +18,8 @@ before_install:
   - export HDF5_DIR=/home/travis/miniconda3/
   - export NETCDF4_DIR=/home/travis/miniconda3/
   - export TERM=xterm
+  - pip uninstall -y setuptools
+  - conda install --yes setuptools
   - conda update --yes conda
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
   - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/miniconda3/

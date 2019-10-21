@@ -169,14 +169,14 @@ class Loader(object):
             self.prov['environment'] = platform.platform() + " python " + sys.version.split('\n')[0]
             self.prov['load_date_gmt'] = datetime.datetime.utcnow()
 
-        if not self.args.background and self.args.updateprovenance:
-            if not os.path.isfile(log_file):
-                self.logger.warn('Load log file not found: %s', log_file)
-            else:
+        if not self.args.background:
+            if os.path.isfile(log_file):
                 # Look for line printed by timing module
                 for line in tail(log_file, 50).split('\n'):
                     if line.startswith(MINUTES):
                         self.prov['minutes_to_load'] =line.split(':')[1]
+                if 'minutes_to_load' not in self.prov:
+                    self.logger.warn(f"Did not find line starting with {MINUTES} in {log_file}")
                 try:
                     # Inserted after the log_file has been written with --updateprovenance
                     self.prov['real_exection_time'] = tail(log_file, 3).split('\n')[0].split('\t')[1]
@@ -184,13 +184,15 @@ class Loader(object):
                     self.prov['sys_exection_time'] = tail(log_file, 3).split('\n')[2].split('\t')[1]
                 except IndexError:
                     self.logger.debug('No execution_time information in %s', log_file)
+            else:
+                self.logger.warn('Load log file not found: %s', log_file)
 
-                # Counts
-                self.prov['MeasuredParameter_count'] = MeasuredParameter.objects.using(db).count()
-                self.prov['SampledParameter_count'] = SampledParameter.objects.using(db).count()
-                self.prov['Parameter_count'] = Parameter.objects.using(db).count()
-                self.prov['Activity_count'] = Activity.objects.using(db).count()
-                self.prov['Platform_count'] = Platform.objects.using(db).count()
+            # Counts
+            self.prov['MeasuredParameter_count'] = MeasuredParameter.objects.using(db).count()
+            self.prov['SampledParameter_count'] = SampledParameter.objects.using(db).count()
+            self.prov['Parameter_count'] = Parameter.objects.using(db).count()
+            self.prov['Activity_count'] = Activity.objects.using(db).count()
+            self.prov['Platform_count'] = Platform.objects.using(db).count()
 
     def _log_file(self, script, db, load_command):
         if self._has_no_t_option(db, load_command):
@@ -339,7 +341,7 @@ local   all             all                                     peer
                     sys.exit()
 
         # That user wants to load all the production databases (no --db argument)
-        if not self.args.db:
+        if not self.args.db and not self.args.list and not self.args.updateprovenance:
             print(("On the server running on port =", settings.DATABASES['default']['PORT']))
             print("You are about to load all these databases:")
             print((' '.join(list(campaigns.campaigns.keys()))))
@@ -397,8 +399,7 @@ local   all             all                                     peer
         for name,value in list(self.prov.items()):
             r, _ = Resource.objects.using(db).get_or_create(
                             uristring='', name=name, value=value, resourcetype=self.rt)
-            CampaignResource.objects.using(db).get_or_create(
-                            campaign=self.campaign, resource=r)
+            cr, loaded_flag = CampaignResource.objects.using(db).get_or_create(campaign=self.campaign, resource=r)
             self.logger.info('Resource uristring="%s", name="%s", value="%s"', '', name, value)
 
     def updateprovenance(self):
@@ -443,7 +444,7 @@ local   all             all                                     peer
             self.logger.debug('grant = %s', grant)
             ret = os.system(grant)
             self.logger.debug('ret = %s', ret)
-                
+
     def pg_dump(self):
         campaigns = importlib.import_module(self.args.campaigns)
         for db,load_command in list(campaigns.campaigns.items()):
@@ -507,7 +508,7 @@ local   all             all                                     peer
             db += '_t'
             self._dropdb(db)
 
-    def list(self):
+    def print_list(self):
         stoqs_campaigns = []
         campaigns = importlib.import_module(self.args.campaigns)
         for db,load_command in list(campaigns.campaigns.items()):
@@ -576,8 +577,7 @@ local   all             all                                     peer
                 settings.DATABASES[db] = settings.DATABASES.get('default').copy()
                 settings.DATABASES[db]['NAME'] = db
 
-
-            if self._db_exists(db) and self.args.clobber and self.args.noinput:
+            if self._db_exists(db) and self.args.clobber and (self.args.noinput or self.args.test):
                 self._dropdb(db)
 
             try:
@@ -679,7 +679,7 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
                 
             if ret != 0:
                 self.logger.error(f'Non-zero return code from load script. Check {log_file}')
-                if self._db_exists(db):
+                if self._db_exists(db) and self.args.drop_if_fail:
                     self._dropdb(db)
                 raise DatabaseLoadError(f'Non-zero return code from load script. Check {log_file}')
 
@@ -796,6 +796,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
         parser.add_argument('--drop_indexes', action='store_true', help='Before load drop indexes and create them following the load')
         parser.add_argument('--pg_dump', action='store_true', help='Store a pg_dump(1) with "-Fc" option file on the server')
         parser.add_argument('--noinput', action='store_true', help='Execute without asking for a response, e.g. for --clobber')
+        parser.add_argument('--drop_if_fail', action='store_true', help='Drop database if fail to load data')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
     
@@ -819,7 +820,7 @@ if __name__ == '__main__':
     if l.args.removetest:
         l.removetest()
     elif l.args.list:
-        l.list()
+        l.print_list()
     elif l.args.updateprovenance:
         l.updateprovenance()
     elif l.args.grant_everyone_select:

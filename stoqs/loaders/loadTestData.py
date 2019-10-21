@@ -71,19 +71,19 @@ cl.subsample_csv_files = ['Dorado_2010_300_Bogus_Samples.csv']
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadDorado(stride=100)
+    cl.loadDorado(stride=100, plankton_proxies=False)
     cl.loadM1(stride=10)
     cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
-    cl.loadDorado(stride=2)
+    cl.loadDorado(stride=2, plankton_proxies=False)
     cl.loadM1(stride=1)
     cl.loadSubSamples()
 
 else:
     if cl.args.stride:
         cl.logger.warn("Overriding Dorado load stride parameter with a value of 1000 for this test load script")
-    cl.loadDorado(stride=1000)
+    cl.loadDorado(stride=1000, plankton_proxies=False)
     cl.loadM1(stride=2)
     cl.loadSubSamples()
 
