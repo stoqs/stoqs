@@ -1,4 +1,4 @@
-aiohttp==3.6.1
+aiohttp==3.6.2
 beautifulsoup4==4.8.1
 celery==4.3.0
 cmocean==2.0
