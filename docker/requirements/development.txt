@@ -15,13 +15,12 @@ Cython==0.29.13
 ephem==3.7.7.0
 GDAL==2.4.0
 Genshi==0.7.3
-geopandas==0.6.0
+geopandas==0.6.1
 h5py==2.10.0
 MarkupSafe==1.1.1
 netCDF4==1.5.2
-pandas==0.25.1
-numpy==1.17.2
-pandas==0.25.1
+pandas==0.25.2
+numpy==1.17.3
 requests==2.22.0
 Pygments==2.4.2
 pygraphviz==1.5
