@@ -1299,7 +1299,8 @@ class STOQSQManager(object):
             if not ndCounts[p]:
                 ndCounts[p] = 1         # Trajectories with plotTimeSeriesDepth will not have a nominal depth, set to 1 for calculation below
             a_nds = self._get_activity_nominaldepths(p)
-            for acount, a in enumerate(qs_awp.distinct('name')):
+            # See: https://stackoverflow.com/questions/20582966/django-order-by-filter-with-distinct
+            for acount, a in enumerate(qs_awp.distinct('startdate', 'name').order_by('startdate')):
                 qs_mp_a = qs_mp.filter(measurement__instantpoint__activity__name=a.name)
                 ad = (a.enddate-a.startdate)
                 aseconds = ad.days * 86400 + ad.seconds
