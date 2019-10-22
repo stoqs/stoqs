@@ -201,11 +201,14 @@ class InterpolatorWriter(BaseWriter):
         # End createSeriesPydap
 
     def _file_start_end(self):
-        '''Return datetimes of the start and end of in_file based on its name
+        '''Return datetimes of the start and end of missionlogs in_file based on its name
         '''
-        fstart = dt.datetime.strptime(os.path.basename(self.in_file).split('_')[0], '%Y%m%d%H%M')
-        fend = dt.datetime.strptime(os.path.basename(self.in_file).split('_')[1].split('.nc4')[0], '%Y%m%d%H%M')
-        return fstart, fend 
+        if 'missionlogs' in self.in_file:
+            fstart = dt.datetime.strptime(os.path.basename(self.in_file).split('_')[0], '%Y%m%d%H%M')
+            fend = dt.datetime.strptime(os.path.basename(self.in_file).split('_')[1].split('.nc4')[0], '%Y%m%d%H%M')
+            return fstart, fend 
+        else:
+            return None, None
 
     def createSeries(self, subgroup, name, tname):
         v = subgroup[name]
@@ -216,13 +219,14 @@ class InterpolatorWriter(BaseWriter):
         # Also http://dods.mbari.org/opendap/hyrax/data/lrauv/triton/missionlogs/2019/20191005_20191010/20191007T230214/201910072302_201910090436.nc4
         # raised the need to make a closer chop of the data based in file name start and end datetimes
         fstart, fend = self._file_start_end()
-        out_of_file_time_values = np.where((v_t[:] < fstart.timestamp()) | (v_t[:] > fend.timestamp()))[0]
-        if out_of_file_time_values.any():
-            logger.info(f"{name}: v_t values found before {fstart} and after {fend}: {out_of_file_time_values}")
-            logger.info(f"Their times:  {[time.ctime(ti) for ti in v_t[out_of_file_time_values]]}")
-            logger.info(f"Removing them: {v_t[out_of_file_time_values]} for variable {name}")
-            v_t = np.delete(v_t, out_of_file_time_values)
-            v = np.delete(v, out_of_file_time_values)
+        if fstart and fend:
+            out_of_file_time_values = np.where((v_t[:] < fstart.timestamp()) | (v_t[:] > fend.timestamp()))[0]
+            if out_of_file_time_values.any():
+                logger.info(f"{name}: v_t values found before {fstart} and after {fend}: {out_of_file_time_values}")
+                logger.info(f"Their times:  {[time.ctime(ti) for ti in v_t[out_of_file_time_values]]}")
+                logger.info(f"Removing them: {v_t[out_of_file_time_values]} for variable {name}")
+                v_t = np.delete(v_t, out_of_file_time_values)
+                v = np.delete(v, out_of_file_time_values)
 
         v_time = pd.to_datetime(v_t[:], unit='s', errors = 'coerce')
         v_time_series = pd.Series(v[:], index=v_time)
@@ -703,6 +707,7 @@ class InterpolatorWriter(BaseWriter):
         coord =  ['latitude','longitude','depth']
 
         self.df = netCDF4.Dataset(in_file, mode='r')
+        self.in_file = in_file
         coord_ts = self.createCoord(coord)
 
         # Create pandas time series for each parameter and store attributes
@@ -861,6 +866,7 @@ class InterpolatorWriter(BaseWriter):
         coord = ["latitude", "longitude", "depth", "time"]
 
         self.df = netCDF4.Dataset(in_file, mode='r')
+        self.in_file = in_file
 
         all_ts = self.createCoord(coord)
 
