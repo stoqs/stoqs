@@ -1797,7 +1797,7 @@ class Base_Loader(STOQS_Loader):
             elif featureType == TIMESERIESPROFILE:
                 mps_loaded = self.load_timeseriesprofile()
             elif featureType == TRAJECTORYPROFILE:
-                pass
+                self.logger.warn(f"Loader for featureType {featureType} has not yet been implemented")
             else:
                 raise Exception(f"Global attribute 'featureType' is not one of '{TRAJECTORY}',"
                         " '{TIMESERIES}', or '{TIMESERIESPROFILE}' - see:"

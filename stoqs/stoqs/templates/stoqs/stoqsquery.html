@@ -1386,6 +1386,8 @@
     <script type="text/javascript" src="{{STATIC_URL}}x3dom-1.7.1/x3dom-full.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/GeoOriginTransform.js"></script>
     <!--<script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom-full.js"></script>-->
+    <script type="text/javascript" src="{{STATIC_URL}}linkifyjs/linkify.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}linkifyjs/linkify-jquery.min.js"></script>
 
     <script type="text/javascript"><!--
     
@@ -4326,6 +4328,7 @@ function enable_cardboard(){
                 platformActivitiesHtml += '</div>';
 
                 $('#metadatanetcdf > div').html(platformActivitiesHtml);
+                $('#metadatanetcdf > div').linkify({ /* … */ });
 
                 if ( ql_plots_tab_html == '' ) {
                     $('#metadata-qlp-li').hide()
