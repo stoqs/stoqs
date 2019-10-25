@@ -299,7 +299,7 @@ class Base_Loader(STOQS_Loader):
 
             if hasattr(self, 'add_to_activity'):
                 # Allow use of existing Activity for loading additional data, e.g. Dorado plankton_proxies
-                self.logger.info(f"Will load these data under Activity {self.activity}")
+                self.logger.info(f"Will add these data to Activity {self.add_to_activity}")
             else:
                 # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
                 if not self.startDatetime or not self.endDatetime:
@@ -1586,6 +1586,9 @@ class Base_Loader(STOQS_Loader):
         #
         stationPoint = None
         path = None
+        if add_to_activity:
+            self.activity = add_to_activity
+
         linestringPoints = Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=self.activity
                                                        ).order_by('instantpoint__timevalue').values_list('geom')
         try:
