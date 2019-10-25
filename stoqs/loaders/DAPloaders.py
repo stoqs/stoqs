@@ -297,7 +297,7 @@ class Base_Loader(STOQS_Loader):
             self.platform = self.getPlatform(self.platformName, self.platformTypeName)
             self.add_parameters(self.ds)
 
-            if hasattr(self, 'activity'):
+            if hasattr(self, 'add_to_activity'):
                 # Allow use of existing Activity for loading additional data, e.g. Dorado plankton_proxies
                 self.logger.info(f"Will load these data under Activity {self.activity}")
             else:
