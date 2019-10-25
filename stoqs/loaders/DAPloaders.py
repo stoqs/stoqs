@@ -205,8 +205,10 @@ class Base_Loader(STOQS_Loader):
             self.logger.warn(message)
             # Give calling routing option of catching and ignoring
             raise OpendapError(message)
-        except Exception:
-            self.logger.error('Failed in attempt to open_url("%s")', url)
+        except Exception as e:
+            # Prevent multiline WARNINGs in the output log files
+            message = str(e).split('\n')[0]
+            self.logger.warn(f"Failed in attempt to open_url('{url}'): {message}")
             raise
 
         self.ignored_names = list(self.global_ignored_names)    # Start with copy of list of global ignored names
@@ -1087,24 +1089,31 @@ class Base_Loader(STOQS_Loader):
         dup_times = [False] * meass.count()
         mask = [False] * meass.count()
 
-        unequal_coords = 0
-        for meas, mt, de, la, lo in zip(meass, *self._read_coords_from_ds(tindx, ac)):
+        unequal_ti = unequal_de = unequal_la = unequal_lo = 0
+        for count, (meas, mt, de, la, lo) in enumerate(zip(meass, *self._read_coords_from_ds(tindx, ac))):
             if meas.instantpoint.timevalue != mt:
-                self.logger.debug(f"Existing timevalue ({meas.instantpoint.timevalue}) != mt ({mt})")
-                unequal_coords += 1
+                ti_msg = f"Existing timevalue ({meas.instantpoint.timevalue}) != mt ({mt}) at index {count}"
+                self.logger.debug(ti_msg)
+                unequal_ti += 1
+                if unequal_ti == 1:
+                    first_ti_msg = ti_msg
             if not np.isclose(meas.depth, de):
-                self.logger.debug(f"Existing depth ({meas.depth}) != de ({de})")
-                unequal_coords += 1
+                de_msg = f"Existing depth ({meas.depth}) != de ({de}) at index {count}"
+                self.logger.debug(de_msg)
+                unequal_de += 1
             if not np.isclose(meas.geom.y, la):
-                self.logger.debug(f"Existing latitude ({meas.geom.y}) != la ({la})")
-                unequal_coords += 1
+                la_msg = f"Existing latitude ({meas.geom.y}) != la ({la}) at index {count}"
+                self.logger.debug(la_msg)
+                unequal_la += 1
             if not np.isclose(meas.geom.x, lo):
-                self.logger.debug(f"Existing longitude ({meas.geom.x}) != lo ({lo})")
-                unequal_coords += 1
+                lo_msg = f"Existing longitude ({meas.geom.x}) != lo ({lo}) at index {count}"
+                self.logger.debug(lo_msg)
+                unequal_lo += 1
 
-        if unequal_coords:
-            self.logger.error(f"Encountered {unequal_coords} unequal_coords when adding data from {self.url} to Activity {add_to_activity}")
-            pass
+        if unequal_ti:
+            self.logger.error(f"Encountered {unequal_ti} unequal_ti when adding data from {self.url} to Activity {add_to_activity}")
+            self.logger.error(f"First time mismatch: {first_ti_msg}")
+            self.logger.error(f"Last time mismatch: {ti_msg}")
 
         return meass, dup_times, mask
 
