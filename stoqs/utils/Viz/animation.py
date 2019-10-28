@@ -531,3 +531,11 @@ class PlatformAnimation(object):
             return {'x3d': info.x3d, 'all': info.all_x3d, 'limits': info.limits, 'time': info.times, 
                     'platforms_not_shown': info.platforms_not_shown, 'speedup': speedup, 'scale': scale,
                     'message': info.message}
+
+
+class CurtainAnimation(object):
+    '''Build X3D scene graph fragments for a MeasuredParameter that has been
+    selected for color plotting.
+    '''
+    logger = logging.getLogger(__name__)
+
