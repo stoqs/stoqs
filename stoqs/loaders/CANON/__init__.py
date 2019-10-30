@@ -925,7 +925,7 @@ class CANONLoader(LoadScript):
                                         self.m1met_parms, self.dbAlias, stride, 
                                         self.m1met_startDatetime, self.m1met_endDatetime)
 
-    def loadDEIMOS(self, stride=None):
+    def loadDEIMOS(self, startdate=None, enddate=None, stride=None):
         '''
         Mooring DEIMOS EK60 specific load functions
         '''
@@ -935,8 +935,8 @@ class CANONLoader(LoadScript):
             url = os.path.join(self.deimos_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
                                         platformName, self.colors['deimos'], 'mooring', 'Mooring Deployment', 
-                                        self.deimos_parms, self.dbAlias, stride,
-                                        command_line_args=self.args) 
+                                        self.deimos_parms, self.dbAlias, stride, startdate,
+                                        enddate, command_line_args=self.args) 
     
     def loadHeHaPe(self, stride=None):
         '''
