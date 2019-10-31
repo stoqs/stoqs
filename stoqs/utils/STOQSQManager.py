@@ -108,9 +108,10 @@ class STOQSQManager(object):
             'spsql': self.getSampledParametersPostgreSQL,
             'extent': self.getExtent,
             'activityparameterhistograms': self.getActivityParameterHistograms,
-            'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
+            'parameterplatformdatavaluepng': self.getParameterDatavaluePNG,
             'parameterparameterx3d': self.getParameterParameterX3D,
             'measuredparameterx3d': self.getMeasuredParameterX3D,
+            'curtainstaticx3d': self.getPDV_IFSs,
             'platformanimation': self.getPlatformAnimation,
             'parameterparameterpng': self.getParameterParameterPNG,
             'parameterplatforms': self.getParameterPlatforms,
@@ -1578,11 +1579,11 @@ class STOQSQManager(object):
 
         return {'histdata': aphHash, 'rgbacolors': rgbas, 'parameterunits': pUnits}
 
-    def getParameterPlatformDatavaluePNG(self):
+    def getParameterDatavaluePNG(self):
         '''
-        Called when user interface has selected just one Parameter and just one Platform, in which case
-        produce a depth-time section plot for overlay on the flot plot.  Return a png image file name for inclusion
-        in the AJAX response.
+        Called when user interface has selected one Parameter for plotting, in which case
+        produce a depth-time section plot for overlay on the flot plot.  Return a png image 
+        file name for inclusion in the AJAX response.
         '''
         # Check for parameter-plot-radio button being selected, which inherently ensures that a
         # single parameter name is selected for plotting.  The client code will also ensure that
@@ -1639,6 +1640,17 @@ class STOQSQManager(object):
                                     parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
 
         return cp.renderDatavaluesForFlot()
+
+    def getPDV_IFSs(self):
+        '''Return X3D scene of Parameter DataValue IndexedFaceSets of curtains constructed 
+        from ParameterDatavaluePNG images.
+        '''
+        x3d_dict = {}
+        # TODO: Use a renderDatavaluesForFlot()-like method in stoqs/utils/Viz/plotting,py MeasuredParameter
+        # to generate separate images for each platform.  May need to factor out some functionality from
+        # the existing renderDatavaluesForFlot().
+
+        return x3d_dict
 
     def getParameterParameterPNG(self):
         '''
