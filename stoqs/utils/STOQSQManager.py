@@ -24,7 +24,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from stoqs import models
 from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL
-from loaders.SampleLoaders import SAMPLED, NETTOW, PLANKTONPUMP, ESP_FILTERING, sample_simplify_crit
+from loaders.SampleLoaders import SAMPLED, NETTOW, PLANKTONPUMP, ESP_FILTERING, sample_simplify_crit, SAMPLE_TYPES
 from matplotlib.colors import rgb2hex
 from .utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
 from .utils import (getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, 
@@ -1579,16 +1579,12 @@ class STOQSQManager(object):
 
         return {'histdata': aphHash, 'rgbacolors': rgbas, 'parameterunits': pUnits}
 
-    def getParameterDatavaluePNG(self):
-        '''
-        Called when user interface has selected one Parameter for plotting, in which case
-        produce a depth-time section plot for overlay on the flot plot.  Return a png image 
-        file name for inclusion in the AJAX response.
+    def _build_mpq_queryset(self):
+        '''Factored out method used to construct query for getting data values to
+        produce png images of data in the selection - e.g. for Flot and X3D IndexedFaceSets
         '''
         # Check for parameter-plot-radio button being selected, which inherently ensures that a
-        # single parameter name is selected for plotting.  The client code will also ensure that
-        # extra platforms measuring the same parameter name are filtered out in the selection so
-        # there's no need for this server code to check for just one platform in the selection.
+        # single parameter name is selected for plotting.  Modifies member items from member items.
         parameterID = None
         platformName = None
         contourparameterID = None # parameter for Contour plots
@@ -1616,16 +1612,30 @@ class STOQSQManager(object):
             self.kwargs['parameterplot_id'] = contourparameterID
             if contourparameterID:
                 self.contour_mpq.buildMPQuerySet(*self.args, **self.kwargs)
+
+        return parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups
+
+    def _get_plot_min_max(self, parameterID, contourparameterID):
+        min_max = self.getParameterMinMax(pid=parameterID)['plot']
+        if not parameterID and contourparameterID: 
+            min_max = self.getParameterMinMax(pid=contourparameterID)['plot']
+
+        return min_max
+
+    def getParameterDatavaluePNG(self):
+        '''
+        Called when user interface has selected one Parameter for plotting, in which case
+        produce a depth-time section plot for overlay on the flot plot.  Return a png image 
+        file name for inclusion in the AJAX response.
+        '''
+        parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
       
         if parameterID or platformName or contourparameterID or contourplatformName:
             pass
         else:
             return
 
-        min_max = self.getParameterMinMax(pid=parameterID)['plot']
-        if not parameterID and contourparameterID: 
-            min_max = self.getParameterMinMax(pid=contourparameterID)['plot']
-
+        min_max = self._get_plot_min_max(parameterID, contourparameterID)
         if not min_max:
             return None, None, 'Cannot plot Parameter'
 
@@ -1639,16 +1649,67 @@ class STOQSQManager(object):
                                     min_max, self.getSampleQS(), platformName, 
                                     parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
 
-        return cp.renderDatavaluesForFlot()
+        return cp.renderDatavaluesNoAxes()
+
+    def _combine_sample_platforms(self, platforms):
+        '''Mainly for LRAUV data: combine <platform>_ESP_filtering or <platform>_Sipper Platform name
+        with <platform> for creating the image(s) by renderDatavaluesNoAxes()
+        '''
+        has_samples = []
+        combined_platforms = []
+        for platform in platforms.split(','):
+            for sample_type in SAMPLE_TYPES:
+                if platform.endswith(sample_type):
+                    parent_platform = platform.split('_'+sample_type)[0]
+                    if parent_platform in platforms:
+                        has_samples.append(platform)
+                        has_samples.append(parent_platform)
+                        combined_platforms.append(f"{parent_platform},{platform}")
+                    else:
+                        # Possible to have samples without the parent platform
+                        combined_platforms.append(platform)
+            if platform not in has_samples:
+                combined_platforms.append(platform)
+
+        return combined_platforms
 
     def getPDV_IFSs(self):
         '''Return X3D scene of Parameter DataValue IndexedFaceSets of curtains constructed 
-        from ParameterDatavaluePNG images.
+        from ParameterDatavaluePNG images when contour and 3D data are checked.
         '''
+        # Tesing on dev system with:
+        # http://localhost:8008/stoqs_canon_may2019_t/query/summary/?only=curtainstatic3d&except=spsql&except=mpsql&start_time=2019-06-02+20%3A48%3A34&end_time=2019-06-03+04%3A39%3A37&min_depth=-7.51&max_depth=265.45&updatefromzoom=1&speedup=10&sn_colormap=1&parameterplotid=12&platformplotname=daphne,makai_ESP_filtering,tethys,makai&except=sampledurationsdepthtime&showdataas=contour&cm=algae&cmin=0.06237&cmax=1.766&num_colors=256&showgeox3dmeasurement=1&ve=10&pplr=1&ppsl=1
+
         x3d_dict = {}
-        # TODO: Use a renderDatavaluesForFlot()-like method in stoqs/utils/Viz/plotting,py MeasuredParameter
-        # to generate separate images for each platform.  May need to factor out some functionality from
-        # the existing renderDatavaluesForFlot().
+        contourFlag = False
+        if 'showdataas' in self.kwargs:
+            if self.kwargs['showdataas']:
+                if self.kwargs['showdataas'][0] == 'contour':
+                    contourFlag = True
+        if contourFlag and self.kwargs.get('showgeox3dmeasurement'):
+            # TODO: Use a renderDatavaluesNoAxes()-like method in stoqs/utils/Viz/plotting,py MeasuredParameter
+            # to generate separate images for each platform.  May need to factor out some functionality from
+            # the existing renderDatavaluesNoAxes().
+
+            parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
+            min_max = self._get_plot_min_max(parameterID, contourparameterID)
+            if not min_max:
+                return None, None, 'Cannot plot Parameter'
+
+            # platformName and contourplatformName are for display purposes and may look like:
+            # 'daphne,makai_ESP_filtering,tethys,makai'; _combine_sample_platforms() divies them up for image generation
+            for pns in self._combine_sample_platforms(platformName):
+                # Rebuild query set for just this platform as qs_mp_no_order is an MPQuerySet which has no filter() method
+                self.kwargs['platforms'] = [pns]
+                parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
+                logger.info(f"Rendering image for pns = '{pns}'")
+                cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order, self.contour_mpq.qs_mp_no_order,
+                                        min_max, self.getSampleQS(), pns, 
+                                        parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
+                resp = cp.renderDatavaluesNoAxes()
+                logger.info(f"{resp}")
+                import pdb; pdb.set_trace()
+                pass
 
         return x3d_dict
 
