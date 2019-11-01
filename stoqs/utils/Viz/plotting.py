@@ -508,7 +508,7 @@ class MeasuredParameter(BaseParameter):
         return clt.colors[indx]
 
 
-    def renderDatavaluesForFlot(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False):
+    def renderDatavaluesNoAxes(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False):
         '''
         Produce a .png image without axes suitable for overlay on a Flot graphic. Return a
         3 tuple of (sectionPngFile, colorbarPngFile, errorMessage)
@@ -857,6 +857,14 @@ class MeasuredParameter(BaseParameter):
 
         return x3dResults
 
+    def curtainX3D(self, vert_ex=10.0):
+        '''
+        Return scatter-like data values as X3D geocoordinates and colors.
+        '''
+        x3dResults = {}
+        sectionPngFile, self.colorbarPngFile, self.strideInfo, self.cm_name, cmocean_lookup_str, self.standard_name = self.renderDatavaluesNoAxes()
+
+        return x3dResults
 
 class PPDatabaseException(Exception):
     def __init__(self, message, sql):
