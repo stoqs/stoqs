@@ -1687,10 +1687,7 @@ class STOQSQManager(object):
                 if self.kwargs['showdataas'][0] == 'contour':
                     contourFlag = True
         if contourFlag and self.kwargs.get('showgeox3dmeasurement'):
-            # TODO: Use a renderDatavaluesNoAxes()-like method in stoqs/utils/Viz/plotting,py MeasuredParameter
-            # to generate separate images for each platform.  May need to factor out some functionality from
-            # the existing renderDatavaluesNoAxes().
-
+            # Set a single min_max for all the curtains
             parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
             min_max = self._get_plot_min_max(parameterID, contourparameterID)
             if not min_max:
@@ -1700,16 +1697,15 @@ class STOQSQManager(object):
             # 'daphne,makai_ESP_filtering,tethys,makai'; _combine_sample_platforms() divies them up for image generation
             for pns in self._combine_sample_platforms(platformName):
                 # Rebuild query set for just this platform as qs_mp_no_order is an MPQuerySet which has no filter() method
-                self.kwargs['platforms'] = [pns]
+                # Set self.mpq.qs_mp to None to bypass the Singleton nature of MPQuery and have _build_mpq_queryset() build new self.mpq items
+                self.mpq.qs_mp = None
+                self.kwargs['platforms'] = pns.split(',')
                 parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
                 logger.info(f"Rendering image for pns = '{pns}'")
                 cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order, self.contour_mpq.qs_mp_no_order,
-                                        min_max, self.getSampleQS(), pns, 
+                                        min_max, self.getSampleQS(), pns,
                                         parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
-                resp = cp.renderDatavaluesNoAxes()
-                logger.info(f"{resp}")
-                import pdb; pdb.set_trace()
-                pass
+                x3d_dict[pns] = cp.curtainX3D(pns, float(self.request.GET.get('ve', 10)))
 
         return x3d_dict
 
