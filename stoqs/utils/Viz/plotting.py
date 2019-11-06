@@ -29,6 +29,7 @@ from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL, X3D_MODEL_SCALE
 import seawater.eos80 as sw
 import numpy as np
 from numpy import polyfit
+from PIL import Image, ImageOps
 import logging
 import string
 import random
@@ -508,7 +509,7 @@ class MeasuredParameter(BaseParameter):
         return clt.colors[indx]
 
 
-    def renderDatavaluesNoAxes(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False):
+    def renderDatavaluesNoAxes(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False, loadDataOnly=False):
         '''
         Produce a .png image without axes suitable for overlay on a Flot graphic. Return a
         3 tuple of (sectionPngFile, colorbarPngFile, errorMessage)
@@ -545,6 +546,7 @@ class MeasuredParameter(BaseParameter):
         # query has salient points, typically in the vertices of the yo-yos. 
         # If the time tuple has values then use those, they represent a zoomed in portion of the Temporal-Depth flot plot
         # in the UI.  If they are not specified then use the Flot plot limits specified separately in the flotlimits tuple.
+        # Save key values as member variables for construction IndexedFaceSet for curtainX3D visualizations.
         tmin = None
         tmax = None
         xi = None
@@ -570,6 +572,8 @@ class MeasuredParameter(BaseParameter):
             xi = np.linspace(tmin, tmax, sdt_count)
             ##self.logger.debug('xi = %s', xi)
 
+        self.sdt_count = sdt_count
+
         # If the depth tuple has values then use those, they represent a zoomed in portion of the Temporal-Depth flot plot
         # in the UI.  If they are not specified then use the Flot plot limits specified separately in the flotlimits tuple.
         dmin = None
@@ -584,6 +588,9 @@ class MeasuredParameter(BaseParameter):
             if self.kwargs['flotlimits'][2] is not None and self.kwargs['flotlimits'][3] is not None:
                 dmin = float(self.kwargs['flotlimits'][2])
                 dmax = float(self.kwargs['flotlimits'][3])
+
+        self.dmin = dmin
+        self.dmax = dmax
 
         # Make depth spacing dinc m, limit to time-depth-flot resolution (dgrid_max)
         if dmin is not None and dmax is not None:
@@ -635,6 +642,9 @@ class MeasuredParameter(BaseParameter):
                 cly = list(self.y)
                 clz = list(self.z)
                 self.logger.debug('Number of clx, cly, clz data values retrieved from database = %d', len(clz)) 
+
+            if loadDataOnly:
+                return None, None, 'loadDataOnly specified', self.cm_name, cmocean_lookup_str, self.standard_name
 
             if 'showdataas' in self.kwargs:
                 if self.kwargs['showdataas']:
@@ -743,9 +753,12 @@ class MeasuredParameter(BaseParameter):
                     CS = ax.contour(xi, yi, zli, colors='white')
                     ax.clabel(CS, fontsize=9, inline=1)
 
-                if full_screen:
+                if full_screen or (self.kwargs.get('showgeox3dmeasurement') and contourFlag):
+                    # Make full_screen image also if rendering images for 3D IndexedFaceSets
+                    self.logger.debug(f"Writing file {sectionPngFileFullPath} with dpi=240")
                     fig.savefig(sectionPngFileFullPath, dpi=240, transparent=True)
                 else:
+                    self.logger.debug(f"Writing file {sectionPngFileFullPath} with dpi=120")
                     fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
                 plt.close()
             except Exception as e:
@@ -857,14 +870,77 @@ class MeasuredParameter(BaseParameter):
 
         return x3dResults
 
-    def curtainX3D(self, vert_ex=10.0):
-        '''
-        Return scatter-like data values as X3D geocoordinates and colors.
+    def curtainX3D(self, platform_names, vert_ex=10.0):
+        '''Return X3D elements of image texture mapped onto geospatial geometry of vehicle track.
+        platform_names may be a comma separated list of Platform names that may contain sampling platforms.
         '''
         x3dResults = {}
-        sectionPngFile, self.colorbarPngFile, self.strideInfo, self.cm_name, cmocean_lookup_str, self.standard_name = self.renderDatavaluesNoAxes()
 
+        # 1. Image: Build image with potential Sampling Platforms included
+        self.kwargs['platforms'] = platform_names.split(',')
+        sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes()
+        sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
+
+        # Trim away the transparent parts, leaving only the data portions that map to the locations
+        sectionPngFileTrimmed = sectionPngFile.replace('.png', '_trimmed.png')
+        sectionPngFileTrimmedFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFileTrimmed)
+        im = Image.open(sectionPngFileFullPath)
+        ##im_inv = ImageOps.invert(im)
+        # Trim one pixel from edges to get rid of black lines from Matplotlib
+        new_bounds = [2, 2] + [d - 1 for d in im.size]
+        im_trimmed = im.crop(new_bounds)
+        ##im_trimmed = im.crop(im.getbbox())
+        self.logger.debug(f"Saving timmed image file: {sectionPngFileTrimmedFullPath}")
+        im_trimmed.save(sectionPngFileTrimmedFullPath)
+
+        # 2. Geometry: We want position data for only the main platform
+        if len(self.kwargs['platforms']) > 1:
+            # Now, use renderDatavaluesNoAxes() to fill member variables without Sampling Platforms
+            self.kwargs['platforms'] = self.kwargs['platforms'][0]
+            sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(loadDataOnly=True)
+
+        # Subsample the original track with a step value approximating the simple depth time profiles
+        # The last point - if in _sliced arrays will be repeated will be repeated with the vertical edges
+        import pdb; pdb.set_trace()
+        step = int(len(self.lon)/self.sdt_count)
+        step = 1
+        lon_sliced = self.lon[::step]
+        lat_sliced = self.lat[::step]
+
+        # Construct the geometry according to the 4 edges of the image: time moves left to right in image
+        # Top: lon, lat in order; Right: dmin to dmax; Bottom; lon, lat in reverse order; Left: dmax to dmin
+        points = ''
+        for lon, lat in zip(lon_sliced[1:-1], lat_sliced[1:-1]):
+            points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmin * vert_ex)
+        points += '{:.5f} {:.5f} {:.1f} {:.5f} {:.5f} {:.1f} '.format(lat_sliced[-1], lon_sliced[-1], -self.dmin * vert_ex,
+                                                                lat_sliced[-1], lon_sliced[-1], -self.dmax * vert_ex)
+
+        for lon, lat in zip(reversed(lon_sliced[1:-1]), reversed(lat_sliced[1:-1])):
+            points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmax * vert_ex)
+        points += '{:.5f} {:.5f} {:.1f} {:.5f} {:.5f} {:.1f} '.format(lat_sliced[0], lon_sliced[0], -self.dmax * vert_ex,
+                                                                lat_sliced[0], lon_sliced[0], -self.dmin * vert_ex)
+
+        # The s,t texture coordinate points for the image
+        tc_points = ''
+        for i in np.linspace(0, 1, len(lon_sliced), endpoint=True):
+            tc_points += '{:.5f} 1 '.format(i)
+       
+        for i in np.linspace(1, 0, len(lon_sliced), endpoint=True): 
+            tc_points += '{:.5f} 0 '.format(i)
+      
+        # The coordIndex and texCoordIndex values - they are the same values
+        indices = '' 
+        for index in range(len(lon_sliced) * 2):
+            indices += '{} '.format(index)
+        indices += '-1'
+      
+        self.logger.debug(f"len(points.strip().split(' '))/3 = {len(points.strip().split(' '))/3}") 
+        self.logger.debug(f"len(tc_points.strip().split(' '))/2 = {len(tc_points.strip().split(' '))/2}") 
+        self.logger.debug(f"len(indices.strip().split(' '))/1 = {len(indices.strip().split(' '))/1}") 
+        x3dResults = {'points': points.rstrip(), 'tc_points': tc_points.rstrip(), 'info': '', 
+                      'index': indices.rstrip(), 'image': sectionPngFileTrimmed, 'colorbar': colorbarPngFile}
         return x3dResults
+
 
 class PPDatabaseException(Exception):
     def __init__(self, message, sql):
