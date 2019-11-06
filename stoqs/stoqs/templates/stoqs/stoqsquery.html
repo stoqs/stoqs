@@ -113,7 +113,7 @@
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap.icon-large.min.css" rel="stylesheet"></link>
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet"></link>
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet"></link>
-    <link type="text/css" href="{{ STATIC_URL }}x3dom-1.7.1/x3dom.css" rel="stylesheet"></link>
+    <link type="text/css" href="{{ STATIC_URL }}x3dom-1.8.1/x3dom.css" rel="stylesheet"></link>
     <!--<link type="text/css" href="http://www.x3dom.org/x3dom/dist/x3dom.css" rel="stylesheet">-->
     
 
@@ -365,11 +365,13 @@
         <Group id='spatial-3d-root' render='true'>
           <Group id='spatial-3d-scene' def="spatial-3d-scene">
             <Group id="mp-x3d-track-group"></Group>
+            <Group id="mp-curtain-group"></Group>
             <GeoOriginTransform containerField='children'>
               <Group id="mp-x3d-terrain">
               </Group>
             </GeoOriginTransform>
             <Group id="platform-animations"></Group>
+            <Group id="curtain-animations"></Group>
             <Group id="platform-models"></Group>
           </Group>
         </Group>
@@ -1383,7 +1385,7 @@
     <script type="text/javascript" src="{{STATIC_URL}}permalink/json2.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/purl.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string-min.js"></script> 
-    <script type="text/javascript" src="{{STATIC_URL}}x3dom-1.7.1/x3dom-full.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}x3dom-1.8.1/x3dom-full.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/GeoOriginTransform.js"></script>
     <!--<script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom-full.js"></script>-->
     <script type="text/javascript" src="{{STATIC_URL}}linkifyjs/linkify.min.js"></script>
@@ -2440,12 +2442,27 @@
 
     $('input[name="showdataas"]').on('click', function (event) {
         // Don't need to get everything from queryData, only the response with the PNG image
-        rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
+        if ($('#showgeox3dmeasurement').is(':checked')) {
+            if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+                rebuildFilters(['parameterplatformdatavaluepng', 'curtainstaticx3d', 'parameterminmax']);
+            }
+            else {
+                rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
+            }
+        }
+        else {
+            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
+        }
     });
 
     $('#showgeox3dmeasurement').on('click', function (event) {
         // Don't need to get everything from queryData, only the response with the X3D data
-        rebuildFilters(['measuredparameterx3d']);
+        if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+            rebuildFilters(['curtainstaticx3d']);
+        }
+        else {
+            rebuildFilters(['measuredparameterx3d']);
+        }
     });
 
     $('input[name="colormap_choice"]').on('change', function (event) {
@@ -2721,7 +2738,12 @@
             $('#showsensortracks').removeAttr('disabled');
             $('#showgeox3dmeasurementtext').text($('#temporalparameterplotinfo').data()['info']);
             $('#activitytypes').hide()
-            rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
+            if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+                rebuildFilters(['parameterplatformdatavaluepng', 'curtainstaticx3d', 'parameterminmax']);
+            }
+            else {
+                rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
+            }
         }
         else {
             // Remove sensortracks and image from Flot plot
@@ -3471,7 +3493,12 @@ function enable_cardboard(){
                 }
             }
             $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent().hide();
-            rebuildFilters(['parametertime', 'platformanimation', 'measuredparameterx3d']);
+            if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+                rebuildFilters(['parametertime', 'platformanimation', 'curtainstaticx3d']);
+            }
+            else {
+                rebuildFilters(['parametertime', 'platformanimation', 'measuredparameterx3d']);
+            }
             if (permalink_bypass) {
                 // ZoomIn if being loaded from a permalink
                 var ranges={xaxis: {  to: $('body').data()['end-ems'],
@@ -4086,9 +4113,15 @@ function enable_cardboard(){
         updateTemporal(false);
         if ($('#showplatforms').is(':checked')) {
             rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'measuredparameterx3d', 'platformanimation']);
+            if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+                rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'curtainstaticx3d', 'platformanimation']);
+            }
         }
         else {
             rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'measuredparameterx3d']);
+            if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+                rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'curtainstaticx3d', 'platformanimation']);
+            }
         }
         $('#time-parameter-instr').html('Click and drag zoom, right-click to un-zoom');
     });
@@ -4777,7 +4810,12 @@ function enable_cardboard(){
                             $('#x3d-ve').text('Vertical Exaggeration: ' + item.VerticalExaggeration + 'x');
                             if ( $('body').data()['ve'] != item.VerticalExaggeration ) {
                                 $('body').data()['ve'] = item.VerticalExaggeration;
-                                rebuildFilters(['measuredparameterx3d', 'platformanimation']);
+                                if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+                                    rebuildFilters(['curtainstaticx3d', 'platformanimation']);
+                                }
+                                else {
+                                    rebuildFilters(['measuredparameterx3d', 'platformanimation']);
+                                }
                             }
                         }
                     });
@@ -5419,6 +5457,28 @@ function enable_cardboard(){
                         }
                         $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data.measuredparameterx3d.colorbar + '" />');
                     }
+                }
+            }
+            else if (key == 'curtainstaticx3d') {
+                if (! $.isEmptyObject(data.curtainstaticx3d)) {
+                    $.each(data.curtainstaticx3d, function (platform_name, curtainstaticx3d) {
+                        if (curtainstaticx3d['points']) {
+                            if ( ! $.isEmptyObject(curtainstaticx3d.points) ) {
+                                $('#mp-curtain-group').html([
+                                    '<Shape id="mp-curtain">',
+                                        '<appearance>',
+                                            '<imagetexture repeats="false" repeatt="false" url="{{MEDIA_URL}}sections/' + curtainstaticx3d.image + '"></imagetexture>', 
+                                        '</appearance>',
+                                        '<indexedfaceset solid="false" ccw="false" convex="false" coordIndex="' + curtainstaticx3d.index + '" texCoordIndex="' + curtainstaticx3d.index + '">',
+                                            '<geocoordinate point="' + curtainstaticx3d.points + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>',
+                                            '<texturecoordinate point="' + curtainstaticx3d.tc_points + '"></geocoordinate>',
+                                        '</indexedfaceset>',
+                                    '</Shape>'
+                                ].join(''));
+                            }
+                            $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + curtainstaticx3d.colorbar + '" />');
+                        }
+                    });
                 }
             }
             else if (key == 'resources') {
