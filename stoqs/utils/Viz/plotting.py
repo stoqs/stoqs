@@ -659,29 +659,9 @@ class MeasuredParameter(BaseParameter):
 
         return sectionPngFile, self.colorbarPngFile, self.strideInfo, self.cm_name, cmocean_lookup_str, self.standard_name
 
-    def renderDatavaluesNoAxes(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False, loadDataOnly=False):
+    def _plot_limits(self, forFlot=True):
+        '''Return 4 tuple of time and depth min and max for generating plots for Flot or X3D
         '''
-        Produce a .png image without axes suitable for overlay on a Flot graphic. Return a
-        3 tuple of (sectionPngFile, colorbarPngFile, errorMessage)
-
-        # griddata parameter defaults
-        tgrid_max = 1000            # Reasonable maximum width for time-depth-flot plot is about 1000 pixels
-        dgrid_max = 100             # Height of time-depth-flot plot area is 335 pixels
-        dinc = 0.5                  # Average vertical resolution of AUV Dorado
-        '''
-
-        cmocean_lookup_str = ''
-        for sn, cm in cmocean_lookup.items():
-            cmocean_lookup_str += f"{sn}: {cm}\n"
-
-        # Use session ID so that different users don't stomp on each other with their section plots
-        # - This does not work for Firefox which just reads the previous image from its cache
-        if 'sessionID' in self.request.session:
-            sessionID = self.request.session['sessionID']
-        else:
-            sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
-            self.request.session['sessionID'] = sessionID
-        
         # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
         # query has salient points, typically in the vertices of the yo-yos. 
         # If the time tuple has values then use those, they represent a zoomed in portion of the Temporal-Depth flot plot
@@ -715,6 +695,32 @@ class MeasuredParameter(BaseParameter):
                 dmin = float(self.kwargs['flotlimits'][2])
                 dmax = float(self.kwargs['flotlimits'][3])
 
+        return tmin, tmax, dmin, dmax
+
+    def renderDatavaluesNoAxes(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False, loadDataOnly=False, forFlot=True):
+        '''
+        Produce a .png image without axes suitable for overlay on a Flot graphic. Return a
+        3 tuple of (sectionPngFile, colorbarPngFile, errorMessage)
+
+        # griddata parameter defaults
+        tgrid_max = 1000            # Reasonable maximum width for time-depth-flot plot is about 1000 pixels
+        dgrid_max = 100             # Height of time-depth-flot plot area is 335 pixels
+        dinc = 0.5                  # Average vertical resolution of AUV Dorado
+        '''
+
+        cmocean_lookup_str = ''
+        for sn, cm in cmocean_lookup.items():
+            cmocean_lookup_str += f"{sn}: {cm}\n"
+
+        # Use session ID so that different users don't stomp on each other with their section plots
+        # - This does not work for Firefox which just reads the previous image from its cache
+        if 'sessionID' in self.request.session:
+            sessionID = self.request.session['sessionID']
+        else:
+            sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
+            self.request.session['sessionID'] = sessionID
+
+        tmin, tmax, dmin, dmax = self._plot_limits(forFlot) 
         self.dmin = dmin
         self.dmax = dmax
 
