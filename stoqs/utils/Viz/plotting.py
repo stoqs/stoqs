@@ -508,6 +508,152 @@ class MeasuredParameter(BaseParameter):
             indx = len(clt.colors) - 1
         return clt.colors[indx]
 
+    def _make_image(self, tmin, tmax, dmin, dmax, xi, yi, cx, cy, cz, clx, cly, clz, contourFlag, cmocean_lookup_str):
+        '''Generate image from collected member variables
+        '''
+        if self.parameterID or self.contourParameterID:
+            sectionPngFile = '{}_{}_{}_{}.png'.format(self.parameterID, self.contourParameterID, self.platformName, self.imageID)
+        elif self.kwargs['measuredparametersgroup']:
+            sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
+        else:
+            # Return silently with no error message - simply can't make a plot without a Parameter
+            return None, None, None, self.cm_name, cmocean_lookup_str, self.standard_name
+
+        sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
+        try:
+            os.remove(sectionPngFileFullPath)
+        except OSError:
+            # Silently ignore
+            pass
+
+        if 'showdataas' in self.kwargs:
+            if self.kwargs['showdataas']:
+                if self.kwargs['showdataas'][0] == 'contour':
+                    contourFlag = True
+      
+
+        if len(cz) == 0 and len(clz) == 0:
+            return None, None, 'No data returned from selection', self.cm_name, cmocean_lookup_str, self.standard_name
+
+        if contourFlag:
+            try:
+                self.logger.debug('Gridding data with self.sdt_count = %d, and self.y_count = %d', self.sdt_count, self.y_count)
+                # See https://scipy-cookbook.readthedocs.io/items/Matplotlib_Gridding_irregularly_spaced_data.html
+                zi = griddata((cx, cy), cz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
+            except KeyError as e:
+                self.logger.exception('Got KeyError. Could not grid the data')
+                return None, None, 'Got KeyError. Could not grid the data', self.cm_name, cmocean_lookup_str, self.standard_name
+            except Exception as e:
+                self.logger.exception('Could not grid the data')
+                return None, None, 'Could not grid the data', self.cm_name, cmocean_lookup_str, self.standard_name
+
+            self.logger.debug('zi = %s', zi)
+
+        if self.qs_mp is not None:
+            COLORED_DOT_SIZE_THRESHOLD = 5000
+            if self.qs_mp.count() > COLORED_DOT_SIZE_THRESHOLD:
+                coloredDotSize = 10
+            else:
+                coloredDotSize = 20
+
+        parm_info = self.pMinMax
+        full_screen = False
+        if self.request.GET.get('full_screen'):
+            full_screen = True
+        try:
+            # Make the plot
+            # contour the gridded data, plotting dots at the nonuniform data points.
+            # See http://scipy.org/Cookbook/Matplotlib/Django
+            if full_screen:
+                fig = plt.figure(figsize=(12,6))
+            else:
+                fig = plt.figure(figsize=(6,3))
+            ax = fig.add_axes((0,0,1,1))
+            if self.scale_factor:
+                ax.set_xlim(tmin / self.scale_factor, tmax / self.scale_factor)
+            else:
+                ax.set_xlim(tmin, tmax)
+            ax.set_ylim(dmax, dmin)
+            ax.get_xaxis().set_ticks([])
+            self.set_ticks_bounds_norm(parm_info)
+            if self.parameterID is not None:
+                if contourFlag:
+                    ax.contourf(xi, yi, zi, cmap=self.cm, norm=self.norm, extend='both',
+                            levels=np.linspace(parm_info[1], parm_info[2], self.num_colors+1))
+                    ax.scatter(cx, cy, marker='.', s=2, c='k', lw = 0)
+                else:
+                    self.logger.debug('parm_info = %s', parm_info)
+                    ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2],
+                               norm=self.norm)
+                    # Draw any spanned data, e.g. NetTows
+                    self.logger.debug(f"Drawing spanned data: {len(self.xspan)} samples")
+                    for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
+                        try:
+                            ax.plot(xs, ys, c=self._get_color(z, parm_info[1], parm_info[2]), lw=3)
+                        except ZeroDivisionError:
+                            # Likely all data is same value and color lookup table can't be computed
+                            return None, None, "Can't plot identical data values of %f" % z, self.cm_name, cmocean_lookup_str, self.standard_name
+
+            if self.sampleQS and SAMPLED not in self.parameterGroups:
+                # Sample markers for everything but Net Tows
+                xsamp, ysamp, sname = self._get_samples_for_markers(exclude_act_type_name=NETTOW)
+                self.logger.debug(f"Drawing scatter of Net Tows: {len(xsamp)} samples")
+                ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
+                for x,y,sn in zip(xsamp, ysamp, sname):
+                    plt.annotate(sn, xy=(x,y), xytext=(5,-10), textcoords='offset points', fontsize=7)
+
+                # Annotate NetTow Samples at Sample record location - points
+                xsamp, ysamp, sname = self._get_samples_for_markers(act_type_name=NETTOW)
+                self.logger.debug(f"Annotating scatter of Net Tows: {len(xsamp)} samples")
+                ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
+                for x,y,sn in zip(xsamp, ysamp, sname):
+                    plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords='offset points', fontsize=7)
+
+                # Sample markers for Vertical Net Tows (put circle at surface) - lines
+                xspan, yspan, sname = self._get_samples_for_markers(act_type_name=VERTICALNETTOW, spanned=True)
+                self.logger.debug(f"Plotting Vertical Net Tows: {len(xsamp)} samples")
+                for xs,ys in zip(xspan, yspan):
+                    ax.plot(xs, ys, c='k', lw=2)
+                    ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10, edgecolors='k')
+
+                # Sample markers for Plankton Pumps - lines
+                xspan, yspan, sname = self._get_samples_for_markers(act_type_name=PLANKTONPUMP, spanned=True)
+                self.logger.debug(f"Sample markers for Plankton Pumps: {len(xspan)} samples")
+                for xs,ys in zip(xspan, yspan):
+                    ax.plot(xs, ys, c='k', lw=2)
+                    ax.scatter([xs[1]], [ys[1]], marker='o', c='w', s=15, zorder=10, edgecolors='k')
+
+                # Sample markers for ESP Archives - thick transparent lines
+                xspan, yspan, sname = self._get_samples_for_markers(act_type_name=ESP_FILTERING, spanned=True)
+                self.logger.debug(f"Sample markers for ESP Archives: {len(xspan)} samples")
+                for xs,ys in zip(xspan, yspan):
+                    ax.plot(xs, ys, c='k', lw=1, alpha=0.5)
+
+            if self.contourParameterID is not None:
+                zli = griddata((clx, cly), clz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
+                CS = ax.contour(xi, yi, zli, colors='white')
+                ax.clabel(CS, fontsize=9, inline=1)
+
+            if full_screen or (self.kwargs.get('showgeox3dmeasurement') and contourFlag):
+                # Make full_screen image also if rendering images for 3D IndexedFaceSets
+                self.logger.debug(f"Writing file {sectionPngFileFullPath} with dpi=240")
+                fig.savefig(sectionPngFileFullPath, dpi=240, transparent=False)
+            else:
+                self.logger.debug(f"Writing file {sectionPngFileFullPath} with dpi=120")
+                fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
+            plt.close()
+        except Exception as e:
+            self.logger.exception('Could not plot the data')
+            return None, None, 'Could not plot the data', self.cm_name, cmocean_lookup_str, self.standard_name
+
+        if self.colorbarPngFileFullPath:
+            try:
+                self.makeColorBar(self.colorbarPngFileFullPath, parm_info)
+            except Exception as e:
+                self.logger.exception('%s', e)
+                return None, None, 'Could not plot the colormap', self.cm_name, cmocean_lookup_str, self.standard_name
+
+        return sectionPngFile, self.colorbarPngFile, self.strideInfo, self.cm_name, cmocean_lookup_str, self.standard_name
 
     def renderDatavaluesNoAxes(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False, loadDataOnly=False):
         '''
@@ -531,16 +677,6 @@ class MeasuredParameter(BaseParameter):
         else:
             sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
             self.request.session['sessionID'] = sessionID
-
-        if self.parameterID or self.contourParameterID:
-            sectionPngFile = '{}_{}_{}_{}.png'.format(self.parameterID, self.contourParameterID, self.platformName, self.imageID)
-        elif self.kwargs['measuredparametersgroup']:
-            sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
-        else:
-            # Return silently with no error message - simply can't make a plot without a Parameter
-            return None, None, None, self.cm_name, cmocean_lookup_str, self.standard_name
-
-        sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
         
         # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
         # query has salient points, typically in the vertices of the yo-yos. 
@@ -549,7 +685,6 @@ class MeasuredParameter(BaseParameter):
         # Save key values as member variables for construction IndexedFaceSet for curtainX3D visualizations.
         tmin = None
         tmax = None
-        xi = None
         if 'time' in self.kwargs:
             if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
                 dstart = datetime.strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S') 
@@ -562,23 +697,10 @@ class MeasuredParameter(BaseParameter):
                 tmin = float(self.kwargs['flotlimits'][0]) / 1000.0
                 tmax = float(self.kwargs['flotlimits'][1]) / 1000.0
 
-        if tmin and tmax:
-            sdt_count = self.qs.filter(platform__name = self.platformName).values_list('simpledepthtime__depth').count()
-            sdt_count = int(sdt_count / 2)                 # 2 points define a line, take half the number of simpledepthtime points
-            self.logger.debug('Half of sdt_count from query = %d', sdt_count)
-            if sdt_count > tgrid_max or sdt_count == 0:
-                sdt_count = tgrid_max
-
-            xi = np.linspace(tmin, tmax, sdt_count)
-            ##self.logger.debug('xi = %s', xi)
-
-        self.sdt_count = sdt_count
-
         # If the depth tuple has values then use those, they represent a zoomed in portion of the Temporal-Depth flot plot
         # in the UI.  If they are not specified then use the Flot plot limits specified separately in the flotlimits tuple.
         dmin = None
         dmax = None
-        yi = None
         if 'depth' in self.kwargs:
             if self.kwargs['depth'][0] is not None and self.kwargs['depth'][1] is not None:
                 dmin = float(self.kwargs['depth'][0])
@@ -592,14 +714,25 @@ class MeasuredParameter(BaseParameter):
         self.dmin = dmin
         self.dmax = dmax
 
-        # Make depth spacing dinc m, limit to time-depth-flot resolution (dgrid_max)
-        if dmin is not None and dmax is not None:
-            y_count = int((dmax - dmin) / dinc )
-            if y_count > dgrid_max:
-                y_count = dgrid_max
-            yi = np.linspace(dmin, dmax, y_count)
-            ##self.logger.debug('yi = %s', yi)
+        xi = None
+        if tmin and tmax:
+            self.sdt_count = self.qs.filter(platform__name = self.platformName).values_list('simpledepthtime__depth').count()
+            self.sdt_count = int(self.sdt_count / 2)                 # 2 points define a line, take half the number of simpledepthtime points
+            self.logger.debug('Half of self.sdt_count from query = %d', self.sdt_count)
+            if self.sdt_count > tgrid_max or self.sdt_count == 0:
+                self.sdt_count = tgrid_max
 
+            xi = np.linspace(tmin, tmax, self.sdt_count)
+            ##self.logger.debug('xi = %s', xi)
+
+        # Make depth spacing dinc m, limit to time-depth-flot resolution (dgrid_max)
+        yi = None
+        if dmin is not None and dmax is not None:
+            self.y_count = int((dmax - dmin) / dinc )
+            if self.y_count > dgrid_max:
+                self.y_count = dgrid_max
+            yi = np.linspace(dmin, dmax, self.y_count)
+            ##self.logger.debug('yi = %s', yi)
 
         # Collect the scattered datavalues(time, depth) and grid them
         if xi is not None and yi is not None:
@@ -613,12 +746,6 @@ class MeasuredParameter(BaseParameter):
             else:                
                 self.logger.debug('self.scale_factor = %f', self.scale_factor)
                 xi = xi / self.scale_factor
-
-            try:
-                os.remove(sectionPngFileFullPath)
-            except OSError:
-                # Silently ignore
-                pass
 
             if not self.x and not self.y and not self.z and self.qs_mp is not None:
                 self.loadData(self.qs_mp)
@@ -645,137 +772,12 @@ class MeasuredParameter(BaseParameter):
 
             if loadDataOnly:
                 return None, None, 'loadDataOnly specified', self.cm_name, cmocean_lookup_str, self.standard_name
-
-            if 'showdataas' in self.kwargs:
-                if self.kwargs['showdataas']:
-                    if self.kwargs['showdataas'][0] == 'contour':
-                        contourFlag = True
-          
-            if len(cz) == 0 and len(clz) == 0:
-                return None, None, 'No data returned from selection', self.cm_name, cmocean_lookup_str, self.standard_name
-
-            if contourFlag:
-                try:
-                    self.logger.debug('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
-                    # See https://scipy-cookbook.readthedocs.io/items/Matplotlib_Gridding_irregularly_spaced_data.html
-                    zi = griddata((cx, cy), cz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
-                except KeyError as e:
-                    self.logger.exception('Got KeyError. Could not grid the data')
-                    return None, None, 'Got KeyError. Could not grid the data', self.cm_name, cmocean_lookup_str, self.standard_name
-                except Exception as e:
-                    self.logger.exception('Could not grid the data')
-                    return None, None, 'Could not grid the data', self.cm_name, cmocean_lookup_str, self.standard_name
-
-                self.logger.debug('zi = %s', zi)
-
-            if self.qs_mp is not None:
-                COLORED_DOT_SIZE_THRESHOLD = 5000
-                if self.qs_mp.count() > COLORED_DOT_SIZE_THRESHOLD:
-                    coloredDotSize = 10
-                else:
-                    coloredDotSize = 20
-
-            parm_info = self.pMinMax
-            full_screen = False
-            if self.request.GET.get('full_screen'):
-                full_screen = True
-            try:
-                # Make the plot
-                # contour the gridded data, plotting dots at the nonuniform data points.
-                # See http://scipy.org/Cookbook/Matplotlib/Django
-                if full_screen:
-                    fig = plt.figure(figsize=(12,6))
-                else:
-                    fig = plt.figure(figsize=(6,3))
-                ax = fig.add_axes((0,0,1,1))
-                if self.scale_factor:
-                    ax.set_xlim(tmin / self.scale_factor, tmax / self.scale_factor)
-                else:
-                    ax.set_xlim(tmin, tmax)
-                ax.set_ylim(dmax, dmin)
-                ax.get_xaxis().set_ticks([])
-                self.set_ticks_bounds_norm(parm_info)
-                if self.parameterID is not None:
-                    if contourFlag:
-                        ax.contourf(xi, yi, zi, cmap=self.cm, norm=self.norm, extend='both',
-                                levels=np.linspace(parm_info[1], parm_info[2], self.num_colors+1))
-                        ax.scatter(cx, cy, marker='.', s=2, c='k', lw = 0)
-                    else:
-                        self.logger.debug('parm_info = %s', parm_info)
-                        ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2],
-                                   norm=self.norm)
-                        # Draw any spanned data, e.g. NetTows
-                        self.logger.debug(f"Drawing spanned data: {len(self.xspan)} samples")
-                        for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
-                            try:
-                                ax.plot(xs, ys, c=self._get_color(z, parm_info[1], parm_info[2]), lw=3)
-                            except ZeroDivisionError:
-                                # Likely all data is same value and color lookup table can't be computed
-                                return None, None, "Can't plot identical data values of %f" % z, self.cm_name, cmocean_lookup_str, self.standard_name
-
-                if self.sampleQS and SAMPLED not in self.parameterGroups:
-                    # Sample markers for everything but Net Tows
-                    xsamp, ysamp, sname = self._get_samples_for_markers(exclude_act_type_name=NETTOW)
-                    self.logger.debug(f"Drawing scatter of Net Tows: {len(xsamp)} samples")
-                    ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
-                    for x,y,sn in zip(xsamp, ysamp, sname):
-                        plt.annotate(sn, xy=(x,y), xytext=(5,-10), textcoords='offset points', fontsize=7)
-
-                    # Annotate NetTow Samples at Sample record location - points
-                    xsamp, ysamp, sname = self._get_samples_for_markers(act_type_name=NETTOW)
-                    self.logger.debug(f"Annotating scatter of Net Tows: {len(xsamp)} samples")
-                    ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
-                    for x,y,sn in zip(xsamp, ysamp, sname):
-                        plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords='offset points', fontsize=7)
-
-                    # Sample markers for Vertical Net Tows (put circle at surface) - lines
-                    xspan, yspan, sname = self._get_samples_for_markers(act_type_name=VERTICALNETTOW, spanned=True)
-                    self.logger.debug(f"Plotting Vertical Net Tows: {len(xsamp)} samples")
-                    for xs,ys in zip(xspan, yspan):
-                        ax.plot(xs, ys, c='k', lw=2)
-                        ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10, edgecolors='k')
-
-                    # Sample markers for Plankton Pumps - lines
-                    xspan, yspan, sname = self._get_samples_for_markers(act_type_name=PLANKTONPUMP, spanned=True)
-                    self.logger.debug(f"Sample markers for Plankton Pumps: {len(xspan)} samples")
-                    for xs,ys in zip(xspan, yspan):
-                        ax.plot(xs, ys, c='k', lw=2)
-                        ax.scatter([xs[1]], [ys[1]], marker='o', c='w', s=15, zorder=10, edgecolors='k')
-
-                    # Sample markers for ESP Archives - thick transparent lines
-                    xspan, yspan, sname = self._get_samples_for_markers(act_type_name=ESP_FILTERING, spanned=True)
-                    self.logger.debug(f"Sample markers for ESP Archives: {len(xspan)} samples")
-                    for xs,ys in zip(xspan, yspan):
-                        ax.plot(xs, ys, c='k', lw=1, alpha=0.5)
-
-                if self.contourParameterID is not None:
-                    zli = griddata((clx, cly), clz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
-                    CS = ax.contour(xi, yi, zli, colors='white')
-                    ax.clabel(CS, fontsize=9, inline=1)
-
-                if full_screen or (self.kwargs.get('showgeox3dmeasurement') and contourFlag):
-                    # Make full_screen image also if rendering images for 3D IndexedFaceSets
-                    self.logger.debug(f"Writing file {sectionPngFileFullPath} with dpi=240")
-                    fig.savefig(sectionPngFileFullPath, dpi=240, transparent=True)
-                else:
-                    self.logger.debug(f"Writing file {sectionPngFileFullPath} with dpi=120")
-                    fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
-                plt.close()
-            except Exception as e:
-                self.logger.exception('Could not plot the data')
-                return None, None, 'Could not plot the data', self.cm_name, cmocean_lookup_str, self.standard_name
-
-            if self.colorbarPngFileFullPath:
-                try:
-                    self.makeColorBar(self.colorbarPngFileFullPath, parm_info)
-                except Exception as e:
-                    self.logger.exception('%s', e)
-                    return None, None, 'Could not plot the colormap', self.cm_name, cmocean_lookup_str, self.standard_name
-
-            return sectionPngFile, self.colorbarPngFile, self.strideInfo, self.cm_name, cmocean_lookup_str, self.standard_name
+            else:
+                return self._make_image(tmin, tmax, dmin, dmax, xi, yi, cx, cy, cz, clx, cly, clz, contourFlag, cmocean_lookup_str)
         else:
             self.logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s', tmin, tmax, dmin, dmax)
             return None, None, 'Select a time-depth range', self.cm_name, cmocean_lookup_str, self.standard_name
+
 
     def dataValuesX3D(self, vert_ex=10.0):
         '''
@@ -889,8 +891,9 @@ class MeasuredParameter(BaseParameter):
         # Trim one pixel from edges to get rid of black lines from Matplotlib
         new_bounds = [2, 2] + [d - 1 for d in im.size]
         im_trimmed = im.crop(new_bounds)
+        import pdb; pdb.set_trace()
         ##im_trimmed = im.crop(im.getbbox())
-        self.logger.debug(f"Saving timmed image file: {sectionPngFileTrimmedFullPath}")
+        self.logger.info(f"Saving timmed image file: {sectionPngFileTrimmedFullPath}")
         im_trimmed.save(sectionPngFileTrimmedFullPath)
 
         # 2. Geometry: We want position data for only the main platform
@@ -901,7 +904,6 @@ class MeasuredParameter(BaseParameter):
 
         # Subsample the original track with a step value approximating the simple depth time profiles
         # The last point - if in _sliced arrays will be repeated will be repeated with the vertical edges
-        import pdb; pdb.set_trace()
         step = int(len(self.lon)/self.sdt_count)
         step = 1
         lon_sliced = self.lon[::step]
@@ -910,27 +912,29 @@ class MeasuredParameter(BaseParameter):
         # Construct the geometry according to the 4 edges of the image: time moves left to right in image
         # Top: lon, lat in order; Right: dmin to dmax; Bottom; lon, lat in reverse order; Left: dmax to dmin
         points = ''
-        for lon, lat in zip(lon_sliced[1:-1], lat_sliced[1:-1]):
-            points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmin * vert_ex)
+        ##for lon, lat in zip(lon_sliced[1:-1], lat_sliced[1:-1]):
+        ##    points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmin * vert_ex)
         points += '{:.5f} {:.5f} {:.1f} {:.5f} {:.5f} {:.1f} '.format(lat_sliced[-1], lon_sliced[-1], -self.dmin * vert_ex,
                                                                 lat_sliced[-1], lon_sliced[-1], -self.dmax * vert_ex)
 
-        for lon, lat in zip(reversed(lon_sliced[1:-1]), reversed(lat_sliced[1:-1])):
-            points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmax * vert_ex)
+        ##for lon, lat in zip(reversed(lon_sliced[1:-1]), reversed(lat_sliced[1:-1])):
+        ##    points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmax * vert_ex)
         points += '{:.5f} {:.5f} {:.1f} {:.5f} {:.5f} {:.1f} '.format(lat_sliced[0], lon_sliced[0], -self.dmax * vert_ex,
                                                                 lat_sliced[0], lon_sliced[0], -self.dmin * vert_ex)
 
         # The s,t texture coordinate points for the image
-        tc_points = ''
-        for i in np.linspace(0, 1, len(lon_sliced), endpoint=True):
-            tc_points += '{:.5f} 1 '.format(i)
+        tc_points = '1 1 1 0 0 0 0 1'
+        ##tc_points = ''
+        ##for i in np.linspace(0, 1, len(lon_sliced), endpoint=True):
+        ##    tc_points += '{:.5f} 1 '.format(i)
        
-        for i in np.linspace(1, 0, len(lon_sliced), endpoint=True): 
-            tc_points += '{:.5f} 0 '.format(i)
+        ##for i in np.linspace(1, 0, len(lon_sliced), endpoint=True): 
+        ##    tc_points += '{:.5f} 0 '.format(i)
       
         # The coordIndex and texCoordIndex values - they are the same values
         indices = '' 
-        for index in range(len(lon_sliced) * 2):
+        ##for index in range(len(lon_sliced) * 2):
+        for index in range(4):
             indices += '{} '.format(index)
         indices += '-1'
       
