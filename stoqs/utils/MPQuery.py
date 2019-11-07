@@ -611,6 +611,7 @@ class MPQuery(object):
             if 'activitynames' in self.kwargs:
                 if self.kwargs['activitynames']:
                     qparams['measurement__instantpoint__activity__name__in'] = self.kwargs['activitynames']
+                    logger.debug(f"qparams['measurement__instantpoint__activity__name__in'] = {qparams['measurement__instantpoint__activity__name__in']}")
 
             if 'mplabels'  in self.kwargs:
                 if self.kwargs['mplabels' ]:
@@ -622,6 +623,7 @@ class MPQuery(object):
                 if 'measurement__instantpoint__timevalue__gte' not in qparams:
                     qparams['measurement__instantpoint__pk__isnull'] = False
 
+        logger.debug('Strings may be split on spaces in the following "pretty print"')
         logger.debug('qparams = %s', pprint.pformat(qparams))
 
         return qparams
@@ -686,6 +688,7 @@ class MPQuery(object):
         if qs_mpq is None:
             logger.debug('qs_mpq.query = %s', str(qs_mpq.query))
         else:
+            logger.debug('Strings may be split on spaces in the following "pretty print"')
             logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
 
         return qs_mpq
@@ -745,6 +748,7 @@ class MPQuery(object):
         if qs_spq is None:
             logger.debug('qs_spq.query = %s', str(qs_spq.query))
         else:
+            logger.debug('Strings may be split on spaces in the following "pretty print"')
             logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
 
         return qs_spq
