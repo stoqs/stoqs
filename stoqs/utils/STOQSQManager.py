@@ -1697,15 +1697,24 @@ class STOQSQManager(object):
             # 'daphne,makai_ESP_filtering,tethys,makai'; _combine_sample_platforms() divies them up for image generation
             for pns in self._combine_sample_platforms(platformName):
                 # Rebuild query set for just this platform as qs_mp_no_order is an MPQuerySet which has no filter() method
-                # Set self.mpq.qs_mp to None to bypass the Singleton nature of MPQuery and have _build_mpq_queryset() build new self.mpq items
-                self.mpq.qs_mp = None
                 self.kwargs['platforms'] = pns.split(',')
-                parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
-                logger.info(f"Rendering image for pns = '{pns}'")
-                cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order, self.contour_mpq.qs_mp_no_order,
-                                        min_max, self.getSampleQS(), pns,
-                                        parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
-                x3d_dict[pns] = cp.curtainX3D(pns, float(self.request.GET.get('ve', 10)))
+                x3d_plat = {}
+                # All Activities in the selection, do not inlcude 'special Activities' like LRAUV Mission
+                for act in self.qs.filter(Q(platform__name=self.kwargs['platforms'][0]) & ~Q(activitytype__name='LRAUV Mission')):
+                    # Set self.mpq.qs_mp to None to bypass the Singleton nature of MPQuery and have _build_mpq_queryset() build new self.mpq items
+                    self.mpq.qs_mp = None
+                    self.kwargs['activitynames'] = [act.name]
+                    parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
+                    logger.info(f"Rendering image for pns='{pns}', act.name='{act.name}'")
+                    cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order, self.contour_mpq.qs_mp_no_order,
+                                            min_max, self.getSampleQS(), pns,
+                                            parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
+                    x3d_items = cp.curtainX3D(pns, float(self.request.GET.get('ve', 10)))
+                    if x3d_items:
+                        x3d_plat[act.name] = x3d_items
+
+                if x3d_plat:
+                    x3d_dict[pns] = x3d_plat
 
         return x3d_dict
 
