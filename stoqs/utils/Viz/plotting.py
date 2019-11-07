@@ -666,7 +666,6 @@ class MeasuredParameter(BaseParameter):
         # query has salient points, typically in the vertices of the yo-yos. 
         # If the time tuple has values then use those, they represent a zoomed in portion of the Temporal-Depth flot plot
         # in the UI.  If they are not specified then use the Flot plot limits specified separately in the flotlimits tuple.
-        # Save key values as member variables for construction IndexedFaceSet for curtainX3D visualizations.
         tmin = None
         tmax = None
         if 'time' in self.kwargs:
@@ -699,8 +698,7 @@ class MeasuredParameter(BaseParameter):
 
     def renderDatavaluesNoAxes(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False, loadDataOnly=False, forFlot=True):
         '''
-        Produce a .png image without axes suitable for overlay on a Flot graphic. Return a
-        3 tuple of (sectionPngFile, colorbarPngFile, errorMessage)
+        Produce a .png image without axes suitable for overlay on a Flot graphic or as X3D curtain plots 
 
         # griddata parameter defaults
         tgrid_max = 1000            # Reasonable maximum width for time-depth-flot plot is about 1000 pixels
@@ -708,6 +706,7 @@ class MeasuredParameter(BaseParameter):
         dinc = 0.5                  # Average vertical resolution of AUV Dorado
         '''
 
+        # Save important values as member variables for construction of IndexedFaceSets for curtainX3D visualizations.
         cmocean_lookup_str = ''
         for sn, cm in cmocean_lookup.items():
             cmocean_lookup_str += f"{sn}: {cm}\n"
@@ -783,6 +782,21 @@ class MeasuredParameter(BaseParameter):
                 cly = list(self.y)
                 clz = list(self.z)
                 self.logger.debug('Number of clx, cly, clz data values retrieved from database = %d', len(clz)) 
+
+            if not forFlot:
+                # Serves to clip the rendered image to the limits of data, as needed for X3D curtains
+                # Operate only on Plot Data Color selections 
+                # Continue onto _make_image() if no cx or cy data, there may be clx, cly
+                if cx:
+                    if self.scale_factor:
+                        tmin = cx[0] * self.scale_factor
+                        tmax = cx[-1] * self.scale_factor
+                    else:
+                        tmin = cx[0]
+                        tmax = cx[-1]
+                if cy:
+                    dmin = np.min(cy)
+                    dmax = np.max(cy)
 
             if loadDataOnly:
                 return None, None, 'loadDataOnly specified', self.cm_name, cmocean_lookup_str, self.standard_name
@@ -894,7 +908,7 @@ class MeasuredParameter(BaseParameter):
 
         # 1. Image: Build image with potential Sampling Platforms included
         self.kwargs['platforms'] = platform_names.split(',')
-        sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes()
+        sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(forFlot=False)
         if not sectionPngFile:
             return x3dResults
 
@@ -917,7 +931,7 @@ class MeasuredParameter(BaseParameter):
             # Now, use renderDatavaluesNoAxes() to fill member variables without Sampling Platforms
             self.kwargs['platforms'] = [self.kwargs['platforms'][0]]
             self.logger.debug(f"renderDatavaluesNoAxes(loadDataOnly=True) for self.kwargs['platforms'] = {self.kwargs['platforms']}")
-            sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(loadDataOnly=True)
+            sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(forFlot=False, loadDataOnly=True)
             if not sectionPngFile:
                 return x3dResults
 
