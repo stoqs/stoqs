@@ -886,11 +886,6 @@ class MeasuredParameter(BaseParameter):
         '''
         x3dResults = {}
 
-        ##import pdb; pdb.set_trace()
-        ##for act in list(self.value_by_act.keys()):
-        ##    pass
-
-
         # 1. Image: Build image with potential Sampling Platforms included
         self.kwargs['platforms'] = platform_names.split(',')
         sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes()
@@ -924,35 +919,34 @@ class MeasuredParameter(BaseParameter):
         # The last point - if in _sliced arrays will be repeated will be repeated with the vertical edges
         step = int(len(self.lon)/self.sdt_count)
         step = 1
-        lon_sliced = self.lon[::step]
-        lat_sliced = self.lat[::step]
+        ##lon_sliced = self.lon[::step]
+        ##lat_sliced = self.lat[::step]
+
+        # Test with a 6 vertex polygon - does an IFS have to be planar?
+        midp = int(len(self.lon)/2)
+        lon_sliced = [self.lon[0], self.lon[midp], self.lon[-1]]
+        lat_sliced = [self.lat[0], self.lat[midp], self.lat[-1]]
 
         # Construct the geometry according to the 4 edges of the image: time moves left to right in image
         # Top: lon, lat in order; Right: dmin to dmax; Bottom; lon, lat in reverse order; Left: dmax to dmin
         points = ''
-        ##for lon, lat in zip(lon_sliced[1:-1], lat_sliced[1:-1]):
-        ##    points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmin * vert_ex)
-        points += '{:.5f} {:.5f} {:.1f} {:.5f} {:.5f} {:.1f} '.format(lat_sliced[-1], lon_sliced[-1], -self.dmin * vert_ex,
-                                                                lat_sliced[-1], lon_sliced[-1], -self.dmax * vert_ex)
+        for lon, lat in zip(lon_sliced, lat_sliced):
+            points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmax * vert_ex)
 
-        ##for lon, lat in zip(reversed(lon_sliced[1:-1]), reversed(lat_sliced[1:-1])):
-        ##    points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmax * vert_ex)
-        points += '{:.5f} {:.5f} {:.1f} {:.5f} {:.5f} {:.1f} '.format(lat_sliced[0], lon_sliced[0], -self.dmax * vert_ex,
-                                                                lat_sliced[0], lon_sliced[0], -self.dmin * vert_ex)
+        for lon, lat in zip(lon_sliced[::-1], lat_sliced[::-1]):
+            points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmin * vert_ex)
 
         # The s,t texture coordinate points for the image
-        tc_points = '1 1 1 0 0 0 0 1'
-        ##tc_points = ''
-        ##for i in np.linspace(0, 1, len(lon_sliced), endpoint=True):
-        ##    tc_points += '{:.5f} 1 '.format(i)
-       
-        ##for i in np.linspace(1, 0, len(lon_sliced), endpoint=True): 
-        ##    tc_points += '{:.5f} 0 '.format(i)
+        tc_points = ''
+        for i in np.linspace(0, 1, len(lon_sliced), endpoint=True):
+            tc_points += '{:.5f} 0 '.format(i)
+      
+        for i in np.linspace(1, 0, len(lon_sliced), endpoint=True): 
+            tc_points += '{:.5f} 1 '.format(i)
       
         # The coordIndex and texCoordIndex values - they are the same values
         indices = '' 
-        ##for index in range(len(lon_sliced) * 2):
-        for index in range(4):
+        for index in range(len(lon_sliced) * 2):
             indices += '{} '.format(index)
         indices += '-1'
       
