@@ -5461,24 +5461,26 @@ function enable_cardboard(){
             }
             else if (key == 'curtainstaticx3d') {
                 if (! $.isEmptyObject(data.curtainstaticx3d)) {
-                    $.each(data.curtainstaticx3d, function (platform_name, curtainstaticx3d) {
-                        if (curtainstaticx3d['points']) {
-                            if ( ! $.isEmptyObject(curtainstaticx3d.points) ) {
-                                $('#mp-curtain-group').html([
-                                    '<Shape id="mp-curtain">',
-                                        '<appearance>',
-                                            '<imagetexture repeats="false" repeatt="false" url="{{MEDIA_URL}}sections/' + curtainstaticx3d.image + '"></imagetexture>', 
-                                        '</appearance>',
-                                        '<indexedfaceset solid="false" ccw="false" convex="false" coordIndex="' + curtainstaticx3d.index + '" texCoordIndex="' + curtainstaticx3d.index + '">',
-                                            '<geocoordinate point="' + curtainstaticx3d.points + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>',
-                                            '<texturecoordinate point="' + curtainstaticx3d.tc_points + '"></geocoordinate>',
-                                        '</indexedfaceset>',
-                                    '</Shape>'
-                                ].join(''));
+                    var curtainstaticx3d_html = '';
+                    $.each(data.curtainstaticx3d, function (platform_name, activityx3d) {
+                        $.each(activityx3d, function (activity_name, curtainstaticx3d) {
+                            if (curtainstaticx3d['points']) {
+                                if ( ! $.isEmptyObject(curtainstaticx3d.points) ) {
+                                    curtainstaticx3d_html += '<Shape id="mp-curtain_' + platform_name + '_' + activity_name + '">' +
+                                            '<appearance>' +
+                                                '<imagetexture repeats="false" repeatt="false" url="{{MEDIA_URL}}sections/' + curtainstaticx3d.image + '"></imagetexture>' +
+                                            '</appearance>' +
+                                            '<indexedfaceset solid="false" ccw="false" convex="false" coordIndex="' + curtainstaticx3d.index + '" texCoordIndex="' + curtainstaticx3d.index + '">' +
+                                                '<geocoordinate point="' + curtainstaticx3d.points + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>' +
+                                                '<texturecoordinate point="' + curtainstaticx3d.tc_points + '"></geocoordinate>' +
+                                            '</indexedfaceset>' +
+                                        '</Shape>'
+                                }
+                                $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + curtainstaticx3d.colorbar + '" />');
                             }
-                            $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + curtainstaticx3d.colorbar + '" />');
-                        }
+                        });
                     });
+                    $('#mp-curtain-group').html(curtainstaticx3d_html);
                 }
             }
             else if (key == 'resources') {
