@@ -512,7 +512,11 @@ class MeasuredParameter(BaseParameter):
         '''Generate image from collected member variables
         '''
         if self.parameterID or self.contourParameterID:
-            sectionPngFile = '{}_{}_{}_{}.png'.format(self.parameterID, self.contourParameterID, self.platformName, self.imageID)
+            if self.kwargs.get('activitynames'):
+                sectionPngFile = '{}_{}_{}_{}_{}.png'.format(self.parameterID, self.contourParameterID, self.platformName, 
+                                                             self.kwargs['activitynames'][0].split('.nc')[0], self.imageID)
+            else:
+                sectionPngFile = '{}_{}_{}_{}.png'.format(self.parameterID, self.contourParameterID, self.platformName, self.imageID)
         elif self.kwargs['measuredparametersgroup']:
             sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
         else:
@@ -717,6 +721,10 @@ class MeasuredParameter(BaseParameter):
         xi = None
         if tmin and tmax:
             self.sdt_count = self.qs.filter(platform__name = self.platformName).values_list('simpledepthtime__depth').count()
+            if self.sdt_count == 0:
+                self.logger.warn('No profiles counted self.sdt_count == 0, returning')
+                return None, None, 'No profiles counted self.sdt_count == 0', self.cm_name, cmocean_lookup_str, self.standard_name
+
             self.sdt_count = int(self.sdt_count / 2)                 # 2 points define a line, take half the number of simpledepthtime points
             self.logger.debug('Half of self.sdt_count from query = %d', self.sdt_count)
             if self.sdt_count > tgrid_max or self.sdt_count == 0:
@@ -777,7 +785,6 @@ class MeasuredParameter(BaseParameter):
         else:
             self.logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s', tmin, tmax, dmin, dmax)
             return None, None, 'Select a time-depth range', self.cm_name, cmocean_lookup_str, self.standard_name
-
 
     def dataValuesX3D(self, vert_ex=10.0):
         '''
@@ -875,12 +882,21 @@ class MeasuredParameter(BaseParameter):
     def curtainX3D(self, platform_names, vert_ex=10.0):
         '''Return X3D elements of image texture mapped onto geospatial geometry of vehicle track.
         platform_names may be a comma separated list of Platform names that may contain sampling platforms.
+        Constraints for data in the image come from the settings in self.kwargs set by what calls this.
         '''
         x3dResults = {}
+
+        ##import pdb; pdb.set_trace()
+        ##for act in list(self.value_by_act.keys()):
+        ##    pass
+
 
         # 1. Image: Build image with potential Sampling Platforms included
         self.kwargs['platforms'] = platform_names.split(',')
         sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes()
+        if not sectionPngFile:
+            return x3dResults
+
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
 
         # Trim away the transparent parts, leaving only the data portions that map to the locations
@@ -891,16 +907,18 @@ class MeasuredParameter(BaseParameter):
         # Trim one pixel from edges to get rid of black lines from Matplotlib
         new_bounds = [2, 2] + [d - 1 for d in im.size]
         im_trimmed = im.crop(new_bounds)
-        import pdb; pdb.set_trace()
         ##im_trimmed = im.crop(im.getbbox())
-        self.logger.info(f"Saving timmed image file: {sectionPngFileTrimmedFullPath}")
+        self.logger.info(f"Saving trimmed image file: {sectionPngFileTrimmedFullPath}")
         im_trimmed.save(sectionPngFileTrimmedFullPath)
 
         # 2. Geometry: We want position data for only the main platform
         if len(self.kwargs['platforms']) > 1:
             # Now, use renderDatavaluesNoAxes() to fill member variables without Sampling Platforms
-            self.kwargs['platforms'] = self.kwargs['platforms'][0]
+            self.kwargs['platforms'] = [self.kwargs['platforms'][0]]
+            self.logger.debug(f"renderDatavaluesNoAxes(loadDataOnly=True) for self.kwargs['platforms'] = {self.kwargs['platforms']}")
             sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(loadDataOnly=True)
+            if not sectionPngFile:
+                return x3dResults
 
         # Subsample the original track with a step value approximating the simple depth time profiles
         # The last point - if in _sliced arrays will be repeated will be repeated with the vertical edges
