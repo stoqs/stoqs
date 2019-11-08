@@ -17,6 +17,7 @@ from matplotlib import rcParams
 from scipy.interpolate import griddata
 from scipy.stats import ttest_ind
 from matplotlib.colors import hex2color
+from operator import itemgetter
 from pylab import polyval
 from collections import namedtuple
 from django.conf import settings
@@ -659,7 +660,7 @@ class MeasuredParameter(BaseParameter):
 
         return sectionPngFile, self.colorbarPngFile, self.strideInfo, self.cm_name, cmocean_lookup_str, self.standard_name
 
-    def _plot_limits(self, forFlot=True):
+    def _plot_limits(self):
         '''Return 4 tuple of time and depth min and max for generating plots for Flot or X3D
         '''
         # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
@@ -706,7 +707,6 @@ class MeasuredParameter(BaseParameter):
         dinc = 0.5                  # Average vertical resolution of AUV Dorado
         '''
 
-        # Save important values as member variables for construction of IndexedFaceSets for curtainX3D visualizations.
         cmocean_lookup_str = ''
         for sn, cm in cmocean_lookup.items():
             cmocean_lookup_str += f"{sn}: {cm}\n"
@@ -719,17 +719,11 @@ class MeasuredParameter(BaseParameter):
             sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
             self.request.session['sessionID'] = sessionID
 
-        tmin, tmax, dmin, dmax = self._plot_limits(forFlot) 
-        self.dmin = dmin
-        self.dmax = dmax
+        tmin, tmax, dmin, dmax = self._plot_limits() 
 
         xi = None
         if tmin and tmax:
-            self.sdt_count = self.qs.filter(platform__name = self.platformName).values_list('simpledepthtime__depth').count()
-            if self.sdt_count == 0:
-                self.logger.warn('No profiles counted self.sdt_count == 0, returning')
-                return None, None, 'No profiles counted self.sdt_count == 0', self.cm_name, cmocean_lookup_str, self.standard_name
-
+            self.sdt_count = self.qs.filter(platform__name__in=self.platformName.split(',')).values_list('simpledepthtime__depth').count()
             self.sdt_count = int(self.sdt_count / 2)                 # 2 points define a line, take half the number of simpledepthtime points
             self.logger.debug('Half of self.sdt_count from query = %d', self.sdt_count)
             if self.sdt_count > tgrid_max or self.sdt_count == 0:
@@ -797,6 +791,12 @@ class MeasuredParameter(BaseParameter):
                 if cy:
                     dmin = np.min(cy)
                     dmax = np.max(cy)
+
+            # Save important values as member variables for construction of IndexedFaceSets for curtainX3D visualizations.
+            self.tmin = tmin
+            self.tmax = tmax
+            self.dmin = dmin
+            self.dmax = dmax
 
             if loadDataOnly:
                 return None, None, 'loadDataOnly specified', self.cm_name, cmocean_lookup_str, self.standard_name
@@ -899,7 +899,7 @@ class MeasuredParameter(BaseParameter):
 
         return x3dResults
 
-    def curtainX3D(self, platform_names, vert_ex=10.0, slice_minutes=60):
+    def curtainX3D(self, platform_names, vert_ex=10.0, slice_minutes=30):
         '''Return X3D elements of image texture mapped onto geospatial geometry of vehicle track.
         platform_names may be a comma separated list of Platform names that may contain sampling platforms.
         Constraints for data in the image come from the settings in self.kwargs set by what calls this.
@@ -934,48 +934,43 @@ class MeasuredParameter(BaseParameter):
 
         # Find the indices at slice_minutes intervals
         slice_esecs = []
-        slice_indices = []
+        slice_indices = [0]
         prev_esec = self.x[0] * self.scale_factor
         for index, x in enumerate(self.x):
             if x * self.scale_factor > prev_esec + slice_minutes * 60:
                 slice_esecs.append(x * self.scale_factor)
                 slice_indices.append(index)
                 prev_esec = x * self.scale_factor
-        slice_indices.append(len(self.x))
+
+        slice_indices.append(len(self.x) - 1)
         slice_esecs.append(self.x[-1] * self.scale_factor)
-            
-        # Reduce number of lat, lon points to about half of slice_minutes
-        if len(slice_indices) == 1:
-            step = int(slice_indices[0] / 2)
-        else:
-            step = int(np.mean(np.diff(slice_indices)) / 2)
-        lon_sliced = self.lon[::step]
-        lat_sliced = self.lat[::step]
 
-        # Test with a 6 vertex polygon - does an IFS have to be planar?
-        ##midp = int(len(self.lon)/2)
-        ##lon_sliced = [self.lon[0], self.lon[midp], self.lon[-1]]
-        ##lat_sliced = [self.lat[0], self.lat[midp], self.lat[-1]]
+        lon_sliced = itemgetter(*slice_indices)(self.lon)
+        lat_sliced = itemgetter(*slice_indices)(self.lat)
 
-        # Make planar slices at slice_minutes values along the geometry
+        # Make counter-clockwise planar slices at slice_minutes values along the geometry
         # Construct the geometry according to the 4 edges of the image: time moves left to right in image
-        # Bottom; lon, lat in order; Top: lon, lat in reverse order; indices: 0 to the length * 2
+        # Bottom; lon, lat in order; Top: lon, lat in reverse order - indices: 0 to len(lon_sliced) * 2
         points = ''
         for lon, lat in zip(lon_sliced, lat_sliced):
             points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmax * vert_ex)
 
         for lon, lat in zip(lon_sliced[::-1], lat_sliced[::-1]):
             points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmin * vert_ex)
+        
+        end_index = len(lon_sliced) * 2 - 1
         indices = '' 
-        for index in range(len(lon_sliced) * 2):
+        for index in range(end_index + 1):
             indices += '{} '.format(index)
 
         # Index list for slice_minutes quadrilateral slices of the geometry
         last_index = 0
         ifs_tcindex = ''
-        for index in slice_indices:
-            ifs_tcindex += f'{last_index} {index}  {2 * len(self.lon) - last_index} {2 * len(self.lon) - index} -1 '
+        for index in range(1, len(lon_sliced)):
+            ifs_tcindex += f'{last_index} {index} {end_index - index} {end_index - last_index} -1 '
             last_index = index
+
+        ifs_cindex = ifs_tcindex
 
         # The s,t texture coordinate points for the image, slice_minutes at a time
         last_frac = 0
@@ -983,13 +978,14 @@ class MeasuredParameter(BaseParameter):
         for esec in slice_esecs:
             fraction = (esec - self.x[0] * self.scale_factor) / ((self.x[-1] - self.x[0]) * self.scale_factor)
             self.logger.debug(f"fraction = {fraction}")
-            tc_points += '{last_frac:.5f} 0 {frac:.5f} 0 {frac:.5f} 1 {last_frac:.5f} 1 -1 '.format(last_frac=last_frac, frac=fraction)
+            tc_points += '{last_frac:.5f} 0 {frac:.5f} 0 {frac:.5f} 1 {last_frac:.5f} 1 '.format(last_frac=last_frac, frac=fraction)
             last_frac = fraction
             
         self.logger.debug(f"len(points.strip().split(' '))/3 = {len(points.strip().split(' '))/3}") 
-        self.logger.debug(f"len(tc_points.strip().split(' '))/2 = {len(tc_points.strip().split(' '))/2}") 
         self.logger.debug(f"len(indices.strip().split(' '))/1 = {len(indices.strip().split(' '))/1}") 
-        x3dResults = {'points': points.rstrip(), 'ifs_tcindex': ifs_tcindex.rstrip(), 'tc_points': tc_points.rstrip(), 'info': '', 
+        self.logger.debug(f"Faces: len(ifs_tcindex.strip().split(' '))/5 = {len(ifs_tcindex.strip().split(' '))/5}") 
+        self.logger.debug(f"Faces: len(tc_points.strip().split(' '))/9 = {len(tc_points.strip().split(' '))/8}") 
+        x3dResults = {'points': points.rstrip(), 'ifs_cindex': ifs_cindex.rstrip(), 'ifs_tcindex': ifs_tcindex.rstrip(), 'tc_points': tc_points.rstrip(), 'info': '', 
                       'index': indices.rstrip(), 'image': sectionPngFileTrimmed, 'colorbar': colorbarPngFile}
 
         return x3dResults
