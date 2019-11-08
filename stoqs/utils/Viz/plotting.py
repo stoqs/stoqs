@@ -899,7 +899,7 @@ class MeasuredParameter(BaseParameter):
 
         return x3dResults
 
-    def curtainX3D(self, platform_names, vert_ex=10.0):
+    def curtainX3D(self, platform_names, vert_ex=10.0, slice_minutes=60):
         '''Return X3D elements of image texture mapped onto geospatial geometry of vehicle track.
         platform_names may be a comma separated list of Platform names that may contain sampling platforms.
         Constraints for data in the image come from the settings in self.kwargs set by what calls this.
@@ -914,19 +914,16 @@ class MeasuredParameter(BaseParameter):
 
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
 
-        # Trim away the transparent parts, leaving only the data portions that map to the locations
         sectionPngFileTrimmed = sectionPngFile.replace('.png', '_trimmed.png')
         sectionPngFileTrimmedFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFileTrimmed)
         im = Image.open(sectionPngFileFullPath)
-        ##im_inv = ImageOps.invert(im)
         # Trim one pixel from edges to get rid of black lines from Matplotlib
         new_bounds = [2, 2] + [d - 1 for d in im.size]
         im_trimmed = im.crop(new_bounds)
-        ##im_trimmed = im.crop(im.getbbox())
         self.logger.info(f"Saving trimmed image file: {sectionPngFileTrimmedFullPath}")
         im_trimmed.save(sectionPngFileTrimmedFullPath)
 
-        # 2. Geometry: We want position data for only the main platform
+        # 2. Geometry: We want position data for only the main platform, in case we also have a Sampling Platform
         if len(self.kwargs['platforms']) > 1:
             # Now, use renderDatavaluesNoAxes() to fill member variables without Sampling Platforms
             self.kwargs['platforms'] = [self.kwargs['platforms'][0]]
@@ -935,48 +932,67 @@ class MeasuredParameter(BaseParameter):
             if not sectionPngFile:
                 return x3dResults
 
-        # Subsample the original track with a step value approximating the simple depth time profiles
-        # The last point - if in _sliced arrays will be repeated will be repeated with the vertical edges
-        step = int(len(self.lon)/self.sdt_count)
-        step = 1
-        ##lon_sliced = self.lon[::step]
-        ##lat_sliced = self.lat[::step]
+        # Find the indices at slice_minutes intervals
+        slice_esecs = []
+        slice_indices = []
+        prev_esec = self.x[0] * self.scale_factor
+        for index, x in enumerate(self.x):
+            if x * self.scale_factor > prev_esec + slice_minutes * 60:
+                slice_esecs.append(x * self.scale_factor)
+                slice_indices.append(index)
+                prev_esec = x * self.scale_factor
+        slice_indices.append(len(self.x))
+        slice_esecs.append(self.x[-1] * self.scale_factor)
+            
+        # Reduce number of lat, lon points to about half of slice_minutes
+        if len(slice_indices) == 1:
+            step = int(slice_indices[0] / 2)
+        else:
+            step = int(np.mean(np.diff(slice_indices)) / 2)
+        lon_sliced = self.lon[::step]
+        lat_sliced = self.lat[::step]
 
         # Test with a 6 vertex polygon - does an IFS have to be planar?
-        midp = int(len(self.lon)/2)
-        lon_sliced = [self.lon[0], self.lon[midp], self.lon[-1]]
-        lat_sliced = [self.lat[0], self.lat[midp], self.lat[-1]]
+        ##midp = int(len(self.lon)/2)
+        ##lon_sliced = [self.lon[0], self.lon[midp], self.lon[-1]]
+        ##lat_sliced = [self.lat[0], self.lat[midp], self.lat[-1]]
 
+        # Make planar slices at slice_minutes values along the geometry
         # Construct the geometry according to the 4 edges of the image: time moves left to right in image
-        # Top: lon, lat in order; Right: dmin to dmax; Bottom; lon, lat in reverse order; Left: dmax to dmin
+        # Bottom; lon, lat in order; Top: lon, lat in reverse order; indices: 0 to the length * 2
         points = ''
         for lon, lat in zip(lon_sliced, lat_sliced):
             points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmax * vert_ex)
 
         for lon, lat in zip(lon_sliced[::-1], lat_sliced[::-1]):
             points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmin * vert_ex)
-
-        # The s,t texture coordinate points for the image
-        tc_points = ''
-        for i in np.linspace(0, 1, len(lon_sliced), endpoint=True):
-            tc_points += '{:.5f} 0 '.format(i)
-      
-        for i in np.linspace(1, 0, len(lon_sliced), endpoint=True): 
-            tc_points += '{:.5f} 1 '.format(i)
-      
-        # The coordIndex and texCoordIndex values - they are the same values
         indices = '' 
         for index in range(len(lon_sliced) * 2):
             indices += '{} '.format(index)
-        indices += '-1'
-      
+
+        # Index list for slice_minutes quadrilateral slices of the geometry
+        last_index = 0
+        ifs_tcindex = ''
+        for index in slice_indices:
+            ifs_tcindex += f'{last_index} {index}  {2 * len(self.lon) - last_index} {2 * len(self.lon) - index} -1 '
+            last_index = index
+
+        # The s,t texture coordinate points for the image, slice_minutes at a time
+        last_frac = 0
+        tc_points = ''
+        for esec in slice_esecs:
+            fraction = (esec - self.x[0] * self.scale_factor) / ((self.x[-1] - self.x[0]) * self.scale_factor)
+            self.logger.debug(f"fraction = {fraction}")
+            tc_points += '{last_frac:.5f} 0 {frac:.5f} 0 {frac:.5f} 1 {last_frac:.5f} 1 -1 '.format(last_frac=last_frac, frac=fraction)
+            last_frac = fraction
+            
         self.logger.debug(f"len(points.strip().split(' '))/3 = {len(points.strip().split(' '))/3}") 
         self.logger.debug(f"len(tc_points.strip().split(' '))/2 = {len(tc_points.strip().split(' '))/2}") 
         self.logger.debug(f"len(indices.strip().split(' '))/1 = {len(indices.strip().split(' '))/1}") 
-        x3dResults = {'points': points.rstrip(), 'tc_points': tc_points.rstrip(), 'info': '', 
+        x3dResults = {'points': points.rstrip(), 'ifs_tcindex': ifs_tcindex.rstrip(), 'tc_points': tc_points.rstrip(), 'info': '', 
                       'index': indices.rstrip(), 'image': sectionPngFileTrimmed, 'colorbar': colorbarPngFile}
-        return x3dResults
 
+        return x3dResults
 
 class PPDatabaseException(Exception):
     def __init__(self, message, sql):
