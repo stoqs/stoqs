@@ -1706,7 +1706,7 @@ class STOQSQManager(object):
                     self.kwargs['activitynames'] = [act.name]
                     parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
                     logger.info(f"Rendering image for pns='{pns}', act.name='{act.name}'")
-                    cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order, self.contour_mpq.qs_mp_no_order,
+                    cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, self.contour_mpq.qs_mp_no_order,
                                             min_max, self.getSampleQS(), pns,
                                             parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
                     x3d_items = cp.curtainX3D(pns, float(self.request.GET.get('ve', 10)))
