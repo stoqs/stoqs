@@ -2444,7 +2444,7 @@
         // Don't need to get everything from queryData, only the response with the PNG image
         if ($('#showgeox3dmeasurement').is(':checked')) {
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['parameterplatformdatavaluepng', 'curtainstaticx3d', 'parameterminmax']);
+                rebuildFilters(['parameterplatformdatavaluepng', 'curtainstaticx3d', 'measuredparameterx3d', 'parameterminmax']);
             }
             else {
                 rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
@@ -2458,7 +2458,7 @@
     $('#showgeox3dmeasurement').on('click', function (event) {
         // Don't need to get everything from queryData, only the response with the X3D data
         if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-            rebuildFilters(['curtainstaticx3d']);
+            rebuildFilters(['curtainstaticx3d', 'measuredparameterx3d']);
         }
         else {
             rebuildFilters(['measuredparameterx3d']);
@@ -2739,7 +2739,7 @@
             $('#showgeox3dmeasurementtext').text($('#temporalparameterplotinfo').data()['info']);
             $('#activitytypes').hide()
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['parameterplatformdatavaluepng', 'curtainstaticx3d', 'parameterminmax']);
+                rebuildFilters(['parameterplatformdatavaluepng', 'curtainstaticx3d', 'measuredparameterx3d', 'parameterminmax']);
             }
             else {
                 rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
@@ -3494,7 +3494,7 @@ function enable_cardboard(){
             }
             $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent().hide();
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['parametertime', 'platformanimation', 'curtainstaticx3d']);
+                rebuildFilters(['parametertime', 'platformanimation', 'curtainstaticx3d', 'measuredparameterx3d']);
             }
             else {
                 rebuildFilters(['parametertime', 'platformanimation', 'measuredparameterx3d']);
@@ -4114,7 +4114,7 @@ function enable_cardboard(){
         if ($('#showplatforms').is(':checked')) {
             rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'measuredparameterx3d', 'platformanimation']);
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'curtainstaticx3d', 'platformanimation']);
+                rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'curtainstaticx3d', 'measuredparameterx3d', 'platformanimation']);
             }
         }
         else {
@@ -4811,7 +4811,7 @@ function enable_cardboard(){
                             if ( $('body').data()['ve'] != item.VerticalExaggeration ) {
                                 $('body').data()['ve'] = item.VerticalExaggeration;
                                 if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                                    rebuildFilters(['curtainstaticx3d', 'platformanimation']);
+                                    rebuildFilters(['curtainstaticx3d', 'measuredparameterx3d', 'platformanimation']);
                                 }
                                 else {
                                     rebuildFilters(['measuredparameterx3d', 'platformanimation']);
