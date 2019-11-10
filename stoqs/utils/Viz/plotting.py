@@ -639,10 +639,12 @@ class MeasuredParameter(BaseParameter):
                 CS = ax.contour(xi, yi, zli, colors='white')
                 ax.clabel(CS, fontsize=9, inline=1)
 
-            if full_screen or (self.kwargs.get('showgeox3dmeasurement') and contourFlag):
-                # Make full_screen image also if rendering images for 3D IndexedFaceSets
-                self.logger.debug(f"Writing file {sectionPngFileFullPath} with dpi=240")
-                fig.savefig(sectionPngFileFullPath, dpi=240, transparent=False)
+            if self.kwargs.get('showgeox3dmeasurement') and contourFlag and self.kwargs.get('activitynames'):
+                self.logger.debug(f"Writing curtain X3D file {sectionPngFileFullPath} with dpi=480")
+                fig.savefig(sectionPngFileFullPath, dpi=480, transparent=True)
+            elif full_screen:
+                self.logger.debug(f"Writing full_screen file {sectionPngFileFullPath} with dpi=240")
+                fig.savefig(sectionPngFileFullPath, dpi=240, transparent=True)
             else:
                 self.logger.debug(f"Writing file {sectionPngFileFullPath} with dpi=120")
                 fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
@@ -899,7 +901,7 @@ class MeasuredParameter(BaseParameter):
 
         return x3dResults
 
-    def curtainX3D(self, platform_names, vert_ex=10.0, slice_minutes=30):
+    def curtainX3D(self, platform_names, vert_ex=10.0, slice_minutes=60):
         '''Return X3D elements of image texture mapped onto geospatial geometry of vehicle track.
         platform_names may be a comma separated list of Platform names that may contain sampling platforms.
         Constraints for data in the image come from the settings in self.kwargs set by what calls this.
@@ -932,10 +934,10 @@ class MeasuredParameter(BaseParameter):
             if not sectionPngFile:
                 return x3dResults
 
-        # Find the indices at slice_minutes intervals
-        slice_esecs = []
+        # Find the indices at slice_minutes intervals, always include the first and last indices
+        slice_esecs = [self.x[0] * self.scale_factor]
         slice_indices = [0]
-        prev_esec = self.x[0] * self.scale_factor
+        prev_esec = self.x[0]
         for index, x in enumerate(self.x):
             if x * self.scale_factor > prev_esec + slice_minutes * 60:
                 slice_esecs.append(x * self.scale_factor)
@@ -945,6 +947,7 @@ class MeasuredParameter(BaseParameter):
         slice_indices.append(len(self.x) - 1)
         slice_esecs.append(self.x[-1] * self.scale_factor)
 
+        self.logger.debug(f"Slicing {len(self.lon)} lat & lon points at indices {slice_indices} for {slice_minutes} minute intervals")
         lon_sliced = itemgetter(*slice_indices)(self.lon)
         lat_sliced = itemgetter(*slice_indices)(self.lat)
 
@@ -963,30 +966,32 @@ class MeasuredParameter(BaseParameter):
         for index in range(end_index + 1):
             indices += '{} '.format(index)
 
-        # Index list for slice_minutes quadrilateral slices of the geometry
+        # Index list for slice_minutes quadrilateral slices of the geometry (and the image)
         last_index = 0
         ifs_tcindex = ''
         for index in range(1, len(lon_sliced)):
             ifs_tcindex += f'{last_index} {index} {end_index - index} {end_index - last_index} -1 '
             last_index = index
-
         ifs_cindex = ifs_tcindex
 
-        # The s,t texture coordinate points for the image, slice_minutes at a time
-        last_frac = 0
+        # The s,t texture coordinate points for slice_minutes quadrilateral slices of the image
         tc_points = ''
         for esec in slice_esecs:
-            fraction = (esec - self.x[0] * self.scale_factor) / ((self.x[-1] - self.x[0]) * self.scale_factor)
+            fraction = (esec - self.tmin) / (self.tmax - self.tmin)
             self.logger.debug(f"fraction = {fraction}")
-            tc_points += '{last_frac:.5f} 0 {frac:.5f} 0 {frac:.5f} 1 {last_frac:.5f} 1 '.format(last_frac=last_frac, frac=fraction)
-            last_frac = fraction
+            tc_points += '{frac:.5f} 0 '.format(frac=fraction)
+        for esec in slice_esecs[::-1]:
+            fraction = (esec - self.tmin) / (self.tmax - self.tmin)
+            self.logger.debug(f"fraction = {fraction}")
+            tc_points += '{frac:.5f} 1 '.format(frac=fraction)
             
         self.logger.debug(f"len(points.strip().split(' '))/3 = {len(points.strip().split(' '))/3}") 
+        self.logger.debug(f"len(tc_points.strip().split(' '))/2 = {len(tc_points.strip().split(' '))/2}") 
         self.logger.debug(f"len(indices.strip().split(' '))/1 = {len(indices.strip().split(' '))/1}") 
         self.logger.debug(f"Faces: len(ifs_tcindex.strip().split(' '))/5 = {len(ifs_tcindex.strip().split(' '))/5}") 
-        self.logger.debug(f"Faces: len(tc_points.strip().split(' '))/9 = {len(tc_points.strip().split(' '))/8}") 
-        x3dResults = {'points': points.rstrip(), 'ifs_cindex': ifs_cindex.rstrip(), 'ifs_tcindex': ifs_tcindex.rstrip(), 'tc_points': tc_points.rstrip(), 'info': '', 
-                      'index': indices.rstrip(), 'image': sectionPngFileTrimmed, 'colorbar': colorbarPngFile}
+        x3dResults = {'points': points.rstrip(), 'ifs_cindex': ifs_cindex.rstrip(), 'ifs_tcindex': ifs_tcindex.rstrip(),
+                      'tc_points': tc_points.rstrip(), 'info': '', 
+                      'image': sectionPngFileTrimmed, 'colorbar': colorbarPngFile}
 
         return x3dResults
 
