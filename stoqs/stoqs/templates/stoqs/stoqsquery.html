@@ -293,41 +293,68 @@
                                             </div>
                                             <div id="collapseContols3D" class="accordion-body in">
                                                 <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
-                                                    <h5><a id="data-3d" class="accordion-toggle" data-toggle="collapse" href="#data3D" title="Data Options" style="padding:0px;color:black;">
-                                                        Data
+                                                    <h5><a id="measurements-3d" class="accordion-toggle" data-toggle="collapse" href="#measurements3D" title="Data Options" style="padding:0px;color:black;">
+                                                        Measurements
                                                     </a></h5>
-                                                    <div id="data3D" class="accordion-body in">
-                                                        <form class="form-inline" style="margin:0px;">
-                                                            <label class="checkbox disabled">
+                                                    <div id="measurements3D" class="accordion-body in">
+                                                        <form class="form-inline" style="margin:0px;vertical-align:center">
+                                                            <label class="checkbox disabled" style="margin:0px;">
                                                                 <input type="checkbox" id="showgeox3dmeasurement" />
-                                                                <span id="showgeox3dmeasurementtext">Measurements</span>
+                                                                <span id="showgeox3dmeasurementtext">Show visualizations of Plot Data Color selections </span>
                                                             </label>
-                                                            <label class="checkbox disabled">
-                                                                <input type="checkbox" id="showgeox3dsample" />
-                                                                <span id="showgeox3dsampletext">Samples</span>
-                                                            </label>
-                                                            <span>
-                                                                <label class="checkbox disabled">
-                                                                    <input type="checkbox" id="showplatforms" />
-                                                                    <span id="showplatformstext">Platforms</span>
-                                                                </label>
-                                                                <label class="checkbox" style="display:none;">
-                                                                    <input type="checkbox" id="showgeox3dlabels" checked />
-                                                                    <span id="showplatformstext">Labels</span>
-                                                                </label>
-                                                                <label class="checkbox" style="display:none;">
-                                                                    <input type="checkbox" id="showgeox3denuaxes" checked />
-                                                                    <span id="showplatformstext">ENU Axes</span>
-                                                                </label>
-                                                                <label class="checkbox" style="display:none;">
-                                                                    <input type="checkbox" id="showgeox3drotaxis" checked />
-                                                                    <span id="showplatformstext">ROT Axis</span>
-                                                                </label>
-                                                            </span>
                                                         </form>
+                                                        <div class="input-group" style="padding-bottom:0px;padding-top:1px;"> 
+                                                            <span> Animate in </span>
+                                                            <select id="slice_minutes" class="selectpicker form-control" style="height:18px;width:50px;margin-bottom:5px;">
+                                                                <option>240</option>
+                                                                <option>120</option>
+                                                                <option>60</option>
+                                                                <option selected="selected">30</option>
+                                                                <option>10</option>
+                                                                <option>5</option>
+                                                            </select>
+                                                            <span> minute slices</span>
+                                                        </div>
                                                         <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
                                                             <div id="geo3d-colorbar"></div>
                                                         </a>
+                                                    </div>
+                                                </div> <!-- row-fluid -->
+
+                                                <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
+                                                    <h5><a id="platforms-3d" class="accordion-toggle" data-toggle="collapse" href="#platforms3D" title="Data Options" style="padding:0px;color:black;">
+                                                        Platforms
+                                                    </a></h5>
+                                                    <div id="platforms3D" class="accordion-body in">
+                                                        <form class="form-inline" style="margin:0px;">
+                                                            <span>
+                                                                <label class="checkbox disabled">
+                                                                    <input type="checkbox" id="showplatforms" />
+                                                                    <span id="showplatformstext">Show models of platforms with animations of their motion</span>
+                                                                </label>
+                                                                <label class="checkbox" style="display:none;">
+                                                                    <input type="checkbox" id="showgeox3dlabels" checked />
+                                                                    <span>Labels</span>
+                                                                </label>
+                                                                <label class="checkbox" style="display:none;">
+                                                                    <input type="checkbox" id="showgeox3denuaxes" checked />
+                                                                    <span>ENU Axes</span>
+                                                                </label>
+                                                                <label class="checkbox" style="display:none;">
+                                                                    <input type="checkbox" id="showgeox3drotaxis" checked />
+                                                                    <span>ROT Axis</span>
+                                                                </label>
+                                                                <div><span id="spatial-3d-x3d-message"></span></div>
+                                                            </span>
+                                                        </form>
+                                                    </div>
+                                                </div> <!-- row-fluid -->
+
+                                                <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
+                                                    <h5><a id="animation-3d" class="accordion-toggle" data-toggle="collapse" href="#animation3D" title="Data Options" style="padding:0px;color:black;">
+                                                        Animation
+                                                    </a></h5>
+                                                    <div id="animation3D" class="accordion-body in">
                                                         <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
                                                             <div class="span1" style="padding:0px;margin-left:5px;"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
                                                             <div class="span9" style="margin:0px;margin-top:3px;"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
@@ -337,8 +364,10 @@
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                        <div><span id="spatial-3d-x3d-message"></span></div>
                                                     </div>
+                                                </div> <!-- row-fluid -->
+
+                                                <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
                                                     <h5><a id="terrain-3d" class="accordion-toggle" data-toggle="collapse" href="#terrain3D" title="Show Terrain Options" style="padding:0px;color:black;">
                                                         Terrain
                                                     </a></h5>
@@ -348,6 +377,7 @@
                                                         <div id="x3d-ve"></div><br>
                                                     </div>
                                                 </div> <!-- row-fluid -->
+
                                             </div> <!-- collapseContols3D -->
                                         </div> <!-- limit-div-width -->
                                         </div> <!-- geo-3dplot-control -->
@@ -5482,6 +5512,9 @@ function enable_cardboard(){
                         });
                     });
                     $('#mp-curtain-group').html(curtainstaticx3d_html);
+                    $('#spatial-3d-x3d-pp-slider').show();
+                    $('#spatial-3d-x3d-speedup').show()
+                    $('#speedup-value').val(data[key].speedup);
                 }
             }
             else if (key == 'resources') {
@@ -5508,6 +5541,7 @@ function enable_cardboard(){
             else if (key == 'platformanimation') {
                 if ( ! $.isEmptyObject(data[key]['x3d']) ) {
                     var x3dText = '';
+                    $('#showplatformstext').html('Animating: ' + Object.keys(data[key]['x3d']));
                     $('body').data()['platformAnimation'] = [];
                     $.each(data[key]['x3d'], function (plat, x3d) {
                         $('body').data()['platformAnimation'].push(plat);
