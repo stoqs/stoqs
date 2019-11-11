@@ -1716,6 +1716,8 @@ class STOQSQManager(object):
                 if x3d_plat:
                     x3d_dict[pns] = x3d_plat
 
+            x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
+
         return x3d_dict
 
     def getParameterParameterPNG(self):
@@ -1789,6 +1791,18 @@ class STOQSQManager(object):
             
         return x3dDict
 
+    def _get_speedup(self, platforms=()):
+        # Hard-code appropriate speedup for different platforms
+        speedup = 10
+        for platform in platforms:
+            if 'BED' in platform.name.upper():
+                speedup = 1
+        # Override speedup if provided by request from UI
+        if self.kwargs.get('speedup'):
+            speedup = float(self.kwargs.get('speedup')[0])
+
+        return speedup
+
     def getMeasuredParameterX3D(self):
         '''Returns dictionary of X3D elements for rendering by X3DOM
         '''
@@ -1820,6 +1834,7 @@ class STOQSQManager(object):
                             platformName, parameterID, parameterGroups)
                     # Default vertical exaggeration is 10x
                     x3dDict = mpdv.dataValuesX3D(float(self.request.GET.get('ve', 10)))
+                    x3dDict['speedup'] = self._get_speedup({act.platform for act in self.qs})
             
         return x3dDict
 
@@ -1856,15 +1871,7 @@ class STOQSQManager(object):
                 # Use qs_mp_no_parm QuerySet as it contains roll, pitch, and yaw values
                 mppa = PlatformAnimation(platforms_to_animate, self.kwargs, 
                         self.request, self.qs, self.mpq.qs_mp_no_parm)
-                # Hard-code appropriate speedup for different platforms
-                speedup = 10
-                for platform in platforms_to_animate:
-                    if 'BED' in platform.name.upper():
-                        speedup = 1
-                # Override speedup if provided by request from UI
-                if self.kwargs.get('speedup'):
-                    speedup = float(self.kwargs.get('speedup')[0])
-
+                speedup = self._get_speedup(platforms_to_animate)
                 # Default vertical exaggeration is 10x and default geoorigin is empty string
                 orientDict = mppa.platformAnimationDataValuesForX3D(
                                 float(self.request.GET.get('ve', 10)), 
