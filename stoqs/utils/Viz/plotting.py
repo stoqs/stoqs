@@ -239,9 +239,9 @@ class MeasuredParameter(BaseParameter):
                                              .get(id=parameterID).standard_name)
         self.set_colormap()
 
-        if self.cmin is not None:
+        if self.cmin is not None and self.pMinMax:
             self.pMinMax[1] = self.cmin
-        if self.cmax is not None:
+        if self.cmax is not None and self.pMinMax:
             self.pMinMax[2] = self.cmax
 
         self.sampleQS = sampleQS
@@ -886,14 +886,15 @@ class MeasuredParameter(BaseParameter):
                 # End the IndexedLinestring with -1 so that end point does not connect to the beg point
                 indices = indices + '-1 ' 
 
-            if self.colorbarPngFileFullPath:
-                try:
-                    self.makeColorBar(self.colorbarPngFileFullPath, self.pMinMax)
-                except Exception as e:
-                    self.logger.exception('Could not plot the colormap')
-                    x3dResults = 'Could not plot the colormap'
-                else:
-                    x3dResults = {'colors': colors.rstrip(), 'points': points.rstrip(), 'info': '', 'index': indices.rstrip(), 'colorbar': self.colorbarPngFile}
+            if self.value_by_act or self.value_by_act_span:
+                if self.colorbarPngFileFullPath:
+                    try:
+                        self.makeColorBar(self.colorbarPngFileFullPath, self.pMinMax)
+                    except Exception as e:
+                        self.logger.exception('Could not plot the colormap')
+                        x3dResults = 'Could not plot the colormap'
+                    else:
+                        x3dResults = {'colors': colors.rstrip(), 'points': points.rstrip(), 'info': '', 'index': indices.rstrip(), 'colorbar': self.colorbarPngFile}
 
         except Exception as e:
             self.logger.exception('Could not create measuredparameterx3d: %s', e)
@@ -901,7 +902,7 @@ class MeasuredParameter(BaseParameter):
 
         return x3dResults
 
-    def curtainX3D(self, platform_names, vert_ex=10.0, slice_minutes=60):
+    def curtainX3D(self, platform_names, vert_ex=10.0, slice_minutes=10):
         '''Return X3D elements of image texture mapped onto geospatial geometry of vehicle track.
         platform_names may be a comma separated list of Platform names that may contain sampling platforms.
         Constraints for data in the image come from the settings in self.kwargs set by what calls this.
