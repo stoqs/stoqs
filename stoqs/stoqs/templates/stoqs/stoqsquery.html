@@ -313,7 +313,17 @@
                                                                 <option>10</option>
                                                                 <option>5</option>
                                                             </select>
-                                                            <span> minute slices</span>
+                                                            <span> minute slices. </span>
+                                                            <span> Fade away after </span>
+                                                            <select id="fade_away_minutes" class="selectpicker form-control" style="height:18px;width:50px;margin-bottom:5px;">
+                                                                <option>480</option>
+                                                                <option>240</option>
+                                                                <option selected="selected">120</option>
+                                                                <option>60</option>
+                                                                <option>30</option>
+                                                                <option>10</option>
+                                                            </select>
+                                                            <span> minutes</span>
                                                         </div>
                                                         <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
                                                             <div id="geo3d-colorbar"></div>
@@ -4244,6 +4254,8 @@ function enable_cardboard(){
         if ($('#showgeox3dmeasurement').is(':checked') || $('#showplatforms').is(':checked')) {
             if ($('#showgeox3dmeasurement').is(':checked')) {
                 qstring += '&showgeox3dmeasurement=1';
+                qstring += '&slice_minutes=' + $('#slice_minutes').val();
+                qstring += '&fade_away_minutes=' + $('#fade_away_minutes').val();
             }
             if ($('#showplatforms').is(':checked')) {
                 qstring += '&showplatforms=1';
