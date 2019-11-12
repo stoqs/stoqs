@@ -12,7 +12,7 @@ STOQS Query manager for building ajax responses to selections made for QueryUI
 @license: GPL
 '''
 
-from collections import defaultdict
+from collections import defaultdict, Mapping
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q, Max, Min, Sum, Avg
@@ -672,8 +672,9 @@ class STOQSQManager(object):
             return self.platformTypeHash
 
         # Use queryset that does not filter out platforms - so that Platform buttons work in the UI
-        qs = self.qs_platform.values('platform__uuid', 'platform__name', 'platform__color', 
-                                     'platform__platformtype__name').distinct().order_by('platform__name')
+        qs = (self.qs_platform.filter(~Q(activitytype__name=LRAUV_MISSION))
+                              .values('platform__uuid', 'platform__name', 'platform__color', 
+                                      'platform__platformtype__name').distinct().order_by('platform__name'))
         if self.kwargs.get('activitynames'):
             qs = qs.filter(name__in=self.kwargs.get('activitynames'))
 
@@ -1700,7 +1701,7 @@ class STOQSQManager(object):
                 self.kwargs['platforms'] = pns.split(',')
                 x3d_plat = {}
                 # All Activities in the selection, do not inlcude 'special Activities' like LRAUV Mission
-                for act in self.qs.filter(Q(platform__name=self.kwargs['platforms'][0]) & ~Q(activitytype__name='LRAUV Mission')):
+                for act in self.qs.filter(Q(platform__name=self.kwargs['platforms'][0]) & ~Q(activitytype__name=LRAUV_MISSION)):
                     # Set self.mpq.qs_mp to None to bypass the Singleton nature of MPQuery and have _build_mpq_queryset() build new self.mpq items
                     self.mpq.qs_mp = None
                     self.kwargs['activitynames'] = [act.name]
@@ -1716,7 +1717,8 @@ class STOQSQManager(object):
                 if x3d_plat:
                     x3d_dict[pns] = x3d_plat
 
-            x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
+            if isinstance(x3d_dict, Mapping):
+                x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
 
         return x3d_dict
 
@@ -1834,7 +1836,8 @@ class STOQSQManager(object):
                             platformName, parameterID, parameterGroups)
                     # Default vertical exaggeration is 10x
                     x3dDict = mpdv.dataValuesX3D(float(self.request.GET.get('ve', 10)))
-                    x3dDict['speedup'] = self._get_speedup({act.platform for act in self.qs})
+                    if isinstance(x3dDict, Mapping):
+                        x3dDict['speedup'] = self._get_speedup({act.platform for act in self.qs})
             
         return x3dDict
 
