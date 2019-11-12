@@ -808,7 +808,26 @@ class MeasuredParameter(BaseParameter):
             self.logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s', tmin, tmax, dmin, dmax)
             return None, None, 'Select a time-depth range', self.cm_name, cmocean_lookup_str, self.standard_name
 
-    def dataValuesX3D(self, vert_ex=10.0):
+    def _get_slices(self, time_array, slice_minutes):
+        # Find the indices at slice_minutes intervals, always include the first and last indices
+        # time_array is something like self.x with a scale_factor as applied for contour plotting
+        if not self.scale_factor:
+            self.scale_factor = 1
+        slice_esecs = [time_array[0] * self.scale_factor]
+        slice_indices = [0]
+        prev_esec = time_array[0]
+        for index, x in enumerate(time_array):
+            if x * self.scale_factor > prev_esec + slice_minutes * 60:
+                slice_esecs.append(x * self.scale_factor)
+                slice_indices.append(index)
+                prev_esec = x * self.scale_factor
+
+        slice_indices.append(len(time_array) - 1)
+        slice_esecs.append(time_array[-1] * self.scale_factor)
+
+        return slice_indices, slice_esecs
+
+    def dataValuesX3D(self, vert_ex=10.0, slice_minutes=10):
         '''
         Return scatter-like data values as X3D geocoordinates and colors.
         '''
@@ -829,6 +848,9 @@ class MeasuredParameter(BaseParameter):
             index = 0
             for act in list(self.value_by_act.keys()):
                 self.logger.debug('Reading data from act = %s', act)
+                import pdb; pdb.set_trace()
+                slice_indices, slice_esecs = self._get_slices(self.x, slice_minutes)
+
                 for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
                     points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
                     try:
@@ -856,7 +878,7 @@ class MeasuredParameter(BaseParameter):
 
             # Make pairs of points for spanned NetTow-like data
             for act in list(self.value_by_act_span.keys()):
-                self.logger.debug('Reading data from act = %s', act)
+                self.logger.debug('Reading spanned NetTow-like data from act = %s', act)
                 for lons, lats, depths, value in zip(self.lon_by_act_span[act], 
                                                       self.lat_by_act_span[act], 
                                                       self.depth_by_act_span[act], 
@@ -935,18 +957,7 @@ class MeasuredParameter(BaseParameter):
             if not sectionPngFile:
                 return x3dResults
 
-        # Find the indices at slice_minutes intervals, always include the first and last indices
-        slice_esecs = [self.x[0] * self.scale_factor]
-        slice_indices = [0]
-        prev_esec = self.x[0]
-        for index, x in enumerate(self.x):
-            if x * self.scale_factor > prev_esec + slice_minutes * 60:
-                slice_esecs.append(x * self.scale_factor)
-                slice_indices.append(index)
-                prev_esec = x * self.scale_factor
-
-        slice_indices.append(len(self.x) - 1)
-        slice_esecs.append(self.x[-1] * self.scale_factor)
+        slice_indices, slice_esecs = self._get_slices(self.x, slice_minutes)
 
         self.logger.debug(f"Slicing {len(self.lon)} lat & lon points at indices {slice_indices} for {slice_minutes} minute intervals")
         lon_sliced = itemgetter(*slice_indices)(self.lon)

@@ -1710,7 +1710,8 @@ class STOQSQManager(object):
                     cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, self.contour_mpq.qs_mp_no_order,
                                             min_max, self.getSampleQS(), pns,
                                             parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
-                    x3d_items = cp.curtainX3D(pns, float(self.request.GET.get('ve', 10)))
+                    x3d_items = cp.curtainX3D(pns, float(self.request.GET.get('ve', 10)), 
+                                                     int(self.request.GET.get('slice_minutes')))
                     if x3d_items:
                         x3d_plat[act.name] = x3d_items
 
@@ -1835,7 +1836,7 @@ class STOQSQManager(object):
                             self.getParameterMinMax()['plot'], self.getSampleQS(), 
                             platformName, parameterID, parameterGroups)
                     # Default vertical exaggeration is 10x
-                    x3dDict = mpdv.dataValuesX3D(float(self.request.GET.get('ve', 10)))
+                    x3dDict = mpdv.dataValuesX3D(float(self.request.GET.get('ve', 10)), int(self.request.GET.get('slice_minutes')))
                     if isinstance(x3dDict, Mapping):
                         x3dDict['speedup'] = self._get_speedup({act.platform for act in self.qs})
             
