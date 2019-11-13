@@ -892,7 +892,10 @@ class MeasuredParameter(BaseParameter):
                 for istart, iend, start_esecs in zip(slice_indices, slice_indices[1:], slice_esecs):
                     shape_id = f"ils_{platform_name}_{int(start_esecs)}"
                     self.logger.debug(f"Getting IndexedLineSet data for shape_id: {shape_id}")
-                    points, colors, indices = self._get_ils(act, istart, iend, vert_ex, 
+                    iendp1 = iend + 1
+                    if iendp1 > len(self.lon_by_act[act]) -1:
+                        iendp1 = iend
+                    points, colors, indices = self._get_ils(act, istart, iendp1, vert_ex, 
                                                             'lon_by_act', 'lat_by_act', 'depth_by_act', 'value_by_act')
                     x3d_results[shape_id] = {'colors': colors.rstrip(), 'points': points.rstrip(), 'index': indices.rstrip()}
 
