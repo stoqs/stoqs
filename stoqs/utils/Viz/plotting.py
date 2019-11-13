@@ -884,42 +884,27 @@ class MeasuredParameter(BaseParameter):
             self.logger.debug('Calling self.loadData()...')
             self.loadData(self.qs_mp)
         try:
-            x3d_by_act = {}
             for act in list(self.value_by_act.keys()):
                 self.logger.debug('Reading data from act = %s', act)
                 # Get indices and times of the Shape slices to be animated
                 slice_indices, slice_esecs = self._get_slices(self.x, slice_minutes)
                 self.logger.debug(f"Slicing pairwise {len(self.lon_by_act[act])} lat & lon points at indices {slice_indices} for {slice_minutes} minute intervals")
-                x3d_by_shape = {}
                 for istart, iend, start_esecs in zip(slice_indices, slice_indices[1:], slice_esecs):
                     shape_id = f"ils_{platform_name}_{int(start_esecs)}"
                     self.logger.debug(f"Getting IndexedLineSet data for shape_id: {shape_id}")
                     points, colors, indices = self._get_ils(act, istart, iend, vert_ex, 
                                                             'lon_by_act', 'lat_by_act', 'depth_by_act', 'value_by_act')
-                    x3d_by_shape[shape_id] = {'colors': colors.rstrip(), 'points': points.rstrip(), 'index': indices.rstrip()}
-
-                x3d_by_act[act] = x3d_by_shape
+                    x3d_results[shape_id] = {'colors': colors.rstrip(), 'points': points.rstrip(), 'index': indices.rstrip()}
 
             # Make pairs of points for spanned NetTow-like data
             for act in list(self.value_by_act_span.keys()):
                 self.logger.debug('Reading spanned NetTow-like data from act = %s', act)
                 istart = 0
                 iend = len(self.lon_by_act_span[act])
-                x3d_by_shape = {}
                 shape_id = f"ils_{platform_name}_{int(start_esecs)}_span"
                 points, colors, indices = self._get_ils(act, istart, iend, vert_ex, 
                                                         'lon_by_act_span', 'lat_by_act_span', 'depth_by_act_span', 'value_by_act_span')
-                x3d_by_shape[shape_id] = {'colors': colors.rstrip(), 'points': points.rstrip(), 'index': indices.rstrip()}
-                x3d_by_act[act] = x3d_by_shape
-
-
-            if self.colorbarPngFileFullPath and (self.value_by_act or self.value_by_act_span):
-                try:
-                    self.makeColorBar(self.colorbarPngFileFullPath, self.pMinMax)
-                except Exception as e:
-                    self.logger.exception('Could not plot the colormap')
-                else:
-                    x3d_results = {'ils': x3d_by_act, 'info': '', 'colorbar': self.colorbarPngFile}
+                x3d_results[shape_id] = {'colors': colors.rstrip(), 'points': points.rstrip(), 'index': indices.rstrip()}
 
         except Exception as e:
             self.logger.exception('Could not create measuredparameterx3d: %s', e)

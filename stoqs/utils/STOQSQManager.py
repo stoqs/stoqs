@@ -1826,7 +1826,6 @@ class STOQSQManager(object):
                 # Rebuild query set for just this platform as qs_mp_no_order is an MPQuerySet which has no filter() method
                 self.kwargs['platforms'] = pns.split(',')
                 platform_single = self.kwargs['platforms'][0]
-                x3d_plat = {}
                 # All Activities in the selection, do not inlcude 'special Activities' like LRAUV Mission
                 for act in self.qs.filter(Q(platform__name=platform_single) & ~Q(activitytype__name=LRAUV_MISSION)):
                     # Set self.mpq.qs_mp to None to bypass the Singleton nature of MPQuery and have _build_mpq_queryset() build new self.mpq items
@@ -1838,16 +1837,14 @@ class STOQSQManager(object):
                                             min_max, self.getSampleQS(), pns,
                                             parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
                     x3d_items = cp.dataValuesX3D(platform_single, float(self.request.GET.get('ve', 10)), 
-                                                                    int(self.request.GET.get('slice_minutes')))
+                                                                    int(self.request.GET.get('slice_minutes', 30)))
                     if x3d_items:
-                        x3d_plat[act.name] = x3d_items
-
-
-                if x3d_plat:
-                    x3d_dict[pns] = x3d_plat
+                        x3d_dict.update(x3d_items)
 
             if isinstance(x3d_dict, Mapping):
                 x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
+                cp.makeColorBar(cp.colorbarPngFileFullPath, cp.pMinMax)
+                x3d_dict['colorbar'] = cp.colorbarPngFile
             
         return x3d_dict
 
