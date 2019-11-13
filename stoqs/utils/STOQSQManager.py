@@ -1699,9 +1699,10 @@ class STOQSQManager(object):
             for pns in self._combine_sample_platforms(platformName):
                 # Rebuild query set for just this platform as qs_mp_no_order is an MPQuerySet which has no filter() method
                 self.kwargs['platforms'] = pns.split(',')
+                platform_single = self.kwargs['platforms'][0]
                 x3d_plat = {}
                 # All Activities in the selection, do not inlcude 'special Activities' like LRAUV Mission
-                for act in self.qs.filter(Q(platform__name=self.kwargs['platforms'][0]) & ~Q(activitytype__name=LRAUV_MISSION)):
+                for act in self.qs.filter(Q(platform__name=platform_single) & ~Q(activitytype__name=LRAUV_MISSION)):
                     # Set self.mpq.qs_mp to None to bypass the Singleton nature of MPQuery and have _build_mpq_queryset() build new self.mpq items
                     self.mpq.qs_mp = None
                     self.kwargs['activitynames'] = [act.name]
@@ -1807,40 +1808,48 @@ class STOQSQManager(object):
         return speedup
 
     def getMeasuredParameterX3D(self):
-        '''Returns dictionary of X3D elements for rendering by X3DOM
+        '''Returns dictionary of X3D elements for rendering by X3DOM.
+        The dictionary is arganized by Platform. The dataValuesX3D() method returns items 
+        organized by Activity and slice_minute Shape slices.
         '''
-        x3dDict = None
-        if self.kwargs.get('showgeox3dmeasurement'):
-            if 'parameterplot' in self.kwargs:
-                if self.kwargs['parameterplot'][0]:
-                    parameterID = self.kwargs['parameterplot'][0]
-                    parameterGroups = getParameterGroups(self.request.META['dbAlias'], 
-                              models.Parameter.objects.using(self.request.META['dbAlias']
-                              ).get(id=parameterID))
-                    try:
-                        count = self.mpq.count()
-                        logger.debug('count = %s', count)
-                    except AttributeError:
-                        logger.debug('Calling self.mpq.buildMPQuerySet()')
-                        self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
-                    else:
-                        logger.debug('self.mpq.qs_mp = %s', self.mpq.qs_mp)
-                    try:
-                        platformName = self.kwargs['parameterplot'][1]
-                    except IndexError as e:
-                        logger.warn(e)
-                        platformName = None
+        x3d_dict = {}
+        if self.kwargs.get('showgeox3dmeasurement') and 'parameterplot' in self.kwargs:
+            # Set a single min_max for coloring all the lines
+            parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
+            min_max = self._get_plot_min_max(parameterID, contourparameterID)
+            if not min_max:
+                return None, None, 'Cannot make X3D lines'
 
-                    logger.debug('Getting data values in X3D for platformName = %s', platformName) 
-                    mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, self.contour_mpq.qs_sp_no_order,
-                            self.getParameterMinMax()['plot'], self.getSampleQS(), 
-                            platformName, parameterID, parameterGroups)
-                    # Default vertical exaggeration is 10x
-                    x3dDict = mpdv.dataValuesX3D(float(self.request.GET.get('ve', 10)), int(self.request.GET.get('slice_minutes')))
-                    if isinstance(x3dDict, Mapping):
-                        x3dDict['speedup'] = self._get_speedup({act.platform for act in self.qs})
+            # platformName and contourplatformName are for display purposes and may look like:
+            # 'daphne,makai_ESP_filtering,tethys,makai'; _combine_sample_platforms() divies them up to get by-platform querystrings
+            for pns in self._combine_sample_platforms(platformName):
+                # Rebuild query set for just this platform as qs_mp_no_order is an MPQuerySet which has no filter() method
+                self.kwargs['platforms'] = pns.split(',')
+                platform_single = self.kwargs['platforms'][0]
+                x3d_plat = {}
+                # All Activities in the selection, do not inlcude 'special Activities' like LRAUV Mission
+                for act in self.qs.filter(Q(platform__name=platform_single) & ~Q(activitytype__name=LRAUV_MISSION)):
+                    # Set self.mpq.qs_mp to None to bypass the Singleton nature of MPQuery and have _build_mpq_queryset() build new self.mpq items
+                    self.mpq.qs_mp = None
+                    self.kwargs['activitynames'] = [act.name]
+                    parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
+                    logger.info(f"Getting dataValues for pns='{pns}', act.name='{act.name}'")
+                    cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, self.contour_mpq.qs_mp_no_order,
+                                            min_max, self.getSampleQS(), pns,
+                                            parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
+                    x3d_items = cp.dataValuesX3D(platform_single, float(self.request.GET.get('ve', 10)), 
+                                                                    int(self.request.GET.get('slice_minutes')))
+                    if x3d_items:
+                        x3d_plat[act.name] = x3d_items
+
+
+                if x3d_plat:
+                    x3d_dict[pns] = x3d_plat
+
+            if isinstance(x3d_dict, Mapping):
+                x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
             
-        return x3dDict
+        return x3d_dict
 
     def getPlatformAnimation(self):
         '''

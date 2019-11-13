@@ -827,102 +827,104 @@ class MeasuredParameter(BaseParameter):
 
         return slice_indices, slice_esecs
 
-    def dataValuesX3D(self, vert_ex=10.0, slice_minutes=10):
+    def _get_ils(self, act, istart, iend, vert_ex, lon_attr, lat_attr, depth_attr, value_attr):
+
+        lon_sliced = getattr(self, lon_attr)[act][istart:iend]
+        lat_sliced = getattr(self, lat_attr)[act][istart:iend]
+        depth_sliced = getattr(self, depth_attr)[act][istart:iend]
+        value_sliced = getattr(self, value_attr)[act][istart:iend]
+
+        points = ''
+        colors = ''
+        indices = ''
+        index = 0
+        for lon, lat, depth, value in zip(lon_sliced, lat_sliced, depth_sliced, value_sliced):
+            try:
+                cindx = int(round((value - float(self.pMinMax[1])) * (len(self.clt) - 1) / 
+                                  (float(self.pMinMax[2]) - float(self.pMinMax[1]))))
+            except ValueError as e:
+                # Likely: 'cannot convert float NaN to integer' as happens when rendering something like altitude outside of terrain coverage
+                continue
+            except ZeroDivisionError as e:
+                logger.error("Can't make color lookup table with min and max being the same, self.pMinMax = %s", self.pMinMax)
+                raise e
+
+            if cindx < 0:
+                cindx = 0
+            if cindx > len(self.clt) - 1:
+                cindx = len(self.clt) - 1
+
+            if lon_attr.endswith('_span'):
+                points = points + '%.5f %.5f %.1f %.5f %.5f %.1f ' % (lats[0], lons[0],
+                        -depths[0] * vert_ex, lats[1], lons[1], -depths[1] * vert_ex)
+                colors = colors + '%.3f %.3f %.3f %.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2],
+                                                                      self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
+                indices = indices + '%i %i ' % (index, index + 1)
+                index = index + 2
+            else:
+                points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
+                colors = colors + '%.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
+                indices = indices + '%i ' % index
+                index = index + 1
+
+        # End the IndexedLinestring with -1 so that end point does not 
+        # connect to the beg point, end with space for multiple activities
+        indices = indices + '-1 ' 
+
+        return points, colors, indices
+
+    def dataValuesX3D(self, platform_name, vert_ex=10.0, slice_minutes=10):
         '''
         Return scatter-like data values as X3D geocoordinates and colors.
+        This is called per platform and returns a hash organized by activity and slice_minutes Shapes.
         '''
-        x3dResults = {}
-        # Hack warning: too much coupling with UI code
-        if not self.kwargs.get('showgeox3dmeasurement'):
-            return x3dResults
-
+        x3d_results = {}
         logger.debug("Building X3D data values with vert_ex = %f", vert_ex)
-
         if not self.lon and not self.lat and not self.depth and not self.value:
             self.logger.debug('Calling self.loadData()...')
             self.loadData(self.qs_mp)
         try:
-            points = ''
-            colors = ''
-            indices = ''
-            index = 0
+            x3d_by_act = {}
             for act in list(self.value_by_act.keys()):
                 self.logger.debug('Reading data from act = %s', act)
-                import pdb; pdb.set_trace()
+                # Get indices and times of the Shape slices to be animated
                 slice_indices, slice_esecs = self._get_slices(self.x, slice_minutes)
+                self.logger.debug(f"Slicing pairwise {len(self.lon_by_act[act])} lat & lon points at indices {slice_indices} for {slice_minutes} minute intervals")
+                x3d_by_shape = {}
+                for istart, iend, start_esecs in zip(slice_indices, slice_indices[1:], slice_esecs):
+                    shape_id = f"ils_{platform_name}_{int(start_esecs)}"
+                    self.logger.debug(f"Getting IndexedLineSet data for shape_id: {shape_id}")
+                    points, colors, indices = self._get_ils(act, istart, iend, vert_ex, 
+                                                            'lon_by_act', 'lat_by_act', 'depth_by_act', 'value_by_act')
+                    x3d_by_shape[shape_id] = {'colors': colors.rstrip(), 'points': points.rstrip(), 'index': indices.rstrip()}
 
-                for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
-                    points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
-                    try:
-                        cindx = int(round((value - float(self.pMinMax[1])) * (len(self.clt) - 1) / 
-                                        (float(self.pMinMax[2]) - float(self.pMinMax[1]))))
-                    except ValueError as e:
-                        # Likely: 'cannot convert float NaN to integer' as happens when rendering something like altitude outside of terrain coverage
-                        continue
-                    except ZeroDivisionError as e:
-                        logger.error("Can't make color lookup table with min and max being the same, self.pMinMax = %s", self.pMinMax)
-                        raise e
-
-                    if cindx < 0:
-                        cindx = 0
-                    if cindx > len(self.clt) - 1:
-                        cindx = len(self.clt) - 1
-
-                    colors = colors + '%.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
-                    indices = indices + '%i ' % index
-                    index = index + 1
-
-                # End the IndexedLinestring with -1 so that end point does not 
-                # connect to the beg point, end with space for multiple activities
-                indices = indices + '-1 ' 
+                x3d_by_act[act] = x3d_by_shape
 
             # Make pairs of points for spanned NetTow-like data
             for act in list(self.value_by_act_span.keys()):
                 self.logger.debug('Reading spanned NetTow-like data from act = %s', act)
-                for lons, lats, depths, value in zip(self.lon_by_act_span[act], 
-                                                      self.lat_by_act_span[act], 
-                                                      self.depth_by_act_span[act], 
-                                                      self.value_by_act_span[act]):
-                    points = points + '%.5f %.5f %.1f %.5f %.5f %.1f ' % (lats[0], lons[0],
-                            -depths[0] * vert_ex, lats[1], lons[1], -depths[1] * vert_ex)
-                    try:
-                        cindx = int(round((value - float(self.pMinMax[1])) * (len(self.clt) - 1) / 
-                                        (float(self.pMinMax[2]) - float(self.pMinMax[1]))))
-                    except ValueError as e:
-                        # Likely: 'cannot convert float NaN to integer' as happens when rendering something like altitude outside of terrain coverage
-                        continue
-                    except ZeroDivisionError as e:
-                        logger.error("Can't make color lookup table with min and max being the same, self.pMinMax = %s", self.pMinMax)
-                        raise e
+                istart = 0
+                iend = len(self.lon_by_act_span[act])
+                x3d_by_shape = {}
+                shape_id = f"ils_{platform_name}_{int(start_esecs)}_span"
+                points, colors, indices = self._get_ils(act, istart, iend, vert_ex, 
+                                                        'lon_by_act_span', 'lat_by_act_span', 'depth_by_act_span', 'value_by_act_span')
+                x3d_by_shape[shape_id] = {'colors': colors.rstrip(), 'points': points.rstrip(), 'index': indices.rstrip()}
+                x3d_by_act[act] = x3d_by_shape
 
-                    if cindx < 0:
-                        cindx = 0
-                    if cindx > len(self.clt) - 1:
-                        cindx = len(self.clt) - 1
 
-                    colors = colors + '%.3f %.3f %.3f %.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2],
-                                                                          self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
-                    indices = indices + '%i %i ' % (index, index + 1)
-                    index = index + 2
-
-                # End the IndexedLinestring with -1 so that end point does not connect to the beg point
-                indices = indices + '-1 ' 
-
-            if self.value_by_act or self.value_by_act_span:
-                if self.colorbarPngFileFullPath:
-                    try:
-                        self.makeColorBar(self.colorbarPngFileFullPath, self.pMinMax)
-                    except Exception as e:
-                        self.logger.exception('Could not plot the colormap')
-                        x3dResults = 'Could not plot the colormap'
-                    else:
-                        x3dResults = {'colors': colors.rstrip(), 'points': points.rstrip(), 'info': '', 'index': indices.rstrip(), 'colorbar': self.colorbarPngFile}
+            if self.colorbarPngFileFullPath and (self.value_by_act or self.value_by_act_span):
+                try:
+                    self.makeColorBar(self.colorbarPngFileFullPath, self.pMinMax)
+                except Exception as e:
+                    self.logger.exception('Could not plot the colormap')
+                else:
+                    x3d_results = {'ils': x3d_by_act, 'info': '', 'colorbar': self.colorbarPngFile}
 
         except Exception as e:
             self.logger.exception('Could not create measuredparameterx3d: %s', e)
-            x3dResults = 'Could not create measuredparameterx3d'
 
-        return x3dResults
+        return x3d_results
 
     def curtainX3D(self, platform_names, vert_ex=10.0, slice_minutes=10):
         '''Return X3D elements of image texture mapped onto geospatial geometry of vehicle track.
@@ -957,8 +959,8 @@ class MeasuredParameter(BaseParameter):
             if not sectionPngFile:
                 return x3dResults
 
+        # Get indices and times of the quadrilaterals for our image texture mapping
         slice_indices, slice_esecs = self._get_slices(self.x, slice_minutes)
-
         self.logger.debug(f"Slicing {len(self.lon)} lat & lon points at indices {slice_indices} for {slice_minutes} minute intervals")
         lon_sliced = itemgetter(*slice_indices)(self.lon)
         lat_sliced = itemgetter(*slice_indices)(self.lat)
