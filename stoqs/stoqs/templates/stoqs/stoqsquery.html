@@ -5486,27 +5486,27 @@ function enable_cardboard(){
                 }
             }
             else if (key == 'measuredparameterx3d') {
-                if (data[key]) {
-                    if (data[key]['points']) {
-                        if ( ! $.isEmptyObject(data.measuredparameterx3d.points) ) {
-                            $('#mp-x3d-track-group').html([
-                                '<Shape id="mp-x3d-track">',
-                                    '<Appearance><LineProperties linewidthScaleFactor="5"></LineProperties></Appearance>',
-                                    '<indexedlineset coordIndex="' + data.measuredparameterx3d.index + '">',
-                                        '<color color="' + data.measuredparameterx3d.colors + '"></color>',
-                                        '<geocoordinate point="' + data.measuredparameterx3d.points  + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>',
-                                    '</indexedlineset>',
+                if ( ! $.isEmptyObject(data.measuredparameterx3d) ) {
+                    var ils_x3d_html = '';
+                    $.each(data.measuredparameterx3d, function (shapeid, shapex3d) {
+                        if ( ! $.isEmptyObject(shapex3d.points) ) {
+                            ils_x3d_html += '<Shape id="' + shapeid + '">' +
+                                    '<Appearance><LineProperties linewidthScaleFactor="5"></LineProperties></Appearance>' +
+                                    '<indexedlineset coordIndex="' + shapex3d.index + '">' +
+                                        '<color color="' + shapex3d.colors + '"></color>' +
+                                        '<geocoordinate point="' + shapex3d.points  + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>' +
+                                    '</indexedlineset>' +
                                 '</Shape>'
-                            ].join(''));
                         }
-                        $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data.measuredparameterx3d.colorbar + '" />');
-                        if ( ! $('#animation3D').hasClass('in') ) {
-                            $('#animation3D-anchor').click();
-                        }
-                        $('#spatial-3d-x3d-pp-slider').show();
-                        $('#spatial-3d-x3d-speedup').show()
-                        $('#speedup-value').val(data[key].speedup);
+                    });
+                    $('#mp-x3d-track-group').html(ils_x3d_html);
+                    $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data.measuredparameterx3d.colorbar + '" />');
+                    if ( ! $('#animation3D').hasClass('in') ) {
+                        $('#animation3D-anchor').click();
                     }
+                    $('#spatial-3d-x3d-pp-slider').show();
+                    $('#spatial-3d-x3d-speedup').show()
+                    $('#speedup-value').val(data[key].speedup);
                 }
             }
             else if (key == 'curtainstaticx3d') {
