@@ -2533,12 +2533,10 @@
     $('#showplatforms').on('click', function (event) {
         if ( $('#showplatforms').is(':checked') ) {
             // Need time series data to redraw with crosshairs, so get everything
-            rebuildFilters();
+            rebuildFilters(['platformanimation']);
             addStationaryPlatformModels();
             $('#showgeox3dlabels').parent().show();
             $('#showgeox3denuaxes').parent().show();
-            $('#showplatforms').parent().parent().css( {'padding': '3px',
-                                                        'background-color': 'lightgray'});
         }
         else {
             if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
