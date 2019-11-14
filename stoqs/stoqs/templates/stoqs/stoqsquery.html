@@ -74,10 +74,10 @@
             margin-bottom: 0px;
         }
         .stoqs-speedup-input {
-            width: 20px;
+            width: 25px;
             height: 8px;
             line-height: 12px;
-            font-size: 13px;
+            font-size: 11px;
             margin-bottom: 4px;
             text-align: right;
         }
@@ -369,7 +369,7 @@
                                                             <div class="span1" style="padding:0px;margin-left:5px;"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
                                                             <div class="span9" style="margin:0px;margin-top:3px;"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
                                                             <div class="span2">
-                                                                <span id="spatial-3d-x3d-speedup" style="display:none;">
+                                                                <span id="spatial-3d-x3d-speedup" style="font-size:11px;display:none;">
                                                                     Speed: <input id="speedup-value" class="stoqs-speedup-input" type="text"/>x
                                                                 </span>
                                                             </div>
@@ -404,12 +404,11 @@
         <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
         <Group id='spatial-3d-root' render='true'>
           <Group id='spatial-3d-scene' def="spatial-3d-scene">
-            <Group id="mp-x3d-track-group"></Group>
-            <Group id="mp-curtain-group"></Group>
             <GeoOriginTransform containerField='children'>
               <Group id="mp-x3d-terrain">
               </Group>
             </GeoOriginTransform>
+            <Group id="track-animations"></Group>
             <Group id="platform-animations"></Group>
             <Group id="curtain-animations"></Group>
             <Group id="platform-models"></Group>
@@ -2484,7 +2483,7 @@
         // Don't need to get everything from queryData, only the response with the PNG image
         if ($('#showgeox3dmeasurement').is(':checked')) {
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['parameterplatformdatavaluepng', 'curtainstaticx3d', 'measuredparameterx3d', 'parameterminmax']);
+                rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
             }
             else {
                 rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
@@ -2498,7 +2497,7 @@
     $('#showgeox3dmeasurement').on('click', function (event) {
         // Don't need to get everything from queryData, only the response with the X3D data
         if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-            rebuildFilters(['curtainstaticx3d', 'measuredparameterx3d']);
+            rebuildFilters(['curtainx3d', 'measuredparameterx3d']);
         }
         else {
             rebuildFilters(['measuredparameterx3d']);
@@ -2777,7 +2776,7 @@
             $('#showgeox3dmeasurementtext').text($('#temporalparameterplotinfo').data()['info']);
             $('#activitytypes').hide()
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['parameterplatformdatavaluepng', 'curtainstaticx3d', 'measuredparameterx3d', 'parameterminmax']);
+                rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
             }
             else {
                 rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
@@ -3532,7 +3531,7 @@ function enable_cardboard(){
             }
             $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent().hide();
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['parametertime', 'platformanimation', 'curtainstaticx3d', 'measuredparameterx3d']);
+                rebuildFilters(['parametertime', 'platformanimation', 'curtainx3d', 'measuredparameterx3d']);
             }
             else {
                 rebuildFilters(['parametertime', 'platformanimation', 'measuredparameterx3d']);
@@ -4152,13 +4151,13 @@ function enable_cardboard(){
         if ($('#showplatforms').is(':checked')) {
             rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'measuredparameterx3d', 'platformanimation']);
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'curtainstaticx3d', 'measuredparameterx3d', 'platformanimation']);
+                rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'curtainx3d', 'measuredparameterx3d', 'platformanimation']);
             }
         }
         else {
             rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'measuredparameterx3d']);
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'curtainstaticx3d', 'platformanimation']);
+                rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'curtainx3d', 'platformanimation']);
             }
         }
         $('#time-parameter-instr').html('Click and drag zoom, right-click to un-zoom');
@@ -4851,7 +4850,7 @@ function enable_cardboard(){
                             if ( $('body').data()['ve'] != item.VerticalExaggeration ) {
                                 $('body').data()['ve'] = item.VerticalExaggeration;
                                 if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                                    rebuildFilters(['curtainstaticx3d', 'measuredparameterx3d', 'platformanimation']);
+                                    rebuildFilters(['curtainx3d', 'measuredparameterx3d', 'platformanimation']);
                                 }
                                 else {
                                     rebuildFilters(['measuredparameterx3d', 'platformanimation']);
@@ -5497,7 +5496,7 @@ function enable_cardboard(){
                                 '</Shape>'
                         }
                     });
-                    $('#mp-x3d-track-group').html(ils_x3d_html);
+                    $('#track-animations').html(ils_x3d_html);
                     $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data.measuredparameterx3d.colorbar + '" />');
                     if ( ! $('#animation3D').hasClass('in') ) {
                         $('#animation3D-anchor').click();
@@ -5507,29 +5506,29 @@ function enable_cardboard(){
                     $('#speedup-value').val(data[key].speedup);
                 }
             }
-            else if (key == 'curtainstaticx3d') {
-                if (! $.isEmptyObject(data.curtainstaticx3d)) {
-                    var curtainstaticx3d_html = '';
-                    $.each(data.curtainstaticx3d, function (platform_name, activityx3d) {
-                        $.each(activityx3d, function (activity_name, curtainstaticx3d) {
-                            if (curtainstaticx3d['points']) {
-                                if ( ! $.isEmptyObject(curtainstaticx3d.points) ) {
-                                    curtainstaticx3d_html += '<Shape id="mp-curtain_' + platform_name + '_' + activity_name + '">' +
+            else if (key == 'curtainx3d') {
+                if (! $.isEmptyObject(data.curtainx3d)) {
+                    var curtainx3d_html = '';
+                    $.each(data.curtainx3d, function (platform_name, activityx3d) {
+                        $.each(activityx3d, function (activity_name, curtainx3d) {
+                            if (curtainx3d['points']) {
+                                if ( ! $.isEmptyObject(curtainx3d.points) ) {
+                                    curtainx3d_html += '<Shape id="mp-curtain_' + platform_name + '_' + activity_name + '">' +
                                             '<appearance>' +
-                                                '<imagetexture repeats="false" repeatt="false" url="{{MEDIA_URL}}sections/' + curtainstaticx3d.image + '"></imagetexture>' +
+                                                '<imagetexture repeats="false" repeatt="false" url="{{MEDIA_URL}}sections/' + curtainx3d.image + '"></imagetexture>' +
                                             '</appearance>' +
-                                            '<indexedfaceset solid="false" coordIndex="' + curtainstaticx3d.ifs_cindex + 
-                                                                     '" texCoordIndex="' + curtainstaticx3d.ifs_tcindex + '">' +
-                                                '<geocoordinate point="' + curtainstaticx3d.points + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>' +
-                                                '<texturecoordinate point="' + curtainstaticx3d.tc_points + '"></geocoordinate>' +
+                                            '<indexedfaceset solid="false" coordIndex="' + curtainx3d.ifs_cindex + 
+                                                                     '" texCoordIndex="' + curtainx3d.ifs_tcindex + '">' +
+                                                '<geocoordinate point="' + curtainx3d.points + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>' +
+                                                '<texturecoordinate point="' + curtainx3d.tc_points + '"></geocoordinate>' +
                                             '</indexedfaceset>' +
                                         '</Shape>'
                                 }
-                                $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + curtainstaticx3d.colorbar + '" />');
+                                $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + curtainx3d.colorbar + '" />');
                             }
                         });
                     });
-                    $('#mp-curtain-group').html(curtainstaticx3d_html);
+                    $('#curtain-animations').html(curtainx3d_html);
 
                     if ( ! $('#animation3D').hasClass('in') ) {
                         $('#animation3D-anchor').click();

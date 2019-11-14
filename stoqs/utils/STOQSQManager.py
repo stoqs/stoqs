@@ -111,7 +111,7 @@ class STOQSQManager(object):
             'parameterplatformdatavaluepng': self.getParameterDatavaluePNG,
             'parameterparameterx3d': self.getParameterParameterX3D,
             'measuredparameterx3d': self.getMeasuredParameterX3D,
-            'curtainstaticx3d': self.getPDV_IFSs,
+            'curtainx3d': self.getPDV_IFSs,
             'platformanimation': self.getPlatformAnimation,
             'parameterparameterpng': self.getParameterParameterPNG,
             'parameterplatforms': self.getParameterPlatforms,
@@ -1678,9 +1678,6 @@ class STOQSQManager(object):
         '''Return X3D scene of Parameter DataValue IndexedFaceSets of curtains constructed 
         from ParameterDatavaluePNG images when contour and 3D data are checked.
         '''
-        # Tesing on dev system with:
-        # http://localhost:8008/stoqs_canon_may2019_t/query/summary/?only=curtainstatic3d&except=spsql&except=mpsql&start_time=2019-06-02+20%3A48%3A34&end_time=2019-06-03+04%3A39%3A37&min_depth=-7.51&max_depth=265.45&updatefromzoom=1&speedup=10&sn_colormap=1&parameterplotid=12&platformplotname=daphne,makai_ESP_filtering,tethys,makai&except=sampledurationsdepthtime&showdataas=contour&cm=algae&cmin=0.06237&cmax=1.766&num_colors=256&showgeox3dmeasurement=1&ve=10&pplr=1&ppsl=1
-
         x3d_dict = {}
         contourFlag = False
         if 'showdataas' in self.kwargs:
