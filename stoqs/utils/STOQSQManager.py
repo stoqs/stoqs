@@ -1827,8 +1827,14 @@ class STOQSQManager(object):
                 # Rebuild query set for just this platform as qs_mp_no_order is an MPQuerySet which has no filter() method
                 self.kwargs['platforms'] = pns.split(',')
                 platform_single = self.kwargs['platforms'][0]
+                self.min_start_time = datetime.utcnow()
+                self.max_end_time = datetime.utcfromtimestamp(0)
                 # All Activities in the selection, do not inlcude 'special Activities' like LRAUV Mission
                 for act in self.qs.filter(Q(platform__name=platform_single) & ~Q(activitytype__name=LRAUV_MISSION)):
+                    if act.startdate < self.min_start_time:
+                        self.min_start_time = act.startdate
+                    if act.enddate > self.max_end_time:
+                        self.max_end_time = act.enddate
                     # Set self.mpq.qs_mp to None to bypass the Singleton nature of MPQuery and have _build_mpq_queryset() build new self.mpq items
                     self.mpq.qs_mp = None
                     self.kwargs['activitynames'] = [act.name]
@@ -1846,6 +1852,9 @@ class STOQSQManager(object):
             self.kwargs['activitynames'] = saved_activitynames
             if x3d_dict:
                 x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
+                cycInt = (self.max_end_time - self.min_start_time).total_seconds() / x3d_dict['speedup']
+                x3d_dict['timesensor'] = PlatformAnimation.global_template.format(cycInt=cycInt)
+
                 cp.makeColorBar(cp.colorbarPngFileFullPath, cp.pMinMax)
                 x3d_dict['colorbar'] = cp.colorbarPngFile
             
