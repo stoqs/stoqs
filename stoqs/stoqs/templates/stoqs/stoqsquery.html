@@ -411,6 +411,7 @@
             <Group id="track-animations"></Group>
             <Group id="platform-animations"></Group>
             <Group id="curtain-animations"></Group>
+            <Group id="animations"></Group>
             <Group id="platform-models"></Group>
           </Group>
         </Group>
@@ -1471,6 +1472,8 @@
     var rtLeft, rtRight;
     var lastW, lastH;
     var num_pt_colors = 16;
+    var ils_x3d_dict = {};
+    var ifs_x3d_dict = {};
 
     var vrHMD = null, vrSensor = null;
     var pyr = new x3dom.fields.SFVec3f(0, 0, 0);        // For the Leap Motion
@@ -1481,6 +1484,9 @@
             return;
         var fraction = eventObject.value;
         $('#spatial-3d-x3d-slider').val(fraction);
+        // TODO: Set render to true or false for shapes
+        //if (fraction < ... ) {
+        //}
         updateCrosshairs(fraction, timeAxis, sliderLimits);
     }
 
@@ -5487,6 +5493,8 @@ function enable_cardboard(){
                     var ils_x3d_html = '';
                     $.each(data.measuredparameterx3d, function (shapeid, shapex3d) {
                         if ( ! $.isEmptyObject(shapex3d.points) ) {
+                            // shapeid is like: ils_tethys_1558637082
+                            ils_x3d_dict[shapeid.split('_')[2]] = [shapeid];
                             ils_x3d_html += '<Shape id="' + shapeid + '">' +
                                     '<Appearance><LineProperties linewidthScaleFactor="5"></LineProperties></Appearance>' +
                                     '<indexedlineset coordIndex="' + shapex3d.index + '">' +
@@ -5513,6 +5521,8 @@ function enable_cardboard(){
                         $.each(activityx3d, function (activity_name, curtainx3d) {
                             if (curtainx3d['points']) {
                                 if ( ! $.isEmptyObject(curtainx3d.points) ) {
+                                    // shapeid is like: ifs_tethys_1558637082
+                                    // TODO: make like ils... ifs_x3d_dict[shapeid.split('_')[2]] = [shapeid];
                                     curtainx3d_html += '<Shape id="mp-curtain_' + platform_name + '_' + activity_name + '">' +
                                             '<appearance>' +
                                                 '<imagetexture repeats="false" repeatt="false" url="{{MEDIA_URL}}sections/' + curtainx3d.image + '"></imagetexture>' +
@@ -5529,7 +5539,6 @@ function enable_cardboard(){
                         });
                     });
                     $('#curtain-animations').html(curtainx3d_html);
-
                     if ( ! $('#animation3D').hasClass('in') ) {
                         $('#animation3D-anchor').click();
                     }
@@ -5568,7 +5577,8 @@ function enable_cardboard(){
                         $('body').data()['platformAnimation'].push(plat);
                         x3dText += x3d;
                     });
-                    $('#platform-animations').html(data[key]['all'] + x3dText);
+                    $('#animations').html(data[key]['all']);
+                    $('#platform-animations').html(x3dText);
 
                     // Check for any platforms that have Shape IndexedLineSets so as to show ROT Axis check box
                     var has_rotaxes = false;
