@@ -893,7 +893,7 @@ class MeasuredParameter(BaseParameter):
                     shape_id = f"ils_{platform_name}_{int(start_esecs)}"
                     self.logger.debug(f"Getting IndexedLineSet data for shape_id: {shape_id}")
                     iendp1 = iend + 1
-                    if iendp1 > len(self.lon_by_act[act]) -1:
+                    if iendp1 > len(self.lon_by_act[act]) - 1:
                         iendp1 = iend
                     points, colors, indices = self._get_ils(act, istart, iendp1, vert_ex, 
                                                             'lon_by_act', 'lat_by_act', 'depth_by_act', 'value_by_act')
@@ -922,9 +922,11 @@ class MeasuredParameter(BaseParameter):
         x3dResults = {}
 
         # 1. Image: Build image with potential Sampling Platforms included
+        saved_platforms = self.kwargs['platforms']
         self.kwargs['platforms'] = platform_names.split(',')
         sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(forFlot=False)
         if not sectionPngFile:
+            self.kwargs['platforms'] = saved_platforms
             return x3dResults
 
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
@@ -945,6 +947,7 @@ class MeasuredParameter(BaseParameter):
             self.logger.debug(f"renderDatavaluesNoAxes(loadDataOnly=True) for self.kwargs['platforms'] = {self.kwargs['platforms']}")
             sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(forFlot=False, loadDataOnly=True)
             if not sectionPngFile:
+                self.kwargs['platforms'] = saved_platforms
                 return x3dResults
 
         # Get indices and times of the quadrilaterals for our image texture mapping
@@ -995,6 +998,7 @@ class MeasuredParameter(BaseParameter):
                       'tc_points': tc_points.rstrip(), 'info': '', 
                       'image': sectionPngFileTrimmed, 'colorbar': colorbarPngFile}
 
+        self.kwargs['platforms'] = saved_platforms
         return x3dResults
 
 class PPDatabaseException(Exception):

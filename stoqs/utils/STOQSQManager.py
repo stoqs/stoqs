@@ -1696,6 +1696,7 @@ class STOQSQManager(object):
 
             # platformName and contourplatformName are for display purposes and may look like:
             # 'daphne,makai_ESP_filtering,tethys,makai'; _combine_sample_platforms() divies them up for image generation
+            saved_platforms = self.kwargs['platforms']
             for pns in self._combine_sample_platforms(platformName):
                 # Rebuild query set for just this platform as qs_mp_no_order is an MPQuerySet which has no filter() method
                 self.kwargs['platforms'] = pns.split(',')
@@ -1719,6 +1720,7 @@ class STOQSQManager(object):
                 if x3d_plat:
                     x3d_dict[pns] = x3d_plat
 
+            self.kwargs['platforms'] = saved_platforms
             if isinstance(x3d_dict, Mapping):
                 x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
 
@@ -1822,6 +1824,8 @@ class STOQSQManager(object):
 
             # platformName and contourplatformName are for display purposes and may look like:
             # 'daphne,makai_ESP_filtering,tethys,makai'; _combine_sample_platforms() divies them up to get by-platform querystrings
+            saved_platforms = self.kwargs['platforms']
+            saved_activitynames = self.kwargs['activitynames']
             for pns in self._combine_sample_platforms(platformName):
                 # Rebuild query set for just this platform as qs_mp_no_order is an MPQuerySet which has no filter() method
                 self.kwargs['platforms'] = pns.split(',')
@@ -1841,7 +1845,9 @@ class STOQSQManager(object):
                     if x3d_items:
                         x3d_dict.update(x3d_items)
 
-            if isinstance(x3d_dict, Mapping):
+            self.kwargs['platforms'] = saved_platforms
+            self.kwargs['activitynames'] = saved_activitynames
+            if x3d_dict:
                 x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
                 cp.makeColorBar(cp.colorbarPngFileFullPath, cp.pMinMax)
                 x3d_dict['colorbar'] = cp.colorbarPngFile
@@ -1857,10 +1863,8 @@ class STOQSQManager(object):
         '''
         orientDict = {}
         if self.request.GET.get('showplatforms', False):
-            try:
-                count = self.mpq.count()
-            except AttributeError:
-                self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+            self.mpq.qs_mp = None
+            parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
 
             # Test if there are any X3D platform models in the selection
             platformsHavingModels = {pr.platform for pr in models.PlatformResource.objects.using(
