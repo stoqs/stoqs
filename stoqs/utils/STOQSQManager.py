@@ -1812,6 +1812,7 @@ class STOQSQManager(object):
         organized by Activity and slice_minute Shape slices.
         '''
         x3d_dict = {}
+        x3d_dict['shape_id_dict'] = {}
         if self.kwargs.get('showgeox3dmeasurement') and 'parameterplot' in self.kwargs:
             # Set a single min_max for coloring all the lines
             parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
@@ -1843,10 +1844,11 @@ class STOQSQManager(object):
                     cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, self.contour_mpq.qs_mp_no_order,
                                             min_max, self.getSampleQS(), pns,
                                             parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
-                    x3d_items = cp.dataValuesX3D(platform_single, float(self.request.GET.get('ve', 10)), 
-                                                                    int(self.request.GET.get('slice_minutes', 30)))
+                    x3d_items, shape_id_dict = cp.dataValuesX3D(platform_single, float(self.request.GET.get('ve', 10)), 
+                                                                                   int(self.request.GET.get('slice_minutes', 30)))
                     if x3d_items:
                         x3d_dict.update(x3d_items)
+                        x3d_dict['shape_id_dict'].update(shape_id_dict)
 
             self.kwargs['platforms'] = saved_platforms
             self.kwargs['activitynames'] = saved_activitynames

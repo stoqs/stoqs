@@ -879,6 +879,7 @@ class MeasuredParameter(BaseParameter):
         This is called per platform and returns a hash organized by activity and slice_minutes Shapes.
         '''
         x3d_results = {}
+        shape_id_dict = {}
         logger.debug("Building X3D data values with vert_ex = %f", vert_ex)
         if not self.lon and not self.lat and not self.depth and not self.value:
             self.logger.debug('Calling self.loadData()...')
@@ -891,6 +892,7 @@ class MeasuredParameter(BaseParameter):
                 self.logger.debug(f"Slicing pairwise {len(self.lon_by_act[act])} lat & lon points at indices {slice_indices} for {slice_minutes} minute intervals")
                 for istart, iend, start_esecs in zip(slice_indices, slice_indices[1:], slice_esecs):
                     shape_id = f"ils_{platform_name}_{int(start_esecs)}"
+                    shape_id_dict[int(start_esecs)] = [shape_id]
                     self.logger.debug(f"Getting IndexedLineSet data for shape_id: {shape_id}")
                     iendp1 = iend + 1
                     if iendp1 > len(self.lon_by_act[act]) - 1:
@@ -904,7 +906,9 @@ class MeasuredParameter(BaseParameter):
                 self.logger.debug('Reading spanned NetTow-like data from act = %s', act)
                 istart = 0
                 iend = len(self.lon_by_act_span[act])
+                # TODO: test and fix getting start time for _span data
                 shape_id = f"ils_{platform_name}_{int(start_esecs)}_span"
+                shape_id_dict[int(start_esecs)] = [shape_id]
                 points, colors, indices = self._get_ils(act, istart, iend, vert_ex, 
                                                         'lon_by_act_span', 'lat_by_act_span', 'depth_by_act_span', 'value_by_act_span')
                 x3d_results[shape_id] = {'colors': colors.rstrip(), 'points': points.rstrip(), 'index': indices.rstrip()}
@@ -912,7 +916,7 @@ class MeasuredParameter(BaseParameter):
         except Exception as e:
             self.logger.exception('Could not create measuredparameterx3d: %s', e)
 
-        return x3d_results
+        return x3d_results, shape_id_dict
 
     def curtainX3D(self, platform_names, vert_ex=10.0, slice_minutes=10):
         '''Return X3D elements of image texture mapped onto geospatial geometry of vehicle track.
@@ -920,6 +924,7 @@ class MeasuredParameter(BaseParameter):
         Constraints for data in the image come from the settings in self.kwargs set by what calls this.
         '''
         x3dResults = {}
+        shape_id_dict = {}
 
         # 1. Image: Build image with potential Sampling Platforms included
         saved_platforms = self.kwargs['platforms']
@@ -995,11 +1000,11 @@ class MeasuredParameter(BaseParameter):
         self.logger.debug(f"len(indices.strip().split(' '))/1 = {len(indices.strip().split(' '))/1}") 
         self.logger.debug(f"Faces: len(ifs_tcindex.strip().split(' '))/5 = {len(ifs_tcindex.strip().split(' '))/5}") 
         x3dResults = {'points': points.rstrip(), 'ifs_cindex': ifs_cindex.rstrip(), 'ifs_tcindex': ifs_tcindex.rstrip(),
-                      'tc_points': tc_points.rstrip(), 'info': '', 
+                      'tc_points': tc_points.rstrip(), 'info': '',
                       'image': sectionPngFileTrimmed, 'colorbar': colorbarPngFile}
 
         self.kwargs['platforms'] = saved_platforms
-        return x3dResults
+        return x3dResults, shape_id_dict
 
 class PPDatabaseException(Exception):
     def __init__(self, message, sql):
