@@ -1472,8 +1472,7 @@
     var rtLeft, rtRight;
     var lastW, lastH;
     var num_pt_colors = 16;
-    var ils_x3d_dict = {};
-    var ifs_x3d_dict = {};
+    var render_shapes;
 
     var vrHMD = null, vrSensor = null;
     var pyr = new x3dom.fields.SFVec3f(0, 0, 0);        // For the Leap Motion
@@ -1483,10 +1482,28 @@
         if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
             return;
         var fraction = eventObject.value;
+        var fesec;
+        var frac_ems;
+        var frac_esec;
         $('#spatial-3d-x3d-slider').val(fraction);
-        // TODO: Set render to true or false for shapes
-        //if (fraction < ... ) {
-        //}
+        // Set render to true or false for shapes
+        if ( ! $.isEmptyObject(render_shapes) ) {
+            $.each(render_shapes, function(esec, shape_ids) {
+                shps_esec = parseInt(esec);
+                frac_ems = $('body').data()['end-ems'] + fraction * ($('body').data()['start-ems'] - $('body').data()['end-ems']);
+                frac_esec = parseInt(frac_ems / 1000.0);
+                if (frac_esec >= shps_esec) {
+                    $.each(shape_ids, function(index, shape_id) {
+                        $('#' + shape_id)[0].setAttribute('render', 'true');
+                    });
+                }
+                else {
+                    $.each(shape_ids, function(index, shape_id) {
+                        $('#' + shape_id)[0].setAttribute('render', 'false');
+                    });
+                }
+            });
+        }
         updateCrosshairs(fraction, timeAxis, sliderLimits);
     }
 
@@ -2457,6 +2474,11 @@
             $('#spatial-3d-x3d-pause-play').removeClass('icon-play')
             $('#spatial-3d-x3d-pause-play').addClass('icon-pause')
             $('#PLATFORMS_TS').attr('enabled','true');
+            $.each(render_shapes, function(esec, shape_ids) {
+                $.each(shape_ids, function(index, shape_id) {
+                    $('#' + shape_id)[0].setAttribute('render', 'false');
+                });
+            });
             setScale(event);
         }
     });
@@ -5150,6 +5172,53 @@ function enable_cardboard(){
             $('#metadata-loading').html("");
         } //resetWaitIndicators()
 
+        function merge_shape_id_dicts(ils_dict, ifs_dict) {
+            // Combine two dictionaries into one keyed by epoch seconds containing lists of shapes to render for that time
+            var shape_id_dict;
+            if ( ! $.isEmptyObject(ils_dict) && ! $.isEmptyObject(ifs_dict) ) {
+                shape_id_dict = Object.assign({}, ils_dict, ifs_dict);
+            }
+            else if ( ! $.isEmptyObject(ils_dict) ) {
+                shape_id_dict = ils_dict
+            }
+            else if ( ! $.isEmptyObject(ifs_dict) ) {
+                shape_id_dict = ifs_dict
+            }
+            if ( $.isEmptyObject(shape_id_dict) ) {
+                return;
+            }
+
+            min_esec = (new Date()).getTime()/1000;
+            max_esec = 0;
+            $.each(shape_id_dict, function(esec, shape_id) {
+                if (esec < min_esec) {
+                    min_esec = esec;
+                }
+                if (esec > max_esec) {
+                    max_esec = esec;
+                }
+            });
+
+            render_shapes = {};
+            start_esec = parseInt(min_esec);
+            end_esec = parseInt(start_esec) + parseInt($('#fade_away_minutes').val()) * 60.0;
+            // Group shapes into dictionary values for rendering - appears that shape_id_dict is ordered in time
+            $.each(shape_id_dict, function(esec, shape_id) {
+                esec = parseInt(esec);
+                console.log(esec, start_esec, end_esec);
+                if ( $.type(render_shapes[end_esec]) == "undefined" ) {
+                    render_shapes[end_esec] = [];
+                }
+                if (start_esec <= esec && esec < end_esec) {
+                    render_shapes[end_esec].push(shape_id);
+                }
+                else if (esec >= end_esec) {
+                    start_esec = end_esec;
+                    end_esec = parseInt(start_esec) + parseInt($('#fade_away_minutes').val()) * 60.0;
+                }
+            });
+        } // merge_shape_id_dicts()
+
 
         function onUpdate(data, key) {
             // Called from ajax to update the selectors base on the new selection
@@ -5490,11 +5559,15 @@ function enable_cardboard(){
             }
             else if (key == 'measuredparameterx3d') {
                 if ( ! $.isEmptyObject(data.measuredparameterx3d) ) {
+                    if ( ! $.isEmptyObject(data.curtainx3d) ) {
+                        merge_shape_id_dicts(data.measuredparameterx3d.shape_id_dict, data.curtainx3d.shape_id_dict);
+                    }
+                    else {
+                        merge_shape_id_dicts(data.measuredparameterx3d.shape_id_dict, {});
+                    }
                     var ils_x3d_html = '';
                     $.each(data.measuredparameterx3d, function (shapeid, shapex3d) {
                         if ( ! $.isEmptyObject(shapex3d.points) ) {
-                            // shapeid is like: ils_tethys_1558637082
-                            ils_x3d_dict[shapeid.split('_')[2]] = [shapeid];
                             ils_x3d_html += '<Shape id="' + shapeid + '">' +
                                     '<Appearance><LineProperties linewidthScaleFactor="5"></LineProperties></Appearance>' +
                                     '<indexedlineset coordIndex="' + shapex3d.index + '">' +
@@ -5516,13 +5589,12 @@ function enable_cardboard(){
             }
             else if (key == 'curtainx3d') {
                 if (! $.isEmptyObject(data.curtainx3d)) {
+                    merge_shape_id_dicts(data.curtainx3d.shape_id_dict, data.measuredparameterx3d.shape_id_dict);
                     var curtainx3d_html = '';
                     $.each(data.curtainx3d, function (platform_name, activityx3d) {
                         $.each(activityx3d, function (activity_name, curtainx3d) {
                             if (curtainx3d['points']) {
                                 if ( ! $.isEmptyObject(curtainx3d.points) ) {
-                                    // shapeid is like: ifs_tethys_1558637082
-                                    // TODO: make like ils... ifs_x3d_dict[shapeid.split('_')[2]] = [shapeid];
                                     curtainx3d_html += '<Shape id="mp-curtain_' + platform_name + '_' + activity_name + '">' +
                                             '<appearance>' +
                                                 '<imagetexture repeats="false" repeatt="false" url="{{MEDIA_URL}}sections/' + curtainx3d.image + '"></imagetexture>' +
