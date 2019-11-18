@@ -69,7 +69,14 @@ try:
             cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1)
 except KeyboardInterrupt:
     # Likely purposfully terminated return with 0 return code so that we don't drop the database
-    print("KeyboardInterrupt: exiting with 0 return code")
+    print("KeyboardInterrupt: exiting lrauv section with 0 return code")
+    sys.exit(0)
+
+try:
+    cl.loadDorado(syear, eyear, build_attrs=True, plankton_proxies=True)
+except KeyboardInterrupt:
+    # Likely purposfully terminated return with 0 return code so that we don't drop the database
+    print("KeyboardInterrupt: exiting dorado section with 0 return code")
     sys.exit(0)
 
 try:
