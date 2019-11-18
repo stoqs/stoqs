@@ -20,7 +20,6 @@ before_install:
   - export TERM=xterm
   - pip uninstall -y setuptools
   - conda install --yes setuptools
-  - conda remove postgresql
   - conda update --yes conda
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
   - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/miniconda3/
@@ -28,6 +27,7 @@ before_install:
 env:
   - DJANGO=1.10
 install:
+  - conda remove --yes postgresql
   - conda install --yes --verbose python=3.6 hdf4 hdf5 netcdf4 numpy scipy matplotlib nose python-dateutil statsmodels gdal
   - conda install --yes -c omnia python-coveralls=2.9.0
   - pip install --upgrade pip
