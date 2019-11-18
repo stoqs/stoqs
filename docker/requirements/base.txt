@@ -20,7 +20,7 @@ djangorestframework==3.10.3
 euclid==0.1
 GitPython==3.0.3
 httplib2==0.14.0
-ipython==7.8.0
+ipython==7.9.0
 jdcal==1.4.1
 Jinja2==2.10.3
 jupyter==1.0.0
@@ -36,7 +36,7 @@ Paste==3.2.2
 PasteDeploy==2.0.1
 PasteScript==3.2.0
 pika==1.1.0
-Pillow==6.2.0
+Pillow==6.2.1
 pysher==1.0.4
 psycopg2-binary==2.8.4
 pupynere==1.0.15
@@ -55,7 +55,7 @@ selenium==3.141.0
 simplejson==3.16.0
 slacker==0.13.0
 statsmodels==0.10.1
-Sphinx==2.2.0
+Sphinx==2.2.1
 sphinx-rtd-theme==0.4.3
 sqlparse==0.3.0
 thredds-crawler==1.5.4
