@@ -183,7 +183,7 @@ class ParentSamplesLoader(STOQS_Loader):
         self.logger.debug('sampletype %s, created = %s', gulper_type, created)
         with requests.get(gulperUrl, stream=True) as r:
             if r.status_code != 200:
-                self.logger.error('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
+                self.logger.warn('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
                 return
 
             r_decoded = (line.decode('utf-8') for line in r.iter_lines())
