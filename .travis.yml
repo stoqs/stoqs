@@ -20,7 +20,7 @@ before_install:
   - export TERM=xterm
   - pip uninstall -y setuptools
   - conda install --yes setuptools
-  - conda remove postgresql-11
+  - conda remove postgresql
   - conda update --yes conda
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
   - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/miniconda3/
