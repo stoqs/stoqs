@@ -39,7 +39,6 @@ WORKDIR /srv
 
 # Symlink to requirements from docker directory used to minimize context
 COPY requirements /requirements
-##RUN pip3 install git+https://github.com/pymssql/pymssql
 RUN pip3 install -U git+https://github.com/matplotlib/basemap.git
 RUN /bin/bash -c 'pip install -r /requirements/production.txt'
 
