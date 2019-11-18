@@ -2,12 +2,12 @@ language: python
 python:
   - "3.6"
 addons:
-  postgresql: "11"
+  postgresql: "10"
   firefox: "68.0"
   apt:
     packages:
-      - postgresql-11
-      - postgresql-11-postgis-2.4
+      - postgresql-10
+      - postgresql-10-postgis-2.4
 services:
   - xvfb
 before_install: 
@@ -20,6 +20,7 @@ before_install:
   - export TERM=xterm
   - pip uninstall -y setuptools
   - conda install --yes setuptools
+  - conda remove postgresql-11
   - conda update --yes conda
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
   - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/miniconda3/
