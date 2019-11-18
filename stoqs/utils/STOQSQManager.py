@@ -1593,6 +1593,11 @@ class STOQSQManager(object):
         parameterGroups = []
         contourparameterGroups = []
         logger.debug('self.kwargs = %s', self.kwargs)
+        
+        if self.request.GET.get('showplatforms', False):
+            # Allow for platofmrm animation without selecting a parameterplot
+            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+
         if 'parameterplot' in self.kwargs:
             if self.kwargs['parameterplot'][0]:
                 parameterID = self.kwargs['parameterplot'][0]
@@ -1812,7 +1817,6 @@ class STOQSQManager(object):
         organized by Activity and slice_minute Shape slices.
         '''
         x3d_dict = {}
-        x3d_dict['shape_id_dict'] = {}
         if self.kwargs.get('showgeox3dmeasurement') and 'parameterplot' in self.kwargs:
             # Set a single min_max for coloring all the lines
             parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
