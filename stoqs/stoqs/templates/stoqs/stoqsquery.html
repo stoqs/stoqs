@@ -1490,7 +1490,7 @@
         if ( ! $.isEmptyObject(render_shapes) ) {
             $.each(render_shapes, function(esec, shape_ids) {
                 shps_esec = parseInt(esec);
-                frac_ems = $('body').data()['end-ems'] + fraction * ($('body').data()['start-ems'] - $('body').data()['end-ems']);
+                frac_ems = $('body').data()['start-ems'] + fraction * ($('body').data()['end-ems'] - $('body').data()['start-ems']);
                 frac_esec = parseInt(frac_ems / 1000.0);
                 if (frac_esec >= shps_esec) {
                     $.each(shape_ids, function(index, shape_id) {
@@ -2469,6 +2469,13 @@
             $('#spatial-3d-x3d-pause-play').removeClass('icon-pause')
             $('#spatial-3d-x3d-pause-play').addClass('icon-play')
             $('#PLATFORMS_TS').attr('enabled','false');
+            if ( ! $.isEmptyObject(render_shapes) ) {
+                $.each(render_shapes, function(esec, shape_ids) {
+                    $.each(shape_ids, function(index, shape_id) {
+                        $('#' + shape_id)[0].setAttribute('render', 'true');
+                    });
+                });
+            }
         }
         else if ($('#spatial-3d-x3d-pause-play').hasClass('icon-play')) {
             $('#spatial-3d-x3d-pause-play').removeClass('icon-play')
@@ -5175,16 +5182,16 @@ function enable_cardboard(){
         } //resetWaitIndicators()
 
         function merge_shape_id_dicts(ils_dict, ifs_dict) {
-            // Combine two dictionaries into one keyed by epoch seconds containing lists of shapes to render for that time
             var shape_id_dict;
+            // Combine two dictionaries into one keyed by epoch seconds containing lists of shapes to render for that time
             if ( ! $.isEmptyObject(ils_dict) && ! $.isEmptyObject(ifs_dict) ) {
                 shape_id_dict = Object.assign({}, ils_dict, ifs_dict);
             }
             else if ( ! $.isEmptyObject(ils_dict) ) {
-                shape_id_dict = ils_dict
+                shape_id_dict = ils_dict;
             }
             else if ( ! $.isEmptyObject(ifs_dict) ) {
-                shape_id_dict = ifs_dict
+                shape_id_dict = ifs_dict;
             }
             if ( $.isEmptyObject(shape_id_dict) ) {
                 return;
@@ -5192,7 +5199,8 @@ function enable_cardboard(){
 
             min_esec = (new Date()).getTime()/1000;
             max_esec = 0;
-            $.each(shape_id_dict, function(esec, shape_id) {
+            $.each(shape_id_dict, function(es, shape_id) {
+                var esec = parseInt(es);
                 if (esec < min_esec) {
                     min_esec = esec;
                 }
@@ -5203,20 +5211,29 @@ function enable_cardboard(){
 
             render_shapes = {};
             start_esec = parseInt(min_esec);
-            end_esec = parseInt(start_esec) + parseInt($('#fade_away_minutes').val()) * 60.0;
+            end_esec = start_esec + parseInt($('#fade_away_minutes').val()) * 60.0;
             // Group shapes into dictionary values for rendering - appears that shape_id_dict is ordered in time
-            $.each(shape_id_dict, function(esec, shape_id) {
-                esec = parseInt(esec);
-                console.log(esec, start_esec, end_esec);
-                if ( $.type(render_shapes[end_esec]) == "undefined" ) {
-                    render_shapes[end_esec] = [];
-                }
+            $.each(shape_id_dict, function(es, shape_id) {
+                var esec = parseInt(es);
                 if (start_esec <= esec && esec < end_esec) {
-                    render_shapes[end_esec].push(shape_id);
+                    if ( $.type(render_shapes[end_esec]) == "undefined" ) {
+                        render_shapes[end_esec] = [];
+                        render_shapes[end_esec].push(shape_id);
+                    }
+                    else {
+                        render_shapes[end_esec].push(shape_id);
+                    }
                 }
                 else if (esec >= end_esec) {
                     start_esec = end_esec;
-                    end_esec = parseInt(start_esec) + parseInt($('#fade_away_minutes').val()) * 60.0;
+                    end_esec = start_esec + parseInt($('#fade_away_minutes').val()) * 60.0;
+                    if ( $.type(render_shapes[end_esec]) == "undefined" ) {
+                        render_shapes[end_esec] = [];
+                        render_shapes[end_esec].push(shape_id);
+                    }
+                    else {
+                        render_shapes[end_esec].push(shape_id);
+                    }
                 }
             });
         } // merge_shape_id_dicts()
