@@ -1033,7 +1033,7 @@ class Base_Loader(STOQS_Loader):
             try:
                 ip, secs_diff = get_closest_instantpoint(self.associatedActivityName, mt, self.dbAlias)
             except ClosestTimeNotFoundException as e:
-                self.logger.error('Could not find corresponding measurment for LOPC data measured at %s', tv)
+                self.logger.error('Could not find corresponding measurment for LOPC data measured at %s', mt)
             else:
                 if secs_diff > noload_secs_diff:
                     noload_count += 1
