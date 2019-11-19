@@ -2474,11 +2474,13 @@
             $('#spatial-3d-x3d-pause-play').removeClass('icon-play')
             $('#spatial-3d-x3d-pause-play').addClass('icon-pause')
             $('#PLATFORMS_TS').attr('enabled','true');
-            $.each(render_shapes, function(esec, shape_ids) {
-                $.each(shape_ids, function(index, shape_id) {
-                    $('#' + shape_id)[0].setAttribute('render', 'false');
+            if ( ! $.isEmptyObject(render_shapes) ) {
+                $.each(render_shapes, function(esec, shape_ids) {
+                    $.each(shape_ids, function(index, shape_id) {
+                        $('#' + shape_id)[0].setAttribute('render', 'false');
+                    });
                 });
-            });
+            }
             setScale(event);
         }
     });
@@ -4837,7 +4839,7 @@ function enable_cardboard(){
                     });
                     $('#terrain3D-choices').append('<label class="checkbox" style="padding:0px;">' +
                                             '<input type="checkbox" style="margin:3px;" name="use_viewpoint"' + 
-                                            ' value="' + terrain + '" checked />Use viewpoint for selected terrain</label>');
+                                            ' value="' + terrain + '" checked />Set to selected terrain viewpoint on refresh (uncheck to keep current viewpoint)</label>');
                     $('#spatial-3d-li').show();
 
                     // Register listeners for terrain selections
