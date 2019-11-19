@@ -366,12 +366,28 @@
                                                     </a></h5>
                                                     <div id="animation3D" class="accordion-body">
                                                         <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
-                                                            <div class="span1" style="padding:0px;margin-left:5px;"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
-                                                            <div class="span9" style="margin:0px;margin-top:3px;"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
-                                                            <div class="span2">
-                                                                <span id="spatial-3d-x3d-speedup" style="font-size:11px;display:none;">
-                                                                    Speed: <input id="speedup-value" class="stoqs-speedup-input" type="text"/>x
-                                                                </span>
+                                                            <div class="row-fluid">
+                                                                <div class="span1" style="padding:0px;margin-left:5px;">
+                                                                    <i id="spatial-3d-x3d-pause-play" class="icon-play"></i>
+                                                                </div>
+                                                                <div class="span9" style="margin:0px;margin-top:3px;">
+                                                                    <div class="row-fluid">
+                                                                        <input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:98%;">
+                                                                    </div>
+                                                                    <div class="row-fluid">
+                                                                        <span id="slider-start-time"></span>
+                                                                        <div style="float:right;"><span id="slider-end-time"></span></div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="span2">
+                                                                    <span id="spatial-3d-x3d-speedup" style="font-size:11px;display:none;">
+                                                                        Speed: <input id="speedup-value" class="stoqs-speedup-input" type="text"/>x
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row-fluid">
+                                                                <div class="span1" style="padding:0px;margin-left:5px;"></div>
+                                                                <div class="span9"> </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -4838,6 +4854,9 @@ function enable_cardboard(){
                 $('body').data()['terrains'] = data['x3dterrains'];
                 if ( ! $.isEmptyObject(data[key]) ) {
                     // Only a single terrain is supported for now
+                    $('#terrain3D-choices').append('<label class="checkbox" style="padding:0px;">' +
+                                            '<input type="checkbox" style="margin:3px;" name="use_viewpoint"' + 
+                                            ' value="' + terrain + '" checked />Set to selected terrain viewpoint on refresh (uncheck to keep current viewpoint)</label><br>');
                     $.each(data[key], function (terrain, item) {
                         var tname = get_tname(terrain, item);
                         $('#terrain3D-choices').append('<input type="radio" name="terrain_view" class="terrain-view" style="margin:3px;" value="' + terrain + '"/>' +
@@ -4847,9 +4866,6 @@ function enable_cardboard(){
                         $('#mp-x3d-terrain').append('<Inline id="terrain-' + tname + '"></Inline>');
                         $('#terrain-' + tname).attr('url', terrain);
                     });
-                    $('#terrain3D-choices').append('<label class="checkbox" style="padding:0px;">' +
-                                            '<input type="checkbox" style="margin:3px;" name="use_viewpoint"' + 
-                                            ' value="' + terrain + '" checked />Set to selected terrain viewpoint on refresh (uncheck to keep current viewpoint)</label>');
                     $('#spatial-3d-li').show();
 
                     // Register listeners for terrain selections
@@ -5607,6 +5623,8 @@ function enable_cardboard(){
                     $('#spatial-3d-x3d-pp-slider').show();
                     $('#spatial-3d-x3d-speedup').show()
                     $('#speedup-value').val(data[key].speedup);
+                    $('#slider-start-time').html($('body').data()['start-time']);
+                    $('#slider-end-time').html($('body').data()['end-time']);
                 }
             }
             else if (key == 'curtainx3d') {
@@ -5639,6 +5657,8 @@ function enable_cardboard(){
                     $('#spatial-3d-x3d-pp-slider').show();
                     $('#spatial-3d-x3d-speedup').show()
                     $('#speedup-value').val(data[key].speedup);
+                    $('#slider-start-time').html($('body').data()['start-time']);
+                    $('#slider-end-time').html($('body').data()['end-time']);
                 }
             }
             else if (key == 'resources') {
@@ -5694,6 +5714,8 @@ function enable_cardboard(){
                     if (has_rotaxes) {
                         show_geox3drotaxis($('#showgeox3drotaxis').is(':checked'));
                     }
+                    $('#slider-start-time').html($('body').data()['start-time']);
+                    $('#slider-end-time').html($('body').data()['end-time']);
                 }
                 else {
                     if ( ! $.isEmptyObject(data[key]['message']) ) {
