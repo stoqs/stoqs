@@ -1488,11 +1488,13 @@
         $('#spatial-3d-x3d-slider').val(fraction);
         // Set render to true or false for shapes
         if ( ! $.isEmptyObject(render_shapes) ) {
+            var last_shps_esec = 0;
             $.each(render_shapes, function(esec, shape_ids) {
                 shps_esec = parseInt(esec);
                 frac_ems = $('body').data()['start-ems'] + fraction * ($('body').data()['end-ems'] - $('body').data()['start-ems']);
                 frac_esec = parseInt(frac_ems / 1000.0);
-                if (frac_esec >= shps_esec) {
+                // Render only the shapes in the list for the time entry in render_shapes
+                if (last_shps_esec <= frac_esec && frac_esec < shps_esec) {
                     $.each(shape_ids, function(index, shape_id) {
                         $('#' + shape_id)[0].setAttribute('render', 'true');
                     });
@@ -1502,6 +1504,7 @@
                         $('#' + shape_id)[0].setAttribute('render', 'false');
                     });
                 }
+                last_shps_esec = shps_esec;
             });
         }
         updateCrosshairs(fraction, timeAxis, sliderLimits);
