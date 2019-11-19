@@ -1852,7 +1852,11 @@ class STOQSQManager(object):
                                                                                    int(self.request.GET.get('slice_minutes', 30)))
                     if x3d_items:
                         x3d_dict.update(x3d_items)
-                        x3d_dict['shape_id_dict'].update(shape_id_dict)
+                        try:
+                            x3d_dict['shape_id_dict'].update(shape_id_dict)
+                        except KeyError:
+                            x3d_dict['shape_id_dict'] = {}
+                            x3d_dict['shape_id_dict'].update(shape_id_dict)
 
             self.kwargs['platforms'] = saved_platforms
             self.kwargs['activitynames'] = saved_activitynames
