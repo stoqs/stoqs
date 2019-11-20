@@ -922,8 +922,11 @@ class MeasuredParameter(BaseParameter):
         '''Return X3D elements of image texture mapped onto geospatial geometry of vehicle track.
         platform_names may be a comma separated list of Platform names that may contain sampling platforms.
         Constraints for data in the image come from the settings in self.kwargs set by what calls this.
+        Images will be constructed by Activity in order to provide a temporal bounds, maintaining some
+        detail in the image.  Shapes will be keyed by 'ifs_<platform>_<esecs>' as in the IndexedLineSet
+        shapes.
         '''
-        x3dResults = {}
+        x3d_results = {}
         shape_id_dict = {}
 
         # 1. Image: Build image with potential Sampling Platforms included
@@ -932,7 +935,7 @@ class MeasuredParameter(BaseParameter):
         sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(forFlot=False)
         if not sectionPngFile:
             self.kwargs['platforms'] = saved_platforms
-            return x3dResults
+            return x3d_results, shape_id_dict
 
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
 
@@ -953,58 +956,61 @@ class MeasuredParameter(BaseParameter):
             sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(forFlot=False, loadDataOnly=True)
             if not sectionPngFile:
                 self.kwargs['platforms'] = saved_platforms
-                return x3dResults
+                return x3d_results, shape_id_dict
 
         # Get indices and times of the quadrilaterals for our image texture mapping
         slice_indices, slice_esecs = self._get_slices(self.x, slice_minutes)
         self.logger.debug(f"Slicing {len(self.lon)} lat & lon points at indices {slice_indices} for {slice_minutes} minute intervals")
-        lon_sliced = itemgetter(*slice_indices)(self.lon)
-        lat_sliced = itemgetter(*slice_indices)(self.lat)
+        for istart, iend, start_esecs in zip(slice_indices, slice_indices[1:], slice_esecs):
+            shape_id = f"ifs_{self.kwargs['platforms'][0]}_{int(start_esecs)}"
+            shape_id_dict[int(start_esecs)] = [shape_id]
+            self.logger.debug(f"Getting IndexedFace data for shape_id: {shape_id}")
 
-        # Make counter-clockwise planar slices at slice_minutes values along the geometry
-        # Construct the geometry according to the 4 edges of the image: time moves left to right in image
-        # Bottom; lon, lat in order; Top: lon, lat in reverse order - indices: 0 to len(lon_sliced) * 2
-        points = ''
-        for lon, lat in zip(lon_sliced, lat_sliced):
-            points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmax * vert_ex)
+            # Make counter-clockwise planar slices at slice_minutes values along the geometry
+            # Construct the geometry according to the 4 edges of the image: time moves left to right in image
+            # Bottom; lon, lat in order; Top: lon, lat in reverse order - indices: 0 to len(lon_sliced) * 2
+            points = ''
+            for lon, lat in zip(self.lon[istart:iend], self.lat[istart:iend]):
+                points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmax * vert_ex)
 
-        for lon, lat in zip(lon_sliced[::-1], lat_sliced[::-1]):
-            points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmin * vert_ex)
-        
-        end_index = len(lon_sliced) * 2 - 1
-        indices = '' 
-        for index in range(end_index + 1):
-            indices += '{} '.format(index)
-
-        # Index list for slice_minutes quadrilateral slices of the geometry (and the image)
-        last_index = 0
-        ifs_tcindex = ''
-        for index in range(1, len(lon_sliced)):
-            ifs_tcindex += f'{last_index} {index} {end_index - index} {end_index - last_index} -1 '
-            last_index = index
-        ifs_cindex = ifs_tcindex
-
-        # The s,t texture coordinate points for slice_minutes quadrilateral slices of the image
-        tc_points = ''
-        for esec in slice_esecs:
-            fraction = (esec - self.tmin) / (self.tmax - self.tmin)
-            self.logger.debug(f"fraction = {fraction}")
-            tc_points += '{frac:.5f} 0 '.format(frac=fraction)
-        for esec in slice_esecs[::-1]:
-            fraction = (esec - self.tmin) / (self.tmax - self.tmin)
-            self.logger.debug(f"fraction = {fraction}")
-            tc_points += '{frac:.5f} 1 '.format(frac=fraction)
+            for lon, lat in zip(self.lon[istart:iend:-1], self.lat[istart:iend:-1]):
+                points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmin * vert_ex)
             
-        self.logger.debug(f"len(points.strip().split(' '))/3 = {len(points.strip().split(' '))/3}") 
-        self.logger.debug(f"len(tc_points.strip().split(' '))/2 = {len(tc_points.strip().split(' '))/2}") 
-        self.logger.debug(f"len(indices.strip().split(' '))/1 = {len(indices.strip().split(' '))/1}") 
-        self.logger.debug(f"Faces: len(ifs_tcindex.strip().split(' '))/5 = {len(ifs_tcindex.strip().split(' '))/5}") 
-        x3dResults = {'points': points.rstrip(), 'ifs_cindex': ifs_cindex.rstrip(), 'ifs_tcindex': ifs_tcindex.rstrip(),
-                      'tc_points': tc_points.rstrip(), 'info': '',
-                      'image': sectionPngFileTrimmed, 'colorbar': colorbarPngFile}
+            end_index = len(self.lon[istart:iend]) * 2 - 1
+            indices = '' 
+            for index in range(end_index + 1):
+                indices += '{} '.format(index)
+
+            # Index list for slice_minutes quadrilateral slices of the geometry (and the image)
+            last_index = 0
+            ifs_tcindex = ''
+            for index in range(1, len(self.lon[istart:iend])):
+                ifs_tcindex += f'{last_index} {index} {end_index - index} {end_index - last_index} -1 '
+                last_index = index
+            ifs_cindex = ifs_tcindex
+
+            # The s,t texture coordinate points for slice_minutes quadrilateral slices of the image
+            tc_points = ''
+            for esec in slice_esecs:
+                fraction = (esec - self.tmin) / (self.tmax - self.tmin)
+                self.logger.debug(f"fraction = {fraction}")
+                tc_points += '{frac:.5f} 0 '.format(frac=fraction)
+            for esec in slice_esecs[::-1]:
+                fraction = (esec - self.tmin) / (self.tmax - self.tmin)
+                self.logger.debug(f"fraction = {fraction}")
+                tc_points += '{frac:.5f} 1 '.format(frac=fraction)
+
+            self.logger.info(f"len(points.strip().split(' '))/3 = {len(points.strip().split(' '))/3}") 
+            self.logger.info(f"len(tc_points.strip().split(' '))/2 = {len(tc_points.strip().split(' '))/2}") 
+            self.logger.info(f"len(indices.strip().split(' '))/1 = {len(indices.strip().split(' '))/1}") 
+            self.logger.info(f"Faces: len(ifs_tcindex.strip().split(' '))/5 = {len(ifs_tcindex.strip().split(' '))/5}") 
+            import pdb; pdb.set_trace()
+            x3d_results[shape_id] = {'points': points.rstrip(), 'ifs_cindex': ifs_cindex.rstrip(), 'ifs_tcindex': ifs_tcindex.rstrip(),
+                                     'tc_points': tc_points.rstrip(), 'info': '',
+                                     'image': sectionPngFileTrimmed, 'colorbar': colorbarPngFile}
 
         self.kwargs['platforms'] = saved_platforms
-        return x3dResults, shape_id_dict
+        return x3d_results, shape_id_dict
 
 class PPDatabaseException(Exception):
     def __init__(self, message, sql):

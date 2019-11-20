@@ -1703,7 +1703,6 @@ class STOQSQManager(object):
                 # Rebuild query set for just this platform as qs_mp_no_order is an MPQuerySet which has no filter() method
                 self.kwargs['platforms'] = pns.split(',')
                 platform_single = self.kwargs['platforms'][0]
-                x3d_plat = {}
                 # All Activities in the selection, do not inlcude 'special Activities' like LRAUV Mission
                 for act in self.qs.filter(Q(platform__name=platform_single) & ~Q(activitytype__name=LRAUV_MISSION)):
                     # Set self.mpq.qs_mp to None to bypass the Singleton nature of MPQuery and have _build_mpq_queryset() build new self.mpq items
@@ -1714,16 +1713,18 @@ class STOQSQManager(object):
                     cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, self.contour_mpq.qs_mp_no_order,
                                             min_max, self.getSampleQS(), pns,
                                             parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
-                    x3d_items = cp.curtainX3D(pns, float(self.request.GET.get('ve', 10)), 
+                    x3d_items, shape_id_dict = cp.curtainX3D(pns, float(self.request.GET.get('ve', 10)), 
                                                      int(self.request.GET.get('slice_minutes')))
                     if x3d_items:
-                        x3d_plat[act.name] = x3d_items
-
-                if x3d_plat:
-                    x3d_dict[pns] = x3d_plat
+                        x3d_dict.update(x3d_items)
+                        try:
+                            x3d_dict['shape_id_dict'].update(shape_id_dict)
+                        except KeyError:
+                            x3d_dict['shape_id_dict'] = {}
+                            x3d_dict['shape_id_dict'].update(shape_id_dict)
 
             self.kwargs['platforms'] = saved_platforms
-            if isinstance(x3d_dict, Mapping):
+            if x3d_dict:
                 x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
 
         return x3d_dict

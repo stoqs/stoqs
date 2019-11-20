@@ -5631,24 +5631,20 @@ function enable_cardboard(){
                 if (! $.isEmptyObject(data.curtainx3d)) {
                     merge_shape_id_dicts(data.curtainx3d.shape_id_dict, data.measuredparameterx3d.shape_id_dict);
                     var curtainx3d_html = '';
-                    $.each(data.curtainx3d, function (platform_name, activityx3d) {
-                        $.each(activityx3d, function (activity_name, curtainx3d) {
-                            if (curtainx3d['points']) {
-                                if ( ! $.isEmptyObject(curtainx3d.points) ) {
-                                    curtainx3d_html += '<Shape id="mp-curtain_' + platform_name + '_' + activity_name + '">' +
-                                            '<appearance>' +
-                                                '<imagetexture repeats="false" repeatt="false" url="{{MEDIA_URL}}sections/' + curtainx3d.image + '"></imagetexture>' +
-                                            '</appearance>' +
-                                            '<indexedfaceset solid="false" coordIndex="' + curtainx3d.ifs_cindex + 
-                                                                     '" texCoordIndex="' + curtainx3d.ifs_tcindex + '">' +
-                                                '<geocoordinate point="' + curtainx3d.points + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>' +
-                                                '<texturecoordinate point="' + curtainx3d.tc_points + '"></geocoordinate>' +
-                                            '</indexedfaceset>' +
-                                        '</Shape>'
-                                }
-                                $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + curtainx3d.colorbar + '" />');
-                            }
-                        });
+                    $.each(data.curtainx3d, function (shapeid, curtainx3d) {
+                        if ( ! $.isEmptyObject(curtainx3d.points) ) {
+                            curtainx3d_html += '<Shape id="' + shapeid + '">' +
+                                    '<appearance>' +
+                                        '<imagetexture repeats="false" repeatt="false" url="{{MEDIA_URL}}sections/' + curtainx3d.image + '"></imagetexture>' +
+                                    '</appearance>' +
+                                    '<indexedfaceset solid="false" coordIndex="' + curtainx3d.ifs_cindex + 
+                                                             '" texCoordIndex="' + curtainx3d.ifs_tcindex + '">' +
+                                        '<geocoordinate point="' + curtainx3d.points + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>' +
+                                        '<texturecoordinate point="' + curtainx3d.tc_points + '"></geocoordinate>' +
+                                    '</indexedfaceset>' +
+                                '</Shape>'
+                        }
+                        $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + curtainx3d.colorbar + '" />');
                     });
                     $('#curtain-animations').html(curtainx3d_html);
                     if ( ! $('#animation3D').hasClass('in') ) {
