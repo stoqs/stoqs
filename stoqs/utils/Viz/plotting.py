@@ -815,7 +815,7 @@ class MeasuredParameter(BaseParameter):
             self.scale_factor = 1
         slice_esecs = [time_array[0] * self.scale_factor]
         slice_indices = [0]
-        prev_esec = time_array[0]
+        prev_esec = time_array[0] * self.scale_factor
         for index, x in enumerate(time_array):
             if x * self.scale_factor > prev_esec + slice_minutes * 60:
                 slice_esecs.append(x * self.scale_factor)
@@ -961,50 +961,37 @@ class MeasuredParameter(BaseParameter):
         # Get indices and times of the quadrilaterals for our image texture mapping
         slice_indices, slice_esecs = self._get_slices(self.x, slice_minutes)
         self.logger.debug(f"Slicing {len(self.lon)} lat & lon points at indices {slice_indices} for {slice_minutes} minute intervals")
-        for istart, iend, start_esecs in zip(slice_indices, slice_indices[1:], slice_esecs):
-            shape_id = f"ifs_{self.kwargs['platforms'][0]}_{int(start_esecs)}"
-            shape_id_dict[int(start_esecs)] = [shape_id]
+        last_frac = 0.0
+        for sindex, eindex, end_esecs in zip(slice_indices, slice_indices[1:], slice_esecs[1:]):
+            shape_id = f"ifs_{self.kwargs['platforms'][0]}_{int(end_esecs)}"
+            shape_id_dict[int(end_esecs)] = [shape_id]
             self.logger.debug(f"Getting IndexedFace data for shape_id: {shape_id}")
 
             # Make counter-clockwise planar slices at slice_minutes values along the geometry
             # Construct the geometry according to the 4 edges of the image: time moves left to right in image
             # Bottom; lon, lat in order; Top: lon, lat in reverse order - indices: 0 to len(lon_sliced) * 2
             points = ''
-            for lon, lat in zip(self.lon[istart:iend], self.lat[istart:iend]):
-                points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmax * vert_ex)
-
-            for lon, lat in zip(self.lon[istart:iend:-1], self.lat[istart:iend:-1]):
-                points += '{:.5f} {:.5f} {:.1f} '.format(lat, lon, -self.dmin * vert_ex)
-            
-            end_index = len(self.lon[istart:iend]) * 2 - 1
-            indices = '' 
-            for index in range(end_index + 1):
-                indices += '{} '.format(index)
-
-            # Index list for slice_minutes quadrilateral slices of the geometry (and the image)
-            last_index = 0
-            ifs_tcindex = ''
-            for index in range(1, len(self.lon[istart:iend])):
-                ifs_tcindex += f'{last_index} {index} {end_index - index} {end_index - last_index} -1 '
-                last_index = index
-            ifs_cindex = ifs_tcindex
+            points += '{:.5f} {:.5f} {:.1f} '.format(self.lat[sindex], self.lon[sindex], -self.dmax * vert_ex)
+            points += '{:.5f} {:.5f} {:.1f} '.format(self.lat[eindex], self.lon[eindex], -self.dmax * vert_ex)
+            points += '{:.5f} {:.5f} {:.1f} '.format(self.lat[eindex], self.lon[eindex], -self.dmin * vert_ex)
+            points += '{:.5f} {:.5f} {:.1f} '.format(self.lat[sindex], self.lon[sindex], -self.dmin * vert_ex)
+           
+            indices = '0 1 2 3 ' 
+            ifs_cindex = ifs_tcindex = indices + '-1'
 
             # The s,t texture coordinate points for slice_minutes quadrilateral slices of the image
             tc_points = ''
-            for esec in slice_esecs:
-                fraction = (esec - self.tmin) / (self.tmax - self.tmin)
-                self.logger.debug(f"fraction = {fraction}")
-                tc_points += '{frac:.5f} 0 '.format(frac=fraction)
-            for esec in slice_esecs[::-1]:
-                fraction = (esec - self.tmin) / (self.tmax - self.tmin)
-                self.logger.debug(f"fraction = {fraction}")
-                tc_points += '{frac:.5f} 1 '.format(frac=fraction)
+            fraction = (end_esecs - self.tmin) / (self.tmax - self.tmin)
+            self.logger.debug(f"fraction = {fraction}")
+            tc_points += '{last_frac:.5f} 0 {frac:.5f} 0 '.format(last_frac=last_frac, frac=fraction)
+            tc_points += '{frac:.5f} 1 {last_frac:.5f} 1 '.format(last_frac=last_frac, frac=fraction)
+            last_frac = fraction
 
-            self.logger.info(f"len(points.strip().split(' '))/3 = {len(points.strip().split(' '))/3}") 
-            self.logger.info(f"len(tc_points.strip().split(' '))/2 = {len(tc_points.strip().split(' '))/2}") 
-            self.logger.info(f"len(indices.strip().split(' '))/1 = {len(indices.strip().split(' '))/1}") 
-            self.logger.info(f"Faces: len(ifs_tcindex.strip().split(' '))/5 = {len(ifs_tcindex.strip().split(' '))/5}") 
-            import pdb; pdb.set_trace()
+            self.logger.debug(f"len(points.strip().split(' '))/3 = {len(points.strip().split(' '))/3}") 
+            self.logger.debug(f"len(tc_points.strip().split(' '))/2 = {len(tc_points.strip().split(' '))/2}") 
+            self.logger.debug(f"len(indices.strip().split(' '))/1 = {len(indices.strip().split(' '))/1}") 
+            self.logger.debug(f"Faces: len(ifs_tcindex.strip().split(' '))/5 = {len(ifs_tcindex.strip().split(' '))/5}") 
+
             x3d_results[shape_id] = {'points': points.rstrip(), 'ifs_cindex': ifs_cindex.rstrip(), 'ifs_tcindex': ifs_tcindex.rstrip(),
                                      'tc_points': tc_points.rstrip(), 'info': '',
                                      'image': sectionPngFileTrimmed, 'colorbar': colorbarPngFile}
