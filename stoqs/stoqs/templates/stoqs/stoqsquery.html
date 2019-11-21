@@ -5201,24 +5201,18 @@ function enable_cardboard(){
         } //resetWaitIndicators()
 
         function merge_shape_id_dicts(ils_dict, ifs_dict) {
-            var shape_id_dict;
-            // Combine two dictionaries into one keyed by epoch seconds containing lists of shapes to render for that time
-            if ( ! $.isEmptyObject(ils_dict) && ! $.isEmptyObject(ifs_dict) ) {
-                shape_id_dict = Object.assign({}, ils_dict, ifs_dict);
-            }
-            else if ( ! $.isEmptyObject(ils_dict) ) {
-                shape_id_dict = ils_dict;
-            }
-            else if ( ! $.isEmptyObject(ifs_dict) ) {
-                shape_id_dict = ifs_dict;
-            }
-            if ( $.isEmptyObject(shape_id_dict) ) {
-                return;
-            }
-
             min_esec = (new Date()).getTime()/1000;
             max_esec = 0;
-            $.each(shape_id_dict, function(es, shape_id) {
+            $.each(ils_dict, function(es, shape_id) {
+                var esec = parseInt(es);
+                if (esec < min_esec) {
+                    min_esec = esec;
+                }
+                if (esec > max_esec) {
+                    max_esec = esec;
+                }
+            });
+            $.each(ifs_dict, function(es, shape_id) {
                 var esec = parseInt(es);
                 if (esec < min_esec) {
                     min_esec = esec;
@@ -5229,34 +5223,65 @@ function enable_cardboard(){
             });
 
             render_shapes = {};
+
+            // Lines
             start_esec = parseInt(min_esec);
             end_esec = start_esec + parseInt($('#fade_away_minutes').val()) * 60.0;
-            // Group shapes into dictionary values for rendering - appears that shape_id_dict is ordered in time
-            $.each(shape_id_dict, function(es, shape_id) {
-                var esec = parseInt(es);
-                if (start_esec <= esec && esec < end_esec) {
-                    if ( $.type(render_shapes[end_esec]) == "undefined" ) {
-                        render_shapes[end_esec] = [];
-                        render_shapes[end_esec].push(shape_id);
+            $.each(ils_dict, function(es, shape_ids) {
+                $.each(shape_ids, function(index, shape_id) {
+                    var esec = parseInt(es);
+                    if (start_esec <= esec && esec < end_esec) {
+                        if ( $.type(render_shapes[end_esec]) == "undefined" ) {
+                            render_shapes[end_esec] = [];
+                            render_shapes[end_esec].push(shape_id);
+                        }
+                        else {
+                            render_shapes[end_esec].push(shape_id);
+                        }
                     }
-                    else {
-                        render_shapes[end_esec].push(shape_id);
+                    else if (esec >= end_esec) {
+                        start_esec = end_esec;
+                        end_esec = start_esec + parseInt($('#fade_away_minutes').val()) * 60.0;
+                        if ( $.type(render_shapes[end_esec]) == "undefined" ) {
+                            render_shapes[end_esec] = [];
+                            render_shapes[end_esec].push(shape_id);
+                        }
+                        else {
+                            render_shapes[end_esec].push(shape_id);
+                        }
                     }
-                }
-                else if (esec >= end_esec) {
-                    start_esec = end_esec;
-                    end_esec = start_esec + parseInt($('#fade_away_minutes').val()) * 60.0;
-                    if ( $.type(render_shapes[end_esec]) == "undefined" ) {
-                        render_shapes[end_esec] = [];
-                        render_shapes[end_esec].push(shape_id);
+                });
+            });
+
+            // Faces
+            start_esec = parseInt(min_esec);
+            end_esec = start_esec + parseInt($('#fade_away_minutes').val()) * 60.0;
+            $.each(ifs_dict, function(es, shape_ids) {
+                $.each(shape_ids, function(index, shape_id) {
+                    var esec = parseInt(es);
+                    if (start_esec <= esec && esec < end_esec) {
+                        if ( $.type(render_shapes[end_esec]) == "undefined" ) {
+                            render_shapes[end_esec] = [];
+                            render_shapes[end_esec].push(shape_id);
+                        }
+                        else {
+                            render_shapes[end_esec].push(shape_id);
+                        }
                     }
-                    else {
-                        render_shapes[end_esec].push(shape_id);
+                    else if (esec >= end_esec) {
+                        start_esec = end_esec;
+                        end_esec = start_esec + parseInt($('#fade_away_minutes').val()) * 60.0;
+                        if ( $.type(render_shapes[end_esec]) == "undefined" ) {
+                            render_shapes[end_esec] = [];
+                            render_shapes[end_esec].push(shape_id);
+                        }
+                        else {
+                            render_shapes[end_esec].push(shape_id);
+                        }
                     }
-                }
+                });
             });
         } // merge_shape_id_dicts()
-
 
         function onUpdate(data, key) {
             // Called from ajax to update the selectors base on the new selection
@@ -5629,7 +5654,12 @@ function enable_cardboard(){
             }
             else if (key == 'curtainx3d') {
                 if (! $.isEmptyObject(data.curtainx3d)) {
-                    merge_shape_id_dicts(data.curtainx3d.shape_id_dict, data.measuredparameterx3d.shape_id_dict);
+                    if ( ! $.isEmptyObject(data.measuredparameterx3d) ) {
+                        merge_shape_id_dicts(data.curtainx3d.shape_id_dict, data.measuredparameterx3d.shape_id_dict);
+                    }
+                    else {
+                        merge_shape_id_dicts(data.curtainx3d.shape_id_dict, {});
+                    }
                     var curtainx3d_html = '';
                     $.each(data.curtainx3d, function (shapeid, curtainx3d) {
                         if ( ! $.isEmptyObject(curtainx3d.points) ) {
