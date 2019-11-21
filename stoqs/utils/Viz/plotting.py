@@ -993,8 +993,7 @@ class MeasuredParameter(BaseParameter):
             self.logger.debug(f"Faces: len(ifs_tcindex.strip().split(' '))/5 = {len(ifs_tcindex.strip().split(' '))/5}") 
 
             x3d_results[shape_id] = {'points': points.rstrip(), 'ifs_cindex': ifs_cindex.rstrip(), 'ifs_tcindex': ifs_tcindex.rstrip(),
-                                     'tc_points': tc_points.rstrip(), 'info': '',
-                                     'image': sectionPngFileTrimmed, 'colorbar': colorbarPngFile}
+                                     'tc_points': tc_points.rstrip(), 'info': '', 'image': sectionPngFileTrimmed}
 
         self.kwargs['platforms'] = saved_platforms
         return x3d_results, shape_id_dict

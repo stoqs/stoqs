@@ -1726,6 +1726,11 @@ class STOQSQManager(object):
             self.kwargs['platforms'] = saved_platforms
             if x3d_dict:
                 x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
+                cycInt = (self.max_end_time - self.min_start_time).total_seconds() / x3d_dict['speedup']
+                x3d_dict['timesensor'] = PlatformAnimation.global_template.format(cycInt=cycInt)
+
+                cp.makeColorBar(cp.colorbarPngFileFullPath, cp.pMinMax)
+                x3d_dict['colorbar'] = cp.colorbarPngFile
 
         return x3d_dict
 
@@ -1823,7 +1828,7 @@ class STOQSQManager(object):
             parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
             min_max = self._get_plot_min_max(parameterID, contourparameterID)
             if not min_max:
-                return None, None, 'Cannot make X3D lines'
+                return x3d_dict
 
             # platformName and contourplatformName are for display purposes and may look like:
             # 'daphne,makai_ESP_filtering,tethys,makai'; _combine_sample_platforms() divies them up to get by-platform querystrings
