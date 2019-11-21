@@ -302,11 +302,21 @@
                                                                 <input type="checkbox" id="showgeox3dmeasurement" />
                                                                 <span id="showgeox3dmeasurementtext">Show visualizations of Plot Data Color selections </span>
                                                             </label>
+                                                            <label class="checkbox" style="display:none;">
+                                                                <input type="checkbox" id="showlines" checked />
+                                                                <span>Lines</span>
+                                                            </label>
+                                                            <label class="checkbox" style="display:none;">
+                                                                <input type="checkbox" id="showfaces" checked />
+                                                                <span>Faces</span>
+                                                            </label>
                                                         </form>
                                                         <div class="input-group" style="padding-bottom:0px;padding-top:1px;"> 
                                                             <span> Animate in </span>
-                                                            <select id="slice_minutes" class="selectpicker form-control" style="height:18px;width:50px;margin-bottom:5px;">
-                                                                <option>240</option>
+                                                            <select id="slice_minutes" class="selectpicker form-control" style="height:18px;width:55px;margin-bottom:5px;">
+                                                                <option>1440</option>
+                                                                <option>720</option>
+                                                                <option>360</option>
                                                                 <option>120</option>
                                                                 <option>60</option>
                                                                 <option selected="selected">30</option>
@@ -2540,6 +2550,8 @@
         if ($('#showgeox3dmeasurement').is(':checked')) {
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
                 rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
+                $('#showlines').parent().show();
+                $('#showfaces').parent().show();
             }
             else {
                 rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
@@ -2551,12 +2563,24 @@
     });
 
     $('#showgeox3dmeasurement').on('click', function (event) {
-        // Don't need to get everything from queryData, only the response with the X3D data
-        if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-            rebuildFilters(['curtainx3d', 'measuredparameterx3d']);
+        if ( $('#showgeox3dmeasurement').is(':checked') ) {
+            $('#track-animations')[0].setAttribute('render', true);
+            $('#curtain-animations')[0].setAttribute('render', true);
+            // Don't need to get everything from queryData, only the response with the X3D data
+            if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+                rebuildFilters(['curtainx3d', 'measuredparameterx3d']);
+                $('#showlines').parent().show();
+                $('#showfaces').parent().show();
+            }
+            else {
+                rebuildFilters(['measuredparameterx3d']);
+            }
         }
         else {
-            rebuildFilters(['measuredparameterx3d']);
+            $('#track-animations')[0].setAttribute('render', false);
+            $('#curtain-animations')[0].setAttribute('render', false);
+            $('#showlines').parent().hide();
+            $('#showfaces').parent().hide();
         }
     });
 
@@ -2602,7 +2626,6 @@
             $('body').data()['platformAnimation'] = [];
             $('#showgeox3dlabels').parent().hide();
             $('#showgeox3denuaxes').parent().hide();
-            $('#showplatforms').parent().parent().removeAttr('style');
         }
     });
 
@@ -2756,6 +2779,24 @@
         }
     });
 
+    $('#showlines').on('click', function (e) {
+        if ( $('#showlines').is(':checked') ) {
+            $('#track-animations')[0].setAttribute('render', true);
+        }
+        else {
+            $('#track-animations')[0].setAttribute('render', false);
+        }
+    });
+
+    $('#showfaces').on('click', function (e) {
+        if ( $('#showfaces').is(':checked') ) {
+            $('#curtain-animations')[0].setAttribute('render', true);
+        }
+        else {
+            $('#curtain-animations')[0].setAttribute('render', false);
+        }
+    });
+
     $('.colormaps-toggle').on('click', function(e) {
         var attr = $('#sectioncolorbarimg').attr('href');
         if ( $.isEmptyObject(attr) ) {
@@ -2829,7 +2870,7 @@
             $('#temporalparameterplotinfo').text('Plotting ' + $('#temporalparameterplotinfo').data()['info'] + '...');
             $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info']);
             $('#showsensortracks').removeAttr('disabled');
-            $('#showgeox3dmeasurementtext').text($('#temporalparameterplotinfo').data()['info']);
+            $('#showgeox3dmeasurementtext').text('Show: ' + $('#temporalparameterplotinfo').data()['info']);
             $('#activitytypes').hide()
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
                 rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
@@ -5674,8 +5715,8 @@ function enable_cardboard(){
                                     '</indexedfaceset>' +
                                 '</Shape>'
                         }
-                        $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + curtainx3d.colorbar + '" />');
                     });
+                    $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data.curtainx3d.colorbar + '" />');
                     $('#curtain-animations').html(curtainx3d_html);
                     if ( ! $('#animation3D').hasClass('in') ) {
                         $('#animation3D-anchor').click();
