@@ -142,8 +142,8 @@ class PlatformAnimation(object):
         <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_Z_OI"></ROUTE>
     '''
 
-    global_template = '<TimeSensor id="PLATFORMS_TS" DEF="TS" cycleInterval="{cycInt}" loop="true" enabled="false" onoutputchange="setSlider(event)"></TimeSensor>'
-    x3d_info = namedtuple('x3d_info', ['x3d', 'all_x3d', 'platforms', 'times', 'limits', 
+    timesensor_template = '<TimeSensor id="PLATFORMS_TS" DEF="TS" cycleInterval="{cycInt}" loop="true" enabled="false" onoutputchange="setSlider(event)"></TimeSensor>'
+    x3d_info = namedtuple('x3d_info', ['x3d', 'timesensor_x3d', 'platforms', 'times', 'limits', 
                                        'platforms_not_shown', 'message'])
 
     def __init__(self, platforms, kwargs, request, qs, qs_mp):
@@ -331,7 +331,7 @@ class PlatformAnimation(object):
                 assembled_platforms.append(p)
 
         cycInt = (max_end_time -  min_start_time).total_seconds() / speedup
-        all_x3d = self.global_template.format(cycInt=cycInt)
+        timesensor_x3d = self.timesensor_template.format(cycInt=cycInt)
         platforms_not_shown = (set(p.name for p in platforms) -
                                set(p.name for p in assembled_platforms))
 
@@ -341,7 +341,7 @@ class PlatformAnimation(object):
             equal_times = np.arange(st_ems, et_ems,
                           self.time_by_plat[earliest_platform.name][2] - self.time_by_plat[earliest_platform.name][1])
 
-        return self.x3d_info(x3d=x3d_dict, all_x3d=all_x3d, platforms=assembled_platforms,
+        return self.x3d_info(x3d=x3d_dict, timesensor_x3d=timesensor_x3d, platforms=assembled_platforms,
                              times=equal_times, limits=(0, len(equal_times)),
                              platforms_not_shown=platforms_not_shown, message=error_msg)
 
@@ -515,7 +515,7 @@ class PlatformAnimation(object):
                                           speedup=1, force_overlap=False):
         '''Public method called by STOQSQManager.py
         '''
-        info = self.x3d_info(x3d='', all_x3d='', times=(), platforms=(), limits=(), 
+        info = self.x3d_info(x3d='', timesensor_x3d='', times=(), platforms=(), limits=(), 
                              platforms_not_shown=(), message='')
         try:
             info = self._assemble_platforms(self.platforms, vert_ex, geoOrigin, scale,
@@ -528,7 +528,7 @@ class PlatformAnimation(object):
             return {'x3d': '', 'message': '{} are too many values to animate. Filter to get below {}.'.format(
                                            len(info.times), PA_MAX_POINTS)}
         else:
-            return {'x3d': info.x3d, 'all': info.all_x3d, 'limits': info.limits, 'time': info.times, 
+            return {'x3d': info.x3d, 'timesensor': info.timesensor_x3d, 'limits': info.limits, 'time': info.times, 
                     'platforms_not_shown': info.platforms_not_shown, 'speedup': speedup, 'scale': scale,
                     'message': info.message}
 
