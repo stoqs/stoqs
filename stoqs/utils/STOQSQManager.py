@@ -1727,7 +1727,11 @@ class STOQSQManager(object):
             if x3d_dict:
                 x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
                 cycInt = (self.max_end_time - self.min_start_time).total_seconds() / x3d_dict['speedup']
-                x3d_dict['timesensor'] = PlatformAnimation.global_template.format(cycInt=cycInt)
+                x3d_dict['timesensor'] = PlatformAnimation.timesensor_template.format(cycInt=cycInt)
+
+                sec_interval = (cp.x[2] - cp.x[1]) * cp.scale_factor
+                spaced_ts = np.arange(self.min_start_time.timestamp(), self.max_end_time.timestamp(), sec_interval)
+                x3d_dict['limits'] = (0, len(spaced_ts))
 
                 cp.makeColorBar(cp.colorbarPngFileFullPath, cp.pMinMax)
                 x3d_dict['colorbar'] = cp.colorbarPngFile
@@ -1869,11 +1873,15 @@ class STOQSQManager(object):
             if x3d_dict:
                 x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
                 cycInt = (self.max_end_time - self.min_start_time).total_seconds() / x3d_dict['speedup']
-                x3d_dict['timesensor'] = PlatformAnimation.global_template.format(cycInt=cycInt)
+                x3d_dict['timesensor'] = PlatformAnimation.timesensor_template.format(cycInt=cycInt)
+
+                sec_interval = (cp.x[2] - cp.x[1]) * cp.scale_factor
+                spaced_ts = np.arange(self.min_start_time.timestamp(), self.max_end_time.timestamp(), sec_interval)
+                x3d_dict['limits'] = (0, len(spaced_ts))
 
                 cp.makeColorBar(cp.colorbarPngFileFullPath, cp.pMinMax)
                 x3d_dict['colorbar'] = cp.colorbarPngFile
-            
+
         return x3d_dict
 
     def getPlatformAnimation(self):
