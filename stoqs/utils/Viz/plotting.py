@@ -887,12 +887,12 @@ class MeasuredParameter(BaseParameter):
         try:
             for act in list(self.value_by_act.keys()):
                 self.logger.debug('Reading data from act = %s', act)
-                # Get indices and times of the Shape slices to be animated
+                # Get indices and times of the Shape slices to be animated - organize shapes by end time of the slice
                 slice_indices, slice_esecs = self._get_slices(self.x, slice_minutes)
                 self.logger.debug(f"Slicing pairwise {len(self.lon_by_act[act])} lat & lon points at indices {slice_indices} for {slice_minutes} minute intervals")
-                for istart, iend, start_esecs in zip(slice_indices, slice_indices[1:], slice_esecs):
-                    shape_id = f"ils_{platform_name}_{int(start_esecs)}"
-                    shape_id_dict[int(start_esecs)] = [shape_id]
+                for istart, iend, end_esecs in zip(slice_indices, slice_indices[1:], slice_esecs[1:]):
+                    shape_id = f"ils_{platform_name}_{int(end_esecs)}"
+                    shape_id_dict[int(end_esecs)] = [shape_id]
                     self.logger.debug(f"Getting IndexedLineSet data for shape_id: {shape_id}")
                     iendp1 = iend + 1
                     if iendp1 > len(self.lon_by_act[act]) - 1:
@@ -907,8 +907,8 @@ class MeasuredParameter(BaseParameter):
                 istart = 0
                 iend = len(self.lon_by_act_span[act])
                 # TODO: test and fix getting start time for _span data
-                shape_id = f"ils_{platform_name}_{int(start_esecs)}_span"
-                shape_id_dict[int(start_esecs)] = [shape_id]
+                shape_id = f"ils_{platform_name}_{int(end_esecs)}_span"
+                shape_id_dict[int(end_esecs)] = [shape_id]
                 points, colors, indices = self._get_ils(act, istart, iend, vert_ex, 
                                                         'lon_by_act_span', 'lat_by_act_span', 'depth_by_act_span', 'value_by_act_span')
                 x3d_results[shape_id] = {'colors': colors.rstrip(), 'points': points.rstrip(), 'index': indices.rstrip()}
@@ -958,7 +958,7 @@ class MeasuredParameter(BaseParameter):
                 self.kwargs['platforms'] = saved_platforms
                 return x3d_results, shape_id_dict
 
-        # Get indices and times of the quadrilaterals for our image texture mapping
+        # Get indices and times of the quadrilaterals for our image texture mapping - organize shapes by end time of the slice
         slice_indices, slice_esecs = self._get_slices(self.x, slice_minutes)
         self.logger.debug(f"Slicing {len(self.lon)} lat & lon points at indices {slice_indices} for {slice_minutes} minute intervals")
         last_frac = 0.0
