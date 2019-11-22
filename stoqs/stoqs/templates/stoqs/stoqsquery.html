@@ -308,12 +308,12 @@
                                                             </label>
                                                             <label class="checkbox" style="display:none;">
                                                                 <input type="checkbox" id="showfaces" checked />
-                                                                <span>Faces</span>
+                                                                <span>Polygons</span>
                                                             </label>
                                                         </form>
                                                         <div class="input-group" style="padding-bottom:0px;padding-top:1px;"> 
                                                             <span> Animate in </span>
-                                                            <select id="slice_minutes" class="selectpicker form-control" style="height:18px;width:55px;margin-bottom:5px;">
+                                                            <select id="slice_minutes" class="selectpicker form-control regen-activate" style="height:18px;width:55px;margin-bottom:5px;">
                                                                 <option>1440</option>
                                                                 <option>720</option>
                                                                 <option>360</option>
@@ -325,7 +325,7 @@
                                                             </select>
                                                             <span> minute slices. </span>
                                                             <span> Fade away after </span>
-                                                            <select id="fade_away_minutes" class="selectpicker form-control" style="height:18px;width:50px;margin-bottom:5px;">
+                                                            <select id="fade_away_minutes" class="selectpicker form-control regen-activate" style="height:18px;width:50px;margin-bottom:5px;">
                                                                 <option>480</option>
                                                                 <option>240</option>
                                                                 <option selected="selected">120</option>
@@ -333,7 +333,8 @@
                                                                 <option>30</option>
                                                                 <option>10</option>
                                                             </select>
-                                                            <span> minutes</span>
+                                                            <span> minutes. </span>
+                                                            <button id="regenerate-animations-button" class="btn btn-mini disabled">Regenerate</button>
                                                         </div>
                                                         <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
                                                             <div id="geo3d-colorbar"></div>
@@ -407,7 +408,7 @@
                                                     <h5><a id="terrain-3d" class="accordion-toggle" data-toggle="collapse" href="#terrain3D" title="Show Terrain Options" style="padding:0px;color:black;">
                                                         Terrain
                                                     </a></h5>
-                                                    <div id="terrain3D" class="accordion-body collapse in" style="float:none;display:inline-block;overflow-x:auto;white-space:nowrap;" >
+                                                    <div id="terrain3D" class="accordion-body collapse" style="float:none;display:inline-block;overflow-x:auto;white-space:nowrap;" >
                                                         <form id="terrain3D-choices" class="form-inline" style="margin:0px;">
                                                         </form>
                                                         <div id="x3d-ve"></div><br>
@@ -1512,6 +1513,7 @@
         var frac_ems;
         var frac_esec;
         $('#spatial-3d-x3d-slider').val(fraction);
+
         // Set render to true or false for shapes
         if ( ! $.isEmptyObject(render_shapes) ) {
             var last_shps_esec = 0;
@@ -2772,10 +2774,36 @@
         }
     });
 
+    $('#regenerate-animations-button').click(function () {
+        if ( $('#regenerate-animations-button').hasClass('btn-primary') ) {
+            var rebuild_list = [];
+            if ($('#showplatforms').is(':checked')) {
+                rebuild_list.push('platformanimation');
+            }
+            if ($('#showgeox3dmeasurement').is(':checked')) {
+                rebuild_list.push('measuredparameterx3d');
+                if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+                    rebuild_list.push('curtainx3d');
+                }
+            }
+            rebuildFilters(rebuild_list);
+        }
+    });
+
     $('#speedup-value').on('keypress', function (e) {
         if (e.which == 13) {
             // Enter key pressed
-            rebuildFilters(['platformanimation']);
+            var rebuild_list = [];
+            if ($('#showplatforms').is(':checked')) {
+                rebuild_list.push('platformanimation');
+            }
+            if ($('#showgeox3dmeasurement').is(':checked')) {
+                rebuild_list.push('measuredparameterx3d');
+                if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+                    rebuild_list.push('curtainx3d');
+                }
+            }
+            rebuildFilters(rebuild_list);
         }
     });
 
@@ -2824,6 +2852,11 @@
         $('#apply-color-limit-button').addClass('btn-primary');
         $('#reset-color-limit-button').removeClass('disabled');
         $('#reset-color-limit-button').addClass('btn-primary');
+    });
+
+    $('.regen-activate').on('change', function (event, previousText) {
+        $('#regenerate-animations-button').removeClass('disabled');
+        $('#regenerate-animations-button').addClass('btn-primary');
     });
 
     $('#cmincmax_lock').on('change', function (event) {
@@ -4245,6 +4278,7 @@ function enable_cardboard(){
                                         parametertime_options_zoom ]);
 
         updateTemporal(false);
+
         if ($('#showplatforms').is(':checked')) {
             rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'measuredparameterx3d', 'platformanimation']);
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
@@ -4257,6 +4291,7 @@ function enable_cardboard(){
                 rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'curtainx3d', 'platformanimation']);
             }
         }
+
         $('#time-parameter-instr').html('Click and drag zoom, right-click to un-zoom');
     });
     $("#time-parameter-flot").bind("contextmenu",  ZoomOut);
@@ -5686,11 +5721,17 @@ function enable_cardboard(){
                     if ( ! $('#animation3D').hasClass('in') ) {
                         $('#animation3D-anchor').click();
                     }
+                    $('#animations').html(data[key]['timesensor']);
                     $('#spatial-3d-x3d-pp-slider').show();
                     $('#spatial-3d-x3d-speedup').show()
                     $('#speedup-value').val(data[key].speedup);
                     $('#slider-start-time').html($('body').data()['start-time']);
                     $('#slider-end-time').html($('body').data()['end-time']);
+                    $('#regenerate-animations-button').addClass('disabled');
+                    $('#regenerate-animations-button').removeClass('btn-primary');
+                    if ( ! $.isEmptyObject(data.measuredparameterx3d.limits) ) {
+                        sliderLimits = data.measuredparameterx3d.limits;
+                    }
                 }
             }
             else if (key == 'curtainx3d') {
@@ -5721,11 +5762,15 @@ function enable_cardboard(){
                     if ( ! $('#animation3D').hasClass('in') ) {
                         $('#animation3D-anchor').click();
                     }
+                    $('#animations').html(data[key]['timesensor']);
                     $('#spatial-3d-x3d-pp-slider').show();
                     $('#spatial-3d-x3d-speedup').show()
                     $('#speedup-value').val(data[key].speedup);
                     $('#slider-start-time').html($('body').data()['start-time']);
                     $('#slider-end-time').html($('body').data()['end-time']);
+                    if ( ! $.isEmptyObject(data.curtainx3d.limits) ) {
+                        sliderLimits = data.curtainx3d.limits;
+                    }
                 }
             }
             else if (key == 'resources') {
@@ -5758,7 +5803,7 @@ function enable_cardboard(){
                         $('body').data()['platformAnimation'].push(plat);
                         x3dText += x3d;
                     });
-                    $('#animations').html(data[key]['all']);
+                    $('#animations').html(data[key]['timesensor']);
                     $('#platform-animations').html(x3dText);
 
                     // Check for any platforms that have Shape IndexedLineSets so as to show ROT Axis check box
@@ -5824,7 +5869,6 @@ function enable_cardboard(){
                     $('#spatial-3d-x3d-pp-slider').show();
                     $('#spatial-3d-x3d-speedup').show()
                     $('#speedup-value').val(data[key].speedup);
-
 
                     $('#spatial-3d-x3d-pause-play').click();
                     if ($('#spatial-3d-x3d-pause-play').hasClass('icon-play')) {
