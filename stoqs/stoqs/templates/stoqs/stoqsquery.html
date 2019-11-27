@@ -319,15 +319,16 @@
                                                                 <option>360</option>
                                                                 <option>120</option>
                                                                 <option>60</option>
-                                                                <option selected="selected">30</option>
+                                                                <option>30</option>
                                                                 <option>10</option>
-                                                                <option>5</option>
+                                                                <option selected="selected">5</option>
                                                             </select>
                                                             <span> minute slices. </span>
                                                             <span> Fade away after </span>
                                                             <select id="fade_away_minutes" class="selectpicker form-control regen-activate" style="height:18px;width:50px;margin-bottom:5px;">
-                                                                <option>480</option>
-                                                                <option>240</option>
+                                                                <option>1440</option>
+                                                                <option>720</option>
+                                                                <option>360</option>
                                                                 <option selected="selected">120</option>
                                                                 <option>60</option>
                                                                 <option>30</option>
@@ -1499,7 +1500,7 @@
     var rtLeft, rtRight;
     var lastW, lastH;
     var num_pt_colors = 16;
-    var render_shapes;
+    var render_shapes = {};
 
     var vrHMD = null, vrSensor = null;
     var pyr = new x3dom.fields.SFVec3f(0, 0, 0);        // For the Leap Motion
@@ -1512,6 +1513,7 @@
         var fesec;
         var frac_ems;
         var frac_esec;
+        var fade_away_secs = parseInt($('#fade_away_minutes').val()) * 60;
         $('#spatial-3d-x3d-slider').val(fraction);
 
         // Set render to true or false for shapes
@@ -1522,7 +1524,7 @@
                 frac_ems = $('body').data()['start-ems'] + fraction * ($('body').data()['end-ems'] - $('body').data()['start-ems']);
                 frac_esec = parseInt(frac_ems / 1000.0);
                 // Render only the shapes in the list for the time entry in render_shapes
-                if (last_shps_esec <= frac_esec && frac_esec < shps_esec) {
+                if (last_shps_esec - fade_away_secs <= frac_esec && frac_esec < shps_esec) {
                     $.each(shape_ids, function(index, shape_id) {
                         $('#' + shape_id)[0].setAttribute('render', 'true');
                     });
@@ -5276,19 +5278,10 @@ function enable_cardboard(){
             $('#metadata-loading').html("");
         } //resetWaitIndicators()
 
-        function merge_shape_id_dicts(ils_dict, ifs_dict) {
+        function merge_shape_id_dicts(shape_dict) {
             min_esec = (new Date()).getTime()/1000;
             max_esec = 0;
-            $.each(ils_dict, function(es, shape_id) {
-                var esec = parseInt(es);
-                if (esec < min_esec) {
-                    min_esec = esec;
-                }
-                if (esec > max_esec) {
-                    max_esec = esec;
-                }
-            });
-            $.each(ifs_dict, function(es, shape_id) {
+            $.each(shape_dict, function(es, shape_id) {
                 var esec = parseInt(es);
                 if (esec < min_esec) {
                     min_esec = esec;
@@ -5298,66 +5291,22 @@ function enable_cardboard(){
                 }
             });
 
-            render_shapes = {};
-
-            // Lines
             start_esec = parseInt(min_esec);
-            end_esec = start_esec + parseInt($('#fade_away_minutes').val()) * 60.0;
-            $.each(ils_dict, function(es, shape_ids) {
-                $.each(shape_ids, function(index, shape_id) {
+            for (var end_esec = min_esec + parseInt($('#slice_minutes').val()) * 60.0; end_esec <= max_esec; end_esec += parseInt($('#slice_minutes').val()) * 60.0) {
+                render_shapes[end_esec] = [];
+                $.each(shape_dict, function(es, shape_ids) {
                     var esec = parseInt(es);
-                    if (start_esec <= esec && esec < end_esec) {
-                        if ( $.type(render_shapes[end_esec]) == "undefined" ) {
-                            render_shapes[end_esec] = [];
-                            render_shapes[end_esec].push(shape_id);
-                        }
-                        else {
-                            render_shapes[end_esec].push(shape_id);
-                        }
+                    if (start_esec < end_esec - parseInt($('#fade_away_minutes').val()) * 60.0) {
+                        start_esec = end_esec - parseInt($('#fade_away_minutes').val()) * 60.0;
                     }
-                    else if (esec >= end_esec) {
-                        start_esec = end_esec;
-                        end_esec = start_esec + parseInt($('#fade_away_minutes').val()) * 60.0;
-                        if ( $.type(render_shapes[end_esec]) == "undefined" ) {
-                            render_shapes[end_esec] = [];
+                    if (start_esec <= esec && esec < end_esec) {
+                        $.each(shape_ids, function(index, shape_id) {
                             render_shapes[end_esec].push(shape_id);
-                        }
-                        else {
-                            render_shapes[end_esec].push(shape_id);
-                        }
+                        });
                     }
                 });
-            });
-
-            // Faces
-            start_esec = parseInt(min_esec);
-            end_esec = start_esec + parseInt($('#fade_away_minutes').val()) * 60.0;
-            $.each(ifs_dict, function(es, shape_ids) {
-                $.each(shape_ids, function(index, shape_id) {
-                    var esec = parseInt(es);
-                    if (start_esec <= esec && esec < end_esec) {
-                        if ( $.type(render_shapes[end_esec]) == "undefined" ) {
-                            render_shapes[end_esec] = [];
-                            render_shapes[end_esec].push(shape_id);
-                        }
-                        else {
-                            render_shapes[end_esec].push(shape_id);
-                        }
-                    }
-                    else if (esec >= end_esec) {
-                        start_esec = end_esec;
-                        end_esec = start_esec + parseInt($('#fade_away_minutes').val()) * 60.0;
-                        if ( $.type(render_shapes[end_esec]) == "undefined" ) {
-                            render_shapes[end_esec] = [];
-                            render_shapes[end_esec].push(shape_id);
-                        }
-                        else {
-                            render_shapes[end_esec].push(shape_id);
-                        }
-                    }
-                });
-            });
-        } // merge_shape_id_dicts()
+            }
+        }
 
         function onUpdate(data, key) {
             // Called from ajax to update the selectors base on the new selection
@@ -5698,12 +5647,7 @@ function enable_cardboard(){
             }
             else if (key == 'measuredparameterx3d') {
                 if ( ! $.isEmptyObject(data.measuredparameterx3d) ) {
-                    if ( ! $.isEmptyObject(data.curtainx3d) ) {
-                        merge_shape_id_dicts(data.measuredparameterx3d.shape_id_dict, data.curtainx3d.shape_id_dict);
-                    }
-                    else {
-                        merge_shape_id_dicts(data.measuredparameterx3d.shape_id_dict, {});
-                    }
+                    merge_shape_id_dicts(data.measuredparameterx3d.shape_id_dict);
                     var ils_x3d_html = '';
                     $.each(data.measuredparameterx3d, function (shapeid, shapex3d) {
                         if ( ! $.isEmptyObject(shapex3d.points) ) {
@@ -5736,12 +5680,7 @@ function enable_cardboard(){
             }
             else if (key == 'curtainx3d') {
                 if (! $.isEmptyObject(data.curtainx3d)) {
-                    if ( ! $.isEmptyObject(data.measuredparameterx3d) ) {
-                        merge_shape_id_dicts(data.curtainx3d.shape_id_dict, data.measuredparameterx3d.shape_id_dict);
-                    }
-                    else {
-                        merge_shape_id_dicts(data.curtainx3d.shape_id_dict, {});
-                    }
+                    merge_shape_id_dicts(data.curtainx3d.shape_id_dict);
                     var curtainx3d_html = '';
                     $.each(data.curtainx3d, function (shapeid, curtainx3d) {
                         if ( ! $.isEmptyObject(curtainx3d.points) ) {
