@@ -325,7 +325,7 @@
                                                             </select>
                                                             <span> minute slices. </span>
                                                             <span> Fade away after </span>
-                                                            <select id="fade_away_minutes" class="selectpicker form-control regen-activate" style="height:18px;width:50px;margin-bottom:5px;">
+                                                            <select id="fade_away_minutes" class="selectpicker form-control regen-activate" style="height:18px;width:55px;margin-bottom:5px;">
                                                                 <option>1440</option>
                                                                 <option>720</option>
                                                                 <option>360</option>
@@ -379,12 +379,15 @@
                                                     <div id="animation3D" class="accordion-body">
                                                         <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
                                                             <div class="row-fluid">
+                                                                <span id="slider-esecs"></span>
                                                                 <div class="span1" style="padding:0px;margin-left:5px;">
                                                                     <i id="spatial-3d-x3d-pause-play" class="icon-play"></i>
                                                                 </div>
                                                                 <div class="span9" style="margin:0px;margin-top:3px;">
                                                                     <div class="row-fluid">
                                                                         <input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:98%;">
+                                                                            <span id="slider-time" style="position:absolute;width:inherit;"></span>
+                                                                        </input>
                                                                     </div>
                                                                     <div class="row-fluid">
                                                                         <span id="slider-start-time"></span>
@@ -1453,7 +1456,7 @@
     <script type="text/javascript" src="{{STATIC_URL}}permalink/json2.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/purl.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string-min.js"></script> 
-    <script type="text/javascript" src="{{STATIC_URL}}x3dom-1.8.1/x3dom-full.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}x3dom-1.8.1/x3dom-full.debug.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/GeoOriginTransform.js"></script>
     <!--<script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom-full.js"></script>-->
     <script type="text/javascript" src="{{STATIC_URL}}linkifyjs/linkify.min.js"></script>
@@ -1501,30 +1504,51 @@
     var lastW, lastH;
     var num_pt_colors = 16;
     var render_shapes = {};
+    var ts_fraction;
+    var frac_esec;
 
     var vrHMD = null, vrSensor = null;
     var pyr = new x3dom.fields.SFVec3f(0, 0, 0);        // For the Leap Motion
 
     // Callback from X3DOM TimeSensor added to scene with 'showplatforms' checkbox 
     function setSlider(eventObject) {
+        if (eventObject.type == "outputchange" && eventObject.fieldName == "pauseTime") {
+            if (eventObject.value) {
+                console.log('pauseTime  = ' + eventObject.value);
+            }
+        }
+
+        if (eventObject.type == "outputchange" && eventObject.fieldName == "isActive") {
+            if (eventObject.value) {
+                console.log('active');
+            }
+            else {
+                console.log('not active');
+            }
+        }
+
         if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
             return;
-        var fraction = eventObject.value;
+
+        ts_fraction = eventObject.value;
         var fesec;
-        var frac_ems;
-        var frac_esec;
+        var frac_ems = $('body').data()['start-ems'] + ts_fraction * ($('body').data()['end-ems'] - $('body').data()['start-ems']);
+        frac_esec = parseInt(frac_ems / 1000.0);
+        $('#slider-esecs').html(frac_esec);
+        $('#slider-time').html(getUTCDateString(new Date(frac_ems)));
+        $('#slider-time').css( {'transform': 'translate(' + ts_fraction * 50 + '%, -40px)'} );
+
         var fade_away_secs = parseInt($('#fade_away_minutes').val()) * 60;
-        $('#spatial-3d-x3d-slider').val(fraction);
+        var slice_secs = parseInt($('#slice_minutes').val()) * 60;
+        $('#spatial-3d-x3d-slider').val(ts_fraction);
 
         // Set render to true or false for shapes
         if ( ! $.isEmptyObject(render_shapes) ) {
             var last_shps_esec = 0;
             $.each(render_shapes, function(esec, shape_ids) {
                 shps_esec = parseInt(esec);
-                frac_ems = $('body').data()['start-ems'] + fraction * ($('body').data()['end-ems'] - $('body').data()['start-ems']);
-                frac_esec = parseInt(frac_ems / 1000.0);
                 // Render only the shapes in the list for the time entry in render_shapes
-                if (last_shps_esec - fade_away_secs <= frac_esec && frac_esec < shps_esec) {
+                if (last_shps_esec - fade_away_secs <= frac_esec && frac_esec < shps_esec - slice_secs) {
                     $.each(shape_ids, function(index, shape_id) {
                         $('#' + shape_id)[0].setAttribute('render', 'true');
                     });
@@ -1537,7 +1561,7 @@
                 last_shps_esec = shps_esec;
             });
         }
-        updateCrosshairs(fraction, timeAxis, sliderLimits);
+        updateCrosshairs(ts_fraction, timeAxis, sliderLimits);
     }
 
     function setScale(event) {
@@ -2498,10 +2522,17 @@
     });
 
     $('#spatial-3d-x3d-pause-play').on('click', function (event) {
-        if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
+        var click_time = new Date().getTime() / 1000.0;
+        if ( $.isEmptyObject($('#PLATFORMS_TS').attr('startTime')) ) {
+            $('#spatial-3d-x3d-pause-play').removeClass('icon-play')
+            $('#spatial-3d-x3d-pause-play').addClass('icon-pause')
+            $('#PLATFORMS_TS').attr('enabled','true');
+            $('#PLATFORMS_TS')[0].setAttribute('startTime', click_time);
+        }
+        else if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
             $('#spatial-3d-x3d-pause-play').removeClass('icon-pause')
             $('#spatial-3d-x3d-pause-play').addClass('icon-play')
-            $('#PLATFORMS_TS').attr('enabled','false');
+            $('#PLATFORMS_TS')[0].setAttribute('pauseTime', click_time);
             if ( ! $.isEmptyObject(render_shapes) ) {
                 $.each(render_shapes, function(esec, shape_ids) {
                     $.each(shape_ids, function(index, shape_id) {
@@ -2510,10 +2541,10 @@
                 });
             }
         }
-        else if ($('#spatial-3d-x3d-pause-play').hasClass('icon-play')) {
+        else {
             $('#spatial-3d-x3d-pause-play').removeClass('icon-play')
             $('#spatial-3d-x3d-pause-play').addClass('icon-pause')
-            $('#PLATFORMS_TS').attr('enabled','true');
+            $('#PLATFORMS_TS')[0].setAttribute('resumeTime', click_time);
             if ( ! $.isEmptyObject(render_shapes) ) {
                 $.each(render_shapes, function(esec, shape_ids) {
                     $.each(shape_ids, function(index, shape_id) {
@@ -2521,8 +2552,8 @@
                     });
                 });
             }
-            setScale(event);
         }
+        setScale(event);
     });
 
     $('#getactualcount').on('click', function (event) {
@@ -5292,7 +5323,7 @@ function enable_cardboard(){
             });
 
             start_esec = parseInt(min_esec);
-            for (var end_esec = min_esec + parseInt($('#slice_minutes').val()) * 60.0; end_esec <= max_esec; end_esec += parseInt($('#slice_minutes').val()) * 60.0) {
+            for (var end_esec = min_esec + parseInt($('#slice_minutes').val()) * 60.0; end_esec < max_esec; end_esec += parseInt($('#slice_minutes').val()) * 60.0) {
                 render_shapes[end_esec] = [];
                 $.each(shape_dict, function(es, shape_ids) {
                     var esec = parseInt(es);
@@ -5787,10 +5818,9 @@ function enable_cardboard(){
                     function updateTranslateRotate(fraction) {
                         var currentInterval = $('#PLATFORMS_TS').attr('cycleInterval');
                         var timeElapsed = fraction * currentInterval;
-                        var currentTime = (new Date()).getTime()/1000;
+                        var currentTime = new Date().getTime()/1000;
                         var newStartTime = currentTime - timeElapsed;
                         
-                        $('#PLATFORMS_TS').attr('enabled','false');
                         $('#PLATFORMS_TS').attr('startTime', String(newStartTime));
                         $('#PLATFORMS_TS').attr('enabled', 'true');
                         if ($('#spatial-3d-x3d-pause-play').hasClass('icon-play')) {
@@ -5799,7 +5829,8 @@ function enable_cardboard(){
                         updateCrosshairs(fraction, timeAxis, sliderLimits);
                     }
                     $('#spatial-3d-x3d-slider').mousemove( function(e) {
-                        updateTranslateRotate($(this).val());
+                        console.log('#spatial-3d-x3d-slider mousemove event');
+                        //updateTranslateRotate($(this).val());
                     });
 
                     if ( ! $('#animation3D').hasClass('in') ) {
@@ -5808,11 +5839,7 @@ function enable_cardboard(){
                     $('#spatial-3d-x3d-pp-slider').show();
                     $('#spatial-3d-x3d-speedup').show()
                     $('#speedup-value').val(data[key].speedup);
-
                     $('#spatial-3d-x3d-pause-play').click();
-                    if ($('#spatial-3d-x3d-pause-play').hasClass('icon-play')) {
-                        $('#spatial-3d-x3d-pause-play').click();
-                    }
                 }
                 if (data[key]['platforms_not_shown']) {
                     if ( ! $.isEmptyObject(data[key]['platforms_not_shown']) ) {
