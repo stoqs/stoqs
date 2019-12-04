@@ -379,9 +379,11 @@
                                                     <div id="animation3D" class="accordion-body">
                                                         <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
                                                             <div class="row-fluid">
-                                                                <span id="slider-esecs"></span>
+                                                                <span id="slider-esecs" style="display:none;"></span>
                                                                 <div class="span1" style="padding:0px;margin-left:5px;">
                                                                     <i id="spatial-3d-x3d-pause-play" class="icon-play"></i>
+                                                                    <br>
+                                                                    <input type="checkbox" id="enableanimation" title="Uncheck to pause animation and show all the data" checked="checked"/>
                                                                 </div>
                                                                 <div class="span9" style="margin:0px;margin-top:3px;">
                                                                     <div class="row-fluid">
@@ -2533,17 +2535,20 @@
             $('#spatial-3d-x3d-pause-play').removeClass('icon-pause')
             $('#spatial-3d-x3d-pause-play').addClass('icon-play')
             $('#PLATFORMS_TS')[0].setAttribute('pauseTime', click_time);
-            if ( ! $.isEmptyObject(render_shapes) ) {
-                $.each(render_shapes, function(esec, shape_ids) {
-                    $.each(shape_ids, function(index, shape_id) {
-                        $('#' + shape_id)[0].setAttribute('render', 'true');
-                    });
-                });
-            }
         }
         else {
             $('#spatial-3d-x3d-pause-play').removeClass('icon-play')
             $('#spatial-3d-x3d-pause-play').addClass('icon-pause')
+            $('#PLATFORMS_TS')[0].setAttribute('resumeTime', click_time);
+        }
+        //setScale(event);
+        var viewpoint = $('#spatial-3d-x3d')[0].runtime.viewpoint();
+        viewpoint._vf.bind = true;
+    });
+
+    $('#enableanimation').on('change', function (event) {
+        var click_time = new Date().getTime() / 1000.0;
+        if ( $('#enableanimation').is(':checked') ) {
             $('#PLATFORMS_TS')[0].setAttribute('resumeTime', click_time);
             if ( ! $.isEmptyObject(render_shapes) ) {
                 $.each(render_shapes, function(esec, shape_ids) {
@@ -2553,7 +2558,16 @@
                 });
             }
         }
-        setScale(event);
+        else {
+            $('#PLATFORMS_TS')[0].setAttribute('pauseTime', click_time);
+            if ( ! $.isEmptyObject(render_shapes) ) {
+                $.each(render_shapes, function(esec, shape_ids) {
+                    $.each(shape_ids, function(index, shape_id) {
+                        $('#' + shape_id)[0].setAttribute('render', 'true');
+                    });
+                });
+            }
+        }
     });
 
     $('#getactualcount').on('click', function (event) {
@@ -2597,7 +2611,7 @@
         }
     });
 
-    $('#showgeox3dmeasurement').on('click', function (event) {
+    $('#showgeox3dmeasurement').on('change', function (event) {
         if ( $('#showgeox3dmeasurement').is(':checked') ) {
             $('#track-animations')[0].setAttribute('render', true);
             $('#curtain-animations')[0].setAttribute('render', true);
@@ -2644,7 +2658,7 @@
         }
     });
 
-    $('#showplatforms').on('click', function (event) {
+    $('#showplatforms').on('change', function (event) {
         if ( $('#showplatforms').is(':checked') ) {
             // Need time series data to redraw with crosshairs, so get everything
             rebuildFilters(['platformanimation']);
@@ -6132,12 +6146,7 @@ function enable_cardboard(){
             $(item[0]).val(item[1]);
         });
 
-        // All clicks
-        $.each(parameters['clicks'], function (pos, item) {
-            $(item).click();
-        });
-
-        // Now, the rest of the information
+        // Open sections and tabs
         $.each(parameters, function (key, value) {
             switch(key) {
                 case 'map-center':
@@ -6178,6 +6187,13 @@ function enable_cardboard(){
                     if ( ! $.isEmptyObject(value) ) {
                         parametervalues = JSON.parse(value);
                     }
+            }
+        });
+
+        // All clicks
+        $.each(parameters['clicks'], function (pos, item) {
+            if ( ! $(item).is(':checked') ) {
+                $(item).click();
             }
         });
 
