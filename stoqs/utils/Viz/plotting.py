@@ -17,6 +17,7 @@ from matplotlib import rcParams
 from scipy.interpolate import griddata
 from scipy.stats import ttest_ind
 from matplotlib.colors import hex2color
+from operator import itemgetter
 from pylab import polyval
 from collections import namedtuple
 from django.conf import settings
@@ -29,6 +30,7 @@ from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL, X3D_MODEL_SCALE
 import seawater.eos80 as sw
 import numpy as np
 from numpy import polyfit
+from PIL import Image, ImageOps
 import logging
 import string
 import random
@@ -237,9 +239,9 @@ class MeasuredParameter(BaseParameter):
                                              .get(id=parameterID).standard_name)
         self.set_colormap()
 
-        if self.cmin is not None:
+        if self.cmin is not None and self.pMinMax:
             self.pMinMax[1] = self.cmin
-        if self.cmax is not None:
+        if self.cmax is not None and self.pMinMax:
             self.pMinMax[2] = self.cmax
 
         self.sampleQS = sampleQS
@@ -507,11 +509,199 @@ class MeasuredParameter(BaseParameter):
             indx = len(clt.colors) - 1
         return clt.colors[indx]
 
-
-    def renderDatavaluesForFlot(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False):
+    def _make_image(self, tmin, tmax, dmin, dmax, xi, yi, cx, cy, cz, clx, cly, clz, contourFlag, cmocean_lookup_str):
+        '''Generate image from collected member variables
         '''
-        Produce a .png image without axes suitable for overlay on a Flot graphic. Return a
-        3 tuple of (sectionPngFile, colorbarPngFile, errorMessage)
+        if self.parameterID or self.contourParameterID:
+            if self.kwargs.get('activitynames'):
+                sectionPngFile = '{}_{}_{}_{}_{}.png'.format(self.parameterID, self.contourParameterID, self.platformName, 
+                                                             self.kwargs['activitynames'][0].split('.nc')[0], self.imageID)
+            else:
+                sectionPngFile = '{}_{}_{}_{}.png'.format(self.parameterID, self.contourParameterID, self.platformName, self.imageID)
+        elif self.kwargs['measuredparametersgroup']:
+            sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
+        else:
+            # Return silently with no error message - simply can't make a plot without a Parameter
+            return None, None, None, self.cm_name, cmocean_lookup_str, self.standard_name
+
+        sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
+        try:
+            os.remove(sectionPngFileFullPath)
+        except OSError:
+            # Silently ignore
+            pass
+
+        if 'showdataas' in self.kwargs:
+            if self.kwargs['showdataas']:
+                if self.kwargs['showdataas'][0] == 'contour':
+                    contourFlag = True
+      
+
+        if len(cz) == 0 and len(clz) == 0:
+            return None, None, 'No data returned from selection', self.cm_name, cmocean_lookup_str, self.standard_name
+
+        if contourFlag:
+            try:
+                self.logger.debug('Gridding data with self.sdt_count = %d, and self.y_count = %d', self.sdt_count, self.y_count)
+                # See https://scipy-cookbook.readthedocs.io/items/Matplotlib_Gridding_irregularly_spaced_data.html
+                zi = griddata((cx, cy), cz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
+            except KeyError as e:
+                self.logger.exception('Got KeyError. Could not grid the data')
+                return None, None, 'Got KeyError. Could not grid the data', self.cm_name, cmocean_lookup_str, self.standard_name
+            except Exception as e:
+                self.logger.exception('Could not grid the data')
+                return None, None, 'Could not grid the data', self.cm_name, cmocean_lookup_str, self.standard_name
+
+            self.logger.debug('zi = %s', zi)
+
+        if self.qs_mp is not None:
+            COLORED_DOT_SIZE_THRESHOLD = 5000
+            if self.qs_mp.count() > COLORED_DOT_SIZE_THRESHOLD:
+                coloredDotSize = 10
+            else:
+                coloredDotSize = 20
+
+        parm_info = self.pMinMax
+        full_screen = False
+        if self.request.GET.get('full_screen'):
+            full_screen = True
+        try:
+            # Make the plot
+            # contour the gridded data, plotting dots at the nonuniform data points.
+            # See http://scipy.org/Cookbook/Matplotlib/Django
+            if full_screen:
+                fig = plt.figure(figsize=(12,6))
+            else:
+                fig = plt.figure(figsize=(6,3))
+            ax = fig.add_axes((0,0,1,1))
+            if self.scale_factor:
+                ax.set_xlim(tmin / self.scale_factor, tmax / self.scale_factor)
+            else:
+                ax.set_xlim(tmin, tmax)
+            ax.set_ylim(dmax, dmin)
+            ax.get_xaxis().set_ticks([])
+            self.set_ticks_bounds_norm(parm_info)
+            if self.parameterID is not None:
+                if contourFlag:
+                    ax.contourf(xi, yi, zi, cmap=self.cm, norm=self.norm, extend='both',
+                            levels=np.linspace(parm_info[1], parm_info[2], self.num_colors+1))
+                    ax.scatter(cx, cy, marker='.', s=2, c='k', lw = 0)
+                else:
+                    self.logger.debug('parm_info = %s', parm_info)
+                    ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2],
+                               norm=self.norm)
+                    # Draw any spanned data, e.g. NetTows
+                    self.logger.debug(f"Drawing spanned data: {len(self.xspan)} samples")
+                    for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
+                        try:
+                            ax.plot(xs, ys, c=self._get_color(z, parm_info[1], parm_info[2]), lw=3)
+                        except ZeroDivisionError:
+                            # Likely all data is same value and color lookup table can't be computed
+                            return None, None, "Can't plot identical data values of %f" % z, self.cm_name, cmocean_lookup_str, self.standard_name
+
+            if self.sampleQS and SAMPLED not in self.parameterGroups:
+                # Sample markers for everything but Net Tows
+                xsamp, ysamp, sname = self._get_samples_for_markers(exclude_act_type_name=NETTOW)
+                self.logger.debug(f"Drawing scatter of Net Tows: {len(xsamp)} samples")
+                ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
+                for x,y,sn in zip(xsamp, ysamp, sname):
+                    plt.annotate(sn, xy=(x,y), xytext=(5,-10), textcoords='offset points', fontsize=7)
+
+                # Annotate NetTow Samples at Sample record location - points
+                xsamp, ysamp, sname = self._get_samples_for_markers(act_type_name=NETTOW)
+                self.logger.debug(f"Annotating scatter of Net Tows: {len(xsamp)} samples")
+                ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
+                for x,y,sn in zip(xsamp, ysamp, sname):
+                    plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords='offset points', fontsize=7)
+
+                # Sample markers for Vertical Net Tows (put circle at surface) - lines
+                xspan, yspan, sname = self._get_samples_for_markers(act_type_name=VERTICALNETTOW, spanned=True)
+                self.logger.debug(f"Plotting Vertical Net Tows: {len(xsamp)} samples")
+                for xs,ys in zip(xspan, yspan):
+                    ax.plot(xs, ys, c='k', lw=2)
+                    ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10, edgecolors='k')
+
+                # Sample markers for Plankton Pumps - lines
+                xspan, yspan, sname = self._get_samples_for_markers(act_type_name=PLANKTONPUMP, spanned=True)
+                self.logger.debug(f"Sample markers for Plankton Pumps: {len(xspan)} samples")
+                for xs,ys in zip(xspan, yspan):
+                    ax.plot(xs, ys, c='k', lw=2)
+                    ax.scatter([xs[1]], [ys[1]], marker='o', c='w', s=15, zorder=10, edgecolors='k')
+
+                # Sample markers for ESP Archives - thick transparent lines
+                xspan, yspan, sname = self._get_samples_for_markers(act_type_name=ESP_FILTERING, spanned=True)
+                self.logger.debug(f"Sample markers for ESP Archives: {len(xspan)} samples")
+                for xs,ys in zip(xspan, yspan):
+                    ax.plot(xs, ys, c='k', lw=1, alpha=0.5)
+
+            if self.contourParameterID is not None:
+                zli = griddata((clx, cly), clz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
+                CS = ax.contour(xi, yi, zli, colors='white')
+                ax.clabel(CS, fontsize=9, inline=1)
+
+            if self.kwargs.get('showgeox3dmeasurement') and contourFlag and self.kwargs.get('activitynames'):
+                self.logger.debug(f"Writing curtain X3D file {sectionPngFileFullPath} with dpi=480")
+                fig.savefig(sectionPngFileFullPath, dpi=480, transparent=True)
+            elif full_screen:
+                self.logger.debug(f"Writing full_screen file {sectionPngFileFullPath} with dpi=240")
+                fig.savefig(sectionPngFileFullPath, dpi=240, transparent=True)
+            else:
+                self.logger.debug(f"Writing file {sectionPngFileFullPath} with dpi=120")
+                fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
+            plt.close()
+        except Exception as e:
+            self.logger.exception('Could not plot the data')
+            return None, None, 'Could not plot the data', self.cm_name, cmocean_lookup_str, self.standard_name
+
+        if self.colorbarPngFileFullPath:
+            try:
+                self.makeColorBar(self.colorbarPngFileFullPath, parm_info)
+            except Exception as e:
+                self.logger.exception('%s', e)
+                return None, None, 'Could not plot the colormap', self.cm_name, cmocean_lookup_str, self.standard_name
+
+        return sectionPngFile, self.colorbarPngFile, self.strideInfo, self.cm_name, cmocean_lookup_str, self.standard_name
+
+    def _plot_limits(self):
+        '''Return 4 tuple of time and depth min and max for generating plots for Flot or X3D
+        '''
+        # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
+        # query has salient points, typically in the vertices of the yo-yos. 
+        # If the time tuple has values then use those, they represent a zoomed in portion of the Temporal-Depth flot plot
+        # in the UI.  If they are not specified then use the Flot plot limits specified separately in the flotlimits tuple.
+        tmin = None
+        tmax = None
+        if 'time' in self.kwargs:
+            if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
+                dstart = datetime.strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S') 
+                dend = datetime.strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S') 
+                tmin = dstart.timestamp()
+                tmax = dend.timestamp()
+
+        if not tmin and not tmax:
+            if self.kwargs['flotlimits'][0] is not None and self.kwargs['flotlimits'][1] is not None:
+                tmin = float(self.kwargs['flotlimits'][0]) / 1000.0
+                tmax = float(self.kwargs['flotlimits'][1]) / 1000.0
+
+        # If the depth tuple has values then use those, they represent a zoomed in portion of the Temporal-Depth flot plot
+        # in the UI.  If they are not specified then use the Flot plot limits specified separately in the flotlimits tuple.
+        dmin = None
+        dmax = None
+        if 'depth' in self.kwargs:
+            if self.kwargs['depth'][0] is not None and self.kwargs['depth'][1] is not None:
+                dmin = float(self.kwargs['depth'][0])
+                dmax = float(self.kwargs['depth'][1])
+
+        if not dmin and not dmax:
+            if self.kwargs['flotlimits'][2] is not None and self.kwargs['flotlimits'][3] is not None:
+                dmin = float(self.kwargs['flotlimits'][2])
+                dmax = float(self.kwargs['flotlimits'][3])
+
+        return tmin, tmax, dmin, dmax
+
+    def renderDatavaluesNoAxes(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False, loadDataOnly=False, forFlot=True):
+        '''
+        Produce a .png image without axes suitable for overlay on a Flot graphic or as X3D curtain plots 
 
         # griddata parameter defaults
         tgrid_max = 1000            # Reasonable maximum width for time-depth-flot plot is about 1000 pixels
@@ -531,68 +721,27 @@ class MeasuredParameter(BaseParameter):
             sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
             self.request.session['sessionID'] = sessionID
 
-        if self.parameterID or self.contourParameterID:
-            sectionPngFile = '{}_{}_{}_{}.png'.format(self.parameterID, self.contourParameterID, self.platformName, self.imageID)
-        elif self.kwargs['measuredparametersgroup']:
-            sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
-        else:
-            # Return silently with no error message - simply can't make a plot without a Parameter
-            return None, None, None, self.cm_name, cmocean_lookup_str, self.standard_name
+        tmin, tmax, dmin, dmax = self._plot_limits() 
 
-        sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
-        
-        # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
-        # query has salient points, typically in the vertices of the yo-yos. 
-        # If the time tuple has values then use those, they represent a zoomed in portion of the Temporal-Depth flot plot
-        # in the UI.  If they are not specified then use the Flot plot limits specified separately in the flotlimits tuple.
-        tmin = None
-        tmax = None
         xi = None
-        if 'time' in self.kwargs:
-            if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
-                dstart = datetime.strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S') 
-                dend = datetime.strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S') 
-                tmin = dstart.timestamp()
-                tmax = dend.timestamp()
-
-        if not tmin and not tmax:
-            if self.kwargs['flotlimits'][0] is not None and self.kwargs['flotlimits'][1] is not None:
-                tmin = float(self.kwargs['flotlimits'][0]) / 1000.0
-                tmax = float(self.kwargs['flotlimits'][1]) / 1000.0
-
         if tmin and tmax:
-            sdt_count = self.qs.filter(platform__name = self.platformName).values_list('simpledepthtime__depth').count()
-            sdt_count = int(sdt_count / 2)                 # 2 points define a line, take half the number of simpledepthtime points
-            self.logger.debug('Half of sdt_count from query = %d', sdt_count)
-            if sdt_count > tgrid_max or sdt_count == 0:
-                sdt_count = tgrid_max
+            self.sdt_count = self.qs.filter(platform__name__in=self.platformName.split(',')).values_list('simpledepthtime__depth').count()
+            self.sdt_count = int(self.sdt_count / 2)                 # 2 points define a line, take half the number of simpledepthtime points
+            self.logger.debug('Half of self.sdt_count from query = %d', self.sdt_count)
+            if self.sdt_count > tgrid_max or self.sdt_count == 0:
+                self.sdt_count = tgrid_max
 
-            xi = np.linspace(tmin, tmax, sdt_count)
+            xi = np.linspace(tmin, tmax, self.sdt_count)
             ##self.logger.debug('xi = %s', xi)
 
-        # If the depth tuple has values then use those, they represent a zoomed in portion of the Temporal-Depth flot plot
-        # in the UI.  If they are not specified then use the Flot plot limits specified separately in the flotlimits tuple.
-        dmin = None
-        dmax = None
-        yi = None
-        if 'depth' in self.kwargs:
-            if self.kwargs['depth'][0] is not None and self.kwargs['depth'][1] is not None:
-                dmin = float(self.kwargs['depth'][0])
-                dmax = float(self.kwargs['depth'][1])
-
-        if not dmin and not dmax:
-            if self.kwargs['flotlimits'][2] is not None and self.kwargs['flotlimits'][3] is not None:
-                dmin = float(self.kwargs['flotlimits'][2])
-                dmax = float(self.kwargs['flotlimits'][3])
-
         # Make depth spacing dinc m, limit to time-depth-flot resolution (dgrid_max)
+        yi = None
         if dmin is not None and dmax is not None:
-            y_count = int((dmax - dmin) / dinc )
-            if y_count > dgrid_max:
-                y_count = dgrid_max
-            yi = np.linspace(dmin, dmax, y_count)
+            self.y_count = int((dmax - dmin) / dinc )
+            if self.y_count > dgrid_max:
+                self.y_count = dgrid_max
+            yi = np.linspace(dmin, dmax, self.y_count)
             ##self.logger.debug('yi = %s', yi)
-
 
         # Collect the scattered datavalues(time, depth) and grid them
         if xi is not None and yi is not None:
@@ -606,12 +755,6 @@ class MeasuredParameter(BaseParameter):
             else:                
                 self.logger.debug('self.scale_factor = %f', self.scale_factor)
                 xi = xi / self.scale_factor
-
-            try:
-                os.remove(sectionPngFileFullPath)
-            except OSError:
-                # Silently ignore
-                pass
 
             if not self.x and not self.y and not self.z and self.qs_mp is not None:
                 self.loadData(self.qs_mp)
@@ -636,227 +779,224 @@ class MeasuredParameter(BaseParameter):
                 clz = list(self.z)
                 self.logger.debug('Number of clx, cly, clz data values retrieved from database = %d', len(clz)) 
 
-            if 'showdataas' in self.kwargs:
-                if self.kwargs['showdataas']:
-                    if self.kwargs['showdataas'][0] == 'contour':
-                        contourFlag = True
-          
-            if len(cz) == 0 and len(clz) == 0:
-                return None, None, 'No data returned from selection', self.cm_name, cmocean_lookup_str, self.standard_name
-
-            if contourFlag:
-                try:
-                    self.logger.debug('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
-                    # See https://scipy-cookbook.readthedocs.io/items/Matplotlib_Gridding_irregularly_spaced_data.html
-                    zi = griddata((cx, cy), cz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
-                except KeyError as e:
-                    self.logger.exception('Got KeyError. Could not grid the data')
-                    return None, None, 'Got KeyError. Could not grid the data', self.cm_name, cmocean_lookup_str, self.standard_name
-                except Exception as e:
-                    self.logger.exception('Could not grid the data')
-                    return None, None, 'Could not grid the data', self.cm_name, cmocean_lookup_str, self.standard_name
-
-                self.logger.debug('zi = %s', zi)
-
-            if self.qs_mp is not None:
-                COLORED_DOT_SIZE_THRESHOLD = 5000
-                if self.qs_mp.count() > COLORED_DOT_SIZE_THRESHOLD:
-                    coloredDotSize = 10
-                else:
-                    coloredDotSize = 20
-
-            parm_info = self.pMinMax
-            full_screen = False
-            if self.request.GET.get('full_screen'):
-                full_screen = True
-            try:
-                # Make the plot
-                # contour the gridded data, plotting dots at the nonuniform data points.
-                # See http://scipy.org/Cookbook/Matplotlib/Django
-                if full_screen:
-                    fig = plt.figure(figsize=(12,6))
-                else:
-                    fig = plt.figure(figsize=(6,3))
-                ax = fig.add_axes((0,0,1,1))
-                if self.scale_factor:
-                    ax.set_xlim(tmin / self.scale_factor, tmax / self.scale_factor)
-                else:
-                    ax.set_xlim(tmin, tmax)
-                ax.set_ylim(dmax, dmin)
-                ax.get_xaxis().set_ticks([])
-                self.set_ticks_bounds_norm(parm_info)
-                if self.parameterID is not None:
-                    if contourFlag:
-                        ax.contourf(xi, yi, zi, cmap=self.cm, norm=self.norm, extend='both',
-                                levels=np.linspace(parm_info[1], parm_info[2], self.num_colors+1))
-                        ax.scatter(cx, cy, marker='.', s=2, c='k', lw = 0)
+            if not forFlot:
+                # Serves to clip the rendered image to the limits of data, as needed for X3D curtains
+                # Operate only on Plot Data Color selections 
+                # Continue onto _make_image() if no cx or cy data, there may be clx, cly
+                if cx:
+                    if self.scale_factor:
+                        tmin = cx[0] * self.scale_factor
+                        tmax = cx[-1] * self.scale_factor
                     else:
-                        self.logger.debug('parm_info = %s', parm_info)
-                        ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2],
-                                   norm=self.norm)
-                        # Draw any spanned data, e.g. NetTows
-                        self.logger.debug(f"Drawing spanned data: {len(self.xspan)} samples")
-                        for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
-                            try:
-                                ax.plot(xs, ys, c=self._get_color(z, parm_info[1], parm_info[2]), lw=3)
-                            except ZeroDivisionError:
-                                # Likely all data is same value and color lookup table can't be computed
-                                return None, None, "Can't plot identical data values of %f" % z, self.cm_name, cmocean_lookup_str, self.standard_name
+                        tmin = cx[0]
+                        tmax = cx[-1]
+                if cy:
+                    dmin = np.min(cy)
+                    dmax = np.max(cy)
 
-                if self.sampleQS and SAMPLED not in self.parameterGroups:
-                    # Sample markers for everything but Net Tows
-                    xsamp, ysamp, sname = self._get_samples_for_markers(exclude_act_type_name=NETTOW)
-                    self.logger.debug(f"Drawing scatter of Net Tows: {len(xsamp)} samples")
-                    ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
-                    for x,y,sn in zip(xsamp, ysamp, sname):
-                        plt.annotate(sn, xy=(x,y), xytext=(5,-10), textcoords='offset points', fontsize=7)
+            # Save important values as member variables for construction of IndexedFaceSets for curtainX3D visualizations.
+            self.tmin = tmin
+            self.tmax = tmax
+            self.dmin = dmin
+            self.dmax = dmax
 
-                    # Annotate NetTow Samples at Sample record location - points
-                    xsamp, ysamp, sname = self._get_samples_for_markers(act_type_name=NETTOW)
-                    self.logger.debug(f"Annotating scatter of Net Tows: {len(xsamp)} samples")
-                    ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
-                    for x,y,sn in zip(xsamp, ysamp, sname):
-                        plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords='offset points', fontsize=7)
-
-                    # Sample markers for Vertical Net Tows (put circle at surface) - lines
-                    xspan, yspan, sname = self._get_samples_for_markers(act_type_name=VERTICALNETTOW, spanned=True)
-                    self.logger.debug(f"Plotting Vertical Net Tows: {len(xsamp)} samples")
-                    for xs,ys in zip(xspan, yspan):
-                        ax.plot(xs, ys, c='k', lw=2)
-                        ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10, edgecolors='k')
-
-                    # Sample markers for Plankton Pumps - lines
-                    xspan, yspan, sname = self._get_samples_for_markers(act_type_name=PLANKTONPUMP, spanned=True)
-                    self.logger.debug(f"Sample markers for Plankton Pumps: {len(xspan)} samples")
-                    for xs,ys in zip(xspan, yspan):
-                        ax.plot(xs, ys, c='k', lw=2)
-                        ax.scatter([xs[1]], [ys[1]], marker='o', c='w', s=15, zorder=10, edgecolors='k')
-
-                    # Sample markers for ESP Archives - thick transparent lines
-                    xspan, yspan, sname = self._get_samples_for_markers(act_type_name=ESP_FILTERING, spanned=True)
-                    self.logger.debug(f"Sample markers for ESP Archives: {len(xspan)} samples")
-                    for xs,ys in zip(xspan, yspan):
-                        ax.plot(xs, ys, c='k', lw=1, alpha=0.5)
-
-                if self.contourParameterID is not None:
-                    zli = griddata((clx, cly), clz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
-                    CS = ax.contour(xi, yi, zli, colors='white')
-                    ax.clabel(CS, fontsize=9, inline=1)
-
-                if full_screen:
-                    fig.savefig(sectionPngFileFullPath, dpi=240, transparent=True)
-                else:
-                    fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
-                plt.close()
-            except Exception as e:
-                self.logger.exception('Could not plot the data')
-                return None, None, 'Could not plot the data', self.cm_name, cmocean_lookup_str, self.standard_name
-
-            if self.colorbarPngFileFullPath:
-                try:
-                    self.makeColorBar(self.colorbarPngFileFullPath, parm_info)
-                except Exception as e:
-                    self.logger.exception('%s', e)
-                    return None, None, 'Could not plot the colormap', self.cm_name, cmocean_lookup_str, self.standard_name
-
-            return sectionPngFile, self.colorbarPngFile, self.strideInfo, self.cm_name, cmocean_lookup_str, self.standard_name
+            if loadDataOnly:
+                return None, None, 'loadDataOnly specified', self.cm_name, cmocean_lookup_str, self.standard_name
+            else:
+                return self._make_image(tmin, tmax, dmin, dmax, xi, yi, cx, cy, cz, clx, cly, clz, contourFlag, cmocean_lookup_str)
         else:
             self.logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s', tmin, tmax, dmin, dmax)
             return None, None, 'Select a time-depth range', self.cm_name, cmocean_lookup_str, self.standard_name
 
-    def dataValuesX3D(self, vert_ex=10.0):
+    def _get_slices(self, time_array, slice_minutes):
+        # Find the indices at slice_minutes intervals, always include the first and last indices
+        # time_array is something like self.x with a scale_factor as applied for contour plotting
+        if not self.scale_factor:
+            self.scale_factor = 1
+        slice_esecs = [time_array[0] * self.scale_factor]
+        slice_indices = [0]
+        prev_esec = time_array[0] * self.scale_factor
+        for index, x in enumerate(time_array):
+            if x * self.scale_factor > prev_esec + slice_minutes * 60:
+                slice_esecs.append(x * self.scale_factor)
+                slice_indices.append(index)
+                prev_esec = x * self.scale_factor
+
+        slice_indices.append(len(time_array) - 1)
+        slice_esecs.append(time_array[-1] * self.scale_factor)
+
+        return slice_indices, slice_esecs
+
+    def _get_ils(self, act, istart, iend, vert_ex, lon_attr, lat_attr, depth_attr, value_attr):
+
+        lon_sliced = getattr(self, lon_attr)[act][istart:iend]
+        lat_sliced = getattr(self, lat_attr)[act][istart:iend]
+        depth_sliced = getattr(self, depth_attr)[act][istart:iend]
+        value_sliced = getattr(self, value_attr)[act][istart:iend]
+
+        points = ''
+        colors = ''
+        indices = ''
+        index = 0
+        for lon, lat, depth, value in zip(lon_sliced, lat_sliced, depth_sliced, value_sliced):
+            try:
+                cindx = int(round((value - float(self.pMinMax[1])) * (len(self.clt) - 1) / 
+                                  (float(self.pMinMax[2]) - float(self.pMinMax[1]))))
+            except ValueError as e:
+                # Likely: 'cannot convert float NaN to integer' as happens when rendering something like altitude outside of terrain coverage
+                continue
+            except ZeroDivisionError as e:
+                logger.error("Can't make color lookup table with min and max being the same, self.pMinMax = %s", self.pMinMax)
+                raise e
+
+            if cindx < 0:
+                cindx = 0
+            if cindx > len(self.clt) - 1:
+                cindx = len(self.clt) - 1
+
+            if lon_attr.endswith('_span'):
+                points = points + '%.5f %.5f %.1f %.5f %.5f %.1f ' % (lats[0], lons[0],
+                        -depths[0] * vert_ex, lats[1], lons[1], -depths[1] * vert_ex)
+                colors = colors + '%.3f %.3f %.3f %.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2],
+                                                                      self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
+                indices = indices + '%i %i ' % (index, index + 1)
+                index = index + 2
+            else:
+                points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
+                colors = colors + '%.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
+                indices = indices + '%i ' % index
+                index = index + 1
+
+        # End the IndexedLinestring with -1 so that end point does not 
+        # connect to the beg point, end with space for multiple activities
+        indices = indices + '-1 ' 
+
+        return points, colors, indices
+
+    def dataValuesX3D(self, platform_name, vert_ex=10.0, slice_minutes=10):
         '''
         Return scatter-like data values as X3D geocoordinates and colors.
+        This is called per platform and returns a hash organized by activity and slice_minutes Shapes.
         '''
-        x3dResults = {}
-        # Hack warning: too much coupling with UI code
-        if not self.kwargs.get('showgeox3dmeasurement'):
-            return x3dResults
-
+        x3d_results = {}
+        shape_id_dict = {}
         logger.debug("Building X3D data values with vert_ex = %f", vert_ex)
-
         if not self.lon and not self.lat and not self.depth and not self.value:
             self.logger.debug('Calling self.loadData()...')
             self.loadData(self.qs_mp)
         try:
-            points = ''
-            colors = ''
-            indices = ''
-            index = 0
             for act in list(self.value_by_act.keys()):
                 self.logger.debug('Reading data from act = %s', act)
-                for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
-                    points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
-                    try:
-                        cindx = int(round((value - float(self.pMinMax[1])) * (len(self.clt) - 1) / 
-                                        (float(self.pMinMax[2]) - float(self.pMinMax[1]))))
-                    except ValueError as e:
-                        # Likely: 'cannot convert float NaN to integer' as happens when rendering something like altitude outside of terrain coverage
-                        continue
-                    except ZeroDivisionError as e:
-                        logger.error("Can't make color lookup table with min and max being the same, self.pMinMax = %s", self.pMinMax)
-                        raise e
-
-                    if cindx < 0:
-                        cindx = 0
-                    if cindx > len(self.clt) - 1:
-                        cindx = len(self.clt) - 1
-
-                    colors = colors + '%.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
-                    indices = indices + '%i ' % index
-                    index = index + 1
-
-                # End the IndexedLinestring with -1 so that end point does not 
-                # connect to the beg point, end with space for multiple activities
-                indices = indices + '-1 ' 
+                # Get indices and times of the Shape slices to be animated - organize shapes by end time of the slice
+                slice_indices, slice_esecs = self._get_slices(self.x, slice_minutes)
+                self.logger.debug(f"Slicing pairwise {len(self.lon_by_act[act])} lat & lon points at indices {slice_indices} for {slice_minutes} minute intervals")
+                for istart, iend, end_esecs in zip(slice_indices, slice_indices[1:], slice_esecs[1:]):
+                    shape_id = f"ils_{platform_name}_{int(end_esecs)}"
+                    shape_id_dict[int(end_esecs)] = [shape_id]
+                    self.logger.debug(f"Getting IndexedLineSet data for shape_id: {shape_id}")
+                    iendp1 = iend + 1
+                    if iendp1 > len(self.lon_by_act[act]) - 1:
+                        iendp1 = iend
+                    points, colors, indices = self._get_ils(act, istart, iendp1, vert_ex, 
+                                                            'lon_by_act', 'lat_by_act', 'depth_by_act', 'value_by_act')
+                    x3d_results[shape_id] = {'colors': colors.rstrip(), 'points': points.rstrip(), 'index': indices.rstrip()}
 
             # Make pairs of points for spanned NetTow-like data
             for act in list(self.value_by_act_span.keys()):
-                self.logger.debug('Reading data from act = %s', act)
-                for lons, lats, depths, value in zip(self.lon_by_act_span[act], 
-                                                      self.lat_by_act_span[act], 
-                                                      self.depth_by_act_span[act], 
-                                                      self.value_by_act_span[act]):
-                    points = points + '%.5f %.5f %.1f %.5f %.5f %.1f ' % (lats[0], lons[0],
-                            -depths[0] * vert_ex, lats[1], lons[1], -depths[1] * vert_ex)
-                    try:
-                        cindx = int(round((value - float(self.pMinMax[1])) * (len(self.clt) - 1) / 
-                                        (float(self.pMinMax[2]) - float(self.pMinMax[1]))))
-                    except ValueError as e:
-                        # Likely: 'cannot convert float NaN to integer' as happens when rendering something like altitude outside of terrain coverage
-                        continue
-                    except ZeroDivisionError as e:
-                        logger.error("Can't make color lookup table with min and max being the same, self.pMinMax = %s", self.pMinMax)
-                        raise e
-
-                    if cindx < 0:
-                        cindx = 0
-                    if cindx > len(self.clt) - 1:
-                        cindx = len(self.clt) - 1
-
-                    colors = colors + '%.3f %.3f %.3f %.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2],
-                                                                          self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
-                    indices = indices + '%i %i ' % (index, index + 1)
-                    index = index + 2
-
-                # End the IndexedLinestring with -1 so that end point does not connect to the beg point
-                indices = indices + '-1 ' 
-
-            if self.colorbarPngFileFullPath:
-                try:
-                    self.makeColorBar(self.colorbarPngFileFullPath, self.pMinMax)
-                except Exception as e:
-                    self.logger.exception('Could not plot the colormap')
-                    x3dResults = 'Could not plot the colormap'
-                else:
-                    x3dResults = {'colors': colors.rstrip(), 'points': points.rstrip(), 'info': '', 'index': indices.rstrip(), 'colorbar': self.colorbarPngFile}
+                self.logger.debug('Reading spanned NetTow-like data from act = %s', act)
+                istart = 0
+                iend = len(self.lon_by_act_span[act])
+                # TODO: test and fix getting start time for _span data
+                shape_id = f"ils_{platform_name}_{int(end_esecs)}_span"
+                shape_id_dict[int(end_esecs)] = [shape_id]
+                points, colors, indices = self._get_ils(act, istart, iend, vert_ex, 
+                                                        'lon_by_act_span', 'lat_by_act_span', 'depth_by_act_span', 'value_by_act_span')
+                x3d_results[shape_id] = {'colors': colors.rstrip(), 'points': points.rstrip(), 'index': indices.rstrip()}
 
         except Exception as e:
             self.logger.exception('Could not create measuredparameterx3d: %s', e)
-            x3dResults = 'Could not create measuredparameterx3d'
 
-        return x3dResults
+        return x3d_results, shape_id_dict
 
+    def curtainX3D(self, platform_names, vert_ex=10.0, slice_minutes=10):
+        '''Return X3D elements of image texture mapped onto geospatial geometry of vehicle track.
+        platform_names may be a comma separated list of Platform names that may contain sampling platforms.
+        Constraints for data in the image come from the settings in self.kwargs set by what calls this.
+        Images will be constructed by Activity in order to provide a temporal bounds, maintaining some
+        detail in the image.  Shapes will be keyed by 'ifs_<platform>_<esecs>' as in the IndexedLineSet
+        shapes.
+        '''
+        x3d_results = {}
+        shape_id_dict = {}
+
+        # 1. Image: Build image with potential Sampling Platforms included
+        saved_platforms = self.kwargs['platforms']
+        self.kwargs['platforms'] = platform_names.split(',')
+        sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(forFlot=False)
+        if not sectionPngFile:
+            self.kwargs['platforms'] = saved_platforms
+            return x3d_results, shape_id_dict
+
+        sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
+
+        sectionPngFileTrimmed = sectionPngFile.replace('.png', '_trimmed.png')
+        sectionPngFileTrimmedFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFileTrimmed)
+        im = Image.open(sectionPngFileFullPath)
+        # Trim one pixel from edges to get rid of black lines from Matplotlib
+        new_bounds = [2, 2] + [d - 1 for d in im.size]
+        im_trimmed = im.crop(new_bounds)
+        self.logger.info(f"Saving trimmed image file: {sectionPngFileTrimmedFullPath}")
+        im_trimmed.save(sectionPngFileTrimmedFullPath)
+
+        # 2. Geometry: We want position data for only the main platform, in case we also have a Sampling Platform
+        if len(self.kwargs['platforms']) > 1:
+            # Now, use renderDatavaluesNoAxes() to fill member variables without Sampling Platforms
+            self.kwargs['platforms'] = [self.kwargs['platforms'][0]]
+            self.logger.debug(f"renderDatavaluesNoAxes(loadDataOnly=True) for self.kwargs['platforms'] = {self.kwargs['platforms']}")
+            sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(forFlot=False, loadDataOnly=True)
+            if not sectionPngFile:
+                self.kwargs['platforms'] = saved_platforms
+                return x3d_results, shape_id_dict
+
+        # Get indices and times of the quadrilaterals for our image texture mapping - organize shapes by end time of the slice
+        slice_indices, slice_esecs = self._get_slices(self.x, slice_minutes)
+        self.logger.debug(f"Slicing {len(self.lon)} lat & lon points at indices {slice_indices} for {slice_minutes} minute intervals")
+        last_frac = 0.0
+        for sindex, eindex, end_esecs in zip(slice_indices, slice_indices[1:], slice_esecs[1:]):
+            shape_id = f"ifs_{self.kwargs['platforms'][0]}_{int(end_esecs)}"
+            shape_id_dict[int(end_esecs)] = [shape_id]
+            self.logger.debug(f"Getting IndexedFace data for shape_id: {shape_id}")
+
+            # Make counter-clockwise planar slices at slice_minutes values along the geometry
+            # Construct the geometry according to the 4 edges of the image: time moves left to right in image
+            # Bottom; lon, lat in order; Top: lon, lat in reverse order - indices: 0 to len(lon_sliced) * 2
+            points = ''
+            points += '{:.5f} {:.5f} {:.1f} '.format(self.lat[sindex], self.lon[sindex], -self.dmax * vert_ex)
+            points += '{:.5f} {:.5f} {:.1f} '.format(self.lat[eindex], self.lon[eindex], -self.dmax * vert_ex)
+            points += '{:.5f} {:.5f} {:.1f} '.format(self.lat[eindex], self.lon[eindex], -self.dmin * vert_ex)
+            points += '{:.5f} {:.5f} {:.1f} '.format(self.lat[sindex], self.lon[sindex], -self.dmin * vert_ex)
+           
+            indices = '0 1 2 3 ' 
+            ifs_cindex = ifs_tcindex = indices + '-1'
+
+            # The s,t texture coordinate points for slice_minutes quadrilateral slices of the image
+            tc_points = ''
+            fraction = (end_esecs - self.tmin) / (self.tmax - self.tmin)
+            self.logger.debug(f"fraction = {fraction}")
+            tc_points += '{last_frac:.5f} 0 {frac:.5f} 0 '.format(last_frac=last_frac, frac=fraction)
+            tc_points += '{frac:.5f} 1 {last_frac:.5f} 1 '.format(last_frac=last_frac, frac=fraction)
+            last_frac = fraction
+
+            self.logger.debug(f"len(points.strip().split(' '))/3 = {len(points.strip().split(' '))/3}") 
+            self.logger.debug(f"len(tc_points.strip().split(' '))/2 = {len(tc_points.strip().split(' '))/2}") 
+            self.logger.debug(f"len(indices.strip().split(' '))/1 = {len(indices.strip().split(' '))/1}") 
+            self.logger.debug(f"Faces: len(ifs_tcindex.strip().split(' '))/5 = {len(ifs_tcindex.strip().split(' '))/5}") 
+
+            x3d_results[shape_id] = {'points': points.rstrip(), 'ifs_cindex': ifs_cindex.rstrip(), 'ifs_tcindex': ifs_tcindex.rstrip(),
+                                     'tc_points': tc_points.rstrip(), 'info': '', 'image': sectionPngFileTrimmed}
+
+        self.kwargs['platforms'] = saved_platforms
+        return x3d_results, shape_id_dict
 
 class PPDatabaseException(Exception):
     def __init__(self, message, sql):

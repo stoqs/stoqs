@@ -12,7 +12,7 @@ STOQS Query manager for building ajax responses to selections made for QueryUI
 @license: GPL
 '''
 
-from collections import defaultdict
+from collections import defaultdict, Mapping
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q, Max, Min, Sum, Avg
@@ -24,7 +24,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from stoqs import models
 from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL
-from loaders.SampleLoaders import SAMPLED, NETTOW, PLANKTONPUMP, ESP_FILTERING, sample_simplify_crit
+from loaders.SampleLoaders import SAMPLED, NETTOW, PLANKTONPUMP, ESP_FILTERING, sample_simplify_crit, SAMPLE_TYPES
 from matplotlib.colors import rgb2hex
 from .utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
 from .utils import (getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, 
@@ -108,9 +108,10 @@ class STOQSQManager(object):
             'spsql': self.getSampledParametersPostgreSQL,
             'extent': self.getExtent,
             'activityparameterhistograms': self.getActivityParameterHistograms,
-            'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
+            'parameterplatformdatavaluepng': self.getParameterDatavaluePNG,
             'parameterparameterx3d': self.getParameterParameterX3D,
             'measuredparameterx3d': self.getMeasuredParameterX3D,
+            'curtainx3d': self.getPDV_IFSs,
             'platformanimation': self.getPlatformAnimation,
             'parameterparameterpng': self.getParameterParameterPNG,
             'parameterplatforms': self.getParameterPlatforms,
@@ -671,8 +672,9 @@ class STOQSQManager(object):
             return self.platformTypeHash
 
         # Use queryset that does not filter out platforms - so that Platform buttons work in the UI
-        qs = self.qs_platform.values('platform__uuid', 'platform__name', 'platform__color', 
-                                     'platform__platformtype__name').distinct().order_by('platform__name')
+        qs = (self.qs_platform.filter(~Q(activitytype__name=LRAUV_MISSION))
+                              .values('platform__uuid', 'platform__name', 'platform__color', 
+                                      'platform__platformtype__name').distinct().order_by('platform__name'))
         if self.kwargs.get('activitynames'):
             qs = qs.filter(name__in=self.kwargs.get('activitynames'))
 
@@ -1578,16 +1580,12 @@ class STOQSQManager(object):
 
         return {'histdata': aphHash, 'rgbacolors': rgbas, 'parameterunits': pUnits}
 
-    def getParameterPlatformDatavaluePNG(self):
-        '''
-        Called when user interface has selected just one Parameter and just one Platform, in which case
-        produce a depth-time section plot for overlay on the flot plot.  Return a png image file name for inclusion
-        in the AJAX response.
+    def _build_mpq_queryset(self):
+        '''Factored out method used to construct query for getting data values to
+        produce png images of data in the selection - e.g. for Flot and X3D IndexedFaceSets
         '''
         # Check for parameter-plot-radio button being selected, which inherently ensures that a
-        # single parameter name is selected for plotting.  The client code will also ensure that
-        # extra platforms measuring the same parameter name are filtered out in the selection so
-        # there's no need for this server code to check for just one platform in the selection.
+        # single parameter name is selected for plotting.  Modifies member items from member items.
         parameterID = None
         platformName = None
         contourparameterID = None # parameter for Contour plots
@@ -1595,6 +1593,11 @@ class STOQSQManager(object):
         parameterGroups = []
         contourparameterGroups = []
         logger.debug('self.kwargs = %s', self.kwargs)
+        
+        if self.request.GET.get('showplatforms', False):
+            # Allow for platofmrm animation without selecting a parameterplot
+            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+
         if 'parameterplot' in self.kwargs:
             if self.kwargs['parameterplot'][0]:
                 parameterID = self.kwargs['parameterplot'][0]
@@ -1615,16 +1618,30 @@ class STOQSQManager(object):
             self.kwargs['parameterplot_id'] = contourparameterID
             if contourparameterID:
                 self.contour_mpq.buildMPQuerySet(*self.args, **self.kwargs)
+
+        return parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups
+
+    def _get_plot_min_max(self, parameterID, contourparameterID):
+        min_max = self.getParameterMinMax(pid=parameterID)['plot']
+        if not parameterID and contourparameterID: 
+            min_max = self.getParameterMinMax(pid=contourparameterID)['plot']
+
+        return min_max
+
+    def getParameterDatavaluePNG(self):
+        '''
+        Called when user interface has selected one Parameter for plotting, in which case
+        produce a depth-time section plot for overlay on the flot plot.  Return a png image 
+        file name for inclusion in the AJAX response.
+        '''
+        parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
       
         if parameterID or platformName or contourparameterID or contourplatformName:
             pass
         else:
             return
 
-        min_max = self.getParameterMinMax(pid=parameterID)['plot']
-        if not parameterID and contourparameterID: 
-            min_max = self.getParameterMinMax(pid=contourparameterID)['plot']
-
+        min_max = self._get_plot_min_max(parameterID, contourparameterID)
         if not min_max:
             return None, None, 'Cannot plot Parameter'
 
@@ -1638,7 +1655,88 @@ class STOQSQManager(object):
                                     min_max, self.getSampleQS(), platformName, 
                                     parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
 
-        return cp.renderDatavaluesForFlot()
+        return cp.renderDatavaluesNoAxes()
+
+    def _combine_sample_platforms(self, platforms):
+        '''Mainly for LRAUV data: combine <platform>_ESP_filtering or <platform>_Sipper Platform name
+        with <platform> for creating the image(s) by renderDatavaluesNoAxes()
+        '''
+        has_samples = []
+        combined_platforms = []
+        for platform in platforms.split(','):
+            for sample_type in SAMPLE_TYPES:
+                if platform.endswith(sample_type):
+                    parent_platform = platform.split('_'+sample_type)[0]
+                    if parent_platform in platforms:
+                        has_samples.append(platform)
+                        has_samples.append(parent_platform)
+                        combined_platforms.append(f"{parent_platform},{platform}")
+                    else:
+                        # Possible to have samples without the parent platform
+                        combined_platforms.append(platform)
+            if platform not in has_samples:
+                combined_platforms.append(platform)
+
+        return combined_platforms
+
+    def getPDV_IFSs(self):
+        '''Return X3D scene of Parameter DataValue IndexedFaceSets of curtains constructed 
+        from ParameterDatavaluePNG images when contour and 3D data are checked.
+        '''
+        x3d_dict = {}
+        contourFlag = False
+        if 'showdataas' in self.kwargs:
+            if self.kwargs['showdataas']:
+                if self.kwargs['showdataas'][0] == 'contour':
+                    contourFlag = True
+        if contourFlag and self.kwargs.get('showgeox3dmeasurement'):
+            # Set a single min_max for all the curtains
+            parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
+            min_max = self._get_plot_min_max(parameterID, contourparameterID)
+            if not min_max:
+                return None, None, 'Cannot plot Parameter'
+
+            # platformName and contourplatformName are for display purposes and may look like:
+            # 'daphne,makai_ESP_filtering,tethys,makai'; _combine_sample_platforms() divies them up for image generation
+            saved_platforms = self.kwargs['platforms']
+            for pns in self._combine_sample_platforms(platformName):
+                # Rebuild query set for just this platform as qs_mp_no_order is an MPQuerySet which has no filter() method
+                self.kwargs['platforms'] = pns.split(',')
+                platform_single = self.kwargs['platforms'][0]
+                # All Activities in the selection, do not inlcude 'special Activities' like LRAUV Mission
+                for act in self.qs.filter(Q(platform__name=platform_single) & ~Q(activitytype__name=LRAUV_MISSION)):
+                    # Set self.mpq.qs_mp to None to bypass the Singleton nature of MPQuery and have _build_mpq_queryset() build new self.mpq items
+                    self.mpq.qs_mp = None
+                    self.kwargs['activitynames'] = [act.name]
+                    parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
+                    logger.info(f"Rendering image for pns='{pns}', act.name='{act.name}'")
+                    cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, self.contour_mpq.qs_mp_no_order,
+                                            min_max, self.getSampleQS(), pns,
+                                            parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
+                    x3d_items, shape_id_dict = cp.curtainX3D(pns, float(self.request.GET.get('ve', 10)), 
+                                                     int(self.request.GET.get('slice_minutes')))
+                    if x3d_items:
+                        x3d_dict.update(x3d_items)
+                        try:
+                            x3d_dict['shape_id_dict'].update(shape_id_dict)
+                        except KeyError:
+                            x3d_dict['shape_id_dict'] = {}
+                            x3d_dict['shape_id_dict'].update(shape_id_dict)
+
+            self.kwargs['platforms'] = saved_platforms
+            if x3d_dict:
+                x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
+                cycInt = (self.max_end_time - self.min_start_time).total_seconds() / x3d_dict['speedup']
+                x3d_dict['timesensor'] = PlatformAnimation.timesensor_template.format(cycInt=cycInt)
+
+                sec_interval = (cp.x[2] - cp.x[1]) * cp.scale_factor
+                spaced_ts = np.arange(self.min_start_time.timestamp(), self.max_end_time.timestamp(), sec_interval)
+                x3d_dict['limits'] = (0, len(spaced_ts))
+
+                cp.makeColorBar(cp.colorbarPngFileFullPath, cp.pMinMax)
+                x3d_dict['colorbar'] = cp.colorbarPngFile
+
+        return x3d_dict
 
     def getParameterParameterPNG(self):
         '''
@@ -1711,39 +1809,80 @@ class STOQSQManager(object):
             
         return x3dDict
 
-    def getMeasuredParameterX3D(self):
-        '''Returns dictionary of X3D elements for rendering by X3DOM
-        '''
-        x3dDict = None
-        if self.kwargs.get('showgeox3dmeasurement'):
-            if 'parameterplot' in self.kwargs:
-                if self.kwargs['parameterplot'][0]:
-                    parameterID = self.kwargs['parameterplot'][0]
-                    parameterGroups = getParameterGroups(self.request.META['dbAlias'], 
-                              models.Parameter.objects.using(self.request.META['dbAlias']
-                              ).get(id=parameterID))
-                    try:
-                        count = self.mpq.count()
-                        logger.debug('count = %s', count)
-                    except AttributeError:
-                        logger.debug('Calling self.mpq.buildMPQuerySet()')
-                        self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
-                    else:
-                        logger.debug('self.mpq.qs_mp = %s', self.mpq.qs_mp)
-                    try:
-                        platformName = self.kwargs['parameterplot'][1]
-                    except IndexError as e:
-                        logger.warn(e)
-                        platformName = None
+    def _get_speedup(self, platforms=()):
+        # Hard-code appropriate speedup for different platforms
+        speedup = 10
+        for platform in platforms:
+            if 'BED' in platform.name.upper():
+                speedup = 1
+        # Override speedup if provided by request from UI
+        if self.kwargs.get('speedup'):
+            speedup = float(self.kwargs.get('speedup')[0])
 
-                    logger.debug('Getting data values in X3D for platformName = %s', platformName) 
-                    mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, self.contour_mpq.qs_sp_no_order,
-                            self.getParameterMinMax()['plot'], self.getSampleQS(), 
-                            platformName, parameterID, parameterGroups)
-                    # Default vertical exaggeration is 10x
-                    x3dDict = mpdv.dataValuesX3D(float(self.request.GET.get('ve', 10)))
-            
-        return x3dDict
+        return speedup
+
+    def getMeasuredParameterX3D(self):
+        '''Returns dictionary of X3D elements for rendering by X3DOM.
+        The dictionary is arganized by Platform. The dataValuesX3D() method returns items 
+        organized by Activity and slice_minute Shape slices.
+        '''
+        x3d_dict = {}
+        if self.kwargs.get('showgeox3dmeasurement') and 'parameterplot' in self.kwargs:
+            # Set a single min_max for coloring all the lines
+            parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
+            min_max = self._get_plot_min_max(parameterID, contourparameterID)
+            if not min_max:
+                return x3d_dict
+
+            # platformName and contourplatformName are for display purposes and may look like:
+            # 'daphne,makai_ESP_filtering,tethys,makai'; _combine_sample_platforms() divies them up to get by-platform querystrings
+            saved_platforms = self.kwargs['platforms']
+            saved_activitynames = self.kwargs['activitynames']
+            for pns in self._combine_sample_platforms(platformName):
+                # Rebuild query set for just this platform as qs_mp_no_order is an MPQuerySet which has no filter() method
+                self.kwargs['platforms'] = pns.split(',')
+                platform_single = self.kwargs['platforms'][0]
+                self.min_start_time = datetime.utcnow()
+                self.max_end_time = datetime.utcfromtimestamp(0)
+                # All Activities in the selection, do not inlcude 'special Activities' like LRAUV Mission
+                for act in self.qs.filter(Q(platform__name=platform_single) & ~Q(activitytype__name=LRAUV_MISSION)):
+                    if act.startdate < self.min_start_time:
+                        self.min_start_time = act.startdate
+                    if act.enddate > self.max_end_time:
+                        self.max_end_time = act.enddate
+                    # Set self.mpq.qs_mp to None to bypass the Singleton nature of MPQuery and have _build_mpq_queryset() build new self.mpq items
+                    self.mpq.qs_mp = None
+                    self.kwargs['activitynames'] = [act.name]
+                    parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
+                    logger.info(f"Getting dataValues for pns='{pns}', act.name='{act.name}'")
+                    cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, self.contour_mpq.qs_mp_no_order,
+                                            min_max, self.getSampleQS(), pns,
+                                            parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
+                    x3d_items, shape_id_dict = cp.dataValuesX3D(platform_single, float(self.request.GET.get('ve', 10)), 
+                                                                                   int(self.request.GET.get('slice_minutes', 30)))
+                    if x3d_items:
+                        x3d_dict.update(x3d_items)
+                        try:
+                            x3d_dict['shape_id_dict'].update(shape_id_dict)
+                        except KeyError:
+                            x3d_dict['shape_id_dict'] = {}
+                            x3d_dict['shape_id_dict'].update(shape_id_dict)
+
+            self.kwargs['platforms'] = saved_platforms
+            self.kwargs['activitynames'] = saved_activitynames
+            if x3d_dict:
+                x3d_dict['speedup'] = self._get_speedup({act.platform for act in self.qs})
+                cycInt = (self.max_end_time - self.min_start_time).total_seconds() / x3d_dict['speedup']
+                x3d_dict['timesensor'] = PlatformAnimation.timesensor_template.format(cycInt=cycInt)
+
+                sec_interval = (cp.x[2] - cp.x[1]) * cp.scale_factor
+                spaced_ts = np.arange(self.min_start_time.timestamp(), self.max_end_time.timestamp(), sec_interval)
+                x3d_dict['limits'] = (0, len(spaced_ts))
+
+                cp.makeColorBar(cp.colorbarPngFileFullPath, cp.pMinMax)
+                x3d_dict['colorbar'] = cp.colorbarPngFile
+
+        return x3d_dict
 
     def getPlatformAnimation(self):
         '''
@@ -1754,10 +1893,8 @@ class STOQSQManager(object):
         '''
         orientDict = {}
         if self.request.GET.get('showplatforms', False):
-            try:
-                count = self.mpq.count()
-            except AttributeError:
-                self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+            self.mpq.qs_mp = None
+            parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
 
             # Test if there are any X3D platform models in the selection
             platformsHavingModels = {pr.platform for pr in models.PlatformResource.objects.using(
@@ -1778,15 +1915,7 @@ class STOQSQManager(object):
                 # Use qs_mp_no_parm QuerySet as it contains roll, pitch, and yaw values
                 mppa = PlatformAnimation(platforms_to_animate, self.kwargs, 
                         self.request, self.qs, self.mpq.qs_mp_no_parm)
-                # Hard-code appropriate speedup for different platforms
-                speedup = 10
-                for platform in platforms_to_animate:
-                    if 'BED' in platform.name.upper():
-                        speedup = 1
-                # Override speedup if provided by request from UI
-                if self.kwargs.get('speedup'):
-                    speedup = float(self.kwargs.get('speedup')[0])
-
+                speedup = self._get_speedup(platforms_to_animate)
                 # Default vertical exaggeration is 10x and default geoorigin is empty string
                 orientDict = mppa.platformAnimationDataValuesForX3D(
                                 float(self.request.GET.get('ve', 10)), 

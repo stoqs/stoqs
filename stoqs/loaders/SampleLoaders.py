@@ -66,6 +66,8 @@ HORIZONTALNETTOW = 'VerticalNetTow'     # name__contains=NETTOW returns both ver
 PLANKTONPUMP = 'PlanktonPump'
 ESP_FILTERING = 'ESP_filtering'
 SIPPER = 'Sipper'
+SAMPLE_TYPES = [GULPER, NISKIN, NETTOW, VERTICALNETTOW, HORIZONTALNETTOW, PLANKTONPUMP, ESP_FILTERING, SIPPER]
+
 SIPPER_NUM_ERR = re.compile('Sample (?P<sipper_num>\d+), err_code=(?P<sipper_err>\d+)')
 SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
 NOWATER = 'no water'
