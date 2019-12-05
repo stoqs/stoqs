@@ -31,7 +31,7 @@ campaign_file_name = 'mbari_lrauv_campaigns.py'
 script_template = 'load_lrauv.template'
 
 # Construct list of lrauvs with: ls -d /mbari/LRAUV/*/missionlogs | cut -d/ -f4
-lrauvs = ('ahi', 'aku', 'brezo', 'daphne', 'galene', 'makai', 'opah', 'pontus', 
+lrauvs = ('ahi', 'aku', 'brezo', 'brizo', 'daphne', 'galene', 'makai', 'opah', 'pontus', 
           'tethys', 'triton', 'whoidhs', )
 
 title_base = 'LRAUV - Routine Operational data'
