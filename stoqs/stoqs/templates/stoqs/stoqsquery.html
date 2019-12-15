@@ -1509,43 +1509,32 @@
     var lastW, lastH;
     var num_pt_colors = 16;
     var render_shapes = {};
-    var ts_fraction;
     var frac_esec;
 
     var vrHMD = null, vrSensor = null;
     var pyr = new x3dom.fields.SFVec3f(0, 0, 0);        // For the Leap Motion
 
-    // Callback from X3DOM TimeSensor added to scene with 'showplatforms' checkbox 
-    function setSlider(eventObject) {
-        if (eventObject.type == "outputchange" && eventObject.fieldName == "pauseTime") {
-            if (eventObject.value) {
-                console.log('pauseTime  = ' + eventObject.value);
-            }
-        }
-
-        if (eventObject.type == "outputchange" && eventObject.fieldName == "isActive") {
-            if (eventObject.value) {
-                console.log('active');
-            }
-            else {
-                console.log('not active');
-            }
-        }
-
-        if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
-            return;
-
-        ts_fraction = eventObject.value;
+    function update3DScene(ts_fraction, event) {
+        // Called from TimeSensor onoutputchanged() event or on HTML slider mousemove event
         var fesec;
         var frac_ems = $('body').data()['start-ems'] + ts_fraction * ($('body').data()['end-ems'] - $('body').data()['start-ems']);
         frac_esec = parseInt(frac_ems / 1000.0);
+
         //$('#slider-esecs').html(frac_esec);
         $('#slider-time').html(getUTCDateString(new Date(frac_ems)));
         $('#slider-time').css( {'transform': 'translate(' + ts_fraction * 50 + '%, -40px)'} );
 
         var fade_away_secs = parseInt($('#fade_away_minutes').val()) * 60;
         var slice_secs = parseInt($('#slice_minutes').val()) * 60;
-        $('#spatial-3d-x3d-slider').val(ts_fraction);
+        if ( event.type == 'mousemove' ) {
+            $('#platform-animations > geopositioninterpolator')[0].setFieldValue('set_fraction', ts_fraction)
+            $('#platform-animations > orientationinterpolator')[0].setFieldValue('set_fraction', ts_fraction)
+            $('#platform-animations > orientationinterpolator')[1].setFieldValue('set_fraction', ts_fraction)
+            $('#platform-animations > orientationinterpolator')[2].setFieldValue('set_fraction', ts_fraction)
+        }
+        else {
+            $('#spatial-3d-x3d-slider').val(ts_fraction);
+        }
 
         // Set render to true or false for shapes
         if ( ! $.isEmptyObject(render_shapes) ) {
@@ -1567,6 +1556,13 @@
             });
         }
         updateCrosshairs(ts_fraction, timeAxis, sliderLimits);
+    }
+
+    // Callback from X3DOM TimeSensor added to scene with 'showplatforms' checkbox 
+    function setSlider(eventObject) {
+        if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
+            return;
+        update3DScene(eventObject.value, eventObject);
     }
 
     function setPlatformScales(viewpoint, vp) {
@@ -4990,7 +4986,7 @@ function enable_cardboard(){
                     // Only a single terrain is supported for now
                     $('#terrain3D-choices').append('<label class="checkbox" style="padding:0px;">' +
                                             '<input type="checkbox" style="margin:3px;" name="use_viewpoint"' + 
-                                            ' value="' + terrain + '" checked />Set to terrain viewpoint on refresh</label><br>');
+                                            ' value="' + terrain + '" checked />Set to terrain viewpoint on reload/terrain selection</label><br>');
                     $.each(data[key], function (terrain, item) {
                         var tname = get_tname(terrain, item);
                         $('#terrain3D-choices').append('<input type="radio" name="terrain_view" class="terrain-view" style="margin:3px;" value="' + terrain + '"/>' +
@@ -5840,22 +5836,36 @@ function enable_cardboard(){
                 if (data[key]['limits']) {
                     timeAxis = data[key]['time'];
                     sliderLimits = data[key]['limits'];
-                    function updateTranslateRotate(fraction) {
-                        var currentInterval = $('#PLATFORMS_TS').attr('cycleInterval');
-                        var timeElapsed = fraction * currentInterval;
-                        var currentTime = new Date().getTime()/1000;
-                        var newStartTime = currentTime - timeElapsed;
-                        
-                        $('#PLATFORMS_TS').attr('startTime', String(newStartTime));
-                        $('#PLATFORMS_TS').attr('enabled', 'true');
-                        if ($('#spatial-3d-x3d-pause-play').hasClass('icon-play')) {
-                            $('#PLATFORMS_TS').attr('enabled', 'false');
+
+                    function updateSlider(ts_fraction, event) {
+                        var click_time = new Date().getTime()/1000;
+                        var frac_ems = $('body').data()['start-ems'] + ts_fraction * ($('body').data()['end-ems'] - $('body').data()['start-ems']);
+                        var pause_after_start_time;
+                        frac_esec = parseInt(frac_ems / 1000.0);
+
+                        if ( event.type == 'mousemove' ) {
+                            // Update scene with fraction from the slider, not the TimeSensor
+                            $('#PLATFORMS_TS')[0].setAttribute('pauseTime', click_time);
+                            update3DScene(event.currentTarget.value, event);
                         }
-                        updateCrosshairs(fraction, timeAxis, sliderLimits);
+                        if ( event.type == 'mouseup' ) {
+                            if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
+                                $('#PLATFORMS_TS')[0].setAttribute('resumeTime', click_time);
+                            }
+                        }
+                        var currentInterval = $('#PLATFORMS_TS').attr('cycleInterval');
+                        var newStartTime = click_time - ts_fraction * currentInterval;
+                        $('#PLATFORMS_TS').attr('startTime', String(newStartTime));
                     }
-                    $('#spatial-3d-x3d-slider').mousemove( function(e) {
-                        console.log('#spatial-3d-x3d-slider mousemove event');
-                        //updateTranslateRotate($(this).val());
+
+                    $('#spatial-3d-x3d-slider').mousedown( function(e) {
+                        $('#spatial-3d-x3d-slider').mousemove( function(ev) {
+                            updateSlider($(this).val(), ev);
+                        });
+                    });
+                    $('#spatial-3d-x3d-slider').mouseup( function(e) {
+                        updateSlider($(this).val(), e);
+                        $('#PLATFORMS_TS')[0].setFieldValue('_fraction', e.currentTarget.value);
                     });
 
                     if ( ! $('#animation3D').hasClass('in') ) {
