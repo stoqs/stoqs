@@ -4181,8 +4181,14 @@ function enable_cardboard(){
                                                                         axisLabel: 'Count'
                                                                     }]
                                                                           });
-        parameter_idsafe = parameter.replace(/[\s\.\[\]\(\)\/\%]/g, '_');
-        $.plot($("#" + parameter_idsafe + "-histogram-flot"), histdata, histogram_options_labels);
+        parameter_idsafe = parameter.replace(/[\s\.\[\]\(\)\/\%\{\}\^]/g, '_');
+        try {
+            $.plot($("#" + parameter_idsafe + "-histogram-flot"), histdata, histogram_options_labels);
+        }
+        catch (err) {
+            console.error(parameter_idsafe + ': ' + err);
+        }
+
         $("#" + parameter_idsafe + "-histogram-flot").trigger('plotloaded');
     }
 
@@ -5589,7 +5595,7 @@ function enable_cardboard(){
                 var $elem=$('#parameter-value-table > tbody');
                 var parameterunits = data[key]['parameterunits'];
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
-                    parameter_idsafe = parameter.replace(/[\s\.\[\]\(\)\/\%]/g, '_');       // HTML ids don't allow spaces, ., or parens
+                    parameter_idsafe = parameter.replace(/[\s\.\[\]\(\)\/\%\{\}\^]/g, '_');       // HTML ids don't allow spaces, ., or parens
 					var divid=parameter_idsafe + '-histogram-flot';
                     if ($('#' + divid).length == 0) {
 	                    histHtml += '<tr>' +
@@ -5601,7 +5607,7 @@ function enable_cardboard(){
                 });
                 $elem.html(histHtml);
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
-                    parameter_idsafe = parameter.replace(/[\s\.\[\]\(\)\/\%]/g, '_');       // HTML ids don't allow spaces, ., or parens
+                    parameter_idsafe = parameter.replace(/[\s\.\[\]\(\)\/\%\{\}\^]/g, '_');       // HTML ids don't allow spaces, ., or parens
                     histdata = [];
                     $("#" + parameter_idsafe + "-histogram-flot").bind("plotselected", function (event, ranges) {
                         parametervalues[parameter] = {'xmin': ranges.xaxis.from, 'xmax': ranges.xaxis.to, 'ymin':0, 'ymax': ranges.yaxis.to };
