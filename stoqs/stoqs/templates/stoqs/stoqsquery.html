@@ -1560,6 +1560,21 @@
 
     // Callback from X3DOM TimeSensor added to scene with 'showplatforms' checkbox 
     function setSlider(eventObject) {
+        if (eventObject.type == "outputchange" && eventObject.fieldName == "pauseTime") {
+            if (eventObject.value) {
+                console.log('pauseTime  = ' + eventObject.value);
+            }
+        }
+
+        if (eventObject.type == "outputchange" && eventObject.fieldName == "isActive") {
+            if (eventObject.value) {
+                console.log('active');
+            }
+            else {
+                console.log('not active');
+            }
+        }
+
         if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
             return;
         update3DScene(eventObject.value, eventObject);
