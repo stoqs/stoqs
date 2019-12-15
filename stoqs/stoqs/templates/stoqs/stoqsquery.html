@@ -1515,7 +1515,7 @@
     var pyr = new x3dom.fields.SFVec3f(0, 0, 0);        // For the Leap Motion
 
     function update3DScene(ts_fraction, event) {
-        // Can be called from TimeSensor onoutputchanged() event or on HTML slider mousemove event
+        // Called from TimeSensor onoutputchanged() event or on HTML slider mousemove event
         var fesec;
         var frac_ems = $('body').data()['start-ems'] + ts_fraction * ($('body').data()['end-ems'] - $('body').data()['start-ems']);
         frac_esec = parseInt(frac_ems / 1000.0);
@@ -1560,21 +1560,6 @@
 
     // Callback from X3DOM TimeSensor added to scene with 'showplatforms' checkbox 
     function setSlider(eventObject) {
-        if (eventObject.type == "outputchange" && eventObject.fieldName == "pauseTime") {
-            if (eventObject.value) {
-                console.log('pauseTime  = ' + eventObject.value);
-            }
-        }
-
-        if (eventObject.type == "outputchange" && eventObject.fieldName == "isActive") {
-            if (eventObject.value) {
-                console.log('active');
-            }
-            else {
-                console.log('not active');
-            }
-        }
-
         if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
             return;
         update3DScene(eventObject.value, eventObject);
