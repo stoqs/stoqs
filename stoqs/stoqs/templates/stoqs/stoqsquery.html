@@ -2386,13 +2386,19 @@
         // Colormap stuff
         if ( rebuild_from_permalink ) {
             if ( ! $.isEmptyObject($('#cm-cmin').val()) ) {
-                params['cmin'] = $('#cm-cmin').val();
+                if ( $('#cm-cmin').val() != '' ) {
+                    params['cmin'] = $('#cm-cmin').val();
+                }
             }
             if ( ! $.isEmptyObject($('#cm-cmax').val()) ) {
-                params['cmax'] = $('#cm-cmax').val();
+                if ( $('#cm-cmax').val() != '' ) {
+                    params['cmax'] = $('#cm-cmax').val();
+                }
             }
             if ( ! $.isEmptyObject($('#num_colors').val()) ) {
-                params['num_colors'] = $('#num_colors').val();
+                if ( $('#num_colors').val() != '' ) {
+                    params['num_colors'] = $('#num_colors').val();
+                }
             }
         }
 
@@ -5865,10 +5871,10 @@ function enable_cardboard(){
                         $('#PLATFORMS_TS').attr('startTime', String(newStartTime));
                     }
 
-                    $('#spatial-3d-x3d-slider').mousedown( function(e) {
-                        $('#spatial-3d-x3d-slider').mousemove( function(ev) {
-                            updateSlider($(this).val(), ev);
-                        });
+                    $('#spatial-3d-x3d-slider').mousemove( function(e) {
+                        if ( e.which == 1 ) {   // Execute only when mousedown
+                            updateSlider($(this).val(), e);
+                        }
                     });
                     $('#spatial-3d-x3d-slider').mouseup( function(e) {
                         updateSlider($(this).val(), e);
