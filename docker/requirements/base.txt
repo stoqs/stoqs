@@ -3,7 +3,7 @@ beautifulsoup4==4.8.1
 celery==4.3.0
 cmocean==2.0
 coards==1.0.5
-coverage==4.5.4
+coverage==5.0
 datadiff==2.0.0
 dj-database-url==0.5.0
 Django==1.11.25
@@ -13,14 +13,14 @@ django-configurations==2.2
 django-debug-toolbar==2.1
 django-environ==0.4.5
 django-extensions==2.2.5
-django-model-utils==3.2.0
+django-model-utils==4.0.0
 django-picklefield==2.0
 django-secure==1.0.1
-djangorestframework==3.10.3
+djangorestframework==3.11.0
 euclid==0.1
 GitPython==3.0.5
 httplib2==0.14.0
-ipython==7.10.1
+ipython==7.10.2
 jdcal==1.4.1
 Jinja2==2.10.3
 jupyter==1.0.0
@@ -55,7 +55,7 @@ selenium==3.141.0
 simplejson==3.17.0
 slacker==0.13.0
 statsmodels==0.10.2
-Sphinx==2.2.2
+Sphinx==2.3.0
 sphinx-rtd-theme==0.4.3
 sqlparse==0.3.0
 thredds-crawler==1.5.4
