@@ -1058,6 +1058,8 @@ class STOQS_Loader(object):
                 ap.min = np_data.min()
                 ap.max = np_data.max()
             except ValueError as err:
+                # At least update ap with number, likely 0
+                ap.save(using=dbAlias)
                 if not err.args:
                     err.args=('',)
 

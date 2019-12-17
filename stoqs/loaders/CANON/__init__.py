@@ -925,7 +925,7 @@ class CANONLoader(LoadScript):
                                         self.m1met_parms, self.dbAlias, stride, 
                                         self.m1met_startDatetime, self.m1met_endDatetime)
 
-    def loadDEIMOS(self, stride=None):
+    def loadDEIMOS(self, startdate=None, enddate=None, stride=None):
         '''
         Mooring DEIMOS EK60 specific load functions
         '''
@@ -935,8 +935,8 @@ class CANONLoader(LoadScript):
             url = os.path.join(self.deimos_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
                                         platformName, self.colors['deimos'], 'mooring', 'Mooring Deployment', 
-                                        self.deimos_parms, self.dbAlias, stride,
-                                        command_line_args=self.args) 
+                                        self.deimos_parms, self.dbAlias, stride, startdate,
+                                        enddate, command_line_args=self.args) 
     
     def loadHeHaPe(self, stride=None):
         '''
@@ -1474,7 +1474,9 @@ class CANONLoader(LoadScript):
         for url in d:
             yyyy_yd = '_'.join(url.split('/')[-1].split('_')[1:3])
             file_dt = datetime.strptime(yyyy_yd, '%Y_%j')
-            if startdate < file_dt and file_dt < enddate:
+            sd = startdate.replace(hour=0, minute=0, second=0, microsecond=0)
+            ed = enddate.replace(hour=0, minute=0, second=0, microsecond=0)
+            if sd <= file_dt and file_dt <= ed:
                 urls.append(url)
                 self.logger.debug(f'* {url}')
             else:
@@ -1491,16 +1493,19 @@ class CANONLoader(LoadScript):
         setattr(self, platform + '_parms' , parameters)
 
         urls = []
+        files = []
         for year in range(startdate.year, enddate.year+1):
             base = f'http://dods.mbari.org/thredds/catalog/auv/{platform}/{year}/netcdf/'
             dods_base = f'http://dods.mbari.org/opendap/data/auvctd/surveys/{year}/netcdf/'
             try:
                 urls += self.find_dorado_urls(base, file_patterns, startdate, enddate)
-                files = []
                 for url in sorted(urls):
                     files.append(url.split('/')[-1])
             except FileNotFound as e:
                 self.logger.debug(f'{e}')
+
+        if not files:
+            self.logger.warn(f"No files found for {platform} between {startdate} and {enddate} in {dods_base}")
 
         # Send signal that urls span years by not setting dorado_base so that dorado_urls is used instead
         if startdate.year == enddate.year:

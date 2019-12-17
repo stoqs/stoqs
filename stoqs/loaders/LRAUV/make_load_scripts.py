@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 '''
-Routine loading of all LRUAV data available on a DAP server
-This script writes load scripts for month's worth of LRAUV data.
+Routine loading of all LRUAV data available on a DAP server.
+This module writes load scripts for month's worth of LRAUV data.
+It is imported by stoqs/loaders/LRAUV/load_lrauv_month.py for
+creating multiple year scripts.  Running this script will create
+load scripts for the current year only.
+
 It also enters lines into the lruav_campaigns.py file.
 
-Executing the load is accomplished with another step, e.g.:
+Executing the load is then accomplished with another step, e.g.:
 
    stoqs/loaders/load.py --db stoqs_lrauv_may2019
 
@@ -27,7 +31,7 @@ campaign_file_name = 'mbari_lrauv_campaigns.py'
 script_template = 'load_lrauv.template'
 
 # Construct list of lrauvs with: ls -d /mbari/LRAUV/*/missionlogs | cut -d/ -f4
-lrauvs = ('ahi', 'aku', 'brezo', 'daphne', 'galene', 'makai', 'opah', 'pontus', 
+lrauvs = ('ahi', 'aku', 'brezo', 'brizo', 'daphne', 'galene', 'makai', 'opah', 'pontus', 
           'tethys', 'triton', 'whoidhs', )
 
 title_base = 'LRAUV - Routine Operational data'

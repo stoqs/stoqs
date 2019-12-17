@@ -37,7 +37,7 @@ cl = CANONLoader('stoqs_all_dorado', 'Plankton Proxies - All Dorado Data',
                  )
 
 startdate = datetime.datetime(2003, 1, 1)
-enddate = datetime.datetime(2019, 12, 31)
+enddate = datetime.datetime(2029, 12, 31)
 
 # Execute the load
 cl.process_command_line()
@@ -60,6 +60,17 @@ if cl.args.test:
     cl.dorado_files = ['Dorado389_2004_251_00_251_00_decim.nc']
     cl.dorado_parms = ['temperature']
     cl.loadDorado(startdate, enddate, build_attrs=False, plankton_proxies=True)
+
+    # Most recent survey during validation tests of production load
+    startdate = datetime.datetime(2019, 10, 3)
+    enddate = datetime.datetime(2019, 10, 5)
+    cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
+
+    # Survey that has ActivityParameters for _proxies.nc Parameters, but no other
+    startdate = datetime.datetime(2007, 9, 11)
+    enddate = datetime.datetime(2007, 9, 13)
+    cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
+
 elif cl.args.stride:
     cl.stride = cl.args.stride
     cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)

@@ -66,6 +66,8 @@ HORIZONTALNETTOW = 'VerticalNetTow'     # name__contains=NETTOW returns both ver
 PLANKTONPUMP = 'PlanktonPump'
 ESP_FILTERING = 'ESP_filtering'
 SIPPER = 'Sipper'
+SAMPLE_TYPES = [GULPER, NISKIN, NETTOW, VERTICALNETTOW, HORIZONTALNETTOW, PLANKTONPUMP, ESP_FILTERING, SIPPER]
+
 SIPPER_NUM_ERR = re.compile('Sample (?P<sipper_num>\d+), err_code=(?P<sipper_err>\d+)')
 SampleInfo = namedtuple('SampleInfo', 'start end volume summary')
 NOWATER = 'no water'
@@ -183,7 +185,7 @@ class ParentSamplesLoader(STOQS_Loader):
         self.logger.debug('sampletype %s, created = %s', gulper_type, created)
         with requests.get(gulperUrl, stream=True) as r:
             if r.status_code != 200:
-                self.logger.error('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
+                self.logger.warn('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
                 return
 
             r_decoded = (line.decode('utf-8') for line in r.iter_lines())

@@ -172,8 +172,7 @@ class BrowserTestCase(BaseTestCase):
         self.assertIn('default', self.browser.title)
         self.assertEqual('', self._mapserver_loading_panel_test())
 
-    def test_dorado_trajectory(self):
-        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
+    def _select_dorado(self):
         try:
             # Click on Platforms to expand
             platforms_anchor = self.browser.find_element_by_id(
@@ -188,6 +187,31 @@ class BrowserTestCase(BaseTestCase):
         dorado_button = self.browser.find_element_by_id('dorado'
                             ).find_element_by_tag_name('button')
         self._wait_until_visible_then_click(dorado_button)
+
+    def test_curtain(self):
+        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
+        self._select_dorado()
+
+        # Make contour plot of altitude
+        measuredparameters_anchor = self.browser.find_element_by_id('measuredparameters-anchor')
+        self._wait_until_visible_then_click(measuredparameters_anchor, delay=4)
+        altitude_id = Parameter.objects.get(name__contains='altitude').id
+        altitude_plot_button = self.browser.find_element(By.XPATH,
+                "//input[@name='parameters_plot' and @value='{}']".format(altitude_id))
+        self._wait_until_visible_then_click(altitude_plot_button)
+        contour_button = self.browser.find_element(By.XPATH, "//input[@name='showdataas' and @value='contour']")
+        self._wait_until_visible_then_click(contour_button)
+
+        # Make 3D plot and test for curtain element
+        spatial_3d_anchor = self.browser.find_element_by_id('spatial-3d-anchor')
+        self._wait_until_visible_then_click(spatial_3d_anchor)
+        showgeox3dmeasurement = self.browser.find_element_by_id('showgeox3dmeasurement')
+        self._wait_until_visible_then_click(showgeox3dmeasurement)
+        self._wait_until_id_is_visible('mp-curtain')
+
+    def test_dorado_trajectory(self):
+        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
+        self._select_dorado()
 
         # Test that Mapserver returns images
         self.assertEqual('', self._mapserver_loading_panel_test(delay=4))
@@ -208,7 +232,7 @@ class BrowserTestCase(BaseTestCase):
         self._wait_until_visible_then_click(colorbar)
         colormap = self._wait_until_src_is_visible('deep.png', delay=4)
         self._wait_until_visible_then_click(colormap)
-        # - 3D measuement data
+        # - 3D measurement data
         showgeox3dmeasurement = self.browser.find_element_by_id('showgeox3dmeasurement')
         self._wait_until_visible_then_click(showgeox3dmeasurement)
         self._wait_until_id_is_visible('mp-x3d-track')
