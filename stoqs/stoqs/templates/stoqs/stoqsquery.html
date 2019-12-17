@@ -1787,6 +1787,7 @@
                         if (strideVal < 1) {
                             strideVal = 1;
                         }
+                        map.addLayer(sensortrackskml);
                         $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info'] + ' (every ' + getValueOrdinal(strideVal) + ' point)');
                         // Set colorbar as an attribution - must get the url to the .png from the sensor tracks being turned on
                         // See: http://stackoverflow.com/questions/5539633/adding-a-absolutely-positioned-div-to-the-bottom-of-an-openlayers-map/5568762#5568762
@@ -6443,7 +6444,6 @@ function enable_cardboard(){
         //map.addLayer(samplewfs);
 
 
-        map.addLayer(sensortrackskml);
         map.addLayer(track_lines); 
         map.addLayer(stations); 
         map.addLayer(sample_points); 
