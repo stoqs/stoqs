@@ -390,7 +390,7 @@
                                                                 </div>
                                                                 <div class="span9" style="margin:0px;margin-top:3px;">
                                                                     <div class="row-fluid">
-                                                                        <input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:98%;">
+                                                                        <input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:98%;" oninput="slider(event)">
                                                                             <span id="slider-time" style="position:absolute;width:inherit;"></span>
                                                                         </input>
                                                                     </div>
@@ -1510,31 +1510,47 @@
     var num_pt_colors = 16;
     var render_shapes = {};
     var frac_esec;
+    var start_fraction = 0;
+    var stopped_by_scrubbing = false;
 
     var vrHMD = null, vrSensor = null;
     var pyr = new x3dom.fields.SFVec3f(0, 0, 0);        // For the Leap Motion
 
+    function movePlatforms(ts_fraction) {
+        $('#platform-animations > geopositioninterpolator')[0].setFieldValue('set_fraction', ts_fraction)
+        $('#platform-animations > orientationinterpolator')[0].setFieldValue('set_fraction', ts_fraction)
+        $('#platform-animations > orientationinterpolator')[1].setFieldValue('set_fraction', ts_fraction)
+        $('#platform-animations > orientationinterpolator')[2].setFieldValue('set_fraction', ts_fraction)
+        updateCrosshairs(ts_fraction, timeAxis, sliderLimits);
+    }
+
+    function slider(e) {
+        var click_time = new Date().getTime() / 1000.0;
+        $('#PLATFORMS_TS')[0].setAttribute('stopTime', click_time);
+        stopped_by_scrubbing = true;
+        movePlatforms(e.target.value);
+
+        if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
+            $('#spatial-3d-x3d-pause-play').removeClass('icon-pause')
+            $('#spatial-3d-x3d-pause-play').addClass('icon-play')
+        }
+    }
+
     function update3DScene(ts_fraction, event) {
+        movePlatforms(ts_fraction);
+        $('#spatial-3d-x3d-slider').val(ts_fraction);
+
         // Called from TimeSensor onoutputchanged() event or on HTML slider mousemove event
         var fesec;
         var frac_ems = $('body').data()['start-ems'] + ts_fraction * ($('body').data()['end-ems'] - $('body').data()['start-ems']);
         frac_esec = parseInt(frac_ems / 1000.0);
 
-        //$('#slider-esecs').html(frac_esec);
+        //$('#slider-esecs').html(frac_esec);       // For debugging
         $('#slider-time').html(getUTCDateString(new Date(frac_ems)));
         $('#slider-time').css( {'transform': 'translate(' + ts_fraction * 50 + '%, -40px)'} );
 
         var fade_away_secs = parseInt($('#fade_away_minutes').val()) * 60;
         var slice_secs = parseInt($('#slice_minutes').val()) * 60;
-        if ( event.type == 'mousemove' ) {
-            $('#platform-animations > geopositioninterpolator')[0].setFieldValue('set_fraction', ts_fraction)
-            $('#platform-animations > orientationinterpolator')[0].setFieldValue('set_fraction', ts_fraction)
-            $('#platform-animations > orientationinterpolator')[1].setFieldValue('set_fraction', ts_fraction)
-            $('#platform-animations > orientationinterpolator')[2].setFieldValue('set_fraction', ts_fraction)
-        }
-        else {
-            $('#spatial-3d-x3d-slider').val(ts_fraction);
-        }
 
         // Set render to true or false for shapes
         if ( ! $.isEmptyObject(render_shapes) ) {
@@ -1555,14 +1571,16 @@
                 last_shps_esec = shps_esec;
             });
         }
-        updateCrosshairs(ts_fraction, timeAxis, sliderLimits);
     }
 
     // Callback from X3DOM TimeSensor added to scene with 'showplatforms' checkbox 
-    function setSlider(eventObject) {
-        if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
-            return;
-        update3DScene(eventObject.value, eventObject);
+    function setSlider(e) {
+        if ( e.fieldName == "fraction_changed" ) {
+            //console.log('start_fraction = ' + start_fraction + ', e.value = ' + e.value);
+            ts_fraction = (start_fraction + e.value) % 1;
+            //console.log('(start_fraction + e.value) = ' + (start_fraction + e.value) + ', ts_fraction = ' + ts_fraction);
+            update3DScene(ts_fraction, e);
+        }
     }
 
     function setPlatformScales(viewpoint, vp) {
@@ -1614,6 +1632,10 @@
             $('input[name=terrain_view][value="' + $('body').data()['terrain_view'] + '"]').prop('checked', true).trigger("click");
         }
         if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
+            // Rescale platforms so that they become visible
+            var viewpoint = $('#spatial-3d-x3d')[0].runtime.viewpoint();
+            setPlatformScales(viewpoint, viewpoint._vf.position);
+
             // Set color of animated 3D model
             $.each($('body').data()['platformAnimation'], function(index, plat) {
                 // Axes & all Material IDs starting with 'MAT' in inlined model X3D + ENU axes
@@ -1623,6 +1645,7 @@
                 $('#' + plat + '_axesENU__Grey > Material').attr('diffuseColor', x3d_color);
                 $('#' + plat + '_axesENU__Black > Material').attr('diffuseColor', x3d_color);
             });
+            $('#spatial-3d-x3d-pause-play').click();
         }
     }
 
@@ -2538,6 +2561,7 @@
             $('#spatial-3d-x3d-pause-play').removeClass('icon-play')
             $('#spatial-3d-x3d-pause-play').addClass('icon-pause')
             $('#PLATFORMS_TS').attr('enabled','true');
+            //console.log('Setting startTime = ' + click_time + ' in #spatial-3d-x3d-pause-play handler');
             $('#PLATFORMS_TS')[0].setAttribute('startTime', click_time);
             if ( ! $('#enableanimation').is(':checked') ) {
                 $('#enableanimation').click();
@@ -2546,12 +2570,32 @@
         else if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
             $('#spatial-3d-x3d-pause-play').removeClass('icon-pause')
             $('#spatial-3d-x3d-pause-play').addClass('icon-play')
+            //console.log('Setting pauseTime = ' + click_time + ' in #spatial-3d-x3d-pause-play handler');
             $('#PLATFORMS_TS')[0].setAttribute('pauseTime', click_time);
+            stopped_by_scrubbing = false;
         }
         else {
             $('#spatial-3d-x3d-pause-play').removeClass('icon-play')
             $('#spatial-3d-x3d-pause-play').addClass('icon-pause')
-            $('#PLATFORMS_TS')[0].setAttribute('resumeTime', click_time);
+            if ( stopped_by_scrubbing ) {
+                //console.log('Setting startTime = ' + click_time + ' in #spatial-3d-x3d-pause-play handler');
+                $('#PLATFORMS_TS')[0].setAttribute('startTime', click_time);
+                //console.log('Setting stopTime = ' + click_time + 3600 + ' in #spatial-3d-x3d-pause-play handler');
+                $('#PLATFORMS_TS')[0].setAttribute('stopTime', click_time + 3600);
+                start_fraction = $('#spatial-3d-x3d-slider').val() * 1.0;
+                //console.log('start_fraction = ' + start_fraction)
+
+                // For case of scrubbing a paused playback
+                if ( ! $.isEmptyObject($('#PLATFORMS_TS').attr('pausetime')) ) {
+                    if ( $('#PLATFORMS_TS').attr('stoptime') > $('#PLATFORMS_TS').attr('pausetime') ) {
+                        $('#PLATFORMS_TS')[0].setAttribute('resumeTime', click_time);
+                    }
+                }
+            }
+            else {
+                //console.log('Setting resumeTime = ' + click_time + ' in #spatial-3d-x3d-pause-play handler');
+                $('#PLATFORMS_TS')[0].setAttribute('resumeTime', click_time);
+            }
         }
 
         // Turn off Viewpoint reset for rebuildFilters()
@@ -5850,55 +5894,18 @@ function enable_cardboard(){
                     timeAxis = data[key]['time'];
                     sliderLimits = data[key]['limits'];
 
-                    function updateSlider(ts_fraction, event) {
-                        var click_time = new Date().getTime()/1000;
-                        var frac_ems = $('body').data()['start-ems'] + ts_fraction * ($('body').data()['end-ems'] - $('body').data()['start-ems']);
-                        var pause_after_start_time;
-                        frac_esec = parseInt(frac_ems / 1000.0);
-
-                        if ( event.type == 'mousemove' ) {
-                            // Update scene with fraction from the slider, not the TimeSensor
-                            $('#PLATFORMS_TS')[0].setAttribute('pauseTime', click_time);
-                            update3DScene(event.currentTarget.value, event);
-                        }
-                        if ( event.type == 'mouseup' ) {
-                            if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
-                                $('#PLATFORMS_TS')[0].setAttribute('resumeTime', click_time);
-                                $('#PLATFORMS_TS')[0].setAttribute('startTime', click_time);
-                            }
-                        }
-                        var currentInterval = $('#PLATFORMS_TS').attr('cycleInterval');
-                        var newStartTime = click_time - ts_fraction * currentInterval;
-                        $('#PLATFORMS_TS').attr('startTime', String(newStartTime));
-                    }
-
-                    $('#spatial-3d-x3d-slider').mousemove( function(e) {
-                        if ( e.which == 1 ) {   // Execute only when mousedown
-                            updateSlider($(this).val(), e);
-                        }
-                    });
-                    $('#spatial-3d-x3d-slider').mouseup( function(e) {
-                        updateSlider($(this).val(), e);
-                        $('#PLATFORMS_TS')[0].setFieldValue('_fraction', e.currentTarget.value);
-                    });
-
                     if ( ! $('#animation3D').hasClass('in') ) {
                         $('#animation3D-anchor').click();
                     }
                     $('#spatial-3d-x3d-pp-slider').show();
                     $('#spatial-3d-x3d-speedup').show()
                     $('#speedup-value').val(data[key].speedup);
-                    $('#spatial-3d-x3d-pause-play').click();
                 }
                 if (data[key]['platforms_not_shown']) {
                     if ( ! $.isEmptyObject(data[key]['platforms_not_shown']) ) {
                         $('#spatial-3d-x3d-message').html('Platform(s) not shown: ' + data[key]['platforms_not_shown']);
                     }
                 }
-
-                // Rescale platforms so that they become visible
-                var viewpoint = $('#spatial-3d-x3d')[0].runtime.viewpoint();
-                setPlatformScales(viewpoint, viewpoint._vf.position);
             }
 
             // If no parametertime data and Station tab is active then disable it and switch back to Trajectory
