@@ -80,18 +80,15 @@ class PlatformAnimation(object):
         <GeoPositionInterpolator DEF="{pName}_POS_INTERP" key="{pKeys}" keyValue="{posValues}">{geoOriginStr}</GeoPositionInterpolator>
         <OrientationInterpolator DEF="{pName}_AA_OI" key="{oKeys}" keyValue="{aaRotValues}"></OrientationInterpolator>
         
-        <!-- Wire up the connections between the nodes to animate the motion of the Shape -->       
+        <!-- Wire up the connections between the nodes to animate the motion of the Shape -->
+        <!-- ROUTES from TimeSensor to Interpolator set_fraction are handled in JavaScript to enable scrubbing with input slider -->
         <ROUTE fromField="geovalue_changed" fromNode="{pName}_POS_INTERP" toField="geoCoords" toNode="{pName}_LOCATION"></ROUTE>
 
         <ROUTE fromField="value_changed" fromNode="{pName}_AA_OI" toField="rotation" toNode="{pName}_AAROT"></ROUTE>
 
-        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_POS_INTERP"></ROUTE>
-        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_AA_OI"></ROUTE>
-
         <!-- Axis of rotation -->
         <CoordinateInterpolator DEF="{pName}_A_CI" key="{pKeys}" keyValue="{axisValues}"></CoordinateInterpolator>
         <ROUTE fromField="value_changed" fromNode="{pName}_A_CI" toField="point" toNode="{pName}_A_C"></ROUTE>
-        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_A_CI"></ROUTE>
 
     '''
 
@@ -136,10 +133,7 @@ class PlatformAnimation(object):
         <ROUTE fromField="value_changed" fromNode="{pName}_X_OI" toField="rotation" toNode="{pName}_XROT"></ROUTE>
         <ROUTE fromField="value_changed" fromNode="{pName}_Y_OI" toField="rotation" toNode="{pName}_YROT"></ROUTE>
         <ROUTE fromField="value_changed" fromNode="{pName}_Z_OI" toField="rotation" toNode="{pName}_ZROT"></ROUTE>
-        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_POS_INTERP"></ROUTE>
-        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_X_OI"></ROUTE>
-        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_Y_OI"></ROUTE>
-        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_Z_OI"></ROUTE>
+        <!-- ROUTES from TimeSensor to Interpolator set_fraction are handled in JavaScript to enable scrubbing with input slider -->
     '''
 
     timesensor_template = '<TimeSensor id="PLATFORMS_TS" DEF="TS" cycleInterval="{cycInt}" loop="true" enabled="false" onoutputchange="setSlider(event)"></TimeSensor>'
