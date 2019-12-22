@@ -114,7 +114,7 @@
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet"></link>
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet"></link>
     <!--<link type="text/css" href="{{ STATIC_URL }}x3dom-1.8.1/x3dom.css" rel="stylesheet"></link>-->
-    <link type="text/css" href="https://www.x3dom.org/x3dom/dist/x3dom.css" rel="stylesheet">
+    <link type="text/css" href="https://www.x3dom.org/x3dom/dist/x3dom.css" rel="stylesheet"></link>
     
 
     <!-- The HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -1528,7 +1528,7 @@
         var click_time = new Date().getTime() / 1000.0;
         $('#PLATFORMS_TS')[0].setAttribute('stopTime', click_time);
         stopped_by_scrubbing = true;
-        movePlatforms(e.target.value);
+        update3DScene(e.target.value, e);
 
         if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
             $('#spatial-3d-x3d-pause-play').removeClass('icon-pause')
