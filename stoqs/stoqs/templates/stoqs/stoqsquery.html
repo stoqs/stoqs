@@ -390,9 +390,12 @@
                                                                 </div>
                                                                 <div class="span9" style="margin:0px;margin-top:3px;">
                                                                     <div class="row-fluid">
-                                                                        <input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:98%;" oninput="slider(event)">
-                                                                            <span id="slider-time" style="position:absolute;width:inherit;"></span>
-                                                                        </input>
+                                                                        <div style="position:relative; margin:auto; width:98%">
+                                                                            <span style="position:absolute;">
+                                                                                <span id="slider-time" style="display:inline-block;width:70px;"></span>
+                                                                            </span>
+                                                                            <input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="box-shadow:0px 0px 0px 0px;margin:0px;width:98%;" oninput="slider(event)">
+                                                                        </div>
                                                                     </div>
                                                                     <div class="row-fluid">
                                                                         <span id="slider-start-time"></span>
@@ -1517,10 +1520,12 @@
     var pyr = new x3dom.fields.SFVec3f(0, 0, 0);        // For the Leap Motion
 
     function movePlatforms(ts_fraction) {
-        $('#platform-animations > geopositioninterpolator')[0].setFieldValue('set_fraction', ts_fraction)
-        $('#platform-animations > orientationinterpolator')[0].setFieldValue('set_fraction', ts_fraction)
-        $('#platform-animations > orientationinterpolator')[1].setFieldValue('set_fraction', ts_fraction)
-        $('#platform-animations > orientationinterpolator')[2].setFieldValue('set_fraction', ts_fraction)
+        $.each($('#platform-animations > geopositioninterpolator'), function(index, gpi) {
+            gpi.setFieldValue('set_fraction', ts_fraction);
+        });
+        $.each($('#platform-animations > orientationinterpolator'), function(index, oi) {
+            oi.setFieldValue('set_fraction', ts_fraction);
+        });
         updateCrosshairs(ts_fraction, timeAxis, sliderLimits);
     }
 
@@ -1545,9 +1550,17 @@
         var frac_ems = $('body').data()['start-ems'] + ts_fraction * ($('body').data()['end-ems'] - $('body').data()['start-ems']);
         frac_esec = parseInt(frac_ems / 1000.0);
 
+        // See https://stackoverflow.com/questions/10004723/html5-input-type-range-show-range-value
+        var myRange = document.querySelector('#spatial-3d-x3d-slider');
+        var myValue = document.querySelector('#slider-time');
+        var myUnits = 'myUnits';
+        var off = myRange.offsetWidth / (parseInt(myRange.max) - parseInt(myRange.min));
+        var px =  ((myRange.valueAsNumber - parseInt(myRange.min)) * off) - (myValue.offsetParent.offsetWidth / 2);
+
         //$('#slider-esecs').html(frac_esec);       // For debugging
         $('#slider-time').html(getUTCDateString(new Date(frac_ems)));
-        $('#slider-time').css( {'transform': 'translate(' + ts_fraction * 50 + '%, -40px)'} );
+
+        $('#slider-time').parent().css( {'left': px + 'px', 'bottom': $('#spatial-3d-x3d-slider')[0].offsetHeight + 'px'} );
 
         var fade_away_secs = parseInt($('#fade_away_minutes').val()) * 60;
         var slice_secs = parseInt($('#slice_minutes').val()) * 60;
@@ -2611,7 +2624,9 @@
             if ( ! $.isEmptyObject(render_shapes) ) {
                 $.each(render_shapes, function(esec, shape_ids) {
                     $.each(shape_ids, function(index, shape_id) {
-                        $('#' + shape_id)[0].setAttribute('render', 'false');
+                        if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                            $('#' + shape_id)[0].setAttribute('render', 'false');
+                        }
                     });
                 });
             }
@@ -2621,7 +2636,9 @@
             if ( ! $.isEmptyObject(render_shapes) ) {
                 $.each(render_shapes, function(esec, shape_ids) {
                     $.each(shape_ids, function(index, shape_id) {
-                        $('#' + shape_id)[0].setAttribute('render', 'true');
+                        if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                            $('#' + shape_id)[0].setAttribute('render', 'true');
+                        }
                     });
                 });
             }
