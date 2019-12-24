@@ -1553,13 +1553,10 @@
         // See https://stackoverflow.com/questions/10004723/html5-input-type-range-show-range-value
         var myRange = document.querySelector('#spatial-3d-x3d-slider');
         var myValue = document.querySelector('#slider-time');
-        var myUnits = 'myUnits';
-        var off = myRange.offsetWidth / (parseInt(myRange.max) - parseInt(myRange.min));
-        var px =  ((myRange.valueAsNumber - parseInt(myRange.min)) * off) - (myValue.offsetParent.offsetWidth / 2);
+        var px = (myRange.valueAsNumber * myRange.offsetWidth) - (myValue.offsetParent.offsetWidth / 2);
 
         //$('#slider-esecs').html(frac_esec);       // For debugging
         $('#slider-time').html(getUTCDateString(new Date(frac_ems)));
-
         $('#slider-time').parent().css( {'left': px + 'px', 'bottom': $('#spatial-3d-x3d-slider')[0].offsetHeight + 'px'} );
 
         var fade_away_secs = parseInt($('#fade_away_minutes').val()) * 60;
@@ -1573,12 +1570,16 @@
                 // Render only the shapes in the list for the time entry in render_shapes
                 if (last_shps_esec - fade_away_secs <= frac_esec && frac_esec < shps_esec - slice_secs) {
                     $.each(shape_ids, function(index, shape_id) {
-                        $('#' + shape_id)[0].setAttribute('render', 'true');
+                        if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                            $('#' + shape_id)[0].setAttribute('render', 'true');
+                        }
                     });
                 }
                 else {
                     $.each(shape_ids, function(index, shape_id) {
-                        $('#' + shape_id)[0].setAttribute('render', 'false');
+                        if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                            $('#' + shape_id)[0].setAttribute('render', 'false');
+                        }
                     });
                 }
                 last_shps_esec = shps_esec;
