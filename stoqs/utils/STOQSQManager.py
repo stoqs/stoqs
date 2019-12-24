@@ -1595,7 +1595,7 @@ class STOQSQManager(object):
         logger.debug('self.kwargs = %s', self.kwargs)
         
         if self.request.GET.get('showplatforms', False):
-            # Allow for platofmrm animation without selecting a parameterplot
+            # Allow for platform animation without selecting a parameterplot
             self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
 
         if 'parameterplot' in self.kwargs:
@@ -1894,6 +1894,7 @@ class STOQSQManager(object):
         orientDict = {}
         if self.request.GET.get('showplatforms', False):
             self.mpq.qs_mp = None
+            self.kwargs['activitynames'] = []
             parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
 
             # Test if there are any X3D platform models in the selection
