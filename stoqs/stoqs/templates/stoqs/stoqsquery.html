@@ -4585,11 +4585,38 @@ function enable_cardboard(){
                 });
             });
 
+            // Build acts_by_mode (LRUAV: realtime/delayed mode) for use by both init and update
+            var acts_by_mode = {};
+            $.each(platforms, function (index, plat) {
+                var activities = $.map(data.resources.netcdf[plat], function(activities, a) {return a}).sort();
+                $.each(activities, function(index, activity) {
+                    // Save a hash list of activities by mode={'realtime', 'delayed'} so the they can be selected / de-selected
+                    // Hack warning: hard-coded to specific .nc file name endings: '*shore_i.nc' and '*scieng.nc'
+                    if ( ! $.isEmptyObject(activity.match(/shore_i.nc/)) ) {
+                        if ( $.type(acts_by_mode['realtime']) == "undefined" ) {
+                                acts_by_mode['realtime'] = [];
+                        }
+                        else {
+                            acts_by_mode['realtime'].push(activity);
+                        }
+                    }
+                    else if ( ! $.isEmptyObject(activity.match(/scieng.nc/)) ) {
+                        if ( $.type(acts_by_mode['delayed']) == "undefined" ) {
+                                acts_by_mode['delayed'] = [];
+                        }
+                        else {
+                            acts_by_mode['delayed'].push(activity);
+                        }
+                    }
+                });
+            });
+
             if (init) {
                 // Sort the Activities by platform and build HTML for NetCDF tab
                 var platformActivitiesHtml = 'Check/Uncheck Activities (leave this section open for selections to apply - <u>collapse it otherwise</u>)<br>';
                 platformActivitiesHtml += '<input type="checkbox" name="all_activity_select_cb" value="" class="checkall_activity" /> All';
                 platformActivitiesHtml += '<div id="acts-by-stride"></div>';
+                platformActivitiesHtml += '<div id="acts-by-mode"></div>';
                 var ql_plots_tab_html = '';
                 platformActivitiesHtml += '<div id="netcdf-groups">'; 
                 $.each(platforms, function (index, plat) {
@@ -4617,12 +4644,20 @@ function enable_cardboard(){
                         var attributes = data.resources.netcdf[plat][activity];
                         var dsLink = activity;
                         var stride_val = 'stride=1';
+                        var mode;
                         if ( ! $.isEmptyObject(activity.match(/\((.+)\)/)) ) {
                             stride_val = activity.match(/\((.+)\)/)[1];
                         }
+                        // Hack warning: hard-coded to specific .nc file name endings: '*shore_i.nc' and '*scieng.nc'
+                        if ( ! $.isEmptyObject(activity.match(/shore_i.nc/)) ) {
+                            mode = 'realtime';
+                        }
+                        if ( ! $.isEmptyObject(activity.match(/scieng.nc/)) ) {
+                            mode = 'delayed';
+                        }
                         if (attributes.opendap_url) {
                             dsLink = '<input type="checkbox" name="activity_select_cb" value="' + activity + '" class="activity-select-checkbox ' + 
-                                                                                                stride_val.replace('=', '') + '" style="margin:0px;"/> ';
+                                                             stride_val.replace('=', '') + ' ' + mode + '" style="margin:0px;"/> ';
                             dsLink += '<a target="_blank" href="' + attributes.opendap_url + '.html">';
                             dsLink += '<span style="overflow:hidden;text-overflow:ellipsis;display:block;">' + activity + '</span></a>';
                         }
@@ -4697,6 +4732,27 @@ function enable_cardboard(){
                 if ( $('.check_activity_stride').length < 2 ) {
                     $('#acts-by-stride').hide();
                 }
+
+                // Add the realtime/delayed mode selection checkboxes
+                var acts_by_mode_html = '';
+                if ( ! $.isEmptyObject(acts_by_mode) ) {
+                    acts_by_mode_html += 'LRAUV data: <ul>';
+                }
+                $.each(acts_by_mode, function(mode, activities) {
+                    acts_by_mode_html += '<li><div><input type="checkbox" id="' + mode + '" name="activity_' + mode + 
+                                           '_cb" value="" class="check_activity_mode" /> ' + mode + '</div></li>';
+                });
+                if ( ! $.isEmptyObject(acts_by_mode) ) {
+                    acts_by_mode_html += '</ul>';
+                }
+                $('#acts-by-mode').html(acts_by_mode_html);
+                $('#acts-by-mode :checkbox').each(function() {
+                    $(this).prop('checked', true);
+                });
+
+                if ( $('.check_activity_mode').length < 2 ) {
+                    $('#acts-by-mode').hide();
+                }
             }
             else {
                 // On update we need to reflect what is in the selection (platforms, MP, temporal/depth)
@@ -4707,6 +4763,7 @@ function enable_cardboard(){
 
                 // Second, show the rows that are in the selection - lookup up from checkbox value, which can handle activity.name characters
                 var strides_to_show = {};
+                var modes_to_show = {};
                 $.each(data.resources.netcdf, function (plat, activities) {
                     $.each(activities, function (activityname, activity) {
                         $('input[name=activity_select_cb][value="' + activityname + '"]').parent().parent().show();
@@ -4715,10 +4772,15 @@ function enable_cardboard(){
                                 strides_to_show[stride.replace('=', '')] = true;
                             }
                         });
+                        $.each(acts_by_mode, function(mode, activities_by_mode) {
+                            if ( $.inArray(activity, activities_by_mode) ) {
+                                modes_to_show[mode] = true;
+                            }
+                        });
                     });
                 });
 
-                // Third, modify the Activities by stride checkboxes (and parent divs) according to what is in the selection
+                // Third, modify the Activities by stride & mode checkboxes (and parent divs) according to what is in the selection
                 $('#acts-by-stride').show();
                 $('.check_activity_stride').each(function(index, elem) {
                     $(elem).hide();
@@ -4730,6 +4792,19 @@ function enable_cardboard(){
                 });
                 if ( $('.check_activity_stride:visible').length < 2 ) {
                     $('#acts-by-stride').hide();
+                }
+
+                $('#acts-by-mode').show();
+                $('.check_activity_mode').each(function(index, elem) {
+                    $(elem).hide();
+                    $(elem).parent().hide();
+                    if ( modes_to_show[elem.id] ) {
+                        $(elem).show();
+                        $(elem).parent().show();
+                    }
+                });
+                if ( $('.check_activity_mode:visible').length < 2 ) {
+                    $('#acts-by-mode').hide();
                 }
 
                 // Hide groups that have no showing Activities
@@ -4762,8 +4837,8 @@ function enable_cardboard(){
                 rebuildFilters();
             });
 
-            // Register event handler for activity strides checkboxes - fires off a rebuildFilters()
-            $('.check_activity_stride').unbind().on('click', function () {
+            // Register event handler for activity strides and modes checkboxes - fires off a rebuildFilters()
+            $('.check_activity_stride,.check_activity_mode').unbind().on('click', function () {
                 if ( $(this).is(':checked') ) {
                     $('.' + this.id).prop('checked', true);
                     $('.' + this.id).each(function(index, elem) {
