@@ -1869,9 +1869,9 @@ class STOQSQManager(object):
                             x3d_dict['shape_id_dict'] = {}
                             x3d_dict['shape_id_dict'].update(shape_id_dict)
 
-                        sec_interval = (cp.x[2] - cp.x[1]) * cp.scale_factor
-                        if sec_interval < min_sec_interval:
-                            min_sec_interval = (cp.x[2] - cp.x[1]) * cp.scale_factor
+                        sec_interval = (cp.x[1] - cp.x[0]) * cp.scale_factor
+                        if sec_interval < min_sec_interval and sec_interval > 0:
+                            min_sec_interval = sec_interval
 
             self.kwargs['platforms'] = saved_platforms
             self.kwargs['activitynames'] = saved_activitynames
