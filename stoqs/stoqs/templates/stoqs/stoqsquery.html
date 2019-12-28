@@ -379,16 +379,32 @@
                                                     <div id="animation3D" class="accordion-body">
                                                         <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
                                                             <div class="row-fluid">
-                                                                <div class="span1" style="padding:0px;margin-left:5px;">
-                                                                    <input type="checkbox" id="enableanimation" title="Uncheck to pause animation and show all the data" checked="checked"/>
-                                                                </div>
-                                                            </div>
-                                                            <div class="row-fluid">
                                                                 <span id="slider-esecs" style="display:none;"></span>
                                                                 <div class="span1" style="padding:0px;margin-left:5px;">
                                                                     <i id="spatial-3d-x3d-pause-play" class="icon-play"></i>
                                                                 </div>
-                                                                <div class="span9" style="margin:0px;margin-top:3px;">
+                                                                <div class="span3">
+                                                                    <span id="spatial-3d-x3d-speedup" style="font-size:11px;display:none;">
+                                                                        Speedup: <input id="speedup-value" class="stoqs-speedup-input" type="text"/>x
+                                                                    </span>
+                                                                </div>
+                                                                <div class="span8" style="padding:0px;margin-left:5px;display:none;">
+                                                                    <form class="form-inline">
+                                                                        Measured Parameters:
+                                                                        <label>
+                                                                            <input type="radio" name="show-mp-3d" value="all" style="margin-top:0;margin-bottom:3px;" checked /> show all
+                                                                        </label>
+                                                                        <label>
+                                                                            <input type="radio" name="show-mp-3d" value="tails" style="margin-top:0;margin-bottom:3px;" /> animate tails
+                                                                        </label>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row-fluid">
+                                                                <div class="span12" style="padding:0px;margin-left:5px;">&nbsp;</div>
+                                                            </div>
+                                                            <div class="row-fluid">
+                                                                <div class="span12" style="margin:0px;margin-top:3px;">
                                                                     <div class="row-fluid">
                                                                         <div style="position:relative; margin:auto; width:98%">
                                                                             <span style="position:absolute;">
@@ -402,15 +418,6 @@
                                                                         <div style="float:right;"><span id="slider-end-time"></span></div>
                                                                     </div>
                                                                 </div>
-                                                                <div class="span2">
-                                                                    <span id="spatial-3d-x3d-speedup" style="font-size:11px;display:none;">
-                                                                        Speed: <input id="speedup-value" class="stoqs-speedup-input" type="text"/>x
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <div class="row-fluid">
-                                                                <div class="span1" style="padding:0px;margin-left:5px;"></div>
-                                                                <div class="span9"> </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1563,7 +1570,7 @@
         var slice_secs = parseInt($('#slice_minutes').val()) * 60;
 
         // Set render to true or false for shapes
-        if ( ! $.isEmptyObject(render_shapes) ) {
+        if ( $('input:radio[name=show-mp-3d]:checked').val() == 'tails' && ! $.isEmptyObject(render_shapes) ) {
             var last_shps_esec = 0;
             $.each(render_shapes, function(esec, shape_ids) {
                 shps_esec = parseInt(esec);
@@ -2577,9 +2584,6 @@
             $('#PLATFORMS_TS').attr('enabled','true');
             //console.log('Setting startTime = ' + click_time + ' in #spatial-3d-x3d-pause-play handler');
             $('#PLATFORMS_TS')[0].setAttribute('startTime', click_time);
-            if ( ! $('#enableanimation').is(':checked') ) {
-                $('#enableanimation').click();
-            }
         }
         else if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
             $('#spatial-3d-x3d-pause-play').removeClass('icon-pause')
@@ -2615,34 +2619,6 @@
         // Turn off Viewpoint reset for rebuildFilters()
         if ( $('input[name="use_viewpoint"]').is(':checked') ) {
             $('input[name="use_viewpoint"]').click();
-        }
-    });
-
-    $('#enableanimation').on('change', function (event) {
-        var click_time = new Date().getTime() / 1000.0;
-        if ( $('#enableanimation').is(':checked') ) {
-            $('#PLATFORMS_TS')[0].setAttribute('resumeTime', click_time);
-            if ( ! $.isEmptyObject(render_shapes) ) {
-                $.each(render_shapes, function(esec, shape_ids) {
-                    $.each(shape_ids, function(index, shape_id) {
-                        if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                            $('#' + shape_id)[0].setAttribute('render', 'false');
-                        }
-                    });
-                });
-            }
-        }
-        else {
-            $('#PLATFORMS_TS')[0].setAttribute('pauseTime', click_time);
-            if ( ! $.isEmptyObject(render_shapes) ) {
-                $.each(render_shapes, function(esec, shape_ids) {
-                    $.each(shape_ids, function(index, shape_id) {
-                        if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                            $('#' + shape_id)[0].setAttribute('render', 'true');
-                        }
-                    });
-                });
-            }
         }
     });
 
@@ -2691,6 +2667,7 @@
         if ( $('#showgeox3dmeasurement').is(':checked') ) {
             $('#track-animations')[0].setAttribute('render', true);
             $('#curtain-animations')[0].setAttribute('render', true);
+            $('input[name="show-mp-3d"]').parent().parent().parent().show()
             // Don't need to get everything from queryData, only the response with the X3D data
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
                 rebuildFilters(['curtainx3d', 'measuredparameterx3d']);
@@ -2704,8 +2681,25 @@
         else {
             $('#track-animations')[0].setAttribute('render', false);
             $('#curtain-animations')[0].setAttribute('render', false);
+            $('input[name="show-mp-3d"]').parent().parent().parent().hide()
             $('#showlines').parent().hide();
             $('#showfaces').parent().hide();
+        }
+    });
+
+    $('input[name="show-mp-3d"]').on('click', function (event) {
+        if ($('#showgeox3dmeasurement').is(':checked')) {
+            if ($('input:radio[name=show-mp-3d]:checked').val() == 'all') {
+                if ( ! $.isEmptyObject(render_shapes) ) {
+                    $.each(render_shapes, function(esec, shape_ids) {
+                        $.each(shape_ids, function(index, shape_id) {
+                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                $('#' + shape_id)[0].setAttribute('render', 'true');
+                            }
+                        });
+                    });
+                }
+            }
         }
     });
 
