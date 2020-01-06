@@ -1450,7 +1450,7 @@ class STOQSQManager(object):
             esp_archive = None
         try:
             esp_archive_at = models.ActivityType.objects.using(self.dbname).get(name__contains=ESP_FILTERING)
-        except models.SampleType.DoesNotExist:
+        except models.ActivityType.DoesNotExist:
             esp_archive_at = None
 
         # Samples for which activity mindepth and maxdepth are sufficient for simpledepthtime display
