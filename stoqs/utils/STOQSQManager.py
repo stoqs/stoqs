@@ -1436,10 +1436,22 @@ class STOQSQManager(object):
         of the activity to get the start and end time and min and max depths, or the depth time series. 
         '''
         sample_durations = []
-        nettow = models.SampleType.objects.using(self.dbname).filter(name__contains=NETTOW)
-        planktonpump = models.SampleType.objects.using(self.dbname).filter(name__contains=PLANKTONPUMP)
-        esp_archive = models.SampleType.objects.using(self.dbname).filter(name__contains=ESP_FILTERING)
-        esp_archive_at = models.ActivityType.objects.using(self.dbname).filter(name__contains=ESP_FILTERING)
+        try:
+            nettow = models.SampleType.objects.using(self.dbname).get(name__contains=NETTOW)
+        except models.SampleType.DoesNotExist:
+            nettow = None
+        try:
+            planktonpump = models.SampleType.objects.using(self.dbname).get(name__contains=PLANKTONPUMP)
+        except models.SampleType.DoesNotExist:
+            planktonpump = None
+        try:
+            esp_archive = models.SampleType.objects.using(self.dbname).get(name__contains=ESP_FILTERING)
+        except models.SampleType.DoesNotExist:
+            esp_archive = None
+        try:
+            esp_archive_at = models.ActivityType.objects.using(self.dbname).get(name__contains=ESP_FILTERING)
+        except models.SampleType.DoesNotExist:
+            esp_archive_at = None
 
         # Samples for which activity mindepth and maxdepth are sufficient for simpledepthtime display
         if self.getSampleQS() and (nettow or planktonpump):
