@@ -1595,7 +1595,7 @@ class STOQSQManager(object):
         logger.debug('self.kwargs = %s', self.kwargs)
         
         if self.request.GET.get('showplatforms', False):
-            # Allow for platofmrm animation without selecting a parameterplot
+            # Allow for platform animation without selecting a parameterplot
             self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
 
         if 'parameterplot' in self.kwargs:
@@ -1838,6 +1838,7 @@ class STOQSQManager(object):
             # 'daphne,makai_ESP_filtering,tethys,makai'; _combine_sample_platforms() divies them up to get by-platform querystrings
             saved_platforms = self.kwargs['platforms']
             saved_activitynames = self.kwargs['activitynames']
+            min_sec_interval = 10e10
             for pns in self._combine_sample_platforms(platformName):
                 # Rebuild query set for just this platform as qs_mp_no_order is an MPQuerySet which has no filter() method
                 self.kwargs['platforms'] = pns.split(',')
@@ -1868,6 +1869,10 @@ class STOQSQManager(object):
                             x3d_dict['shape_id_dict'] = {}
                             x3d_dict['shape_id_dict'].update(shape_id_dict)
 
+                        sec_interval = (cp.x[1] - cp.x[0]) * cp.scale_factor
+                        if sec_interval < min_sec_interval and sec_interval > 0:
+                            min_sec_interval = sec_interval
+
             self.kwargs['platforms'] = saved_platforms
             self.kwargs['activitynames'] = saved_activitynames
             if x3d_dict:
@@ -1875,8 +1880,7 @@ class STOQSQManager(object):
                 cycInt = (self.max_end_time - self.min_start_time).total_seconds() / x3d_dict['speedup']
                 x3d_dict['timesensor'] = PlatformAnimation.timesensor_template.format(cycInt=cycInt)
 
-                sec_interval = (cp.x[2] - cp.x[1]) * cp.scale_factor
-                spaced_ts = np.arange(self.min_start_time.timestamp(), self.max_end_time.timestamp(), sec_interval)
+                spaced_ts = np.arange(self.min_start_time.timestamp(), self.max_end_time.timestamp(), min_sec_interval)
                 x3d_dict['limits'] = (0, len(spaced_ts))
 
                 cp.makeColorBar(cp.colorbarPngFileFullPath, cp.pMinMax)
@@ -1894,6 +1898,7 @@ class STOQSQManager(object):
         orientDict = {}
         if self.request.GET.get('showplatforms', False):
             self.mpq.qs_mp = None
+            self.kwargs['activitynames'] = []
             parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
 
             # Test if there are any X3D platform models in the selection
