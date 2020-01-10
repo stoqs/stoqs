@@ -17,6 +17,7 @@ before_install:
   - export PATH=/home/travis/miniconda3/bin:$PATH
   - export HDF5_DIR=/home/travis/miniconda3/
   - export NETCDF4_DIR=/home/travis/miniconda3/
+  - export GDAL_LIBRARY_PATH=/home/travis/miniconda3/lib/libgdal.so
   - export TERM=xterm
   - pip uninstall -y setuptools
   - conda install --yes setuptools
