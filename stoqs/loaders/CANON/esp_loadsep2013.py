@@ -21,7 +21,8 @@ import os
 import sys
 import datetime  # needed for glider data
 import time      # for startdate, enddate args
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE']='config.settings.local'
 project_dir = os.path.dirname(__file__)
 
 # the next line makes it possible to find CANON

@@ -12,7 +12,8 @@ MBARI 25 September 2015
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE']='config.settings.local'
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE']='config.settings.local'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # settings.py is one dir up
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 

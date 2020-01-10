@@ -11,7 +11,6 @@ from . import trex_sensor_pb2
 import pyproj
 import logging
 #TODO: Rework if needed for django >= 1.8
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))  # settings.py is three dirs up
 from django.conf import settings
