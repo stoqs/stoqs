@@ -48,6 +48,11 @@ DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TEMPLATE_CONTEXT': True,
 }
 
+# See: https://docs.djangoproject.com/en/3.0/ref/contrib/gis/install/geolibs/#geos-library-path
+#      https://docs.djangoproject.com/en/3.0/ref/contrib/gis/install/geolibs/#gdal-library-path
+GEOS_LIBRARY_PATH = '/usr/local/lib/libgeos_c.so'
+GDAL_LIBRARY_PATH = '/usr/local/lib/libgdal.so'
+
 # django-extensions
 # ------------------------------------------------------------------------------
 INSTALLED_APPS += ('django_extensions', )
