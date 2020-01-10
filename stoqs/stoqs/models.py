@@ -12,7 +12,6 @@ MBARI 17 March 2012
 
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
-from django.utils.encoding import python_2_unicode_compatible
 
 try:
     import uuid
@@ -39,7 +38,6 @@ class UUIDField(models.CharField) :
             return super(UUIDField, self).pre_save(model_instance, add)
 
 
-@python_2_unicode_compatible
 class ResourceType(models.Model):
     '''
     Type of Resource. Example names: nc_global, quick-look-plot.
@@ -53,7 +51,6 @@ class ResourceType(models.Model):
         return "%s" % (self.name,)
 
 
-@python_2_unicode_compatible
 class Resource(models.Model):
     '''
     A catchall class for saving any bit of information that may be associated with an Activity, or other STOQS model class.
@@ -73,7 +70,6 @@ class Resource(models.Model):
         return "(%s=%s)" % (self.name, self.value,)
 
 
-@python_2_unicode_compatible
 class Campaign(models.Model):
     '''
     A Campaign holds a collection of Activities and can have a name, description and start and end time.  
@@ -92,7 +88,6 @@ class Campaign(models.Model):
         return "%s" % (self.name,)
         
 
-@python_2_unicode_compatible
 class CampaignLog(models.Model):
     '''
     Placeholder for potential integration of various logging systems into STOQS.  The
@@ -115,7 +110,6 @@ class CampaignLog(models.Model):
         return "%s at %s" % (self.message, self.timevalue)
 
 
-@python_2_unicode_compatible
 class ActivityType(models.Model):
     '''
     Type of Activity.  Example names: AUV Survey, Mooring Deployment, Ship Cruse, GLider Mission.
@@ -130,7 +124,6 @@ class ActivityType(models.Model):
         return "%s" % (self.name,)
 
 
-@python_2_unicode_compatible
 class PlatformType(models.Model):
     '''
     Type of platform. Example names: auv, mooring, drifter, ship.  The color field is RGB(A) in hex.
@@ -144,7 +137,6 @@ class PlatformType(models.Model):
         return "%s" % (self.name,)
 
 
-@python_2_unicode_compatible
 class Platform(models.Model):
     '''
     Platform.  Example names (use lower case): dorado, tethys, martin.  The color field is RGB(A) in hex.
@@ -161,7 +153,6 @@ class Platform(models.Model):
         return "%s" % (self.name,)
 
 
-@python_2_unicode_compatible
 class Activity(models.Model):
     '''
     An Activity is anything that may produce data.  Example Activity names include:  
@@ -193,7 +184,6 @@ class Activity(models.Model):
         return "%s" % (self.name,)
 
 
-@python_2_unicode_compatible
 class InstantPoint(models.Model):
     '''
     An instance in time for an Activity.  This InstantPoint may have a measurement or sample associated with it.
@@ -212,7 +202,6 @@ class InstantPoint(models.Model):
         return "%s" % (self.timevalue,)
 
 
-@python_2_unicode_compatible
 class NominalLocation(models.Model):
     '''
     A NominalLocation has depth and geom fields for storing a Nominal horizontal position and depth of a
@@ -274,7 +263,6 @@ class PlannedDepthTime(models.Model):
         app_label = 'stoqs'
 
 
-@python_2_unicode_compatible
 class Parameter(models.Model):
     '''
     A Parameter is something that can be measured producing a numeric value or
@@ -300,7 +288,6 @@ class Parameter(models.Model):
         return "%s" % (self.name,)
 
 
-@python_2_unicode_compatible
 class ParameterGroup(models.Model):
     '''
     A grouping of parameters with a many-to-many relationship to the Paramter table.  Useful for showing checkboxes
@@ -376,7 +363,6 @@ class ParameterResource(models.Model):
         unique_together = ['parameter', 'resource']
 
 
-@python_2_unicode_compatible
 class Measurement(models.Model):
     '''
     A Measurement may have a @depth value (this is an Oceanographic Query System) and a horizontal location 
@@ -397,7 +383,6 @@ class Measurement(models.Model):
         return "Measurement at %s, %s" % (self.geom, self.depth)
 
 
-@python_2_unicode_compatible
 class SampleType(models.Model):
     '''
     Type of Sample.  Example names: Gulper, Niskin, Bucket
@@ -412,7 +397,6 @@ class SampleType(models.Model):
         return "%s" % (self.name,)
 
 
-@python_2_unicode_compatible
 class SamplePurpose(models.Model):
     '''
     Purpose of Sample.  Example names: random, control, peak
@@ -428,7 +412,6 @@ class SamplePurpose(models.Model):
         return "%s" % (self.name,)
 
 
-@python_2_unicode_compatible
 class AnalysisMethod(models.Model):
     '''
     The method used for producing a ParamaterSample.datavlue from a Sample
@@ -444,7 +427,6 @@ class AnalysisMethod(models.Model):
         return "%s" % (self.name,)
 
 
-@python_2_unicode_compatible
 class Sample(models.Model):
     '''
     A Sample may have a depth value (this is an Oceanographic Query System) and a location (represented by the geom field), 
