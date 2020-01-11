@@ -6,8 +6,8 @@ addons:
   firefox: "68.0"
   apt:
     packages:
-      - postgresql-10
-      - postgresql-10-postgis-2.4
+      - postgresql-11
+      - postgresql-11-postgis-2.5
 services:
   - xvfb
 before_install: 
@@ -39,6 +39,7 @@ before_script:
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
 script:  
   - find / -name libgdal.so
+  - gdal-config --version
   - ./test.sh CHANGEME load noextraload
 after_script:
   - coveralls --base_dir stoqs
