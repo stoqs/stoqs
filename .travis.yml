@@ -34,10 +34,11 @@ install:
   - pip install --upgrade pip
   - pip install -r requirements/travis-ci.txt
 before_script:
-  - locate psql
+  - find . -name psql
   - which psql
   - psql --version
-  - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
+  - /usr/bin/psql --version
+  - /usr/bin/psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
 script:  
   - find / -name libgdal.so
