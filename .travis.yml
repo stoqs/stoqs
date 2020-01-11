@@ -38,8 +38,7 @@ before_script:
   - psql -U postgres -c "create extension postgis"
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
 script:  
-  - ls -lR /home/travis/miniconda3/
-  - locate libgdal.so
+  - find / -name libgdal.so
   - ./test.sh CHANGEME load noextraload
 after_script:
   - coveralls --base_dir stoqs
