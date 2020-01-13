@@ -30,7 +30,7 @@ before_install:
 env:
   - DJANGO=2.2
 install:
-  - conda install --yes --verbose python=3.6 hdf4 hdf5 numpy scipy matplotlib nose python-dateutil statsmodels gdal
+  - conda install --yes --verbose python=3.6 hdf4 hdf5 numpy scipy nose python-dateutil statsmodels gdal
   - conda install --yes -c omnia python-coveralls=2.9.0
   - gdal-config --version
   - pip install --upgrade pip
