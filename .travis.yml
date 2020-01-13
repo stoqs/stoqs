@@ -32,10 +32,9 @@ install:
   - pip install --upgrade pip
   - pip install -r requirements/travis-ci.txt
 before_script:
-  - find / -name psql 2> /dev/null
   - which psql
-  - psql --version
   - /usr/bin/psql --version
+  - psql --version
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
 script:  
