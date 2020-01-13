@@ -28,11 +28,11 @@ before_install:
 env:
   - DJANGO=2.2
 install:
-  - conda install --yes --verbose python=3.6 hdf4 hdf5 numpy scipy nose python-dateutil statsmodels gdal
+  - conda install --yes --verbose python=3.8 hdf4 hdf5 numpy scipy nose python-dateutil statsmodels gdal
   - conda install --yes -c omnia python-coveralls=2.9.0
   - gdal-config --version
   - pip install --upgrade pip
-  - export PYTHONPATH=$PYTHONPATH:/home/travis/miniconda3/lib/python3.6/site-packages
+  - export PYTHONPATH=$PYTHONPATH:/home/travis/miniconda3/lib/python3.8/site-packages
   - pip install -r requirements/travis-ci.txt
 before_script:
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
