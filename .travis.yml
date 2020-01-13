@@ -16,7 +16,6 @@ before_install:
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=$PATH:/home/travis/miniconda3/bin:/home/travis/miniconda3
-  - export PYTHONPATH=$PYTHONPATH:/home/travis/miniconda3/lib/python3.6/site-packages
   - export HDF5_DIR=/home/travis/miniconda3/
   - export NETCDF4_DIR=/home/travis/miniconda3/
   - export GDAL_LIBRARY_PATH=/home/travis/miniconda3/lib/libgdal.so
@@ -41,6 +40,7 @@ before_script:
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
 script:  
   - gdal-config --version
+  - export PYTHONPATH=$PYTHONPATH:/home/travis/miniconda3/lib/python3.6/site-packages
   - echo $PYTHONPATH
   - ./test.sh CHANGEME load noextraload
 after_script:
