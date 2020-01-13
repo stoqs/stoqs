@@ -14,7 +14,7 @@ before_install:
   - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
-  - export PATH=$PATH:/home/travis/miniconda3/
+  - export PATH=$PATH:/home/travis/miniconda3/bin
   - export HDF5_DIR=/home/travis/miniconda3/
   - export NETCDF4_DIR=/home/travis/miniconda3/
   - export GDAL_LIBRARY_PATH=/home/travis/miniconda3/lib/libgdal.so
