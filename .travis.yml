@@ -21,15 +21,15 @@ before_install:
   - pip --version
   - pip uninstall -y setuptools
   - pip --version
-  - conda install --yes setuptools
-  - conda update --yes conda
+  ##- conda install --yes setuptools
+  ##- conda update --yes conda
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
   - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/miniconda3/
 env:
   - DJANGO=2.2
 install:
-  - conda install --yes --verbose python=3.8 hdf4 hdf5 numpy scipy nose python-dateutil statsmodels gdal
-  - conda install --yes -c omnia python-coveralls=2.9.0
+  ##- conda install --yes --verbose python=3.8 hdf4 hdf5 numpy scipy nose python-dateutil statsmodels gdal
+  ##- conda install --yes -c omnia python-coveralls=2.9.0
   - gdal-config --version
   - pip install --upgrade pip
   - export PYTHONPATH=$PYTHONPATH:/home/travis/miniconda3/lib/python3.8/site-packages
