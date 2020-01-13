@@ -1,6 +1,6 @@
 language: python
 python:
-  - "3.6"
+  - "3.8"
 addons:
   postgresql: "10"
   firefox: "72.0"
@@ -17,8 +17,6 @@ before_install:
   - ./miniconda.sh -b
   - export PATH=$PATH:/home/travis/miniconda3/bin:/home/travis/miniconda3
   - export HDF5_DIR=/home/travis/miniconda3/
-  ##- export NETCDF4_DIR=/home/travis/miniconda3/
-  ##- export GDAL_LIBRARY_PATH=/home/travis/miniconda3/lib/libgdal.so
   - export TERM=xterm
   - pip --version
   - pip uninstall -y setuptools
@@ -37,12 +35,8 @@ install:
   - export PYTHONPATH=$PYTHONPATH:/home/travis/miniconda3/lib/python3.6/site-packages
   - pip install -r requirements/travis-ci.txt
 before_script:
-  - which psql
-  - /usr/bin/psql --version
-  - psql --version
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
-  - gdal-config --version
   - echo $PYTHONPATH
 script:  
   - ./test.sh CHANGEME load noextraload
