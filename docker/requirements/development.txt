@@ -18,7 +18,6 @@ Genshi==0.7.3
 geopandas==0.6.2
 h5py==2.10.0
 MarkupSafe==1.1.1
-netCDF4==1.5.3
 pandas==0.25.3
 numpy==1.18.1
 requests==2.22.0
