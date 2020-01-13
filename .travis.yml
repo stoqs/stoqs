@@ -32,7 +32,7 @@ install:
   - pip install --upgrade pip
   - pip install -r requirements/travis-ci.txt
 before_script:
-  - find / -name psql
+  - find / -name psql 2> /dev/null
   - which psql
   - psql --version
   - /usr/bin/psql --version
