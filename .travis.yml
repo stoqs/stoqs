@@ -39,8 +39,8 @@ before_script:
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
 script:  
-  - find / -name libgdal.so
   - gdal-config --version
+  - find / -name "netCDF4*" 2> /dev/null
   - ./test.sh CHANGEME load noextraload
 after_script:
   - coveralls --base_dir stoqs
