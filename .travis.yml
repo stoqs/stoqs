@@ -10,6 +10,7 @@ addons:
       - postgresql-11-postgis-2.5
 services:
   - xvfb
+  - postgresql
 before_install: 
   - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
