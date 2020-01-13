@@ -17,7 +17,7 @@ before_install:
   - ./miniconda.sh -b
   - export PATH=$PATH:/home/travis/miniconda3/bin:/home/travis/miniconda3
   - export HDF5_DIR=/home/travis/miniconda3/
-  - export NETCDF4_DIR=/home/travis/miniconda3/
+  ##- export NETCDF4_DIR=/home/travis/miniconda3/
   ##- export GDAL_LIBRARY_PATH=/home/travis/miniconda3/lib/libgdal.so
   - export TERM=xterm
   - pip --version
@@ -30,7 +30,7 @@ before_install:
 env:
   - DJANGO=2.2
 install:
-  - conda install --yes --verbose python=3.6 hdf4 hdf5 netcdf4 numpy scipy matplotlib nose python-dateutil statsmodels gdal
+  - conda install --yes --verbose python=3.6 hdf4 hdf5 numpy scipy matplotlib nose python-dateutil statsmodels gdal
   - conda install --yes -c omnia python-coveralls=2.9.0
   - gdal-config --version
   - pip install --upgrade pip
