@@ -13,8 +13,8 @@ services:
   - xvfb
   - postgresql
 before_install: 
-  - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux32.tar.gz
-  - tar -xzf geckodriver-v0.26.0-linux32.tar.gz --directory /home/travis/bin
+  - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
+  - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/bin
   - sudo add-apt-repository -y ppa:ubuntugis/ppa 
   - sudo apt-get -y update
   - sudo apt-get -y install libgdal-dev
