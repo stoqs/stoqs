@@ -13,7 +13,7 @@ cookiecutter==1.7.0
 docutils==0.16
 Cython==0.29.14
 ephem==3.7.7.0
-GDAL==3.0.2
+GDAL==3.0.3
 Genshi==0.7.3
 geopandas==0.6.2
 h5py==2.10.0
