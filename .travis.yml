@@ -8,10 +8,9 @@ addons:
     packages:
       - postgresql-10
       - postgresql-10-postgis-2.5
-      ##- libhdf5-serial-dev
 services:
   - xvfb
-  - postgresql
+  ##- postgresql
 before_install: 
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
   - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/bin
