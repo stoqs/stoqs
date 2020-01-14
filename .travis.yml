@@ -14,27 +14,20 @@ services:
   - xvfb
   - postgresql
 before_install: 
-  - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=$PATH:/home/travis/miniconda3/bin:/home/travis/miniconda3
-  - export HDF5_DIR=/home/travis/miniconda3/
+  ##- wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  ##- chmod +x miniconda.sh
+  ##- ./miniconda.sh -b
+  ##- export PATH=$PATH:/home/travis/miniconda3/bin:/home/travis/miniconda3
+  ##- export HDF5_DIR=/home/travis/miniconda3/
   - export TERM=xterm
-  ##- pip --version
-  ##- pip uninstall -y setuptools
-  ##- pip --version
-  ##- conda install --yes setuptools
-  ##- conda update --yes conda
-  - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
-  - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/miniconda3/
+  ##- wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
+  ##- tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/miniconda3/
 env:
   - DJANGO=2.2
 install:
-  ##- conda install --yes --verbose python=3.8 hdf4 hdf5 numpy scipy nose python-dateutil statsmodels gdal
-  ##- conda install --yes -c omnia python-coveralls=2.9.0
   - gdal-config --version
   - pip install --upgrade pip
-  - export PYTHONPATH=$PYTHONPATH:/home/travis/miniconda3/lib/python3.8/site-packages
+  ##- export PYTHONPATH=$PYTHONPATH:/home/travis/miniconda3/lib/python3.8/site-packages
   - pip install -r requirements/travis-ci.txt
 before_script:
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
