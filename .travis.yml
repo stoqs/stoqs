@@ -2,12 +2,12 @@ language: python
 python:
   - "3.8"
 addons:
-  postgresql: "10"
+  postgresql: "11"
   firefox: "72.0"
   apt:
     packages:
-      - postgresql-10
-      - postgresql-10-postgis-2.5
+      - postgresql-11
+      - postgresql-11-postgis-2.5
       - libhdf5-serial-dev
       - libgdal-dev
 services:
@@ -16,7 +16,9 @@ services:
 before_install: 
   - export TERM=xterm
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux32.tar.gz
-  - tar -xzf geckodriver-v0.26.0-linux32.tar.gz --directory /usr/local/bin
+  - mkdir bin
+  - tar -xzf geckodriver-v0.26.0-linux32.tar.gz --directory bin
+  - export PATH=$PATH:$PWD/bin
 env:
   - DJANGO=2.2
 install:
