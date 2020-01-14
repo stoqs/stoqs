@@ -14,25 +14,18 @@ services:
   - xvfb
   - postgresql
 before_install: 
-  ##- wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-  ##- chmod +x miniconda.sh
-  ##- ./miniconda.sh -b
-  ##- export PATH=$PATH:/home/travis/miniconda3/bin:/home/travis/miniconda3
-  ##- export HDF5_DIR=/home/travis/miniconda3/
   - export TERM=xterm
-  ##- wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
-  ##- tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/miniconda3/
+  - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
+  - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /usr/bin
 env:
   - DJANGO=2.2
 install:
   - gdal-config --version
   - pip install --upgrade pip
-  ##- export PYTHONPATH=$PYTHONPATH:/home/travis/miniconda3/lib/python3.8/site-packages
   - pip install -r requirements/travis-ci.txt
 before_script:
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
-  - echo $PYTHONPATH
 script:  
   - ./test.sh CHANGEME load noextraload
 after_script:
