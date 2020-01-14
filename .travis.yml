@@ -16,7 +16,9 @@ services:
 before_install: 
   - export TERM=xterm
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux32.tar.gz
-  - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /usr/local/bin
+  - mkdir bin
+  - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory bin
+  - export PATH=$PATH:$PWD/bin
 env:
   - DJANGO=2.2
 install:
