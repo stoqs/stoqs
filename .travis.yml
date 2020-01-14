@@ -28,6 +28,7 @@ install:
 before_script:
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
+  - gdal-config --version
 script:  
   - ./test.sh CHANGEME load noextraload
 after_script:
