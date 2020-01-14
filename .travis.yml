@@ -14,7 +14,7 @@ services:
   - xvfb
   - postgresql
 before_install: 
-  - export TERM=xterm
+  ##- export TERM=xterm
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux32.tar.gz
   - mkdir bin
   - tar -xzf geckodriver-v0.26.0-linux32.tar.gz --directory bin
