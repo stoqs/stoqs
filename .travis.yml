@@ -8,6 +8,8 @@ addons:
     packages:
       - postgresql-10
       - postgresql-10-postgis-2.5
+      - libhdf5-serial-dev
+      - libgdal-dev
 services:
   - xvfb
   - postgresql
