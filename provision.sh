@@ -60,7 +60,7 @@ then
     echo Install Python 3.6
     yum install -y zlib-devel openssl-devel sqlite-devel bzip2-devel xz-libs readline-devel
     yum -y install https://centos7.iuscommunity.org/ius-release.rpm
-    yum install -y python36u python36u-pip python36u-devel
+    yum install -y python36u python36u-pip python3-devel
 
     echo Install package prerequisites for NetCDF4
     yum -y install curl-devel hdf5 hdf5-devel
@@ -91,13 +91,25 @@ cd netcdf-fortran-4.4.4
 make -j 2 && sudo make install
 cd ..
 
-echo Build and install gdal
-wget -q -N http://download.osgeo.org/gdal/2.4.0/gdal-2.4.0.tar.gz
-tar -xzf gdal-2.4.0.tar.gz
-cd gdal-2.4.0
-export PATH=$(pwd):$PATH
+echo Build and install proj 6
+wget -q -N https://download.osgeo.org/proj/proj-datumgrid-1.8.zip
+wget -q -N wget https://download.osgeo.org/proj/proj-6.2.1.tar.gz
+tar -xzf proj-6.2.1.tar.gz
+cd proj-6.2.1
+unzip -o -q ../proj-datumgrid-1.8.zip -d data
+export PROJ_LIB=$(pwd)/data
 ./configure --prefix=/usr/local
+make -j 2 && make install
+cd ..
+
+echo Build and install gdal
+wget -q -N http://download.osgeo.org/gdal/2.4.3/gdal-2.4.3.tar.gz
+tar -xzf gdal-2.4.3.tar.gz
+cd gdal-2.4.3
+export PATH=$(pwd):$PATH
+./configure --prefix=/usr/local --with-python
 gmake -j 2 && gmake install
+export LD_PRELOAD=/usr/local/lib/libgdal.so
 cd ..
 
 # TODO: Add stanza for other OSes, e.g. 'ubuntu'
@@ -112,11 +124,11 @@ then
     popd
 
     yum -y install deltarpm rabbitmq-server scipy mod_wsgi memcached python-memcached
-    yum -y install graphviz-devel graphviz-python ImageMagick postgis24_10 SFCGAL-devel
-    yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
-    yum -y install proj-nad proj-epsg libxml2-devel libxslt-devel pam-devel
+    yum -y install graphviz-devel graphviz-python ImageMagick postgis30_10 SFCGAL-devel
+    yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel
+    yum -y install libxml2-devel libxslt-devel pam-devel
     yum -y install python-psycopg2 libpqxx-devel hdf hdf-devel freetds-devel postgresql-devel
-    yum -y install gdal-python mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
+    yum -y install mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip gcc mlocate
     yum -y install scipy blas blas-devel lapack lapack-devel lvm2 firefox cachefilesd
     yum -y groups install "GNOME Desktop"
     yum -y install fftw-devel motif-devel ghc-OpenGL-devel
@@ -256,13 +268,13 @@ su - postgres -c "/usr/pgsql-10/bin/pg_ctl -D /var/lib/pgsql/10/data -l logfile 
 echo Create postgis database and restart postgresql-10
 su - postgres -c "createdb postgis"
 su - postgres -c "createlang plpgsql postgis"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/postgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/spatial_ref_sys.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/postgis_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/rtpostgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/raster_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/topology.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-2.4/topology_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/postgis.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/spatial_ref_sys.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/postgis_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/rtpostgis.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/raster_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/topology.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/topology_comments.sql"
 su - postgres -c "psql -c \"CREATE DATABASE template_postgis WITH TEMPLATE postgis;\""
 su - postgres -c "psql -c \"CREATE USER vagrant LOGIN PASSWORD 'vagrant';\""
 su - postgres -c "psql -c \"ALTER ROLE vagrant SUPERUSER;\""
@@ -305,9 +317,10 @@ git config core.preloadindex true
 export PATH="/usr/local/bin:$PATH"
 python3.6 -m venv venv-stoqs
 
-echo Installing Python modules for a development system
+echo Creating venv-stoqs...
 source venv-stoqs/bin/activate
 pip install --upgrade pip
+echo Executing setup.sh to install Python modules for a development system...
 ./setup.sh
 
 echo Giving user $USER ownership of everything in /home/$USER
