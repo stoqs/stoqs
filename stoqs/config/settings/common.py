@@ -174,8 +174,10 @@ USE_TZ = False
 
 # See: https://docs.djangoproject.com/en/3.0/ref/contrib/gis/install/geolibs/#geos-library-path
 #      https://docs.djangoproject.com/en/3.0/ref/contrib/gis/install/geolibs/#gdal-library-path
-GEOS_LIBRARY_PATH = '/usr/local/lib/libgeos_c.so'
-GDAL_LIBRARY_PATH = '/usr/local/lib/libgdal.so'
+GEOS_LIBRARY_PATH = '/usr/geos38/lib64/libgeos_c.so'
+GDAL_LIBRARY_PATH = '/usr/gdal30/lib/libgdal.so.26'
+PROJ_LIB = '/usr/proj62/share/proj'
+GDAL_DATA = '/usr/gdal30/share/'
 
 # TEMPLATE CONFIGURATION
 # ------------------------------------------------------------------------------
