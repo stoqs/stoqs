@@ -7,19 +7,21 @@ then echo "Please run as root"
     exit 1
 fi
 
-if [ $1 ]
-then
-    OS=$1
-else
-    OS='centos7'
-fi      
 
-if [ $2 ] 
-then
-    USER=$2
-else
-    USER='vagrant'
-fi
+
+# For a minimal STOQS development system set to "false"
+INSTALL_MB-SYSTEM="false"
+INSTALL_DESKTOP_GRAPHICS="false"
+INSTALL_DOCKER="false"
+INSTALL_BASEMAP="false"
+
+# Sometimes we'd like to test newer versions of software built from source
+# Set these to "true" to build rather than use the repository version:
+BUILD_GEO="false"
+BUILD_NETCDF="false"
+BUILD_GMT="false"
+
+USER='vagrant'
 if id -u "$USER" >/dev/null 2>&1; 
 then
     echo "user $USER exists"
@@ -29,149 +31,181 @@ else
 fi
 
 cd /home/$USER
-mkdir Downloads && cd Downloads
+mkdir Downloads && pushd Downloads
 
 # Initial package installs needed for building packages from source
-# TODO: Add stanza for other OSes, e.g. 'ubuntu'
-if [ $OS = 'centos7' ]
+echo Disable SELinux
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
+mkdir /selinux
+echo 0 > /selinux/enforce
+
+echo Add epel, remi, and postgres repositories
+yum makecache fast
+yum -y install wget git
+yum -y install epel-release
+yum -y update epel-release
+yum repolist
+wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
+rpm -Uvh remi-release-7*.rpm
+
+echo Install Python 3.8
+yum groupinstall -y "Development Tools"
+yum -y install zlib-devel openssl-devel sqlite-devel bzip2-devel xz-libs xz-devel readline-devel libffi-devel
+wget -q -N https://www.python.org/ftp/python/3.8.1/Python-3.8.1.tgz
+tar xzf Python-3.8.1.tgz
+cd Python-3.8.1
+sudo ./configure --enable-optimizations
+sudo make altinstall
+cd ..
+
+if [ $BUILD_GEO = "true" ];
 then
-    echo Disable SELinux
-    sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
-    mkdir /selinux
-    echo 0 > /selinux/enforce
-
-    echo Add epel, remi, and postgres repositories
-    yum makecache fast
-    yum -y install wget git
-    yum -y install epel-release
-    yum -y update epel-release
-    yum repolist
-    wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
-    rpm -Uvh remi-release-7*.rpm
-    wget -q -N https://yum.postgresql.org/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm
-    if [ $? -ne 0 ] ; then
-        echo "*** Provisioning for STOQS failed. RPM for specified PostgreSQL not found. ***"
-        echo "Check https://yum.postgresql.org/10/redhat/rhel-7-x86_64/ and update provision.sh."
-        exit 1
-    fi
-    rpm -ivh pgdg*
-    yum groupinstall -y "Development Tools"
-
-    echo Install Python 3.6
-    yum install -y zlib-devel openssl-devel sqlite-devel bzip2-devel xz-libs readline-devel
-    yum -y install https://centos7.iuscommunity.org/ius-release.rpm
-    yum install -y python36u python36u-pip python3-devel
-
-    echo Install package prerequisites for NetCDF4
-    yum -y install curl-devel hdf5 hdf5-devel
+    echo Build and install geos
+    echo '/usr/local/lib' >> /etc/ld.so.conf
+    wget -q -N http://download.osgeo.org/geos/geos-3.6.0.tar.bz2
+    tar -xjf geos-3.6.0.tar.bz2
+    cd geos-3.6.0
+    ./configure
+    make -j 2 && make install
+    ldconfig
+    cd ..
+else
+    ##yum install geos38-devel
+    echo Let postgis25_11 install geos
 fi
 
-echo Build and install geos
-echo '/usr/local/lib' >> /etc/ld.so.conf
-wget -q -N http://download.osgeo.org/geos/geos-3.6.0.tar.bz2
-tar -xjf geos-3.6.0.tar.bz2
-cd geos-3.6.0
-./configure
-make -j 2 && make install
-ldconfig
-cd ..
-
-echo Build and install NetCDF4
-wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.4.1.tar.gz
-tar -xzf netcdf-4.4.1.tar.gz
-cd netcdf-4.4.1
-./configure
-make -j 2 && sudo make install
-cd ..
-export LD_LIBRARY_PATH=/usr/local/lib
-wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-fortran-4.4.4.tar.gz
-tar -xzf netcdf-fortran-4.4.4.tar.gz
-cd netcdf-fortran-4.4.4
-./configure
-make -j 2 && sudo make install
-cd ..
-
-echo Build and install proj 6
-wget -q -N https://download.osgeo.org/proj/proj-datumgrid-1.8.zip
-wget -q -N wget https://download.osgeo.org/proj/proj-6.2.1.tar.gz
-tar -xzf proj-6.2.1.tar.gz
-cd proj-6.2.1
-unzip -o -q ../proj-datumgrid-1.8.zip -d data
-export PROJ_LIB=$(pwd)/data
-./configure --prefix=/usr/local
-make -j 2 && make install
-cd ..
-
-echo Build and install gdal
-wget -q -N http://download.osgeo.org/gdal/2.4.3/gdal-2.4.3.tar.gz
-tar -xzf gdal-2.4.3.tar.gz
-cd gdal-2.4.3
-export PATH=$(pwd):$PATH
-./configure --prefix=/usr/local --with-python
-gmake -j 2 && gmake install
-export LD_PRELOAD=/usr/local/lib/libgdal.so
-cd ..
-
-# TODO: Add stanza for other OSes, e.g. 'ubuntu'
-if [ $OS = 'centos7' ]
+if [ $BUILD_NETCDF = "true" ];
 then
-    yum -y groupinstall "PostgreSQL Database Server 10 PGDG"
+    echo Install package prerequisites for NetCDF4
+    yum -y install curl-devel hdf5 hdf5-devel
+    echo Build and install NetCDF4
+    wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-c-4.7.3.tar.gz
+    tar -xzf netcdf-c-4.7.3.tar.gz
+    cd netcdf-c-4.7.3
+    ./configure
+    make -j 2 && sudo make install
+    cd ..
+    export LD_LIBRARY_PATH=/usr/local/lib
+    wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-fortran-4.5.2.tar.gz
+    tar -xzf netcdf-fortran-4.5.2.tar.gz
+    cd netcdf-fortran-4.5.2
+    ./configure
+    make -j 2 && sudo make install
+    cd ..
+else
+    ##yum install netcdf
+    echo Let postgis25_11 install netcdf
+fi
 
-    echo Put geckodriver in /usr/local/bin
-    pushd /usr/local/bin
-    wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
-    tar -xzf geckodriver-v0.24.0-linux32.tar.gz
-    popd
+if [ $BUILD_GEO = "true" ];
+then
+    echo Build and install proj 6
+    wget -q -N https://download.osgeo.org/proj/proj-datumgrid-1.8.zip
+    wget -q -N wget https://download.osgeo.org/proj/proj-6.2.1.tar.gz
+    tar -xzf proj-6.2.1.tar.gz
+    cd proj-6.2.1
+    unzip -o -q ../proj-datumgrid-1.8.zip -d data
+    export PROJ_LIB=$(pwd)/data
+    ./configure --prefix=/usr/local
+    make -j 2 && make install
+    cd ..
+else
+    ##yum install proj62-devel
+    export PROJ_LIB=/usr/proj62/share/proj
+    echo Let postgis25_11 install proj with PROJ_LIB = $PROJ_LIB
+fi
 
-    yum -y install deltarpm rabbitmq-server scipy mod_wsgi memcached python-memcached
-    yum -y install graphviz-devel graphviz-python ImageMagick postgis30_10 SFCGAL-devel
-    yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel
-    yum -y install libxml2-devel libxslt-devel pam-devel
-    yum -y install python-psycopg2 libpqxx-devel hdf hdf-devel freetds-devel postgresql-devel
-    yum -y install mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip gcc mlocate
-    yum -y install scipy blas blas-devel lapack lapack-devel lvm2 firefox cachefilesd
+if [ $BUILD_GEO = "true" ];
+then
+    echo Build and install gdal
+    wget -q -N http://download.osgeo.org/gdal/2.4.3/gdal-2.4.3.tar.gz
+    tar -xzf gdal-2.4.3.tar.gz
+    cd gdal-2.4.3
+    export PATH=$(pwd):$PATH
+    ./configure --prefix=/usr/local
+    gmake -j 2 && gmake install
+    cd ..
+else
+    ##yum install gdal23-devel
+    export GDAL_DATA=/usr/gdal30/share/
+    echo Let postgis25_11 install gdal with GDAL_DATA = $GDAL_DATA
+fi
+
+echo Install PostgreSQL
+yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-centos11-11-2.noarch.rpm
+yum -y groupinstall "PostgreSQL Database Server 11 PGDG"
+##yum -y install postgresql11-server postgresql11
+
+echo Put geckodriver in /usr/local/bin
+pushd /usr/local/bin
+wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
+tar -xzf geckodriver-v0.24.0-linux32.tar.gz
+popd
+
+yum -y install deltarpm rabbitmq-server mod_wsgi memcached python-memcached
+yum -y install graphviz-devel graphviz-python ImageMagick postgis25_11 SFCGAL-devel
+yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel
+yum -y install libxml2-devel libxslt-devel pam-devel
+yum -y install python-psycopg2 libpqxx-devel hdf hdf-devel freetds-devel postgresql-devel
+echo Install libxml and more
+yum -y install libxml2 libxml2-python python-lxml python-pip gcc mlocate
+echo Install scipy and more
+yum -y install scipy blas blas-devel lapack lapack-devel lvm2 firefox cachefilesd
+yum -y install harfbuzz-devel fribidi-devel
+
+if [ $INSTALL_DOCKER = "true" ];
+then
+    yum -y install docker docker-compose nginx
+fi
+
+if [ $INSTALL_DESKTOP_GRAPHICS = "true" ];
+then
     yum -y groups install "GNOME Desktop"
     yum -y install fftw-devel motif-devel ghc-OpenGL-devel
-    yum -y install docker docker-compose nginx
-    yum -y install harfbuzz-devel fribidi-devel
     # For InstantReality's aopt command referenced in doc/instructions/SPATIAL_3d.md
     yum -y install freeglut luajit
     wget http://doc.instantreality.org/media/uploads/downloads/2.8.0/InstantReality-RedHat-7-x64-2.8.0.38619.rpm
     rpm -Uvh InstantReality-RedHat-7-x64-2.8.0.38619.rpm
 fi
 
-# Configure and make (using 2 cpus) additional packages
+if [ $BUILD_GMT = "true" ];
+then
+    # Configure and make (using 2 cpus) additional packages
+    echo Download and install CMake
+    wget -q -N http://www.cmake.org/files/v2.8/cmake-2.8.12.2.tar.gz
+    tar -xzf cmake-2.8.12.2.tar.gz
+    cd cmake-2.8.12.2
+    ./configure --prefix=/opt/cmake
+    gmake -j 2 && gmake install
+    cd ..
 
-echo Download and install CMake
-wget -q -N http://www.cmake.org/files/v2.8/cmake-2.8.12.2.tar.gz
-tar -xzf cmake-2.8.12.2.tar.gz
-cd cmake-2.8.12.2
-./configure --prefix=/opt/cmake
-gmake -j 2 && gmake install
-cd ..
+    echo Build and install GMT
+    wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-5.4.4-src.tar.gz
+    tar -xzf gmt-5.4.4-src.tar.gz
+    cd gmt-5.4.4
+    cp cmake/ConfigUserTemplate.cmake cmake/ConfigUser.cmake
+    mkdir build
+    cd build
+    /opt/cmake/bin/cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+    make -j 2 && make install
+    cd ../..
+else
+    yum install GMT GMT-devel
+fi
 
-echo Build and install GMT
-wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-5.4.4-src.tar.gz
-tar -xzf gmt-5.4.4-src.tar.gz
-cd gmt-5.4.4
-cp cmake/ConfigUserTemplate.cmake cmake/ConfigUser.cmake
-mkdir build
-cd build
-/opt/cmake/bin/cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
-make -j 2 && make install
-cd ../..
-
-echo Build and install OSU Tidal Prediction Software
-pushd /usr/local
-wget -q -N ftp://ftp.oce.orst.edu/dist/tides/OTPS2.tar.Z
-tar -xzf OTPS2.tar.Z
-cd /usr/local/OTPS2
-wget -q -N ftp://ftp.oce.orst.edu/dist/tides/TPXO8_compact/tpxo8_atlas_compact_v1.tar.Z
-tar -xzf tpxo8_atlas_compact_v1.tar.Z
-make extract_HC
-make predict_tide
-cp setup.inp setup.inp.bak
-cat <<EOT > setup.inp
+if [ $INSTALL_MB-SYSTEM = "true" ];
+then
+    echo Build and install OSU Tidal Prediction Software
+    pushd /usr/local
+    wget -q -N ftp://ftp.oce.orst.edu/dist/tides/OTPS2.tar.Z
+    tar -xzf OTPS2.tar.Z
+    cd /usr/local/OTPS2
+    wget -q -N ftp://ftp.oce.orst.edu/dist/tides/TPXO8_compact/tpxo8_atlas_compact_v1.tar.Z
+    tar -xzf tpxo8_atlas_compact_v1.tar.Z
+    make extract_HC
+    make predict_tide
+    cp setup.inp setup.inp.bak
+    cat <<EOT > setup.inp
 DATA/Model_atlas_v1        ! 1. tidal model control file
 lat_lon_time               ! 2. latitude/longitude/<time> file
 z                          ! 3. z/U/V/u/v
@@ -181,22 +215,23 @@ oce                        ! 6. oce/geo
 1                          ! 7. 1/0 correct for minor constituents
 sample.out                 ! 8. output file (ASCII)
 EOT
-cp DATA/Model_atlas_v1 DATA/Model_atlas_v1.bak
-cat <<EOT > DATA/Model_atlas_v1
+    cp DATA/Model_atlas_v1 DATA/Model_atlas_v1.bak
+    cat <<EOT > DATA/Model_atlas_v1
 /usr/local/OTPS2/DATA/hf.tpxo8_atlas_30_v1
 /usr/local/OTPS2/DATA/uv.tpxo8_atlas_30_v1
 /usr/local/OTPS2/DATA/grid_tpxo8atlas_30_v1
 EOT
-popd
+    popd
 
-echo Build and install MB-System, set overcommit_memory to wizardry mode
-wget -q -N ftp://ftp.ldeo.columbia.edu/pub/MB-System/mbsystem-5.5.2284.tar.gz
-tar -xzf mbsystem-5.5.2284.tar.gz
-cd mbsystem-5.5.2284/
-./configure --with-otps-dir=/usr/local/OTPS2
-make -j 2 && make install
-echo 1 > /proc/sys/vm/overcommit_memory
-cd ..
+    echo Build and install MB-System, set overcommit_memory to wizardry mode
+    wget -q -N ftp://ftp.ldeo.columbia.edu/pub/MB-System/mbsystem-5.5.2284.tar.gz
+    tar -xzf mbsystem-5.5.2284.tar.gz
+    cd mbsystem-5.5.2284/
+    ./configure --with-otps-dir=/usr/local/OTPS2
+    make -j 2 && make install
+    echo 1 > /proc/sys/vm/overcommit_memory
+    cd ..
+fi
 
 echo Build and install Mapserver
 wget -q -N http://download.osgeo.org/mapserver/mapserver-7.0.7.tar.gz
@@ -225,9 +260,9 @@ echo Build database for locate command
 updatedb
 
 echo Configure and start services
-/usr/pgsql-10/bin/postgresql-10-setup initdb
-/usr/bin/systemctl enable postgresql-10
-/usr/bin/systemctl start postgresql-10
+/usr/pgsql-11/bin/postgresql-11-setup initdb
+/usr/bin/systemctl enable postgresql-11
+/usr/bin/systemctl start postgresql-11
 /usr/bin/systemctl enable rabbitmq-server
 /usr/bin/systemctl start rabbitmq-server
 rabbitmqctl add_user stoqs stoqs
@@ -243,12 +278,12 @@ rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
 /usr/bin/systemctl start docker
 
 echo Have postgresql listen on port 5438
-cp /var/lib/pgsql/10/data/postgresql.conf /var/lib/pgsql/10/data/postgresql.conf.bak
-sed -i 's/#port = 5432/port = 5438/' /var/lib/pgsql/10/data/postgresql.conf
+cp /var/lib/pgsql/11/data/postgresql.conf /var/lib/pgsql/11/data/postgresql.conf.bak
+sed -i 's/#port = 5432/port = 5438/' /var/lib/pgsql/11/data/postgresql.conf
 
 echo Modify pg_hba.conf
-mv -f /var/lib/pgsql/10/data/pg_hba.conf /var/lib/pgsql/10/data/pg_hba.conf.bak
-cat <<EOT > /var/lib/pgsql/10/data/pg_hba.conf
+mv -f /var/lib/pgsql/11/data/pg_hba.conf /var/lib/pgsql/11/data/pg_hba.conf.bak
+cat <<EOT > /var/lib/pgsql/11/data/pg_hba.conf
 # Allow user/password login
 host    all     stoqsadm     127.0.0.1/32   md5
 host    all     stoqsadm     10.0.2.0/24    md5
@@ -258,27 +293,16 @@ local   all     all                         trust
 local   all     all                     peer map=root_as_others
 host    all     all     127.0.0.1/32    ident map=root_as_others
 EOT
-cat /var/lib/pgsql/10/data/pg_hba.conf.bak >> /var/lib/pgsql/10/data/pg_hba.conf
-cp /var/lib/pgsql/10/data/pg_ident.conf /var/lib/pgsql/10/data/pg_ident.conf.bak
-echo "root_as_others  root            postgres" >> /var/lib/pgsql/10/data/pg_ident.conf
+cat /var/lib/pgsql/11/data/pg_hba.conf.bak >> /var/lib/pgsql/11/data/pg_hba.conf
+cp /var/lib/pgsql/11/data/pg_ident.conf /var/lib/pgsql/11/data/pg_ident.conf.bak
+echo "root_as_others  root            postgres" >> /var/lib/pgsql/11/data/pg_ident.conf
 
 su - postgres -c 'createuser -s $USER'
-su - postgres -c "/usr/pgsql-10/bin/pg_ctl -D /var/lib/pgsql/10/data -l logfile start"
-
-echo Create postgis database and restart postgresql-10
-su - postgres -c "createdb postgis"
-su - postgres -c "createlang plpgsql postgis"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/postgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/spatial_ref_sys.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/postgis_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/rtpostgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/raster_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/topology.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-10/share/contrib/postgis-3.0/topology_comments.sql"
+su - postgres -c "/usr/pgsql-11/bin/pg_ctl -D /var/lib/pgsql/11/data -l logfile start"
 su - postgres -c "psql -c \"CREATE DATABASE template_postgis WITH TEMPLATE postgis;\""
 su - postgres -c "psql -c \"CREATE USER vagrant LOGIN PASSWORD 'vagrant';\""
 su - postgres -c "psql -c \"ALTER ROLE vagrant SUPERUSER;\""
-/usr/bin/systemctl restart postgresql-10
+/usr/bin/systemctl restart postgresql-11
 cd ..
 
 echo Modifying local firewall to allow incoming connections on ports 80 and 8000
@@ -311,17 +335,31 @@ echo Cloning STOQS repo from https://github.com/stoqs/stoqs.git into $STOQS_HOME
 echo ">>> See CONTRIBUTING.md for how to configure your development system so that you can contribute to STOQS"
 
 mkdir -p $STOQS_HOME
-git clone --depth=50 https://github.com/stoqs/stoqs.git $STOQS_HOME
+##git clone --depth=50 https://github.com/stoqs/stoqs.git $STOQS_HOME
 cd $STOQS_HOME
 git config core.preloadindex true
 export PATH="/usr/local/bin:$PATH"
-python3.6 -m venv venv-stoqs
+python3.8 -m venv venv-stoqs
 
 echo Creating venv-stoqs...
 source venv-stoqs/bin/activate
 pip install --upgrade pip
-echo Executing setup.sh to install Python modules for a development system...
-./setup.sh
+# scikit-bio and pymsssql setups are broken, install numpy and Cython here first
+pip install numpy Cython
+echo Executing pip install -r docker/requirements/development.txt...
+pip install -r docker/requirements/development.txt
+
+if [ $INSTALL_BASEMAP = "true" ];
+then
+    # Required for plotting basemap in LRAUV plots
+    echo Build and install Basemap...
+    wget 'http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz'
+    tar -xzf basemap-1.0.7.tar.gz
+    cd basemap-1.0.7
+    export GEOS_DIR=/usr/local
+    python setup.py install
+    cd ..
+fi
 
 echo Giving user $USER ownership of everything in /home/$USER
 chown -R $USER /home/$USER
