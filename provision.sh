@@ -7,7 +7,8 @@ then echo "Please run as root"
     exit 1
 fi
 
-
+# For easier setting of Postgresql version: 10, 11, ...
+PG_VER=11
 
 # For a minimal STOQS development system set to "false"
 INSTALL_MB-SYSTEM="false"
@@ -18,6 +19,7 @@ INSTALL_BASEMAP="false"
 # Sometimes we'd like to test newer versions of software built from source
 # Set these to "true" to build rather than use the repository version:
 BUILD_GEO="false"
+BUILD_GDAL="false"
 BUILD_NETCDF="false"
 BUILD_GMT="false"
 
@@ -71,7 +73,7 @@ then
     cd ..
 else
     ##yum install geos38-devel
-    echo Let postgis25_11 install geos
+    echo Let postgis30_${PG_VER} install geos
 fi
 
 if [ $BUILD_NETCDF = "true" ];
@@ -94,8 +96,12 @@ then
     cd ..
 else
     ##yum install netcdf
-    echo Let postgis25_11 install netcdf
+    echo Let postgis30_${PG_VER} install netcdf
 fi
+
+echo Install PostgreSQL
+yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-centos11-11-2.noarch.rpm
+yum -y groupinstall "PostgreSQL Database Server ${PG_VER} PGDG"
 
 if [ $BUILD_GEO = "true" ];
 then
@@ -112,10 +118,10 @@ then
 else
     ##yum install proj62-devel
     export PROJ_LIB=/usr/proj62/share/proj
-    echo Let postgis25_11 install proj with PROJ_LIB = $PROJ_LIB
+    echo Let postgis30_${PG_VER} install proj with PROJ_LIB = $PROJ_LIB
 fi
 
-if [ $BUILD_GEO = "true" ];
+if [ $BUILD_GDAL = "true" ];
 then
     echo Build and install gdal
     wget -q -N http://download.osgeo.org/gdal/2.4.3/gdal-2.4.3.tar.gz
@@ -128,13 +134,8 @@ then
 else
     ##yum install gdal23-devel
     export GDAL_DATA=/usr/gdal30/share/
-    echo Let postgis25_11 install gdal with GDAL_DATA = $GDAL_DATA
+    echo Let postgis30_${PG_VER} install gdal with GDAL_DATA = $GDAL_DATA
 fi
-
-echo Install PostgreSQL
-yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-centos11-11-2.noarch.rpm
-yum -y groupinstall "PostgreSQL Database Server 11 PGDG"
-##yum -y install postgresql11-server postgresql11
 
 echo Put geckodriver in /usr/local/bin
 pushd /usr/local/bin
@@ -143,10 +144,10 @@ tar -xzf geckodriver-v0.24.0-linux32.tar.gz
 popd
 
 yum -y install deltarpm rabbitmq-server mod_wsgi memcached python-memcached
-yum -y install graphviz-devel graphviz-python ImageMagick postgis25_11 SFCGAL-devel
+yum -y install graphviz-devel graphviz-python ImageMagick postgis30_${PG_VER} SFCGAL-devel
 yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel
 yum -y install libxml2-devel libxslt-devel pam-devel
-yum -y install python-psycopg2 libpqxx-devel hdf hdf-devel freetds-devel postgresql-devel
+yum -y install python-psycopg2 libpqxx-devel hdf hdf-devel freetds-devel
 echo Install libxml and more
 yum -y install libxml2 libxml2-python python-lxml python-pip gcc mlocate
 echo Install scipy and more
@@ -239,7 +240,7 @@ tar xzf mapserver-7.0.7.tar.gz
 cd mapserver-7.0.7
 mkdir build
 cd build
-/opt/cmake/bin/cmake .. -DWITH_FRIBIDI=1 -DWITH_CAIRO=0 -DWITH_FCGI=0 -DCMAKE_PREFIX_PATH="/usr/local;/usr/pgsql-10"
+/opt/cmake/bin/cmake .. -DWITH_FRIBIDI=1 -DWITH_CAIRO=0 -DWITH_FCGI=0 -DCMAKE_PREFIX_PATH="/usr/local;/usr/pgsql-${PG_VER}"
 make -j 2 && make install
 cp /usr/local/bin/mapserv /var/www/cgi-bin
 ldconfig
@@ -260,9 +261,9 @@ echo Build database for locate command
 updatedb
 
 echo Configure and start services
-/usr/pgsql-11/bin/postgresql-11-setup initdb
-/usr/bin/systemctl enable postgresql-11
-/usr/bin/systemctl start postgresql-11
+/usr/pgsql-${PG_VER}/bin/postgresql-${PG_VER}-setup initdb
+/usr/bin/systemctl enable postgresql-${PG_VER}
+/usr/bin/systemctl start postgresql-${PG_VER}
 /usr/bin/systemctl enable rabbitmq-server
 /usr/bin/systemctl start rabbitmq-server
 rabbitmqctl add_user stoqs stoqs
@@ -278,12 +279,12 @@ rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
 /usr/bin/systemctl start docker
 
 echo Have postgresql listen on port 5438
-cp /var/lib/pgsql/11/data/postgresql.conf /var/lib/pgsql/11/data/postgresql.conf.bak
-sed -i 's/#port = 5432/port = 5438/' /var/lib/pgsql/11/data/postgresql.conf
+cp /var/lib/pgsql/${PG_VER}/data/postgresql.conf /var/lib/pgsql/${PG_VER}/data/postgresql.conf.bak
+sed -i 's/#port = 5432/port = 5438/' /var/lib/pgsql/${PG_VER}/data/postgresql.conf
 
 echo Modify pg_hba.conf
-mv -f /var/lib/pgsql/11/data/pg_hba.conf /var/lib/pgsql/11/data/pg_hba.conf.bak
-cat <<EOT > /var/lib/pgsql/11/data/pg_hba.conf
+mv -f /var/lib/pgsql/${PG_VER}/data/pg_hba.conf /var/lib/pgsql/${PG_VER}/data/pg_hba.conf.bak
+cat <<EOT > /var/lib/pgsql/${PG_VER}/data/pg_hba.conf
 # Allow user/password login
 host    all     stoqsadm     127.0.0.1/32   md5
 host    all     stoqsadm     10.0.2.0/24    md5
@@ -293,16 +294,16 @@ local   all     all                         trust
 local   all     all                     peer map=root_as_others
 host    all     all     127.0.0.1/32    ident map=root_as_others
 EOT
-cat /var/lib/pgsql/11/data/pg_hba.conf.bak >> /var/lib/pgsql/11/data/pg_hba.conf
-cp /var/lib/pgsql/11/data/pg_ident.conf /var/lib/pgsql/11/data/pg_ident.conf.bak
-echo "root_as_others  root            postgres" >> /var/lib/pgsql/11/data/pg_ident.conf
+cat /var/lib/pgsql/${PG_VER}/data/pg_hba.conf.bak >> /var/lib/pgsql/${PG_VER}/data/pg_hba.conf
+cp /var/lib/pgsql/${PG_VER}/data/pg_ident.conf /var/lib/pgsql/${PG_VER}/data/pg_ident.conf.bak
+echo "root_as_others  root            postgres" >> /var/lib/pgsql/${PG_VER}/data/pg_ident.conf
 
 su - postgres -c 'createuser -s $USER'
-su - postgres -c "/usr/pgsql-11/bin/pg_ctl -D /var/lib/pgsql/11/data -l logfile start"
+su - postgres -c "/usr/pgsql-${PG_VER}/bin/pg_ctl -D /var/lib/pgsql/${PG_VER}/data -l logfile start"
 su - postgres -c "psql -c \"CREATE DATABASE template_postgis WITH TEMPLATE postgis;\""
 su - postgres -c "psql -c \"CREATE USER vagrant LOGIN PASSWORD 'vagrant';\""
 su - postgres -c "psql -c \"ALTER ROLE vagrant SUPERUSER;\""
-/usr/bin/systemctl restart postgresql-11
+/usr/bin/systemctl restart postgresql-${PG_VER}
 cd ..
 
 echo Modifying local firewall to allow incoming connections on ports 80 and 8000
