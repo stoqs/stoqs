@@ -18,8 +18,8 @@ INSTALL_BASEMAP="false"
 
 # Sometimes we'd like to test newer versions of software built from source
 # Set these to "true" to build rather than use the repository version:
-BUILD_GEO="false"
-BUILD_GDAL="false"
+BUILD_GEO="true"
+BUILD_GDAL="true"
 BUILD_NETCDF="false"
 BUILD_GMT="false"
 
