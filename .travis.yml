@@ -10,7 +10,6 @@ addons:
       - postgresql-10-postgis-2.5
 services:
   - xvfb
-  ##- postgresql
 before_install: 
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
   - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/bin
@@ -27,9 +26,6 @@ before_script:
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
 script:  
-  - gdal-config --prefix
-  - gdal-config --libs
-  - find /usr -name libgdal.so 2> /dev/null
   - export GEOS_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/libgeos_c.so
   - export GDAL_LIBRARY_PATH=/usr/lib/libgdal.so
   - ./test.sh CHANGEME load noextraload
