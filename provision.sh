@@ -1,7 +1,7 @@
 #!/bin/bash
 # Idempotent shell script to install system level prerequisites for STOQS.
 # Designed to be run from Vagrantfile, where default USER is vagrant.
-# Usage: provision.sh centos7 vagrant (default)
+# INSTALL_* variables may be set to "true" for optional software
 if [ "$EUID" -ne 0 ]
 then echo "Please run as root"
     exit 1
@@ -169,17 +169,17 @@ then
     rpm -Uvh InstantReality-RedHat-7-x64-2.8.0.38619.rpm
 fi
 
+# Configure and make (using 2 cpus) additional packages
+echo Download and install CMake
+wget -q -N http://www.cmake.org/files/v2.8/cmake-2.8.12.2.tar.gz
+tar -xzf cmake-2.8.12.2.tar.gz
+cd cmake-2.8.12.2
+./configure --prefix=/opt/cmake
+gmake -j 2 && gmake install
+cd ..
+
 if [ $BUILD_GMT = "true" ];
 then
-    # Configure and make (using 2 cpus) additional packages
-    echo Download and install CMake
-    wget -q -N http://www.cmake.org/files/v2.8/cmake-2.8.12.2.tar.gz
-    tar -xzf cmake-2.8.12.2.tar.gz
-    cd cmake-2.8.12.2
-    ./configure --prefix=/opt/cmake
-    gmake -j 2 && gmake install
-    cd ..
-
     echo Build and install GMT
     wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-5.4.4-src.tar.gz
     tar -xzf gmt-5.4.4-src.tar.gz
