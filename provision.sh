@@ -11,17 +11,17 @@ fi
 PG_VER=11
 
 # For a minimal STOQS development system set to "false"
-INSTALL_MB-SYSTEM="false"
-INSTALL_DESKTOP_GRAPHICS="false"
-INSTALL_DOCKER="false"
-INSTALL_BASEMAP="false"
+INSTALL_MB-SYSTEM="true"
+INSTALL_DESKTOP_GRAPHICS="true"
+INSTALL_DOCKER="true"
+INSTALL_BASEMAP="true"
 
 # Sometimes we'd like to test newer versions of software built from source
 # Set these to "true" to build rather than use the repository version:
 BUILD_GEO="true"
 BUILD_GDAL="true"
+BUILD_GMT="true"
 BUILD_NETCDF="false"
-BUILD_GMT="false"
 
 USER='vagrant'
 if id -u "$USER" >/dev/null 2>&1; 
