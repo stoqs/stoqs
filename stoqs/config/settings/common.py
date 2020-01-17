@@ -381,6 +381,11 @@ LOGGING['loggers']['utils'] = {
                             'level':'INFO',
                             'formatter': 'verbose'
 }
+LOGGING['loggers']['stoqs.views'] = {
+                            'handlers':['console'],
+                            'level':'INFO',
+                            'formatter': 'verbose'
+}
 LOGGING['loggers']['stoqs.tests'] = {
                             'handlers':['console'],
                             'level':'INFO',
