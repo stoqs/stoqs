@@ -14,7 +14,6 @@ PG_VER=11
 INSTALL_MB-SYSTEM="true"
 INSTALL_DESKTOP_GRAPHICS="true"
 INSTALL_DOCKER="true"
-INSTALL_BASEMAP="true"
 
 # Sometimes we'd like to test newer versions of software built from source
 # Set these to "true" to build rather than use the repository version:
@@ -235,12 +234,17 @@ EOT
 fi
 
 echo Build and install Mapserver
-wget -q -N http://download.osgeo.org/mapserver/mapserver-7.0.7.tar.gz
-tar xzf mapserver-7.0.7.tar.gz
-cd mapserver-7.0.7
+wget -q -N http://download.osgeo.org/mapserver/mapserver-7.4.3.tar.gz
+tar xzf mapserver-7.4.3.tar.gz
+cd mapserver-7.4.3
 mkdir build
 cd build
-/opt/cmake/bin/cmake .. -DWITH_FRIBIDI=1 -DWITH_CAIRO=0 -DWITH_FCGI=0 -DCMAKE_PREFIX_PATH="/usr/local;/usr/pgsql-${PG_VER}"
+/opt/cmake/bin/cmake .. -DWITH_FRIBIDI=1 -DWITH_CAIRO=0 -DWITH_FCGI=0 -DWITH_PROTOBUFC=0 -DCMAKE_PREFIX_PATH="/usr/local;/usr/pgsql-${PG_VER}"
+if [ $? != 0 ];
+then
+    echo "cmake for mapserver failed, correct the problem and re-provision"
+    exit 1
+fi
 make -j 2 && make install
 cp /usr/local/bin/mapserv /var/www/cgi-bin
 ldconfig
@@ -349,18 +353,7 @@ pip install --upgrade pip
 pip install numpy Cython
 echo Executing pip install -r docker/requirements/development.txt...
 pip install -r docker/requirements/development.txt
-
-if [ $INSTALL_BASEMAP = "true" ];
-then
-    # Required for plotting basemap in LRAUV plots
-    echo Build and install Basemap...
-    wget 'http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz'
-    tar -xzf basemap-1.0.7.tar.gz
-    cd basemap-1.0.7
-    export GEOS_DIR=/usr/local
-    python setup.py install
-    cd ..
-fi
+pip install -U git+https://github.com/matplotlib/basemap.git
 
 echo Giving user $USER ownership of everything in /home/$USER
 chown -R $USER /home/$USER
@@ -374,9 +367,9 @@ systemctl restart network
 groupadd docker
 usermod -aG docker $USER
 
-echo Provisioning and setup have finished. 
+echo Provisioning has finished. 
 echo Default database loading and STOQS software tests should be run with:
-echo "(These commands are also found in $STOQS_HOME/README.md)"
+echo "(Note: These commands are also found in $STOQS_HOME/README.md)"
 echo ---------------------------------------------------------------------
 echo vagrant ssh -- -X                        # Wait for [vagrant@localhost ~]$ prompt
 echo export STOQS_HOME=/vagrant/dev/stoqsgit  # Use STOQS_HOME=/home/vagrant/dev/stoqsgit if not using NFS mount
