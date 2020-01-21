@@ -30,7 +30,8 @@ To run the loader
 # Force lookup of models to THE specific stoqs module.
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE']='settings.local'
 project_dir = os.path.dirname(__file__)
 # Add parent dir to pythonpath so that we can see the loaders and stoqs modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../") )

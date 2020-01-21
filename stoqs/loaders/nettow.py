@@ -24,7 +24,8 @@ MBARI 3 February 2015
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, project_dir)
 

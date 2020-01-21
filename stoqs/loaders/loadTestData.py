@@ -82,7 +82,7 @@ elif cl.args.optimal_stride:
 
 else:
     if cl.args.stride:
-        cl.logger.warn("Overriding Dorado load stride parameter with a value of 1000 for this test load script")
+        cl.logger.warning("Overriding Dorado load stride parameter with a value of 1000 for this test load script")
     cl.loadDorado(stride=1000, plankton_proxies=False)
     cl.loadM1(stride=2)
     cl.loadSubSamples()

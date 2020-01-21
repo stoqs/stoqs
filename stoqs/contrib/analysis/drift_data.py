@@ -29,7 +29,8 @@ import os
 import sys
 project_dir = os.path.join(os.path.dirname(__file__), "../../")         # settings.py is two dirs up
 sys.path.insert(0, project_dir)
-os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 import django
 django.setup()
 

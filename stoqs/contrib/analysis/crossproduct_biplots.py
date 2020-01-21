@@ -8,7 +8,8 @@ MBARI 10 February 2014
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE']='settings'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # settings.py is one dir up
 
 import matplotlib

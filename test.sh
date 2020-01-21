@@ -37,6 +37,8 @@ cd stoqs
 psql -p $PGPORT -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres 2> /dev/null
 psql -p $PGPORT -c "CREATE USER everyone WITH PASSWORD 'guest';" -U postgres 2> /dev/null
 
+export DJANGO_SETTINGS_MODULE=config.settings.ci
+
 # If there is a third argument and it is 'extraload' execute this block, use 3rd arg of 'noextraload' to not execute
 if [ ${3:-extraload} == 'extraload' ]
 then
