@@ -17,7 +17,8 @@ fi
 echo
 echo "*** docker exec stoqs ps -ef | grep test.sh | grep -v grep ..."
 docker exec stoqs ps -ef | grep test.sh | grep -v grep
-while [[ $? == 1 ]] ; do
+##while [[ $? == 1 ]] ; do
+for i in {1..5} ; do
     sleep 30; echo "*** Waiting for test.sh to start ..."
     docker exec stoqs ps -ef | grep test.sh | grep -v grep
 done
