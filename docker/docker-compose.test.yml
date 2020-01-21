@@ -66,6 +66,8 @@ services:
       - MEDIA_ROOT=/srv/media-files
       - NGINX_SERVER_NAME=${NGINX_SERVER_NAME}
       - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - GEOS_LIBRARY_PATH=${GEOS_LIBRARY_PATH}
+      - GDAL_LIBRARY_PATH=${GDAL_LIBRARY_PATH}
     container_name: stoqs
     depends_on:
       - mapserver
