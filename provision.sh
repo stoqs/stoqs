@@ -340,7 +340,7 @@ echo Cloning STOQS repo from https://github.com/stoqs/stoqs.git into $STOQS_HOME
 echo ">>> See CONTRIBUTING.md for how to configure your development system so that you can contribute to STOQS"
 
 mkdir -p $STOQS_HOME
-##git clone --depth=50 https://github.com/stoqs/stoqs.git $STOQS_HOME
+git clone --depth=50 https://github.com/stoqs/stoqs.git $STOQS_HOME
 cd $STOQS_HOME
 git config core.preloadindex true
 export PATH="/usr/local/bin:$PATH"
