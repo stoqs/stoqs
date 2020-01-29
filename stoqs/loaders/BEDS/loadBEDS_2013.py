@@ -24,7 +24,8 @@ MBARI 13 May 2013
 import os
 import sys
 import datetime
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 

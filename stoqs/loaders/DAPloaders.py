@@ -32,7 +32,8 @@ import sys
 from argparse import Namespace
 from django.contrib.gis.geos import LineString, Point
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # config is one dir up
-os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 from django.conf import settings
 
 from django.db.models import Max
@@ -81,6 +82,9 @@ DEPTH = 'depth'
 LATITUDE = 'latitude'
 LONGITUDE = 'longitude'
 
+# Set batch_size such that we avoid swapping with bulk_create() on a 3 GB RAM system, a value = 10000 is good
+# Significant swap disk is used (12%) and loads of DEIMOS data take 20% longer with BATCH_SIZE=100000
+BATCH_SIZE=10000
 
 if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
@@ -1228,9 +1232,9 @@ class Base_Loader(STOQS_Loader):
                                                 meass, values, dup_times, mask) if not dt and not mk)
 
                 # All items but meass are generators, so we can call len() on it
-                self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
+                self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string} with batch_size = {BATCH_SIZE}')
                 mps = self._measuredparameter_with_measurement(meass, mps)
-                mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
+                mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps, batch_size=BATCH_SIZE)
                 self.parameter_counts[self.param_by_key[pname]] = len(mps)
                 total_loaded += len(mps)
 
@@ -1421,8 +1425,8 @@ class Base_Loader(STOQS_Loader):
 
                     ips = (InstantPoint(activity=self.activity, timevalue=mt) for mt in mtimes)
                     try:
-                        self.logger.info(f'Calling bulk_create() for InstantPoints in ips generator for firstp = {firstp}')
-                        ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips)
+                        self.logger.info(f'Calling bulk_create() for InstantPoints in ips generator for firstp = {firstp} with batch_size = {BATCH_SIZE}')
+                        ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips, batch_size=BATCH_SIZE)
                     except (IntegrityError, psycopg2.IntegrityError) as e:
                         self.logger.info(f"Time axis '{ac[TIME]}' likely has timevalues already loaded from an axis in {time_axes_loaded}")
                         self.logger.info(f'Getting matching InstantPoints from the database, creating new ones not yet there.')
@@ -1469,8 +1473,8 @@ class Base_Loader(STOQS_Loader):
                             meass.append(Measurement(depth=repr(de), geom=po, instantpoint=ip, nominallocation=nl))
 
                     try:
-                        self.logger.info(f'Calling bulk_create() for {len(meass)} Measurements')
-                        meass = Measurement.objects.using(self.dbAlias).bulk_create(meass)
+                        self.logger.info(f'Calling bulk_create() for {len(meass)} Measurements with batch_size = {BATCH_SIZE}')
+                        meass = Measurement.objects.using(self.dbAlias).bulk_create(meass, batch_size=BATCH_SIZE)
                     except (IntegrityError, psycopg2.IntegrityError) as e:
                         self.logger.info(f"Depth axis '{ac[DEPTH]}' likely has depths already loaded from an axis in {depth_axes_loaded}")
                         self.logger.info(f'Getting matching Measurements from the database, creating new ones not yet there.')
@@ -1518,9 +1522,9 @@ class Base_Loader(STOQS_Loader):
                                                 datavalue=va) for me, va in zip(meass, values))
 
                 # All items but mess are generators, so we can call len() on it
-                self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string}')
+                self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string} with batch_size = {BATCH_SIZE}')
                 self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
-                mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps)
+                mps = MeasuredParameter.objects.using(self.dbAlias).bulk_create(mps, batch_size=BATCH_SIZE)
                 total_loaded += len(mps)
 
         return total_loaded
@@ -1546,7 +1550,7 @@ class Base_Loader(STOQS_Loader):
                 meas_to_load.append(meas)
        
         try:
-            self.ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips_to_load)
+            self.ips = InstantPoint.objects.using(self.dbAlias).bulk_create(ips_to_load, batch_size=BATCH_SIZE)
         except IntegrityError as e:
             # Some data sets (e.g. Waveglider) share time coordinates with different depths
             # Report the reuse of previous self.ips values
@@ -1559,8 +1563,8 @@ class Base_Loader(STOQS_Loader):
 
         meass = self._measurement_with_instantpoint(self.ips, meas_to_load)
 
-        self.logger.info(f'Calling bulk_create() for Measurements in meass generator')
-        meass = Measurement.objects.using(self.dbAlias).bulk_create(meass)
+        self.logger.info(f'Calling bulk_create() for Measurements in meass generator with batch_size = {BATCH_SIZE}')
+        meass = Measurement.objects.using(self.dbAlias).bulk_create(meass, batch_size=BATCH_SIZE)
 
         return meass, mask
 

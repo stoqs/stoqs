@@ -22,7 +22,9 @@ fi
 CONFIG=$(which gdal-config)
 if [ $? -ne 0 ]; then
     echo "gdal-config is not in PATH"
+    echo "*** Removing $VENV_DIR. Fix the gdal install and rerun $0 ***"
     rm -rf $VENV_DIR
+    echo "$0 failed."
     exit 1
 fi
 
@@ -33,9 +35,6 @@ echo "Using PG_CONFIG=$PG_CONFIG"
 PATH=$(dirname $PG_CONFIG):$PATH
 
 ln -s $CONFIG $VENV_DIR/bin/
-
-# GDAL 1.9.2 pip install requires this environment variable
-export LD_PRELOAD=/usr/lib64/libgdal.so.1
 
 # Install everything in $REQ
 if [ -f "$REQ" ]; then

@@ -71,4 +71,5 @@ HOME_PAGE_ALT = env('HOME_PAGE_LOGO', default='MBARI')
 
 LOGGING['loggers']['utils']['level'] = 'WARN'
 LOGGING['loggers']['stoqs']['level'] = 'WARN'
+LOGGING['loggers']['stoqs.views']['level'] = 'WARN'
 

@@ -1,42 +1,33 @@
 language: python
 python:
-  - "3.6"
+  - "3.8"
 addons:
   postgresql: "10"
-  firefox: "68.0"
+  firefox: "72.0"
   apt:
     packages:
       - postgresql-10
-      - postgresql-10-postgis-2.4
+      - postgresql-10-postgis-2.5
 services:
   - xvfb
 before_install: 
-  - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda3/bin:$PATH
-  - export HDF5_DIR=/home/travis/miniconda3/
-  - export NETCDF4_DIR=/home/travis/miniconda3/
-  - export TERM=xterm
-  - pip uninstall -y setuptools
-  - conda install --yes setuptools
-  - conda update --yes conda
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz
-  - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/miniconda3/
-  - export PATH=$PATH:/home/travis/miniconda3/
+  - tar -xzf geckodriver-v0.24.0-linux32.tar.gz --directory /home/travis/bin
+  # Needed for GDAL 2.2.2, which is needed for Django 3 - default libgdal-dev is version 1.1
+  - sudo add-apt-repository -y ppa:ubuntugis/ppa 
+  - sudo apt-get -y update
+  - sudo apt-get -y install libgdal-dev
 env:
-  - DJANGO=1.10
+  - DJANGO=2.2
 install:
-  - conda install --yes --verbose python=3.6 hdf4 hdf5 netcdf4 numpy scipy matplotlib nose python-dateutil statsmodels gdal
-  - conda install --yes -c omnia python-coveralls=2.9.0
-  - conda remove --yes postgresql
   - pip install --upgrade pip
   - pip install -r requirements/travis-ci.txt
 before_script:
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
-  - psql -U postgres -c "create extension postgis"
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
 script:  
+  - export GEOS_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/libgeos_c.so
+  - export GDAL_LIBRARY_PATH=/usr/lib/libgdal.so
   - ./test.sh CHANGEME load noextraload
 after_script:
   - coveralls --base_dir stoqs

@@ -7,16 +7,25 @@ MAINTAINER Mike McCann <mccann@mbari.org>
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get -qq -y install \
+    firefox \
     freetds-dev \
     git \
     gmt \
+    imagemagick \
     libncurses-dev \
-    postgresql-10 \
     time \
     wget \
-    imagemagick \
-    firefox \
     xvfb
+
+# For postgresql-10 - needs to correspond with version specified in Dockerfile-postgis, comment out the other
+RUN apt-get -qq -y install postgresql-10
+
+# For postgresql-11 - needs to correspond with version specified in Dockerfile-postgis, comment out the other
+##RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ bionic-pgdg main' >> /etc/apt/sources.list.d/pgdg.list && \
+##    wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O /tmp/ACCC4CF8.asc && \
+##    apt-key add /tmp/ACCC4CF8.asc 2> /dev/null && \
+##    apt-get update && \
+##    apt-get -qq -y install postgresql-11 postgresql-contrib
 
 # For running functional tests
 RUN wget -q "https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz" -O /tmp/geckodriver.tgz \

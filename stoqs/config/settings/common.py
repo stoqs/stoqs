@@ -172,6 +172,12 @@ USE_L10N = True
 # It's OK to use naiive datetimes with this policy
 USE_TZ = False
 
+# See: https://docs.djangoproject.com/en/3.0/ref/contrib/gis/install/geolibs/#geos-library-path
+#      https://docs.djangoproject.com/en/3.0/ref/contrib/gis/install/geolibs/#gdal-library-path
+# Default paths set to 'built from source' locations
+GEOS_LIBRARY_PATH = env('GEOS_LIBRARY_PATH', default='/usr/local/lib/libgeos_c.so')
+GDAL_LIBRARY_PATH = env('GDAL_LIBRARY_PATH', default='/usr/local/lib/libgdal.so')
+
 # TEMPLATE CONFIGURATION
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#templates
@@ -372,6 +378,11 @@ LOGGING['loggers']['loaders'] = {
 LOGGING['loggers']['utils'] = {
                             'handlers':['console'],
                             'propagate': True,
+                            'level':'INFO',
+                            'formatter': 'verbose'
+}
+LOGGING['loggers']['stoqs.views'] = {
+                            'handlers':['console'],
                             'level':'INFO',
                             'formatter': 'verbose'
 }

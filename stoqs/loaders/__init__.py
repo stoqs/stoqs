@@ -11,7 +11,8 @@ import sys
 
 app_dir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, app_dir)
-os.environ['DJANGO_SETTINGS_MODULE']='config.settings.local'
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE']='config.settings.local'
 import django
 django.setup()
 

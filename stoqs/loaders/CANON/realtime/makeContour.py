@@ -3,7 +3,8 @@ __author__ = 'dcline'
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../toNetCDF"))      # lrauvNc4ToNetcdf.py is in sister toNetCDF dir
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))           # settings.py is two dirs up
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "./"))

@@ -12,7 +12,8 @@ import os
 import sys
 # Add parent dir to pythonpath so that we can see the loaders and stoqs modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../") )
-os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 from django.conf import settings
 from django.contrib.gis.geos import LineString, Point
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError

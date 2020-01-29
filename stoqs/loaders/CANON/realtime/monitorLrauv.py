@@ -10,7 +10,8 @@ MBARI 12 March 2014
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))              # loaders is two dirs up
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))           # config is three dirs up
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../CANON/toNetCDF/"))            # for lrauvNc4ToNetcdf
