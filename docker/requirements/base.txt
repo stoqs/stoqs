@@ -22,7 +22,7 @@ GitPython==3.0.5
 httplib2==0.17.0
 ipython==7.11.1
 jdcal==1.4.1
-Jinja2==2.10.3
+Jinja2==2.11.1
 jupyter==1.0.0
 kombu==4.6.7
 lxml==4.4.2
