@@ -6,7 +6,7 @@ amqplib==1.0.2
 anyjson==0.3.3
 Babel==2.8.0
 backports.ssl-match-hostname==3.7.0.1
-billiard==3.6.1.0
+billiard==3.6.2.0
 binaryornot==0.4.4
 certifi==2019.11.28
 cookiecutter==1.7.0
@@ -18,7 +18,7 @@ Genshi==0.7.3
 geopandas==0.6.2
 h5py==2.10.0
 MarkupSafe==1.1.1
-pandas==0.25.3
+pandas==1.0.0
 numpy==1.18.1
 requests==2.22.0
 Pygments==2.5.2
