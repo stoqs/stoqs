@@ -79,7 +79,6 @@ own server you will occasionally want to get new features with:
 
 ```bash
 git pull
-./setup.sh
 ```
 
 #### Production Deployment with Docker
