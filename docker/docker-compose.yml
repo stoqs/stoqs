@@ -1,4 +1,4 @@
-version: '2'
+version: '2.2'
 
 volumes:
     static-files:
@@ -26,6 +26,7 @@ services:
       - PGDATA=/var/lib/postgresql/data
       - POSTGRES_INITDB_WALDIR=/var/lib/postgresql/waldir
     container_name: stoqs-postgis
+    oom_kill_disable: true
     env_file:
       - ./.env
 
