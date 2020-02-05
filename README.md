@@ -79,7 +79,6 @@ own server you will occasionally want to get new features with:
 
 ```bash
 git pull
-./setup.sh
 ```
 
 #### Production Deployment with Docker
@@ -136,7 +135,9 @@ docker-compose run stoqs stoqs/loaders/load.py --db stoqs_simz_aug2013
 ```
 
 (To load MBARI Campaigns you will need to have uncommented the `CAMPAIGNS_MODULE=stoqs/mbari_campaigns.py` 
-line in your .env file.)
+line in your .env file. Make sure that you do not have a symbolic link named `campaigns.py` in the stoqs 
+directory. This is needed only for a Vagrant development machine &mdash; it's best to keep the directory used
+for a Docker deployment separate from one used for Vagrant.)
 
 In another window monitor its output:
 
