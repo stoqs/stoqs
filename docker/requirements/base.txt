@@ -18,7 +18,7 @@ django-picklefield==2.1.1
 django-secure==1.0.1
 djangorestframework==3.11.0
 euclid==0.1
-GitPython==3.0.5
+GitPython==3.0.7
 httplib2==0.17.0
 ipython==7.12.0
 jdcal==1.4.1
