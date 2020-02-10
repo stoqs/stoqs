@@ -1902,15 +1902,17 @@
         // For platforms in the selection look in $('body').data()['platformModels'] for x3dModels and add to the scene
         x3d = ''
         $.each($('body').data()['platformModels'], function(plat, m) {
-            x3d += '<GeoLocation geoCoords="' + m[1] + ',' + m[2] + ',' + m[3] + '">';
-            x3d += $('body').data()['geoorigin_use'];
-            if (m[0].match("^http")) {
-                x3d += '<Transform id="' + plat + '_SCALE" def="' + plat + '_SCALE" scale="2000,2000,2000"><Inline url="' + m[0] + '"></Inline></Transform>';
+            if ($.inArray(plat, params['platforms']) !== -1) {
+                x3d += '<GeoLocation geoCoords="' + m[1] + ',' + m[2] + ',' + m[3] + '">';
+                x3d += $('body').data()['geoorigin_use'];
+                if (m[0].match("^http")) {
+                    x3d += '<Transform id="' + plat + '_SCALE" def="' + plat + '_SCALE" scale="2000,2000,2000"><Inline url="' + m[0] + '"></Inline></Transform>';
+                }
+                else {
+                    x3d += '<Transform id="' + plat + '_SCALE" def="' + plat + '_SCALE" scale="200,200,200"><Inline url="{{STATIC_URL}}' + m[0] + '"></Inline></Transform>';
+                }
+                x3d += '</GeoLocation>';
             }
-            else {
-                x3d += '<Transform id="' + plat + '_SCALE" def="' + plat + '_SCALE" scale="200,200,200"><Inline url="{{STATIC_URL}}' + m[0] + '"></Inline></Transform>';
-            }
-            x3d += '</GeoLocation>';
         });
         $('#platform-models').html(x3d);
     }
