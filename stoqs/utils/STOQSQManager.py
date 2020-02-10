@@ -704,26 +704,28 @@ class STOQSQManager(object):
                 if 'trajectory' in featureType:
                     platformTypeHash[platformType].append((name, id, color, featureType, ))
                 else:
-                    logger.debug(f"Seeing if Platform {name} has an x3dModel...")
-                    x3dModel, x, y, z = self._getPlatformModel(name) 
-                    if not x3dModel:
-                        logger.debug("No x3dModel. Not adding x3dModel")
-                        platformTypeHash[platformType].append((name, id, color, featureType, ))
-                        continue
+                    # Filter out models from static platforms not in the selection
+                    if name in self.qs.values_list('platform__name', flat=True):
+                        logger.debug(f"Seeing if Platform {name} has an x3dModel...")
+                        x3dModel, x, y, z = self._getPlatformModel(name) 
+                        if not x3dModel:
+                            logger.debug("No x3dModel. Not adding x3dModel")
+                            platformTypeHash[platformType].append((name, id, color, featureType, ))
+                            continue
 
-                    # Only add stationary X3D model for platforms that don't have roll, pitch and yaw
-                    # Platforms with rotations have their X3D model added to the scene in stoqs/utils/Viz/animation.py
-                    logger.debug(f"Seeing if Platform {name} has roll, pitch, and yaw Parameters...")
-                    pr_qs = models.ActivityParameter.objects.using(self.dbname).filter(activity__platform__name=name)
-                    has_roll = pr_qs.filter(parameter__standard_name='platform_roll_angle')
-                    has_pitch = pr_qs.filter(parameter__standard_name='platform_pitch_angle')
-                    has_yaw = pr_qs.filter(parameter__standard_name='platform_yaw_angle')
-                    if has_roll or has_pitch or has_yaw:
-                        logger.debug("Has roll, pitch, or yaw. Not adding x3dModel")
-                        platformTypeHash[platformType].append((name, id, color, featureType, ))
-                    else: 
-                        logger.debug("Has x3dModel, no rotations, adding x3dModel")
-                        platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
+                        # Only add stationary X3D model for platforms that don't have roll, pitch and yaw
+                        # Platforms with rotations have their X3D model added to the scene in stoqs/utils/Viz/animation.py
+                        logger.debug(f"Seeing if Platform {name} has roll, pitch, and yaw Parameters...")
+                        pr_qs = models.ActivityParameter.objects.using(self.dbname).filter(activity__platform__name=name)
+                        has_roll = pr_qs.filter(parameter__standard_name='platform_roll_angle')
+                        has_pitch = pr_qs.filter(parameter__standard_name='platform_pitch_angle')
+                        has_yaw = pr_qs.filter(parameter__standard_name='platform_yaw_angle')
+                        if has_roll or has_pitch or has_yaw:
+                            logger.debug("Has roll, pitch, or yaw. Not adding x3dModel")
+                            platformTypeHash[platformType].append((name, id, color, featureType, ))
+                        else: 
+                            logger.debug("Has x3dModel, no rotations, adding x3dModel")
+                            platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
 
         logger.debug(f"Done building platformTypeHash.")
         self.platformTypeHash = platformTypeHash
