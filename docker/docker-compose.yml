@@ -102,3 +102,11 @@ services:
     env_file:
       - ./.env
 
+  # Uncomment to restart services when new images pushed to docker hub, for continuous deployment
+  ##watchtower:
+  ##  container_name: watchtower
+  ##  image: containrrr/watchtower
+  ##  volumes:
+  ##    - /var/run/docker.sock:/var/run/docker.sock
+  ##  restart: unless-stopped
+  ##  command: stoqs mapserver postgis nginx --interval 30
