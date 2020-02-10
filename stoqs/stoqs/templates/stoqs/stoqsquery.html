@@ -1579,8 +1579,7 @@
         $('#spatial-3d-x3d-slider').val(ts_fraction);
 
         // Called from TimeSensor onoutputchanged() event or on HTML slider mousemove event
-        var fesec;
-        var frac_ems = $('body').data()['start-ems'] + ts_fraction * ($('body').data()['end-ems'] - $('body').data()['start-ems']);
+        var frac_ems = $('body').data()['timesensor-start-ems'] + ts_fraction * ($('body').data()['timesensor-end-ems'] - $('body').data()['timesensor-start-ems']);
         frac_esec = parseInt(frac_ems / 1000.0);
 
         // See https://stackoverflow.com/questions/10004723/html5-input-type-range-show-range-value
@@ -2945,6 +2944,7 @@
                 if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
                     rebuild_list.push('curtainx3d');
                 }
+                render_shapes = {};     // Re-initialize this global object
             }
             rebuildFilters(rebuild_list);
         }
@@ -6021,8 +6021,15 @@ function enable_cardboard(){
                     if (has_rotaxes) {
                         show_geox3drotaxis($('#showgeox3drotaxis').is(':checked'));
                     }
-                    $('#slider-start-time').html($('body').data()['start-time']);
-                    $('#slider-end-time').html($('body').data()['end-time']);
+
+                    // TimeSensor limits - different than Flot plot limits - needed for update3DScene()
+                    $('body').data()['timesensor-start-ems'] = data.platformanimation.time[0];
+                    $('body').data()['timesensor-end-ems'] = data.platformanimation.time[data.platformanimation.time.length-1];
+                    $('body').data()['timesensor-start-time'] = getUTCDateString(new Date($('body').data()['timesensor-start-ems']));
+                    $('body').data()['timesensor-end-time'] = getUTCDateString(new Date($('body').data()['timesensor-end-ems']));
+
+                    $('#slider-start-time').html($('body').data()['timesensor-start-time']);
+                    $('#slider-end-time').html($('body').data()['timesensor-end-time']);
                 }
                 else {
                     if ( ! $.isEmptyObject(data[key]['message']) ) {
