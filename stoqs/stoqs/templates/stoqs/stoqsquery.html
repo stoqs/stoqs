@@ -1522,6 +1522,7 @@
     var frac_esec;
     var start_fraction = 0;
     var stopped_by_scrubbing = false;
+    var last_cb_shape_esec = 0;
 
     var vrHMD = null, vrSensor = null;
     var pyr = new x3dom.fields.SFVec3f(0, 0, 0);        // For the Leap Motion
@@ -1533,7 +1534,6 @@
         $.each($('#platform-animations > orientationinterpolator'), function(index, oi) {
             oi.setFieldValue('set_fraction', ts_fraction);
         });
-        updateCrosshairs(ts_fraction, timeAxis, sliderLimits);
     }
 
     function slider(e) {
@@ -1576,6 +1576,7 @@
 
     function update3DScene(ts_fraction, event) {
         movePlatforms(ts_fraction);
+        updateCrosshairs(ts_fraction, timeAxis, sliderLimits);
         $('#spatial-3d-x3d-slider').val(ts_fraction);
 
         // Called from TimeSensor onoutputchanged() event or on HTML slider mousemove event
@@ -1591,14 +1592,20 @@
         $('#slider-time').html(getUTCDateString(new Date(frac_ems)));
         $('#slider-time').parent().css( {'left': px + 'px', 'bottom': $('#spatial-3d-x3d-slider')[0].offsetHeight + 'px'} );
 
-        var fade_away_secs = parseInt($('#fade_away_minutes').val()) * 60;
-        var slice_secs = parseInt($('#slice_minutes').val()) * 60;
-
-        // Set render to true or false for shapes
         if ( $('input:radio[name=show-mp-3d]:checked').val() == 'tails' && ! $.isEmptyObject(render_shapes) ) {
-            var last_shps_esec = 0;
+            // Set render to true or false for shapes
             var cb_shape_id = closest_below(frac_esec, Object.keys(render_shapes));
             if ( cb_shape_id !== null ) {
+                if ( parseInt(cb_shape_id) < last_cb_shape_esec ) {
+                    //console.log('Wrap-around detected. Setting all shapes to render false.');
+                    $.each(render_shapes, function(esec, shape_grp) {
+                        $.each(shape_grp.shapes, function(index, shape_id) {
+                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                $('#' + shape_id)[0].setAttribute('render', 'false');
+                            }
+                        });
+                    });
+                }
                 //console.log('Setting render attributes for shape key: ' + cb_shape_id);
                 $.each(render_shapes[cb_shape_id]['shapes'], function(index, shape_id) {
                     if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
@@ -1621,6 +1628,7 @@
                         }
                     });
                 }
+                last_cb_shape_esec = parseInt(cb_shape_id);
             }
         }
     }
@@ -1629,7 +1637,7 @@
     function setSlider(e) {
         if ( e.fieldName == "fraction_changed" ) {
             //console.log('start_fraction = ' + start_fraction + ', e.value = ' + e.value);
-            ts_fraction = (start_fraction + e.value) % 1;
+            var ts_fraction = (start_fraction + e.value) % 1;
             //console.log('(start_fraction + e.value) = ' + (start_fraction + e.value) + ', ts_fraction = ' + ts_fraction);
             update3DScene(ts_fraction, e);
         }
@@ -1679,25 +1687,42 @@
     }
 
     function downloadsFinished(event) {
-        // Trigger the viewpoint parameters setting after X3DOM finishes loading new content
+        // Trigger the viewpoint parameters setting after X3DOM finishes loading new content 
+        // Note: An onUpdate() from a rebuildFilters() does not trigger this
         if ( ! $('body').data()['init']) {
             $('input[name=terrain_view][value="' + $('body').data()['terrain_view'] + '"]').prop('checked', true).trigger("click");
         }
-        if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
-            // Rescale platforms so that they become visible
-            var viewpoint = $('#spatial-3d-x3d')[0].runtime.viewpoint();
-            setPlatformScales(viewpoint, viewpoint._vf.position);
+        if ( $('#animations').has('timesensor').length > 0 ) {
+            if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
+                // Rescale platforms so that they become visible
+                var viewpoint = $('#spatial-3d-x3d')[0].runtime.viewpoint();
+                setPlatformScales(viewpoint, viewpoint._vf.position);
 
-            // Set color of animated 3D model
-            $.each($('body').data()['platformAnimation'], function(index, plat) {
-                // Axes & all Material IDs starting with 'MAT' in inlined model X3D + ENU axes
-                x3d_color = hexToX3D($('body').data()['platformColors'][plat]);
-                $('#' + plat + '_AAROT_model__Grey > Material').attr('diffuseColor', x3d_color);
-                $("[id*='" + plat + "_AAROT_model__MAT']").attr('diffuseColor', x3d_color);
-                $('#' + plat + '_axesENU__Grey > Material').attr('diffuseColor', x3d_color);
-                $('#' + plat + '_axesENU__Black > Material').attr('diffuseColor', x3d_color);
-            });
-            $('#spatial-3d-x3d-pause-play').click();
+                // Set color of animated 3D model
+                $.each($('body').data()['platformAnimation'], function(index, plat) {
+                    // Axes & all Material IDs starting with 'MAT' in inlined model X3D + ENU axes
+                    x3d_color = hexToX3D($('body').data()['platformColors'][plat]);
+                    $('#' + plat + '_AAROT_model__Grey > Material').attr('diffuseColor', x3d_color);
+                    $("[id*='" + plat + "_AAROT_model__MAT']").attr('diffuseColor', x3d_color);
+                    $('#' + plat + '_axesENU__Grey > Material').attr('diffuseColor', x3d_color);
+                    $('#' + plat + '_axesENU__Black > Material').attr('diffuseColor', x3d_color);
+                });
+            }
+            if ($('input:radio[name=show-mp-3d]:checked').val() == 'tails') {
+                if ( ! $.isEmptyObject(render_shapes) ) {
+                    $.each(render_shapes, function(esec, shape_grp) {
+                        $.each(shape_grp.shapes, function(index, shape_id) {
+                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                $('#' + shape_id)[0].setAttribute('render', 'false');
+                            }
+                        });
+                    });
+                }
+            }
+            // Ensure that animation is playing - need to fire off a click when hasClass('icon-play')
+            if ($('#spatial-3d-x3d-pause-play').hasClass('icon-play')) {
+                $('#spatial-3d-x3d-pause-play').click();
+            }
         }
     }
 
@@ -5556,7 +5581,7 @@ function enable_cardboard(){
                 var bin_end = grp_esec;
                 $.each(shape_dict, function(es, shape_ids) {
                     var esec = parseInt(es);
-                    if (bin_start <= esec && esec < bin_end) {
+                    if (bin_start <= esec && esec <= bin_end) {
                         $.each(shape_ids, function(index, shape_id) {
                             render_shapes[grp_esec]['shapes'].push(shape_id);
                         });
@@ -5564,6 +5589,16 @@ function enable_cardboard(){
 
                 });
             }
+
+            // TimeSensor limits - different than Flot plot limits - needed for update3DScene()
+            var time_esecs = Object.keys(render_shapes);
+            $('body').data()['timesensor-start-ems'] = time_esecs[0] * 1000.0;
+            $('body').data()['timesensor-end-ems'] = time_esecs[time_esecs.length-1] * 1000.0;
+            $('body').data()['timesensor-start-time'] = getUTCDateString(new Date($('body').data()['timesensor-start-ems']));
+            $('body').data()['timesensor-end-time'] = getUTCDateString(new Date($('body').data()['timesensor-end-ems']));
+
+            $('#slider-start-time').html($('body').data()['timesensor-start-time']);
+            $('#slider-end-time').html($('body').data()['timesensor-end-time']);
         }
 
         function onUpdate(data, key) {
@@ -5933,6 +5968,7 @@ function enable_cardboard(){
                     $('#regenerate-animations-button').removeClass('btn-primary');
                     if ( ! $.isEmptyObject(data.measuredparameterx3d.limits) ) {
                         sliderLimits = data.measuredparameterx3d.limits;
+                        timeAxis = Object.keys(render_shapes);
                     }
                 }
             }
@@ -5967,6 +6003,7 @@ function enable_cardboard(){
                     $('#slider-end-time').html($('body').data()['end-time']);
                     if ( ! $.isEmptyObject(data.curtainx3d.limits) ) {
                         sliderLimits = data.curtainx3d.limits;
+                        timeAxis = Object.keys(render_shapes);
                     }
                 }
             }
