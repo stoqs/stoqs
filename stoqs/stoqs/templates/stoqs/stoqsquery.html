@@ -2800,6 +2800,10 @@
     $('#showplatforms').on('change', function (event) {
         if ( $('#showplatforms').is(':checked') ) {
             // Need time series data to redraw with crosshairs, so get everything
+            if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
+                // Pause TimeSensor before reloading it
+                $('#spatial-3d-x3d-pause-play').click();
+            }
             rebuildFilters(['platformanimation']);
             addStationaryPlatformModels();
             $('#showgeox3dlabels').parent().show();
@@ -2989,6 +2993,10 @@
                 if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
                     rebuild_list.push('curtainx3d');
                 }
+            }
+            if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
+                // Pause TimeSensor before reloading it
+                $('#spatial-3d-x3d-pause-play').click();
             }
             rebuildFilters(rebuild_list);
         }
@@ -5601,6 +5609,13 @@ function enable_cardboard(){
             $('#slider-end-time').html($('body').data()['timesensor-end-time']);
         }
 
+        function updateTimeSensor(ts) {
+            $('#animations').html(ts);
+            if ($('#spatial-3d-x3d-pause-play').hasClass('icon-play')) {
+                $('#spatial-3d-x3d-pause-play').click();
+            }
+        }
+
         function onUpdate(data, key) {
             // Called from ajax to update the selectors base on the new selection
             $('body').data()['data'] = data;
@@ -5958,7 +5973,7 @@ function enable_cardboard(){
                     if ( ! $('#animation3D').hasClass('in') ) {
                         $('#animation3D-anchor').click();
                     }
-                    $('#animations').html(data[key]['timesensor']);
+                    updateTimeSensor(data[key]['timesensor']);
                     $('#spatial-3d-x3d-pp-slider').show();
                     $('#spatial-3d-x3d-speedup').show()
                     $('#speedup-value').val(data[key].speedup);
@@ -5995,7 +6010,7 @@ function enable_cardboard(){
                     if ( ! $('#animation3D').hasClass('in') ) {
                         $('#animation3D-anchor').click();
                     }
-                    $('#animations').html(data[key]['timesensor']);
+                    updateTimeSensor(data[key]['timesensor']);
                     $('#spatial-3d-x3d-pp-slider').show();
                     $('#spatial-3d-x3d-speedup').show()
                     $('#speedup-value').val(data[key].speedup);
@@ -6037,7 +6052,7 @@ function enable_cardboard(){
                         $('body').data()['platformAnimation'].push(plat);
                         x3dText += x3d;
                     });
-                    $('#animations').html(data[key]['timesensor']);
+                    updateTimeSensor(data[key]['timesensor']);
                     $('#platform-animations').html(x3dText);
 
                     // Check for any platforms that have Shape IndexedLineSets so as to show ROT Axis check box
