@@ -132,7 +132,7 @@ class Loader(object):
             copyfile(log_file , os.path.join(loadlogs_dir, log_file_url))
             self.prov['load_logfile'] = os.path.join(settings.MEDIA_URL, 'loadlogs', log_file_url)
         except IOError as e:
-            self.logger.warn(e)
+            self.logger.warning(e)
 
     def _create_pg_dump(self, db):
         pg_dumps_dir = os.path.join(settings.MEDIA_ROOT, 'pg_dumps')
@@ -177,7 +177,7 @@ class Loader(object):
                     if line.startswith(MINUTES):
                         self.prov['minutes_to_load'] =line.split(':')[1]
                 if 'minutes_to_load' not in self.prov:
-                    self.logger.warn(f"Did not find line starting with {MINUTES} in {log_file}")
+                    self.logger.warning(f"Did not find line starting with {MINUTES} in {log_file}")
                 try:
                     # Inserted after the log_file has been written with --updateprovenance
                     self.prov['real_exection_time'] = tail(log_file, 3).split('\n')[0].split('\t')[1]
@@ -186,7 +186,7 @@ class Loader(object):
                 except IndexError:
                     self.logger.debug('No execution_time information in %s', log_file)
             else:
-                self.logger.warn('Load log file not found: %s', log_file)
+                self.logger.warning('Load log file not found: %s', log_file)
 
             # Counts
             self.prov['MeasuredParameter_count'] = MeasuredParameter.objects.using(db).count()
@@ -271,7 +271,7 @@ class Loader(object):
         if self.args.db:
             for d in self.args.db:
                 if d not in list(campaigns.campaigns.keys()):
-                    self.logger.warn('%s not in %s', d, self.args.campaigns)
+                    self.logger.warning('%s not in %s', d, self.args.campaigns)
 
         # That can connect as user postgres for creating and dropping databases
         cmd = ('psql -p {} -c "\q" -U postgres').format(settings.DATABASES['default']['PORT'])
@@ -279,7 +279,7 @@ class Loader(object):
         ret = os.system(cmd)
         self.logger.debug('ret = %s', ret)
         if ret != 0:
-            self.logger.warn('Cannot connect to the database server as user postgres. Either run as user postgres or alter your pg_hba.conf file.')
+            self.logger.warning('Cannot connect to the database server as user postgres. Either run as user postgres or alter your pg_hba.conf file.')
             suggestion = '''
 
 To permit simpler loading of your databases you may want to temporarilry open
@@ -344,7 +344,7 @@ local   all             all                                     peer
         # That user wants to load all the production databases (no --db argument)
         if not self.args.db and not self.args.list and not self.args.updateprovenance:
             print(("On the server running on port =", settings.DATABASES['default']['PORT']))
-            print("You are about to load all these databases:")
+            print("You are about to operate on all of these databases:")
             print((' '.join(list(campaigns.campaigns.keys()))))
             ans = input('\nAre you sure you want load all these databases? [y/N] ') or 'N'
             if ans.lower() != 'y':
@@ -365,8 +365,8 @@ local   all             all                                     peer
             self.rt, _ = ResourceType.objects.using(db).get_or_create(name=rt_name, 
                     description='Information about the source of data')
         except (ConnectionDoesNotExist, OperationalError, ProgrammingError) as e:
-            self.logger.warn('Could not open database "%s" for updating provenance.', db)
-            self.logger.warn(e)
+            self.logger.warning('Could not open database "%s" for updating provenance.', db)
+            self.logger.warning(e)
             raise ObjectDoesNotExist(e)
 
         i = 0
@@ -422,8 +422,8 @@ local   all             all                                     peer
             try:
                 self.recordprovenance(db, load_command, log_file)
             except (ObjectDoesNotExist, DatabaseLoadError) as e:
-                self.logger.warn('Could not record provenance in database %s', db)
-                self.logger.warn(e)
+                self.logger.warning('Could not record provenance in database %s', db)
+                self.logger.warning(e)
 
     def grant_everyone_select(self):
         campaigns = importlib.import_module(self.args.campaigns)
@@ -446,6 +446,38 @@ local   all             all                                     peer
             ret = os.system(grant)
             self.logger.debug('ret = %s', ret)
 
+    def add_resource(self):
+        '''Customize the Resources to be added here in the source code
+        '''
+        campaigns = importlib.import_module(self.args.campaigns)
+        for db,load_command in list(campaigns.campaigns.items()):
+            if self.args.db:
+                if db not in self.args.db:
+                    continue
+
+            if self.args.test:
+                if self._has_no_t_option(db, load_command):
+                    continue
+                
+                db += '_t'
+
+            resourceType, _ = ResourceType.objects.using(db).get_or_create(
+                                           name='x3dterrain', 
+                                           description='X3D Terrain information for Spatial 3D visualization')
+            campaign = Campaign.objects.using(db).get()
+            self.logger.info(f'Adding Resources to {db}')
+            for url in (Resource.objects.using(db).filter(resourcetype__name='x3dterrain')
+                                        .values_list('uristring', flat=True).distinct()):
+                self.logger.info(f'{url}: Adding default clipping plane zNear, zFar values: 100.0, 300000.0')
+                resource, rid1 = Resource.objects.using(db).get_or_create(
+                              uristring=url, name='zNear', value=100.0, resourcetype=resourceType)
+                CampaignResource.objects.using(db).get_or_create(
+                              campaign=campaign, resource=resource)
+                resource, rid2 = Resource.objects.using(db).get_or_create(
+                              uristring=url, name='zFar', value=300000.0, resourcetype=resourceType)
+                CampaignResource.objects.using(db).get_or_create(
+                              campaign=campaign, resource=resource)
+
     def pg_dump(self):
         campaigns = importlib.import_module(self.args.campaigns)
         for db,load_command in list(campaigns.campaigns.items()):
@@ -464,7 +496,7 @@ local   all             all                                     peer
             try:
                 self._assign_rt_campaign(db)
             except ObjectDoesNotExist:
-                self.logger.warn('Skipping')
+                self.logger.warning('Skipping')
                 continue
 
             self.logger.debug(f'Recording pg_dump_size = {pg_dump_size} in provenance')
@@ -491,7 +523,7 @@ local   all             all                                     peer
         ret = os.system(dropdb)
         self.logger.debug('ret = %s', ret)
         if ret != 0:
-            self.logger.warn('Failed to drop %s', db)
+            self.logger.warning('Failed to drop %s', db)
             self._show_activity(db)
 
     def removetest(self):
@@ -584,8 +616,8 @@ local   all             all                                     peer
             try:
                 self._create_db(db)
             except DatabaseCreationError as e:
-                self.logger.warn(e)
-                self.logger.warn('Use the --clobber option, or fix the problem indicated.')
+                self.logger.warning(e)
+                self.logger.warning('Use the --clobber option, or fix the problem indicated.')
                 if self.args.db and not self.args.test:
                     raise Exception('Maybe use the --clobber option to recreate the database...')
                 else:
@@ -694,7 +726,7 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
             try:
                 self.recordprovenance(db, load_command, log_file)
             except DatabaseLoadError as e:
-                self.logger.warn(str(e))
+                self.logger.warning(str(e))
 
     def process_command_line(self):
         import argparse
@@ -794,6 +826,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
         parser.add_argument('--updateprovenance', action='store_true', help=('Use after background jobs finish to copy'
                                                                             ' loadlogs and update provenance information'))
         parser.add_argument('--grant_everyone_select', action='store_true', help='Grant everyone role select privileges on all relations')
+        parser.add_argument('--add_resource', action='store_true', help='Add a Resource to all databases: e.g. for zNear & zFar')
         parser.add_argument('--drop_indexes', action='store_true', help='Before load drop indexes and create them following the load')
         parser.add_argument('--pg_dump', action='store_true', help='Store a pg_dump(1) with "-Fc" option file on the server')
         parser.add_argument('--noinput', action='store_true', help='Execute without asking for a response, e.g. for --clobber')
@@ -826,6 +859,8 @@ if __name__ == '__main__':
         l.updateprovenance()
     elif l.args.grant_everyone_select:
         l.grant_everyone_select()
+    elif l.args.add_resource:
+        l.add_resource()
     elif l.args.pg_dump:
         l.pg_dump()
     else:
