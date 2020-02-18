@@ -66,6 +66,9 @@
             border-color: transparent; 
             background-color: transparent; 
         }
+        .accordion-group {
+            border: none;
+        }
         .stoqs-color-limit-input {
             width: 40px;
             height: 10px;
@@ -214,7 +217,7 @@
 
             <div id="accordion1" class="accordion well" style="border:none;">
 
-                <div id="spatial-group" class="accordian-group">
+                <div id="spatial-group" class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="spatial-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseSpatial">
                         Spatial
@@ -534,10 +537,10 @@
                             </div><!-- tab-content -->
                         </div><!-- accordion-inner -->
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
 
-                <div id="metadata-group" class="accordian-group">
+                <div id="metadata-group" class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="metadata-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseMetadata">
                         Metadata:</a> <span id="metadata-count" style="color:black;"></span>
@@ -575,10 +578,10 @@
 
                         </div><!-- accordion-inner -->
                     </div><!-- collapseMetadata -->
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
 
-                <div id="parameter-parameter-group" class="accordian-group">
+                <div id="parameter-parameter-group" class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="parameter-parameter-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseParameterParameter">
                         Parameter-Parameter</a>
@@ -779,10 +782,10 @@
                         </div><!-- accordion-inner -->
                     </div><!-- collapseParameterParameter -->
 
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
 
-                <div id="sp-data-access-group" class="accordian-group" style="display:none">
+                <div id="sp-data-access-group" class="accordion-group" style="display:none">
                     <div class="accordian-heading">
                         <h3><a id="sp-data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#sp-collapseDataAccess">
                         Sampled Parameter Data Access
@@ -850,10 +853,10 @@
                         </div>
                     </div>
 
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
 
-                <div id="mp-data-access-group" class="accordian-group">
+                <div id="mp-data-access-group" class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="mp-data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#mp-collapseDataAccess">
                         Measured Parameter Data Access
@@ -913,7 +916,7 @@
                             
                         </div>
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
             </div><!-- accordian well -->
 
@@ -922,7 +925,7 @@
         <div id="right-column" class="span6 stoqs-zoom-width">
             <div class="accordion well" id="accordion2" style="border:none;">
 
-                <div class="accordian-group">
+                <div class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="temporal-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTemporal">
                         Temporal</a>
@@ -1002,11 +1005,11 @@
 
                         </div><!-- accordion-inner -->
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
 
-                <div class="accordian-group" style="display:none;">
-                    <!--<div class="accordian-group">-->
+                <div class="accordion-group" style="display:none;">
+                    <!--<div class="accordion-group">-->
                     <div class="accordian-heading">
                         <table><tr style="white-space:nowrap;">
                             <td style="width:20%;"><h3>
@@ -1092,7 +1095,7 @@
 
 
 
-                <div class="accordian-group" style="display:none">
+                <div class="accordion-group" style="display:none">
                     <div class="accordian-heading">
                         <h3><a id="sampledparameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSampledParameter">
                         Sampled Parameters</a>
@@ -1197,10 +1200,10 @@
                             </fieldset>
                         </div>
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
 
-                <div class="accordian-group">
+                <div class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="measuredparameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseMeasuredParameter">
                         Measured Parameters</a>
@@ -1314,9 +1317,9 @@
                             </fieldset>
                         </div>
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
-                <div class="accordian-group">
+                <div class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="parameter-values-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseParameterValues">
                         Parameter Values</a>
@@ -1338,9 +1341,9 @@
                             </table>
                         </div>
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
-                <div id="attributes-group" class="accordian-group" style="display:none;">
+                <div id="attributes-group" class="accordion-group" style="display:none;">
                     <div class="accordian-heading">
                         <h3><a id="attributes-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseAttributes">
                         Attributes</a>
@@ -1373,7 +1376,7 @@
                     </div>
                 </div>
 
-                <div class="accordian-group">
+                <div class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="platforms-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapsePlatforms">
                         Platforms</a>
@@ -1406,7 +1409,7 @@
                             </table>
                         </div>
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
             </div><!-- accordian well -->
 
@@ -4668,7 +4671,7 @@ function enable_cardboard(){
                 platformActivitiesHtml += '<div id="netcdf-groups">'; 
                 $.each(platforms, function (index, plat) {
                     var activities = $.map(data.resources.netcdf[plat], function(activities, a) {return a}).sort();
-                    platformActivitiesHtml += '<div id="' + plat + '-group" class="accordian-group">' +
+                    platformActivitiesHtml += '<div id="' + plat + '-group" class="accordion-group">' +
                     '<div class="accordian-heading">' + 
                        '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
                         plat + 
@@ -4676,7 +4679,7 @@ function enable_cardboard(){
                     '</div>' + 
                     '<div id="collapse-' + plat + '" class="accordion-body">' + 
                         '<div class="accordion-inner" style="padding:0;">';
-                    ql_plots_tab_html += '<div id="' + plat + '-group" class="accordian-group">' +
+                    ql_plots_tab_html += '<div id="' + plat + '-group" class="accordion-group">' +
                     '<div class="accordian-heading">' + 
                        '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
                         plat + 
@@ -4944,7 +4947,7 @@ function enable_cardboard(){
                 platformTypes = $.map(data[key], function(platforms, ptype) {return ptype}).sort();
                 $.each(platformTypes, function (index, ptype) {
                     platforms = data[key][ptype];
-                    platformTypeHtml += '<div id="' + ptype + '-group" class="accordian-group">' +
+                    platformTypeHtml += '<div id="' + ptype + '-group" class="accordion-group">' +
                     '<div class="accordian-heading">' + 
                        '<h5><a id="' + ptype + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + ptype + '">' + 
                         ptype + 
@@ -5326,7 +5329,7 @@ function enable_cardboard(){
                             if (labelType != 'commandlines') {
                                 labels = data[key]['measurement'][labelType];
                                 labelTypeID = labelType.replace(/ /g, '-');
-                                labelTypeHtml += '<div id="' + labelType + '-group" class="accordian-group">' +
+                                labelTypeHtml += '<div id="' + labelType + '-group" class="accordion-group">' +
                                 '<div class="accordian-heading">' + 
                                 '<h5><a id="' + labelType + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#attributes-anchor" href="#collapse-' + 
                                     labelTypeID + '">' + labelType + 
