@@ -75,7 +75,6 @@ query_parms = {
                    'parametertimeplotcoord': 'parametertimeplotcoord',                      # Plot checkbox coordinate names
                    'showgeox3dmeasurement': 'showgeox3dmeasurement',                        # Flag value from checkbox
                    'slice_minutes': 'slice_minutes',                                        # Parameter for visualization
-                   'fade_away_minutes': 'fade_away_minutes',                                # Parameter for visualization
                    'showgeox3dsample': 'showgeox3dsample',                                  # Flag value from checkbox
                    'showplatforms': 'showplatforms',                    # Flag value from checkbox
                    'showdataas': 'showdataas',              # Value from radio button, either 'contour' or 'scatter'

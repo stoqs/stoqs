@@ -312,7 +312,7 @@
                                                             </label>
                                                         </form>
                                                         <span>
-                                                            in <input id="slice_minutes" type="text" class="text-3d-input" value="5"/> minute slices.
+                                                            in <input id="slice_minutes" type="text" class="text-3d-input" value="5"/> minute slices (for contour curtainimages).
                                                         </span>
                                                         <span>
                                                             Fade away after <input id="fade_away_minutes" type="text" class="text-3d-input" value="120"/> minutes.
@@ -2944,8 +2944,9 @@
         }
     });
 
-    $('#regenerate-animations-button').click(function () {
-        if ( $('#regenerate-animations-button').hasClass('btn-primary') ) {
+    $('#slice_minutes').on('keypress', function (e) {
+        if (e.which == 13) {
+            // Enter key pressed
             var rebuild_list = [];
             if ($('#showplatforms').is(':checked')) {
                 rebuild_list.push('platformanimation');
@@ -3027,11 +3028,6 @@
         $('#apply-color-limit-button').addClass('btn-primary');
         $('#reset-color-limit-button').removeClass('disabled');
         $('#reset-color-limit-button').addClass('btn-primary');
-    });
-
-    $('.regen-activate').on('change', function (event, previousText) {
-        $('#regenerate-animations-button').removeClass('disabled');
-        $('#regenerate-animations-button').addClass('btn-primary');
     });
 
     $('#cmincmax_lock').on('change', function (event) {
@@ -4565,7 +4561,6 @@ function enable_cardboard(){
             if ($('#showgeox3dmeasurement').is(':checked')) {
                 qstring += '&showgeox3dmeasurement=1';
                 qstring += '&slice_minutes=' + $('#slice_minutes').val();
-                qstring += '&fade_away_minutes=' + $('#fade_away_minutes').val();
             }
             if ($('#showplatforms').is(':checked')) {
                 qstring += '&showplatforms=1';
@@ -5959,8 +5954,6 @@ function enable_cardboard(){
                     $('#speedup-value').val(data[key].speedup);
                     $('#slider-start-time').html($('body').data()['start-time']);
                     $('#slider-end-time').html($('body').data()['end-time']);
-                    $('#regenerate-animations-button').addClass('disabled');
-                    $('#regenerate-animations-button').removeClass('btn-primary');
                     if ( ! $.isEmptyObject(data.measuredparameterx3d.limits) ) {
                         sliderLimits = data.measuredparameterx3d.limits;
                         timeAxis = Object.keys(render_shapes);
