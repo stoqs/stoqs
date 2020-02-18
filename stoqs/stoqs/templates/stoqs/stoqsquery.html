@@ -73,7 +73,7 @@
             font-size: 13px;
             margin-bottom: 0px;
         }
-        .stoqs-speedup-input {
+        .text-3d-input {
             width: 25px;
             height: 8px;
             line-height: 12px;
@@ -297,7 +297,7 @@
                                                         Measured Parameters
                                                     </a></h5>
                                                     <div id="measurements3D" class="accordion-body in">
-                                                        <form class="form-inline" style="margin:0px;vertical-align:center">
+                                                        <form class="form-inline" action="javascript:void(0);" style="margin:0px;vertical-align:bottom;">
                                                             <label class="checkbox disabled" style="margin:0px;">
                                                                 <input type="checkbox" id="showgeox3dmeasurement" />
                                                                 <span id="showgeox3dmeasurementtext">Show visualizations of Plot Data Color selections </span>
@@ -311,32 +311,12 @@
                                                                 <span>Polygons</span>
                                                             </label>
                                                         </form>
-                                                        <div class="input-group" style="padding-bottom:0px;padding-top:1px;"> 
-                                                            <span> Animate in </span>
-                                                            <select id="slice_minutes" class="selectpicker form-control regen-activate" style="height:18px;width:55px;margin-bottom:5px;">
-                                                                <option>1440</option>
-                                                                <option>720</option>
-                                                                <option>360</option>
-                                                                <option>120</option>
-                                                                <option>60</option>
-                                                                <option>30</option>
-                                                                <option>10</option>
-                                                                <option selected="selected">5</option>
-                                                            </select>
-                                                            <span> minute slices. </span>
-                                                            <span> Fade away after </span>
-                                                            <select id="fade_away_minutes" class="selectpicker form-control regen-activate" style="height:18px;width:55px;margin-bottom:5px;">
-                                                                <option>1440</option>
-                                                                <option>720</option>
-                                                                <option>360</option>
-                                                                <option selected="selected">120</option>
-                                                                <option>60</option>
-                                                                <option>30</option>
-                                                                <option>10</option>
-                                                            </select>
-                                                            <span> minutes. </span>
-                                                            <button id="regenerate-animations-button" class="btn btn-mini disabled">Regenerate</button>
-                                                        </div>
+                                                        <span>
+                                                            in <input id="slice_minutes" type="text" class="text-3d-input" value="5"/> minute slices.
+                                                        </span>
+                                                        <span>
+                                                            Fade away after <input id="fade_away_minutes" type="text" class="text-3d-input" value="120"/> minutes.
+                                                        </span>
                                                         <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
                                                             <div id="geo3d-colorbar"></div>
                                                         </a>
@@ -385,7 +365,7 @@
                                                                 </div>
                                                                 <div class="span3">
                                                                     <span id="spatial-3d-x3d-speedup" style="font-size:11px;display:none;">
-                                                                        Speedup: <input id="speedup-value" class="stoqs-speedup-input" type="text"/>x
+                                                                        Speedup: <input id="speedup-value" class="text-3d-input" type="text"/>x
                                                                     </span>
                                                                 </div>
                                                                 <div class="span8" style="padding:0px;margin-left:5px;display:none;">
