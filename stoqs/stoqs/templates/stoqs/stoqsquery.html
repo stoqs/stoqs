@@ -297,7 +297,7 @@
                                             <div id="collapseContols3D" class="accordion-body in">
                                                 <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
                                                     <h5><a id="measurements-3d" class="accordion-toggle" data-toggle="collapse" href="#measurements3D" title="Make selections in Measured Parameters section" style="padding:0px;color:black;">
-                                                        Measured Parameters
+                                                        Measured Parameter
                                                     </a></h5>
                                                     <div id="measurements3D" class="accordion-body in">
                                                         <form class="form-inline" action="javascript:void(0);" style="margin:0px;vertical-align:bottom;">
@@ -315,10 +315,7 @@
                                                             </label>
                                                         </form>
                                                         <span>
-                                                            in <input id="slice_minutes" type="text" class="text-3d-input" value="5"/> minute slices (for contour curtainimages).
-                                                        </span>
-                                                        <span>
-                                                            Fade away after <input id="fade_away_minutes" type="text" class="text-3d-input" value="120"/> minutes.
+                                                            in <input id="slice_minutes" type="text" class="text-3d-input" value="5"/> minute slices (for contour curtain images)
                                                         </span>
                                                         <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
                                                             <div id="geo3d-colorbar"></div>
@@ -372,13 +369,15 @@
                                                                     </span>
                                                                 </div>
                                                                 <div class="span8" style="padding:0px;margin-left:5px;display:none;">
-                                                                    <form class="form-inline">
-                                                                        Measured Parameters:
+                                                                    <form class="form-inline" action="javascript:void(0);">
+                                                                        Measured Parameter:
                                                                         <label>
-                                                                            <input type="radio" name="show-mp-3d" value="all" style="margin-top:0;margin-bottom:3px;" checked /> show all
+                                                                            <input type="radio" name="show-mp-3d" value="all" style="margin-top:0;margin-bottom:3px;" checked /> Show all
                                                                         </label>
                                                                         <label>
-                                                                            <input type="radio" name="show-mp-3d" value="tails" style="margin-top:0;margin-bottom:3px;" /> animate tails
+                                                                            <input type="radio" name="show-mp-3d" value="tails" style="margin-top:0;margin-bottom:3px;" />
+                                                                            Show in <input id="step_minutes" type="text" class="text-3d-input" value="5"/> minute steps,
+                                                                            fade away after <input id="fade_away_minutes" type="text" class="text-3d-input" value="120"/> minutes
                                                                         </label>
                                                                     </form>
                                                                 </div>
