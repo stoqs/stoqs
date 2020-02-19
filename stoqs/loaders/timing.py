@@ -4,7 +4,7 @@ import atexit
 from time import time, strftime, localtime
 from datetime import datetime, timedelta
 
-MINUTES = 'Minutes to load:'
+MINUTES = 'Minutes to execute:'
 
 def secondsToStr(elapsed=None):
     if elapsed is None:
