@@ -13,7 +13,7 @@ installing all the required software.
 
 ### Setting up your development system
  
-1. Build a development Linux system -- the [Vagrantfile installation](README.md)
+1. Build a development Linux system -- the [Vagrantfile installation](README.md#getting-started-with-a-stoqs-development-system)
    saves a lot of time and frustration in doing this
 
 2. Fork the repository after logging into GitHub by clicking on the Fork button at 
@@ -24,7 +24,8 @@ installing all the required software.
 
 4. Rename the existing `origin` remote to `upstream`:
 
-        cd /vagrant/dev/stoqsgit
+        export STOQS_HOME=/vagrant/dev/stoqsgit  # Use STOQS_HOME=/home/vagrant/dev/stoqsgit if not using NFS mount
+        cd $STOQS_HOME
         git remote rename origin upstream
 
 5. Assign `origin` remote to your forked repository:
@@ -37,7 +38,8 @@ installing all the required software.
 
 1. cd into your working directory, e.g.:
 
-        cd /vagrant/dev/stoqsgit
+        export STOQS_HOME=/vagrant/dev/stoqsgit  # Use STOQS_HOME=/home/vagrant/dev/stoqsgit if not using NFS mount
+        cd $STOQS_HOME
 
 2. Create a branch off of master for the new feature: 
 
