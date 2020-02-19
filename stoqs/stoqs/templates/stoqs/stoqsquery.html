@@ -1581,19 +1581,15 @@
                 if ( parseInt(cb_shape_id) < last_cb_shape_esec ) {
                     //console.log('Wrap-around detected. Setting all shapes to render false.');
                     $.each(render_shapes, function(esec, shape_grp) {
-                        $.each(shape_grp.shapes, function(index, shape_id) {
-                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                                $('#' + shape_id)[0].setAttribute('render', 'false');
-                            }
-                        });
+                        if ( ! $.isEmptyObject(shape_grp.shapes) ) {
+                            $.each(shape_grp.shapes, function(index, shape_id) {
+                                if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                    $('#' + shape_id)[0].setAttribute('render', 'false');
+                                }
+                            });
+                        }
                     });
                 }
-                //console.log('Setting render attributes for shape key: ' + cb_shape_id);
-                $.each(render_shapes[cb_shape_id]['shapes'], function(index, shape_id) {
-                    if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                        $('#' + shape_id)[0].setAttribute('render', 'true');
-                    }
-                });
                 var before_id = render_shapes[cb_shape_id]['before'];
                 if ( before_id !== null ) {
                     $.each(render_shapes[before_id]['shapes'], function(index, shape_id) {
@@ -1610,6 +1606,12 @@
                         }
                     });
                 }
+                //console.log('Setting render attributes for shape key: ' + cb_shape_id);
+                $.each(render_shapes[cb_shape_id]['shapes'], function(index, shape_id) {
+                    if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                        $('#' + shape_id)[0].setAttribute('render', 'true');
+                    }
+                });
                 last_cb_shape_esec = parseInt(cb_shape_id);
             }
         }
@@ -1693,11 +1695,13 @@
             if ($('input:radio[name=show-mp-3d]:checked').val() == 'tails') {
                 if ( ! $.isEmptyObject(render_shapes) ) {
                     $.each(render_shapes, function(esec, shape_grp) {
-                        $.each(shape_grp.shapes, function(index, shape_id) {
-                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                                $('#' + shape_id)[0].setAttribute('render', 'false');
-                            }
-                        });
+                        if ( ! $.isEmptyObject(shape_grp.shapes) ) {
+                            $.each(shape_grp.shapes, function(index, shape_id) {
+                                if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                    $('#' + shape_id)[0].setAttribute('render', 'false');
+                                }
+                            });
+                        }
                     });
                 }
             }
@@ -2732,22 +2736,26 @@
             if ($('input:radio[name=show-mp-3d]:checked').val() == 'all') {
                 if ( ! $.isEmptyObject(render_shapes) ) {
                     $.each(render_shapes, function(esec, shape_grp) {
-                        $.each(shape_grp.shapes, function(index, shape_id) {
-                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                                $('#' + shape_id)[0].setAttribute('render', 'true');
-                            }
-                        });
+                        if ( ! $.isEmptyObject(shape_grp.shapes) ) {
+                            $.each(shape_grp.shapes, function(index, shape_id) {
+                                if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                    $('#' + shape_id)[0].setAttribute('render', 'true');
+                                }
+                            });
+                        }
                     });
                 }
             }
             if ($('input:radio[name=show-mp-3d]:checked').val() == 'tails') {
                 if ( ! $.isEmptyObject(render_shapes) ) {
                     $.each(render_shapes, function(esec, shape_grp) {
-                        $.each(shape_grp.shapes, function(index, shape_id) {
-                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                                $('#' + shape_id)[0].setAttribute('render', 'false');
-                            }
-                        });
+                        if ( ! $.isEmptyObject(shape_grp.shapes) ) {
+                            $.each(shape_grp.shapes, function(index, shape_id) {
+                                if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                    $('#' + shape_id)[0].setAttribute('render', 'false');
+                                }
+                            });
+                        }
                     });
                 }
             }
@@ -2943,6 +2951,17 @@
         }
         else {
             show_geox3drotaxis(false);
+        }
+    });
+
+    $('#step_minutes').on('keypress', function (e) {
+        if (e.which == 13) {
+            // Enter key pressed
+            if ($('#showgeox3dmeasurement').is(':checked')) {
+                var all_shapes = render_shapes['all_shapes'];
+                render_shapes = {};     // Re-initialize this global object
+                merge_shape_id_dicts(all_shapes);
+            }
         }
     });
 
@@ -4438,6 +4457,71 @@ function enable_cardboard(){
         return false;
     }
 
+    function merge_shape_id_dicts(shape_dict) {
+        var step_sec = parseInt($('#step_minutes').val()) * 60.0;
+        var fade_sec = parseInt($('#fade_away_minutes').val()) * 60.0;
+        if ( $.isEmptyObject(render_shapes) ) {
+            var min_esec = (new Date()).getTime()/1000;
+            var max_esec = 0;
+            $.each(shape_dict, function(es, shape_id) {
+                var esec = parseInt(es);
+                if (esec < min_esec) {
+                    min_esec = esec;
+                }
+                if (esec > max_esec) {
+                    max_esec = esec;
+                }
+            });
+
+            // Group shapes into a global dictionary (render_shapes) for turning off & on in update3DScene() - time wraps around
+            last_esec = null;
+            //for (var grp_esec = min_esec + inc_sec; grp_esec <= max_esec + inc_sec; grp_esec += inc_sec) {
+            render_shapes['all_shapes'] = [];
+            for (var grp_esec = min_esec + step_sec; grp_esec <= max_esec + step_sec; grp_esec += step_sec) {
+                render_shapes[grp_esec] = [];
+                render_shapes[grp_esec]['before'] = last_esec;
+                render_shapes[grp_esec]['after'] = grp_esec + step_sec;
+                render_shapes[grp_esec]['shapes'] = [];
+                last_esec = grp_esec;
+            }
+            render_shapes[min_esec+step_sec]['before'] = last_esec;
+            render_shapes[last_esec]['after'] = min_esec + step_sec;
+        }
+        else {
+            min_esec = Math.min.apply(null, Object.keys(render_shapes));
+            max_esec = Math.max.apply(null, Object.keys(render_shapes));
+        }
+
+        //for (var grp_esec = min_esec + inc_sec; grp_esec <= max_esec + inc_sec; grp_esec += inc_sec) {
+        for (var grp_esec = min_esec + step_sec; grp_esec <= max_esec + step_sec; grp_esec += step_sec) {
+            var bin_start = grp_esec - fade_sec;
+            var bin_end = grp_esec;
+            $.each(shape_dict, function(es, shape_ids) {
+                render_shapes['all_shapes'][es] = shape_ids;
+                var esec = parseInt(es);
+                if (bin_start <= esec && esec <= bin_end) {
+                    $.each(shape_ids, function(index, shape_id) {
+                        render_shapes[grp_esec]['shapes'].push(shape_id);
+                    });
+                }
+
+            });
+        }
+
+        // TimeSensor limits - different than Flot plot limits - needed for update3DScene()
+        var time_esecs = Object.keys(render_shapes);
+        $('body').data()['timesensor-start-ems'] = time_esecs[0] * 1000.0;
+        $('body').data()['timesensor-end-ems'] = time_esecs[time_esecs.length-1] * 1000.0;
+        $('body').data()['timesensor-start-time'] = getUTCDateString(new Date($('body').data()['timesensor-start-ems']));
+        $('body').data()['timesensor-end-time'] = getUTCDateString(new Date($('body').data()['timesensor-end-ems']));
+
+        $('#slider-start-time').html($('body').data()['timesensor-start-time']);
+        $('#slider-end-time').html($('body').data()['timesensor-end-time']);
+    }
+
+
+
+
     $("#time-depth-flot").bind("plotselected", ZoomIn);
     $("#time-depth-flot").bind("contextmenu",  ZoomOut);
 
@@ -5528,63 +5612,6 @@ function enable_cardboard(){
             $('#metadata-ajaxtime').html(" " + nsecs + " seconds");
             $('#metadata-loading').html("");
         } //resetWaitIndicators()
-
-        function merge_shape_id_dicts(shape_dict) {
-            var inc_sec = parseInt($('#fade_away_minutes').val()) * 60.0;
-            if ( $.isEmptyObject(render_shapes) ) {
-                var min_esec = (new Date()).getTime()/1000;
-                var max_esec = 0;
-                $.each(shape_dict, function(es, shape_id) {
-                    var esec = parseInt(es);
-                    if (esec < min_esec) {
-                        min_esec = esec;
-                    }
-                    if (esec > max_esec) {
-                        max_esec = esec;
-                    }
-                });
-
-                // Group shapes into a global dictionary (render_shapes) for turning off & on in update3DScene() - time wraps around
-                last_esec = null;
-                for (var grp_esec = min_esec + inc_sec; grp_esec <= max_esec + inc_sec; grp_esec += inc_sec) {
-                    render_shapes[grp_esec] = [];
-                    render_shapes[grp_esec]['before'] = last_esec;
-                    render_shapes[grp_esec]['after'] = grp_esec + inc_sec;
-                    render_shapes[grp_esec]['shapes'] = [];
-                    last_esec = grp_esec;
-                }
-                render_shapes[min_esec+inc_sec]['before'] = last_esec;
-                render_shapes[last_esec]['after'] = min_esec + inc_sec;
-            }
-            else {
-                min_esec = Math.min.apply(null, Object.keys(render_shapes));
-                max_esec = Math.max.apply(null, Object.keys(render_shapes));
-            }
-
-            for (var grp_esec = min_esec + inc_sec; grp_esec <= max_esec + inc_sec; grp_esec += inc_sec) {
-                var bin_start = grp_esec - inc_sec;
-                var bin_end = grp_esec;
-                $.each(shape_dict, function(es, shape_ids) {
-                    var esec = parseInt(es);
-                    if (bin_start <= esec && esec <= bin_end) {
-                        $.each(shape_ids, function(index, shape_id) {
-                            render_shapes[grp_esec]['shapes'].push(shape_id);
-                        });
-                    }
-
-                });
-            }
-
-            // TimeSensor limits - different than Flot plot limits - needed for update3DScene()
-            var time_esecs = Object.keys(render_shapes);
-            $('body').data()['timesensor-start-ems'] = time_esecs[0] * 1000.0;
-            $('body').data()['timesensor-end-ems'] = time_esecs[time_esecs.length-1] * 1000.0;
-            $('body').data()['timesensor-start-time'] = getUTCDateString(new Date($('body').data()['timesensor-start-ems']));
-            $('body').data()['timesensor-end-time'] = getUTCDateString(new Date($('body').data()['timesensor-end-ems']));
-
-            $('#slider-start-time').html($('body').data()['timesensor-start-time']);
-            $('#slider-end-time').html($('body').data()['timesensor-end-time']);
-        }
 
         function updateTimeSensor(ts) {
             $('#animations').html(ts);
