@@ -66,6 +66,9 @@
             border-color: transparent; 
             background-color: transparent; 
         }
+        .accordion-group {
+            border: none;
+        }
         .stoqs-color-limit-input {
             width: 40px;
             height: 10px;
@@ -73,7 +76,7 @@
             font-size: 13px;
             margin-bottom: 0px;
         }
-        .stoqs-speedup-input {
+        .text-3d-input {
             width: 25px;
             height: 8px;
             line-height: 12px;
@@ -214,7 +217,7 @@
 
             <div id="accordion1" class="accordion well" style="border:none;">
 
-                <div id="spatial-group" class="accordian-group">
+                <div id="spatial-group" class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="spatial-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseSpatial">
                         Spatial
@@ -294,10 +297,10 @@
                                             <div id="collapseContols3D" class="accordion-body in">
                                                 <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
                                                     <h5><a id="measurements-3d" class="accordion-toggle" data-toggle="collapse" href="#measurements3D" title="Make selections in Measured Parameters section" style="padding:0px;color:black;">
-                                                        Measured Parameters
+                                                        Measured Parameter
                                                     </a></h5>
                                                     <div id="measurements3D" class="accordion-body in">
-                                                        <form class="form-inline" style="margin:0px;vertical-align:center">
+                                                        <form class="form-inline" action="javascript:void(0);" style="margin:0px;vertical-align:bottom;">
                                                             <label class="checkbox disabled" style="margin:0px;">
                                                                 <input type="checkbox" id="showgeox3dmeasurement" />
                                                                 <span id="showgeox3dmeasurementtext">Show visualizations of Plot Data Color selections </span>
@@ -311,32 +314,9 @@
                                                                 <span>Polygons</span>
                                                             </label>
                                                         </form>
-                                                        <div class="input-group" style="padding-bottom:0px;padding-top:1px;"> 
-                                                            <span> Animate in </span>
-                                                            <select id="slice_minutes" class="selectpicker form-control regen-activate" style="height:18px;width:55px;margin-bottom:5px;">
-                                                                <option>1440</option>
-                                                                <option>720</option>
-                                                                <option>360</option>
-                                                                <option>120</option>
-                                                                <option>60</option>
-                                                                <option>30</option>
-                                                                <option>10</option>
-                                                                <option selected="selected">5</option>
-                                                            </select>
-                                                            <span> minute slices. </span>
-                                                            <span> Fade away after </span>
-                                                            <select id="fade_away_minutes" class="selectpicker form-control regen-activate" style="height:18px;width:55px;margin-bottom:5px;">
-                                                                <option>1440</option>
-                                                                <option>720</option>
-                                                                <option>360</option>
-                                                                <option selected="selected">120</option>
-                                                                <option>60</option>
-                                                                <option>30</option>
-                                                                <option>10</option>
-                                                            </select>
-                                                            <span> minutes. </span>
-                                                            <button id="regenerate-animations-button" class="btn btn-mini disabled">Regenerate</button>
-                                                        </div>
+                                                        <span>
+                                                            in <input id="slice_minutes" type="text" class="text-3d-input" value="5"/> minute slices (for contour curtain images)
+                                                        </span>
                                                         <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
                                                             <div id="geo3d-colorbar"></div>
                                                         </a>
@@ -385,17 +365,19 @@
                                                                 </div>
                                                                 <div class="span3">
                                                                     <span id="spatial-3d-x3d-speedup" style="font-size:11px;display:none;">
-                                                                        Speedup: <input id="speedup-value" class="stoqs-speedup-input" type="text"/>x
+                                                                        Speedup: <input id="speedup-value" class="text-3d-input" type="text"/>x
                                                                     </span>
                                                                 </div>
                                                                 <div class="span8" style="padding:0px;margin-left:5px;display:none;">
-                                                                    <form class="form-inline">
-                                                                        Measured Parameters:
+                                                                    <form class="form-inline" action="javascript:void(0);">
+                                                                        Measured Parameter:
                                                                         <label>
-                                                                            <input type="radio" name="show-mp-3d" value="all" style="margin-top:0;margin-bottom:3px;" checked /> show all
+                                                                            <input type="radio" name="show-mp-3d" value="all" style="margin-top:0;margin-bottom:3px;" checked /> Show all
                                                                         </label>
                                                                         <label>
-                                                                            <input type="radio" name="show-mp-3d" value="tails" style="margin-top:0;margin-bottom:3px;" /> animate tails
+                                                                            <input type="radio" name="show-mp-3d" value="tails" style="margin-top:0;margin-bottom:3px;" />
+                                                                            Show in <input id="step_minutes" type="text" class="text-3d-input" value="5"/> minute steps,
+                                                                            fade away after <input id="fade_away_minutes" type="text" class="text-3d-input" value="120"/> minutes
                                                                         </label>
                                                                     </form>
                                                                 </div>
@@ -554,10 +536,10 @@
                             </div><!-- tab-content -->
                         </div><!-- accordion-inner -->
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
 
-                <div id="metadata-group" class="accordian-group">
+                <div id="metadata-group" class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="metadata-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseMetadata">
                         Metadata:</a> <span id="metadata-count" style="color:black;"></span>
@@ -595,10 +577,10 @@
 
                         </div><!-- accordion-inner -->
                     </div><!-- collapseMetadata -->
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
 
-                <div id="parameter-parameter-group" class="accordian-group">
+                <div id="parameter-parameter-group" class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="parameter-parameter-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseParameterParameter">
                         Parameter-Parameter</a>
@@ -799,10 +781,10 @@
                         </div><!-- accordion-inner -->
                     </div><!-- collapseParameterParameter -->
 
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
 
-                <div id="sp-data-access-group" class="accordian-group" style="display:none">
+                <div id="sp-data-access-group" class="accordion-group" style="display:none">
                     <div class="accordian-heading">
                         <h3><a id="sp-data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#sp-collapseDataAccess">
                         Sampled Parameter Data Access
@@ -870,10 +852,10 @@
                         </div>
                     </div>
 
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
 
-                <div id="mp-data-access-group" class="accordian-group">
+                <div id="mp-data-access-group" class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="mp-data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#mp-collapseDataAccess">
                         Measured Parameter Data Access
@@ -933,7 +915,7 @@
                             
                         </div>
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
             </div><!-- accordian well -->
 
@@ -942,7 +924,7 @@
         <div id="right-column" class="span6 stoqs-zoom-width">
             <div class="accordion well" id="accordion2" style="border:none;">
 
-                <div class="accordian-group">
+                <div class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="temporal-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTemporal">
                         Temporal</a>
@@ -1022,11 +1004,11 @@
 
                         </div><!-- accordion-inner -->
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
 
-                <div class="accordian-group" style="display:none;">
-                    <!--<div class="accordian-group">-->
+                <div class="accordion-group" style="display:none;">
+                    <!--<div class="accordion-group">-->
                     <div class="accordian-heading">
                         <table><tr style="white-space:nowrap;">
                             <td style="width:20%;"><h3>
@@ -1112,7 +1094,7 @@
 
 
 
-                <div class="accordian-group" style="display:none">
+                <div class="accordion-group" style="display:none">
                     <div class="accordian-heading">
                         <h3><a id="sampledparameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSampledParameter">
                         Sampled Parameters</a>
@@ -1217,10 +1199,10 @@
                             </fieldset>
                         </div>
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
 
-                <div class="accordian-group">
+                <div class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="measuredparameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseMeasuredParameter">
                         Measured Parameters</a>
@@ -1334,9 +1316,9 @@
                             </fieldset>
                         </div>
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
-                <div class="accordian-group">
+                <div class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="parameter-values-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseParameterValues">
                         Parameter Values</a>
@@ -1358,9 +1340,9 @@
                             </table>
                         </div>
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
-                <div id="attributes-group" class="accordian-group" style="display:none;">
+                <div id="attributes-group" class="accordion-group" style="display:none;">
                     <div class="accordian-heading">
                         <h3><a id="attributes-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseAttributes">
                         Attributes</a>
@@ -1393,7 +1375,7 @@
                     </div>
                 </div>
 
-                <div class="accordian-group">
+                <div class="accordion-group">
                     <div class="accordian-heading">
                         <h3><a id="platforms-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapsePlatforms">
                         Platforms</a>
@@ -1426,7 +1408,7 @@
                             </table>
                         </div>
                     </div>
-                </div><!-- accordian-group -->
+                </div><!-- accordion-group -->
 
             </div><!-- accordian well -->
 
@@ -1599,19 +1581,15 @@
                 if ( parseInt(cb_shape_id) < last_cb_shape_esec ) {
                     //console.log('Wrap-around detected. Setting all shapes to render false.');
                     $.each(render_shapes, function(esec, shape_grp) {
-                        $.each(shape_grp.shapes, function(index, shape_id) {
-                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                                $('#' + shape_id)[0].setAttribute('render', 'false');
-                            }
-                        });
+                        if ( ! $.isEmptyObject(shape_grp.shapes) ) {
+                            $.each(shape_grp.shapes, function(index, shape_id) {
+                                if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                    $('#' + shape_id)[0].setAttribute('render', 'false');
+                                }
+                            });
+                        }
                     });
                 }
-                //console.log('Setting render attributes for shape key: ' + cb_shape_id);
-                $.each(render_shapes[cb_shape_id]['shapes'], function(index, shape_id) {
-                    if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                        $('#' + shape_id)[0].setAttribute('render', 'true');
-                    }
-                });
                 var before_id = render_shapes[cb_shape_id]['before'];
                 if ( before_id !== null ) {
                     $.each(render_shapes[before_id]['shapes'], function(index, shape_id) {
@@ -1628,6 +1606,12 @@
                         }
                     });
                 }
+                //console.log('Setting render attributes for shape key: ' + cb_shape_id);
+                $.each(render_shapes[cb_shape_id]['shapes'], function(index, shape_id) {
+                    if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                        $('#' + shape_id)[0].setAttribute('render', 'true');
+                    }
+                });
                 last_cb_shape_esec = parseInt(cb_shape_id);
             }
         }
@@ -1711,11 +1695,13 @@
             if ($('input:radio[name=show-mp-3d]:checked').val() == 'tails') {
                 if ( ! $.isEmptyObject(render_shapes) ) {
                     $.each(render_shapes, function(esec, shape_grp) {
-                        $.each(shape_grp.shapes, function(index, shape_id) {
-                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                                $('#' + shape_id)[0].setAttribute('render', 'false');
-                            }
-                        });
+                        if ( ! $.isEmptyObject(shape_grp.shapes) ) {
+                            $.each(shape_grp.shapes, function(index, shape_id) {
+                                if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                    $('#' + shape_id)[0].setAttribute('render', 'false');
+                                }
+                            });
+                        }
                     });
                 }
             }
@@ -2750,22 +2736,26 @@
             if ($('input:radio[name=show-mp-3d]:checked').val() == 'all') {
                 if ( ! $.isEmptyObject(render_shapes) ) {
                     $.each(render_shapes, function(esec, shape_grp) {
-                        $.each(shape_grp.shapes, function(index, shape_id) {
-                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                                $('#' + shape_id)[0].setAttribute('render', 'true');
-                            }
-                        });
+                        if ( ! $.isEmptyObject(shape_grp.shapes) ) {
+                            $.each(shape_grp.shapes, function(index, shape_id) {
+                                if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                    $('#' + shape_id)[0].setAttribute('render', 'true');
+                                }
+                            });
+                        }
                     });
                 }
             }
             if ($('input:radio[name=show-mp-3d]:checked').val() == 'tails') {
                 if ( ! $.isEmptyObject(render_shapes) ) {
                     $.each(render_shapes, function(esec, shape_grp) {
-                        $.each(shape_grp.shapes, function(index, shape_id) {
-                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                                $('#' + shape_id)[0].setAttribute('render', 'false');
-                            }
-                        });
+                        if ( ! $.isEmptyObject(shape_grp.shapes) ) {
+                            $.each(shape_grp.shapes, function(index, shape_id) {
+                                if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                    $('#' + shape_id)[0].setAttribute('render', 'false');
+                                }
+                            });
+                        }
                     });
                 }
             }
@@ -2964,8 +2954,20 @@
         }
     });
 
-    $('#regenerate-animations-button').click(function () {
-        if ( $('#regenerate-animations-button').hasClass('btn-primary') ) {
+    $('#step_minutes').on('keypress', function (e) {
+        if (e.which == 13) {
+            // Enter key pressed
+            if ($('#showgeox3dmeasurement').is(':checked')) {
+                var all_shapes = render_shapes['all_shapes'];
+                render_shapes = {};     // Re-initialize this global object
+                merge_shape_id_dicts(all_shapes);
+            }
+        }
+    });
+
+    $('#slice_minutes').on('keypress', function (e) {
+        if (e.which == 13) {
+            // Enter key pressed
             var rebuild_list = [];
             if ($('#showplatforms').is(':checked')) {
                 rebuild_list.push('platformanimation');
@@ -3047,11 +3049,6 @@
         $('#apply-color-limit-button').addClass('btn-primary');
         $('#reset-color-limit-button').removeClass('disabled');
         $('#reset-color-limit-button').addClass('btn-primary');
-    });
-
-    $('.regen-activate').on('change', function (event, previousText) {
-        $('#regenerate-animations-button').removeClass('disabled');
-        $('#regenerate-animations-button').addClass('btn-primary');
     });
 
     $('#cmincmax_lock').on('change', function (event) {
@@ -4460,6 +4457,71 @@ function enable_cardboard(){
         return false;
     }
 
+    function merge_shape_id_dicts(shape_dict) {
+        var step_sec = parseInt($('#step_minutes').val()) * 60.0;
+        var fade_sec = parseInt($('#fade_away_minutes').val()) * 60.0;
+        if ( $.isEmptyObject(render_shapes) ) {
+            var min_esec = (new Date()).getTime()/1000;
+            var max_esec = 0;
+            $.each(shape_dict, function(es, shape_id) {
+                var esec = parseInt(es);
+                if (esec < min_esec) {
+                    min_esec = esec;
+                }
+                if (esec > max_esec) {
+                    max_esec = esec;
+                }
+            });
+
+            // Group shapes into a global dictionary (render_shapes) for turning off & on in update3DScene() - time wraps around
+            last_esec = null;
+            //for (var grp_esec = min_esec + inc_sec; grp_esec <= max_esec + inc_sec; grp_esec += inc_sec) {
+            render_shapes['all_shapes'] = [];
+            for (var grp_esec = min_esec + step_sec; grp_esec <= max_esec + step_sec; grp_esec += step_sec) {
+                render_shapes[grp_esec] = [];
+                render_shapes[grp_esec]['before'] = last_esec;
+                render_shapes[grp_esec]['after'] = grp_esec + step_sec;
+                render_shapes[grp_esec]['shapes'] = [];
+                last_esec = grp_esec;
+            }
+            render_shapes[min_esec+step_sec]['before'] = last_esec;
+            render_shapes[last_esec]['after'] = min_esec + step_sec;
+        }
+        else {
+            min_esec = Math.min.apply(null, Object.keys(render_shapes));
+            max_esec = Math.max.apply(null, Object.keys(render_shapes));
+        }
+
+        //for (var grp_esec = min_esec + inc_sec; grp_esec <= max_esec + inc_sec; grp_esec += inc_sec) {
+        for (var grp_esec = min_esec + step_sec; grp_esec <= max_esec + step_sec; grp_esec += step_sec) {
+            var bin_start = grp_esec - fade_sec;
+            var bin_end = grp_esec;
+            $.each(shape_dict, function(es, shape_ids) {
+                render_shapes['all_shapes'][es] = shape_ids;
+                var esec = parseInt(es);
+                if (bin_start <= esec && esec <= bin_end) {
+                    $.each(shape_ids, function(index, shape_id) {
+                        render_shapes[grp_esec]['shapes'].push(shape_id);
+                    });
+                }
+
+            });
+        }
+
+        // TimeSensor limits - different than Flot plot limits - needed for update3DScene()
+        var time_esecs = Object.keys(render_shapes);
+        $('body').data()['timesensor-start-ems'] = time_esecs[0] * 1000.0;
+        $('body').data()['timesensor-end-ems'] = time_esecs[time_esecs.length-1] * 1000.0;
+        $('body').data()['timesensor-start-time'] = getUTCDateString(new Date($('body').data()['timesensor-start-ems']));
+        $('body').data()['timesensor-end-time'] = getUTCDateString(new Date($('body').data()['timesensor-end-ems']));
+
+        $('#slider-start-time').html($('body').data()['timesensor-start-time']);
+        $('#slider-end-time').html($('body').data()['timesensor-end-time']);
+    }
+
+
+
+
     $("#time-depth-flot").bind("plotselected", ZoomIn);
     $("#time-depth-flot").bind("contextmenu",  ZoomOut);
 
@@ -4585,7 +4647,6 @@ function enable_cardboard(){
             if ($('#showgeox3dmeasurement').is(':checked')) {
                 qstring += '&showgeox3dmeasurement=1';
                 qstring += '&slice_minutes=' + $('#slice_minutes').val();
-                qstring += '&fade_away_minutes=' + $('#fade_away_minutes').val();
             }
             if ($('#showplatforms').is(':checked')) {
                 qstring += '&showplatforms=1';
@@ -4693,7 +4754,7 @@ function enable_cardboard(){
                 platformActivitiesHtml += '<div id="netcdf-groups">'; 
                 $.each(platforms, function (index, plat) {
                     var activities = $.map(data.resources.netcdf[plat], function(activities, a) {return a}).sort();
-                    platformActivitiesHtml += '<div id="' + plat + '-group" class="accordian-group">' +
+                    platformActivitiesHtml += '<div id="' + plat + '-group" class="accordion-group">' +
                     '<div class="accordian-heading">' + 
                        '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
                         plat + 
@@ -4701,7 +4762,7 @@ function enable_cardboard(){
                     '</div>' + 
                     '<div id="collapse-' + plat + '" class="accordion-body">' + 
                         '<div class="accordion-inner" style="padding:0;">';
-                    ql_plots_tab_html += '<div id="' + plat + '-group" class="accordian-group">' +
+                    ql_plots_tab_html += '<div id="' + plat + '-group" class="accordion-group">' +
                     '<div class="accordian-heading">' + 
                        '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
                         plat + 
@@ -4969,7 +5030,7 @@ function enable_cardboard(){
                 platformTypes = $.map(data[key], function(platforms, ptype) {return ptype}).sort();
                 $.each(platformTypes, function (index, ptype) {
                     platforms = data[key][ptype];
-                    platformTypeHtml += '<div id="' + ptype + '-group" class="accordian-group">' +
+                    platformTypeHtml += '<div id="' + ptype + '-group" class="accordion-group">' +
                     '<div class="accordian-heading">' + 
                        '<h5><a id="' + ptype + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + ptype + '">' + 
                         ptype + 
@@ -5351,7 +5412,7 @@ function enable_cardboard(){
                             if (labelType != 'commandlines') {
                                 labels = data[key]['measurement'][labelType];
                                 labelTypeID = labelType.replace(/ /g, '-');
-                                labelTypeHtml += '<div id="' + labelType + '-group" class="accordian-group">' +
+                                labelTypeHtml += '<div id="' + labelType + '-group" class="accordion-group">' +
                                 '<div class="accordian-heading">' + 
                                 '<h5><a id="' + labelType + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#attributes-anchor" href="#collapse-' + 
                                     labelTypeID + '">' + labelType + 
@@ -5551,63 +5612,6 @@ function enable_cardboard(){
             $('#metadata-ajaxtime').html(" " + nsecs + " seconds");
             $('#metadata-loading').html("");
         } //resetWaitIndicators()
-
-        function merge_shape_id_dicts(shape_dict) {
-            var inc_sec = parseInt($('#fade_away_minutes').val()) * 60.0;
-            if ( $.isEmptyObject(render_shapes) ) {
-                var min_esec = (new Date()).getTime()/1000;
-                var max_esec = 0;
-                $.each(shape_dict, function(es, shape_id) {
-                    var esec = parseInt(es);
-                    if (esec < min_esec) {
-                        min_esec = esec;
-                    }
-                    if (esec > max_esec) {
-                        max_esec = esec;
-                    }
-                });
-
-                // Group shapes into a global dictionary (render_shapes) for turning off & on in update3DScene() - time wraps around
-                last_esec = null;
-                for (var grp_esec = min_esec + inc_sec; grp_esec <= max_esec + inc_sec; grp_esec += inc_sec) {
-                    render_shapes[grp_esec] = [];
-                    render_shapes[grp_esec]['before'] = last_esec;
-                    render_shapes[grp_esec]['after'] = grp_esec + inc_sec;
-                    render_shapes[grp_esec]['shapes'] = [];
-                    last_esec = grp_esec;
-                }
-                render_shapes[min_esec+inc_sec]['before'] = last_esec;
-                render_shapes[last_esec]['after'] = min_esec + inc_sec;
-            }
-            else {
-                min_esec = Math.min.apply(null, Object.keys(render_shapes));
-                max_esec = Math.max.apply(null, Object.keys(render_shapes));
-            }
-
-            for (var grp_esec = min_esec + inc_sec; grp_esec <= max_esec + inc_sec; grp_esec += inc_sec) {
-                var bin_start = grp_esec - inc_sec;
-                var bin_end = grp_esec;
-                $.each(shape_dict, function(es, shape_ids) {
-                    var esec = parseInt(es);
-                    if (bin_start <= esec && esec <= bin_end) {
-                        $.each(shape_ids, function(index, shape_id) {
-                            render_shapes[grp_esec]['shapes'].push(shape_id);
-                        });
-                    }
-
-                });
-            }
-
-            // TimeSensor limits - different than Flot plot limits - needed for update3DScene()
-            var time_esecs = Object.keys(render_shapes);
-            $('body').data()['timesensor-start-ems'] = time_esecs[0] * 1000.0;
-            $('body').data()['timesensor-end-ems'] = time_esecs[time_esecs.length-1] * 1000.0;
-            $('body').data()['timesensor-start-time'] = getUTCDateString(new Date($('body').data()['timesensor-start-ems']));
-            $('body').data()['timesensor-end-time'] = getUTCDateString(new Date($('body').data()['timesensor-end-ems']));
-
-            $('#slider-start-time').html($('body').data()['timesensor-start-time']);
-            $('#slider-end-time').html($('body').data()['timesensor-end-time']);
-        }
 
         function updateTimeSensor(ts) {
             $('#animations').html(ts);
@@ -5979,8 +5983,6 @@ function enable_cardboard(){
                     $('#speedup-value').val(data[key].speedup);
                     $('#slider-start-time').html($('body').data()['start-time']);
                     $('#slider-end-time').html($('body').data()['end-time']);
-                    $('#regenerate-animations-button').addClass('disabled');
-                    $('#regenerate-animations-button').removeClass('btn-primary');
                     if ( ! $.isEmptyObject(data.measuredparameterx3d.limits) ) {
                         sliderLimits = data.measuredparameterx3d.limits;
                         timeAxis = Object.keys(render_shapes);

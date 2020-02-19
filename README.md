@@ -85,14 +85,13 @@ git pull
 
 First, install [Docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/install/)
 on your system.  Then clone the repository; in the docker directory copy the `template.env` file to `.env` 
-and edit it for your specific installation, then execute `docker-compose pull` and `docker-compose up`:
+and edit it for your specific installation, then execute `docker-compose up`:
 
 ```bash
 git clone https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit/docker
 cp template.env .env
 chmod 600 .env      # You must then edit .env and change settings for your environment
-docker-compose pull
 docker-compose up
 ```
 If the directory set to the STOQS_VOLS_DIR variable in your .env file doesn't exist then the 
