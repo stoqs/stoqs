@@ -97,7 +97,9 @@ docker-compose up
 ```
 If the directory set to the STOQS_VOLS_DIR variable in your .env file doesn't exist then the 
 execution of `docker-compose up` will create the postgresql database cluster, load a default 
-stoqs database, and execute the unit and functional tests of the stoqs application.
+stoqs database, and execute the unit and functional tests of the stoqs application.  If you
+don't see these tests being executed (they will take several minutes) then check for error
+messages.
 
 Once you see `... [emperor] vassal /etc/uwsgi/django-uwsgi.ini is ready to accept requests`
 you can visit the site at https://localhost &mdash; it uses a self-signed certificate, so your
@@ -118,7 +120,7 @@ docker-compose up -d
 The above commands should also be done following a `git pull` in order to deploy updated
 software on your server.
 
-One thing that's good to do is monitor logs, this can be done with:
+One thing that's good to do is monitor logs and check for error messages, this can be done with:
 
 ```
 docker-compose logs -f
