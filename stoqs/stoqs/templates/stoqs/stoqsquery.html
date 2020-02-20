@@ -1501,7 +1501,7 @@
     var lastW, lastH;
     var num_pt_colors = 16;
     var render_shapes = {};
-    var all_shapes = {};
+    var all_shapes;
     var frac_esec;
     var start_fraction = 0;
     var stopped_by_scrubbing = false;
@@ -2947,7 +2947,7 @@
         }
     });
 
-    $('#step_minutes').on('keypress', function (e) {
+    $('#step_minutes, #fade_away_minutes').on('keypress', function (e) {
         if (e.which == 13) {
             // Enter key pressed
             if ($('#showgeox3dmeasurement').is(':checked')) {
@@ -4467,7 +4467,7 @@ function enable_cardboard(){
 
             // Group shapes into a global dictionary (render_shapes) for turning off & on in update3DScene() - time wraps around
             last_esec = null;
-            all_shapes = [];
+            all_shapes = {};
             for (var grp_esec = min_esec + step_sec; grp_esec <= max_esec + step_sec; grp_esec += step_sec) {
                 render_shapes[grp_esec] = [];
                 render_shapes[grp_esec]['before'] = last_esec;
