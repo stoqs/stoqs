@@ -2989,10 +2989,14 @@
                 }
             }
             if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
-                // Pause TimeSensor before reloading it
+                // Pause TimeSensor if it's playing
                 $('#spatial-3d-x3d-pause-play').click();
             }
-            rebuildFilters(rebuild_list);
+            var cyc_int = ($('body').data()['timesensor-end-ems'] - $('body').data()['timesensor-start-ems']) / parseFloat($('#speedup-value').val()) / 1000.0;
+            $('#animations > timesensor')[0].setAttribute('enabled', 'false');
+            $('#animations > timesensor')[0].setAttribute('cycleInterval', cyc_int);
+            $('#animations > timesensor')[0].setAttribute('enabled', 'true');
+            $('#spatial-3d-x3d-pause-play').click();
         }
     });
 
