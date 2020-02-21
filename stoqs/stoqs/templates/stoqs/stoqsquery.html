@@ -1453,8 +1453,8 @@
     <script type="text/javascript" src="{{STATIC_URL}}permalink/json2.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/purl.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string-min.js"></script> 
-    <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom-1.8.1/x3dom-full.debug.js"></script>-->
-    <script type="text/javascript" src="https://www.x3dom.org/x3dom/dist/x3dom-full.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}x3dom-1.8.1/x3dom-full.debug.js"></script>
+    <!--<script type="text/javascript" src="https://www.x3dom.org/x3dom/dist/x3dom-full.js"></script>-->
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/GeoOriginTransform.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}linkifyjs/linkify.min.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}linkifyjs/linkify-jquery.min.js"></script>
@@ -1501,6 +1501,7 @@
     var lastW, lastH;
     var num_pt_colors = 16;
     var render_shapes = {};
+    var all_shapes = {};
     var frac_esec;
     var start_fraction = 0;
     var stopped_by_scrubbing = false;
@@ -1581,13 +1582,11 @@
                 if ( parseInt(cb_shape_id) < last_cb_shape_esec ) {
                     //console.log('Wrap-around detected. Setting all shapes to render false.');
                     $.each(render_shapes, function(esec, shape_grp) {
-                        if ( ! $.isEmptyObject(shape_grp.shapes) ) {
-                            $.each(shape_grp.shapes, function(index, shape_id) {
-                                if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                                    $('#' + shape_id)[0].setAttribute('render', 'false');
-                                }
-                            });
-                        }
+                        $.each(shape_grp.shapes, function(index, shape_id) {
+                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                $('#' + shape_id)[0].setAttribute('render', 'false');
+                            }
+                        });
                     });
                 }
                 var before_id = render_shapes[cb_shape_id]['before'];
@@ -1695,13 +1694,11 @@
             if ($('input:radio[name=show-mp-3d]:checked').val() == 'tails') {
                 if ( ! $.isEmptyObject(render_shapes) ) {
                     $.each(render_shapes, function(esec, shape_grp) {
-                        if ( ! $.isEmptyObject(shape_grp.shapes) ) {
-                            $.each(shape_grp.shapes, function(index, shape_id) {
-                                if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                                    $('#' + shape_id)[0].setAttribute('render', 'false');
-                                }
-                            });
-                        }
+                        $.each(shape_grp.shapes, function(index, shape_id) {
+                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                $('#' + shape_id)[0].setAttribute('render', 'false');
+                            }
+                        });
                     });
                 }
             }
@@ -2736,26 +2733,22 @@
             if ($('input:radio[name=show-mp-3d]:checked').val() == 'all') {
                 if ( ! $.isEmptyObject(render_shapes) ) {
                     $.each(render_shapes, function(esec, shape_grp) {
-                        if ( ! $.isEmptyObject(shape_grp.shapes) ) {
-                            $.each(shape_grp.shapes, function(index, shape_id) {
-                                if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                                    $('#' + shape_id)[0].setAttribute('render', 'true');
-                                }
-                            });
-                        }
+                        $.each(shape_grp.shapes, function(index, shape_id) {
+                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                $('#' + shape_id)[0].setAttribute('render', 'true');
+                            }
+                        });
                     });
                 }
             }
             if ($('input:radio[name=show-mp-3d]:checked').val() == 'tails') {
                 if ( ! $.isEmptyObject(render_shapes) ) {
                     $.each(render_shapes, function(esec, shape_grp) {
-                        if ( ! $.isEmptyObject(shape_grp.shapes) ) {
-                            $.each(shape_grp.shapes, function(index, shape_id) {
-                                if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                                    $('#' + shape_id)[0].setAttribute('render', 'false');
-                                }
-                            });
-                        }
+                        $.each(shape_grp.shapes, function(index, shape_id) {
+                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                $('#' + shape_id)[0].setAttribute('render', 'false');
+                            }
+                        });
                     });
                 }
             }
@@ -2954,11 +2947,10 @@
         }
     });
 
-    $('#step_minutes').on('keypress', function (e) {
+    $('#step_minutes, #fade_away_minutes').on('keypress', function (e) {
         if (e.which == 13) {
             // Enter key pressed
             if ($('#showgeox3dmeasurement').is(':checked')) {
-                var all_shapes = render_shapes['all_shapes'];
                 render_shapes = {};     // Re-initialize this global object
                 merge_shape_id_dicts(all_shapes);
             }
@@ -2997,10 +2989,14 @@
                 }
             }
             if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
-                // Pause TimeSensor before reloading it
+                // Pause TimeSensor if it's playing
                 $('#spatial-3d-x3d-pause-play').click();
             }
-            rebuildFilters(rebuild_list);
+            var cyc_int = ($('body').data()['timesensor-end-ems'] - $('body').data()['timesensor-start-ems']) / parseFloat($('#speedup-value').val()) / 1000.0;
+            $('#animations > timesensor')[0].setAttribute('enabled', 'false');
+            $('#animations > timesensor')[0].setAttribute('cycleInterval', cyc_int);
+            $('#animations > timesensor')[0].setAttribute('enabled', 'true');
+            $('#spatial-3d-x3d-pause-play').click();
         }
     });
 
@@ -4475,8 +4471,7 @@ function enable_cardboard(){
 
             // Group shapes into a global dictionary (render_shapes) for turning off & on in update3DScene() - time wraps around
             last_esec = null;
-            //for (var grp_esec = min_esec + inc_sec; grp_esec <= max_esec + inc_sec; grp_esec += inc_sec) {
-            render_shapes['all_shapes'] = [];
+            all_shapes = {};
             for (var grp_esec = min_esec + step_sec; grp_esec <= max_esec + step_sec; grp_esec += step_sec) {
                 render_shapes[grp_esec] = [];
                 render_shapes[grp_esec]['before'] = last_esec;
@@ -4488,16 +4483,25 @@ function enable_cardboard(){
             render_shapes[last_esec]['after'] = min_esec + step_sec;
         }
         else {
-            min_esec = Math.min.apply(null, Object.keys(render_shapes));
-            max_esec = Math.max.apply(null, Object.keys(render_shapes));
+            min_esec = Math.min.apply(null, Object.keys(render_shapes)) - step_sec;
+            max_esec = Math.max.apply(null, Object.keys(render_shapes)) - step_sec;
         }
 
-        //for (var grp_esec = min_esec + inc_sec; grp_esec <= max_esec + inc_sec; grp_esec += inc_sec) {
+        $.each(shape_dict, function(es, shape_ids) {
+            if ( $.isEmptyObject(all_shapes[es]) ) {
+                all_shapes[es] = [];
+            }
+            $.each(shape_ids, function(index, shape_id) {
+                if ( $.inArray(shape_id, all_shapes[es]) == -1) {
+                    all_shapes[es].push(shape_id);
+                }
+            });
+        });
+
         for (var grp_esec = min_esec + step_sec; grp_esec <= max_esec + step_sec; grp_esec += step_sec) {
             var bin_start = grp_esec - fade_sec;
             var bin_end = grp_esec;
             $.each(shape_dict, function(es, shape_ids) {
-                render_shapes['all_shapes'][es] = shape_ids;
                 var esec = parseInt(es);
                 if (bin_start <= esec && esec <= bin_end) {
                     $.each(shape_ids, function(index, shape_id) {
@@ -4518,8 +4522,6 @@ function enable_cardboard(){
         $('#slider-start-time').html($('body').data()['timesensor-start-time']);
         $('#slider-end-time').html($('body').data()['timesensor-end-time']);
     }
-
-
 
 
     $("#time-depth-flot").bind("plotselected", ZoomIn);

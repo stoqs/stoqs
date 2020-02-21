@@ -20,7 +20,7 @@ h5py==2.10.0
 MarkupSafe==1.1.1
 pandas==1.0.1
 numpy==1.18.1
-requests==2.22.0
+requests==2.23.0
 Pygments==2.5.2
 pygraphviz==1.5
 pymssql-py38==2.1.4
