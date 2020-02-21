@@ -3,15 +3,6 @@
 STOQS_SRVHOME=/srv
 STOQS_SRVPROJ=/srv/stoqs
 
-echo "Checking for presence of ${STOQS_SRVHOME}/stoqs/campaigns.py..."
-if [[ -e ${STOQS_SRVHOME}/stoqs/campaigns.py ]]; then
-    echo "*** File ${STOQS_SRVHOME}/stoqs/campaigns.py exists! ***"
-    echo "This may be a symbolic link to stoqs/mbari_campaigns.py for use in a development system."
-    echo "You must first remove stoqs/campaigns.py before running a Docker-based STOQS server."
-    echo "(Press Ctrl+C to interrupt docker-compose and get your command prompt back.)"
-    exit 1
-fi
-
 # Ensure that stoqs-postgis container is serving databases before continuing
 POSTGRES_DB=postgres python ${STOQS_SRVHOME}/docker/database-check.py > /dev/null 2>&1
 while [[ $? != 0 ]] ; do
@@ -53,6 +44,14 @@ if [[ $? != 0 ]]; then
 fi
 
 if [[ ! -z $CAMPAIGNS_MODULE ]]; then
+    echo "Checking for presence of ${STOQS_SRVHOME}/stoqs/campaigns.py..."
+    if [[ -e ${STOQS_SRVHOME}/stoqs/campaigns.py ]]; then
+        echo "Warning: File ${STOQS_SRVHOME}/stoqs/campaigns.py exists!"
+        echo "This may be a symbolic link to stoqs/mbari_campaigns.py for use in a development system."
+        echo "File stoqs/campaigns.py must first be removed before running a Docker-based STOQS server."
+        echo "Removing it for you..."
+        /bin/rm ${STOQS_SRVHOME}/stoqs/campaigns.py
+    fi
     echo "Copying ${STOQS_SRVHOME}/$CAMPAIGNS_MODULE to ${STOQS_SRVPROJ}/campaigns.py..."
     cp ${STOQS_SRVHOME}/$CAMPAIGNS_MODULE ${STOQS_SRVPROJ}/campaigns.py
 fi
