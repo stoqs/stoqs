@@ -1886,8 +1886,8 @@ class STOQSQManager(object):
                         try:
                             sec_interval = (cp.x[1] - cp.x[0]) * cp.scale_factor
                         except IndexError as e:
-                            logger.warning(f"{e}: Likely no time range for this slice.")
-                            return x3d_dict
+                            logger.warning(f"{e}: Likely no data in this slice.")
+                            continue
                         if sec_interval < min_sec_interval and sec_interval > 0:
                             min_sec_interval = sec_interval
 
