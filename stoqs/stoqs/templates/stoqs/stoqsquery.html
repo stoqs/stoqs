@@ -375,6 +375,9 @@
                                                                             <input type="radio" name="show-mp-3d" value="all" style="margin-top:0;margin-bottom:3px;" checked /> Show all
                                                                         </label>
                                                                         <label>
+                                                                            <input type="radio" name="show-mp-3d" value="clear" style="margin-top:0;margin-bottom:3px;" checked /> Clear
+                                                                        </label>
+                                                                        <label>
                                                                             <input type="radio" name="show-mp-3d" value="tails" style="margin-top:0;margin-bottom:3px;" />
                                                                             Show in <input id="step_minutes" type="text" class="text-3d-input" value="5"/> minute steps,
                                                                             fade away after <input id="fade_away_minutes" type="text" class="text-3d-input" value="120"/> minutes
@@ -2736,6 +2739,17 @@
                         $.each(shape_grp.shapes, function(index, shape_id) {
                             if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
                                 $('#' + shape_id)[0].setAttribute('render', 'true');
+                            }
+                        });
+                    });
+                }
+            }
+            if ($('input:radio[name=show-mp-3d]:checked').val() == 'clear') {
+                if ( ! $.isEmptyObject(render_shapes) ) {
+                    $.each(render_shapes, function(esec, shape_grp) {
+                        $.each(shape_grp.shapes, function(index, shape_id) {
+                            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                                $('#' + shape_id)[0].setAttribute('render', 'false');
                             }
                         });
                     });
