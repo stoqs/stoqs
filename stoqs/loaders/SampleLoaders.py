@@ -331,13 +331,10 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return sample_act, sample_ip, point, depth, maptrack
 
-    def _samples_from_json(self, platform_name, url, db_alias):
-        '''Retrieve Sample information that's available in the syslogurl from the TethysDash REST API
-        url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
-        Construct a TethysDash REST URL that looks like:
-        https://okeanids.mbari.org/TethysDash/api/events?vehicles=tethys&from=2018-09-08T00:00&to=2018-09-08T06:00&eventTypes=logImportant&limit=1000
-        Query it to build information on each sample in the url.
-        '''
+    def _parse_from_syslog(self, platform_name, url, db_alias):
+        pass
+
+    def _parse_from_tethysdash(self, platform_name, url, db_alias):
         esp_s_filtering = []
         esp_s_stopping = []
         esp_log_summaries = []
@@ -356,13 +353,7 @@ class ParentSamplesLoader(STOQS_Loader):
             # Likely an old slate.nc4 file that got converted to a .nc file
             self.logger.warn(f"Could not parse end date year from url = {url}")
             return esp_s_filtering, esp_s_stopping, esp_log_summaries 
-            
         td_url = f"https://okeanids.mbari.org/TethysDash/api/events?vehicles={platform_name}&from={from_time}&to={to_time}&eventTypes=logImportant&limit=100000"
-
-        FILTERING = 'ESP sampling state: S_FILTERING'
-        PROCESSING = 'ESP sampling state: S_PROCESSING'
-        LOGSUMMARY = 'ESP log summary report'
-
         self.logger.debug(f"Opening td_url = {td_url}")
         with requests.get(td_url) as resp:
             if resp.status_code != 200:
@@ -372,23 +363,23 @@ class ParentSamplesLoader(STOQS_Loader):
 
         Log = namedtuple('Log', 'esec text')
         try:
-            esp_s_filtering = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if FILTERING in d['text']]
+            esp_s_filtering = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if no_num_sampling_start_re in d['text']]
         except KeyError:
-            self.logger.debug(f"No '{FILTERING}' messages found in {td_url}")
+            self.logger.debug(f"No '{no_num_sampling_start_re}' messages found in {td_url}")
         try:
-            esp_s_stopping = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if PROCESSING in d['text']]
+            esp_s_stopping = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if no_num_sampling_end_re in d['text']]
         except KeyError:
-            self.logger.debug(f"No '{PROCESSING}' messages found in {td_url}")
+            self.logger.debug(f"No '{no_num_sampling_end_re}' messages found in {td_url}")
         try:
-            esp_log_summaries = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if LOGSUMMARY in d['text']]
+            esp_log_summaries = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if lsr_num_messages_re in d['text']]
         except KeyError:
-            self.logger.debug(f"No '{LOGSUMMARY}' messages found in {td_url}")
+            self.logger.debug(f"No '{lsr_num_messages_re}' messages found in {td_url}")
 
         if esp_s_filtering and esp_s_stopping and esp_log_summaries:
             self.logger.info(f"Parsed {len(esp_log_summaries)} Samples (esp_log_summaries) from {td_url}")
         elif esp_s_filtering and esp_s_stopping:
             # LOGSUMMARY messages were added halfway through 2018, before that create a "sequence number" for the Sample
-            self.logger.info(f"No '{LOGSUMMARY}' messages found")
+            self.logger.info(f"No '{lsr_num_messages_re}' messages found")
             if 'stoqs_canon_may2018' in db_alias:
                 self.logger.info(f"Will assign Cartridge numbers for the Campaign to the Samples - a special fix for stoqs_canon_may2018")
                 numbers = range(self.esp_cartridge_number - len(esp_s_filtering), self.esp_cartridge_number)
@@ -404,8 +395,23 @@ class ParentSamplesLoader(STOQS_Loader):
             self.logger.info(f"Parsed {len(esp_s_filtering)} Samples from {td_url} with no LOGSUMMARY reports")
         else:
             self.logger.info(f"No Samples parsed from {td_url}")
-       
+
         return esp_s_filtering, esp_s_stopping, esp_log_summaries 
+
+    def _samples_from_json(self, platform_name, url, db_alias):
+        '''Retrieve Sample information that's available in the syslogurl from the TethysDash REST API
+        url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
+        Construct a TethysDash REST URL that looks like:
+        https://okeanids.mbari.org/TethysDash/api/events?vehicles=tethys&from=2018-09-08T00:00&to=2018-09-08T06:00&eventTypes=logImportant&limit=1000
+        Query it to build information on each sample in the url.
+        Note: The TethysDash database behind this REST URL is used for real-time command and control and is susiceptible to lost messages.
+              More complete information is in the syslog files.  Let's try and reuse this code by building a similar json data structure from the syslog.
+        '''
+            
+        ##esp_s_filtering, esp_s_stopping, esp_log_summaries = self._parse_from_tethysdash(platform_name, url, db_alias)
+        return self._parse_from_tethysdash(platform_name, url, db_alias)
+       
+        ##return esp_s_filtering, esp_s_stopping, esp_log_summaries 
 
     def _validate_summaries(self, filterings, stoppings, summaries):
         '''Ensure that there are the same number of items in filterings, stoppings, summaries and 
