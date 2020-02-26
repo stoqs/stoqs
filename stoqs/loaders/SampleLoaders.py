@@ -90,6 +90,10 @@ lsr_volume_re           = r'Sampled\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_un
 lsr_volume_re_paused    = r'.*[Ss]ampl.+\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
 lsr_esp_error_msg_re    = r'(?P<esp_error_message>.+Error in PROCESSING.+)'
 
+# Begining of syslog, E.G.: 2019-08-16T19:51:31.135Z,1565985091.135 [ESPComponent](INFO)
+iso_time = r'\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d*Z'
+beg_syslog_re = iso_time + r',(?P<log_esec>\d*\.\d+)\s\[(?P<log_component>[^\]]+)\]\((?P<log_level>[^\)]+)\):\s(?P<log_message>[^\n]+)'
+
 class ClosestTimeNotFoundException(Exception):
     pass
 
@@ -331,17 +335,52 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return sample_act, sample_ip, point, depth, maptrack
 
-    def _samples_from_json(self, platform_name, url, db_alias):
-        '''Retrieve Sample information that's available in the syslogurl from the TethysDash REST API
-        url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
-        Construct a TethysDash REST URL that looks like:
-        https://okeanids.mbari.org/TethysDash/api/events?vehicles=tethys&from=2018-09-08T00:00&to=2018-09-08T06:00&eventTypes=logImportant&limit=1000
-        Query it to build information on each sample in the url.
-        '''
-        esp_s_filtering = []
-        esp_s_stopping = []
-        esp_log_summaries = []
-        
+    def _read_syslog(self, url):
+        syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
+        self.logger.info(f"Getting ESP Sample information from {syslog_url} - first parsing into a json structure")
+        log_rows = []
+
+        # Pull out only these log messages from the syslog
+        components = ('ESPComponent', )
+        levels = ('IMPORTANT', )
+
+        with requests.get(syslog_url, stream=True) as resp:
+            if resp.status_code != 200:
+                self.logger.error(f'Cannot read {syslog_url}, resp.status_code = {resp.status_code}')
+                return
+
+            following_lines = ''
+            prev_message = ''
+            prev_line_has_component = False
+            for line in (lb.decode() for lb in resp.iter_lines()):
+                # Ugly logic to handle multiple line messages
+                lm = re.match(beg_syslog_re, line)
+                if lm:
+                    if lm.groupdict().get('log_component') in components and lm.groupdict().get('log_level') in levels:
+                        if prev_line_has_component:
+                            log_rows.append({'unixTime': float(prev_esec) * 1000, 'text': prev_message})
+
+                        prev_esec = lm.groupdict().get('log_esec')
+                        prev_message = lm.groupdict().get('log_message')
+                        following_lines = ''
+                        prev_line_has_component = True
+                    else:
+                        message = prev_message
+                        if prev_line_has_component:
+                            if following_lines:
+                                message = prev_message + '\n' + following_lines
+                        if message:
+                            log_rows.append({'unixTime': float(prev_esec) * 1000, 'text': message})
+                            prev_message = ''
+
+                        prev_line_has_component = False
+                else:
+                    if line:
+                        following_lines += line + '\n'
+
+        return log_rows
+
+    def _read_tethysdash(self, platform_name, url):
         st = url.split('/')[-1].split('_')[0]
         et = url.split('/')[-1].split('_')[1]
         from_time = f"{st[0:4]}-{st[4:6]}-{st[6:8]}T{st[8:10]}:{st[10:12]}"
@@ -355,40 +394,61 @@ class ParentSamplesLoader(STOQS_Loader):
         except ValueError:
             # Likely an old slate.nc4 file that got converted to a .nc file
             self.logger.warn(f"Could not parse end date year from url = {url}")
-            return esp_s_filtering, esp_s_stopping, esp_log_summaries 
-            
+            return
+
         td_url = f"https://okeanids.mbari.org/TethysDash/api/events?vehicles={platform_name}&from={from_time}&to={to_time}&eventTypes=logImportant&limit=100000"
-
-        FILTERING = 'ESP sampling state: S_FILTERING'
-        PROCESSING = 'ESP sampling state: S_PROCESSING'
-        LOGSUMMARY = 'ESP log summary report'
-
         self.logger.debug(f"Opening td_url = {td_url}")
         with requests.get(td_url) as resp:
             if resp.status_code != 200:
                 self.logger.error('Cannot read %s, resp.status_code = %s', td_url, resp.status_code)
                 return
-            td_log_important = resp.json()['result']
+
+            return resp.json()['result']
+
+    def _esps_from_json(self, platform_name, url, db_alias, use_syslog=True):
+        '''Retrieve Sample information that's available in the syslogurl from the TethysDash REST API
+        url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
+        Construct a TethysDash REST URL that looks like:
+        https://okeanids.mbari.org/TethysDash/api/events?vehicles=tethys&from=2018-09-08T00:00&to=2018-09-08T06:00&eventTypes=logImportant&limit=1000
+        Query it to build information on each sample in the url.
+        Note: The TethysDash database behind this REST URL is used for real-time command and control and is susiceptible to lost messages.
+              More complete information is in the syslog files.  Let's try and reuse this code by building a similar json data structure from the syslog.
+        '''
+        esp_s_filtering = []
+        esp_s_stopping = []
+        esp_log_summaries = []
+
+        FILTERING = 'ESP sampling state: S_FILTERING'
+        PROCESSING = 'ESP sampling state: S_PROCESSING'
+        LOGSUMMARY = 'ESP log summary report'
+
+        if use_syslog:
+            log_important = self._read_syslog(url)
+        else:
+            log_important = self._read_tethysdash(platform_name, url)
+
+        if not log_important:
+            return esp_s_filtering, esp_s_stopping, esp_log_summaries 
 
         Log = namedtuple('Log', 'esec text')
         try:
-            esp_s_filtering = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if FILTERING in d['text']]
+            esp_s_filtering = [Log(d['unixTime']/1000.0, d['text']) for d in log_important if FILTERING in d['text']]
         except KeyError:
-            self.logger.debug(f"No '{FILTERING}' messages found in {td_url}")
+            self.logger.debug(f"No '{no_num_sampling_start_re}' messages found in syslog for {url}")
         try:
-            esp_s_stopping = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if PROCESSING in d['text']]
+            esp_s_stopping = [Log(d['unixTime']/1000.0, d['text']) for d in log_important if PROCESSING in d['text']]
         except KeyError:
-            self.logger.debug(f"No '{PROCESSING}' messages found in {td_url}")
+            self.logger.debug(f"No '{no_num_sampling_end_re}' messages found in syslog for {url}")
         try:
-            esp_log_summaries = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if LOGSUMMARY in d['text']]
+            esp_log_summaries = [Log(d['unixTime']/1000.0, d['text']) for d in log_important if LOGSUMMARY in d['text']]
         except KeyError:
-            self.logger.debug(f"No '{LOGSUMMARY}' messages found in {td_url}")
+            self.logger.debug(f"No '{lsr_num_messages_re}' messages found in syslog for {url}")
 
         if esp_s_filtering and esp_s_stopping and esp_log_summaries:
-            self.logger.info(f"Parsed {len(esp_log_summaries)} Samples (esp_log_summaries) from {td_url}")
+            self.logger.info(f"Parsed {len(esp_log_summaries)} Samples (esp_log_summaries) from syslog for {url}")
         elif esp_s_filtering and esp_s_stopping:
             # LOGSUMMARY messages were added halfway through 2018, before that create a "sequence number" for the Sample
-            self.logger.info(f"No '{LOGSUMMARY}' messages found")
+            self.logger.info(f"No '{lsr_num_messages_re}' messages found")
             if 'stoqs_canon_may2018' in db_alias:
                 self.logger.info(f"Will assign Cartridge numbers for the Campaign to the Samples - a special fix for stoqs_canon_may2018")
                 numbers = range(self.esp_cartridge_number - len(esp_s_filtering), self.esp_cartridge_number)
@@ -401,10 +461,10 @@ class ParentSamplesLoader(STOQS_Loader):
                 for i, filtering, stopping in zip(range(len(esp_s_filtering), 0, -1), esp_s_filtering, esp_s_stopping):
                     self.logger.info(f"Sequence {i} assigned to Sample that started filtering at {filtering.esec} and stopped at {stopping.esec}") 
                     esp_log_summaries.append(Log(filtering.esec, f"Sequence {i}"))
-            self.logger.info(f"Parsed {len(esp_s_filtering)} Samples from {td_url} with no LOGSUMMARY reports")
+            self.logger.info(f"Parsed {len(esp_s_filtering)} Samples from syslog for {url} with no LOGSUMMARY reports")
         else:
-            self.logger.info(f"No Samples parsed from {td_url}")
-       
+            self.logger.info(f"No ESP Samples parsed from syslog for {url}")
+
         return esp_s_filtering, esp_s_stopping, esp_log_summaries 
 
     def _validate_summaries(self, filterings, stoppings, summaries):
@@ -552,15 +612,15 @@ class ParentSamplesLoader(STOQS_Loader):
             if resp.status_code != 200:
                 self.logger.error('Cannot read %s, resp.status_code = %s', td_url, resp.status_code)
                 return
-            td_log_important = resp.json()['result']
+            log_important = resp.json()['result']
 
         Log = namedtuple('Log', 'esec text')
         try:
-            samplings_at = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if SIPPERING in d['text']]
+            samplings_at = [Log(d['unixTime']/1000.0, d['text']) for d in log_important if SIPPERING in d['text']]
         except KeyError:
             self.logger.debug(f"No '{SIPPERING}' messages found in {td_url}")
         try:
-            sample_num_errs = [Log(d['unixTime']/1000.0, d['text']) for d in td_log_important if re.match(SIPPER_NUM_ERR, d['text'])]
+            sample_num_errs = [Log(d['unixTime']/1000.0, d['text']) for d in log_important if re.match(SIPPER_NUM_ERR, d['text'])]
         except KeyError:
             self.logger.debug(f"No '{SIPPERING}' messages found in {td_url}")
 
@@ -632,20 +692,18 @@ class ParentSamplesLoader(STOQS_Loader):
         '''
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
         '''
-        syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
-        self.logger.info(f"Getting ESP or Sipper Sample information from the TethysDash API that's also in {syslog_url}")
 
-        filterings, stoppings, summaries = self._samples_from_json(platform_name, url, db_alias)
+        filterings, stoppings, summaries = self._esps_from_json(platform_name, url, db_alias)
         filterings, stoppings, summaries = self._validate_summaries(filterings, stoppings, summaries)
-        sample_names = self._match_seq_to_cartridge(filterings, stoppings, summaries)
+        esp_names = self._match_seq_to_cartridge(filterings, stoppings, summaries)
 
         samplings_at, sample_num_errs = self._sippers_from_json(platform_name, url)
         sipper_names = self._match_sippers(samplings_at, sample_num_errs)
 
-        if sample_names:
+        if esp_names:
             (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_FILTERING)
             self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
-            self._save_samples(db_alias, platform_name, activity_name, esp_archive_type, sample_names, 
+            self._save_samples(db_alias, platform_name, activity_name, esp_archive_type, esp_names, 
                                log_text='ESP log summary report')
 
         if sipper_names:
