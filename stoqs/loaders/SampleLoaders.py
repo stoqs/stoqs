@@ -249,7 +249,13 @@ class ParentSamplesLoader(STOQS_Loader):
                                                             timevalue__gte=sdt,
                                                             timevalue__lte=edt).order_by('timevalue')
         if not ip_qs:
-            self.logger.warn(f"Could not get InstantPoint - likely doing a high stride test load - skipping Sample {sample_name}")
+            self.logger.warn(f"No InstantPoints for Sample '{sample_name}' between {sdt} and {edt}")
+            if db_alias.endswith('_t'):
+                self.logger.warn(f"Perhaps doing a high stride test load? - skipping Sample '{sample_name}'")
+            else:
+                self.logger.warn(f"*** No timevalue data available for Sample '{sample_name}' between {sdt} and {edt}")
+                self.logger.warn(f"*** Not loading Sample '{sample_name}' because there is no corresponding measurement or location data.")
+
             return None, None, None, None, None
 
         m_qs = Measurement.objects.using(db_alias).filter(instantpoint__activity__name=activity_name,
