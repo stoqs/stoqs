@@ -43,8 +43,11 @@ if cl.args.test:
     #-cl.makai_files = ['201908232353_201908261943_2S_scieng.nc']
     #-cl.makai_parms = ['temperature']
     # Shorter log for testing setting sample_simplify_crit
-    cl.makai_base = 'http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20190819_20190821/20190819T210619/'
-    cl.makai_files = ['201908192106_201908200410_2S_scieng.nc']
+    ##cl.makai_base = 'http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20190819_20190821/20190819T210619/'
+    ##cl.makai_files = ['201908192106_201908200410_2S_scieng.nc']
+    # Test for missing Cartridge 45
+    cl.makai_base = 'http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20190819_20190821/20190820T055043/'
+    cl.makai_files = ['201908200550_201908201158_2S_scieng.nc']
     cl.makai_parms = ['temperature']
     cl.loadLRAUV('makai', sdate, edate, critSimpleDepthTime=0.1, build_attrs=False)
 elif cl.args.stride:
