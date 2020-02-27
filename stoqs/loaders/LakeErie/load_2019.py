@@ -52,10 +52,10 @@ elif cl.args.stride:
 
     # Realtime data load - Loads files produced by stoqs/loaders/CANON/realtime/monitorLrauv_erie2019.sh
     # Need small critSimpleDepthTime for the 1-2 m shallow yo-yos done
-    for lrauv in ('makai', 'tethys'):
-        cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True,
-                     parameters=['chlorophyll', 'temperature', 'salinity', 
-                                 'mass_concentration_of_oxygen_in_sea_water'])
+    ##for lrauv in ('makai', 'tethys'):
+    ##    cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True,
+    ##                 parameters=['chlorophyll', 'temperature', 'salinity', 
+    ##                             'mass_concentration_of_oxygen_in_sea_water'])
 
     # Post recovery missionlogs load
     for lrauv in ('makai', 'tethys'):
