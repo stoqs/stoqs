@@ -183,7 +183,7 @@ class MissionLoader(STOQS_Loader):
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
         '''
         syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
-        self.logger.info(f"Getting Sample information from the TethysDash API that's also in {syslog_url}")
+        self.logger.info(f"Getting mission start information from the TethysDash API that's also in {syslog_url}")
         mission_starts = self._missions_from_json(platform_name, url)
         orig_activity = Activity.objects.using(db_alias).get(name=activity_name)
         starts, ends, names = self._make_starts_ends_names(mission_starts, orig_activity, db_alias)
