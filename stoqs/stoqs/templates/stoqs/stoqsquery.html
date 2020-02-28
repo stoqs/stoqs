@@ -2701,6 +2701,7 @@
                 rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
                 $('#showlines').parent().show();
                 $('#showfaces').parent().show();
+                $('#showpoints').parent().show();
             }
             else {
                 rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
@@ -2721,6 +2722,7 @@
                 rebuildFilters(['curtainx3d', 'measuredparameterx3d']);
                 $('#showlines').parent().show();
                 $('#showfaces').parent().show();
+                $('#showpoints').parent().show();
             }
             else {
                 rebuildFilters(['measuredparameterx3d']);
@@ -2732,6 +2734,7 @@
             $('input[name="show-mp-3d"]').parent().parent().parent().hide()
             $('#showlines').parent().hide();
             $('#showfaces').parent().hide();
+            $('#showpoints').parent().show();
         }
     });
 
@@ -3033,6 +3036,15 @@
         }
         else {
             $('#curtain-animations')[0].setAttribute('render', false);
+        }
+    });
+    
+    $('#showpoints').on('click', function (e) {
+        if ( $('#showpoints').is(':checked') ) {
+            $('#points-animations')[0].setAttribute('render', true);
+        }
+        else {
+            $('#points-animations')[0].setAttribute('render', false);
         }
     });
 
