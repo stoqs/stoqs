@@ -1582,7 +1582,7 @@
             // Set render to true or false for shapes
             var cb_shape_id = closest_below(frac_esec, Object.keys(render_shapes));
             if ( cb_shape_id !== null ) {
-                if ( parseInt(cb_shape_id) < last_cb_shape_esec ) {
+                if ( ! stopped_by_scrubbing && (parseInt(cb_shape_id) < last_cb_shape_esec) ) {
                     //console.log('Wrap-around detected. Setting all shapes to render false.');
                     $.each(render_shapes, function(esec, shape_grp) {
                         $.each(shape_grp.shapes, function(index, shape_id) {

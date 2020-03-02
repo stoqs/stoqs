@@ -358,7 +358,7 @@ class ParentSamplesLoader(STOQS_Loader):
             following_lines = ''
             prev_message = ''
             prev_line_has_component = False
-            for line in (lb.decode() for lb in resp.iter_lines()):
+            for line in (lb.decode(errors='ignore') for lb in resp.iter_lines()):
                 # Ugly logic to handle multiple line messages
                 lm = re.match(beg_syslog_re, line)
                 if lm:
