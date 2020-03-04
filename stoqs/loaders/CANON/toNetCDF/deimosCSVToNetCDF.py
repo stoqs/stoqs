@@ -66,11 +66,20 @@ Ping_index,Distance_gps,Distance_vl,Ping_date,Ping_time,Ping_milliseconds,Latitu
                                         "%Y-%m-%d%H:%M:%S.%f")
                 if count == 0:
                     first_dt = dt
+                    start_dep = float(rec['Depth_start'])
+                    stop_dep = float(rec['Depth_stop'])
+                    sample_count = int(rec['Sample_count'])
+
+                assert(float(rec['Depth_start']) == start_dep)
+                assert(float(rec['Depth_stop']) == stop_dep)
+                assert(float(rec['Sample_count']) == sample_count)
 
                 self.esec_list.append((dt - datetime(1970, 1, 1)).total_seconds())
                 self.ad_list.append([float(d) for d in rec[None]])
 
-        self.logger.info(f"Collected {len(self.esec_list)} time steps, from {first_dt} to {dt}")
+        self.dep_list = np.linspace(start_dep, stop_dep, sample_count)
+
+        self.logger.info(f"Collected {len(self.esec_list)} time steps, from {first_dt} to {dt}, between depths {start_dep} and {stop_dep}")
         self.write_sv(ad_name="sv38")
 
     def process_deimos_sam_csv_file(self):
