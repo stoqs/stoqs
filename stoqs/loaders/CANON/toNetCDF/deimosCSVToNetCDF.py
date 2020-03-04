@@ -154,6 +154,22 @@ Process_ID, Interval, Layer, Sv_mean, NASC, Height_mean, Depth_mean, Layer_depth
                 self.ncFile.summary += '.'
             self.ncFile.summary += ' Translated with no modification from original data file %s' % self.args.inFile
 
+        # Text cribbed from the README
+        self.ncFile.summary += '''
+IMPORTANT: these acoustic data have gone through automated noise-removal
+procedures, but have not been fully quality-controlled.  As such, they are
+likely to contain spurious signals due to noise, non-biological scatterers, etc.
+The data are binned at reduced spatial and temporal resolution and have not been
+calibrated.
+'''
+
+        self.ncFile.summary += '''THESE DATA ARE NOT "SCIENCE QUALITY" AND SHOULD ONLY BE USED FOR PRELIMINARY VISUALIZATIONS.'
+
+For data appropriate for publications, presentations, etc., please contact:
+
+Kelly Benoit-Bird <kbb@mbari.org>
+Chad Waluk <cwaluk@mbari.org>'''
+
         # If specified on command line override the default generic license with what is specified
         if self.args.license:
             self.ncFile.license = self.args.license
