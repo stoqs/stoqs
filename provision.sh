@@ -11,7 +11,7 @@ fi
 PG_VER=11
 
 # For a minimal STOQS development system set to "false"
-INSTALL_MB-SYSTEM="true"
+INSTALL_MB_SYSTEM="true"
 INSTALL_DESKTOP_GRAPHICS="true"
 INSTALL_DOCKER="true"
 
@@ -193,7 +193,7 @@ else
     yum install GMT GMT-devel
 fi
 
-if [ $INSTALL_MB-SYSTEM = "true" ];
+if [ $INSTALL_MB_SYSTEM = "true" ];
 then
     echo Build and install OSU Tidal Prediction Software
     pushd /usr/local
