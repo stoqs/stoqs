@@ -84,6 +84,11 @@ LONGITUDE = 'longitude'
 
 # Set batch_size such that we avoid swapping with bulk_create() on a 3 GB RAM system, a value = 10000 is good
 # Significant swap disk is used (12%) and loads of DEIMOS data take 20% longer with BATCH_SIZE=100000
+# Update on 6 March 2020:
+#   A more raw version of the DEIMOS data with 2619 depths in each profile runs out of memory unless it's
+#   run on a VM with more than 10 GB of RAM.  Reducing BATCH_SIZE to 4 helps some with the memory requirement
+#   but will still crash (be killed) on a 3 GB VM and takes will take twice the time on a bigger VM.
+#   TODO: Load these data as trajectoryProfile with point simplification (removal of redundant data points).
 BATCH_SIZE=10000
 
 if settings.DEBUG:
