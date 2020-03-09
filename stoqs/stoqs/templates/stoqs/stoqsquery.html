@@ -1556,7 +1556,7 @@
         }
 
         // Binary search for value that is not a node in the binary search tree
-        arr = Object.keys(render_shapes);
+        var arr = Object.keys(render_shapes);
         var lo = 0,
             hi = arr.length - 1,
             mid;
@@ -1582,6 +1582,56 @@
         return arr[hi];
     }
 
+    function closest_above(value, at_neighbor) {
+        var after_id, after_id_to_return;
+        if (at_neighbor) {
+            // Return contiguous ids that are rendered true
+            // See: https://stackoverflow.com/questions/8224375/jquery-each-stop-loop-and-return-object?answertab=active#tab-top
+            after_id = render_shapes[value]['after'];
+            $.each(render_shapes[after_id]['shapes'], function(index, shape_id) {
+                if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+                    if ( $('#' + shape_id).attr('render') == 'true' ) {
+                        after_id_to_return = after_id;
+                        //console.log('Found true at ' + after_id + ' with shape_id = ' + shape_id)
+                        return false;
+                    }
+                    else {
+                        after_id_to_return = null;
+                        //console.log('Found false at ' + after_id + ' with shape_id = ' + shape_id)
+                        return false;
+                    }
+                }
+            });
+            return after_id_to_return;
+        }
+
+        // Binary search for value that is not a node in the binary search tree
+        var arr = Object.keys(render_shapes);
+        var lo = 0,
+            hi = arr.length - 1,
+            mid;
+
+        if (value < arr[0]) {
+            return null;
+        }
+        if (value > arr[arr.length-1]) {
+            return arr[arr.length-1];
+        }
+        while(lo <= hi) {
+            mid = parseInt((hi + lo) / 2);
+            if (value < arr[mid]) {
+                hi = mid - 1;
+            }
+            else if (value > arr[mid]) {
+                lo = mid + 1;
+            }
+            else {
+                return arr[mid];
+            }
+        }
+        return arr[lo];
+    }
+
     function render_false_and_true_around(cb_shape_id, ) {
         if ( ! stopped_by_scrubbing && (parseInt(cb_shape_id) < last_cb_shape_esec) ) {
             //console.log('Wrap-around detected. Setting all shapes to render false.');
@@ -1594,28 +1644,51 @@
             });
         }
         var before_id = render_shapes[cb_shape_id]['before'];
-        while(before_id != null) {
+        while( before_id != null ) {
             $.each(render_shapes[before_id]['shapes'], function(index, shape_id) {
                 if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
                     $('#' + shape_id)[0].setAttribute('render', 'false');
                 }
             });
             before_id = closest_below(before_id, true);
-            console.log(before_id);
         }
 
         var after_id = render_shapes[cb_shape_id]['after'];
-        if ( after_id !== null ) {
+        while( after_id !== null ) {
             $.each(render_shapes[after_id]['shapes'], function(index, shape_id) {
                 if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
                     $('#' + shape_id)[0].setAttribute('render', 'false');
                 }
             });
+            after_id = closest_above(after_id, true);
         }
+
+        // Debug
+        //after_id = render_shapes[cb_shape_id]['after'];
+        //var after_id_to_return;
+        //$.each(Object.keys(render_shapes), function(index, shape_key) {
+        //    if (shape_key > after_id) {
+        //        $.each(render_shapes[shape_key]['shapes'], function(index, shape_id) {
+        //            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
+        //                if ( $('#' + shape_id).attr('render') == 'true' ) {
+        //                    after_id_to_return = shape_key;
+        //                    return false;
+        //                }
+        //            }
+        //        });
+        //    }
+        //});
+        //if ( ! $.isEmptyObject(after_id_to_return) ) {
+        //    console.log(after_id_to_return);
+        //}
+        
+
         //console.log('Setting render attributes for shape key: ' + cb_shape_id);
         $.each(render_shapes[cb_shape_id]['shapes'], function(index, shape_id) {
             if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                $('#' + shape_id)[0].setAttribute('render', 'true');
+                if ( $('#' + shape_id).attr('render') != 'true' ) {
+                    $('#' + shape_id)[0].setAttribute('render', 'true');
+                }
             }
         });
         last_cb_shape_esec = parseInt(cb_shape_id);
