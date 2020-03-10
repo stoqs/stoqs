@@ -1544,10 +1544,12 @@
                 if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
                     if ( $('#' + shape_id).attr('render') == 'true' ) {
                         before_id_to_return = before_id;
+                        //console.log('Found true before at ' + before_id + ' with shape_id = ' + shape_id)
                         return false;
                     }
                     else {
                         before_id_to_return = null;
+                        //console.log('Found false before at ' + before_id + ' with shape_id = ' + shape_id)
                         return false;
                     }
                 }
@@ -1582,22 +1584,35 @@
         return arr[hi];
     }
 
-    function closest_above(value, at_neighbor) {
+    function closest_above(value, at_neighbor, going_backwards) {
         var after_id, after_id_to_return;
         if (at_neighbor) {
             // Return contiguous ids that are rendered true
             // See: https://stackoverflow.com/questions/8224375/jquery-each-stop-loop-and-return-object?answertab=active#tab-top
             after_id = render_shapes[value]['after'];
+            var found_true = false;
             $.each(render_shapes[after_id]['shapes'], function(index, shape_id) {
+                after_id_to_return = null;
                 if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-                    if ( $('#' + shape_id).attr('render') == 'true' ) {
-                        after_id_to_return = after_id;
-                        //console.log('Found true at ' + after_id + ' with shape_id = ' + shape_id)
-                        return false;
+                    if ( going_backwards ) {
+                        // Sporadic slices left when scrubbing going backwards, keep looking until we find one that's true
+                        if ( $('#' + shape_id).attr('render') == 'true' ) {
+                            after_id_to_return = after_id;
+                            //console.log('Going backwards found true after in ' + after_id + ' with shape_id = ' + shape_id + ' at index ' + index)
+                            found_true = true;
+                        }
                     }
                     else {
-                        after_id_to_return = null;
-                        //console.log('Found false at ' + after_id + ' with shape_id = ' + shape_id)
+                        // Break immediately when going forward
+                        if ( $('#' + shape_id).attr('render') == 'true' ) {
+                            after_id_to_return = after_id;
+                            return false;
+                        }
+                        else {
+                            return false;
+                        }
+                    }
+                    if ( found_true ) {
                         return false;
                     }
                 }
@@ -1633,7 +1648,8 @@
     }
 
     function render_false_and_true_around(cb_shape_id, ) {
-        if ( ! stopped_by_scrubbing && (parseInt(cb_shape_id) < last_cb_shape_esec) ) {
+        var going_backwards = parseInt(cb_shape_id) < last_cb_shape_esec;
+        if ( ! stopped_by_scrubbing && going_backwards ) {
             //console.log('Wrap-around detected. Setting all shapes to render false.');
             $.each(render_shapes, function(esec, shape_grp) {
                 $.each(shape_grp.shapes, function(index, shape_id) {
@@ -1660,28 +1676,8 @@
                     $('#' + shape_id)[0].setAttribute('render', 'false');
                 }
             });
-            after_id = closest_above(after_id, true);
+            after_id = closest_above(after_id, true, going_backwards)
         }
-
-        // Debug
-        //after_id = render_shapes[cb_shape_id]['after'];
-        //var after_id_to_return;
-        //$.each(Object.keys(render_shapes), function(index, shape_key) {
-        //    if (shape_key > after_id) {
-        //        $.each(render_shapes[shape_key]['shapes'], function(index, shape_id) {
-        //            if ( ! $.isEmptyObject($('#' + shape_id)[0]) ) {
-        //                if ( $('#' + shape_id).attr('render') == 'true' ) {
-        //                    after_id_to_return = shape_key;
-        //                    return false;
-        //                }
-        //            }
-        //        });
-        //    }
-        //});
-        //if ( ! $.isEmptyObject(after_id_to_return) ) {
-        //    console.log(after_id_to_return);
-        //}
-        
 
         //console.log('Setting render attributes for shape key: ' + cb_shape_id);
         $.each(render_shapes[cb_shape_id]['shapes'], function(index, shape_id) {
