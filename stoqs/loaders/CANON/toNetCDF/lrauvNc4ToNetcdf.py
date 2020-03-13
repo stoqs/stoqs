@@ -997,6 +997,12 @@ class InterpolatorWriter(BaseWriter):
         logger.info(f'Read file {in_file}')
 
         coord_ts = self.createCoord(coord)
+        repeated_values = np.where(np.diff(coord_ts['time'].index.astype('int')) <= 0)[0]
+        if len(repeated_values) > 0:
+            logger.warning(f"Original time axis has repeated values at indices: {repeated_values}")
+            logger.warning(f"Dropping those indices from coords: {coord}")
+            for c in coord:
+                coord_ts[c].drop(coord_ts[c].index[repeated_values], inplace=True)
 
         # Get time parameter and align everything to this
         logger.info(f'Creating t variable of the time indexes')

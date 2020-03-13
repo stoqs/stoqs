@@ -45,6 +45,7 @@ docker/tmp/
 # Data loading log and pg_dump files
 stoqs/stoqs/media/loadlogs/
 stoqs/stoqs/media/pg_dumps/
+stoqs/stoqs/media/*
 
 # Private docker files that never go into version control
 docker/.env
@@ -60,4 +61,5 @@ stoqs/loaders/CANON/toNetCDF/notebooks/.ipynb_checkpoints/
 # Automatically generated load scripts
 stoqs/loaders/LRAUV/load_lrauv*[0-9][0-9][0-9][0-9].py
 stoqs/mbari_lrauv_campaigns.py
+
 
