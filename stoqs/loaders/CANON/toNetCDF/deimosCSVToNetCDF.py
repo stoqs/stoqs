@@ -46,8 +46,9 @@ class ParserWriter(BaseWriter):
 
         self.ad_list.append(deps)
 
-    def process_deimos_csv_file(self):
-        '''The .csv file looks like:
+    def process_deimos_tsp_csv_file(self):
+        '''Process DEIMOS data into a TimeSeriesProfile CF-NetCDF featureType file.
+         The .csv file looks like:
 Ping_index,Distance_gps,Distance_vl,Ping_date,Ping_time,Ping_milliseconds,Latitude,Longitude,Depth_start,Depth_stop,Range_start,Range_stop,Sample_count
 0,-9.9e+37,0.0000000000,2019-10-06,00:00:01,250.0,999.0000000000,999.0000000000,-0.1909107200,999.7994406400,-0.1909107200,999.7994406400,2619,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-9.9e+37,-89.140898,-87.511737,-87.431613,-88.386803,-90.688064,-92.684762,-93.915170,-93.629650,-92.724587,-92.733174,-94.681568,-97.019348,-98.350405,-98.916013,....
 
@@ -222,12 +223,12 @@ if __name__ == '__main__':
     '''Example execution:
     Using process_deimos_sam_csv_file():
         stoqs/loaders/CANON/toNetCDF/deimosCSVToNetCDF.py --sam --inFile deimos-2019-CANON-Spring.csv
-    Default:
+    Using process_deimos_tsp_csv_file():
         stoqs/loaders/CANON/toNetCDF/deimosCSVToNetCDF.py --inFile Deimos\ -\ Cleaned\ Smoothed\ Data\ -\ Original\ Full\ Resolution\ -\ 2019-10-06\ 0000to0100.sv.csv
     '''
     pw = ParserWriter()
     pw.process_command_line()
     ##pw.process_deimos_sam_csv_file()
-    pw.process_deimos_csv_file()
+    pw.process_deimos_tsp_csv_file()
     pw.logger.info("Done.")
 
