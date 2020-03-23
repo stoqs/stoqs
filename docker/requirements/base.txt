@@ -26,7 +26,7 @@ Jinja2==2.11.1
 jupyter==1.0.0
 kombu==4.6.8
 lxml==4.5.0
-mock==4.0.1
+mock==4.0.2
 matplotlib==3.2.0
 netCDF4==1.5.3
 netifaces==0.10.9
