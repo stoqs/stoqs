@@ -1295,7 +1295,7 @@ class CANONLoader(LoadScript):
         except IOError as e:
             self.logger.error(str(e))
 
-    def find_lrauv_urls(self, base, search_str, startdate, enddate):
+    def find_lrauv_urls(self, base, search_str, startdate, enddate, date_intersect=True):
         '''Use Thredds Crawler to return a list of DAP urls.  Initially written for LRAUV data, for
         which we don't initially know the urls.
         '''
@@ -1327,15 +1327,26 @@ class CANONLoader(LoadScript):
                 dir_start =  datetime.strptime(dts[0], '%Y%m%d')
                 dir_end =  datetime.strptime(dts[1], '%Y%m%d')
 
-                # if within a valid range, grab the valid urls
-                self.logger.debug(f'{mission_dir_name}: Looking for {search_str} files between {startdate} and {enddate}')
-                if dir_start >= startdate and dir_end <= enddate:
-                    catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
-                    c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
-                    d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
-                    for url in d:
-                        self.logger.debug(f'{url}')
-                        urls.append(url)
+                if date_intersect:
+                    # Grab the valid urls for all log files in a .dlist directory that intersect the Campaign dates
+                    if ( (dir_start <= startdate and startdate <= dir_end) or (dir_start <= enddate and enddate <= dir_end) ):
+                        self.logger.debug(f'{mission_dir_name}: Collecting all log files matching {search_str} in this directory')
+                        catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
+                        c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
+                        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+                        for url in d:
+                            self.logger.debug(f'{url}')
+                            urls.append(url)
+                else:
+                    # Grab the valid urls for .dlist directories encompasing the startdate and enddate for the Campaign
+                    self.logger.debug(f'{mission_dir_name}: Looking for {search_str} files between {startdate} and {enddate}')
+                    if dir_start >= startdate and dir_end <= enddate:
+                        catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
+                        c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
+                        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+                        for url in d:
+                            self.logger.debug(f'{url}')
+                            urls.append(url)
             else:
                 # Likely a realtime log - add to urls if only url date is greater than startdate
                 catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
