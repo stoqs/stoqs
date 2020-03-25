@@ -251,6 +251,9 @@ class Base_Loader(STOQS_Loader):
                     if self.ds[ac['time']].attributes['units'] == 'seconds since 1970-01-01T00:00:00Z':
                         minDT[v] = from_udunits(self.ds[ac['time']].data[0][0], 'seconds since 1970-01-01 00:00:00')
                         maxDT[v] = from_udunits(self.ds[ac['time']].data[-1][0], 'seconds since 1970-01-01 00:00:00')
+                except ValueError as e:
+                    self.logger.warn(f'Skipping load of {self.url}: {e}')
+                    raise NoValidData(f'Could not get min and max time from {self.url}')
                     
             elif self.getFeatureType() == TIMESERIES or self.getFeatureType() == TIMESERIESPROFILE: # pragma: no cover
                 self.logger.debug('Getting timeseries start time for v = %s', v)
