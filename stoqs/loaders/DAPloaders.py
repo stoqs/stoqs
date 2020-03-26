@@ -1136,9 +1136,12 @@ class Base_Loader(STOQS_Loader):
         load_groups, coor_groups = self.get_load_structure()
         coords_equal_hash = {}
         if 'shore_i.nc' in self.url:
-            # Variables from same NetCDF4 group in realtime LRAUV data have different axis names,
-            # but same coord values. Find them to not load duplicate measurements.
-            coords_equal_hash = self._equal_coords(load_groups, coor_groups)
+            try:
+                # Variables from same NetCDF4 group in realtime LRAUV data have different axis names,
+                # but same coord values. Find them to not load duplicate measurements.
+                coords_equal_hash = self._equal_coords(load_groups, coor_groups)
+            except ValueError as e:
+                self.logger.warning(f"Skipping {self.url}: {e}")
 
         total_loaded = 0   
         for axis_count, (k, pnames) in enumerate(load_groups.items()):
