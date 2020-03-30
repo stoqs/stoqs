@@ -24,8 +24,8 @@ def log(s, elapsed=None):
 def endlog():
     end = datetime.now()
     elapsed = end - start
-    log("End Load",elapsed.total_seconds())
+    log("End Execution",elapsed.total_seconds())
 
 start = datetime.now()
 atexit.register(endlog)
-log("Start Load")
+log("Start Execution")

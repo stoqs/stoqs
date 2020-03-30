@@ -52,7 +52,7 @@ class AutoLoad():
             self.logger.debug(f"Executing self.loader.load()...")
             self.loader.load(cl_args=self.args)
         except DatabaseLoadError:
-            self.logger.warn(f"Failed to load {self.loader.args.db}")
+            self.logger.warning(f"Failed to load {self.loader.args.db}")
             return
 
         self.logger.debug(f"Executing self.loader.updateprovenance()...")
@@ -66,7 +66,7 @@ class AutoLoad():
             num_new_campaigns = self.lm.update_lrauv_campaigns(items)
             if num_new_campaigns:
                 self.logger.info(f"{num_new_campaigns} campaigns added to campaigns.py file")
-                self.logger.warn(f"If you are running in a Docker container you you need to restart the stoqs service with this file before executing the loads.")
+                self.logger.warning(f"If you are running in a Docker container you you need to restart the stoqs service with this file before executing the loads.")
 
     def execute(self):
         if self.args.verbose:

@@ -106,6 +106,16 @@ class InterpolatorWriter(BaseWriter):
 
         return deployment_name
 
+    def get_esp_log_url(self, log_dir):
+        '''Set esp_log_url attrubute to url of ESP Log file if it exists in log_dir
+        '''
+        url_path = log_dir.replace('/mbari/LRAUV', 'http://dods.mbari.org/opendap/data/lrauv')
+        esp_log_url = os.path.join(url_path, 'ESP.log')
+        if requests.head(esp_log_url).status_code == 200:
+            return esp_log_url
+        else:
+            return None
+
     def write_netcdf(self, out_file, in_url):
 
         # Check parent directory and create if needed
@@ -123,6 +133,7 @@ class InterpolatorWriter(BaseWriter):
         # Lead the title with the Deployment Name form the .dlist file - if it exists
         # also save it in a 'deployment_name' global attribute
         deployment_name = self.get_deployment_name(dirName)
+        self.esp_log_url = self.get_esp_log_url(dirName)
         if deployment_name:
             self.ncFile.title = deployment_name + ' - LRAUV interpolated data'
             self.ncFile.deployment_name = deployment_name
@@ -163,11 +174,15 @@ class InterpolatorWriter(BaseWriter):
         logger.debug("Adding in global metadata")
         self.add_global_metadata()
         if getattr(self, 'segment_count', None) and getattr(self, 'segment_minsum', None):
-            self.ncFile.summary += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward GPS fixes."
+            self.ncFile.summary += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward GPS fixes"
         if getattr(self, 'trackingdb_values', None):
             self.ncFile.comment = f"latitude and longitude values interpolated from {self.trackingdb_values} values retrieved from {self.trackingdb_url}"
             self.ncFile.summary += f" {self.trackingdb_values} acoustic navigation fixes retrieved from tracking database with {self.trackingdb_url}"
             self.ncFile.title += " with acoustic navigation data retrieved from Tracking Database"
+        if getattr(self, 'esp_log_url', None):
+            self.ncFile.summary += f". Associated with ESP Log file {self.esp_log_url}"
+
+        self.ncFile.summary += "."
 
         self.ncFile.close()
         # End write_netcdf()
@@ -982,6 +997,12 @@ class InterpolatorWriter(BaseWriter):
         logger.info(f'Read file {in_file}')
 
         coord_ts = self.createCoord(coord)
+        repeated_values = np.where(np.diff(coord_ts['time'].index.astype('int')) <= 0)[0]
+        if len(repeated_values) > 0:
+            logger.warning(f"Original time axis has repeated values at indices: {repeated_values}")
+            logger.warning(f"Dropping those indices from coords: {coord}")
+            for c in coord:
+                coord_ts[c].drop(coord_ts[c].index[repeated_values], inplace=True)
 
         # Get time parameter and align everything to this
         logger.info(f'Creating t variable of the time indexes')

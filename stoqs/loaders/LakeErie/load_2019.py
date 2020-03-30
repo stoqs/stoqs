@@ -43,8 +43,11 @@ if cl.args.test:
     #-cl.makai_files = ['201908232353_201908261943_2S_scieng.nc']
     #-cl.makai_parms = ['temperature']
     # Shorter log for testing setting sample_simplify_crit
-    cl.makai_base = 'http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20190819_20190821/20190819T210619/'
-    cl.makai_files = ['201908192106_201908200410_2S_scieng.nc']
+    ##cl.makai_base = 'http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20190819_20190821/20190819T210619/'
+    ##cl.makai_files = ['201908192106_201908200410_2S_scieng.nc']
+    # Test for missing Cartridge 45
+    cl.makai_base = 'http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20190819_20190821/20190820T055043/'
+    cl.makai_files = ['201908200550_201908201158_2S_scieng.nc']
     cl.makai_parms = ['temperature']
     cl.loadLRAUV('makai', sdate, edate, critSimpleDepthTime=0.1, build_attrs=False)
 elif cl.args.stride:
@@ -52,10 +55,10 @@ elif cl.args.stride:
 
     # Realtime data load - Loads files produced by stoqs/loaders/CANON/realtime/monitorLrauv_erie2019.sh
     # Need small critSimpleDepthTime for the 1-2 m shallow yo-yos done
-    for lrauv in ('makai', 'tethys'):
-        cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True,
-                     parameters=['chlorophyll', 'temperature', 'salinity', 
-                                 'mass_concentration_of_oxygen_in_sea_water'])
+    ##for lrauv in ('makai', 'tethys'):
+    ##    cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True,
+    ##                 parameters=['chlorophyll', 'temperature', 'salinity', 
+    ##                             'mass_concentration_of_oxygen_in_sea_water'])
 
     # Post recovery missionlogs load
     for lrauv in ('makai', 'tethys'):
