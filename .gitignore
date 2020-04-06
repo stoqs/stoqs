@@ -42,9 +42,8 @@ stoqs/loaders/MolecularEcology/SIMZAug2013/*.csv
 # Docker work area
 docker/tmp/
 
-# Data loading log and pg_dump files
-stoqs/stoqs/media/loadlogs/
-stoqs/stoqs/media/pg_dumps/
+# Data loading log, pg_dump, and section files
+stoqs/stoqs/media/
 
 # Private docker files that never go into version control
 docker/.env
