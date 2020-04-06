@@ -15,7 +15,7 @@ django-environ==0.4.5
 django-extensions==2.2.9
 django-model-utils==4.0.0
 django-picklefield==2.1.1
-django-secure==1.0.1
+django-secure==1.0.2
 djangorestframework==3.11.0
 euclid==0.1
 GitPython==3.1.0
