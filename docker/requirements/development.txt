@@ -24,7 +24,7 @@ requests==2.23.0
 Pygments==2.6.1
 pygraphviz==1.5
 pymssql-py38==2.1.4
-pyparsing==2.4.6
+pyparsing==2.4.7
 python-coveralls==2.9.3
 scikit-bio==0.5.6
 snowballstemmer==2.0.0
