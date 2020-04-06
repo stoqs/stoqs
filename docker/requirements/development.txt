@@ -8,7 +8,7 @@ Babel==2.8.0
 backports.ssl-match-hostname==3.7.0.1
 billiard==3.6.3.0
 binaryornot==0.4.4
-certifi==2019.11.28
+certifi==2020.4.5.1
 cookiecutter==1.7.0
 docutils==0.16
 Cython==0.29.16
@@ -24,7 +24,7 @@ requests==2.23.0
 Pygments==2.6.1
 pygraphviz==1.5
 pymssql-py38==2.1.4
-pyparsing==2.4.6
+pyparsing==2.4.7
 python-coveralls==2.9.3
 scikit-bio==0.5.6
 snowballstemmer==2.0.0
