@@ -17,7 +17,7 @@ django-model-utils==4.0.0
 django-picklefield==2.1.1
 djangorestframework==3.11.0
 euclid==0.1
-GitPython==3.1.0
+GitPython==3.1.1
 httplib2==0.17.1
 ipython==7.13.0
 jdcal==1.4.1
