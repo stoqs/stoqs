@@ -37,7 +37,7 @@ Paste==3.4.0
 PasteScript==3.2.0
 pika==1.1.0
 Pillow==7.1.1
-pysher==1.0.5
+pysher==1.0.4
 psycopg2-binary==2.8.5
 pupynere==1.0.15
 Pydap==3.2.2
