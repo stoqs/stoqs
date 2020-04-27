@@ -18,7 +18,7 @@ django-picklefield==2.1.1
 djangorestframework==3.11.0
 euclid==0.1
 GitPython==3.1.1
-httplib2==0.17.2
+httplib2==0.17.3
 ipython==7.13.0
 jdcal==1.4.1
 Jinja2==2.11.2
@@ -37,7 +37,7 @@ Paste==3.4.0
 PasteScript==3.2.0
 pika==1.1.0
 Pillow==7.1.2
-pysher==1.0.4
+pysher==1.0.5
 psycopg2-binary==2.8.5
 pupynere==1.0.15
 Pydap==3.2.2
