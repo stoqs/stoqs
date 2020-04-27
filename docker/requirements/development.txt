@@ -9,9 +9,9 @@ backports.ssl-match-hostname==3.7.0.1
 billiard==3.6.3.0
 binaryornot==0.4.4
 certifi==2020.4.5.1
-cookiecutter==1.7.0
+cookiecutter==1.7.2
 docutils==0.16
-Cython==0.29.16
+Cython==0.29.17
 ephem==3.7.7.1
 ##GDAL==3.0.3
 Genshi==0.7.3
@@ -19,7 +19,7 @@ geopandas==0.7.0
 h5py==2.10.0
 MarkupSafe==1.1.1
 pandas==1.0.3
-numpy==1.18.2
+numpy==1.18.3
 requests==2.23.0
 Pygments==2.6.1
 pygraphviz==1.5
