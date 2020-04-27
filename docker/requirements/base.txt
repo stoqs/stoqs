@@ -36,7 +36,7 @@ PasteDeploy==2.1.0
 Paste==3.4.0
 PasteScript==3.2.0
 pika==1.1.0
-Pillow==7.1.1
+Pillow==7.1.2
 pysher==1.0.5
 psycopg2-binary==2.8.5
 pupynere==1.0.15
