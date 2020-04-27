@@ -3,8 +3,8 @@ Spatial Temporal Oceanographic Query System
 
 [![Build Status](https://travis-ci.org/stoqs/stoqs.svg)](https://travis-ci.org/stoqs/stoqs/branches)
 [![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=master)](https://requires.io/github/stoqs/stoqs/requirements/?branch=master)
+[![PyUp](https://pyup.io/repos/github/MBARIMike/stoqs/shield.svg)](https://pyup.io/account/repos/github/MBARIMike/stoqs/)
 [![DOI](https://zenodo.org/badge/20654/stoqs/stoqs.svg)](https://zenodo.org/badge/latestdoi/20654/stoqs/stoqs)
-[ ~ Dependencies scanned by PyUp.io ~ ]
  
 STOQS is a geospatial database and web application designed to give oceanographers
 efficient integrated access to *in situ* measurement and *ex situ* sample data.
