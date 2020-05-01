@@ -306,16 +306,16 @@
                                                                 <span id="showgeox3dmeasurementtext">Show visualizations of Plot Data Color selections </span>
                                                             </label>
                                                             <label class="checkbox" style="display:none;">
+                                                                <input type="checkbox" id="showpoints" checked />
+                                                                <span>Points</span>
+                                                            </label>
+                                                            <label class="checkbox" style="display:none;">
                                                                 <input type="checkbox" id="showlines" checked />
                                                                 <span>Lines</span>
                                                             </label>
                                                             <label class="checkbox" style="display:none;">
                                                                 <input type="checkbox" id="showfaces" checked />
                                                                 <span>Polygons</span>
-                                                            </label>
-                                                            <label class="checkbox" style="display:none;">
-                                                                <input type="checkbox" id="showpoints" checked />
-                                                                <span>Points</span>
                                                             </label>
                                                         </form>
                                                         <span>
@@ -2799,8 +2799,22 @@
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
                 rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
                 $('#showlines').parent().show();
+                $('#showpoints').parent().show();
+                $('#showfaces').parent().show();
+                $('#showfaces').css({'cursor' : 'auto'});
+                $('#showfaces').prop('disabled', false);
+                $('#showfaces').removeAttr('title');
+            }
+            if ($('input:radio[name=showdataas]:checked').val() == 'scatter') {
+                rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
+                $('#showlines').parent().show();
                 $('#showfaces').parent().show();
                 $('#showpoints').parent().show();
+                // disabling polygon box when scatter is selected
+                $('#showfaces').css({'cursor' : 'not-allowed'});
+                $('#showfaces').prop('disabled', true);
+                $('#showfaces').prop('checked', false);
+                $('#showfaces').attr('title', 'Click \'contour\' to enable');
             }
             else {
                 rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
@@ -2823,6 +2837,17 @@
                 $('#showlines').parent().show();
                 $('#showfaces').parent().show();
                 $('#showpoints').parent().show();
+            }
+            if ($('input:radio[name=showdataas]:checked').val() == 'scatter') {
+                rebuildFilters(['curtainx3d', 'measuredparameterx3d']);
+                $('#showlines').parent().show();
+                $('#showpoints').parent().show();
+                // disabling polygon box when scatter is selected
+                $('#showfaces').parent().show();
+                $('#showfaces').css({'cursor': 'not-allowed'});
+                $('#showfaces').prop('disabled', true);
+                $('#showfaces').prop('checked', false);
+                $('#showfaces').attr('title', 'Click \'contour\' to enable');
             }
             else {
                 rebuildFilters(['measuredparameterx3d']);
@@ -6096,9 +6121,8 @@ function enable_cardboard(){
             else if (key == 'measuredparameterx3d') {
                 if ( ! $.isEmptyObject(data.measuredparameterx3d) ) {
                     merge_shape_id_dicts(data.measuredparameterx3d.shape_id_dict);
+                    
                     var ils_x3d_html = '';
-
-
 
                     if($('#points-animations')[0].getAttribute('render')) {
                         $.each(data.measuredparameterx3d, function (shapeid, shapex3d) {
