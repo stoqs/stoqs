@@ -99,7 +99,7 @@ else
 fi
 
 echo Install PostgreSQL
-yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-centos11-11-2.noarch.rpm
+yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 yum -y groupinstall "PostgreSQL Database Server ${PG_VER} PGDG"
 
 if [ $BUILD_GEO = "true" ];
@@ -179,6 +179,22 @@ cd ..
 
 if [ $BUILD_GMT = "true" ];
 then
+    echo Install package prerequisites for NetCDF4
+    yum -y install curl-devel hdf5 hdf5-devel
+    echo Build and install NetCDF4
+    wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-c-4.7.3.tar.gz
+    tar -xzf netcdf-c-4.7.3.tar.gz
+    cd netcdf-c-4.7.3
+    ./configure
+    make -j 2 && sudo make install
+    cd ..
+    export LD_LIBRARY_PATH=/usr/local/lib
+    wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-fortran-4.5.2.tar.gz
+    tar -xzf netcdf-fortran-4.5.2.tar.gz
+    cd netcdf-fortran-4.5.2
+    ./configure
+    make -j 2 && sudo make install
+    cd ..
     echo Build and install GMT
     wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-5.4.4-src.tar.gz
     tar -xzf gmt-5.4.4-src.tar.gz
@@ -340,7 +356,7 @@ echo Cloning STOQS repo from https://github.com/stoqs/stoqs.git into $STOQS_HOME
 echo ">>> See CONTRIBUTING.md for how to configure your development system so that you can contribute to STOQS"
 
 mkdir -p $STOQS_HOME
-git clone --depth=50 https://github.com/stoqs/stoqs.git $STOQS_HOME
+git clone https://github.com/stoqs/stoqs.git $STOQS_HOME
 cd $STOQS_HOME
 git config core.preloadindex true
 export PATH="/usr/local/bin:$PATH"

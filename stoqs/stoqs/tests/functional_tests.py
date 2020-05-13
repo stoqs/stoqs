@@ -23,7 +23,7 @@ Mike McCann
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.conf import settings
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -35,7 +35,8 @@ import os
 import re
 import time
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('stoqs.tests')
+settings.LOGGING['loggers']['stoqs.tests']['level'] = 'INFO'
 
 class wait_for_text_to_match(object):
     def __init__(self, locator, pattern):
@@ -45,9 +46,22 @@ class wait_for_text_to_match(object):
     def __call__(self, driver):
         try:
             element_text = EC._find_element(driver, self.locator).text
-            return self.pattern.search(element_text)
+            return self.pattern.match(element_text)
         except StaleElementReferenceException:
             return False
+
+
+class wait_for_child_elements(object):
+    def __init__(self, locator):
+        self.locator = locator
+
+    def __call__(self, driver):
+        children = self.locator.find_elements_by_xpath(".//*")
+        if children:
+            return children
+        else:
+            return False
+
 
 class BaseTestCase(StaticLiveServerTestCase):
     # Note that the test runner sets DEBUG to False: 
@@ -64,7 +78,7 @@ class BaseTestCase(StaticLiveServerTestCase):
             # Needs X-Server - opens browser windows
             self.browser = webdriver.Firefox()
         else:
-            # The defaule - for running on CI servers
+            # The default - for running on CI servers
             options = Options()
             options.headless = True
             self.browser = webdriver.Firefox(options=options)
@@ -73,22 +87,8 @@ class BaseTestCase(StaticLiveServerTestCase):
         self.browser.quit()
 
     def _mapserver_loading_panel_test(self, delay=2):
-        '''Wait for ajax-loader GIF image to go away'''
-        wait = WebDriverWait(self.browser, delay)
-        try:
-            wait.until(lambda display: self.browser.find_element_by_id('map').
-                        find_element_by_class_name('olControlLoadingPanel').
-                        value_of_css_property('display') == 'none')
-        except TimeoutException as e:
-            # We get flaky results, I think because the 'display' property switches quickly between 'none' and 'block, 
-            # then back to 'none'.
-            # TODO: Figure out a better way to detect mapserver_loading success
-            return ('Mapserver images did not load after waiting ' +
-                    str(delay) + ' seconds')
-        else:
-            # For interactive visual confirmation MAPSERVER_DATABASE_URL must be set, e.g.:
-            # export MAPSERVER_DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs"
-            return ''
+        '''See that there are enough image elements in the openlayers map'''
+        self._test_for_child_elements('OpenLayers.Layer.XYZ_21', 24)
 
     def _temporal_loading_panel_test(self, delay=2):
         '''Wait for ajax-loader GIF image to go away'''
@@ -132,7 +132,7 @@ class BaseTestCase(StaticLiveServerTestCase):
         try:
             if not contains:
                 WebDriverWait(self.browser, delay, poll_frequency=.2).until(
-                              wait_for_text_to_match((By.ID, element_id), expected_text))
+                                            wait_for_text_to_match((By.ID, element_id), expected_text))
             else:
                 # First get the element
                 el = WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.ID, element_id)))
@@ -142,6 +142,20 @@ class BaseTestCase(StaticLiveServerTestCase):
 
         except TimeoutException:
             print(f"TimeoutException: Waited {delay} seconds for text '{expected_text}' to appear")
+
+    def _test_for_child_elements(self, parent_id, expected_num, delay=2):
+        self._wait_until_id_is_visible(parent_id)
+        parent_element = self.browser.find_element_by_id(parent_id)
+        wait = WebDriverWait(self.browser, delay, poll_frequency=.5)
+        try:
+            elements = wait.until(wait_for_child_elements(parent_element))
+        except TimeoutException:
+            print(f"TimeoutException: Waited {delay} seconds for child elements to appear under {parent_id}")
+        else: 
+            num_elements = len(elements) 
+            logger.debug(f"Found {num_elements} child elements in {parent_id}")
+            self.assertEqual(expected_num, num_elements, f'Expected {expected_num} child elements in {parent_id}')
+            self.assertNotEqual(0, num_elements, f'Expected more than 0 elements in {parent_id}')
 
     def _test_share_view(self, func_name):
         # Generic for any func_name that creates a view to share
@@ -156,7 +170,7 @@ class BaseTestCase(StaticLiveServerTestCase):
 
         # Load permalink
         self.browser.get(permalink_url)
-        self.assertEqual('', self._mapserver_loading_panel_test())
+        self._mapserver_loading_panel_test()
 
 
 class BrowserTestCase(BaseTestCase):
@@ -170,7 +184,7 @@ class BrowserTestCase(BaseTestCase):
     def test_query_page(self):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
         self.assertIn('default', self.browser.title)
-        self.assertEqual('', self._mapserver_loading_panel_test())
+        self._mapserver_loading_panel_test()
 
     def _select_dorado(self):
         try:
@@ -188,17 +202,39 @@ class BrowserTestCase(BaseTestCase):
                             ).find_element_by_tag_name('button')
         self._wait_until_visible_then_click(dorado_button)
 
+    def test_points_lines(self):
+        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
+        self._select_dorado()
+
+        # Make contour plot of salinity
+        measuredparameters_anchor = self.browser.find_element_by_id('measuredparameters-anchor')
+        self._wait_until_visible_then_click(measuredparameters_anchor, delay=4)
+        salinity_id = Parameter.objects.get(name__contains='salinity').id
+        salinity_plot_button = self.browser.find_element(By.XPATH,
+                "//input[@name='parameters_plot' and @value='{}']".format(salinity_id))
+        self._wait_until_visible_then_click(salinity_plot_button)
+
+        # Make 3D plot and test for shapes in points and lines elements
+        spatial_3d_anchor = self.browser.find_element_by_id('spatial-3d-anchor')
+        self._wait_until_visible_then_click(spatial_3d_anchor)
+        showgeox3dmeasurement = self.browser.find_element_by_id('showgeox3dmeasurement')
+        self._wait_until_visible_then_click(showgeox3dmeasurement)
+
+        # See that there are shapes in the -animations groups
+        self._test_for_child_elements('track-animations', 588)
+        self._test_for_child_elements('points-animations', 294)
+
     def test_curtain(self):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
         self._select_dorado()
 
-        # Make contour plot of altitude
+        # Make contour plot of temperature
         measuredparameters_anchor = self.browser.find_element_by_id('measuredparameters-anchor')
         self._wait_until_visible_then_click(measuredparameters_anchor, delay=4)
-        altitude_id = Parameter.objects.get(name__contains='altitude').id
-        altitude_plot_button = self.browser.find_element(By.XPATH,
-                "//input[@name='parameters_plot' and @value='{}']".format(altitude_id))
-        self._wait_until_visible_then_click(altitude_plot_button)
+        temperature_id = Parameter.objects.get(name__contains='temperature').id
+        temperature_plot_button = self.browser.find_element(By.XPATH,
+                "//input[@name='parameters_plot' and @value='{}']".format(temperature_id))
+        self._wait_until_visible_then_click(temperature_plot_button)
         contour_button = self.browser.find_element(By.XPATH, "//input[@name='showdataas' and @value='contour']")
         self._wait_until_visible_then_click(contour_button)
 
@@ -207,14 +243,23 @@ class BrowserTestCase(BaseTestCase):
         self._wait_until_visible_then_click(spatial_3d_anchor)
         showgeox3dmeasurement = self.browser.find_element_by_id('showgeox3dmeasurement')
         self._wait_until_visible_then_click(showgeox3dmeasurement)
-        self._wait_until_id_is_visible('mp-curtain')
 
+        # See that there are shapes in the curtain-animation group
+        self._test_for_child_elements('curtain-animations', 294, delay=10)
+
+        # See that there is at least one indexedfaceset in the curtain-animations group
+        shape_id = 'ifs_dorado_1288217606'
+        self._wait_until_id_is_visible(shape_id, delay=10)
+        self.assertEquals(1, len(self.browser.find_element_by_id(shape_id)
+                                     .find_elements_by_xpath(".//indexedfaceset")),
+                                     f"Did not find a single indexedfaceset in {shape_id}")
+        
     def test_dorado_trajectory(self):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
         self._select_dorado()
 
         # Test that Mapserver returns images
-        self.assertEqual('', self._mapserver_loading_panel_test(delay=4))
+        self._mapserver_loading_panel_test()
 
         # Test Spatial 3D - provides test coverage in utils/Viz
         spatial_3d_anchor = self.browser.find_element_by_id('spatial-3d-anchor')
@@ -222,10 +267,10 @@ class BrowserTestCase(BaseTestCase):
         # - Measurement data
         measuredparameters_anchor = self.browser.find_element_by_id('measuredparameters-anchor')
         self._wait_until_visible_then_click(measuredparameters_anchor, delay=4)
-        altitude_id = Parameter.objects.get(name__contains='altitude').id
-        altitude_plot_button = self.browser.find_element(By.XPATH,
-                "//input[@name='parameters_plot' and @value='{}']".format(altitude_id))
-        self._wait_until_visible_then_click(altitude_plot_button)
+        temperature_id = Parameter.objects.get(name__contains='temperature').id
+        temperature_plot_button = self.browser.find_element(By.XPATH,
+                "//input[@name='parameters_plot' and @value='{}']".format(temperature_id))
+        self._wait_until_visible_then_click(temperature_plot_button)
         self._wait_until_src_is_visible('dorado_colorbar', delay=6)
         # - Colormap
         colorbar = self.browser.find_element_by_id('mp-colormap')
@@ -235,8 +280,11 @@ class BrowserTestCase(BaseTestCase):
         # - 3D measurement data
         showgeox3dmeasurement = self.browser.find_element_by_id('showgeox3dmeasurement')
         self._wait_until_visible_then_click(showgeox3dmeasurement)
-        self._wait_until_id_is_visible('mp-x3d-track')
-        assert 'shape' == self.browser.find_element_by_id('mp-x3d-track').tag_name
+
+        # See that there are shapes in the -animations groups
+        self._test_for_child_elements('track-animations', 588)
+        self._test_for_child_elements('points-animations', 294)
+
         # - 3D Platform animation
         showplatforms = self.browser.find_element_by_id('showplatforms')
         self._wait_until_visible_then_click(showplatforms)
@@ -258,7 +306,7 @@ class BrowserTestCase(BaseTestCase):
     def test_share_view_trajectory(self):
         self._test_share_view('test_dorado_trajectory')
         self._temporal_loading_panel_test(delay=6)
-        self._wait_until_id_is_visible('mp-x3d-track')
+        self._wait_until_id_is_visible('track-animations')
 
         # Hack to make test pass: click checkbox twice to make dorado_LOCATION appear
         showplatforms = self.browser.find_element_by_id('showplatforms')
