@@ -261,17 +261,8 @@ class CANONLoader(LoadScript):
                 self.logger.info(f'Building load parameter attributes crawling LRAUV missionlogs dirs')
                 self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
         elif dlist_str:
-            if enddate.year > startdate.year:
-                for year in range(startdate.year, enddate.year + 1):
-                    # Execute load for whole years at a time in order to keep the Activity name shorter
-                    # and because that is kind of how the LRAUV load is structured
-                    self.logger.info(f'Building load parameter attributes crawling LRAUV dirs with dlist_str = {dlist_str} and year = {year}')
-                    self.build_lrauv_attrs(year, pname, datetime(year, 1, 1), datetime(year, 12, 31), 
-                                           parameters, file_patterns, dlist_str, err_on_missing_file)
-            else:
-                # Load just the missions in the startdate enddate range
-                self.build_lrauv_attrs(startdate.year, pname, startdate, enddate,
-                                       parameters, file_patterns, dlist_str, err_on_missing_file)
+            self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, 
+                                   file_patterns, dlist_str, err_on_missing_file)
         else:
             self.logger.info(f'Using load {pname} attributes set in load script')
             parameters = getattr(self, f'{pname}_parms')
@@ -1430,9 +1421,7 @@ class CANONLoader(LoadScript):
                                         dts = dlist_dir.split('_')
                                         dir_start =  datetime.strptime(dts[0], '%Y%m%d')
                                         dir_end =  datetime.strptime(dts[1], '%Y%m%d')
-                                        # Grab the valid urls for all log files in a .dlist directory that fall witin startdata and enddate
-                                        if dlist_dir == '20180220_20180221':
-                                            breakpoint()
+                                        # Grab the valid urls for all log files in a .dlist directory that fall within startdata and enddate
                                         if ( (startdate <= dir_start and dir_start <= enddate) or (startdate <= dir_end and dir_end <= enddate) ):
                                             self.logger.info(f"Adding {url} to urls list")
                                             urls.append(url)
@@ -1471,7 +1460,7 @@ class CANONLoader(LoadScript):
             else:
                 urls += self.find_lrauv_urls(base, file_patterns, startdate, enddate)
             files = []
-            if len(urls) > 0 :
+            if len(urls) > 0:
                 for url in sorted(urls):
                     if 'shore_i' in url:
                         file = '/'.join(url.split('/')[-3:])
@@ -1483,6 +1472,8 @@ class CANONLoader(LoadScript):
             setattr(self, platform  + '_startDatetime', startdate)
             setattr(self, platform + '_endDatetime', enddate)
 
+        except urllib.error.HTTPError as e:
+            self.logger.warn(f'{e}')
         except FileNotFound as e:
             self.logger.warn(f'{e}')
             if err_on_missing_file:
