@@ -261,8 +261,9 @@ class CANONLoader(LoadScript):
                 self.logger.info(f'Building load parameter attributes crawling LRAUV missionlogs dirs')
                 self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
         elif dlist_str:
-            self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, 
-                                   file_patterns, dlist_str, err_on_missing_file)
+            for mission_year in range(startdate.year, enddate.year):
+                self.build_lrauv_attrs(mission_year, pname, startdate, enddate, parameters, 
+                                       file_patterns, dlist_str, err_on_missing_file)
         else:
             self.logger.info(f'Using load {pname} attributes set in load script')
             parameters = getattr(self, f'{pname}_parms')
@@ -1388,50 +1389,51 @@ class CANONLoader(LoadScript):
 
         return 'should_be_present'
 
-    def find_lrauv_urls_by_dlist_string(self, dlist_str, platform, startdate, enddate, nc_str='_2S_scieng.nc'):
+    def find_lrauv_urls_by_dlist_string(self, dlist_str, platform, startdate, enddate, mission_year, nc_str='_2S_scieng.nc'):
         '''Crawl web accessible directories and search for missions that have dlist_str.
         Find all .dlist files and scan contents of the .dlist that has `dlist_str`.
-        Return a list of those urls.
+        Return a list of those urls. This is called by build_lrauv_attrs() which needs 
+        to do its work one year at a time. Add urls that fall within startdate and
+        enddate, but do this only for one mission_year at a time, set by build_lrauv_attrs().
         '''
         urls = []
-        for year in range(startdate.year, enddate.year + 1):
-            file_base = f'http://dods.mbari.org/data/lrauv/{platform}/missionlogs/{year}'
-            dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{year}'
-            self.logger.info(f"Looking in {file_base} for .dlist files containing string '{dlist_str}'")
-            soup = BeautifulSoup(urlopen(file_base).read(), 'lxml')
-            for link in soup.find_all('a'):
-                if '.dlist' in link.get('href'):
-                    dlist_dir = link.get('href').split('/')[-1].split('.')[0]
-                    dlist_url = os.path.join(file_base, f"{dlist_dir}.dlist")
-                    self.logger.debug(f"Cheking if {platform}/missionlogs/{startdate.year}/{dlist_dir}.dlist contains '{dlist_str}'")
-                    with requests.get(dlist_url) as resp:
-                        if resp.status_code != 200:
-                            self.logger.error(f"Cannot read {dlist_url}, resp.status_code = {resp.status_code}")
-                            return
-                        if dlist_str in resp.text:
-                            self.logger.debug(f"Found a .dlist containing {dlist_str}: {dlist_dir}")
-                            self.logger.debug(f"Searching uncommented directores in {dlist_url}")
-                            for line in (r.decode('utf-8') for r in resp.iter_lines()):
-                                self.logger.debug(f"{line}")
-                                if not line.startswith('#'):
-                                    mission_dir = os.path.join(file_base, dlist_dir, line)
-                                    mission_dods = os.path.join(dods_base, dlist_dir, line)
-                                    url = self._get_mission_url(nc_str, mission_dir, mission_dods)
-                                    if url:
-                                        dts = dlist_dir.split('_')
-                                        dir_start =  datetime.strptime(dts[0], '%Y%m%d')
-                                        dir_end =  datetime.strptime(dts[1], '%Y%m%d')
-                                        # Grab the valid urls for all log files in a .dlist directory that fall within startdata and enddate
-                                        if ( (startdate <= dir_start and dir_start <= enddate) or (startdate <= dir_end and dir_end <= enddate) ):
-                                            self.logger.info(f"Adding {url} to urls list")
-                                            urls.append(url)
-                                    else:
-                                        # Check .log file contents to confirm that we expect a url (.nc file)
-                                        log_url = self._get_mission_url(nc_str[:-2] + 'log', mission_dir, mission_dods)
-                                        log_reason = self._scieng_file_state(log_url)
-                                        self.logger.debug(f"The .log file indication for .nc file: {log_reason}")
-                                        if log_reason == 'should_be_present':
-                                            self.logger.warn(f"Could not find {nc_str} file in {mission_dods}, it {log_reason}")
+        file_base = f'http://dods.mbari.org/data/lrauv/{platform}/missionlogs/{mission_year}'
+        dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{mission_year}'
+        self.logger.info(f"Looking in {file_base} for .dlist files containing string '{dlist_str}'")
+        soup = BeautifulSoup(urlopen(file_base).read(), 'lxml')
+        for link in soup.find_all('a'):
+            if '.dlist' in link.get('href'):
+                dlist_dir = link.get('href').split('/')[-1].split('.')[0]
+                dlist_url = os.path.join(file_base, f"{dlist_dir}.dlist")
+                self.logger.debug(f"Cheking if {platform}/missionlogs/{startdate.year}/{dlist_dir}.dlist contains '{dlist_str}'")
+                with requests.get(dlist_url) as resp:
+                    if resp.status_code != 200:
+                        self.logger.error(f"Cannot read {dlist_url}, resp.status_code = {resp.status_code}")
+                        return
+                    if dlist_str in resp.text:
+                        self.logger.debug(f"Found a .dlist containing {dlist_str}: {dlist_dir}")
+                        self.logger.debug(f"Searching uncommented directores in {dlist_url}")
+                        for line in (r.decode('utf-8') for r in resp.iter_lines()):
+                            self.logger.debug(f"{line}")
+                            if not line.startswith('#'):
+                                mission_dir = os.path.join(file_base, dlist_dir, line)
+                                mission_dods = os.path.join(dods_base, dlist_dir, line)
+                                url = self._get_mission_url(nc_str, mission_dir, mission_dods)
+                                if url:
+                                    dts = dlist_dir.split('_')
+                                    dir_start =  datetime.strptime(dts[0], '%Y%m%d')
+                                    dir_end =  datetime.strptime(dts[1], '%Y%m%d')
+                                    # Grab the valid urls for all log files in a .dlist directory that fall within startdata and enddate
+                                    if ( (startdate <= dir_start and dir_start <= enddate) or (startdate <= dir_end and dir_end <= enddate) ):
+                                        self.logger.info(f"Adding {url} to urls list")
+                                        urls.append(url)
+                                else:
+                                    # Check .log file contents to confirm that we expect a url (.nc file)
+                                    log_url = self._get_mission_url(nc_str[:-2] + 'log', mission_dir, mission_dods)
+                                    log_reason = self._scieng_file_state(log_url)
+                                    self.logger.debug(f"The .log file indication for .nc file: {log_reason}")
+                                    if log_reason == 'should_be_present':
+                                        self.logger.warn(f"Could not find {nc_str} file in {mission_dods}, it {log_reason}")
         return urls
 
     def build_lrauv_attrs(self, mission_year, platform, startdate, enddate, parameters, file_patterns,
@@ -1441,6 +1443,7 @@ class CANONLoader(LoadScript):
         years. We'd like to keep the files portion of the string short as it's the mouse-over text 
         in the UI
         '''
+
         base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{mission_year}/'
         dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{mission_year}/'
         if sbd_logs:
@@ -1454,9 +1457,8 @@ class CANONLoader(LoadScript):
         urls = []
         try:
             if dlist_str:
-                urls += self.find_lrauv_urls_by_dlist_string(dlist_str, platform=platform,
-                                                             startdate=startdate,
-                                                             enddate=enddate)
+                urls += self.find_lrauv_urls_by_dlist_string(dlist_str, platform,
+                                                             startdate, enddate, mission_year)
             else:
                 urls += self.find_lrauv_urls(base, file_patterns, startdate, enddate)
             files = []
