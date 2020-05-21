@@ -39,13 +39,13 @@ cl = CANONLoader('stoqs_mbts', 'BOG - Monterey Bay Time Series',
 
 # Will likely need to adjust eyear as time goes on
 syear = datetime(2015, 1, 1)
-eyear = datetime(2019, 12, 31)
+eyear = datetime(2020, 12, 31)
 
 # Execute the load
 cl.process_command_line()
 
 if cl.args.test:
-    cl.stride = 10000
+    cl.stride = 1000
 elif cl.args.stride:
     cl.stride = cl.args.stride
 
