@@ -260,15 +260,16 @@ class CANONLoader(LoadScript):
             else:
                 self.logger.info(f'Building load parameter attributes crawling LRAUV missionlogs dirs')
                 self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
+            self._execute_load(pname, parameters, stride, critSimpleDepthTime)
         elif dlist_str:
             for mission_year in range(startdate.year, enddate.year):
                 self.build_lrauv_attrs(mission_year, pname, startdate, enddate, parameters, 
                                        file_patterns, dlist_str, err_on_missing_file)
+                self._execute_load(pname, parameters, stride, critSimpleDepthTime)
         else:
             self.logger.info(f'Using load {pname} attributes set in load script')
             parameters = getattr(self, f'{pname}_parms')
-
-        self._execute_load(pname, parameters, stride, critSimpleDepthTime)
+            self._execute_load(pname, parameters, stride, critSimpleDepthTime)
 
     def loadMartin(self, stride=None):
         '''
