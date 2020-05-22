@@ -262,7 +262,7 @@ class CANONLoader(LoadScript):
                 self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
             self._execute_load(pname, parameters, stride, critSimpleDepthTime)
         elif dlist_str:
-            for mission_year in range(startdate.year, enddate.year):
+            for mission_year in range(startdate.year, enddate.year + 1):
                 self.build_lrauv_attrs(mission_year, pname, startdate, enddate, parameters, 
                                        file_patterns, dlist_str, err_on_missing_file)
                 self._execute_load(pname, parameters, stride, critSimpleDepthTime)
