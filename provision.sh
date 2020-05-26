@@ -99,6 +99,7 @@ else
 fi
 
 echo Install PostgreSQL
+yum -y install centos-release-scl
 yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 yum -y groupinstall "PostgreSQL Database Server ${PG_VER} PGDG"
 
