@@ -220,7 +220,7 @@ class CANONLoader(LoadScript):
                 lrauv_ml.load_missions(pname, aname, url, self.dbAlias)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
-            except webob.exc.HTTPError as e:
+            except (webob.exc.HTTPError, UnboundLocalError) as e:
                 self.logger.warn(f"{e}")
 
         self.addPlatformResources(f'https://stoqs.mbari.org/x3d/lrauv/lrauv_{pname}.x3d', pname,
@@ -249,22 +249,18 @@ class CANONLoader(LoadScript):
                   stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True, 
                   dlist_str=None, err_on_missing_file=False, critSimpleDepthTime=10,
                   sbd_logs=False, cell_logs=False):
-        '''
-        Loader for tethys, daphne, makai, ahi, aku, 
-        '''
-        if build_attrs and not dlist_str:
-            if sbd_logs:
-                self.logger.info(f'Building load parameter attributes crawling LRAUV sbdlogs dirs')
-                file_patterns=('.*shore_i.nc$')
-                self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns, sbd_logs=True)
-            else:
-                self.logger.info(f'Building load parameter attributes crawling LRAUV missionlogs dirs')
-                self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
-            self._execute_load(pname, parameters, stride, critSimpleDepthTime)
-        elif dlist_str:
+
+        if sbd_logs:
+            dir_string = 'sbdlogs' 
+        elif cell_logs:
+            dir_string = "TODO: Will be 'celllogs' when implemented" 
+        else:
+            dir_string = 'missionlogs'
+        if build_attrs:
+            self.logger.info(f'Building load parameter attributes crawling LRAUV {dir_string} dirs for {pname}')
             for mission_year in range(startdate.year, enddate.year + 1):
                 self.build_lrauv_attrs(mission_year, pname, startdate, enddate, parameters, 
-                                       file_patterns, dlist_str, err_on_missing_file)
+                                       file_patterns, dlist_str, err_on_missing_file, sbd_logs, cell_logs)
                 self._execute_load(pname, parameters, stride, critSimpleDepthTime)
         else:
             self.logger.info(f'Using load {pname} attributes set in load script')
@@ -1327,7 +1323,7 @@ class CANONLoader(LoadScript):
 
                 if date_intersect:
                     # Grab the valid urls for all log files in a .dlist directory that intersect the Campaign dates
-                    if ( (dir_start <= startdate and startdate <= dir_end) or (dir_start <= enddate and enddate <= dir_end) ):
+                    if ( (startdate <= dir_start and dir_start <= enddate) or (startdate <= dir_end and dir_end <= enddate) ):
                         self.logger.debug(f'{mission_dir_name}: Collecting all log files matching {search_str} in this directory')
                         catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                         c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
@@ -1346,13 +1342,13 @@ class CANONLoader(LoadScript):
                             self.logger.debug(f'{url}')
                             urls.append(url)
             else:
-                # Likely a realtime log - add to urls if only url date is greater than startdate
+                # Likely a realtime log - add to urls if only url date is between startdate and enddate
                 catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                 c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
                 d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
                 for url in d:
                     dir_start =  datetime.strptime(url.split('/')[11], '%Y%m%dT%H%M%S')
-                    if dir_start >= startdate:
+                    if (startdate <= dir_start and dir_start <= enddate):
                         self.logger.debug(f'{url}')
                         urls.append(url)
 

@@ -265,7 +265,8 @@ class Loader(object):
             print('The stoqs/campaigns.py could not be loaded. '
                               'Create a symbolic link named "campaigns.py" '
                               'pointing to the file for your site.')
-            print('Use stoqs/mbari_campaigns.py as a model')
+            print('Use stoqs/mbari_campaigns.py or stoqs/mbari_lrauv_campaigns.py as'
+                  ' the source file or as a model for your own.')
             sys.exit()
 
         if self.args.db:
