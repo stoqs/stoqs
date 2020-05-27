@@ -99,6 +99,7 @@ else
 fi
 
 echo Install PostgreSQL
+yum -y install centos-release-scl
 yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 yum -y groupinstall "PostgreSQL Database Server ${PG_VER} PGDG"
 
@@ -382,6 +383,10 @@ EOT
 systemctl restart network
 groupadd docker
 usermod -aG docker $USER
+
+echo Copy x3dom javascript library version that works with SRC binary terrain
+mkdir $STOQS_HOME/stoqs/static/x3dom-1.8.1
+curl "https://stoqs.mbari.org/static/x3dom-1.8.1/x3dom-full.debug.js" -o $STOQS_HOME/stoqs/static/x3dom-1.8.1/x3dom-full.debug.js
 
 echo Provisioning has finished. 
 echo Default database loading and STOQS software tests should be run with:
