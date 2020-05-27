@@ -384,6 +384,10 @@ systemctl restart network
 groupadd docker
 usermod -aG docker $USER
 
+echo Copy x3dom javascript library version that works with SRC binary terrain
+mkdir $STOQS_HOME/stoqs/static/x3dom-1.8.1
+curl "https://stoqs.mbari.org/static/x3dom-1.8.1/x3dom-full.debug.js" -o $STOQS_HOME/stoqs/static/x3dom-1.8.1/x3dom-full.debug.js
+
 echo Provisioning has finished. 
 echo Default database loading and STOQS software tests should be run with:
 echo "(Note: These commands are also found in $STOQS_HOME/README.md)"
