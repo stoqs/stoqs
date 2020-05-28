@@ -200,9 +200,9 @@ class CANONLoader(LoadScript):
             url = os.path.join(base, f)
             # shorten the activity names
             if 'slate.nc' in aname or 'shore' in aname:
-                aname = '_'.join(aname.split('/')[-2:])
+                aname = f"{pname}_{'_'.join(aname.split('/')[-2:])}"
             else:
-                aname = aname.rsplit('/', 1)[-1]
+                aname = f"{pname}_{aname.rsplit('/', 1)[-1]}"
             if hasattr(self, f'{pname}_aux_coords'):
                 aux_coords = getattr(self, f'{pname}_aux_coords')
             else:
