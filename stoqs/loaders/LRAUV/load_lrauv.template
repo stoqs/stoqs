@@ -9,6 +9,7 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 from argparse import ArgumentParser
 from CANON import CANONLoader
 from datetime import datetime
+from stoqs.models import Activity
 import timing
 import traceback
 
@@ -72,12 +73,14 @@ except KeyboardInterrupt:
     print("KeyboardInterrupt: exiting lrauv section with 0 return code")
     sys.exit(0)
 
-try:
-    cl.loadDorado(syear, eyear, build_attrs=True, plankton_proxies=True)
-except KeyboardInterrupt:
-    # Likely purposfully terminated return with 0 return code so that we don't drop the database
-    print("KeyboardInterrupt: exiting dorado section with 0 return code")
-    sys.exit(0)
+if Activity.objects.using(cl.dbAlias):
+    # Only add Dorado missions if we have LRAUV Activities
+    try:
+        cl.loadDorado(syear, eyear, build_attrs=True, plankton_proxies=True)
+    except KeyboardInterrupt:
+        # Likely purposfully terminated return with 0 return code so that we don't drop the database
+        print("KeyboardInterrupt: exiting dorado section with 0 return code")
+        sys.exit(0)
 
 try:
     # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
