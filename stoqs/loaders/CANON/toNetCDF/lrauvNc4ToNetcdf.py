@@ -1146,6 +1146,9 @@ class InterpolatorWriter(BaseWriter):
         logger.info('Wrote ' + out_file)
         logger.removeHandler(fh)
 
+        logger.info(f"Removing /tmp/{base_name}")
+        os.system(f"/bin/rm -f /tmp/{base_name}")
+
         # End processResampleNc4File
 
     def processResample(self, url, out_file, parm, interpFreq, resampleFreq):
