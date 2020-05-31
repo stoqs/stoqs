@@ -83,11 +83,11 @@ then
     psql -p $PGPORT -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
 
     echo "Copy x3dom javascript library version that works with SRC binary terrain"
-    mkdir ../stoqs/static/x3dom-1.8.1
-    wget -N -O -q --no-check-certificate static/x3dom-1.8.1/x3dom-full.debug.js https://stoqs.mbari.org/static/x3dom-1.8.1/x3dom-full.debug.js
+    mkdir stoqs/static/x3dom-1.8.1
+    wget -N --no-check-certificate -O static/x3dom-1.8.1/x3dom-full.debug.js https://stoqs.mbari.org/static/x3dom-1.8.1/x3dom-full.debug.js
 
     # Get bathymetry and load data from MBARI data servers
-    wget -N -O -q --no-check-certificate loaders/Monterey25.grd https://stoqs.mbari.org/terrain/Monterey25.grd
+    wget -N --no-check-certificate -O loaders/Monterey25.grd https://stoqs.mbari.org/terrain/Monterey25.grd
     coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" loaders/loadTestData.py
     if [ $? != 0 ]
     then
