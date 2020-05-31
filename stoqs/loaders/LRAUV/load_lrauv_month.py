@@ -99,10 +99,10 @@ class AutoLoad():
                 if year == int(self.args.start_YYYYMM[:4]):
                     for month in range(int(self.args.start_YYYYMM[4:]), 13):
                         self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
-                if year != int(self.args.start_YYYYMM[:4]) and year != int(self.args.end_YYYYMM[:4]):
+                elif year != int(self.args.start_YYYYMM[:4]) and year != int(self.args.end_YYYYMM[:4]):
                     for month in range(1, 13):
                         self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
-                if year == int(self.args.end_YYYYMM[:4]):
+                elif year == int(self.args.end_YYYYMM[:4]):
                     for month in range(1, int(self.args.end_YYYYMM[4:])):
                         self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
 

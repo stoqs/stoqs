@@ -2,10 +2,6 @@
 # Use /src/${BUILD_CODE} for STOQS_HOME in docker-compose.test.yml
 # The working directory for this script in docker cloud is $STOQS_HOME/docker
 
-echo "==> Copy x3dom javascript library version that works with SRC binary terrain"
-mkdir ../stoqs/static/x3dom-1.8.1
-curl "https://stoqs.mbari.org/static/x3dom-1.8.1/x3dom-full.debug.js" -o ../stoqs/static/x3dom-1.8.1/x3dom-full.debug.js
-
 echo "==> hooks/test"
 
 if [ $GIT_BRANCH == 'MBARIMike:master' ] || [ $SOURCE_REPOSITORY_URL == 'https://github.com/MBARIMike/stoqs' ] 
