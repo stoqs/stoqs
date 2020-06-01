@@ -33,6 +33,70 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+SCI_PARMS = {'Aanderaa_O2': [{'name': 'mass_concentration_of_oxygen_in_sea_water',
+                              'rename': 'oxygen'}],
+             'CTD_NeilBrown': [{'name': 'sea_water_salinity', 'rename': 'salinity'},
+                               {'name': 'sea_water_temperature', 'rename': 'temperature'}],
+             'CTD_Seabird': [{'name': 'sea_water_salinity', 'rename': 'salinity'},
+                             {'name': 'sea_water_temperature', 'rename': 'temperature'}],
+             'ISUS': [{'name': 'mole_concentration_of_nitrate_in_sea_water',
+                       'rename': 'nitrate'}],
+             'PAR_Licor': [{'name': 'downwelling_photosynthetic_photon_flux_in_sea_water',
+                            'rename': 'PAR'}],
+             'WetLabsBB2FL': [{'name': 'mass_concentration_of_chlorophyll_in_sea_water',
+                               'rename': 'chlorophyll'},
+                              {'name': 'Output470', 'rename': 'bbp470'},
+                              {'name': 'Output650', 'rename': 'bbp650'}],
+             'WetLabsSeaOWL_UV_A': [{'name': 'concentration_of_chromophoric_dissolved_organic_matter_in_sea_water',
+                                     'rename': 'chromophoric_dissolved_organic_matter'},
+                                    {'name': 'mass_concentration_of_chlorophyll_in_sea_water',
+                                     'rename': 'chlorophyll'},
+                                    {'name': 'BackscatteringCoeff700nm',
+                                     'rename': 'BackscatteringCoeff700nm'},
+                                    {'name': 'VolumeScatCoeff117deg700nm',
+                                     'rename': 'VolumeScatCoeff117deg700nm'},
+                                    {'name': 'mass_concentration_of_petroleum_hydrocarbons_in_sea_water',
+                                     'rename': 'petroleum_hydrocarbons'}]}
+
+ENG_PARMS = {'BPC1': [{'name': 'platform_battery_charge',
+                       'rename': 'health_platform_battery_charge'},
+                      {'name': 'platform_battery_voltage',
+                       'rename': 'health_platform_average_voltage'}],
+             'BuoyancyServo': [{'name': 'platform_buoyancy_position',
+                                'rename': 'control_inputs_buoyancy_position'}],
+             'DeadReckonUsingMultipleVelocitySources': [{'name': 'fix_residual_percent_distance_traveled',
+                                                         'rename': 'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources'},
+                                                        {'name': 'longitude',
+                                                         'rename': 'pose_longitude_DeadReckonUsingMultipleVelocitySources'},
+                                                        {'name': 'latitude',
+                                                         'rename': 'pose_latitude_DeadReckonUsingMultipleVelocitySources'},
+                                                        {'name': 'depth',
+                                                         'rename': 'pose_depth_DeadReckonUsingMultipleVelocitySources'}],
+             'DeadReckonUsingSpeedCalculator': [{'name': 'fix_residual_percent_distance_traveled',
+                                                 'rename': 'fix_residual_percent_distance_traveled_DeadReckonUsingSpeedCalculator'},
+                                                {'name': 'longitude',
+                                                 'rename': 'pose_longitude_DeadReckonUsingSpeedCalculator'},
+                                                {'name': 'latitude',
+                                                 'rename': 'pose_latitude_DeadReckonUsingSpeedCalculator'},
+                                                {'name': 'depth',
+                                                 'rename': 'pose_depth_DeadReckonUsingSpeedCalculator'}],
+             'ElevatorServo': [{'name': 'platform_elevator_angle',
+                                'rename': 'control_inputs_elevator_angle'}],
+             'MassServo': [{'name': 'platform_mass_position',
+                            'rename': 'control_inputs_mass_position'}],
+             'NAL9602': [{'name': 'time_fix', 'rename': 'fix_time'},
+                         {'name': 'latitude_fix', 'rename': 'fix_latitude'},
+                         {'name': 'longitude_fix', 'rename': 'fix_longitude'}],
+             'Onboard': [{'name': 'platform_average_current',
+                          'rename': 'health_platform_average_current'}],
+             'RudderServo': [{'name': 'platform_rudder_angle',
+                              'rename': 'control_inputs_rudder_angle'}],
+             'ThrusterServo': [{'name': 'platform_propeller_rotation_rate',
+                                'rename': 'control_inputs_propeller_rotation_rate'}]}
+
+SCIENG_PARMS = {**SCI_PARMS, **ENG_PARMS}
+
+
 class ServerError(Exception):
     pass
 
@@ -75,6 +139,8 @@ def process_command_line():
         parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20151031T000000', required=False)
         parser.add_argument('--trackingdb', action='store_true', help='Attempt to use positions of <name>_ac from the Tracking Database (ODSS)')
         parser.add_argument('--nudge', action='store_true', help='Nudge the dead reckoned positions to meet the GPS fixes')
+        parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
+        parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
 
         args = parser.parse_args()
 
@@ -183,8 +249,8 @@ def processResample(pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendS
         raise ie
     except KeyError:
         raise ServerError("Key error - can't read parameters from {}".format(url_in))
-    except ValueError as e:
-        raise ServerError("ValueError: {} - can't read parameters from {}".format(e, url_in))
+    ##except ValueError as e:
+    ##    raise ServerError("ValueError: {} - can't read parameters from {}".format(e, url_in))
 
     url_o = url_out
     return url_o
@@ -195,12 +261,19 @@ if __name__ == '__main__':
     args = process_command_line()
     parms = ''
 
+    # TODO: make work like cron jobs on tethysviz
+
     # Check formatting of json arguments - this is easy to mess up
     try:
         parms = json.loads(args.parms)
     except Exception as e:
         logger.warning('Parameter argument invalid {}'.format(args.parms))
         exit(-1)
+    import pprint
+   
+    print(f"{args.appendString} = {pprint.pformat(parms)}")
+    ##breakpoint()
+    sys.exit()
 
     # Unless start time defined, then start there
     if args.start is not None:
