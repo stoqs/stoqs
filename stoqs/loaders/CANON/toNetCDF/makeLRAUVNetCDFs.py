@@ -32,7 +32,7 @@ from loaders.LRAUV.make_load_scripts import lrauvs
 
 # Set up global variables for logging output to STDOUT
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 SCI_PARMS = {'Aanderaa_O2': [{'name': 'mass_concentration_of_oxygen_in_sea_water',
                               'rename': 'oxygen'}],
@@ -179,7 +179,7 @@ class Make_netCDFs():
             inUrl = self.args.inUrl
         else:
             if self.args.platform:
-                inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{self.args.platform}/missionlogs/{start.year}/*.nc4"
+                inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{self.args.platform}/missionlogs/{start.year}/.*.nc4"
             else:
                 logger.error("Must provide --platform")
 
@@ -194,32 +194,30 @@ class Make_netCDFs():
             u = urlparse(url.replace(".html", ".xml"))
         url = u.geturl()
         urls = []
-        try:
-            c = Crawl(url, select=[".*dlist"])
 
-            # Crawl the catalogRefs:
-            for dataset in c.datasets:
+        breakpoint()
+        dlist_cat = Crawl(url, select=[".*dlist"])
 
-                try:
-                    # get the mission directory name and extract the start and ending dates
-                    dlist = os.path.basename(dataset.id)
-                    mission_dir_name = dlist.split('.')[0]
-                    dts = mission_dir_name.split('_')
-                    dir_start =  datetime.strptime(dts[0], '%Y%m%d')
-                    dir_end =  datetime.strptime(dts[1], '%Y%m%d')
+        # Crawl the catalogRefs:
+        for dataset in dlist_cat.datasets:
+            # get the mission directory name and extract the start and ending dates
+            dlist = os.path.basename(dataset.id)
+            mission_dir_name = dlist.split('.')[0]
+            dts = mission_dir_name.split('_')
+            dir_start =  datetime.strptime(dts[0], '%Y%m%d')
+            dir_end =  datetime.strptime(dts[1], '%Y%m%d')
 
-                    # if within a valid range, grab the valid urls
-                    if dir_start >= startdate and dir_end <= enddate:
-                        catalog = '{}_{}/catalog.xml'.format(dir_start.strftime('%Y%m%d'), dir_end.strftime('%Y%m%d'))
-                        c = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
-                        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
-                        for url in d:
-                            urls.append(url)
-                except Exception as ex:
-                    print("Error reading mission directory name {}".format(ex))
-
-        except BaseException:
-            print("Skipping {} (error parsing the XML XML)".format(url))
+            # if within a valid range, grab the valid urls
+            logger.debug(f"Checking if .dlist {dlist} is within {startdate} and {enddate}")
+            if dir_start >= startdate and dir_end <= enddate:
+                catalog = '{}_{}/catalog.xml'.format(dir_start.strftime('%Y%m%d'), dir_end.strftime('%Y%m%d'))
+                logger.debug(f"Crawling {os.path.join(base, catalog)}")
+                log_cat = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
+                logger.debug(f"Getting opendap urls from datasets {log_cat.datasets}")
+                d = [s.get("url") for d in log_cat.datasets for s in d.services if s.get("service").lower() == "opendap"]
+                for url in d:
+                    logger.debug(f"Adding url {url}")
+                    urls.append(url)
 
         return urls
 
@@ -301,22 +299,16 @@ if __name__ == '__main__':
     mn.process_command_line()
     parms = mn._assign_parms()
     start, end = mn._assign_dates()
-    inUrl, inDir = mn._assign_ins(start, end)
-
-    # TODO: make work like cron jobs on tethysviz
-    import pprint
-    print(f"{mn.args.appendString} = {pprint.pformat(parms)}")
-    print(start, end)
-
-    # Get directory list from sites
-    url, files = inUrl.rsplit('/', 1)
-    logger.info(f"Crawling {url} for {files} files to make {mn.args.resampleFreq}_{mn.args.appendString}.nc files")
-    breakpoint()
-    sys.exit()
+    inDir, inUrl = mn._assign_ins(start, end)
 	
     # Get possible urls with mission dates in the directory name that fall between the requested times
-    all_urls = find_urls(url, files, start, end)
+    url, files = inUrl.rsplit('/', 1)
+    logger.info(f"Crawling {url} for {files} files to make {mn.args.resampleFreq}_{mn.args.appendString}.nc files")
+    all_urls = mn.find_urls(url, files, start, end)
     urls = []
+
+    breakpoint()
+    sys.exit()
 
     for u in all_urls:
         try:
