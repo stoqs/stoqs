@@ -31,8 +31,6 @@ from datetime import datetime
 from loaders.LRAUV.make_load_scripts import lrauvs
 
 # Set up global variables for logging output to STDOUT
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 SCI_PARMS = {'Aanderaa_O2': [{'name': 'mass_concentration_of_oxygen_in_sea_water',
                               'rename': 'oxygen'}],
@@ -102,32 +100,40 @@ class ServerError(Exception):
     pass
 
 class Make_netCDFs():
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
 
     def process_command_line(self):
-            import argparse
-            from argparse import RawTextHelpFormatter
+        import argparse
+        from argparse import RawTextHelpFormatter
 
-            examples = 'Examples:' + '\n\n'
-            examples += sys.argv[0] + " -i /mbari/LRAUV/daphne/missionlogs/2015/ -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/missionlogs/2015/.*.nc4$' -r '10S'"
-            parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
-                                             description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
-                                             epilog=examples)
-            parser.add_argument('-u', '--inUrl',action='store', help='url where processed data logs are. Will be constructed from --platform if not provided.')
-            parser.add_argument('-i', '--inDir',action='store', help='url where processed data logs are. Will be constructed from --platform if not provided.')
-            parser.add_argument('-a', '--appendString',action='store', help='string to append to the data file created; used to differentiate engineering and science data files',
-                                choices=['scieng', 'sci', 'eng'], default='scieng', required=True)
-            parser.add_argument('-r', '--resampleFreq', action='store', 
-                                help='Optional resampling frequency string to specify how to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='2S')
-            parser.add_argument('-p', '--parms', action='store', help='List of JSON formatted parameter groups, variables and renaming of variables. Will override default for --appendString.')
-            parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150930T000000')
-            parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20151031T000000')
-            parser.add_argument('--trackingdb', action='store_true', help='Attempt to use positions of <name>_ac from the Tracking Database (ODSS)')
-            parser.add_argument('--nudge', action='store_true', help='Nudge the dead reckoned positions to meet the GPS fixes')
-            parser.add_argument('--platform', action='store', help='Platform name: tethys, daphne, ahi, ...')
-            parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
-            parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
+        examples = 'Examples:' + '\n\n'
+        examples += sys.argv[0] + " -i /mbari/LRAUV/daphne/missionlogs/2015/ -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/missionlogs/2015/.*.nc4$' -r '10S'"
+        parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
+                                         description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
+                                         epilog=examples)
+        parser.add_argument('-u', '--inUrl',action='store', help='url where processed data logs are. Will be constructed from --platform if not provided.')
+        parser.add_argument('-i', '--inDir',action='store', help='url where processed data logs are. Will be constructed from --platform if not provided.')
+        parser.add_argument('-a', '--appendString',action='store', help='string to append to the data file created; used to differentiate engineering and science data files',
+                            choices=['scieng', 'sci', 'eng'], default='scieng', required=True)
+        parser.add_argument('-r', '--resampleFreq', action='store', 
+                            help='Optional resampling frequency string to specify how to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='2S')
+        parser.add_argument('-p', '--parms', action='store', help='List of JSON formatted parameter groups, variables and renaming of variables. Will override default for --appendString.')
+        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150930T000000')
+        parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20151031T000000')
+        parser.add_argument('--trackingdb', action='store_true', help='Attempt to use positions of <name>_ac from the Tracking Database (ODSS)')
+        parser.add_argument('--nudge', action='store_true', help='Nudge the dead reckoned positions to meet the GPS fixes')
+        parser.add_argument('--platform', action='store', help='Platform name: tethys, daphne, ahi, ...')
+        parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
+        parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
 
-            self.args = parser.parse_args()
+        self.args = parser.parse_args()
+
+        if self.args.verbose >= 1:
+            self.logger.setLevel(logging.DEBUG)
+        elif self.args.verbose > 0:
+            self.logger.setLevel(logging.INFO)
 
     def _assign_parms(self):
         '''Assign the parms dictionary accordingly. Set to parms associated 
@@ -145,7 +151,7 @@ class Make_netCDFs():
             try:
                 parms = json.loads(args.parms)
             except Exception as e:
-                logger.warning('Parameter argument invalid {}'.format(args.parms))
+                self.logger.warning('Parameter argument invalid {}'.format(args.parms))
                 exit(-1)
 
         return parms
@@ -153,12 +159,18 @@ class Make_netCDFs():
     def _assign_dates(self):
         # Unless start time defined, then start there
         if self.args.start is not None:
-            start = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
+            try:
+                start = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
+            except ValueError:
+                start = datetime.strptime(self.args.start, '%Y%m%d')
         else:
             start = None
 
         if self.args.end is not None:
-            end = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
+            try:
+                end = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
+            except ValueError:
+                end = datetime.strptime(self.args.end, '%Y%m%d')
         else:
             end = None
 
@@ -173,7 +185,7 @@ class Make_netCDFs():
             if self.args.platform:
                 inDir = f"/mbari/LRAUV/{self.args.platform}/missionlogs/{start.year}"
             else:
-                logger.error("Must provide --platform")
+                self.logger.error("Must provide --platform")
 
         if self.args.inUrl:
             inUrl = self.args.inUrl
@@ -181,7 +193,7 @@ class Make_netCDFs():
             if self.args.platform:
                 inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{self.args.platform}/missionlogs/{start.year}/.*.nc4"
             else:
-                logger.error("Must provide --platform")
+                self.logger.error("Must provide --platform")
 
         return inDir, inUrl
 
@@ -208,15 +220,15 @@ class Make_netCDFs():
             dir_end =  datetime.strptime(dts[1], '%Y%m%d')
 
             # if within a valid range, grab the valid urls
-            logger.debug(f"Checking if .dlist {dlist} is within {startdate} and {enddate}")
+            self.logger.debug(f"Checking if .dlist {dlist} is within {startdate} and {enddate}")
             if dir_start >= startdate and dir_end <= enddate:
                 catalog = '{}_{}/catalog.xml'.format(dir_start.strftime('%Y%m%d'), dir_end.strftime('%Y%m%d'))
-                logger.debug(f"Crawling {os.path.join(base, catalog)}")
+                self.logger.debug(f"Crawling {os.path.join(base, catalog)}")
                 log_cat = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
-                logger.debug(f"Getting opendap urls from datasets {log_cat.datasets}")
+                self.logger.debug(f"Getting opendap urls from datasets {log_cat.datasets}")
                 d = [s.get("url") for d in log_cat.datasets for s in d.services if s.get("service").lower() == "opendap"]
                 for url in d:
-                    logger.debug(f"Adding url {url}")
+                    self.logger.debug(f"Adding url {url}")
                     urls.append(url)
 
         return urls
@@ -225,20 +237,20 @@ class Make_netCDFs():
         '''Find the lines in the html with the .nc file, then open it and read the start/end times
         return url to the .nc  and start/end as datetime objects.
         '''
-        logger.debug('open_url on urlNcDap = {}'.format(urlNcDap))
+        self.logger.debug('open_url on urlNcDap = {}'.format(urlNcDap))
 
         try:
             base_in =  '/'.join(urlNcDap.split('/')[-3:])
             in_file = os.path.join(inDir, base_in) 
             df = netCDF4.Dataset(in_file, mode='r')
         except pydap.exceptions.ServerError as ex:
-            logger.warning(ex)
+            self.logger.warning(ex)
             raise ServerError("Can't read {} time axis from {}".format(timeAxisName, urlNcDap))
 
         try:
             timeAxisUnits = df[timeAxisName].units
         except KeyError as ex:
-            logger.warning(ex)
+            self.logger.warning(ex)
             raise ServerError("Can't read {} time axis from {}".format(timeAxisName, urlNcDap))
 
         if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
@@ -248,10 +260,10 @@ class Make_netCDFs():
             startDatetime = from_udunits(df[timeAxisName][0].data, timeAxisUnits)
             endDatetime = from_udunits(df[timeAxisName][-1].data, timeAxisUnits)
         except pydap.exceptions.ServerError as ex:
-            logger.warning(ex)
+            self.logger.warning(ex)
             raise ServerError("Can't read start and end dates of {} from {}".format(timeAxisUnits, urlNcDap))
         except ValueError as ex:
-            logger.warning(ex)
+            self.logger.warning(ex)
             raise ServerError("Can't read start and end dates of {} from {}".format(timeAxisUnits, urlNcDap))
 
         return startDatetime, endDatetime
@@ -263,7 +275,7 @@ class Make_netCDFs():
         '''
         url_o = None
 
-        logger.debug('url = {}'.format(url_in))
+        self.logger.debug('url = {}'.format(url_in))
         url_out = url_in.replace('.nc4', '_' + resample_freq + '_' + appendString + '.nc')
         base_in =  '/'.join(url_in.split('/')[-3:])
         base_out = '/'.join(url_out.split('/')[-3:])
@@ -275,14 +287,14 @@ class Make_netCDFs():
             if not os.path.exists(out_file):
                 pw.processResampleNc4File(in_file, out_file, parms, resample_freq, rad_to_deg)
             else:
-                logger.info(f"Not calling processResampleNc4File() for {out_file}: file exists")
+                self.logger.info(f"Not calling processResampleNc4File() for {out_file}: file exists")
         except TypeError as te:
-            logger.warning('Problem reading data from {}'.format(url_in))
-            logger.warning('Assuming data are invalid and skipping')
-            logger.warning(te)
+            self.logger.warning('Problem reading data from {}'.format(url_in))
+            self.logger.warning('Assuming data are invalid and skipping')
+            self.logger.warning(te)
             raise te
         except IndexError as ie:
-            logger.warning('Problem interpolating data from {}'.format(url_in))
+            self.logger.warning('Problem interpolating data from {}'.format(url_in))
             raise ie
         except KeyError:
             raise ServerError("Key error - can't read parameters from {}".format(url_in))
@@ -303,7 +315,7 @@ if __name__ == '__main__':
 	
     # Get possible urls with mission dates in the directory name that fall between the requested times
     url, files = inUrl.rsplit('/', 1)
-    logger.info(f"Crawling {url} for {files} files to make {mn.args.resampleFreq}_{mn.args.appendString}.nc files")
+    mn.logger.info(f"Crawling {url} for {files} files to make {mn.args.resampleFreq}_{mn.args.appendString}.nc files")
     all_urls = mn.find_urls(url, files, start, end)
     urls = []
 
@@ -322,22 +334,22 @@ if __name__ == '__main__':
             fh = logging.FileHandler(log_file, 'w+')
             frm = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
             fh.setFormatter(frm)
-            logger.addHandler(fh)
-            logger.warn(f"Can't get start and end date from .nc4: time_time not found in {u}")
+            mn.logger.addHandler(fh)
+            mn.logger.warn(f"Can't get start and end date from .nc4: time_time not found in {u}")
             fh.close()
             sh = logging.StreamHandler()
             sh.setFormatter(frm)
-            logger.handlers = [sh]
+            mn.logger.handlers = [sh]
             continue
 
-        logger.debug('startDatetime, endDatetime = {}, {}'.format(startDatetime, endDatetime))
+        mn.logger.debug('startDatetime, endDatetime = {}, {}'.format(startDatetime, endDatetime))
 
         if start is not None and startDatetime <= start :
-            logger.info('startDatetime = {} out of bounds with user-defined startDatetime = {}'.format(startDatetime, start))
+            mn.logger.info('startDatetime = {} out of bounds with user-defined startDatetime = {}'.format(startDatetime, start))
             continue
 
         if end is not None and endDatetime >= end :
-            logger.info('endDatetime = {} out of bounds with user-defined endDatetime = {}'.format(endDatetime, end))
+            mn.logger.info('endDatetime = {} out of bounds with user-defined endDatetime = {}'.format(endDatetime, end))
             continue
 
         urls.append(u)
@@ -350,6 +362,6 @@ if __name__ == '__main__':
         try:
             processResample(pw, url, args.inDir, args.resampleFreq, parms, convert_radians, args.appendString, args)
         except ServerError as e:
-            logger.warning(e)
+            mn.logger.warning(e)
             continue
 
