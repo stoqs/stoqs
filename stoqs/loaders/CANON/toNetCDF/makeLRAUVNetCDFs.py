@@ -9,7 +9,10 @@ __doc__ = '''
 Creates interpolated netCDF files for all LRAUV data; engineering and science data
 
 Execute from cron on kraken like:
-docker-compose run -u 1087 -v /dev/shm:/dev/shm -v /tmp:/tmp -v /mbari/LRAUV:/mbari/LRAUV stoqs stoqs/loaders/CANON/toNetCDF/makeLRAUVNetCDFs.py --trackingdb --nudge --start 20120901 --end 20121001
+docker-compose run -u 1087 -T -v /dev/shm:/dev/shm -v /tmp:/tmp -v /mbari/LRAUV:/mbari/LRAUV stoqs stoqs/loaders/CANON/toNetCDF/makeLRAUVNetCDFs.py --trackingdb --nudge --start 20120901 --end 20121001
+
+To debug:
+docker-compose run -u 1087 --rm -v /dev/shm:/dev/shm -v /tmp:/tmp -v /mbari/LRAUV:/mbari/LRAUV stoqs stoqs/loaders/CANON/toNetCDF/makeLRAUVNetCDFs.py --trackingdb --nudge --start 20120901 --end 20121001
 
 '''
 
@@ -200,6 +203,7 @@ class Make_netCDFs():
         url = u.geturl()
         urls = []
 
+        self.logger.debug(f"Crawling {url} looking for .dlist files")
         dlist_cat = Crawl(url, select=[".*dlist"])
 
         # Crawl the catalogRefs:
@@ -314,7 +318,8 @@ class Make_netCDFs():
 
         try:
             if not os.path.exists(out_file):
-                pw.processResampleNc4File(in_file, out_file, parms, resample_freq, rad_to_deg)
+                # The --trackingdb and --nudge args are needed here via self.args
+                pw.processResampleNc4File(in_file, out_file, parms, resample_freq, rad_to_deg, self.args)
             else:
                 self.logger.info(f"Not calling processResampleNc4File() for {out_file}: file exists")
         except TypeError as te:
@@ -347,9 +352,8 @@ if __name__ == '__main__':
         platforms = lrauvs
 
     for platform in platforms:
+        mn.logger.debug(f"Processing new .nc4 data from platform {platform}")
         inDir, inUrl = mn.assign_ins(start, end, platform)
-        
-        # Get possible urls with mission dates in the directory name that fall between the requested times
         url, files = inUrl.rsplit('/', 1)
         potential_urls = mn.find_urls(url, files, start, end)
         urls = mn.validate_urls(potential_urls, inDir)
@@ -361,7 +365,7 @@ if __name__ == '__main__':
         convert_radians = True
         for url in sorted(urls):
             try:
-                processResample(pw, url, args.inDir, args.resampleFreq, parms, convert_radians, args.appendString, args)
+                mn.processResample(pw, url, inDir, mn.args.resampleFreq, parms, convert_radians, mn.args.appendString, mn.args)
             except ServerError as e:
                 mn.logger.warning(e)
                 continue
