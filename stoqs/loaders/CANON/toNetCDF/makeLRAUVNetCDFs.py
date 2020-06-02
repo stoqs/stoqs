@@ -8,10 +8,9 @@ __doc__ = '''
 
 Creates interpolated netCDF files for all LRAUV data; engineering and science data
 
-@var __date__: Date of last svn commit
-@undocumented: __doc__ parser
-@status: production
-@license: GPL
+Execute from cron on kraken like:
+docker-compose run -u 1087 -v /dev/shm:/dev/shm -v /tmp:/tmp -v /mbari/LRAUV:/mbari/LRAUV stoqs stoqs/loaders/CANON/toNetCDF/makeLRAUVNetCDFs.py --trackingdb --nudge --start 20120901 --end 20121001
+
 '''
 
 import os
@@ -115,7 +114,7 @@ class Make_netCDFs():
         parser.add_argument('-u', '--inUrl',action='store', help='url where processed data logs are. Will be constructed from --platform if not provided.')
         parser.add_argument('-i', '--inDir',action='store', help='url where processed data logs are. Will be constructed from --platform if not provided.')
         parser.add_argument('-a', '--appendString',action='store', help='string to append to the data file created; used to differentiate engineering and science data files',
-                            choices=['scieng', 'sci', 'eng'], default='scieng', required=True)
+                            choices=['scieng', 'sci', 'eng'], default='scieng')
         parser.add_argument('-r', '--resampleFreq', action='store', 
                             help='Optional resampling frequency string to specify how to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='2S')
         parser.add_argument('-p', '--parms', action='store', help='List of JSON formatted parameter groups, variables and renaming of variables. Will override default for --appendString.')
@@ -135,7 +134,7 @@ class Make_netCDFs():
         elif self.args.verbose > 0:
             self.logger.setLevel(logging.INFO)
 
-    def _assign_parms(self):
+    def assign_parms(self):
         '''Assign the parms dictionary accordingly. Set to parms associated 
         with appendString, override if --parms specified
         '''
@@ -149,14 +148,14 @@ class Make_netCDFs():
         if self.args.parms:
             # Check formatting of json arguments - this is easy to mess up
             try:
-                parms = json.loads(args.parms)
+                parms = json.loads(self.args.parms)
             except Exception as e:
-                self.logger.warning('Parameter argument invalid {}'.format(args.parms))
+                self.logger.warning('Parameter argument invalid {}'.format(self.args.parms))
                 exit(-1)
 
         return parms
 
-    def _assign_dates(self):
+    def assign_dates(self):
         # Unless start time defined, then start there
         if self.args.start is not None:
             try:
@@ -176,24 +175,18 @@ class Make_netCDFs():
 
         return start, end
 
-    def _assign_ins(self, start, end):
-        '''Default is to return inDir and inURL given --platform and datetime parameters
+    def assign_ins(self, start, end, platform):
+        '''Default is to return inDir and inURL given platform and datetime parameters
         '''
         if self.args.inDir:
             inDir = self.args.inDir
         else:
-            if self.args.platform:
-                inDir = f"/mbari/LRAUV/{self.args.platform}/missionlogs/{start.year}"
-            else:
-                self.logger.error("Must provide --platform")
+            inDir = f"/mbari/LRAUV/{platform}/missionlogs/{start.year}"
 
         if self.args.inUrl:
             inUrl = self.args.inUrl
         else:
-            if self.args.platform:
-                inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{self.args.platform}/missionlogs/{start.year}/.*.nc4"
-            else:
-                self.logger.error("Must provide --platform")
+            inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{start.year}/.*.nc4"
 
         return inDir, inUrl
 
@@ -207,10 +200,10 @@ class Make_netCDFs():
         url = u.geturl()
         urls = []
 
-        breakpoint()
         dlist_cat = Crawl(url, select=[".*dlist"])
 
         # Crawl the catalogRefs:
+        self.logger.info(f"Crawling {url} for {files} files to make {self.args.resampleFreq}_{self.args.appendString}.nc files")
         for dataset in dlist_cat.datasets:
             # get the mission directory name and extract the start and ending dates
             dlist = os.path.basename(dataset.id)
@@ -230,6 +223,42 @@ class Make_netCDFs():
                 for url in d:
                     self.logger.debug(f"Adding url {url}")
                     urls.append(url)
+
+        return urls
+
+    def validate_urls(self, potential_urls, inDir):
+        urls = []
+        for url in potential_urls:
+            try:
+                startDatetime, endDatetime = self.getNcStartEnd(inDir, url, 'time_time')
+            except Exception as e:
+                # Write a message to the .log file for the expected output file so that
+                # lrauv-data-file-audit.sh can detect the problem
+                log_file = os.path.join(inDir, '/'.join(url.split('/')[9:]))
+                log_file = log_file.replace('.nc4', '_' + self.args.resampleFreq + '_' + self.args.appendString + '.log')
+
+                fh = logging.FileHandler(log_file, 'w+')
+                frm = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
+                fh.setFormatter(frm)
+                self.logger.addHandler(fh)
+                self.logger.warn(f"Can't get start and end date from .nc4: time_time not found in {url}")
+                fh.close()
+                sh = logging.StreamHandler()
+                sh.setFormatter(frm)
+                self.logger.handlers = [sh]
+                continue
+
+            self.logger.debug('startDatetime, endDatetime = {}, {}'.format(startDatetime, endDatetime))
+
+            if start is not None and startDatetime <= start :
+                self.logger.info('startDatetime = {} out of bounds with user-defined startDatetime = {}'.format(startDatetime, start))
+                continue
+
+            if end is not None and endDatetime >= end :
+                self.logger.info('endDatetime = {} out of bounds with user-defined endDatetime = {}'.format(endDatetime, end))
+                continue
+
+            urls.append(url)
 
         return urls
 
@@ -309,59 +338,31 @@ if __name__ == '__main__':
 
     mn = Make_netCDFs()
     mn.process_command_line()
-    parms = mn._assign_parms()
-    start, end = mn._assign_dates()
-    inDir, inUrl = mn._assign_ins(start, end)
-	
-    # Get possible urls with mission dates in the directory name that fall between the requested times
-    url, files = inUrl.rsplit('/', 1)
-    mn.logger.info(f"Crawling {url} for {files} files to make {mn.args.resampleFreq}_{mn.args.appendString}.nc files")
-    all_urls = mn.find_urls(url, files, start, end)
-    urls = []
+    parms = mn.assign_parms()
+    start, end = mn.assign_dates()
 
-    breakpoint()
-    sys.exit()
+    if mn.args.platform:
+        platforms = [mn.args.platform]
+    else:
+        platforms = lrauvs
 
-    for u in all_urls:
-        try:
-            startDatetime, endDatetime = getNcStartEnd(args.inDir, u, 'time_time')
-        except Exception as e:
-            # Write a message to the .log file for the expected output file so that
-            # lrauv-data-file-audit.sh can detect the problem
-            log_file = os.path.join(args.inDir, '/'.join(u.split('/')[9:]))
-            log_file = log_file.replace('.nc4', '_' + args.resampleFreq + '_' + args.appendString + '.log')
+    for platform in platforms:
+        inDir, inUrl = mn.assign_ins(start, end, platform)
+        
+        # Get possible urls with mission dates in the directory name that fall between the requested times
+        url, files = inUrl.rsplit('/', 1)
+        potential_urls = mn.find_urls(url, files, start, end)
+        urls = mn.validate_urls(potential_urls, inDir)
 
-            fh = logging.FileHandler(log_file, 'w+')
-            frm = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
-            fh.setFormatter(frm)
-            mn.logger.addHandler(fh)
-            mn.logger.warn(f"Can't get start and end date from .nc4: time_time not found in {u}")
-            fh.close()
-            sh = logging.StreamHandler()
-            sh.setFormatter(frm)
-            mn.logger.handlers = [sh]
-            continue
 
-        mn.logger.debug('startDatetime, endDatetime = {}, {}'.format(startDatetime, endDatetime))
+        pw = lrauvNc4ToNetcdf.InterpolatorWriter()
 
-        if start is not None and startDatetime <= start :
-            mn.logger.info('startDatetime = {} out of bounds with user-defined startDatetime = {}'.format(startDatetime, start))
-            continue
-
-        if end is not None and endDatetime >= end :
-            mn.logger.info('endDatetime = {} out of bounds with user-defined endDatetime = {}'.format(endDatetime, end))
-            continue
-
-        urls.append(u)
-
-    pw = lrauvNc4ToNetcdf.InterpolatorWriter()
-
-    # Look in time order - oldest to newest
-    convert_radians = True
-    for url in sorted(urls):
-        try:
-            processResample(pw, url, args.inDir, args.resampleFreq, parms, convert_radians, args.appendString, args)
-        except ServerError as e:
-            mn.logger.warning(e)
-            continue
+        # Look in time order - oldest to newest
+        convert_radians = True
+        for url in sorted(urls):
+            try:
+                processResample(pw, url, args.inDir, args.resampleFreq, parms, convert_radians, args.appendString, args)
+            except ServerError as e:
+                mn.logger.warning(e)
+                continue
 
