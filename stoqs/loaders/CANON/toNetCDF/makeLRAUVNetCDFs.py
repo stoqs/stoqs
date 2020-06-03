@@ -196,10 +196,10 @@ class Make_netCDFs():
         '''Default is to return inDir and inURL given platform and datetime parameters
         '''
         if not self.args.inDir:
-            self.args.inDir = f"/mbari/LRAUV/{platform}/missionlogs/{start.year}"
+            self.inDir = f"/mbari/LRAUV/{platform}/missionlogs/{start.year}"
 
         if not self.args.inUrl:
-            self.args.inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{start.year}/.*.nc4"
+            self.inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{start.year}/.*.nc4"
 
     def find_urls(self, base, select, startdate, enddate):
         url = os.path.join(base, 'catalog.xml')
@@ -254,7 +254,7 @@ class Make_netCDFs():
             except Exception as e:
                 # Write a message to the .log file for the expected output file so that
                 # lrauv-data-file-audit.sh can detect the problem
-                log_file = os.path.join(self.args.inDir, '/'.join(url.split('/')[9:]))
+                log_file = os.path.join(self.inDir, '/'.join(url.split('/')[9:]))
                 log_file = log_file.replace('.nc4', '_' + self.args.resampleFreq + '_' + self.args.appendString + '.log')
 
                 fh = logging.FileHandler(log_file, 'w+')
@@ -291,7 +291,7 @@ class Make_netCDFs():
 
         try:
             base_in =  '/'.join(urlNcDap.split('/')[-3:])
-            in_file = os.path.join(self.args.inDir, base_in) 
+            in_file = os.path.join(self.inDir, base_in) 
             df = netCDF4.Dataset(in_file, mode='r')
         except pydap.exceptions.ServerError as ex:
             self.logger.warning(ex)
@@ -330,8 +330,8 @@ class Make_netCDFs():
         base_in =  '/'.join(url_in.split('/')[-3:])
         base_out = '/'.join(url_out.split('/')[-3:])
 
-        out_file = os.path.join(self.args.inDir,  base_out)
-        in_file =  os.path.join(self.args.inDir,  base_in)
+        out_file = os.path.join(self.inDir,  base_out)
+        in_file =  os.path.join(self.inDir,  base_in)
 
         try:
             if not os.path.exists(out_file) or self.args.clobber:
@@ -370,8 +370,7 @@ if __name__ == '__main__':
 
     for platform in platforms:
         mn.assign_ins(start, end, platform)
-        url, files = mn.args.inUrl.rsplit('/', 1)
-        breakpoint()
+        url, files = mn.inUrl.rsplit('/', 1)
         potential_urls = mn.find_urls(url, files, start, end)
         urls = mn.validate_urls(potential_urls)
 
