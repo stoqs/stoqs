@@ -203,8 +203,13 @@ class Make_netCDFs():
         url = u.geturl()
         urls = []
 
-        self.logger.debug(f"Crawling {url} looking for .dlist files")
-        dlist_cat = Crawl(url, select=[".*dlist"])
+        try:
+            self.logger.debug(f"Attempting to Crawl {url} looking for .dlist files")
+            dlist_cat = Crawl(url, select=[".*dlist"])
+        except PermissionError as e:
+            self.logger.warn(f"{e}")
+            self.logger.info("Running from docker-compose sometimes encounterers this error.  Try executing again.")
+            raise
 
         # Crawl the catalogRefs:
         self.logger.info(f"Crawling {url} for {files} files to make {self.args.resampleFreq}_{self.args.appendString}.nc files")
@@ -365,7 +370,7 @@ if __name__ == '__main__':
         convert_radians = True
         for url in sorted(urls):
             try:
-                mn.processResample(pw, url, inDir, mn.args.resampleFreq, parms, convert_radians, mn.args.appendString, mn.args)
+                mn.processResample(pw, url, inDir, mn.args.resampleFreq, parms, convert_radians, mn.args.appendString)
             except ServerError as e:
                 mn.logger.warning(e)
                 continue
