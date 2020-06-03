@@ -26,6 +26,7 @@ import netCDF4
 import lrauvNc4ToNetcdf
 import requests
 
+from argparse import ArgumentParser, RawTextHelpFormatter
 from coards import to_udunits, from_udunits
 from thredds_crawler.crawl import Crawl
 from urllib.parse import urlparse
@@ -106,14 +107,11 @@ class Make_netCDFs():
     logger.setLevel(logging.INFO)
 
     def process_command_line(self):
-        import argparse
-        from argparse import RawTextHelpFormatter
-
         examples = 'Examples:' + '\n\n'
         examples += sys.argv[0] + " -i /mbari/LRAUV/daphne/missionlogs/2015/ -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/missionlogs/2015/.*.nc4$' -r '10S'"
-        parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
-                                         description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
-                                         epilog=examples)
+        parser = ArgumentParser(formatter_class=RawTextHelpFormatter,
+                                description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
+                                epilog=examples)
         parser.add_argument('-u', '--inUrl',action='store', help='url where processed data logs are. Will be constructed from --platform if not provided.')
         parser.add_argument('-i', '--inDir',action='store', help='url where processed data logs are. Will be constructed from --platform if not provided.')
         parser.add_argument('-a', '--appendString',action='store', help='string to append to the data file created; used to differentiate engineering and science data files',
@@ -123,14 +121,15 @@ class Make_netCDFs():
         parser.add_argument('-p', '--parms', action='store', help='List of JSON formatted parameter groups, variables and renaming of variables. Will override default for --appendString.')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150930T000000')
         parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20151031T000000')
-        parser.add_argument('--trackingdb', action='store_true', help='Attempt to use positions of <name>_ac from the Tracking Database (ODSS)')
-        parser.add_argument('--nudge', action='store_true', help='Nudge the dead reckoned positions to meet the GPS fixes')
+        parser.add_argument('--clobber', action='store_true', help='Overwrite any existing output .nc files')
         parser.add_argument('--platform', action='store', help='Platform name: tethys, daphne, ahi, ...')
         parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
         parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
 
         self.args = parser.parse_args()
+        self.args.nudge = True
+        self.args.trackingdb = True
 
         if self.args.verbose >= 1:
             self.logger.setLevel(logging.DEBUG)
@@ -181,17 +180,11 @@ class Make_netCDFs():
     def assign_ins(self, start, end, platform):
         '''Default is to return inDir and inURL given platform and datetime parameters
         '''
-        if self.args.inDir:
-            inDir = self.args.inDir
-        else:
-            inDir = f"/mbari/LRAUV/{platform}/missionlogs/{start.year}"
+        if not self.args.inDir:
+            self.args.inDir = f"/mbari/LRAUV/{platform}/missionlogs/{start.year}"
 
-        if self.args.inUrl:
-            inUrl = self.args.inUrl
-        else:
-            inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{start.year}/.*.nc4"
-
-        return inDir, inUrl
+        if not self.args.inUrl:
+            self.args.inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{start.year}/.*.nc4"
 
     def find_urls(self, base, select, startdate, enddate):
         url = os.path.join(base, 'catalog.xml')
@@ -207,7 +200,7 @@ class Make_netCDFs():
             self.logger.debug(f"Attempting to Crawl {url} looking for .dlist files")
             dlist_cat = Crawl(url, select=[".*dlist"])
         except PermissionError as e:
-            self.logger.warn(f"{e}")
+            self.logger.warning(f"{e}")
             self.logger.info("Running from docker-compose sometimes encounterers this error.  Try executing again.")
             raise
 
@@ -235,22 +228,22 @@ class Make_netCDFs():
 
         return urls
 
-    def validate_urls(self, potential_urls, inDir):
+    def validate_urls(self, potential_urls):
         urls = []
         for url in potential_urls:
             try:
-                startDatetime, endDatetime = self.getNcStartEnd(inDir, url, 'time_time')
+                startDatetime, endDatetime = self.getNcStartEnd(self.args.inDir, url, 'time_time')
             except Exception as e:
                 # Write a message to the .log file for the expected output file so that
                 # lrauv-data-file-audit.sh can detect the problem
-                log_file = os.path.join(inDir, '/'.join(url.split('/')[9:]))
+                log_file = os.path.join(self.args.inDir, '/'.join(url.split('/')[9:]))
                 log_file = log_file.replace('.nc4', '_' + self.args.resampleFreq + '_' + self.args.appendString + '.log')
 
                 fh = logging.FileHandler(log_file, 'w+')
                 frm = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
                 fh.setFormatter(frm)
                 self.logger.addHandler(fh)
-                self.logger.warn(f"Can't get start and end date from .nc4: time_time not found in {url}")
+                self.logger.warning(f"Can't get start and end date from .nc4: time_time not found in {url}")
                 fh.close()
                 sh = logging.StreamHandler()
                 sh.setFormatter(frm)
@@ -271,7 +264,7 @@ class Make_netCDFs():
 
         return urls
 
-    def getNcStartEnd(self, inDir, urlNcDap, timeAxisName):
+    def getNcStartEnd(self, urlNcDap, timeAxisName):
         '''Find the lines in the html with the .nc file, then open it and read the start/end times
         return url to the .nc  and start/end as datetime objects.
         '''
@@ -279,7 +272,7 @@ class Make_netCDFs():
 
         try:
             base_in =  '/'.join(urlNcDap.split('/')[-3:])
-            in_file = os.path.join(inDir, base_in) 
+            in_file = os.path.join(self.args.inDir, base_in) 
             df = netCDF4.Dataset(in_file, mode='r')
         except pydap.exceptions.ServerError as ex:
             self.logger.warning(ex)
@@ -307,7 +300,7 @@ class Make_netCDFs():
         return startDatetime, endDatetime
 
 
-    def processResample(self, pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendString):
+    def processResample(self, pw, url_in, resample_freq, parms, rad_to_deg, appendString):
         '''
         Created resampled LRAUV data netCDF file
         '''
@@ -318,12 +311,12 @@ class Make_netCDFs():
         base_in =  '/'.join(url_in.split('/')[-3:])
         base_out = '/'.join(url_out.split('/')[-3:])
 
-        out_file = os.path.join(inDir,  base_out)
-        in_file =  os.path.join(inDir,  base_in)
+        out_file = os.path.join(self.args.inDir,  base_out)
+        in_file =  os.path.join(self.args.inDir,  base_in)
 
         try:
-            if not os.path.exists(out_file):
-                # The --trackingdb and --nudge args are needed here via self.args
+            if not os.path.exists(out_file) or self.args.clobber:
+                # The trackingdb and nudge args are needed here via self.args
                 pw.processResampleNc4File(in_file, out_file, parms, resample_freq, rad_to_deg, self.args)
             else:
                 self.logger.info(f"Not calling processResampleNc4File() for {out_file}: file exists")
@@ -358,19 +351,16 @@ if __name__ == '__main__':
 
     for platform in platforms:
         mn.logger.debug(f"Processing new .nc4 data from platform {platform}")
-        inDir, inUrl = mn.assign_ins(start, end, platform)
-        url, files = inUrl.rsplit('/', 1)
+        mn.assign_ins(start, end, platform)
+        url, files = mn.args.inUrl.rsplit('/', 1)
         potential_urls = mn.find_urls(url, files, start, end)
-        urls = mn.validate_urls(potential_urls, inDir)
-
+        urls = mn.validate_urls(potential_urls)
 
         pw = lrauvNc4ToNetcdf.InterpolatorWriter()
-
-        # Look in time order - oldest to newest
         convert_radians = True
         for url in sorted(urls):
             try:
-                mn.processResample(pw, url, inDir, mn.args.resampleFreq, parms, convert_radians, mn.args.appendString)
+                mn.processResample(pw, url, mn.args.resampleFreq, parms, convert_radians, mn.args.appendString)
             except ServerError as e:
                 mn.logger.warning(e)
                 continue
