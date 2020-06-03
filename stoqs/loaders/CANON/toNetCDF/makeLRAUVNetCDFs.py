@@ -18,6 +18,7 @@ docker-compose run -u 1087 --rm -v /dev/shm:/dev/shm -v /tmp:/tmp -v /mbari/LRAU
 
 import os
 import sys
+import calendar
 import logging
 import re
 import pydap
@@ -28,6 +29,7 @@ import requests
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 from coards import to_udunits, from_udunits
+from dateutil.relativedelta import relativedelta
 from thredds_crawler.crawl import Crawl
 from urllib.parse import urlparse
 from datetime import datetime
@@ -119,8 +121,8 @@ class Make_netCDFs():
         parser.add_argument('-r', '--resampleFreq', action='store', 
                             help='Optional resampling frequency string to specify how to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='2S')
         parser.add_argument('-p', '--parms', action='store', help='List of JSON formatted parameter groups, variables and renaming of variables. Will override default for --appendString.')
-        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150930T000000')
-        parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20151031T000000')
+        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
+        parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--clobber', action='store_true', help='Overwrite any existing output .nc files')
         parser.add_argument('--platform', action='store', help='Platform name: tethys, daphne, ahi, ...')
         parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
@@ -158,22 +160,35 @@ class Make_netCDFs():
         return parms
 
     def assign_dates(self):
-        # Unless start time defined, then start there
-        if self.args.start is not None:
+        # Three possible options from command line
+        if self.args.start and self.args.end:
             try:
                 start = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
             except ValueError:
                 start = datetime.strptime(self.args.start, '%Y%m%d')
-        else:
-            start = None
-
-        if self.args.end is not None:
             try:
                 end = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
             except ValueError:
                 end = datetime.strptime(self.args.end, '%Y%m%d')
-        else:
-            end = None
+            self.logger.debug(f"Setting start and end dates for start and end arguments: {start}, {end}")
+
+        elif self.args.previous_month:
+            prev_mon = datetime.today() - relativedelta(months=1)
+            start_str = f"{prev_mon.strftime('%Y%m')}01"
+            start = datetime.strptime(start_str, '%Y%m%d')
+            last_day = calendar.monthrange(int(prev_mon.strftime('%Y')), int(prev_mon.strftime('%m')))[1]
+            end_str = f"{prev_mon.strftime('%Y%m')}{last_day:2d}"
+            end = datetime.strptime(end_str, '%Y%m%d')
+            self.logger.debug(f"Setting start and end dates for previous_month: {start}, {end}")
+
+        elif self.args.current_month:
+            curr_mon = datetime.today()
+            start_str = f"{curr_mon.strftime('%Y%m')}01"
+            start = datetime.strptime(start_str, '%Y%m%d')
+            last_day = calendar.monthrange(int(curr_mon.strftime('%Y')), int(curr_mon.strftime('%m')))[1]
+            end_str = f"{curr_mon.strftime('%Y%m')}{last_day:2d}"
+            end = datetime.strptime(end_str, '%Y%m%d')
+            self.logger.debug(f"Setting start and end dates for current_month: {start}, {end}")
 
         return start, end
 
@@ -226,13 +241,16 @@ class Make_netCDFs():
                     self.logger.debug(f"Adding url {url}")
                     urls.append(url)
 
+        if not urls:
+            self.logger.info("No URLs found.")
+
         return urls
 
     def validate_urls(self, potential_urls):
         urls = []
         for url in potential_urls:
             try:
-                startDatetime, endDatetime = self.getNcStartEnd(self.args.inDir, url, 'time_time')
+                startDatetime, endDatetime = self.getNcStartEnd(url, 'time_time')
             except Exception as e:
                 # Write a message to the .log file for the expected output file so that
                 # lrauv-data-file-audit.sh can detect the problem
@@ -244,6 +262,7 @@ class Make_netCDFs():
                 fh.setFormatter(frm)
                 self.logger.addHandler(fh)
                 self.logger.warning(f"Can't get start and end date from .nc4: time_time not found in {url}")
+                self.logger.warning(f"{e}")
                 fh.close()
                 sh = logging.StreamHandler()
                 sh.setFormatter(frm)
@@ -350,9 +369,9 @@ if __name__ == '__main__':
         platforms = lrauvs
 
     for platform in platforms:
-        mn.logger.debug(f"Processing new .nc4 data from platform {platform}")
         mn.assign_ins(start, end, platform)
         url, files = mn.args.inUrl.rsplit('/', 1)
+        breakpoint()
         potential_urls = mn.find_urls(url, files, start, end)
         urls = mn.validate_urls(potential_urls)
 
