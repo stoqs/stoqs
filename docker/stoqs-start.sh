@@ -35,10 +35,10 @@ if [ "$PRODUCTION" == "true" ]; then
     fi
 fi
 
-echo "Checking for presence of directory for mapfiles: ${URL_MAPFILE_DIR}"
-if [[ ! -e ${URL_MAPFILE_DIR} ]]; then
-    echo "mkdir ${URL_MAPFILE_DIR}"
-    mkdir ${URL_MAPFILE_DIR}
+echo "Checking for presence of directory for mapfiles: ${MAPFILE_DIR}"
+if [[ ! -e ${MAPFILE_DIR} ]]; then
+    echo "mkdir ${MAPFILE_DIR}"
+    mkdir ${MAPFILE_DIR}
 fi
 
 # If default stoqs database doesn't exist then load it - also running the unit and functional tests
