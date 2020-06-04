@@ -26,6 +26,7 @@ import json
 import netCDF4
 import lrauvNc4ToNetcdf
 import requests
+import time
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 from coards import to_udunits, from_udunits
@@ -170,25 +171,19 @@ class Make_netCDFs():
                 end = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
             except ValueError:
                 end = datetime.strptime(self.args.end, '%Y%m%d')
-            self.logger.debug(f"Setting start and end dates for start and end arguments: {start}, {end}")
+            self.logger.info(f"Setting start and end dates for start and end arguments: {start}, {end}")
 
         elif self.args.previous_month:
             prev_mon = datetime.today() - relativedelta(months=1)
-            start_str = f"{prev_mon.strftime('%Y%m')}01"
-            start = datetime.strptime(start_str, '%Y%m%d')
-            last_day = calendar.monthrange(int(prev_mon.strftime('%Y')), int(prev_mon.strftime('%m')))[1]
-            end_str = f"{prev_mon.strftime('%Y%m')}{last_day:2d}"
-            end = datetime.strptime(end_str, '%Y%m%d')
-            self.logger.debug(f"Setting start and end dates for previous_month: {start}, {end}")
+            start = datetime.strptime(f"{prev_mon.strftime('%Y%m')}01", '%Y%m%d')
+            end = start + relativedelta(months=1)
+            self.logger.info(f"Setting start and end dates for previous_month: {start}, {end}")
 
         elif self.args.current_month:
             curr_mon = datetime.today()
-            start_str = f"{curr_mon.strftime('%Y%m')}01"
-            start = datetime.strptime(start_str, '%Y%m%d')
-            last_day = calendar.monthrange(int(curr_mon.strftime('%Y')), int(curr_mon.strftime('%m')))[1]
-            end_str = f"{curr_mon.strftime('%Y%m')}{last_day:2d}"
-            end = datetime.strptime(end_str, '%Y%m%d')
-            self.logger.debug(f"Setting start and end dates for current_month: {start}, {end}")
+            start = datetime.strptime(f"{curr_mon.strftime('%Y%m')}01", '%Y%m%d')
+            end = start + relativedelta(months=1)
+            self.logger.info(f"Setting start and end dates for current_month: {start}, {end}")
 
         return start, end
 
@@ -211,13 +206,8 @@ class Make_netCDFs():
         url = u.geturl()
         urls = []
 
-        try:
-            self.logger.debug(f"Attempting to Crawl {url} looking for .dlist files")
-            dlist_cat = Crawl(url, select=[".*dlist"])
-        except PermissionError as e:
-            self.logger.warning(f"{e}")
-            self.logger.info("Running from docker-compose sometimes encounterers this error.  Try executing again.")
-            raise
+        self.logger.debug(f"Attempting to Crawl {url} looking for .dlist files")
+        dlist_cat = Crawl(url, select=[".*dlist"])
 
         # Crawl the catalogRefs:
         self.logger.info(f"Crawling {url} for {files} files to make {self.args.resampleFreq}_{self.args.appendString}.nc files")
@@ -231,7 +221,7 @@ class Make_netCDFs():
 
             # if within a valid range, grab the valid urls
             self.logger.debug(f"Checking if .dlist {dlist} is within {startdate} and {enddate}")
-            if dir_start >= startdate and dir_end <= enddate:
+            if (startdate <= dir_start and dir_start <= enddate) or (startdate <= dir_end and dir_end <= enddate):
                 catalog = '{}_{}/catalog.xml'.format(dir_start.strftime('%Y%m%d'), dir_end.strftime('%Y%m%d'))
                 self.logger.debug(f"Crawling {os.path.join(base, catalog)}")
                 log_cat = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
