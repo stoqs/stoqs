@@ -33,7 +33,7 @@ services:
   mapserver:
     image: geodata/mapserver:7.0.1
     volumes:
-      - ${STOQS_VOLS_DIR}/maps:/maps:ro
+      - ${STOQS_VOLS_DIR}/maps:${URL_MAPFILE_DIR}:ro
     container_name: stoqs-mapserver
     # Expose port 80 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##ports:
@@ -47,7 +47,7 @@ services:
         context: .
         dockerfile: Dockerfile-stoqs
     volumes:
-      - ${STOQS_VOLS_DIR}/maps:${URL_MAPFILE_DIR}
+      - ${STOQS_VOLS_DIR}/maps:${MAPFILE_DIR}
       - ${STOQS_VOLS_DIR}/stoqs_root:/root
       - ${STOQS_VOLS_DIR}/nginx:/usr/share/nginx
       - ${STOQS_VOLS_DIR}/pg_dumps:/srv/media-files/pg_dumps
