@@ -35,6 +35,12 @@ if [ "$PRODUCTION" == "true" ]; then
     fi
 fi
 
+echo "Checking for presence of directory for mapfiles: ${URL_MAPFILE_DIR}"
+if [[ ! -e ${URL_MAPFILE_DIR} ]]; then
+    echo "mkdir ${URL_MAPFILE_DIR}"
+    mkdir ${URL_MAPFILE_DIR}
+fi
+
 # If default stoqs database doesn't exist then load it - also running the unit and functional tests
 echo "Checking for presence of stoqs database..."
 POSTGRES_DB=stoqs python ${STOQS_SRVHOME}/docker/database-check.py
