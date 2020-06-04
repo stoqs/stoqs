@@ -1,12 +1,12 @@
 aiohttp==3.6.2
 beautifulsoup4==4.9.1
-celery==4.4.3
+celery==4.4.4
 cmocean==2.0
 coards==1.0.5
 coverage==5.1
 datadiff==2.0.0
 dj-database-url==0.5.0
-Django==3.0.6
+Django==3.0.7
 django-cache-url==3.1.2
 django-celery==3.3.1
 django-configurations==2.2
@@ -23,7 +23,7 @@ ipython==7.15.0
 jdcal==1.4.1
 Jinja2==2.11.2
 jupyter==1.0.0
-kombu==4.6.9
+kombu==4.6.10
 lxml==4.5.1
 mock==4.0.2
 matplotlib==3.2.1
