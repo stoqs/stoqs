@@ -32,6 +32,8 @@ import webob
 ##from Contour import Contour
 from thredds_crawler.crawl import Crawl
 from coards import from_udunits
+from loaders.CANON.toNetCDF.makeLRAUVNetCDFs import SCIENG_PARMS
+from loaders.LRAUV.make_load_scripts import lrauvs
 from stoqs.models import InstantPoint
 from slacker import Slacker
 
@@ -62,22 +64,6 @@ class ServerError(Exception):
 class FileNotInYear(Exception):
     pass
 
-
-def abbreviate(parms):
-    '''Return the shortened string that represents the list of parameters. This is used in both activity and file naming conventions'''
-    pdict = {'sea_water_temperature':'sst', 'sea_water_salinity':'salt', 'mass_concentration_of_chlorophyll_in_sea_water': 'chl'}
-    abbrev = ''
-    for p in parms:
-        found = False
-        for key,value in list(pdict.items()):
-            if p.find(key) != -1:
-                abbrev = abbrev + '_' + value
-                found = True
-                break
-        if not found:
-            abbrev = abbrev + '_' + p[:2]
-
-    return abbrev
 
 def getNcStartEnd(urlNcDap, timeAxisName):
     '''Find the lines in the html with the .nc file, then open it and read the start/end times
@@ -252,9 +238,12 @@ def process_command_line():
     parser.add_argument('-g', '--plotgroup', action='store', help='List of space separated parameters to plot', nargs='*', default=
                             ['VTHI', 'temperature', 'salinity', 'chlorophyll'])
 
-    parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
     parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150911T150000', required=False)
     parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default=None, required=False)
+    parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
+    parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
+    parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
+
 
     args = parser.parse_args()
     return args
