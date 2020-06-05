@@ -65,214 +65,211 @@ class FileNotInYear(Exception):
     pass
 
 
-def getNcStartEnd(urlNcDap, timeAxisName):
-    '''Find the lines in the html with the .nc file, then open it and read the start/end times
-    return url to the .nc  and start/end as datetime objects.
-    '''
-    logger.debug('open_url on urlNcDap = %s', urlNcDap)
-    df = pydap.client.open_url(urlNcDap)
-    try:
-        timeAxisUnits = df[timeAxisName].units
-    except KeyError as e:
-        logger.warning(e)
-        raise ServerError("Can't read %s time axis from %s" % (timeAxisName, urlNcDap))
-
-    if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
-        timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
-
-    try:
-        startDatetime = from_udunits(df[timeAxisName][0][0].data, timeAxisUnits)
-        endDatetime = from_udunits(df[timeAxisName][-1][0].data, timeAxisUnits)
-    except pydap.exceptions.ServerError as e:
-        logger.warning(e)
-        raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
-    except webob.exc.HTTPError as e:
-        logger.warning(e.comment)
-        raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
-    except ValueError as e:
-        logger.warning(e)
-        raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap)) 
-
-    return startDatetime, endDatetime
-
-def processDecimated(args, pw, url, lastDatetime, start, end):
-    '''
-    Process decimated LRAUV data
-    '''
-    logger.debug('url = %s', url)
-
-    if "sbd" in url:
-        base_fname = '/'.join(url.split('/')[-3:]).split('.')[0]
-    else:
-        base_fname = '/'.join(url.split('/')[-2:]).split('.')[0]
-
-    inFile = os.path.join(args.inDir, base_fname + '.nc4')
-    outFile_i = os.path.join(args.outDir, base_fname + '_i.nc')
-    startDatetime, endDatetime = getNcStartEnd(url, 'depth_time')
-    logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
-    logger.debug('lastDatetime = %s', lastDatetime)
-
-    if start is not None and startDatetime < start :
-        raise ServerError('startDatetime = %s out of bounds with user-defined startDatetime = %s' % (startDatetime, start))
-
-    if end is not None and endDatetime > end :
-        raise ServerError('endDatetime = %s out of bounds with user-defined endDatetime = %s' % (endDatetime, end))
-
-    url_i = None
-
-    if endDatetime > lastDatetime:
-        logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
+class Make_netCDFs():
+    def getNcStartEnd(self, urlNcDap, timeAxisName):
+        '''Find the lines in the html with the .nc file, then open it and read the start/end times
+        return url to the .nc  and start/end as datetime objects.
+        '''
+        logger.debug('open_url on urlNcDap = %s', urlNcDap)
+        df = pydap.client.open_url(urlNcDap)
         try:
-            if not args.debug:
-              pw.processNc4FileDecimated(url, inFile, outFile_i, args.parms, json.loads(args.groupparms), args.iparm)
+            timeAxisUnits = df[timeAxisName].units
+        except KeyError as e:
+            logger.warning(e)
+            raise ServerError("Can't read %s time axis from %s" % (timeAxisName, urlNcDap))
 
-        except TypeError:
-            logger.warning('Problem reading data from %s', url)
-            logger.warning('Assuming data are invalid and skipping')
-        except IndexError:
-            logger.warning('Problem interpolating data from %s', url)
-        ##except KeyError:
-        ##    raise ServerError("Key error - can't read parameters from %s" % (url))
-        except ValueError:
-            raise ServerError("Value error - can't read parameters from %s" % (url))
+        if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
+            timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
 
+        try:
+            startDatetime = from_udunits(df[timeAxisName][0][0].data, timeAxisUnits)
+            endDatetime = from_udunits(df[timeAxisName][-1][0].data, timeAxisUnits)
+        except pydap.exceptions.ServerError as e:
+            logger.warning(e)
+            raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
+        except webob.exc.HTTPError as e:
+            logger.warning(e.comment)
+            raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
+        except ValueError as e:
+            logger.warning(e)
+            raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap)) 
+
+        return startDatetime, endDatetime
+
+    def processDecimated(self, args, pw, url, lastDatetime, start, end):
+        '''
+        Process decimated LRAUV data
+        '''
+        logger.debug('url = %s', url)
+
+        if "sbd" in url:
+            base_fname = '/'.join(url.split('/')[-3:]).split('.')[0]
         else:
-            url_i = url.replace('.nc4', '_i.nc')
-    else:
-        logger.debug('endDatetime <= lastDatetime. Assume that data from %s have already been loaded', url)
+            base_fname = '/'.join(url.split('/')[-2:]).split('.')[0]
 
-    return url_i, startDatetime, endDatetime
+        inFile = os.path.join(args.inDir, base_fname + '.nc4')
+        outFile_i = os.path.join(args.outDir, base_fname + '_i.nc')
+        startDatetime, endDatetime = self.getNcStartEnd(url, 'depth_time')
+        logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
+        logger.debug('lastDatetime = %s', lastDatetime)
 
-def process_command_line():
-    '''
-    The argparse library is included in Python 2.7 and is an added package for STOQS.
-    '''
-    import argparse
-    from argparse import RawTextHelpFormatter
+        if start is not None and startDatetime < start :
+            raise ServerError('startDatetime = %s out of bounds with user-defined startDatetime = %s' % (startDatetime, start))
 
-    examples = 'Examples:' + '\n\n'
-    examples += 'Run on test database:\n'
-    examples += sys.argv[0] + " -d  'Test Daphne hotspot data' -o /mbari/LRAUV/daphne/realtime/hotspotlogs -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/hotspotlogs/*.shore.nc4' -b 'stoqs_canon_apr2014_t' -c 'CANON-ECOHAB - March 2014 Test'\n"
-    parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
-                                     description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
-                                     epilog=examples)
-    parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
-                                                             ' must map to the same location as -o directory',
-                        default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/tethys/realtime/sbdlogs/2015/201509/20150911T155447/.*shore.nc4$',required=False)
-    parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='default',required=False)
-    parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='April 2015 testing',required=False)
-    parser.add_argument('-s', '--stride',action='store', help='amount to stride data before loading e.g. 10=every 10th point', default=1)
-    parser.add_argument('-o', '--outDir', action='store', help='output directory to store interpolated .nc file or log contour output '
-                                                               '- can map to the same location as -u URL', default='/tmp/TestMonitorLrauv', required=False)
-    parser.add_argument('-i', '--inDir', action='store', help='input directory  where raw .nc4 files are located '
-                                                              '- must map to the same location as -u URL',
-                        default='/tmp/TestMonitorLrauv', required=True)
-    parser.add_argument('--zoom', action='store', help='time window in hours to zoom animation',default=6, required=False)
-    parser.add_argument('--overlap', action='store', help='time window in hours to overlap animation',default=5, required=False)
-    parser.add_argument('--contourUrl', action='store', help='base url to store cross referenced contour plot resources',
-                        default='http://dods.mbari.org/opendap/data/lrauv/stoqs/',required=False)
-    parser.add_argument('--iparm', action='store', help='parameter to interpolate against; must exist in the -p/--parms list',
-                        default='chlorophyll',required=False)
-    parser.add_argument('--plotDotParmName', action='store', help='parameter to plot as colored dot in map; must exist in the -p/--parms list',
-                        default='VTHI',required=False)
-    parser.add_argument('--booleanPlotGroup', action='store', help='List of space separated boolean parameters to plot as symbols in the map against; must exist in the -p/--parms list',
-                        default=['front'],required=False)
-    parser.add_argument('--contourDir', action='store', help='output directory to store 24 hour contour output',
-                        default='/tmp/TestMonitorLrauv/',required=False)
-    parser.add_argument('--productDir', action='store', help='output directory to store 24 hour contour output for catalog in ODSS',
-                        default='/tmp/TestMonitorLrauv/',required=False)
-    parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='Daphne Monterey data - April 2015')
-    parser.add_argument('--latest24hr', action='store_true', help='create the latest 24 hour plot')
-    parser.add_argument('--autoscale', action='store_true', help='autoscale each plot to 1 and 99 percentile',required=False,default=True)
-    parser.add_argument('-a', '--append', action='store_true', help='Append data to existing Activity',required=False)
-    parser.add_argument('--post', action='store_true', help='Post message to slack about new data. Disable this during initial database load or when debugging',required=False)
-    parser.add_argument('--debug', action='store_true', help='Useful for debugging plots - does not allow data loading',required=False, default=False)
-    parser.add_argument('--plotparms', action='store', help='List of space separated parameters to plot', nargs='*', default=
-                                ['front', 'VTHI', 'temperature', 'salinity', 'chlorophyll'])
-    parser.add_argument('--parms', action='store', help='List of space separated (non group) parameters to load', nargs='*',
-                        default= ['front', 'VTHI', 'temperature', 'salinity'])
-    parser.add_argument('--groupparms', action='store',
-                        help='List of JSON formatted parameter groups, variables and renaming of variables',
-                        default='{' \
-                                 '"CTD_NeilBrown": [ ' \
-                                 '{ "name":"sea_water_salinity" , "rename":"salinity" }, ' \
-                                 '{ "name":"bin_mean_sea_water_salinity" , "rename":"salinity" }, ' \
-                                 '{ "name":"bin_median_sea_water_salinity" , "rename":"salinity" }, ' \
-                                 '{ "name":"sea_water_temperature" , "rename":"temperature" }, ' \
-                                 '{ "name":"bin_mean_sea_water_temperature" , "rename":"temperature" }, ' \
-                                 '{ "name":"bin_median_sea_water_temperature" , "rename":"temperature" } ' \
-                                 '],' \
-                                 '"CTD_Seabird": [ ' \
-                                 '{ "name":"sea_water_salinity" , "rename":"salinity" }, ' \
-                                 '{ "name":"bin_mean_sea_water_salinity" , "rename":"salinity" }, ' \
-                                 '{ "name":"bin_median_sea_water_salinity" , "rename":"salinity" }, ' \
-                                 '{ "name":"sea_water_temperature" , "rename":"temperature" }, ' \
-                                 '{ "name":"bin_mean_sea_water_temperature" , "rename":"temperature" }, ' \
-                                 '{ "name":"bin_median_sea_water_temperature" , "rename":"temperature" } ' \
-                                 '],' \
-                                 '"WetLabsBB2FL": [ ' \
-                                 '{ "name":"mass_concentration_of_chlorophyll_in_sea_water", "rename":"chlorophyll" }, ' \
-                                 '{ "name":"bin_mean_mass_concentration_of_chlorophyll_in_sea_water", "rename":"chlorophyll" }, ' \
-                                 '{ "name":"bin_median_mass_concentration_of_chlorophyll_in_sea_water", "rename":"chlorophyll" }, ' \
-                                 '{ "name":"Output470", "rename":"bbp470" }, ' \
-                                 '{ "name":"Output650", "rename":"bbp650" } ' \
-                                 '],' \
-                                 '"PAR_Licor": [ ' \
-                                 '{ "name":"downwelling_photosynthetic_photon_flux_in_sea_water", "rename":"PAR" }, ' \
-                                 '{ "name":"bin_mean_downwelling_photosynthetic_photon_flux_in_sea_water", "rename":"PAR" }, ' \
-                                 '{ "name":"bin_median_downwelling_photosynthetic_photon_flux_in_sea_water", "rename":"PAR" } ' \
-                                 '],' \
-                                 '"VerticalTemperatureHomogeneityIndexCalculator" : [ ' \
-                                 '{ "name":"vertical_temperature_homogeneity_index", "rename":"VTHI" } ' \
-                                 '],' \
-                                 '"ISUS" : [ ' \
-                                 '{ "name":"mole_concentration_of_nitrate_in_sea_water", "rename":"nitrate" }, ' \
-                                 '{ "name":"bin_mean_mole_concentration_of_nitrate_in_sea_water", "rename":"nitrate" }, ' \
-                                 '{ "name":"bin_median_mole_concentration_of_nitrate_in_sea_water", "rename":"nitrate" } ' \
-                                 '],' \
-                                 '"Aanderaa_O2": [ ' \
-                                 '{ "name":"mass_concentration_of_oxygen_in_sea_water", "rename":"oxygen" }, ' \
-                                 '{ "name":"bin_mean_mass_concentration_of_oxygen_in_sea_water", "rename":"oxygen" }, ' \
-                                 '{ "name":"bin_median_mass_concentration_of_oxygen_in_sea_water", "rename":"oxygen" } ' \
-                                 '] }')
-    parser.add_argument('-g', '--plotgroup', action='store', help='List of space separated parameters to plot', nargs='*', default=
-                            ['VTHI', 'temperature', 'salinity', 'chlorophyll'])
+        if end is not None and endDatetime > end :
+            raise ServerError('endDatetime = %s out of bounds with user-defined endDatetime = %s' % (endDatetime, end))
 
-    parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150911T150000', required=False)
-    parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default=None, required=False)
-    parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
-    parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
-    parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
+        url_i = None
+
+        if endDatetime > lastDatetime:
+            logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
+            try:
+                if not args.debug:
+                  pw.processNc4FileDecimated(url, inFile, outFile_i, args.parms, json.loads(args.groupparms), args.iparm)
+
+            except TypeError:
+                logger.warning('Problem reading data from %s', url)
+                logger.warning('Assuming data are invalid and skipping')
+            except IndexError:
+                logger.warning('Problem interpolating data from %s', url)
+            ##except KeyError:
+            ##    raise ServerError("Key error - can't read parameters from %s" % (url))
+            except ValueError:
+                raise ServerError("Value error - can't read parameters from %s" % (url))
+
+            else:
+                url_i = url.replace('.nc4', '_i.nc')
+        else:
+            logger.debug('endDatetime <= lastDatetime. Assume that data from %s have already been loaded', url)
+
+        return url_i, startDatetime, endDatetime
+
+    def process_command_line(self):
+        '''
+        The argparse library is included in Python 2.7 and is an added package for STOQS.
+        '''
+        import argparse
+        from argparse import RawTextHelpFormatter
+
+        examples = 'Examples:' + '\n\n'
+        examples += 'Run on test database:\n'
+        examples += sys.argv[0] + " -d  'Test Daphne hotspot data' -o /mbari/LRAUV/daphne/realtime/hotspotlogs -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/hotspotlogs/*.shore.nc4' -b 'stoqs_canon_apr2014_t' -c 'CANON-ECOHAB - March 2014 Test'\n"
+        parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
+                                         description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
+                                         epilog=examples)
+        parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
+                                                                 ' must map to the same location as -o directory',
+                            default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/tethys/realtime/sbdlogs/2015/201509/20150911T155447/.*shore.nc4$',required=False)
+        parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='default',required=False)
+        parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='April 2015 testing',required=False)
+        parser.add_argument('-s', '--stride',action='store', help='amount to stride data before loading e.g. 10=every 10th point', default=1)
+        parser.add_argument('-o', '--outDir', action='store', help='output directory to store interpolated .nc file or log contour output '
+                                                                   '- can map to the same location as -u URL', default='/tmp/TestMonitorLrauv', required=False)
+        parser.add_argument('-i', '--inDir', action='store', help='input directory  where raw .nc4 files are located '
+                                                                  '- must map to the same location as -u URL',
+                            default='/tmp/TestMonitorLrauv', required=True)
+        parser.add_argument('--zoom', action='store', help='time window in hours to zoom animation',default=6, required=False)
+        parser.add_argument('--overlap', action='store', help='time window in hours to overlap animation',default=5, required=False)
+        parser.add_argument('--contourUrl', action='store', help='base url to store cross referenced contour plot resources',
+                            default='http://dods.mbari.org/opendap/data/lrauv/stoqs/',required=False)
+        parser.add_argument('--iparm', action='store', help='parameter to interpolate against; must exist in the -p/--parms list',
+                            default='chlorophyll',required=False)
+        parser.add_argument('--plotDotParmName', action='store', help='parameter to plot as colored dot in map; must exist in the -p/--parms list',
+                            default='VTHI',required=False)
+        parser.add_argument('--booleanPlotGroup', action='store', help='List of space separated boolean parameters to plot as symbols in the map against; must exist in the -p/--parms list',
+                            default=['front'],required=False)
+        parser.add_argument('--contourDir', action='store', help='output directory to store 24 hour contour output',
+                            default='/tmp/TestMonitorLrauv/',required=False)
+        parser.add_argument('--productDir', action='store', help='output directory to store 24 hour contour output for catalog in ODSS',
+                            default='/tmp/TestMonitorLrauv/',required=False)
+        parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='Daphne Monterey data - April 2015')
+        parser.add_argument('--latest24hr', action='store_true', help='create the latest 24 hour plot')
+        parser.add_argument('--autoscale', action='store_true', help='autoscale each plot to 1 and 99 percentile',required=False,default=True)
+        parser.add_argument('-a', '--append', action='store_true', help='Append data to existing Activity',required=False)
+        parser.add_argument('--post', action='store_true', help='Post message to slack about new data. Disable this during initial database load or when debugging',required=False)
+        parser.add_argument('--debug', action='store_true', help='Useful for debugging plots - does not allow data loading',required=False, default=False)
+        parser.add_argument('--plotparms', action='store', help='List of space separated parameters to plot', nargs='*', default=
+                                    ['front', 'VTHI', 'temperature', 'salinity', 'chlorophyll'])
+        parser.add_argument('--parms', action='store', help='List of space separated (non group) parameters to load', nargs='*',
+                            default= ['front', 'VTHI', 'temperature', 'salinity'])
+        parser.add_argument('--groupparms', action='store',
+                            help='List of JSON formatted parameter groups, variables and renaming of variables',
+                            default='{' \
+                                     '"CTD_NeilBrown": [ ' \
+                                     '{ "name":"sea_water_salinity" , "rename":"salinity" }, ' \
+                                     '{ "name":"bin_mean_sea_water_salinity" , "rename":"salinity" }, ' \
+                                     '{ "name":"bin_median_sea_water_salinity" , "rename":"salinity" }, ' \
+                                     '{ "name":"sea_water_temperature" , "rename":"temperature" }, ' \
+                                     '{ "name":"bin_mean_sea_water_temperature" , "rename":"temperature" }, ' \
+                                     '{ "name":"bin_median_sea_water_temperature" , "rename":"temperature" } ' \
+                                     '],' \
+                                     '"CTD_Seabird": [ ' \
+                                     '{ "name":"sea_water_salinity" , "rename":"salinity" }, ' \
+                                     '{ "name":"bin_mean_sea_water_salinity" , "rename":"salinity" }, ' \
+                                     '{ "name":"bin_median_sea_water_salinity" , "rename":"salinity" }, ' \
+                                     '{ "name":"sea_water_temperature" , "rename":"temperature" }, ' \
+                                     '{ "name":"bin_mean_sea_water_temperature" , "rename":"temperature" }, ' \
+                                     '{ "name":"bin_median_sea_water_temperature" , "rename":"temperature" } ' \
+                                     '],' \
+                                     '"WetLabsBB2FL": [ ' \
+                                     '{ "name":"mass_concentration_of_chlorophyll_in_sea_water", "rename":"chlorophyll" }, ' \
+                                     '{ "name":"bin_mean_mass_concentration_of_chlorophyll_in_sea_water", "rename":"chlorophyll" }, ' \
+                                     '{ "name":"bin_median_mass_concentration_of_chlorophyll_in_sea_water", "rename":"chlorophyll" }, ' \
+                                     '{ "name":"Output470", "rename":"bbp470" }, ' \
+                                     '{ "name":"Output650", "rename":"bbp650" } ' \
+                                     '],' \
+                                     '"PAR_Licor": [ ' \
+                                     '{ "name":"downwelling_photosynthetic_photon_flux_in_sea_water", "rename":"PAR" }, ' \
+                                     '{ "name":"bin_mean_downwelling_photosynthetic_photon_flux_in_sea_water", "rename":"PAR" }, ' \
+                                     '{ "name":"bin_median_downwelling_photosynthetic_photon_flux_in_sea_water", "rename":"PAR" } ' \
+                                     '],' \
+                                     '"VerticalTemperatureHomogeneityIndexCalculator" : [ ' \
+                                     '{ "name":"vertical_temperature_homogeneity_index", "rename":"VTHI" } ' \
+                                     '],' \
+                                     '"ISUS" : [ ' \
+                                     '{ "name":"mole_concentration_of_nitrate_in_sea_water", "rename":"nitrate" }, ' \
+                                     '{ "name":"bin_mean_mole_concentration_of_nitrate_in_sea_water", "rename":"nitrate" }, ' \
+                                     '{ "name":"bin_median_mole_concentration_of_nitrate_in_sea_water", "rename":"nitrate" } ' \
+                                     '],' \
+                                     '"Aanderaa_O2": [ ' \
+                                     '{ "name":"mass_concentration_of_oxygen_in_sea_water", "rename":"oxygen" }, ' \
+                                     '{ "name":"bin_mean_mass_concentration_of_oxygen_in_sea_water", "rename":"oxygen" }, ' \
+                                     '{ "name":"bin_median_mass_concentration_of_oxygen_in_sea_water", "rename":"oxygen" } ' \
+                                     '] }')
+        parser.add_argument('-g', '--plotgroup', action='store', help='List of space separated parameters to plot', nargs='*', default=
+                                ['VTHI', 'temperature', 'salinity', 'chlorophyll'])
+
+        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150911T150000', required=False)
+        parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default=None, required=False)
+        parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
+        parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
 
 
-    args = parser.parse_args()
-    return args
+        args = parser.parse_args()
+        return args
 
-# Checks if file was created within the last delay in minutes; return True if so
-def check_file(delay, old_filename, new_filename):
-    if not os.path.isfile(old_filename):
-        return False
+    # Checks if file was created within the last delay in minutes; return True if so
+    def check_file(self, delay, old_filename, new_filename):
+        if not os.path.isfile(old_filename):
+            return False
 
-    mod_time = datetime.fromtimestamp(os.stat(old_filename).st_mtime)
-    if os.path.isfile(new_filename):
-      if os.stat(old_filename).st_size == os.stat(new_filename).st_size:
-        return False
+        mod_time = datetime.fromtimestamp(os.stat(old_filename).st_mtime)
+        if os.path.isfile(new_filename):
+          if os.stat(old_filename).st_size == os.stat(new_filename).st_size:
+            return False
 
-    now = datetime.today()
-    if now - mod_time > delay:
-        return False
-    else:
-        return True
+        now = datetime.today()
+        if now - mod_time > delay:
+            return False
+        else:
+            return True
+
 
 if __name__ == '__main__':
-    args = process_command_line()
-    lrauv_names = ('ahi', 'aku', 'brezo', 'daphne', 'galene', 'makai', 'opah', 'pontus', 
-                   'tethys', 'triton', 'whoidhs')
-
+    mn = Make_netCDFs()
+    args = mn.process_command_line()
     platformName = args.inUrl.split('/')[6]
-    if platformName not in lrauv_names:
-        logger.warn(f"Platform name {platformName} parsed from {args.inUrl} is not in {lrauv_names}")
-        sys.exit(1)
 
     # Start back a week from now to load in old data
     lastDatetime = datetime.utcnow() - timedelta(days=7)
@@ -326,7 +323,7 @@ if __name__ == '__main__':
             year_str = '{}'.format(start.year)
             logger.info('Looking for {} in {}'.format(year_str, url))
             if year_str in url:
-                (url_src, startDatetime, endDatetime) = processDecimated(args, pw, url, lastDatetime, start, end)
+                (url_src, startDatetime, endDatetime) = mn.processDecimated(args, pw, url, lastDatetime, start, end)
             else:
                 logger.warn('{} not in search year'.format(url))
                 continue
