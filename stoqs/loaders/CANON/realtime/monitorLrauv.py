@@ -39,14 +39,6 @@ from slacker import Slacker
 
 from django.db.models import Max
 
-# Set up global variables for logging output to STDOUT
-logger = logging.getLogger('monitorLrauvLogger')
-fh = logging.StreamHandler()
-f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
-fh.setFormatter(f)
-logger.addHandler(fh)
-logger.setLevel(logging.DEBUG)
-
 class NoNewHotspotData(Exception):
     pass
 
@@ -66,16 +58,23 @@ class FileNotInYear(Exception):
 
 
 class Make_netCDFs():
+    logger = logging.getLogger('monitorLrauvLogger')
+    fh = logging.StreamHandler()
+    f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
+    fh.setFormatter(f)
+    logger.addHandler(fh)
+    logger.setLevel(logging.INFO)
+
     def getNcStartEnd(self, urlNcDap, timeAxisName):
         '''Find the lines in the html with the .nc file, then open it and read the start/end times
         return url to the .nc  and start/end as datetime objects.
         '''
-        logger.debug('open_url on urlNcDap = %s', urlNcDap)
+        self.logger.debug('open_url on urlNcDap = %s', urlNcDap)
         df = pydap.client.open_url(urlNcDap)
         try:
             timeAxisUnits = df[timeAxisName].units
         except KeyError as e:
-            logger.warning(e)
+            self.logger.warning(e)
             raise ServerError("Can't read %s time axis from %s" % (timeAxisName, urlNcDap))
 
         if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
@@ -85,13 +84,13 @@ class Make_netCDFs():
             startDatetime = from_udunits(df[timeAxisName][0][0].data, timeAxisUnits)
             endDatetime = from_udunits(df[timeAxisName][-1][0].data, timeAxisUnits)
         except pydap.exceptions.ServerError as e:
-            logger.warning(e)
+            self.logger.warning(e)
             raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
         except webob.exc.HTTPError as e:
-            logger.warning(e.comment)
+            self.logger.warning(e.comment)
             raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
         except ValueError as e:
-            logger.warning(e)
+            self.logger.warning(e)
             raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap)) 
 
         return startDatetime, endDatetime
@@ -100,7 +99,7 @@ class Make_netCDFs():
         '''
         Process decimated LRAUV data
         '''
-        logger.debug('url = %s', url)
+        self.logger.debug('url = %s', url)
 
         if "sbd" in url:
             base_fname = '/'.join(url.split('/')[-3:]).split('.')[0]
@@ -110,8 +109,8 @@ class Make_netCDFs():
         inFile = os.path.join(args.inDir, base_fname + '.nc4')
         outFile_i = os.path.join(args.outDir, base_fname + '_i.nc')
         startDatetime, endDatetime = self.getNcStartEnd(url, 'depth_time')
-        logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
-        logger.debug('lastDatetime = %s', lastDatetime)
+        self.logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
+        self.logger.debug('lastDatetime = %s', lastDatetime)
 
         if start is not None and startDatetime < start :
             raise ServerError('startDatetime = %s out of bounds with user-defined startDatetime = %s' % (startDatetime, start))
@@ -122,16 +121,16 @@ class Make_netCDFs():
         url_i = None
 
         if endDatetime > lastDatetime:
-            logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
+            self.logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
             try:
                 if not args.debug:
                   pw.processNc4FileDecimated(url, inFile, outFile_i, args.parms, json.loads(args.groupparms), args.iparm)
 
             except TypeError:
-                logger.warning('Problem reading data from %s', url)
-                logger.warning('Assuming data are invalid and skipping')
+                self.logger.warning('Problem reading data from %s', url)
+                self.logger.warning('Assuming data are invalid and skipping')
             except IndexError:
-                logger.warning('Problem interpolating data from %s', url)
+                self.logger.warning('Problem interpolating data from %s', url)
             ##except KeyError:
             ##    raise ServerError("Key error - can't read parameters from %s" % (url))
             except ValueError:
@@ -140,7 +139,7 @@ class Make_netCDFs():
             else:
                 url_i = url.replace('.nc4', '_i.nc')
         else:
-            logger.debug('endDatetime <= lastDatetime. Assume that data from %s have already been loaded', url)
+            self.logger.debug('endDatetime <= lastDatetime. Assume that data from %s have already been loaded', url)
 
         return url_i, startDatetime, endDatetime
 
@@ -245,6 +244,12 @@ class Make_netCDFs():
         parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
 
+        self.args = parser.parse_args()
+
+        if self.args.verbose >= 1:
+            self.logger.setLevel(logging.DEBUG)
+        elif self.args.verbose > 0:
+            self.logger.setLevel(logging.INFO)
 
         args = parser.parse_args()
         return args
@@ -299,16 +304,22 @@ if __name__ == '__main__':
 
     # Get directory list from sites
     url, files = args.inUrl.rsplit('/',1)
-    logger.info("Crawling %s for %s files", url, files)
+    mn.logger.info("Crawling %s for %s files", url, files)
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$", ".*.js$", ".*.kml$",  ".*.log$"]
     c = Crawl(os.path.join(url, 'catalog.xml'), select=[files], debug=False, skip=skips)
 
     for d in c.datasets:
-        logger.debug('Found %s', d.id)
+        mn.logger.debug('Found %s', d.id)
 
     urls = [s2.get("url") for d in c.datasets for s2 in d.services if s2.get("service").lower() == "opendap"]
 
     pw = lrauvNc4ToNetcdf.InterpolatorWriter()
+    if mn.args.verbose >= 1:
+        pw.logger.setLevel(logging.DEBUG)
+    elif mn.args.verbose > 0:
+        pw.logger.setLevel(logging.INFO)
+    else:
+        pw.logger.setLevel(logging.WARNING)
 
     coord = {}
 
@@ -321,24 +332,25 @@ if __name__ == '__main__':
     for url in sorted(urls):
         try:
             year_str = '{}'.format(start.year)
-            logger.info('Looking for {} in {}'.format(year_str, url))
+            mn.logger.info('Looking for {} in {}'.format(year_str, url))
             if year_str in url:
+                ##breakpoint()
                 (url_src, startDatetime, endDatetime) = mn.processDecimated(args, pw, url, lastDatetime, start, end)
             else:
-                logger.warn('{} not in search year'.format(url))
+                mn.logger.warn('{} not in search year'.format(url))
                 continue
                 ##raise FileNotInYear('{} not in search year'.format(url))
         except ServerError as e:
-            logger.warning(e)
+            mn.logger.warning(e)
             continue
         except lrauvNc4ToNetcdf.MissingCoordinate as e:
-            logger.warning(e)
+            mn.logger.warning(e)
             continue
 
         lastDatetime = endDatetime
 
         if url_src and args.database:
-            logger.info("Received new %s file ending at %s in %s", platformName, lastDatetime, url_src)
+            mn.logger.info("Received new %s file ending at %s in %s", platformName, lastDatetime, url_src)
             aName = url_src.split('/')[-2] + '_' + url_src.split('/')[-1].split('.')[0]
             dataStartDatetime = None
 
@@ -349,7 +361,7 @@ if __name__ == '__main__':
 
             try:
                 if not args.debug:
-                    logger.info("Instantiating Lrauv_Loader for url = %s", url_src)
+                    mn.logger.info("Instantiating Lrauv_Loader for url = %s", url_src)
                     lrauvLoad = DAPloaders.runLrauvLoader(cName = args.campaign,
                                                       cDesc = None,
                                                       aName = aName,
@@ -383,7 +395,7 @@ if __name__ == '__main__':
                     else:
                         outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0]  + '.png')
 
-                logger.debug('out file %s', outFile)
+                mn.logger.debug('out file %s', outFile)
                 contour = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], args.plotgroup,
                                   title, outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
                 contour.run()
@@ -408,7 +420,7 @@ if __name__ == '__main__':
 
 
                 if not os.path.exists(outFile) or args.debug:
-                    logger.debug('out file {} url: {}'.format(outFile, url))
+                    mn.logger.debug('out file {} url: {}'.format(outFile, url))
                     c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title,
                                 outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
                     c.run()
@@ -419,25 +431,25 @@ if __name__ == '__main__':
 
 
             except DAPloaders.NoValidData:
-                logger.info("No measurements in this log set. Activity was not created as there was nothing to load.")
+                mn.logger.info("No measurements in this log set. Activity was not created as there was nothing to load.")
 
             except pydap.exceptions.ServerError as e:
-                logger.warning(e)
+                mn.logger.warning(e)
 
             except DAPloaders.ParameterNotFound as e:
-                logger.warning(e)
+                mn.logger.warning(e)
 
             except DAPloaders.InvalidSliceRequest as e:
-                logger.warning(e)
+                mn.logger.warning(e)
 
             except Exception as e:
-                logger.warning(e)
+                mn.logger.warning(e)
                 continue
 
     # update last 24 hr plot when requested
     if args.latest24hr:
         try:
-            logger.info('Plotting latest 24 hours for platform %s ', platformName)
+            mn.logger.info('Plotting latest 24 hours for platform %s ', platformName)
             # Plot the last 24 hours
             nowStart = datetime.utcnow() - timedelta(hours=24)
             nowEnd = datetime.utcnow()
@@ -462,17 +474,17 @@ if __name__ == '__main__':
                 delay = timedelta(minutes=5)
                 if check_file(delay, outFileLatest, outFileLatestProduct):
                     cmd = r'cp %s %s' %(outFileLatest, outFileLatestProduct)
-                    logger.debug('%s', cmd)
+                    mn.logger.debug('%s', cmd)
                     os.system(cmd)
 
                 # copy to the atlas share that will get cataloged in ODSS
                 if check_file(delay, outFileLatestAnim, outFileLatestProductAnim):
                     cmd = r'cp %s %s' %(outFileLatestAnim, outFileLatestProductAnim)
-                    logger.debug('%s', cmd)
+                    mn.logger.debug('%s', cmd)
                     os.system(cmd)
 
         except Exception as e:
-            logger.warning(e)
+            mn.logger.warning(e)
 
 
-    logger.info('done')
+    mn.logger.info('done')
