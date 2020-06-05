@@ -242,14 +242,16 @@ class Make_netCDFs():
         parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default=None, required=False)
         parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
         parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2], type=int, help='Turn on verbose output. 1: INFO, 2: DEBUG', const=1, default=0)
 
         self.args = parser.parse_args()
 
-        if self.args.verbose >= 1:
+        if self.args.verbose == 2:
             self.logger.setLevel(logging.DEBUG)
-        elif self.args.verbose > 0:
+        elif self.args.verbose == 1:
             self.logger.setLevel(logging.INFO)
+        else:
+            self.logger.setLevel(logging.WARNING)
 
         args = parser.parse_args()
         return args
@@ -314,9 +316,9 @@ if __name__ == '__main__':
     urls = [s2.get("url") for d in c.datasets for s2 in d.services if s2.get("service").lower() == "opendap"]
 
     pw = lrauvNc4ToNetcdf.InterpolatorWriter()
-    if mn.args.verbose >= 1:
+    if mn.args.verbose == 2:
         pw.logger.setLevel(logging.DEBUG)
-    elif mn.args.verbose > 0:
+    elif mn.args.verbose == 1:
         pw.logger.setLevel(logging.INFO)
     else:
         pw.logger.setLevel(logging.WARNING)
@@ -348,103 +350,6 @@ if __name__ == '__main__':
             continue
 
         lastDatetime = endDatetime
-
-        if url_src and args.database:
-            mn.logger.info("Received new %s file ending at %s in %s", platformName, lastDatetime, url_src)
-            aName = url_src.split('/')[-2] + '_' + url_src.split('/')[-1].split('.')[0]
-            dataStartDatetime = None
-
-            if args.append:
-                core_aName = aName.split('_')[0]
-                # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(args.database).filter(activity__name__contains=core_aName).aggregate(Max('timevalue'))['timevalue__max']
-
-            try:
-                if not args.debug:
-                    mn.logger.info("Instantiating Lrauv_Loader for url = %s", url_src)
-                    lrauvLoad = DAPloaders.runLrauvLoader(cName = args.campaign,
-                                                      cDesc = None,
-                                                      aName = aName,
-                                                      aTypeName = 'LRAUV mission',
-                                                      pName = platformName,
-                                                      pTypeName = 'auv',
-                                                      pColor = cl.colors[platformName],
-                                                      url = url_src,
-                                                      parmList = args.plotparms,
-                                                      dbAlias = args.database,
-                                                      stride = int(args.stride),
-                                                      startDatetime = startDatetime,
-                                                      dataStartDatetime = dataStartDatetime,
-                                                      endDatetime = endDatetime,
-                                                      contourUrl = args.contourUrl,
-                                                      auxCoords = coord,
-                                                      timezone = 'America/Los_Angeles',
-                                                      command_line_args = args)
-
-                endDatetimeUTC = pytz.utc.localize(endDatetime)
-                endDatetimeLocal = endDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
-                startDatetimeUTC = pytz.utc.localize(startDatetime)
-                startDatetimeLocal = startDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
-
-                # format contour output file name replacing file extension with .png
-                if args.outDir.startswith('/tmp'):
-                    outFile = os.path.join(args.outDir, url_src.split('/')[-1].split('.')[0] + '.png')
-                else:
-                    if "sbd" in url_src:
-                        outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-3:]).split('.')[0]  + '.png')
-                    else:
-                        outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0]  + '.png')
-
-                mn.logger.debug('out file %s', outFile)
-                contour = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], args.plotgroup,
-                                  title, outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
-                contour.run()
-
-                # Replace netCDF file with png extension and that is the URL of the log
-                logUrl = re.sub('\.nc$','.png', url_src)
-
-                # Round the UTC time to the local time and do the query for the 24 hour period the log file falls into
-                startDatetime = startDatetimeUTC
-                startDateTimeLocal = startDatetime.astimezone(pytz.timezone('America/Los_Angeles'))
-                startDateTimeLocal = startDateTimeLocal.replace(hour=0,minute=0,second=0,microsecond=0)
-                startDateTimeUTC24hr = startDateTimeLocal.astimezone(pytz.utc)
-
-                endDatetime = startDateTimeLocal
-                endDateTimeLocal = endDatetime.replace(hour=23,minute=59,second=0,microsecond=0)
-                endDateTimeUTC24hr = endDateTimeLocal.astimezone(pytz.utc)
-
-                outFile = (args.contourDir + '/' + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') +
-                           '_' + endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png')
-                url = (args.contourUrl + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' +
-                       endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png')
-
-
-                if not os.path.exists(outFile) or args.debug:
-                    mn.logger.debug('out file {} url: {}'.format(outFile, url))
-                    c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title,
-                                outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
-                    c.run()
-
-                if args.post:
-                    message = 'LRAUV log data processed through STOQS workflow. Log <%s|%s plot> ' % (logUrl, aName)
-                    slack.chat.post_message("#lrauvs", message)
-
-
-            except DAPloaders.NoValidData:
-                mn.logger.info("No measurements in this log set. Activity was not created as there was nothing to load.")
-
-            except pydap.exceptions.ServerError as e:
-                mn.logger.warning(e)
-
-            except DAPloaders.ParameterNotFound as e:
-                mn.logger.warning(e)
-
-            except DAPloaders.InvalidSliceRequest as e:
-                mn.logger.warning(e)
-
-            except Exception as e:
-                mn.logger.warning(e)
-                continue
 
     # update last 24 hr plot when requested
     if args.latest24hr:
@@ -485,6 +390,5 @@ if __name__ == '__main__':
 
         except Exception as e:
             mn.logger.warning(e)
-
 
     mn.logger.info('done')
