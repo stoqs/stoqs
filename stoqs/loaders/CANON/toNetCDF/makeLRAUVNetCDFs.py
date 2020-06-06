@@ -128,6 +128,7 @@ class Make_netCDFs():
         parser.add_argument('--platform', action='store', help='Platform name: tethys, daphne, ahi, ...')
         parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
         parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
+        parser.add_argument('--realtime', action='store_true', help='Processed realtime telemetered data rather that delayed mode log files')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2], type=int, help='Turn on verbose output. 1: INFO, 2:DEBUG', const=1, default=0)
 
         self.args = parser.parse_args()
@@ -341,11 +342,63 @@ class Make_netCDFs():
             raise ie
         except KeyError:
             raise ServerError("Key error - can't read parameters from {}".format(url_in))
-        ##except ValueError as e:
-        ##    raise ServerError("ValueError: {} - can't read parameters from {}".format(e, url_in))
 
         url_o = url_out
         return url_o
+
+    def process_realtime(self, pw, url_in, resample_freq, parms, rad_to_deg, appendString):
+        # Borrowed from stoqs/loaders/CANON/realtime/monitorLRAUV.py
+        (url_src, startDatetime, endDatetime) = mn.processDecimated(args, pw, url, lastDatetime, start, end)
+
+
+    def processDecimated(self, args, pw, url, lastDatetime, start, end):
+        '''
+        Process decimated LRAUV data
+        '''
+        self.logger.debug('url = %s', url)
+
+        if "sbd" in url:
+            base_fname = '/'.join(url.split('/')[-3:]).split('.')[0]
+        else:
+            base_fname = '/'.join(url.split('/')[-2:]).split('.')[0]
+
+        inFile = os.path.join(args.inDir, base_fname + '.nc4')
+        outFile_i = os.path.join(args.outDir, base_fname + '_i.nc')
+        startDatetime, endDatetime = self.getNcStartEnd(url, 'depth_time')
+        self.logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
+        self.logger.debug('lastDatetime = %s', lastDatetime)
+
+        if start is not None and startDatetime < start :
+            raise ServerError('startDatetime = %s out of bounds with user-defined startDatetime = %s' % (startDatetime, start))
+
+        if end is not None and endDatetime > end :
+            raise ServerError('endDatetime = %s out of bounds with user-defined endDatetime = %s' % (endDatetime, end))
+
+        url_i = None
+
+        if endDatetime > lastDatetime:
+            self.logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
+            try:
+                if not args.debug:
+                  pw.processNc4FileDecimated(url, inFile, outFile_i, args.parms, json.loads(args.groupparms), args.iparm)
+
+            except TypeError:
+                self.logger.warning('Problem reading data from %s', url)
+                self.logger.warning('Assuming data are invalid and skipping')
+            except IndexError:
+                self.logger.warning('Problem interpolating data from %s', url)
+            ##except KeyError:
+            ##    raise ServerError("Key error - can't read parameters from %s" % (url))
+            except ValueError:
+                raise ServerError("Value error - can't read parameters from %s" % (url))
+
+            else:
+                url_i = url.replace('.nc4', '_i.nc')
+        else:
+            self.logger.debug('endDatetime <= lastDatetime. Assume that data from %s have already been loaded', url)
+
+        return url_i, startDatetime, endDatetime
+
 
 
 if __name__ == '__main__':
@@ -360,25 +413,29 @@ if __name__ == '__main__':
     else:
         platforms = lrauvs
 
-    for platform in platforms:
-        mn.assign_ins(start, end, platform)
-        url, files = mn.inUrl.rsplit('/', 1)
-        potential_urls = mn.find_urls(url, files, start, end)
-        urls = mn.validate_urls(potential_urls)
+    pw = lrauvNc4ToNetcdf.InterpolatorWriter()
+    if mn.args.verbose == 2:
+        pw.logger.setLevel(logging.DEBUG)
+    elif mn.args.verbose == 1:
+        pw.logger.setLevel(logging.INFO)
+    else:
+        pw.logger.setLevel(logging.WARNING)
 
-        pw = lrauvNc4ToNetcdf.InterpolatorWriter()
-        if mn.args.verbose == 2:
-            pw.logger.setLevel(logging.DEBUG)
-        elif mn.args.verbose == 1:
-            pw.logger.setLevel(logging.INFO)
-        else:
-            pw.logger.setLevel(logging.WARNING)
+    if mn.args.realtime:
+        # Borrowed from stoqs/loaders/CANON/realtime/monitorLRAUV.py
+        (url_src, startDatetime, endDatetime) = mn.processDecimated(args, pw, url, lastDatetime, start, end)
+    else:
+        for platform in platforms:
+            mn.assign_ins(start, end, platform)
+            url, files = mn.inUrl.rsplit('/', 1)
+            potential_urls = mn.find_urls(url, files, start, end)
+            urls = mn.validate_urls(potential_urls)
 
-        convert_radians = True
-        for url in sorted(urls):
-            try:
-                mn.processResample(pw, url, mn.args.resampleFreq, parms, convert_radians, mn.args.appendString)
-            except ServerError as e:
-                mn.logger.warning(e)
-                continue
+            convert_radians = True
+            for url in sorted(urls):
+                try:
+                    mn.processResample(pw, url, mn.args.resampleFreq, parms, convert_radians, mn.args.appendString)
+                except ServerError as e:
+                    mn.logger.warning(e)
+                    continue
 
