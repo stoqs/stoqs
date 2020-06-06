@@ -351,6 +351,102 @@ if __name__ == '__main__':
 
         lastDatetime = endDatetime
 
+        if url_src and args.database:
+            logger.info("Received new %s file ending at %s in %s", platformName, lastDatetime, url_src)
+            aName = url_src.split('/')[-2] + '_' + url_src.split('/')[-1].split('.')[0]
+            dataStartDatetime = None
+
+            if args.append:
+                core_aName = aName.split('_')[0]
+                # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
+                dataStartDatetime = InstantPoint.objects.using(args.database).filter(activity__name__contains=core_aName).aggregate(Max('timevalue'))['timevalue__max']
+
+            try:
+                if not args.debug:
+                    logger.info("Instantiating Lrauv_Loader for url = %s", url_src)
+                    lrauvLoad = DAPloaders.runLrauvLoader(cName = args.campaign,
+                                                      cDesc = None,
+                                                      aName = aName,
+                                                      aTypeName = 'LRAUV mission',
+                                                      pName = platformName,
+                                                      pTypeName = 'auv',
+                                                      pColor = cl.colors[platformName],
+                                                      url = url_src,
+                                                      parmList = args.plotparms,
+                                                      dbAlias = args.database,
+                                                      stride = int(args.stride),
+                                                      startDatetime = startDatetime,
+                                                      dataStartDatetime = dataStartDatetime,
+                                                      endDatetime = endDatetime,
+                                                      contourUrl = args.contourUrl,
+                                                      auxCoords = coord,
+                                                      timezone = 'America/Los_Angeles',
+                                                      command_line_args = args)
+
+                endDatetimeUTC = pytz.utc.localize(endDatetime)
+                endDatetimeLocal = endDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+                startDatetimeUTC = pytz.utc.localize(startDatetime)
+                startDatetimeLocal = startDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+
+                # format contour output file name replacing file extension with .png
+                if args.outDir.startswith('/tmp'):
+                    outFile = os.path.join(args.outDir, url_src.split('/')[-1].split('.')[0] + '.png')
+                else:
+                    if "sbd" in url_src:
+                        outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-3:]).split('.')[0]  + '.png')
+                    else:
+                        outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0]  + '.png')
+
+                logger.debug('out file %s', outFile)
+                contour = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], args.plotgroup,
+                                  title, outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
+                contour.run()
+
+                # Replace netCDF file with png extension and that is the URL of the log
+                logUrl = re.sub('\.nc$','.png', url_src)
+
+                # Round the UTC time to the local time and do the query for the 24 hour period the log file falls into
+                startDatetime = startDatetimeUTC
+                startDateTimeLocal = startDatetime.astimezone(pytz.timezone('America/Los_Angeles'))
+                startDateTimeLocal = startDateTimeLocal.replace(hour=0,minute=0,second=0,microsecond=0)
+                startDateTimeUTC24hr = startDateTimeLocal.astimezone(pytz.utc)
+
+                endDatetime = startDateTimeLocal
+                endDateTimeLocal = endDatetime.replace(hour=23,minute=59,second=0,microsecond=0)
+                endDateTimeUTC24hr = endDateTimeLocal.astimezone(pytz.utc)
+
+                outFile = (args.contourDir + '/' + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') +
+                           '_' + endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png')
+                url = (args.contourUrl + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' +
+                       endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png')
+
+
+                if not os.path.exists(outFile) or args.debug:
+                    logger.debug('out file {} url: {}'.format(outFile, url))
+                    c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title,
+                                outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
+                    c.run()
+
+                if args.post:
+                    message = 'LRAUV log data processed through STOQS workflow. Log <%s|%s plot> ' % (logUrl, aName)
+                    slack.chat.post_message("#lrauvs", message)
+
+            except DAPloaders.NoValidData:
+                logger.info("No measurements in this log set. Activity was not created as there was nothing to load.")
+
+            except pydap.exceptions.ServerError as e:
+                logger.warning(e)
+
+            except DAPloaders.ParameterNotFound as e:
+                logger.warning(e)
+
+            except DAPloaders.InvalidSliceRequest as e:
+                logger.warning(e)
+
+            except Exception as e:
+                logger.warning(e)
+                continue
+
     # update last 24 hr plot when requested
     if args.latest24hr:
         try:
@@ -392,3 +488,4 @@ if __name__ == '__main__':
             mn.logger.warning(e)
 
     mn.logger.info('done')
+
