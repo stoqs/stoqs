@@ -128,16 +128,18 @@ class Make_netCDFs():
         parser.add_argument('--platform', action='store', help='Platform name: tethys, daphne, ahi, ...')
         parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
         parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2], type=int, help='Turn on verbose output. 1: INFO, 2:DEBUG', const=1, default=0)
 
         self.args = parser.parse_args()
         self.args.nudge = True
         self.args.trackingdb = True
 
-        if self.args.verbose >= 1:
+        if self.args.verbose == 2:
             self.logger.setLevel(logging.DEBUG)
-        elif self.args.verbose > 0:
+        elif self.args.verbose == 1:
             self.logger.setLevel(logging.INFO)
+        else:
+            self.logger.setLevel(logging.WARNING)
 
     def assign_parms(self):
         '''Assign the parms dictionary accordingly. Set to parms associated 
@@ -365,6 +367,13 @@ if __name__ == '__main__':
         urls = mn.validate_urls(potential_urls)
 
         pw = lrauvNc4ToNetcdf.InterpolatorWriter()
+        if mn.args.verbose == 2:
+            pw.logger.setLevel(logging.DEBUG)
+        elif mn.args.verbose == 1:
+            pw.logger.setLevel(logging.INFO)
+        else:
+            pw.logger.setLevel(logging.WARNING)
+
         convert_radians = True
         for url in sorted(urls):
             try:
