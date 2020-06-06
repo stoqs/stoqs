@@ -352,7 +352,7 @@ if __name__ == '__main__':
         lastDatetime = endDatetime
 
         if url_src and args.database:
-            logger.info("Received new %s file ending at %s in %s", platformName, lastDatetime, url_src)
+            mn.logger.info("Received new %s file ending at %s in %s", platformName, lastDatetime, url_src)
             aName = url_src.split('/')[-2] + '_' + url_src.split('/')[-1].split('.')[0]
             dataStartDatetime = None
 
@@ -363,7 +363,7 @@ if __name__ == '__main__':
 
             try:
                 if not args.debug:
-                    logger.info("Instantiating Lrauv_Loader for url = %s", url_src)
+                    mn.logger.info("Instantiating Lrauv_Loader for url = %s", url_src)
                     lrauvLoad = DAPloaders.runLrauvLoader(cName = args.campaign,
                                                       cDesc = None,
                                                       aName = aName,
@@ -397,7 +397,7 @@ if __name__ == '__main__':
                     else:
                         outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0]  + '.png')
 
-                logger.debug('out file %s', outFile)
+                mn.logger.debug('out file %s', outFile)
                 contour = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], args.plotgroup,
                                   title, outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
                 contour.run()
@@ -422,7 +422,7 @@ if __name__ == '__main__':
 
 
                 if not os.path.exists(outFile) or args.debug:
-                    logger.debug('out file {} url: {}'.format(outFile, url))
+                    mn.logger.debug('out file {} url: {}'.format(outFile, url))
                     c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title,
                                 outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
                     c.run()
@@ -432,19 +432,19 @@ if __name__ == '__main__':
                     slack.chat.post_message("#lrauvs", message)
 
             except DAPloaders.NoValidData:
-                logger.info("No measurements in this log set. Activity was not created as there was nothing to load.")
+                mn.logger.info("No measurements in this log set. Activity was not created as there was nothing to load.")
 
             except pydap.exceptions.ServerError as e:
-                logger.warning(e)
+                mn.logger.warning(e)
 
             except DAPloaders.ParameterNotFound as e:
-                logger.warning(e)
+                mn.logger.warning(e)
 
             except DAPloaders.InvalidSliceRequest as e:
-                logger.warning(e)
+                mn.logger.warning(e)
 
             except Exception as e:
-                logger.warning(e)
+                mn.logger.warning(e)
                 continue
 
     # update last 24 hr plot when requested
