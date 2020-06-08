@@ -129,7 +129,7 @@ class Make_netCDFs():
         parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
         parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
         parser.add_argument('--realtime', action='store_true', help='Processed realtime telemetered data rather that delayed mode log files')
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2], type=int, help='Turn on verbose output. 1: INFO, 2:DEBUG', const=1, default=0)
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. 1: INFO, 2:DEBUG, 3:TDS Crawler', const=1, default=0)
 
         self.args = parser.parse_args()
         self.args.nudge = True
@@ -193,47 +193,63 @@ class Make_netCDFs():
     def assign_ins(self, start, end, platform):
         '''Default is to return inDir and inURL given platform and datetime parameters
         '''
-        if not self.args.inDir:
-            self.inDir = f"/mbari/LRAUV/{platform}/missionlogs/{start.year}"
-
-        if not self.args.inUrl:
-            self.inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{start.year}/.*.nc4"
+        if self.args.realtime:
+            if not self.args.inDir:
+                self.inDir = f"/mbari/LRAUV/{platform}/realtime/sbdlogs/{start.year}"
+            if not self.args.inUrl:
+                self.inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{platform}/realtime/sbdlogs/{start.year}/.*shore.nc4"
+        else:
+            if not self.args.inDir:
+                self.inDir = f"/mbari/LRAUV/{platform}/missionlogs/{start.year}"
+            if not self.args.inUrl:
+                self.inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{start.year}/.*.nc4"
 
     def find_urls(self, base, select, startdate, enddate):
-        url = os.path.join(base, 'catalog.xml')
-        skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
-        u = urlparse(url)
+        cat_url = os.path.join(base, 'catalog.xml')
+        u = urlparse(cat_url)
         name, ext = os.path.splitext(u.path)
         if ext == ".html":
-            u = urlparse(url.replace(".html", ".xml"))
-        url = u.geturl()
+            u = urlparse(cat_url.replace(".html", ".xml"))
+        cat_url = u.geturl()
         urls = []
 
-        self.logger.debug(f"Attempting to Crawl {url} looking for .dlist files")
-        dlist_cat = Crawl(url, select=[".*dlist"])
+        if self.args.realtime:
+            self.logger.info(f"Attempting to crawl {cat_url} for realtime shore.nc4files")
+            skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$", ".*.js$", ".*.kml$",  ".*.log$"]
+            crawl_debug = False
+            if self.args.verbose > 2:
+                crawl_debug = True
+            rt_cat = Crawl(cat_url, select=[".*shore.nc4"], skip=skips, debug=crawl_debug)
 
-        # Crawl the catalogRefs:
-        self.logger.info(f"Crawling {url} for {files} files to make {self.args.resampleFreq}_{self.args.appendString}.nc files")
-        for dataset in dlist_cat.datasets:
-            # get the mission directory name and extract the start and ending dates
-            dlist = os.path.basename(dataset.id)
-            mission_dir_name = dlist.split('.')[0]
-            dts = mission_dir_name.split('_')
-            dir_start =  datetime.strptime(dts[0], '%Y%m%d')
-            dir_end =  datetime.strptime(dts[1], '%Y%m%d')
-
-            # if within a valid range, grab the valid urls
-            self.logger.debug(f"Checking if .dlist {dlist} is within {startdate} and {enddate}")
-            if (startdate <= dir_start and dir_start <= enddate) or (startdate <= dir_end and dir_end <= enddate):
-                catalog = '{}_{}/catalog.xml'.format(dir_start.strftime('%Y%m%d'), dir_end.strftime('%Y%m%d'))
-                self.logger.debug(f"Crawling {os.path.join(base, catalog)}")
-                log_cat = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
-                self.logger.debug(f"Getting opendap urls from datasets {log_cat.datasets}")
-                d = [s.get("url") for d in log_cat.datasets for s in d.services if s.get("service").lower() == "opendap"]
-                for url in d:
+            for url in [s.get("url") for d in rt_cat.datasets for s in d.services if s.get("service").lower() == "opendap"]:
+                dir_start = datetime.strptime(url.split('/')[-2], '%Y%m%dT%H%M%S')
+                if startdate <= dir_start and dir_start <= enddate:
                     self.logger.debug(f"Adding url {url}")
                     urls.append(url)
+        else:
+            self.logger.debug(f"Attempting to Crawl {cat_url} looking for .dlist files")
+            skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
+            dlist_cat = Crawl(cat_url, select=[".*dlist"], skip=skips)
 
+            self.logger.info(f"Crawling {cat_url} for {files} files to make {self.args.resampleFreq}_{self.args.appendString}.nc files")
+            for dataset in dlist_cat.datasets:
+                # get the mission directory name and extract the start and ending dates
+                dlist = os.path.basename(dataset.id)
+                mission_dir_name = dlist.split('.')[0]
+                dts = mission_dir_name.split('_')
+                dir_start =  datetime.strptime(dts[0], '%Y%m%d')
+                dir_end =  datetime.strptime(dts[1], '%Y%m%d')
+
+                # if within a valid range, grab the valid urls
+                self.logger.debug(f"Checking if .dlist {dlist} is within {startdate} and {enddate}")
+                if (startdate <= dir_start and dir_start <= enddate) or (startdate <= dir_end and dir_end <= enddate):
+                    catalog = '{}_{}/catalog.xml'.format(dir_start.strftime('%Y%m%d'), dir_end.strftime('%Y%m%d'))
+                    self.logger.debug(f"Crawling {os.path.join(base, catalog)}")
+                    log_cat = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
+                    self.logger.debug(f"Getting opendap urls from datasets {log_cat.datasets}")
+                    for url in [s.get("url") for d in log_cat.datasets for s in d.services if s.get("service").lower() == "opendap"]:
+                        self.logger.debug(f"Adding url {url}")
+                        urls.append(url)
         if not urls:
             self.logger.info("No URLs found.")
 
@@ -346,12 +362,8 @@ class Make_netCDFs():
         url_o = url_out
         return url_o
 
-    def process_realtime(self, pw, url_in, resample_freq, parms, rad_to_deg, appendString):
-        # Borrowed from stoqs/loaders/CANON/realtime/monitorLRAUV.py
-        (url_src, startDatetime, endDatetime) = mn.processDecimated(args, pw, url, lastDatetime, start, end)
 
-
-    def processDecimated(self, args, pw, url, lastDatetime, start, end):
+    def processDecimated(self, pw, url, lastDatetime, start, end):
         '''
         Process decimated LRAUV data
         '''
@@ -362,8 +374,8 @@ class Make_netCDFs():
         else:
             base_fname = '/'.join(url.split('/')[-2:]).split('.')[0]
 
-        inFile = os.path.join(args.inDir, base_fname + '.nc4')
-        outFile_i = os.path.join(args.outDir, base_fname + '_i.nc')
+        inFile = os.path.join(self.args.inDir, base_fname + '.nc4')
+        outFile_i = os.path.join(self.args.outDir, base_fname + '_i.nc')
         startDatetime, endDatetime = self.getNcStartEnd(url, 'depth_time')
         self.logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
         self.logger.debug('lastDatetime = %s', lastDatetime)
@@ -379,8 +391,8 @@ class Make_netCDFs():
         if endDatetime > lastDatetime:
             self.logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
             try:
-                if not args.debug:
-                  pw.processNc4FileDecimated(url, inFile, outFile_i, args.parms, json.loads(args.groupparms), args.iparm)
+                if not self.args.debug:
+                  pw.processNc4FileDecimated(url, inFile, outFile_i, self.args.parms, json.loads(self.args.groupparms), self.args.iparm)
 
             except TypeError:
                 self.logger.warning('Problem reading data from %s', url)
@@ -422,8 +434,18 @@ if __name__ == '__main__':
         pw.logger.setLevel(logging.WARNING)
 
     if mn.args.realtime:
-        # Borrowed from stoqs/loaders/CANON/realtime/monitorLRAUV.py
-        (url_src, startDatetime, endDatetime) = mn.processDecimated(args, pw, url, lastDatetime, start, end)
+        for platform in platforms:
+            mn.assign_ins(start, end, platform)
+            url, files = mn.inUrl.rsplit('/', 1)
+            potential_urls = mn.find_urls(url, files, start, end)
+            breakpoint()
+            urls = mn.validate_urls(potential_urls)
+
+            convert_radians = True
+            for url in sorted(urls):
+                # Borrowed from stoqs/loaders/CANON/realtime/monitorLRAUV.py
+                breakpoint()
+                (url_src, startDatetime, endDatetime) = mn.processDecimated(pw, url, lastDatetime, start, end)
     else:
         for platform in platforms:
             mn.assign_ins(start, end, platform)
