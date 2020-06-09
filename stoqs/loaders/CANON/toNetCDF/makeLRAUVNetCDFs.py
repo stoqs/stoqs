@@ -258,25 +258,28 @@ class Make_netCDFs():
     def validate_urls(self, potential_urls):
         urls = []
         for url in potential_urls:
-            try:
-                startDatetime, endDatetime = self.getNcStartEnd(url, 'time_time')
-            except Exception as e:
-                # Write a message to the .log file for the expected output file so that
-                # lrauv-data-file-audit.sh can detect the problem
-                log_file = os.path.join(self.inDir, '/'.join(url.split('/')[9:]))
-                log_file = log_file.replace('.nc4', '_' + self.args.resampleFreq + '_' + self.args.appendString + '.log')
+            if self.args.realtime:
+                startDatetime, endDatetime = self.getNcStartEnd(url, 'depth_time')
+            else:
+                try:
+                    startDatetime, endDatetime = self.getNcStartEnd(url, 'time_time')
+                except Exception as e:
+                    # Write a message to the .log file for the expected output file so that
+                    # lrauv-data-file-audit.sh can detect the problem
+                    log_file = os.path.join(self.inDir, '/'.join(url.split('/')[9:]))
+                    log_file = log_file.replace('.nc4', '_' + self.args.resampleFreq + '_' + self.args.appendString + '.log')
 
-                fh = logging.FileHandler(log_file, 'w+')
-                frm = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
-                fh.setFormatter(frm)
-                self.logger.addHandler(fh)
-                self.logger.warning(f"Can't get start and end date from .nc4: time_time not found in {url}")
-                self.logger.warning(f"{e}")
-                fh.close()
-                sh = logging.StreamHandler()
-                sh.setFormatter(frm)
-                self.logger.handlers = [sh]
-                continue
+                    fh = logging.FileHandler(log_file, 'w+')
+                    frm = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
+                    fh.setFormatter(frm)
+                    self.logger.addHandler(fh)
+                    self.logger.warning(f"Can't get start and end date from .nc4: time_time not found in {url}")
+                    self.logger.warning(f"{e}")
+                    fh.close()
+                    sh = logging.StreamHandler()
+                    sh.setFormatter(frm)
+                    self.logger.handlers = [sh]
+                    continue
 
             self.logger.debug('startDatetime, endDatetime = {}, {}'.format(startDatetime, endDatetime))
 
@@ -363,54 +366,38 @@ class Make_netCDFs():
         return url_o
 
 
-    def processDecimated(self, pw, url, lastDatetime, start, end):
+    def processDecimated(self, pw, url_in, start, end):
         '''
-        Process decimated LRAUV data
+        Process realtime (sbdlog) LRAUV data
         '''
-        self.logger.debug('url = %s', url)
+        self.logger.debug('url_in = %s', url_in)
 
-        if "sbd" in url:
-            base_fname = '/'.join(url.split('/')[-3:]).split('.')[0]
-        else:
-            base_fname = '/'.join(url.split('/')[-2:]).split('.')[0]
+        base_fname = '/'.join(url_in.split('/')[-3:]).split('.')[0]
 
-        inFile = os.path.join(self.args.inDir, base_fname + '.nc4')
-        outFile_i = os.path.join(self.args.outDir, base_fname + '_i.nc')
-        startDatetime, endDatetime = self.getNcStartEnd(url, 'depth_time')
-        self.logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
-        self.logger.debug('lastDatetime = %s', lastDatetime)
-
-        if start is not None and startDatetime < start :
-            raise ServerError('startDatetime = %s out of bounds with user-defined startDatetime = %s' % (startDatetime, start))
-
-        if end is not None and endDatetime > end :
-            raise ServerError('endDatetime = %s out of bounds with user-defined endDatetime = %s' % (endDatetime, end))
+        breakpoint()
+        inFile = os.path.join(self.inDir, base_fname + '.nc4')
+        outFile_i = os.path.join(self.inDir, base_fname + '_i.nc')
+        file_start, file_end = self.getNcStartEnd(url_in, 'depth_time')
+        self.logger.debug('file_start, file_end = %s, %s', file_start, file_end)
 
         url_i = None
 
-        if endDatetime > lastDatetime:
-            self.logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
+        if (start <= file_start and file_start <= end) or (start  <= file_end and file_end <= end):
             try:
-                if not self.args.debug:
-                  pw.processNc4FileDecimated(url, inFile, outFile_i, self.args.parms, json.loads(self.args.groupparms), self.args.iparm)
-
+                self.logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
+                pw.processNc4FileDecimated(url, inFile, outFile_i, self.args.parms, json.loads(self.args.groupparms), self.args.iparm)
             except TypeError:
                 self.logger.warning('Problem reading data from %s', url)
                 self.logger.warning('Assuming data are invalid and skipping')
             except IndexError:
                 self.logger.warning('Problem interpolating data from %s', url)
-            ##except KeyError:
-            ##    raise ServerError("Key error - can't read parameters from %s" % (url))
             except ValueError:
                 raise ServerError("Value error - can't read parameters from %s" % (url))
 
             else:
                 url_i = url.replace('.nc4', '_i.nc')
-        else:
-            self.logger.debug('endDatetime <= lastDatetime. Assume that data from %s have already been loaded', url)
 
-        return url_i, startDatetime, endDatetime
-
+        return url_i, file_start, file_end
 
 
 if __name__ == '__main__':
@@ -438,14 +425,12 @@ if __name__ == '__main__':
             mn.assign_ins(start, end, platform)
             url, files = mn.inUrl.rsplit('/', 1)
             potential_urls = mn.find_urls(url, files, start, end)
-            breakpoint()
             urls = mn.validate_urls(potential_urls)
 
             convert_radians = True
             for url in sorted(urls):
                 # Borrowed from stoqs/loaders/CANON/realtime/monitorLRAUV.py
-                breakpoint()
-                (url_src, startDatetime, endDatetime) = mn.processDecimated(pw, url, lastDatetime, start, end)
+                url_src, startDatetime, endDatetime = mn.processDecimated(pw, url, start, end)
     else:
         for platform in platforms:
             mn.assign_ins(start, end, platform)
