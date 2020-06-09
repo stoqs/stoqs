@@ -526,7 +526,7 @@ class InterpolatorWriter(BaseWriter):
                         all_ts[c] = ts
                     except KeyError:
                         # Likely the variable c is not in the NetCDF file
-                        self.logger.warn(f"Could not create coord {c}.  It's likely not in the file")
+                        self.logger.debug(f"Could not create coord {c}.  It's likely not in the file")
                     except ValueError as e:
                         self.logger.error('Could not create coord {}: {}'.format(c, str(e)))
                         continue
@@ -731,7 +731,7 @@ class InterpolatorWriter(BaseWriter):
           try:
             ts = self.createSeriesPydap(key, key + '_time')
           except IndexError as e:
-            self.logger.warn(e)
+            self.logger.debug(e)
             continue
           try:
             if ts.size == 0:
@@ -810,7 +810,7 @@ class InterpolatorWriter(BaseWriter):
                         self.logger.info('Found in group ' + group + ' parameter ' + var + ' renaming to ' + key)
                         parm_valid.append(key)
                     except KeyError as e:
-                        self.logger.error(e)
+                        self.logger.debug(e)
                         continue
                     except Exception as e:
                         self.logger.error(e)
