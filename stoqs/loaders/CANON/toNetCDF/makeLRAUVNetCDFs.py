@@ -101,6 +101,21 @@ ENG_PARMS = {'BPC1': [{'name': 'platform_battery_charge',
 
 SCIENG_PARMS = {**SCI_PARMS, **ENG_PARMS}
 
+REALTIME_SCIENG_PARMS = SCIENG_PARMS
+ALL_PARMS = set()
+for group, parmlist in REALTIME_SCIENG_PARMS.items():
+    for parmdict in parmlist:
+        for k, parm in parmdict.items():
+            if k == 'rename':
+                ALL_PARMS.add(parm)
+            if k == 'name':
+                if parm == 'sea_water_salinity':
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_mean_{parm}", 'rename': 'salinity'})
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_median_{parm}", 'rename': 'salinity'})
+                if parm == 'sea_water_temperature':
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_mean_{parm}", 'rename': 'temperature'})
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_median_{parm}", 'rename': 'temperature'})
+
 
 class ServerError(Exception):
     pass
@@ -311,7 +326,7 @@ class Make_netCDFs():
 
         try:
             timeAxisUnits = df[timeAxisName].units
-        except KeyError as ex:
+        except (KeyError, IndexError) as ex:
             self.logger.warning(ex)
             raise ServerError("Can't read {} time axis from {}".format(timeAxisName, urlNcDap))
 
@@ -374,7 +389,6 @@ class Make_netCDFs():
 
         base_fname = '/'.join(url_in.split('/')[-3:]).split('.')[0]
 
-        breakpoint()
         inFile = os.path.join(self.inDir, base_fname + '.nc4')
         outFile_i = os.path.join(self.inDir, base_fname + '_i.nc')
         file_start, file_end = self.getNcStartEnd(url_in, 'depth_time')
@@ -385,15 +399,10 @@ class Make_netCDFs():
         if (start <= file_start and file_start <= end) or (start  <= file_end and file_end <= end):
             try:
                 self.logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
-                pw.processNc4FileDecimated(url, inFile, outFile_i, self.args.parms, json.loads(self.args.groupparms), self.args.iparm)
-            except TypeError:
-                self.logger.warning('Problem reading data from %s', url)
-                self.logger.warning('Assuming data are invalid and skipping')
-            except IndexError:
-                self.logger.warning('Problem interpolating data from %s', url)
-            except ValueError:
-                raise ServerError("Value error - can't read parameters from %s" % (url))
-
+                pw.processNc4FileDecimated(url, inFile, outFile_i, ALL_PARMS, REALTIME_SCIENG_PARMS, 'depth')
+            except (KeyError, TypeError, IndexError, ValueError, lrauvNc4ToNetcdf.MissingCoordinate) as e :
+                self.logger.debug(f"Problem with: {url}")
+                self.logger.debug(f"{e.__class__.__name__}: {e}")
             else:
                 url_i = url.replace('.nc4', '_i.nc')
 
@@ -426,10 +435,8 @@ if __name__ == '__main__':
             url, files = mn.inUrl.rsplit('/', 1)
             potential_urls = mn.find_urls(url, files, start, end)
             urls = mn.validate_urls(potential_urls)
-
-            convert_radians = True
             for url in sorted(urls):
-                # Borrowed from stoqs/loaders/CANON/realtime/monitorLRAUV.py
+                mn.logger.info(f"Processing realtime file: {url}")
                 url_src, startDatetime, endDatetime = mn.processDecimated(pw, url, start, end)
     else:
         for platform in platforms:
