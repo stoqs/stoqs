@@ -252,6 +252,7 @@ class CANONLoader(LoadScript):
 
         if sbd_logs:
             dir_string = 'sbdlogs' 
+            file_patterns=('.*shore_i.nc$')
         elif cell_logs:
             dir_string = "TODO: Will be 'celllogs' when implemented" 
         else:
