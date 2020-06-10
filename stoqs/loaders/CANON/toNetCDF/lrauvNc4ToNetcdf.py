@@ -746,7 +746,7 @@ class InterpolatorWriter(BaseWriter):
             self.all_coord[key] = {'time': 'time', 'depth': 'depth', 'latitude': 'latitude', 'longitude': 'longitude'}
             parm_valid.append(key)
             self.all_sub_ts[key] = ts
-            self.logger.info('Found parameter ' + key)
+            self.logger.debug('Found parameter ' + key)
           except Exception as e:
             # Likely no variable in the netCDF file
             self.logger.warn(e)
@@ -807,7 +807,7 @@ class InterpolatorWriter(BaseWriter):
                         self.all_sub_ts[key] = ts
                         self.all_coord[key] = { 'time':'time', 'depth':'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
-                        self.logger.info('Found in group ' + group + ' parameter ' + var + ' renaming to ' + key)
+                        self.logger.debug('Found in group ' + group + ' parameter ' + var + ' renaming to ' + key)
                         parm_valid.append(key)
                     except KeyError as e:
                         self.logger.debug(e)
@@ -866,7 +866,12 @@ class InterpolatorWriter(BaseWriter):
 
             self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
-        self.logger.info("%s", self.all_sub_ts.keys())
+        self.logger.info(f"Collected data from {url}")
+        for parm in parms:
+            try:
+                self.logger.info(f"{parm:11s} shape: {self.all_sub_ts[parm].shape}")
+            except KeyError:
+                pass
 
         # Write data to the file
         self.write_netcdf(out_file, url)
