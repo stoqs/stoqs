@@ -102,12 +102,9 @@ ENG_PARMS = {'BPC1': [{'name': 'platform_battery_charge',
 SCIENG_PARMS = {**SCI_PARMS, **ENG_PARMS}
 
 REALTIME_SCIENG_PARMS = SCIENG_PARMS
-ALL_PARMS = set()
 for group, parmlist in REALTIME_SCIENG_PARMS.items():
     for parmdict in parmlist:
         for k, parm in parmdict.items():
-            if k == 'rename':
-                ALL_PARMS.add(parm)
             if k == 'name':
                 if parm == 'sea_water_salinity':
                     REALTIME_SCIENG_PARMS[group].append({'name': f"bin_mean_{parm}", 'rename': 'salinity'})
@@ -393,6 +390,7 @@ class Make_netCDFs():
             self.logger.info(f"Failed to get start and end times from {url_in}: {e.__class__.__name__}: {e}")
             return url_i, None, None
 
+        # The renamed parameters to put into the shore_i.nc file, need 'depth' for interp parameter
         parms = ['depth', 'chlorophyll', 'temperature', 'salinity', 'mass_concentration_of_oxygen_in_sea_water']
 
         if (start <= file_start and file_start <= end) or (start  <= file_end and file_end <= end):
