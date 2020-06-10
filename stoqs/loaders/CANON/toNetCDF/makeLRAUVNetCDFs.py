@@ -373,7 +373,7 @@ class Make_netCDFs():
         return url_o
 
 
-    def processDecimated(self, pw, url_in, start, end):
+    def processDecimated(self, pw, url_in, start, end, current_log=False):
         '''
         Process realtime (sbdlog) LRAUV data
         '''
@@ -395,8 +395,14 @@ class Make_netCDFs():
 
         if (start <= file_start and file_start <= end) or (start  <= file_end and file_end <= end):
             try:
-                self.logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
-                pw.processNc4FileDecimated(url, inFile, outFile_i, parms, REALTIME_SCIENG_PARMS, 'depth')
+                # Always overwrite the last (most current, potentially updating) file
+                if not os.path.exists(outFile_i) or self.args.clobber or current_log:
+                    if current_log:
+                        mn.logger.info(f"current_log = {current_log}")
+                    self.logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
+                    pw.processNc4FileDecimated(url, inFile, outFile_i, parms, REALTIME_SCIENG_PARMS, 'depth')
+                else:
+                    self.logger.info(f"Not calling processNc4FileDecimated() for {outFile_i}: file exists")
             except (KeyError, TypeError, IndexError, ValueError, lrauvNc4ToNetcdf.MissingCoordinate) as e :
                 self.logger.debug(f"Problem with: {url}")
                 self.logger.info(f"Not creating {outFile_i}: {e.__class__.__name__}: {e}")
@@ -431,10 +437,13 @@ if __name__ == '__main__':
             mn.assign_ins(start, end, platform)
             url, files = mn.inUrl.rsplit('/', 1)
             potential_urls = mn.find_urls(url, files, start, end)
-            urls = mn.validate_urls(potential_urls)
-            for url in sorted(urls):
+            urls = sorted(mn.validate_urls(potential_urls))
+            for url in urls:
+                current_log = False
+                if url == urls[-1]:
+                    current_log = True
                 mn.logger.info(f"Processing realtime file: {url}")
-                url_src, startDatetime, endDatetime = mn.processDecimated(pw, url, start, end)
+                url_src, startDatetime, endDatetime = mn.processDecimated(pw, url, start, end, current_log)
     else:
         for platform in platforms:
             mn.assign_ins(start, end, platform)
