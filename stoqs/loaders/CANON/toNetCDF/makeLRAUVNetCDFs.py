@@ -229,7 +229,7 @@ class Make_netCDFs():
         urls = []
 
         if self.args.realtime:
-            self.logger.info(f"Attempting to crawl {cat_url} for realtime shore.nc4files")
+            self.logger.info(f"Attempting to crawl {cat_url} for realtime shore.nc4 files")
             skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$", ".*.js$", ".*.kml$",  ".*.log$"]
             crawl_debug = False
             if self.args.verbose > 2:
@@ -274,7 +274,10 @@ class Make_netCDFs():
         urls = []
         for url in potential_urls:
             if self.args.realtime:
-                startDatetime, endDatetime = self.getNcStartEnd(url, 'depth_time')
+                try:
+                    startDatetime, endDatetime = self.getNcStartEnd(url, 'depth_time')
+                except (pydap.exceptions.ServerError, IndexError) as e:
+                    self.logger.info(f"Failed to get start and end times from {url}: {e.__class__.__name__}: {e}")
             else:
                 try:
                     startDatetime, endDatetime = self.getNcStartEnd(url, 'time_time')
@@ -316,19 +319,11 @@ class Make_netCDFs():
         '''
         self.logger.debug('open_url on urlNcDap = {}'.format(urlNcDap))
 
-        try:
-            base_in =  '/'.join(urlNcDap.split('/')[-3:])
-            in_file = os.path.join(self.inDir, base_in) 
-            df = netCDF4.Dataset(in_file, mode='r')
-        except pydap.exceptions.ServerError as ex:
-            self.logger.warning(ex)
-            raise ServerError("Can't read {} time axis from {}".format(timeAxisName, urlNcDap))
+        base_in =  '/'.join(urlNcDap.split('/')[-3:])
+        in_file = os.path.join(self.inDir, base_in) 
+        df = netCDF4.Dataset(in_file, mode='r')
 
-        try:
-            timeAxisUnits = df[timeAxisName].units
-        except (KeyError, IndexError) as ex:
-            self.logger.warning(ex)
-            raise ServerError("Can't read {} time axis from {}".format(timeAxisName, urlNcDap))
+        timeAxisUnits = df[timeAxisName].units
 
         if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
             timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
@@ -386,23 +381,27 @@ class Make_netCDFs():
         Process realtime (sbdlog) LRAUV data
         '''
         self.logger.debug('url_in = %s', url_in)
+        url_i = None
 
         base_fname = '/'.join(url_in.split('/')[-3:]).split('.')[0]
-
         inFile = os.path.join(self.inDir, base_fname + '.nc4')
         outFile_i = os.path.join(self.inDir, base_fname + '_i.nc')
-        file_start, file_end = self.getNcStartEnd(url_in, 'depth_time')
-        self.logger.debug('file_start, file_end = %s, %s', file_start, file_end)
+        try:
+            file_start, file_end = self.getNcStartEnd(url_in, 'depth_time')
+            self.logger.debug('file_start, file_end = %s, %s', file_start, file_end)
+        except (IndexError, ) as e:
+            self.logger.info(f"Failed to get start and end times from {url_in}: {e.__class__.__name__}: {e}")
+            return url_i, None, None
 
-        url_i = None
+        parms = ['depth', 'chlorophyll', 'temperature', 'salinity', 'mass_concentration_of_oxygen_in_sea_water']
 
         if (start <= file_start and file_start <= end) or (start  <= file_end and file_end <= end):
             try:
                 self.logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
-                pw.processNc4FileDecimated(url, inFile, outFile_i, ALL_PARMS, REALTIME_SCIENG_PARMS, 'depth')
+                pw.processNc4FileDecimated(url, inFile, outFile_i, parms, REALTIME_SCIENG_PARMS, 'depth')
             except (KeyError, TypeError, IndexError, ValueError, lrauvNc4ToNetcdf.MissingCoordinate) as e :
                 self.logger.debug(f"Problem with: {url}")
-                self.logger.debug(f"{e.__class__.__name__}: {e}")
+                self.logger.info(f"Not creating {outFile_i}: {e.__class__.__name__}: {e}")
             else:
                 url_i = url.replace('.nc4', '_i.nc')
 
