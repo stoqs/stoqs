@@ -440,7 +440,7 @@ if __name__ == '__main__':
             urls = sorted(mn.validate_urls(potential_urls))
             for url in urls:
                 current_log = False
-                if url == urls[-1]:
+                if url == urls[-1] or url == urls[-2]:
                     current_log = True
                 mn.logger.info(f"Processing realtime file: {url}")
                 url_src, startDatetime, endDatetime = mn.processDecimated(pw, url, start, end, current_log)
