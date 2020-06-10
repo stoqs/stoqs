@@ -101,6 +101,18 @@ ENG_PARMS = {'BPC1': [{'name': 'platform_battery_charge',
 
 SCIENG_PARMS = {**SCI_PARMS, **ENG_PARMS}
 
+REALTIME_SCIENG_PARMS = SCIENG_PARMS
+for group, parmlist in REALTIME_SCIENG_PARMS.items():
+    for parmdict in parmlist:
+        for k, parm in parmdict.items():
+            if k == 'name':
+                if parm == 'sea_water_salinity':
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_mean_{parm}", 'rename': 'salinity'})
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_median_{parm}", 'rename': 'salinity'})
+                if parm == 'sea_water_temperature':
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_mean_{parm}", 'rename': 'temperature'})
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_median_{parm}", 'rename': 'temperature'})
+
 
 class ServerError(Exception):
     pass
@@ -128,7 +140,8 @@ class Make_netCDFs():
         parser.add_argument('--platform', action='store', help='Platform name: tethys, daphne, ahi, ...')
         parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
         parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2], type=int, help='Turn on verbose output. 1: INFO, 2:DEBUG', const=1, default=0)
+        parser.add_argument('--realtime', action='store_true', help='Processed realtime telemetered data rather that delayed mode log files')
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. 1: INFO, 2:DEBUG, 3:TDS Crawler', const=1, default=0)
 
         self.args = parser.parse_args()
         self.args.nudge = True
@@ -192,47 +205,63 @@ class Make_netCDFs():
     def assign_ins(self, start, end, platform):
         '''Default is to return inDir and inURL given platform and datetime parameters
         '''
-        if not self.args.inDir:
-            self.inDir = f"/mbari/LRAUV/{platform}/missionlogs/{start.year}"
-
-        if not self.args.inUrl:
-            self.inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{start.year}/.*.nc4"
+        if self.args.realtime:
+            if not self.args.inDir:
+                self.inDir = f"/mbari/LRAUV/{platform}/realtime/sbdlogs/{start.year}"
+            if not self.args.inUrl:
+                self.inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{platform}/realtime/sbdlogs/{start.year}/.*shore.nc4"
+        else:
+            if not self.args.inDir:
+                self.inDir = f"/mbari/LRAUV/{platform}/missionlogs/{start.year}"
+            if not self.args.inUrl:
+                self.inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{start.year}/.*.nc4"
 
     def find_urls(self, base, select, startdate, enddate):
-        url = os.path.join(base, 'catalog.xml')
-        skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
-        u = urlparse(url)
+        cat_url = os.path.join(base, 'catalog.xml')
+        u = urlparse(cat_url)
         name, ext = os.path.splitext(u.path)
         if ext == ".html":
-            u = urlparse(url.replace(".html", ".xml"))
-        url = u.geturl()
+            u = urlparse(cat_url.replace(".html", ".xml"))
+        cat_url = u.geturl()
         urls = []
 
-        self.logger.debug(f"Attempting to Crawl {url} looking for .dlist files")
-        dlist_cat = Crawl(url, select=[".*dlist"])
+        if self.args.realtime:
+            self.logger.info(f"Attempting to crawl {cat_url} for realtime shore.nc4 files")
+            skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$", ".*.js$", ".*.kml$",  ".*.log$"]
+            crawl_debug = False
+            if self.args.verbose > 2:
+                crawl_debug = True
+            rt_cat = Crawl(cat_url, select=[".*shore.nc4"], skip=skips, debug=crawl_debug)
 
-        # Crawl the catalogRefs:
-        self.logger.info(f"Crawling {url} for {files} files to make {self.args.resampleFreq}_{self.args.appendString}.nc files")
-        for dataset in dlist_cat.datasets:
-            # get the mission directory name and extract the start and ending dates
-            dlist = os.path.basename(dataset.id)
-            mission_dir_name = dlist.split('.')[0]
-            dts = mission_dir_name.split('_')
-            dir_start =  datetime.strptime(dts[0], '%Y%m%d')
-            dir_end =  datetime.strptime(dts[1], '%Y%m%d')
-
-            # if within a valid range, grab the valid urls
-            self.logger.debug(f"Checking if .dlist {dlist} is within {startdate} and {enddate}")
-            if (startdate <= dir_start and dir_start <= enddate) or (startdate <= dir_end and dir_end <= enddate):
-                catalog = '{}_{}/catalog.xml'.format(dir_start.strftime('%Y%m%d'), dir_end.strftime('%Y%m%d'))
-                self.logger.debug(f"Crawling {os.path.join(base, catalog)}")
-                log_cat = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
-                self.logger.debug(f"Getting opendap urls from datasets {log_cat.datasets}")
-                d = [s.get("url") for d in log_cat.datasets for s in d.services if s.get("service").lower() == "opendap"]
-                for url in d:
+            for url in [s.get("url") for d in rt_cat.datasets for s in d.services if s.get("service").lower() == "opendap"]:
+                dir_start = datetime.strptime(url.split('/')[-2], '%Y%m%dT%H%M%S')
+                if startdate <= dir_start and dir_start <= enddate:
                     self.logger.debug(f"Adding url {url}")
                     urls.append(url)
+        else:
+            self.logger.debug(f"Attempting to Crawl {cat_url} looking for .dlist files")
+            skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
+            dlist_cat = Crawl(cat_url, select=[".*dlist"], skip=skips)
 
+            self.logger.info(f"Crawling {cat_url} for {files} files to make {self.args.resampleFreq}_{self.args.appendString}.nc files")
+            for dataset in dlist_cat.datasets:
+                # get the mission directory name and extract the start and ending dates
+                dlist = os.path.basename(dataset.id)
+                mission_dir_name = dlist.split('.')[0]
+                dts = mission_dir_name.split('_')
+                dir_start =  datetime.strptime(dts[0], '%Y%m%d')
+                dir_end =  datetime.strptime(dts[1], '%Y%m%d')
+
+                # if within a valid range, grab the valid urls
+                self.logger.debug(f"Checking if .dlist {dlist} is within {startdate} and {enddate}")
+                if (startdate <= dir_start and dir_start <= enddate) or (startdate <= dir_end and dir_end <= enddate):
+                    catalog = '{}_{}/catalog.xml'.format(dir_start.strftime('%Y%m%d'), dir_end.strftime('%Y%m%d'))
+                    self.logger.debug(f"Crawling {os.path.join(base, catalog)}")
+                    log_cat = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
+                    self.logger.debug(f"Getting opendap urls from datasets {log_cat.datasets}")
+                    for url in [s.get("url") for d in log_cat.datasets for s in d.services if s.get("service").lower() == "opendap"]:
+                        self.logger.debug(f"Adding url {url}")
+                        urls.append(url)
         if not urls:
             self.logger.info("No URLs found.")
 
@@ -241,25 +270,31 @@ class Make_netCDFs():
     def validate_urls(self, potential_urls):
         urls = []
         for url in potential_urls:
-            try:
-                startDatetime, endDatetime = self.getNcStartEnd(url, 'time_time')
-            except Exception as e:
-                # Write a message to the .log file for the expected output file so that
-                # lrauv-data-file-audit.sh can detect the problem
-                log_file = os.path.join(self.inDir, '/'.join(url.split('/')[9:]))
-                log_file = log_file.replace('.nc4', '_' + self.args.resampleFreq + '_' + self.args.appendString + '.log')
+            if self.args.realtime:
+                try:
+                    startDatetime, endDatetime = self.getNcStartEnd(url, 'depth_time')
+                except (pydap.exceptions.ServerError, IndexError) as e:
+                    self.logger.info(f"Failed to get start and end times from {url}: {e.__class__.__name__}: {e}")
+            else:
+                try:
+                    startDatetime, endDatetime = self.getNcStartEnd(url, 'time_time')
+                except Exception as e:
+                    # Write a message to the .log file for the expected output file so that
+                    # lrauv-data-file-audit.sh can detect the problem
+                    log_file = os.path.join(self.inDir, '/'.join(url.split('/')[9:]))
+                    log_file = log_file.replace('.nc4', '_' + self.args.resampleFreq + '_' + self.args.appendString + '.log')
 
-                fh = logging.FileHandler(log_file, 'w+')
-                frm = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
-                fh.setFormatter(frm)
-                self.logger.addHandler(fh)
-                self.logger.warning(f"Can't get start and end date from .nc4: time_time not found in {url}")
-                self.logger.warning(f"{e}")
-                fh.close()
-                sh = logging.StreamHandler()
-                sh.setFormatter(frm)
-                self.logger.handlers = [sh]
-                continue
+                    fh = logging.FileHandler(log_file, 'w+')
+                    frm = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
+                    fh.setFormatter(frm)
+                    self.logger.addHandler(fh)
+                    self.logger.warning(f"Can't get start and end date from .nc4: time_time not found in {url}")
+                    self.logger.warning(f"{e}")
+                    fh.close()
+                    sh = logging.StreamHandler()
+                    sh.setFormatter(frm)
+                    self.logger.handlers = [sh]
+                    continue
 
             self.logger.debug('startDatetime, endDatetime = {}, {}'.format(startDatetime, endDatetime))
 
@@ -281,19 +316,11 @@ class Make_netCDFs():
         '''
         self.logger.debug('open_url on urlNcDap = {}'.format(urlNcDap))
 
-        try:
-            base_in =  '/'.join(urlNcDap.split('/')[-3:])
-            in_file = os.path.join(self.inDir, base_in) 
-            df = netCDF4.Dataset(in_file, mode='r')
-        except pydap.exceptions.ServerError as ex:
-            self.logger.warning(ex)
-            raise ServerError("Can't read {} time axis from {}".format(timeAxisName, urlNcDap))
+        base_in =  '/'.join(urlNcDap.split('/')[-3:])
+        in_file = os.path.join(self.inDir, base_in) 
+        df = netCDF4.Dataset(in_file, mode='r')
 
-        try:
-            timeAxisUnits = df[timeAxisName].units
-        except KeyError as ex:
-            self.logger.warning(ex)
-            raise ServerError("Can't read {} time axis from {}".format(timeAxisName, urlNcDap))
+        timeAxisUnits = df[timeAxisName].units
 
         if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
             timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
@@ -341,11 +368,42 @@ class Make_netCDFs():
             raise ie
         except KeyError:
             raise ServerError("Key error - can't read parameters from {}".format(url_in))
-        ##except ValueError as e:
-        ##    raise ServerError("ValueError: {} - can't read parameters from {}".format(e, url_in))
 
         url_o = url_out
         return url_o
+
+
+    def processDecimated(self, pw, url_in, start, end):
+        '''
+        Process realtime (sbdlog) LRAUV data
+        '''
+        self.logger.debug('url_in = %s', url_in)
+        url_i = None
+
+        base_fname = '/'.join(url_in.split('/')[-3:]).split('.')[0]
+        inFile = os.path.join(self.inDir, base_fname + '.nc4')
+        outFile_i = os.path.join(self.inDir, base_fname + '_i.nc')
+        try:
+            file_start, file_end = self.getNcStartEnd(url_in, 'depth_time')
+            self.logger.debug('file_start, file_end = %s, %s', file_start, file_end)
+        except (IndexError, ) as e:
+            self.logger.info(f"Failed to get start and end times from {url_in}: {e.__class__.__name__}: {e}")
+            return url_i, None, None
+
+        # The renamed parameters to put into the shore_i.nc file, need 'depth' for interp parameter
+        parms = ['depth', 'chlorophyll', 'temperature', 'salinity', 'mass_concentration_of_oxygen_in_sea_water']
+
+        if (start <= file_start and file_start <= end) or (start  <= file_end and file_end <= end):
+            try:
+                self.logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
+                pw.processNc4FileDecimated(url, inFile, outFile_i, parms, REALTIME_SCIENG_PARMS, 'depth')
+            except (KeyError, TypeError, IndexError, ValueError, lrauvNc4ToNetcdf.MissingCoordinate) as e :
+                self.logger.debug(f"Problem with: {url}")
+                self.logger.info(f"Not creating {outFile_i}: {e.__class__.__name__}: {e}")
+            else:
+                url_i = url.replace('.nc4', '_i.nc')
+
+        return url_i, file_start, file_end
 
 
 if __name__ == '__main__':
@@ -360,25 +418,35 @@ if __name__ == '__main__':
     else:
         platforms = lrauvs
 
-    for platform in platforms:
-        mn.assign_ins(start, end, platform)
-        url, files = mn.inUrl.rsplit('/', 1)
-        potential_urls = mn.find_urls(url, files, start, end)
-        urls = mn.validate_urls(potential_urls)
+    pw = lrauvNc4ToNetcdf.InterpolatorWriter()
+    if mn.args.verbose == 2:
+        pw.logger.setLevel(logging.DEBUG)
+    elif mn.args.verbose == 1:
+        pw.logger.setLevel(logging.INFO)
+    else:
+        pw.logger.setLevel(logging.WARNING)
 
-        pw = lrauvNc4ToNetcdf.InterpolatorWriter()
-        if mn.args.verbose == 2:
-            pw.logger.setLevel(logging.DEBUG)
-        elif mn.args.verbose == 1:
-            pw.logger.setLevel(logging.INFO)
-        else:
-            pw.logger.setLevel(logging.WARNING)
+    if mn.args.realtime:
+        for platform in platforms:
+            mn.assign_ins(start, end, platform)
+            url, files = mn.inUrl.rsplit('/', 1)
+            potential_urls = mn.find_urls(url, files, start, end)
+            urls = mn.validate_urls(potential_urls)
+            for url in sorted(urls):
+                mn.logger.info(f"Processing realtime file: {url}")
+                url_src, startDatetime, endDatetime = mn.processDecimated(pw, url, start, end)
+    else:
+        for platform in platforms:
+            mn.assign_ins(start, end, platform)
+            url, files = mn.inUrl.rsplit('/', 1)
+            potential_urls = mn.find_urls(url, files, start, end)
+            urls = mn.validate_urls(potential_urls)
 
-        convert_radians = True
-        for url in sorted(urls):
-            try:
-                mn.processResample(pw, url, mn.args.resampleFreq, parms, convert_radians, mn.args.appendString)
-            except ServerError as e:
-                mn.logger.warning(e)
-                continue
+            convert_radians = True
+            for url in sorted(urls):
+                try:
+                    mn.processResample(pw, url, mn.args.resampleFreq, parms, convert_radians, mn.args.appendString)
+                except ServerError as e:
+                    mn.logger.warning(e)
+                    continue
 
