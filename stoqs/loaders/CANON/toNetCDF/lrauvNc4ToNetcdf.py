@@ -534,7 +534,7 @@ class InterpolatorWriter(BaseWriter):
         return all_ts
     # End createCoord
 
-    def trackingdb_lat_lon(self, args, sec_extend=3600):
+    def trackingdb_lat_lon(self, in_file, sec_extend=3600):
         '''Query MBARI's Tracking Database and return Pandas time series
         of any acoustic fixes found.
         '''
@@ -543,7 +543,7 @@ class InterpolatorWriter(BaseWriter):
         ee = float(self.df['time'][-1].data) + sec_extend
         st = dt.datetime.utcfromtimestamp(se).strftime('%Y%m%dT%H%M%S')
         et = dt.datetime.utcfromtimestamp(ee).strftime('%Y%m%dT%H%M%S')
-        vehicle = args.inDir.split('/')[3]
+        vehicle = in_file.split('/')[3]
         url = f"http://odss.mbari.org/trackingdb/position/{vehicle}_ac/between/{st}/{et}/data.csv"
         self.trackingdb_url = url
         self.logger.info(url)
@@ -1119,7 +1119,7 @@ class InterpolatorWriter(BaseWriter):
                                 value = self.nudged_lats
                         if args.trackingdb:
                             if not self.tracking_file.get(in_file):
-                                self.ac_lons, self.ac_lats = self.trackingdb_lat_lon(args)
+                                self.ac_lons, self.ac_lats = self.trackingdb_lat_lon(in_file)
                                 self.tracking_file[in_file] = True
                             if key.find('longitude') != -1 and self.ac_lons.any():
                                 value = self.ac_lons
