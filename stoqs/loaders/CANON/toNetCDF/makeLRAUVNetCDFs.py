@@ -112,6 +112,9 @@ for group, parmlist in REALTIME_SCIENG_PARMS.items():
                 if parm == 'sea_water_temperature':
                     REALTIME_SCIENG_PARMS[group].append({'name': f"bin_mean_{parm}", 'rename': 'temperature'})
                     REALTIME_SCIENG_PARMS[group].append({'name': f"bin_median_{parm}", 'rename': 'temperature'})
+                if parm == 'mass_concentration_of_chlorophyll_in_sea_water':
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_mean_{parm}", 'rename': 'chlorophyll'})
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_median_{parm}", 'rename': 'chlorophyll'})
 
 
 class ServerError(Exception):
@@ -278,6 +281,7 @@ class Make_netCDFs():
             else:
                 try:
                     startDatetime, endDatetime = self.getNcStartEnd(url, 'time_time')
+                    self.logger.debug('startDatetime, endDatetime = {}, {}'.format(startDatetime, endDatetime))
                 except Exception as e:
                     # Write a message to the .log file for the expected output file so that
                     # lrauv-data-file-audit.sh can detect the problem
@@ -295,8 +299,6 @@ class Make_netCDFs():
                     sh.setFormatter(frm)
                     self.logger.handlers = [sh]
                     continue
-
-            self.logger.debug('startDatetime, endDatetime = {}, {}'.format(startDatetime, endDatetime))
 
             if start is not None and startDatetime <= start :
                 self.logger.info('startDatetime = {} out of bounds with user-defined startDatetime = {}'.format(startDatetime, start))
