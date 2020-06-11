@@ -222,6 +222,12 @@ class CANONLoader(LoadScript):
                 self.logger.info("No valid data in %s" % url)
             except (webob.exc.HTTPError, UnboundLocalError) as e:
                 self.logger.warn(f"{e}")
+            except Exception as e:
+                if 'shore_i.nc' in url:
+                    self.logger.warn(f"{e}")
+                    self.logger.info(f"Being tolerant of shore_i.nc files and ignoring this warning")
+                else:
+                    raise
 
         self.addPlatformResources(f'https://stoqs.mbari.org/x3d/lrauv/lrauv_{pname}.x3d', pname,
                                   scalefactor=2)
