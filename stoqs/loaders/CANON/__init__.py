@@ -1354,7 +1354,11 @@ class CANONLoader(LoadScript):
                 c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
                 d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
                 for url in d:
-                    dir_start =  datetime.strptime(url.split('/')[11], '%Y%m%dT%H%M%S')
+                    try:
+                        dir_start =  datetime.strptime(url.split('/')[11], '%Y%m%dT%H%M%S')
+                    except ValueError as e:
+                        self.logger.warn(f"{e} from url = {url}")
+                        self.logger.warn(f"Likely due to a log file found in the parent dir. Ignoring.")
                     if (startdate <= dir_start and dir_start <= enddate):
                         self.logger.debug(f'{url}')
                         urls.append(url)
