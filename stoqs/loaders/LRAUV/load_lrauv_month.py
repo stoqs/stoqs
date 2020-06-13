@@ -95,15 +95,20 @@ class AutoLoad():
             for year in range(int(self.args.start_YYYYMM[:4]), int(self.args.end_YYYYMM[:4]) + 1):
                 self._update_campaigns(year)
             # Second, execute the loads
-            for year in range(int(self.args.start_YYYYMM[:4]), int(self.args.end_YYYYMM[:4]) + 1):
-                if year == int(self.args.start_YYYYMM[:4]):
+            start_year = int(self.args.start_YYYYMM[:4])
+            end_year = int(self.args.end_YYYYMM[:4])
+            for year in range(start_year, end_year + 1):
+                if year == start_year and year == end_year:
+                    for month in range(int(self.args.start_YYYYMM[4:]), int(self.args.end_YYYYMM[4:]) + 1):
+                        self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
+                elif year == start_year:
                     for month in range(int(self.args.start_YYYYMM[4:]), 13):
                         self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
-                elif year != int(self.args.start_YYYYMM[:4]) and year != int(self.args.end_YYYYMM[:4]):
+                elif year != start_year and year != end_year:
                     for month in range(1, 13):
                         self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
-                elif year == int(self.args.end_YYYYMM[:4]):
-                    for month in range(1, int(self.args.end_YYYYMM[4:])):
+                elif year == end_year:
+                    for month in range(1, int(self.args.end_YYYYMM[4:]) + 1):
                         self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
 
         elif self.args.previous_month:
