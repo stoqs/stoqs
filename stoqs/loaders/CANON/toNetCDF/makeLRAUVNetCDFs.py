@@ -138,7 +138,7 @@ class Make_netCDFs():
                             help='Optional resampling frequency string to specify how to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='2S')
         parser.add_argument('-p', '--parms', action='store', help='List of JSON formatted parameter groups, variables and renaming of variables. Will override default for --appendString.')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
-        parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format')
+        parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--clobber', action='store_true', help='Overwrite any existing output .nc files')
         parser.add_argument('--platform', action='store', help='Platform name: tethys, daphne, ahi, ...')
         parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
