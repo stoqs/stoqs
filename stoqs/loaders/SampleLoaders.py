@@ -18,7 +18,7 @@ from django.conf import settings
 from django.contrib.gis.geos import LineString, Point
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.db.models import Q, Min, Max, Avg
-from django.db.utils import IntegrityError
+from django.db.utils import IntegrityError, DataError
 
 from stoqs.models import (Activity, InstantPoint, Sample, SampleType, Resource,
                           SamplePurpose, SampleRelationship, Parameter, SampledParameter,
@@ -512,7 +512,7 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return filterings, stoppings, summaries
 
-    def _match_seq_to_cartridge(self, filterings, stoppings, summaries):
+    def _match_seq_to_cartridge(self, filterings, stoppings, summaries, before_seq_num_implemented=False):
         '''Take lists from parsing TethysDash log and build Sample names list with start and end times
         '''
         # Loop through exctractions from syslog to build dictionary
@@ -536,7 +536,9 @@ class ParentSamplesLoader(STOQS_Loader):
 
             # Ensure that sample # (seq) numbers match
             try:
-                if not (ms.groupdict().get('seq_num') == me.groupdict().get('seq_num') == lsr_seq_num.groupdict().get('seq_num')):
+                if before_seq_num_implemented:
+                    self.logger.info(f"This log is before seq_num was implemented - not checking for match")
+                elif not (ms.groupdict().get('seq_num') == me.groupdict().get('seq_num') == lsr_seq_num.groupdict().get('seq_num')):
                     self.logger.warn(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
             except AttributeError:
                 if filtering and stopping and not lsr_seq_num:
@@ -662,7 +664,7 @@ class ParentSamplesLoader(STOQS_Loader):
     def _save_samples(self, db_alias, platform_name, activity_name, sampletype, samples, log_text):
         # Load Samples and sample.text as a Resource associated with the Sample
         for sample_name, sample in samples.items():
-            self.logger.debug(f"Calling _create_activity_instantpoint_platform() for sample_name={sample_name}")
+            self.logger.info(f"Calling _create_activity_instantpoint_platform() for sample_name={sample_name}")
             try:
                 act, ip, point, depth, maptrack = self._create_activity_instantpoint_platform(
                                                 db_alias, platform_name, 
@@ -674,13 +676,18 @@ class ParentSamplesLoader(STOQS_Loader):
             if not act:
                 continue
 
-            samp, _ = (Sample.objects.using(db_alias).get_or_create( 
+            try:
+                samp, _ = (Sample.objects.using(db_alias).get_or_create( 
                             name = sample_name,
                             instantpoint = ip,
                             geom = point,
                             depth = depth,
                             sampletype = sampletype,
                             volume = sample.volume))
+            except DataError as e:
+                self.logger.error(f"{e}")
+                self.logger.info(f"It's possible that the sample_name is too long: {sample_name}")
+                raise
 
             # Update Activity with point and track of the Sampling event
             act.mappoint = point
@@ -701,7 +708,15 @@ class ParentSamplesLoader(STOQS_Loader):
 
         filterings, stoppings, summaries = self._esps_from_json(platform_name, url, db_alias)
         filterings, stoppings, summaries = self._validate_summaries(filterings, stoppings, summaries)
-        esp_names = self._match_seq_to_cartridge(filterings, stoppings, summaries)
+
+        # After 14 August 2018 a 'sample #<num>' is included in the log message:
+        # https://bitbucket.org/mbari/lrauv-application/pull-requests/76/add-sample-to-all-logimportant-entries/diff
+        # Before then don't require a seq_num match
+        before_seq_num_implemented = False
+        if datetime.strptime(url.split('/')[-1][:8], '%Y%m%d') < datetime(2018, 8, 14):
+            before_seq_num_implemented = True
+        esp_names = self._match_seq_to_cartridge(filterings, stoppings, summaries, 
+                                                 before_seq_num_implemented=before_seq_num_implemented)
 
         samplings_at, sample_num_errs = self._sippers_from_json(platform_name, url)
         sipper_names = self._match_sippers(samplings_at, sample_num_errs)
