@@ -549,7 +549,10 @@ class ParentSamplesLoader(STOQS_Loader):
             else:
                 try:
                     sample_name = f"Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')}"
-                    self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}")
+                    if lsr_seq_num:
+                        self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}")
+                    else:
+                        self.logger.info(f"(No 'sample #' match) sample_name = {sample_name}")
                 except AttributeError:
                     # This should not happen. ESP log summary report should have a number of messages separated by newlines.
                     # - the TethysDash should deliver these messages in summary.text
