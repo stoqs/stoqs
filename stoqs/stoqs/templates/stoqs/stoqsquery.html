@@ -314,7 +314,7 @@
                                                                 <span>Lines</span>
                                                             </label>
                                                             <label class="checkbox" style="display:none;">
-                                                                <input type="checkbox" id="showfaces" checked />
+                                                                <input type="checkbox" id="showfaces" />
                                                                 <span>Polygons</span>
                                                             </label>
                                                         </form>
@@ -2794,19 +2794,10 @@
     });
 
     $('input[name="showdataas"]').on('click', function (event) {
-        // Don't need to get everything from queryData, only the response with the PNG image
         if ($('#showgeox3dmeasurement').is(':checked')) {
-            if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
-                $('#showlines').parent().show();
-                $('#showpoints').parent().show();
-                $('#showfaces').parent().show();
-                $('#showfaces').css({'cursor' : 'auto'});
-                $('#showfaces').prop('disabled', false);
-                $('#showfaces').removeAttr('title');
-            }
+            // Don't need to get everything from queryData, but do need to add the x3d responses
             if ($('input:radio[name=showdataas]:checked').val() == 'scatter') {
-                rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
+                rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
                 $('#showlines').parent().show();
                 $('#showfaces').parent().show();
                 $('#showpoints').parent().show();
@@ -2815,12 +2806,21 @@
                 $('#showfaces').prop('disabled', true);
                 $('#showfaces').prop('checked', false);
                 $('#showfaces').attr('title', 'Click \'contour\' to enable');
+                $('#curtain-animations')[0].setAttribute('render', false);
             }
-            else {
-                rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
+            else if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+                rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
+                $('#showlines').parent().show();
+                $('#showpoints').parent().show();
+                $('#showfaces').parent().show();
+                $('#showfaces').css({'cursor' : 'auto'});
+                $('#showfaces').prop('disabled', false);
+                $('#showfaces').removeAttr('title');
+                $('#curtain-animations')[0].setAttribute('render', true);
             }
         }
         else {
+            // Don't need to get everything from queryData, only the response with the PNG image
             rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
         }
     });
@@ -2828,18 +2828,12 @@
     $('#showgeox3dmeasurement').on('change', function (event) {
         if ( $('#showgeox3dmeasurement').is(':checked') ) {
             $('#track-animations')[0].setAttribute('render', true);
-            $('#curtain-animations')[0].setAttribute('render', true);
+            $('#curtain-animations')[0].setAttribute('render', false);
             $('#points-animations')[0].setAttribute('render', true);
             $('input[name="show-mp-3d"]').parent().parent().parent().show()
             // Don't need to get everything from queryData, only the response with the X3D data
-            if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['curtainx3d', 'measuredparameterx3d']);
-                $('#showlines').parent().show();
-                $('#showfaces').parent().show();
-                $('#showpoints').parent().show();
-            }
             if ($('input:radio[name=showdataas]:checked').val() == 'scatter') {
-                rebuildFilters(['curtainx3d', 'measuredparameterx3d']);
+                rebuildFilters(['measuredparameterx3d']);
                 $('#showlines').parent().show();
                 $('#showpoints').parent().show();
                 // disabling polygon box when scatter is selected
@@ -2849,8 +2843,11 @@
                 $('#showfaces').prop('checked', false);
                 $('#showfaces').attr('title', 'Click \'contour\' to enable');
             }
-            else {
-                rebuildFilters(['measuredparameterx3d']);
+            else if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+                rebuildFilters(['curtainx3d', 'measuredparameterx3d']);
+                $('#showpoints').parent().show();
+                $('#showlines').parent().show();
+                $('#showfaces').parent().show();
             }
         }
         else {
@@ -4661,7 +4658,12 @@ function enable_cardboard(){
                 var esec = parseInt(es);
                 if (bin_start <= esec && esec <= bin_end) {
                     $.each(shape_ids, function(index, shape_id) {
-                        render_shapes[grp_esec]['shapes'].push(shape_id);
+                        if ( $.inArray(shape_id, render_shapes[grp_esec]['shapes']) == -1 ) {
+                            render_shapes[grp_esec]['shapes'].push(shape_id);
+                            if ( shape_id.startsWith('ils') ) {
+                                render_shapes[grp_esec]['shapes'].push(shape_id.replace('ils', 'ps'));
+                            }
+                        }
                     });
                 }
 
@@ -6122,12 +6124,13 @@ function enable_cardboard(){
                 if ( ! $.isEmptyObject(data.measuredparameterx3d) ) {
                     merge_shape_id_dicts(data.measuredparameterx3d.shape_id_dict);
                     
+                    var ps_x3d_html = '';
                     var ils_x3d_html = '';
 
                     if($('#points-animations')[0].getAttribute('render')) {
                         $.each(data.measuredparameterx3d, function (shapeid, shapex3d) {
                             if ( ! $.isEmptyObject(shapex3d.points) ) {
-                                ils_x3d_html += '<Shape id="' + shapeid + '">' +
+                                ps_x3d_html += '<Shape id="' + shapeid.replace('ils', 'ps') + '">' +
                                         '<Appearance><PointProperties pointSizeScaleFactor="500"></PointProperties></Appearance>' +
                                         '<pointset coordIndex="' + shapex3d.index + '">' +
                                             '<color color="' + shapex3d.colors + '"></color>' +
@@ -6136,7 +6139,7 @@ function enable_cardboard(){
                                     '</Shape>'
                             }
                         });
-                        $('#points-animations').html(ils_x3d_html);
+                        $('#points-animations').html(ps_x3d_html);
                     }
                     
                     if($('#track-animations')[0].getAttribute('render')) {
@@ -6188,6 +6191,8 @@ function enable_cardboard(){
                                 '</Shape>'
                         }
                     });
+                    $('#showfaces').prop('checked', true);
+                    $('#curtain-animations')[0].setAttribute('render', true);
                     $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data.curtainx3d.colorbar + '" />');
                     $('#curtain-animations').html(curtainx3d_html);
                     if ( ! $('#animation3D').hasClass('in') ) {
