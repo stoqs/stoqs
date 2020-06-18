@@ -1910,11 +1910,13 @@
         var symbols = '';
         if ( ! $.isEmptyObject($('body').data().parameterplatforms[p]) ) {
             $.each($('body').data().parameterplatforms[p], function(index, plat) {
-                if ($('body').data().platformFeatureTypes[plat].toLowerCase() === 'trajectory') {
-                    symbols += '<span style="color:#' + $('body').data().platformColors[plat] + '">|</span>';
-                }
-                else {
-                    symbols += '<span style="color:#' + $('body').data().platformColors[plat] + '">*</span>';
+                if ( ! $.isEmptyObject($('body').data().platformFeatureTypes[plat]) ) {
+                    if ($('body').data().platformFeatureTypes[plat].toLowerCase() === 'trajectory') {
+                        symbols += '<span style="color:#' + $('body').data().platformColors[plat] + '">|</span>';
+                    }
+                    else {
+                        symbols += '<span style="color:#' + $('body').data().platformColors[plat] + '">*</span>';
+                    }
                 }
             });
             e.html(symbols);
@@ -4538,7 +4540,7 @@ function enable_cardboard(){
 
         updateTemporal(false);
         rebuildFilters();
-        $('#time-depth-instr').html('Click and drag to zoom, right-click to un-zoom');
+        $('#time-depth-instr').html('Click and drag to zoom, right-click to undo');
 
     }
 
@@ -4715,7 +4717,7 @@ function enable_cardboard(){
             }
         }
 
-        $('#time-parameter-instr').html('Click and drag zoom, right-click to un-zoom');
+        $('#time-parameter-instr').html('Click and drag zoom, right-click to undo');
     });
     $("#time-parameter-flot").bind("contextmenu",  ZoomOut);
 
