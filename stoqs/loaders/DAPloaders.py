@@ -939,7 +939,12 @@ class Base_Loader(STOQS_Loader):
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
             time_units = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
-        mtimes = (from_udunits(mt, time_units) for mt in times)
+        try:
+            if times.shape[0] > 1:
+                mtimes = (from_udunits(mt, time_units) for mt in times)
+        except IndexError:
+            # Trap case where times.shape = () giving opportunity to turn a single value into a list
+            mtimes = [from_udunits(float(times.data), time_units)]
 
         try:
             if isinstance(self.ds[ac[DEPTH]], pydap.model.GridType):
@@ -968,6 +973,12 @@ class Base_Loader(STOQS_Loader):
             latitudes = self.ds[ac[LATITUDE]][0][0][tindx[0]:tindx[-1]:self.stride]
         else:
             latitudes = self.ds[ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
+        try:
+            if latitudes.shape[0] > 1:
+                pass
+        except IndexError:
+            # Trap case where latitudes.shape = () giving opportunity to turn a single value into a list
+            latitudes = [float(latitudes.data)]
 
         if isinstance(self.ds[ac[LONGITUDE]], pydap.model.GridType):
             longitudes = self.ds[ac[LONGITUDE]][ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
@@ -976,6 +987,12 @@ class Base_Loader(STOQS_Loader):
             longitudes = self.ds[ac[LONGITUDE]][0][0][tindx[0]:tindx[-1]:self.stride]
         else:
             longitudes = self.ds[ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
+        try:
+            if longitudes.shape[0] > 1:
+                pass
+        except IndexError:
+            # Trap case where longitudes.shape = () giving opportunity to turn a single value into a list
+            longitudes = [float(longitudes.data)]
 
         return mtimes, depths, latitudes, longitudes
 
@@ -986,17 +1003,8 @@ class Base_Loader(STOQS_Loader):
         '''
         mtimes, depths, latitudes, longitudes = self._read_coords_from_ds(tindx, ac, multidim_trajectory=multidim_trajectory)
         self.logger.debug(f'Getting good_coords for {pnames}...')
-        try:
-            mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
+        mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
                                         pnames, mtimes, depths, latitudes, longitudes, coords_equal))
-        except TypeError:
-            # When ac[DEPTH] is a number, convert one time value to a list
-            self.logger.info(f'Assuming coords are single valued and converting to lists')
-            mtimes = [from_udunits(float(times.data), time_units)]
-            latitudes = [float(latitudes.data)]
-            longitudes = [float(longitudes.data)]
-            mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
-                                        pnames, mtimes, depths, latitudes, longitudes))
 
         # Reassign meass with Measurement objects that have their id set
         try:
