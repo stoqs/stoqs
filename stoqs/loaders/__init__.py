@@ -24,6 +24,7 @@ from django.db import transaction, DatabaseError
 from django.db.models import Max, Min
 from stoqs import models as m
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 import time
 import re
@@ -120,7 +121,7 @@ class LoadScript(object):
         self.parser = ArgumentParser(formatter_class=RawTextHelpFormatter,
                                      description='STOQS load script for "%s"' % self.base_campaignName,
                                      epilog='Examples:' + '\n\n' + exampleString + '\n' +
-                                            '(Databases must be created, synced and defined in privateSettings - see INSTALL instructions)')
+                                            '(Databases must be created first, usually by execuing stoqs/loaders/load.py)')
 
     def process_command_line(self):
         '''
@@ -170,6 +171,14 @@ class LoadScript(object):
                             help='Stride value (default=1)')
         self.parser.add_argument('-a', '--append', action='store_true', 
                             help='Append data to existing activity - for use in repetative runs')
+        self.parser.add_argument('--startdate', action='store', 
+                            help='For loaders that use it set startdate, in format YYYYMMDD')
+        self.parser.add_argument('--enddate', action='store', 
+                            help='For loaders that use it set enddate, in format YYYYMMDD')
+        self.parser.add_argument('--previous_month', action='store_true', 
+                            help='For loaders that use startdate and enddate, load data from the previoius month')
+        self.parser.add_argument('--current_month', action='store_true', 
+                            help='For loaders that use startdate and enddate, load data from the current month')
         self.parser.add_argument('-v', '--verbose', action='store_true', 
                             help='Turn on DEBUG level logging output')
 
@@ -207,6 +216,20 @@ class LoadScript(object):
             self.logger.setLevel(logging.DEBUG)
         else:
             self.logger.setLevel(logging.INFO)
+
+        if self.args.previous_month:
+            prev_mon = datetime.today() - relativedelta(months=1)
+            prev_mon_st_dt = datetime(prev_mon.year, prev_mon.month, 1)
+            prev_mon_en_dt = prev_mon_st_dt + relativedelta(months=1)
+            self.args.startdate = prev_mon_st_dt.strftime('%Y%m%d')
+            self.args.enddate = prev_mon_en_dt.strftime('%Y%m%d')
+
+        if self.args.current_month:
+            curr_mon = datetime.today()
+            curr_mon_st_dt= datetime(curr_mon.year, curr_mon.month, 1)
+            curr_mon_en_dt = curr_mon_st_dt + relativedelta(months=1)
+            self.args.startdate = curr_mon_st_dt.strftime('%Y%m%d')
+            self.args.enddate = curr_mon_en_dt.strftime('%Y%m%d')
 
         self.commandline = ' '.join(sys.argv)
         self.logger.info('Executing command: %s', self.commandline)

@@ -940,7 +940,7 @@ class Base_Loader(STOQS_Loader):
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
             time_units = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
         try:
-            if times.shape[0] > 1:
+            if times.shape[0] > 0:
                 mtimes = (from_udunits(mt, time_units) for mt in times)
         except IndexError:
             # Trap case where times.shape = () giving opportunity to turn a single value into a list
@@ -974,7 +974,7 @@ class Base_Loader(STOQS_Loader):
         else:
             latitudes = self.ds[ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
         try:
-            if latitudes.shape[0] > 1:
+            if latitudes.shape[0] > 0:
                 pass
         except IndexError:
             # Trap case where latitudes.shape = () giving opportunity to turn a single value into a list
@@ -988,7 +988,7 @@ class Base_Loader(STOQS_Loader):
         else:
             longitudes = self.ds[ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
         try:
-            if longitudes.shape[0] > 1:
+            if longitudes.shape[0] > 0:
                 pass
         except IndexError:
             # Trap case where longitudes.shape = () giving opportunity to turn a single value into a list
