@@ -8,7 +8,7 @@ MBARI 9 August 2018
 
 import os
 import sys
-import datetime
+from datetime import datetime
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
@@ -36,8 +36,8 @@ cl = CANONLoader('stoqs_all_dorado', 'Plankton Proxies - All Dorado Data',
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
 
-startdate = datetime.datetime(2003, 1, 1)
-enddate = datetime.datetime(2029, 12, 31)
+startdate = datetime(2003, 1, 1)
+enddate = datetime(2029, 12, 31)
 
 # Execute the load
 cl.process_command_line()
@@ -46,13 +46,13 @@ if cl.args.test:
     cl.stride = 10
 
     # Initial short survey to test plankton_proxies loading
-    startdate = datetime.datetime(2003, 12, 5)
-    enddate = datetime.datetime(2003, 12, 7)
+    startdate = datetime(2003, 12, 5)
+    enddate = datetime(2003, 12, 7)
     cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
 
     # One of the early (short) surveys with LOPC data
-    startdate = datetime.datetime(2008, 10, 21, 16)
-    enddate = datetime.datetime(2008, 10, 22, 16)
+    startdate = datetime(2008, 10, 21, 16)
+    enddate = datetime(2008, 10, 22, 16)
     cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
 
     # Survey with 0 mps_loaded
@@ -62,17 +62,21 @@ if cl.args.test:
     cl.loadDorado(startdate, enddate, build_attrs=False, plankton_proxies=True)
 
     # Most recent survey during validation tests of production load
-    startdate = datetime.datetime(2019, 10, 3)
-    enddate = datetime.datetime(2019, 10, 5)
+    startdate = datetime(2019, 10, 3)
+    enddate = datetime(2019, 10, 5)
     cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
 
     # Survey that has ActivityParameters for _proxies.nc Parameters, but no other
-    startdate = datetime.datetime(2007, 9, 11)
-    enddate = datetime.datetime(2007, 9, 13)
+    startdate = datetime(2007, 9, 11)
+    enddate = datetime(2007, 9, 13)
     cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
 
 elif cl.args.stride:
     cl.stride = cl.args.stride
+    if cl.args.startdate:
+        startdate = datetime.strptime(cl.args.startdate, '%Y%m%d')
+    if cl.args.enddate:
+        enddate = datetime.strptime(cl.args.enddate, '%Y%m%d')
     cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
