@@ -510,6 +510,42 @@ class ParentSamplesLoader(STOQS_Loader):
                     self.logger.info(f"Deleting index {index} from summaries list")
                     del summaries[index]
 
+        # Check for and remove duplicate sample #s as in:
+        # http://dods.mbari.org/data/lrauv/daphne/missionlogs/2019/20190520_20190524/20190523T195841/syslog
+        num_dict = defaultdict(lambda:0)
+        for filtering, stopping, summary in zip(reversed(filterings), reversed(stoppings), reversed(summaries)):
+            fi_num = filtering.text.split(']')[0].split('#')[1]
+            st_num = stopping.text.split(']')[0].split('#')[1]
+            su_num = summary.text.split(']')[0].split('#')[1]
+            if fi_num == st_num == su_num:
+                num_dict[fi_num] += 1
+
+        to_del = []
+        for num, count in num_dict.items():
+            if count > 1:
+                self.logger.warning(f"[sample #{num}] found more that once ({count}) in syslog")
+                # Find maximum length summary text
+                max_summ_len = 0
+                for index, summary in enumerate(summaries):
+                    lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
+                    if lsr_seq_num.groupdict().get('seq_num') == num:
+                        if len(summary.text) > max_summ_len:
+                            max_summ_len = len(summary.text)
+
+                for index, summary in enumerate(summaries):
+                    lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
+                    if lsr_seq_num.groupdict().get('seq_num') == num:
+                        self.logger.info(f"index {index:3}: summary.text = {summary.text}")
+                        if len(summary.text) < max_summ_len:
+                            self.logger.info(f"Will delete shorter summary.text with index = {index}")
+                            to_del.append(index)
+
+        for index in to_del:
+            self.logger.info(f"Deleting index {index} from filtering, stoppings, andsummaries lists")
+            del filterings[index]
+            del stoppings[index]
+            del summaries[index]
+
         return filterings, stoppings, summaries
 
     def _match_seq_to_cartridge(self, filterings, stoppings, summaries, before_seq_num_implemented=False):
