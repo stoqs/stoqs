@@ -500,10 +500,14 @@ class ParentSamplesLoader(STOQS_Loader):
             # 1. Correct case where we have an extra summary
             if len(summaries) > len(filterings):
                 to_del = []
+                self.logger.info(f"Numbers in filter_nums match '{sampling_end_re}'")
                 for index, summary in enumerate(summaries):
                     lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
                     if lsr_seq_num.groupdict().get('seq_num') not in filter_nums:
-                        self.logger.warn(f"Summary {summary} number not found in filterings: {filterings}")
+                        self.logger.warn(f"Sample seq_num ({lsr_seq_num.groupdict().get('seq_num')}) not found in filter_nums: {filter_nums}")
+                        self.logger.warn(f"Likely an error for this cartridge: {summary.text}")
+                        lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE)
+                        self.logger.info(f"Not loading Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')} at index {index}")
                         to_del.append(index)
 
                 for index in reversed(to_del):
