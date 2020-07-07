@@ -46,13 +46,15 @@ cl = CANONLoader('$db_alias', '$title',
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
 
-# Will likely need to adjust eyear as time goes on
-syear = datetime($s_year, $s_month, $s_day)
-eyear = datetime($e_year, $e_month, $e_day)
+sdate = datetime($s_year, $s_month, $s_day)
+edate = datetime($e_year, $e_month, $e_day)
 
 cl.parser.add_argument('--realtime', action='store_true', help='Load realtime data')
 cl.parser.add_argument('--missionlogs', action='store_true', help='Load delayed mode (missionlogs) data')
 cl.process_command_line()
+
+if cl.args.startdate:
+    sdate = datetime.strptime(cl.args.startdate, '%Y%m%d')
 
 if cl.args.test:
     cl.stride = 10000
@@ -62,12 +64,12 @@ elif cl.args.stride:
 try:
     for lrauv in $lrauvs:
         if cl.args.realtime:
-            cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1, sbd_logs=True)
+            cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True)
         if cl.args.missionlogs:
-            cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1)
+            cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1)
         if not cl.args.realtime and not cl.args.missionlogs:
-            cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1, sbd_logs=True)
-            cl.loadLRAUV(lrauv, syear, eyear, critSimpleDepthTime=0.1)
+            cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True)
+            cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1)
 except KeyboardInterrupt:
     # Likely purposfully terminated return with 0 return code so that we don't drop the database
     print("KeyboardInterrupt: exiting lrauv section with 0 return code")
@@ -76,7 +78,7 @@ except KeyboardInterrupt:
 if Activity.objects.using(cl.dbAlias):
     # Only add Dorado missions if we have LRAUV Activities
     try:
-        cl.loadDorado(syear, eyear, build_attrs=True, plankton_proxies=True)
+        cl.loadDorado(sdate, edate, build_attrs=True, plankton_proxies=True)
     except KeyboardInterrupt:
         # Likely purposfully terminated return with 0 return code so that we don't drop the database
         print("KeyboardInterrupt: exiting dorado section with 0 return code")
