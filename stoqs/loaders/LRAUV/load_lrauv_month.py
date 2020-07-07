@@ -85,6 +85,10 @@ class AutoLoad():
         self.loader.args.test = self.args.test
         self.loader.args.verbose = self.args.verbose
         self.loader.args.drop_if_fail = True
+        if self.args.append:
+            self.loader.args.append = True
+            self.loader.args.startdate = datetime.utcnow().strftime("%Y%m%d")
+            self.args.startdate = self.loader.args.startdate
 
         if self.args.YYYYMM:
             self._update_campaigns(int(self.args.YYYYMM[:4]))
@@ -134,6 +138,8 @@ class AutoLoad():
         parser.add_argument('--test', action='store_true', help='Load test database(s)')
         parser.add_argument('--realtime', action='store_true', help='Load realtime data')
         parser.add_argument('--missionlogs', action='store_true', help='Load delayed mode (missionlogs) data')
+        parser.add_argument('--append', action='store_true', help='Append data to existting database')
+        parser.add_argument('--startdate', help='Startdate in YYYYMMDD format for appending data')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, 
                             help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
 
