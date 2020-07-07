@@ -278,6 +278,7 @@ class Make_netCDFs():
                     startDatetime, endDatetime = self.getNcStartEnd(url, 'depth_time')
                 except (pydap.exceptions.ServerError, IndexError) as e:
                     self.logger.info(f"Failed to get start and end times from {url}: {e.__class__.__name__}: {e}")
+                    continue
             else:
                 try:
                     startDatetime, endDatetime = self.getNcStartEnd(url, 'time_time')
