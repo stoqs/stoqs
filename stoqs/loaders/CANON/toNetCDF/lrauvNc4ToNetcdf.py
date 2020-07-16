@@ -666,7 +666,7 @@ class InterpolatorWriter(BaseWriter):
                                            lat.index < lat_fix.index[i+1]))[0]
             end_sec_diff = (lat_fix.index[i+1] - lat.index[segi[-1]]).total_seconds()
             if end_sec_diff > max_sec_diff_at_end:
-                self.logger.warn(f"end_sec_diff ({end_sec_diff}) > max_sec_diff_at_end ({max_sec_diff_at_end})")
+                self.logger.waring(f"end_sec_diff ({end_sec_diff}) > max_sec_diff_at_end ({max_sec_diff_at_end})")
 
             end_lon_diff = lon_fix[i+1] - lon[segi[-1]]
             end_lat_diff = lat_fix[i+1] - lat[segi[-1]]
@@ -690,9 +690,9 @@ class InterpolatorWriter(BaseWriter):
 
             # Sanity checks
             if np.max(np.abs(lon[segi] + lon_nudge)) > 180 or np.max(np.abs(lat[segi] + lon_nudge)) > 90:
-                self.logger.warn(f"Nudged coordinate is way out of reasonable range - segment {seg_count}")
-                self.logger.warn(f" max(abs(lon)) = {np.max(np.abs(lon[segi] + lon_nudge))}")
-                self.logger.warn(f" max(abs(lat)) = {np.max(np.abs(lat[segi] + lat_nudge))}")
+                self.logger.waring(f"Nudged coordinate is way out of reasonable range - segment {seg_count}")
+                self.logger.waring(f" max(abs(lon)) = {np.max(np.abs(lon[segi] + lon_nudge))}")
+                self.logger.waring(f" max(abs(lat)) = {np.max(np.abs(lat[segi] + lat_nudge))}")
 
             lon_nudged = np.append(lon_nudged, lon[segi] + lon_nudge)
             lat_nudged = np.append(lat_nudged, lat[segi] + lat_nudge)
@@ -749,7 +749,7 @@ class InterpolatorWriter(BaseWriter):
             self.logger.debug('Found parameter ' + key)
           except Exception as e:
             # Likely no variable in the netCDF file
-            self.logger.warn(e)
+            self.logger.waring(e)
             continue
 
         # Create pandas time series for each parameter in each group and store attributes
@@ -832,7 +832,7 @@ class InterpolatorWriter(BaseWriter):
                     ts = coord_ts[c]
                 except KeyError as e:
                     msg = f"Required coordinate {c} missing from {url}"
-                    self.logger.warn(msg)
+                    self.logger.waring(msg)
                     raise MissingCoordinate(msg)
 
                 # and interpolate using parameter time
@@ -913,7 +913,7 @@ class InterpolatorWriter(BaseWriter):
 
             except Exception as e:
                 self.logger.error(e)
-                self.logger.warn('falling back to main group %s' % group)
+                self.logger.waring('falling back to main group %s' % group)
                 subgroup = self.df.groups[g]
                 pkeys = parm[g]
 
@@ -1090,7 +1090,7 @@ class InterpolatorWriter(BaseWriter):
 
                         self.logger.info('Found in group ' + group + ' parameter ' + var + ' renaming to ' + key)
                     except KeyError as e:
-                        self.logger.warn(f"{e} not in {in_file}")
+                        self.logger.debug(f"{e} not in {in_file}")
                         continue
                     except Exception as e:
                         self.logger.error(e)
@@ -1130,7 +1130,7 @@ class InterpolatorWriter(BaseWriter):
                 if key == 'time':
                     repeated_values = np.where(np.diff(i.values) <= 0.1)[0]
                     if len(repeated_values) > 0:
-                        self.logger.warn(f"Interpolated 'time' variable has {len(repeated_values)} repeated values at indices {repeated_values}")
+                        self.logger.waring(f"Interpolated 'time' variable has {len(repeated_values)} repeated values at indices {repeated_values}")
                         self.logger.info(f"Overwriting interpolated repeated values with time's index values")
                         # Useful debugging code for verifying proper interpolation, e.g. no wild outliers in time
                         ##for counter, (rv, indxv) in enumerate(zip(i[repeated_values], i[repeated_values].index.astype(np.int64)/1E9)):
