@@ -152,7 +152,7 @@ class BaseParameter(object):
 
         self.ticks = round_to_n(list(np.linspace(c_min, c_max, num=6)), 4)
         self.bounds = np.linspace(c_min, c_max, num_colors + 1)
-        self.norm = mpl.colors.BoundaryNorm(self.bounds, self.cm.N)
+        self.norm = mpl.colors.BoundaryNorm(self.bounds, num_colors)
 
         if num_colors == 8:
             self.ticks = self.bounds[::2]
