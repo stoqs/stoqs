@@ -13,7 +13,7 @@ sys.path.insert(0, parentDir)
 from CANON import CANONLoader
 import timing
 
-cl = CANONLoader('stoqs_canon_july2020', 'ANON - July 2020',
+cl = CANONLoader('stoqs_canon_july2020', 'CANON - July 2020',
                  description='July 2020 shipless campaign in Monterey Bay',
                  x3dTerrains={
                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
