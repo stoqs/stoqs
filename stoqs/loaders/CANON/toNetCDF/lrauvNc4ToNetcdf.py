@@ -832,7 +832,7 @@ class InterpolatorWriter(BaseWriter):
                     ts = coord_ts[c]
                 except KeyError as e:
                     msg = f"Required coordinate {c} missing from {url}"
-                    self.logger.waring(msg)
+                    self.logger.warning(msg)
                     raise MissingCoordinate(msg)
 
                 # and interpolate using parameter time
