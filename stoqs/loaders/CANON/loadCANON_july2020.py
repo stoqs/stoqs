@@ -54,14 +54,14 @@ cl.l_662a_endDatetime = enddate
 # NPS_34a updated parameter names in netCDF file
 ## The following loads decimated subset of data telemetered during deployment
 cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.nps34a_files = [ 'OS_Glider_NPS_G34_20180514_TS.nc' ]
+cl.nps34a_files = [ 'OS_Glider_NPS_G34_20200707_TS.nc' ]
 cl.nps34a_parms = ['temperature', 'salinity','fluorescence']
 cl.nps34a_startDatetime = startdate
 cl.nps34a_endDatetime = enddate
 
 # NPS_29 ##
 cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.nps29_files = [ 'OS_Glider_NPS_G29_20190528_TS.nc' ]
+cl.nps29_files = [ 'OS_Glider_NPS_G29_20200211_TS.nc' ]
 cl.nps29_parms = ['TEMP', 'PSAL', 'FLU2', 'OXYG']
 cl.nps29_startDatetime = startdate
 cl.nps29_endDatetime = enddate
@@ -79,7 +79,7 @@ cl.nps29_endDatetime = enddate
 # WG Hansen - All instruments combined into one file - one time coordinate
 cl.wg_Hansen_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Hansen_files = [
-                   'wgHansen/20190522/realTime/20190522.nc',
+                   'wgHansen/20200716/realTime/20200716.nc'
                   ]
 
 cl.wg_Hansen_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  'water_temp_sub',
@@ -91,7 +91,7 @@ cl.wg_Hansen_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20190513/realTime/20190513.nc',
+                      'wgTiny/20200717/realTime/20200717.nc' 
                    ]
 
 
@@ -139,6 +139,10 @@ elif cl.args.stride:
 
 cl.loadM1()  
 cl.loadL_662a()
+cl.load_NPS29()
+cl.load_NPS34a()
+cl.load_wg_Tiny()
+cl.load_wg_Hansen()
 cl.loadLRAUV('brizo', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
 cl.loadLRAUV('daphne', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
 cl.loadLRAUV('makai', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
@@ -147,9 +151,6 @@ cl.loadLRAUV('tethys', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=Tru
 #cl.loadLRAUV('daphne', startdate, enddate)
 #cl.loadLRAUV('makai', startdate, enddate)
 #cl.loadLRAUV('tethys', startdate, enddate)
-#cl.load_NPS29()   
-#cl.load_wg_Tiny()
-#cl.load_wg_Hansen()
 #cl.load_oa2() 
 #cl.loadDorado(startdate, enddate, build_attrs=True)
 
