@@ -462,3 +462,4 @@ if __name__ == '__main__':
                     mn.logger.warning(e)
                     continue
 
+    mn.logger.info(f"Done executing: {' '.join(sys.argv)}")

@@ -1085,10 +1085,13 @@ class STOQS_Loader(object):
                     # Likely 'NoneType' object is not iterable because p is altitude of LOPC data
                     data = []
 
+            np_data = np.array([float(d) for d in data if d is not None])
+            if not np_data.any():
+                # Quietly skip over 'no valid data' - can't log because of @static method
+                continue
+
             ap, _ = m.ActivityParameter.objects.using(dbAlias).get_or_create(
                             parameter=p, activity=activity)
-
-            np_data = np.array([float(d) for d in data if d is not None])
             np_data.sort()
             ap.number = len(np_data)
             try:
@@ -1154,6 +1157,7 @@ class STOQS_Loader(object):
             self.update_activityparameter_stats(self.dbAlias, act_to_update, self.parameter_counts, sampledFlag)
         except ValueError as e:
             self.logger.warn(f"{e}")
+            raise
         except IntegrityError as e:
             self.logger.warn('IntegrityError(%s): Cannot create ActivityParameter and '
                              'updated statistics for Activity %s.', (e, act_to_update))

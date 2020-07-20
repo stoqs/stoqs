@@ -41,7 +41,8 @@ from django.db.utils import IntegrityError, DatabaseError
 from django.db import transaction
 from jdcal import gcal2jd, jd2gcal
 from stoqs.models import (Activity, InstantPoint, Measurement, MeasuredParameter,
-                          NominalLocation, Resource, ResourceType, ActivityResource,)
+                          NominalLocation, Resource, ResourceType, ActivityResource,
+                          Parameter)
 from datetime import datetime, timedelta
 from psycopg2.errors import UniqueViolation
 import pytz
@@ -1856,6 +1857,22 @@ class Base_Loader(STOQS_Loader):
         if mps_loaded:
             # Bulk loading may introduce None values, remove them
             MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
+
+            # Removing Nones above may leave a Parameter without any MeasuredParameters, remove them
+            for parameter in self.parameter_counts.copy().keys():
+                mp_count = MeasuredParameter.objects.using(self.dbAlias).filter(parameter=parameter).count()
+                self.logger.info(f"{parameter.name:40} count: {mp_count:6}")
+                if mp_count == 0:
+                    self.logger.info(f"Deleting Parameter because it has no valid data: {parameter}")
+                    try:
+                        del parmCount[parameter.name.split(' ')[0]]
+                        del self.parameter_counts[parameter]
+                        del self.parameter_dict[parameter.name]
+                    except KeyError as e:
+                        self.logger.warning(f"{e} not from Activity {self.activity}")
+                    parameter.delete(using=self.dbAlias)
+                else:
+                    parmCount[parameter.name.split(' ')[0]] = mp_count
             path = self._post_process_updates(mps_loaded, featureType, add_to_activity=add_to_activity)
 
         return mps_loaded, path, parmCount

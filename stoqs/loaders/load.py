@@ -620,11 +620,18 @@ local   all             all                                     peer
                 if cl_args.append:
                     load_command += ' --append'
                     appending = True
-                if appending:
+            if self.args.append:
+                appending = True
+
+            if appending:
+                if cl_args:
                     if cl_args.startdate:
                        load_command += f' --startdate {cl_args.startdate}' 
-                    elif self.args.startdate:
+                if '--startdate' not in load_command:
+                    if self.args.startdate:
                        load_command += f' --startdate {self.args.startdate}' 
+                    elif self.args.current_day:
+                       load_command += f" --startdate {datetime.datetime.utcnow().strftime('%Y%m%d')}"
 
             if not appending:
                 if self._db_exists(db) and self.args.clobber and (self.args.noinput or self.args.test):
@@ -847,6 +854,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
         parser.add_argument('--drop_if_fail', action='store_true', help='Drop database if fail to load data')
         parser.add_argument('--append', action='store_true', help='Append data to existing database')
         parser.add_argument('--startdate', help='Startdate in YYYYMMDD format for appending data')
+        parser.add_argument('--current_day', action='store_true', help='Set startdate to current UTC day - useful for running directly from cron')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
     
