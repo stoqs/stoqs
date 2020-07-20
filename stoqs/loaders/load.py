@@ -618,12 +618,12 @@ local   all             all                                     peer
                 if cl_args.missionlogs:
                     load_command += ' --missionlogs'
                 if cl_args.append:
-                    load_command += ' --append'
                     appending = True
             if self.args.append:
                 appending = True
 
             if appending:
+                load_command += ' --append'
                 if cl_args:
                     if cl_args.startdate:
                        load_command += f' --startdate {cl_args.startdate}' 
