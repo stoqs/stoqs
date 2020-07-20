@@ -334,7 +334,8 @@ class CANONLoader(LoadScript):
             url = self.nps_g29_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
                                        'nps_g29', self.colors['nps_g29'], 'glider', 'Glider Mission', 
-                                       self.nps_g29_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
+                                       self.nps_g29_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
+                                       command_line_args=self.args)
 
     def loadL_662(self, stride=None):
         '''
@@ -608,7 +609,8 @@ class CANONLoader(LoadScript):
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
                                        'wg_Tiny_Glider', self.colors['wg_Tiny'], 'waveglider', 'Glider Mission',
                                        self.wg_Tiny_parms, self.dbAlias, stride, self.wg_Tiny_startDatetime, 
-                                       self.wg_Tiny_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+                                       self.wg_Tiny_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0,
+                                       command_line_args=self.args)
 
     def load_wg_Sparky(self, stride=None):
         '''
@@ -644,7 +646,8 @@ class CANONLoader(LoadScript):
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
                                        'wg_Hansen_Glider', self.colors['wg_Hansen'], 'waveglider', 'Glider Mission',
                                        self.wg_Hansen_parms, self.dbAlias, stride, self.wg_Hansen_startDatetime,
-                                       self.wg_Hansen_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+                                       self.wg_Hansen_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0,
+                                       command_line_args=self.args)
 
 
     def load_wg_oa(self, stride=None):
