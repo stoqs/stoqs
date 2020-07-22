@@ -1525,6 +1525,9 @@
         $.each($('#platform-animations > orientationinterpolator'), function(index, oi) {
             oi.setFieldValue('set_fraction', ts_fraction);
         });
+        $.each($('#platform-animations > coordinateinterpolator'), function(index, ci) {
+            ci.setFieldValue('set_fraction', ts_fraction);
+        });
     }
 
     function slider(e) {
@@ -6133,7 +6136,63 @@ function enable_cardboard(){
                         $.each(data.measuredparameterx3d, function (shapeid, shapex3d) {
                             if ( ! $.isEmptyObject(shapex3d.points) ) {
                                 ps_x3d_html += '<Shape id="' + shapeid.replace('ils', 'ps') + '">' +
-                                        '<Appearance><PointProperties pointSizeScaleFactor="500"></PointProperties></Appearance>' +
+                                        '<Appearance>' +
+                                            '<ImageTexture url="{{STATIC_URL}}images/circle_texture.png"></ImageTexture>' +
+                                            '<!--Material/-->' +
+                                            '<ComposedShader>' +
+                                            '    <Field name="tex" type="SFInt32" value="0"></Field>' +
+                                            '' +
+                                            '    <ShaderPart type="VERTEX" style="display:none">\n' +
+                                            '        attribute vec3 position;\n' +
+                                            '        attribute vec3 color;\n' +
+                                            '        uniform mat4 modelViewProjectionMatrix;\n' +
+                                            '\n' +
+                                            '        varying vec3 col;\n' +
+                                            '\n' +
+                                            '        void main()\n' +
+                                            '        {\n' +
+                                            '           gl_Position = modelViewProjectionMatrix * vec4(position, 1.0);\n' +
+                                            '           gl_PointSize = max( 120000.0 / gl_Position.w, 0.01);\n' +
+                                            '           col = color;\n' +
+                                            '        }\n' +
+                                            '    </ShaderPart>\n' +
+                                            '\n' +
+                                            '    <ShaderPart type="FRAGMENT" style="display:none">\n' +
+                                            '        #ifdef GL_FRAGMENT_PRECISION_HIGH\n' +
+                                            '        precision highp float;\n' +
+                                            '        #else\n' +
+                                            '        precision mediump float;\n' +
+                                            '        #endif\n' +
+                                            '\n' +
+                                            '        uniform sampler2D tex;\n' +
+                                            '\n' +
+                                            '        varying vec3 col;\n' +
+                                            '\n' +
+                                            '        void main()\n' +
+                                            '        {\n' +
+                                            '           //vec2 texCoord = clamp(gl_PointCoord, 0.01, 0.99);\n' +
+                                            '           vec4 texColor = texture2D(tex, gl_PointCoord);\n' +
+                                            '\n' +
+                                            '           if(texColor.a < 0.5)\n' +
+                                            '           {\n' +
+                                            '               discard;\n' +
+                                            '           }\n' +
+                                            '\n' +
+                                            '           float adjustTex = 0.4;\n' +
+                                            '\n' +
+                                            '           texColor *= adjustTex;\n' +
+                                            '\n' +
+                                            '           float targetLum = 0.21*texColor.r + 0.72*texColor.g + 0.072*texColor.b;\n' +
+                                            '           float colLum = 0.21*col.r + 0.72*col.g + 0.072*col.b;\n' +
+                                            '           vec3 color = texColor.rgb * col;\n' +
+                                            '           float lum = 0.21*color.r + 0.72*color.g + 0.072*color.b;\n' +
+                                            '           float adjustLum = targetLum/lum;\n' +
+                                            '           gl_FragColor = vec4(adjustLum * color, texColor.a / adjustTex);\n' +
+                                            '        }\n' +
+                                            '\n' +
+                                            '                        </ShaderPart>\n' +
+                                            '                    </ComposedShader>' +
+                                        '</Appearance>' +
                                         '<pointset coordIndex="' + shapex3d.index + '">' +
                                             '<color color="' + shapex3d.colors + '"></color>' +
                                             '<geocoordinate point="' + shapex3d.points  + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>' +
