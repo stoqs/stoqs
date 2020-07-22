@@ -1,4 +1,4 @@
-version: '2'
+version: '2.2'
 
 volumes:
     static-files:
@@ -18,7 +18,7 @@ services:
     command: postgres -c config_file=/etc/postgresql.conf
     ports:
       - "${STOQS_PGHOST_PORT}:5432"
-    # Set user for deployment on MacOS, assign HOST_ID=<result of `id -u`> in your .env file
+    # Set user for deployment on MacOS, assign HOST_UID=<result of `id -u`> in your .env file
     ##user: ${HOST_UID}
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -26,19 +26,20 @@ services:
       - PGDATA=/var/lib/postgresql/data
       - POSTGRES_INITDB_WALDIR=/var/lib/postgresql/waldir
     container_name: stoqs-postgis
+    oom_kill_disable: true
     env_file:
-      - ./test.env
+      - ./.env
 
   mapserver:
     image: geodata/mapserver:7.0.1
     volumes:
-      - ${STOQS_VOLS_DIR}/maps:/maps:ro
+      - ${STOQS_VOLS_DIR}/maps:${URL_MAPFILE_DIR}:ro
     container_name: stoqs-mapserver
     # Expose port 80 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##ports:
     ##  - "80:80"
     env_file:
-      - ./test.env
+      - ./.env
 
   stoqs:
     image: mbari/stoqs
@@ -46,7 +47,7 @@ services:
         context: .
         dockerfile: Dockerfile-stoqs
     volumes:
-      - ${STOQS_VOLS_DIR}/maps:/dev/shm
+      - ${STOQS_VOLS_DIR}/maps:${MAPFILE_DIR}
       - ${STOQS_VOLS_DIR}/stoqs_root:/root
       - ${STOQS_VOLS_DIR}/nginx:/usr/share/nginx
       - ${STOQS_VOLS_DIR}/pg_dumps:/srv/media-files/pg_dumps
@@ -66,8 +67,7 @@ services:
       - MEDIA_ROOT=/srv/media-files
       - NGINX_SERVER_NAME=${NGINX_SERVER_NAME}
       - DJANGO_DEBUG=${DJANGO_DEBUG}
-      - GEOS_LIBRARY_PATH=${GEOS_LIBRARY_PATH}
-      - GDAL_LIBRARY_PATH=${GDAL_LIBRARY_PATH}
+      - USER=${USER}
     container_name: stoqs
     depends_on:
       - mapserver
@@ -77,7 +77,7 @@ services:
     # Expose port 8000 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##  - "8000:8000"
     env_file:
-      - ./test.env
+      - ./.env
 
   # Disable nginx service if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
   nginx:
@@ -100,13 +100,14 @@ services:
     depends_on:
       - stoqs
     env_file:
-      - ./test.env
+      - ./.env
 
-  ##sut:
-  ##  build:
-  ##    context: .
-  ##    dockerfile: Dockerfile-stoqs
-  ##  command: test.sh
-  ##  environment:
-  ##    - SOURCE_BRANCH
-
+  # Uncomment to restart services when new images pushed to docker hub, for continuous deployment
+  # - Requires also a 'git pull' from https://github.com/stoqs/stoqs.git
+  ##watchtower:
+  ##  container_name: watchtower
+  ##  image: containrrr/watchtower
+  ##  volumes:
+  ##    - /var/run/docker.sock:/var/run/docker.sock
+  ##  restart: unless-stopped
+  ##  command: stoqs mapserver postgis nginx --interval 30
