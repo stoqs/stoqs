@@ -588,7 +588,7 @@ class MeasuredParameter(BaseParameter):
                     ax.scatter(cx, cy, marker='.', s=2, c='k', lw = 0)
                 else:
                     self.logger.debug('parm_info = %s', parm_info)
-                    ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2])
+                    ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2], norm=self.norm)
                     # Draw any spanned data, e.g. NetTows
                     self.logger.debug(f"Drawing spanned data: {len(self.xspan)} samples")
                     for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
@@ -1288,7 +1288,7 @@ class ParameterParameter(BaseParameter):
                     pass
 
                 ax.scatter(self.x, self.y, c=self.c, s=10, cmap=self.cm, lw=0, vmin=self.pMinMax['c'][1], 
-                           vmax=self.pMinMax['c'][2], clip_on=False)
+                           vmax=self.pMinMax['c'][2], clip_on=False, norm=self.norm)
                 # Add colorbar to the image
                 cb_ax = fig.add_axes([0.2, 0.98, 0.6, 0.02]) 
                 cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=self.cm,
