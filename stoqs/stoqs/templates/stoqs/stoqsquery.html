@@ -6182,10 +6182,10 @@ function enable_cardboard(){
                                             '\n' +
                                             '           texColor *= adjustTex;\n' +
                                             '\n' +
-                                            '           float targetLum = 0.21*texColor.r + 0.72*texColor.g + 0.072*texColor.b;\n' +
-                                            '           float colLum = 0.21*col.r + 0.72*col.g + 0.072*col.b;\n' +
+                                            '           float targetLum = 1.0*texColor.r + 1.0*texColor.g + 1.0*texColor.b;\n' +
+                                            '           float colLum = 1.0*col.r + 1.0*col.g + 1.0*col.b;\n' +
                                             '           vec3 color = texColor.rgb * col;\n' +
-                                            '           float lum = 0.21*color.r + 0.72*color.g + 0.072*color.b;\n' +
+                                            '           float lum = 1.0*color.r + 1.0*color.g + 1.0*color.b;\n' +
                                             '           float adjustLum = targetLum/lum;\n' +
                                             '           gl_FragColor = vec4(adjustLum * color, texColor.a / adjustTex);\n' +
                                             '        }\n' +
