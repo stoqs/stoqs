@@ -619,8 +619,9 @@ local   all             all                                     peer
                     load_command += ' --missionlogs'
                 if cl_args.append:
                     appending = True
-            if self.args.append:
-                appending = True
+            if hasattr(self.args, 'append'):
+                if self.args.append:
+                    appending = True
 
             if appending:
                 load_command += ' --append'
@@ -743,11 +744,12 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
                 call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
                 call_command('migrate', settings='config.settings.local', noinput=True, database=db)
 
-            # Record details of the database load to the database
-            try:
-                self.recordprovenance(db, load_command, log_file)
-            except DatabaseLoadError as e:
-                self.logger.warning(str(e))
+            if not appending:
+                # Record details of the database load to the database
+                try:
+                    self.recordprovenance(db, load_command, log_file)
+                except DatabaseLoadError as e:
+                    self.logger.warning(str(e))
 
     def process_command_line(self):
         import argparse
