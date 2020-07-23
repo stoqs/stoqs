@@ -14,7 +14,7 @@ from CANON import CANONLoader
 import timing
 
 cl = CANONLoader('stoqs_canon_july2020', 'CANON - July 2020',
-                 description='July 2020 shipless campaign in Monterey Bay',
+                 description='July 2020 shipless campaign in Monterey Bay (CN20S)',
                  x3dTerrains={
                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -116,42 +116,24 @@ cl.m1_parms = [
 cl.m1_startDatetime = startdate
 cl.m1_endDatetime = enddate
 
-# Mooring 0A2
-cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201812/'
-cl.oa2_files = [
-               'realTime/OA2_201812.nc'
-               ]
-cl.oa2_parms = [
-               'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
-               'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
-               ]
-cl.oa2_startDatetime = startdate
-cl.oa2_endDatetime = enddate
-
-
 # Execute the load
 cl.process_command_line()
 
 if cl.args.test:
-    cl.stride = 100
+    cl.stride = 10
 elif cl.args.stride:
     cl.stride = cl.args.stride
 
 cl.loadM1()  
-cl.loadL_662a()
+#cl.loadL_662a()
 cl.load_NPS29()
 cl.load_NPS34a()
 cl.load_wg_Tiny()
 cl.load_wg_Hansen()
 cl.loadLRAUV('brizo', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
-cl.loadLRAUV('daphne', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
 cl.loadLRAUV('makai', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
-cl.loadLRAUV('tethys', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
-#cl.loadLRAUV('brizo', startdate, enddate)
-#cl.loadLRAUV('daphne', startdate, enddate)
-#cl.loadLRAUV('makai', startdate, enddate)
-#cl.loadLRAUV('tethys', startdate, enddate)
-#cl.load_oa2() 
+cl.loadLRAUV('brizo', startdate, enddate)
+cl.loadLRAUV('makai', startdate, enddate)
 #cl.loadDorado(startdate, enddate, build_attrs=True)
 
 ##cl.loadSubSamples() 
