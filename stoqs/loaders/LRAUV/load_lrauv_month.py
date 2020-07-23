@@ -55,8 +55,10 @@ class AutoLoad():
             self.logger.warning(f"Failed to load {self.loader.args.db}")
             return
 
-        self.logger.debug(f"Executing self.loader.updateprovenance()...")
-        self.loader.updateprovenance()
+        if not self.args.append:
+            self.logger.debug(f"Executing self.loader.updateprovenance()...")
+            self.loader.updateprovenance()
+
         self.logger.debug(f"Executing self.loader.pg_dump()...")
         self.loader.pg_dump()
 
