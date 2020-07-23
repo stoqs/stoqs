@@ -61,7 +61,7 @@ cl.nps34a_endDatetime = enddate
 
 # NPS_29 ##
 cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.nps29_files = [ 'OS_Glider_NPS_G29_20200211_TS.nc' ]
+cl.nps29_files = [ 'OS_Glider_NPS_G29_20200722_TS.nc' ]
 cl.nps29_parms = ['TEMP', 'PSAL', 'FLU2', 'OXYG']
 cl.nps29_startDatetime = startdate
 cl.nps29_endDatetime = enddate
