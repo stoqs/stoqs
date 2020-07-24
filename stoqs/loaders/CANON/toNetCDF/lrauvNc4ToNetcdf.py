@@ -1097,8 +1097,8 @@ class InterpolatorWriter(BaseWriter):
                         continue
 
         # add in navigation
-        if resampleFreq == '2S':
-            # Add roll, pitch, and yaw to only the 2S_eng.nc file
+        if resampleFreq == '2S' or resampleFreq == '1S':
+            # Add roll, pitch, and yaw to only the 2S_*.nc and 1S_*.nc files
             self.createNav(t_resample, resampleFreq)
 
         # add in coordinates
