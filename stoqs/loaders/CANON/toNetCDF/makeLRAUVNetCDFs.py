@@ -420,7 +420,6 @@ if __name__ == '__main__':
     mn = Make_netCDFs()
     mn.process_command_line()
     parms = mn.assign_parms()
-    start, end = mn.assign_dates()
 
     if mn.args.platform:
         platforms = [mn.args.platform]
@@ -435,6 +434,13 @@ if __name__ == '__main__':
     else:
         pw.logger.setLevel(logging.WARNING)
 
+    if mn.args.inUrl:
+        convert_radians = True
+        mn.inDir = '/mbari/' + '/'.join(mn.args.inUrl.split('/')[5:9])
+        mn.processResample(pw, mn.args.inUrl, mn.args.resampleFreq, parms, convert_radians, mn.args.appendString)
+        sys.exit()
+
+    start, end = mn.assign_dates()
     if mn.args.realtime:
         for platform in platforms:
             mn.assign_ins(start, end, platform)
