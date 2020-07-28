@@ -648,6 +648,7 @@ class InterpolatorWriter(BaseWriter):
             lon_nudged = lon[segi]
             lat_nudged = lat[segi]
             dt_nudged = lon.index[segi]
+            self.logger.debug(f"Filled _nudged arrays with {len(segi)} values starting at {lat.index[0]} which were before the first GPS fix at {lat_fix.index[0]}")
         else:
             lon_nudged = np.array([])
             lat_nudged = np.array([])
@@ -664,6 +665,10 @@ class InterpolatorWriter(BaseWriter):
             # Segment of dead reckoned (under water) positions, each surrounded by GPS fixes
             segi = np.where(np.logical_and(lat.index > lat_fix.index[i], 
                                            lat.index < lat_fix.index[i+1]))[0]
+            if not segi.any():
+                self.logger.debug(f"No dead reckoned values found between GPS times of {lat_fix.index[i]} and {lat_fix.index[i+1]}")
+                continue
+
             end_sec_diff = (lat_fix.index[i+1] - lat.index[segi[-1]]).total_seconds()
             if end_sec_diff > max_sec_diff_at_end:
                 self.logger.warning(f"end_sec_diff ({end_sec_diff}) > max_sec_diff_at_end ({max_sec_diff_at_end})")
@@ -1097,9 +1102,7 @@ class InterpolatorWriter(BaseWriter):
                         continue
 
         # add in navigation
-        if resampleFreq == '2S' or resampleFreq == '1S':
-            # Add roll, pitch, and yaw to only the 2S_*.nc and 1S_*.nc files
-            self.createNav(t_resample, resampleFreq)
+        self.createNav(t_resample, resampleFreq)
 
         # add in coordinates
         for key in coord:
