@@ -17,6 +17,7 @@ cl = CANONLoader('stoqs_canon_july2020', 'CANON - July 2020',
                  description='July 2020 shipless campaign in Monterey Bay (CN20S)',
                  x3dTerrains={
                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                     'name': 'Monterey25_10x',
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
                      'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                      'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
@@ -46,14 +47,14 @@ cl.l_662a_endDatetime = enddate
 
 # NPS_34a updated parameter names in netCDF file
 ## The following loads decimated subset of data telemetered during deployment
-cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
 cl.nps34a_files = [ 'OS_Glider_NPS_G34_20200707_TS.nc' ]
 cl.nps34a_parms = ['temperature', 'salinity','fluorescence']
 cl.nps34a_startDatetime = startdate
 cl.nps34a_endDatetime = enddate
 
 # NPS_29 ##
-cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
 cl.nps29_files = [ 'OS_Glider_NPS_G29_20200722_TS.nc' ]
 cl.nps29_parms = ['TEMP', 'PSAL', 'FLU2', 'OXYG']
 cl.nps29_startDatetime = startdate
@@ -116,6 +117,18 @@ if cl.args.test:
     cl.stride = 10
 elif cl.args.stride:
     cl.stride = cl.args.stride
+
+load_shark_bite = False
+if load_shark_bite:
+    # Load 10 Hz orientation data from the shark bite at 2306 20 July 2020, see:
+    # https://mbari.slack.com/archives/C4VJ11Q83/p1595610046147800?thread_ts=1595544882.109700&cid=C4VJ11Q83
+    cl.brizo_base = 'http://dods.mbari.org/opendap/data/lrauv/brizo/missionlogs/2020/20200720_20200723/20200720T202049/'
+    cl.brizo_files = ['202007202020_202007210640_100ms_scieng.nc', ]
+    cl.brizo_parms = [ 'yaw', 'pitch', 'roll',
+                      ]
+    cl.loadLRAUV('brizo', startdate, enddate, build_attrs=False)
+    cl.addTerrainResources()
+    sys.exit()
 
 cl.loadM1()  
 #cl.loadL_662a()
