@@ -1,7 +1,7 @@
 -r base.txt
 
 alabaster==0.7.12
-amqp==2.6.0
+amqp==2.6.1
 amqplib==1.0.2
 anyjson==0.3.3
 Babel==2.8.0
@@ -18,7 +18,7 @@ Genshi==0.7.3
 geopandas==0.8.1
 h5py==2.10.0
 MarkupSafe==1.1.1
-pandas==1.0.5
+pandas==1.1.0
 numpy==1.19.1
 requests==2.24.0
 Pygments==2.6.1
