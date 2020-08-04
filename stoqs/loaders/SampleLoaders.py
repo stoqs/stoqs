@@ -563,11 +563,17 @@ class ParentSamplesLoader(STOQS_Loader):
         # http://dods.mbari.org/data/lrauv/daphne/missionlogs/2019/20190520_20190524/20190523T195841/syslog
         num_dict = defaultdict(lambda:0)
         for filtering, stopping, summary in zip(filterings, stoppings, summaries):
-            fi_num = filtering.text.split(']')[0].split('#')[1]
-            st_num = stopping.text.split(']')[0].split('#')[1]
-            su_num = summary.text.split(']')[0].split('#')[1]
-            if fi_num == st_num == su_num:
-                num_dict[fi_num] += 1
+            try:
+                fi_num = filtering.text.split(']')[0].split('#')[1]
+                st_num = stopping.text.split(']')[0].split('#')[1]
+                su_num = summary.text.split(']')[0].split('#')[1]
+                if fi_num == st_num == su_num:
+                    num_dict[fi_num] += 1
+            except IndexError:
+                self.logger.warning(f"Likely ESP state messages without 'sample #' text")
+                self.logger.info(f"filtering.text = {filtering.text}")
+                self.logger.info(f"stopping.text = {stopping.text}")
+                self.logger.info(f"summary.text = {summary.text}")
 
         to_del = []
         for num, count in num_dict.items():
