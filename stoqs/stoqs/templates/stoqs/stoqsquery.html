@@ -6150,14 +6150,21 @@ function enable_cardboard(){
                                             '    <ShaderPart type="VERTEX" style="display:none">\n' +
                                             '        attribute vec3 position;\n' +
                                             '        attribute vec3 color;\n' +
+                                            '        uniform mat4 modelViewMatrix;\n' +
                                             '        uniform mat4 modelViewProjectionMatrix;\n' +
+                                            '        uniform vec3 bgSize;\n' +
+                                            '        uniform vec3 bgCenter;\n' +
+                                            '        uniform float bgPrecisionMax;\n' +
                                             '\n' +
                                             '        varying vec3 col;\n' +
+                                            '        varying vec3 fragEyeVector;\n' +
                                             '\n' +
                                             '        void main()\n' +
                                             '        {\n' +
+                                            '           vec3 vertPosition = bgCenter + bgSize * position.xyz / bgPrecisionMax;\n' +
                                             '           gl_Position = modelViewProjectionMatrix * vec4(position, 1.0);\n' +
                                             '           gl_PointSize = max( 120000.0 / gl_Position.w, 0.01);\n' +
+                                            '           fragEyeVector = -(modelViewMatrix * vec4(vertPosition, 0.0)).xyz;\n' + 
                                             '           col = color;\n' +
                                             '        }\n' +
                                             '    </ShaderPart>\n' +
@@ -6172,6 +6179,7 @@ function enable_cardboard(){
                                             '        uniform sampler2D tex;\n' +
                                             '\n' +
                                             '        varying vec3 col;\n' +
+                                            '        varying vec3 fragEyeVector;\n' +
                                             '\n' +
                                             '        void main()\n' +
                                             '        {\n' +
