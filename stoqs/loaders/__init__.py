@@ -1122,7 +1122,7 @@ class STOQS_Loader(object):
             else:
                 try:
                     (counts, bins) = np.histogram(np_data,100)
-                except IndexError:
+                except (IndexError, ValueError):
                     # Likely something like 'index -9223372036854775808 is out of bounds for axis 1 with size 101' 
                     # from numpy/lib/function_base.py.  Encoutered in really wild LRAUV data, e.g.:
                     # http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2015/20150824_20150825/20150825T055243/201508250552_201508250553_2S_eng.nc.ascii?control_inputs_mass_position[0:1:13]
@@ -1131,6 +1131,8 @@ class STOQS_Loader(object):
                     #  norm = n_equal_bins / (last_edge - first_edge)
                     #/vagrant/dev/stoqsgit/venv-stoqs/lib64/python3.6/site-packages/numpy/lib/function_base.py:788: RuntimeWarning: invalid value encountered in multiply
                     # tmp_a *= norm
+                    # ValueError: autodetected range of [-inf, inf] is not finite encountered in:
+                    # http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2016/20160801_20160809/20160807T120403/201608071204_201608091210_2S_scieng.nc
                     # Contunue silently (as this is a static method), with the above errors given as a warning.
                     continue
 
