@@ -23,7 +23,7 @@ ipython==7.17.0
 jdcal==1.4.1
 Jinja2==2.11.2
 jupyter==1.0.0
-kombu==4.6.11
+kombu==5.0.0
 lxml==4.5.2
 mock==4.0.2
 matplotlib==3.2.2
