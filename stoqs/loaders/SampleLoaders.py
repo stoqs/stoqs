@@ -608,8 +608,12 @@ class ParentSamplesLoader(STOQS_Loader):
                 self.logger.debug(f"Cannot parse Cartridge number from {summary.text}")
                 continue
             lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
-            self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Passed validation, marked for saving"
-                             f" [sample #{lsr_seq_num.groupdict().get('seq_num')}]")
+            try:
+                self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Passed validation, marked for saving"
+                                 f" [sample #{lsr_seq_num.groupdict().get('seq_num')}]")
+            except AttributeError:
+                self.logger.warn(f"Likely lsr_seq_num ({lsr_seq_num}) is None and this log is before 'sample #' was implemented completely")
+                self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Passed validation, marked for saving")
 
         return filterings, stoppings, summaries
 
