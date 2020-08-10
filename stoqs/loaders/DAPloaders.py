@@ -41,7 +41,8 @@ from django.db.utils import IntegrityError, DatabaseError
 from django.db import transaction
 from jdcal import gcal2jd, jd2gcal
 from stoqs.models import (Activity, InstantPoint, Measurement, MeasuredParameter,
-                          NominalLocation, Resource, ResourceType, ActivityResource,)
+                          NominalLocation, Resource, ResourceType, ActivityResource,
+                          Parameter)
 from datetime import datetime, timedelta
 from psycopg2.errors import UniqueViolation
 import pytz
@@ -939,7 +940,12 @@ class Base_Loader(STOQS_Loader):
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
             time_units = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
-        mtimes = (from_udunits(mt, time_units) for mt in times)
+        try:
+            if times.shape[0] > 0:
+                mtimes = (from_udunits(mt, time_units) for mt in times)
+        except IndexError:
+            # Trap case where times.shape = () giving opportunity to turn a single value into a list
+            mtimes = [from_udunits(float(times.data), time_units)]
 
         try:
             if isinstance(self.ds[ac[DEPTH]], pydap.model.GridType):
@@ -968,6 +974,12 @@ class Base_Loader(STOQS_Loader):
             latitudes = self.ds[ac[LATITUDE]][0][0][tindx[0]:tindx[-1]:self.stride]
         else:
             latitudes = self.ds[ac[LATITUDE]][tindx[0]:tindx[-1]:self.stride]
+        try:
+            if latitudes.shape[0] > 0:
+                pass
+        except IndexError:
+            # Trap case where latitudes.shape = () giving opportunity to turn a single value into a list
+            latitudes = [float(latitudes.data)]
 
         if isinstance(self.ds[ac[LONGITUDE]], pydap.model.GridType):
             longitudes = self.ds[ac[LONGITUDE]][ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
@@ -976,6 +988,12 @@ class Base_Loader(STOQS_Loader):
             longitudes = self.ds[ac[LONGITUDE]][0][0][tindx[0]:tindx[-1]:self.stride]
         else:
             longitudes = self.ds[ac[LONGITUDE]][tindx[0]:tindx[-1]:self.stride]
+        try:
+            if longitudes.shape[0] > 0:
+                pass
+        except IndexError:
+            # Trap case where longitudes.shape = () giving opportunity to turn a single value into a list
+            longitudes = [float(longitudes.data)]
 
         return mtimes, depths, latitudes, longitudes
 
@@ -986,17 +1004,8 @@ class Base_Loader(STOQS_Loader):
         '''
         mtimes, depths, latitudes, longitudes = self._read_coords_from_ds(tindx, ac, multidim_trajectory=multidim_trajectory)
         self.logger.debug(f'Getting good_coords for {pnames}...')
-        try:
-            mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
+        mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
                                         pnames, mtimes, depths, latitudes, longitudes, coords_equal))
-        except TypeError:
-            # When ac[DEPTH] is a number, convert one time value to a list
-            self.logger.info(f'Assuming coords are single valued and converting to lists')
-            mtimes = [from_udunits(float(times.data), time_units)]
-            latitudes = [float(latitudes.data)]
-            longitudes = [float(longitudes.data)]
-            mtimes, depths, latitudes, longitudes, dup_times = zip(*self.good_coords(
-                                        pnames, mtimes, depths, latitudes, longitudes))
 
         # Reassign meass with Measurement objects that have their id set
         try:
@@ -1848,6 +1857,22 @@ class Base_Loader(STOQS_Loader):
         if mps_loaded:
             # Bulk loading may introduce None values, remove them
             MeasuredParameter.objects.using(self.dbAlias).filter(datavalue=None, dataarray=None).delete()
+
+            # Removing Nones above may leave a Parameter without any MeasuredParameters, remove them
+            for parameter in self.parameter_counts.copy().keys():
+                mp_count = MeasuredParameter.objects.using(self.dbAlias).filter(parameter=parameter).count()
+                self.logger.info(f"{parameter.name:40} count: {mp_count:6}")
+                if mp_count == 0:
+                    self.logger.info(f"Deleting Parameter because it has no valid data: {parameter}")
+                    try:
+                        del parmCount[parameter.name.split(' ')[0]]
+                        del self.parameter_counts[parameter]
+                        del self.parameter_dict[parameter.name]
+                    except KeyError as e:
+                        self.logger.warning(f"{e} not from Activity {self.activity}")
+                    parameter.delete(using=self.dbAlias)
+                else:
+                    parmCount[parameter.name.split(' ')[0]] = mp_count
             path = self._post_process_updates(mps_loaded, featureType, add_to_activity=add_to_activity)
 
         return mps_loaded, path, parmCount

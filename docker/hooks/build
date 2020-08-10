@@ -8,6 +8,9 @@ ls -l $(dirname `pwd`)
 echo "*** PWD listing"
 ls -l 
 
+echo "*** Copy template.env to .env"
+cp template.env .env
+
 if [ $GIT_BRANCH == 'MBARIMike:master' ] 
 then
     echo "*** docker-compose -f docker-compose.test.mbarimike.yml build"

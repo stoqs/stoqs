@@ -200,9 +200,9 @@ class CANONLoader(LoadScript):
             url = os.path.join(base, f)
             # shorten the activity names
             if 'slate.nc' in aname or 'shore' in aname:
-                aname = '_'.join(aname.split('/')[-2:])
+                aname = f"{pname}_{'_'.join(aname.split('/')[-2:])}"
             else:
-                aname = aname.rsplit('/', 1)[-1]
+                aname = f"{pname}_{aname.rsplit('/', 1)[-1]}"
             if hasattr(self, f'{pname}_aux_coords'):
                 aux_coords = getattr(self, f'{pname}_aux_coords')
             else:
@@ -220,8 +220,14 @@ class CANONLoader(LoadScript):
                 lrauv_ml.load_missions(pname, aname, url, self.dbAlias)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
-            except webob.exc.HTTPError as e:
+            except (webob.exc.HTTPError, UnboundLocalError) as e:
                 self.logger.warn(f"{e}")
+            except Exception as e:
+                if 'shore_i.nc' in url:
+                    self.logger.warn(f"{e}")
+                    self.logger.info(f"Being tolerant of shore_i.nc files and ignoring this warning")
+                else:
+                    raise
 
         self.addPlatformResources(f'https://stoqs.mbari.org/x3d/lrauv/lrauv_{pname}.x3d', pname,
                                   scalefactor=2)
@@ -249,29 +255,24 @@ class CANONLoader(LoadScript):
                   stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True, 
                   dlist_str=None, err_on_missing_file=False, critSimpleDepthTime=10,
                   sbd_logs=False, cell_logs=False):
-        '''
-        Loader for tethys, daphne, makai, ahi, aku, 
-        '''
-        if build_attrs and not dlist_str:
-            if sbd_logs:
-                self.logger.info(f'Building load parameter attributes crawling LRAUV sbdlogs dirs')
-                file_patterns=('.*shore_i.nc$')
-                self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns, sbd_logs=True)
-            else:
-                self.logger.info(f'Building load parameter attributes crawling LRAUV missionlogs dirs')
-                self.build_lrauv_attrs(startdate.year, pname, startdate, enddate, parameters, file_patterns)
-        elif dlist_str:
-            for year in range(startdate.year, enddate.year + 1):
-                # Execute load for a year at a time in order to keep the Activity name shorter
-                # and because that is kind of how the LRAUV load is structured
-                self.logger.info(f'Building load parameter attributes crawling LRAUV dirs with dlist_str = {dlist_str} and year = {year}')
-                self.build_lrauv_attrs(year, pname, datetime(year, 1, 1), datetime(year, 12, 31), 
-                                       parameters, file_patterns, dlist_str, err_on_missing_file)
+
+        if sbd_logs:
+            dir_string = 'sbdlogs' 
+            file_patterns=('.*shore_i.nc$')
+        elif cell_logs:
+            dir_string = "TODO: Will be 'celllogs' when implemented" 
+        else:
+            dir_string = 'missionlogs'
+        if build_attrs:
+            self.logger.info(f'Building load parameter attributes crawling LRAUV {dir_string} dirs for {pname}')
+            for mission_year in range(startdate.year, enddate.year + 1):
+                self.build_lrauv_attrs(mission_year, pname, startdate, enddate, parameters, 
+                                       file_patterns, dlist_str, err_on_missing_file, sbd_logs, cell_logs)
+                self._execute_load(pname, parameters, stride, critSimpleDepthTime)
         else:
             self.logger.info(f'Using load {pname} attributes set in load script')
             parameters = getattr(self, f'{pname}_parms')
-
-        self._execute_load(pname, parameters, stride, critSimpleDepthTime)
+            self._execute_load(pname, parameters, stride, critSimpleDepthTime)
 
     def loadMartin(self, stride=None):
         '''
@@ -333,7 +334,8 @@ class CANONLoader(LoadScript):
             url = self.nps_g29_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
                                        'nps_g29', self.colors['nps_g29'], 'glider', 'Glider Mission', 
-                                       self.nps_g29_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
+                                       self.nps_g29_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
+                                       command_line_args=self.args)
 
     def loadL_662(self, stride=None):
         '''
@@ -607,7 +609,8 @@ class CANONLoader(LoadScript):
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
                                        'wg_Tiny_Glider', self.colors['wg_Tiny'], 'waveglider', 'Glider Mission',
                                        self.wg_Tiny_parms, self.dbAlias, stride, self.wg_Tiny_startDatetime, 
-                                       self.wg_Tiny_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+                                       self.wg_Tiny_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0,
+                                       command_line_args=self.args)
 
     def load_wg_Sparky(self, stride=None):
         '''
@@ -643,7 +646,8 @@ class CANONLoader(LoadScript):
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
                                        'wg_Hansen_Glider', self.colors['wg_Hansen'], 'waveglider', 'Glider Mission',
                                        self.wg_Hansen_parms, self.dbAlias, stride, self.wg_Hansen_startDatetime,
-                                       self.wg_Hansen_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
+                                       self.wg_Hansen_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0,
+                                       command_line_args=self.args)
 
 
     def load_wg_oa(self, stride=None):
@@ -1329,7 +1333,7 @@ class CANONLoader(LoadScript):
 
                 if date_intersect:
                     # Grab the valid urls for all log files in a .dlist directory that intersect the Campaign dates
-                    if ( (dir_start <= startdate and startdate <= dir_end) or (dir_start <= enddate and enddate <= dir_end) ):
+                    if ( (startdate <= dir_start and dir_start <= enddate) or (startdate <= dir_end and dir_end <= enddate) ):
                         self.logger.debug(f'{mission_dir_name}: Collecting all log files matching {search_str} in this directory')
                         catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                         c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
@@ -1348,13 +1352,17 @@ class CANONLoader(LoadScript):
                             self.logger.debug(f'{url}')
                             urls.append(url)
             else:
-                # Likely a realtime log - add to urls if only url date is greater than startdate
+                # Likely a realtime log - add to urls if only url date is between startdate and enddate
                 catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                 c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
                 d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
                 for url in d:
-                    dir_start =  datetime.strptime(url.split('/')[11], '%Y%m%dT%H%M%S')
-                    if dir_start >= startdate:
+                    try:
+                        dir_start =  datetime.strptime(url.split('/')[11], '%Y%m%dT%H%M%S')
+                    except ValueError as e:
+                        self.logger.warn(f"{e} from url = {url}")
+                        self.logger.warn(f"Likely due to a log file found in the parent dir. Ignoring.")
+                    if (startdate <= dir_start and dir_start <= enddate):
                         self.logger.debug(f'{url}')
                         urls.append(url)
 
@@ -1392,44 +1400,51 @@ class CANONLoader(LoadScript):
 
         return 'should_be_present'
 
-    def find_lrauv_urls_by_dlist_string(self, dlist_str, platform, start_year, end_year, nc_str='_2S_scieng.nc'):
+    def find_lrauv_urls_by_dlist_string(self, dlist_str, platform, startdate, enddate, mission_year, nc_str='_2S_scieng.nc'):
         '''Crawl web accessible directories and search for missions that have dlist_str.
         Find all .dlist files and scan contents of the .dlist that has `dlist_str`.
-        Return a list of those urls.
+        Return a list of those urls. This is called by build_lrauv_attrs() which needs 
+        to do its work one year at a time. Add urls that fall within startdate and
+        enddate, but do this only for one mission_year at a time, set by build_lrauv_attrs().
         '''
         urls = []
-        for year in range(start_year, end_year + 1):
-            file_base = f'http://dods.mbari.org/data/lrauv/{platform}/missionlogs/{year}'
-            dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{year}'
-            self.logger.info(f"Looking in {file_base} for .dlist files containing string '{dlist_str}'")
-            soup = BeautifulSoup(urlopen(file_base).read(), 'lxml')
-            for link in soup.find_all('a'):
-                if '.dlist' in link.get('href'):
-                    dlist_dir = link.get('href').split('/')[-1].split('.')[0]
-                    dlist_url = os.path.join(file_base, f"{dlist_dir}.dlist")
-                    self.logger.debug(f"Found a .dlist containing {dlist_str}: {dlist_dir}")
-                    self.logger.debug(f"Searching uncommented directores in {dlist_url}")
-                    with requests.get(dlist_url) as resp:
-                        if resp.status_code != 200:
-                            self.logger.error(f"Cannot read {dlist_url}, resp.status_code = {resp.status_code}")
-                            return
-                        if dlist_str in resp.text:
-                            for line in (r.decode('utf-8') for r in resp.iter_lines()):
-                                self.logger.debug(f"{line}")
-                                if not line.startswith('#'):
-                                    mission_dir = os.path.join(file_base, dlist_dir, line)
-                                    mission_dods = os.path.join(dods_base, dlist_dir, line)
-                                    url = self._get_mission_url(nc_str, mission_dir, mission_dods)
-                                    if url:
+        file_base = f'http://dods.mbari.org/data/lrauv/{platform}/missionlogs/{mission_year}'
+        dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{mission_year}'
+        self.logger.info(f"Looking in {file_base} for .dlist files containing string '{dlist_str}'")
+        soup = BeautifulSoup(urlopen(file_base).read(), 'lxml')
+        for link in soup.find_all('a'):
+            if '.dlist' in link.get('href'):
+                dlist_dir = link.get('href').split('/')[-1].split('.')[0]
+                dlist_url = os.path.join(file_base, f"{dlist_dir}.dlist")
+                self.logger.debug(f"Cheking if {platform}/missionlogs/{startdate.year}/{dlist_dir}.dlist contains '{dlist_str}'")
+                with requests.get(dlist_url) as resp:
+                    if resp.status_code != 200:
+                        self.logger.error(f"Cannot read {dlist_url}, resp.status_code = {resp.status_code}")
+                        return
+                    if dlist_str in resp.text:
+                        self.logger.debug(f"Found a .dlist containing {dlist_str}: {dlist_dir}")
+                        self.logger.debug(f"Searching uncommented directores in {dlist_url}")
+                        for line in (r.decode('utf-8') for r in resp.iter_lines()):
+                            self.logger.debug(f"{line}")
+                            if not line.startswith('#'):
+                                mission_dir = os.path.join(file_base, dlist_dir, line)
+                                mission_dods = os.path.join(dods_base, dlist_dir, line)
+                                url = self._get_mission_url(nc_str, mission_dir, mission_dods)
+                                if url:
+                                    dts = dlist_dir.split('_')
+                                    dir_start =  datetime.strptime(dts[0], '%Y%m%d')
+                                    dir_end =  datetime.strptime(dts[1], '%Y%m%d')
+                                    # Grab the valid urls for all log files in a .dlist directory that fall within startdata and enddate
+                                    if ( (startdate <= dir_start and dir_start <= enddate) or (startdate <= dir_end and dir_end <= enddate) ):
                                         self.logger.info(f"Adding {url} to urls list")
                                         urls.append(url)
-                                    else:
-                                        # Check .log file contents to confirm that we expect a url (.nc file)
-                                        log_url = self._get_mission_url(nc_str[:-2] + 'log', mission_dir, mission_dods)
-                                        log_reason = self._scieng_file_state(log_url)
-                                        self.logger.debug(f"The .log file indication for .nc file: {log_reason}")
-                                        if log_reason == 'should_be_present':
-                                            self.logger.warn(f"Could not find {nc_str} file in {mission_dods}, it {log_reason}")
+                                else:
+                                    # Check .log file contents to confirm that we expect a url (.nc file)
+                                    log_url = self._get_mission_url(nc_str[:-2] + 'log', mission_dir, mission_dods)
+                                    log_reason = self._scieng_file_state(log_url)
+                                    self.logger.debug(f"The .log file indication for .nc file: {log_reason}")
+                                    if log_reason == 'should_be_present':
+                                        self.logger.warn(f"Could not find {nc_str} file in {mission_dods}, it {log_reason}")
         return urls
 
     def build_lrauv_attrs(self, mission_year, platform, startdate, enddate, parameters, file_patterns,
@@ -1439,6 +1454,7 @@ class CANONLoader(LoadScript):
         years. We'd like to keep the files portion of the string short as it's the mouse-over text 
         in the UI
         '''
+
         base = f'http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{mission_year}/'
         dods_base = f'http://dods.mbari.org/opendap/data/lrauv/{platform}/missionlogs/{mission_year}/'
         if sbd_logs:
@@ -1452,13 +1468,12 @@ class CANONLoader(LoadScript):
         urls = []
         try:
             if dlist_str:
-                urls += self.find_lrauv_urls_by_dlist_string(dlist_str, platform=platform,
-                                                             start_year=startdate.year,
-                                                             end_year=enddate.year)
+                urls += self.find_lrauv_urls_by_dlist_string(dlist_str, platform,
+                                                             startdate, enddate, mission_year)
             else:
                 urls += self.find_lrauv_urls(base, file_patterns, startdate, enddate)
             files = []
-            if len(urls) > 0 :
+            if len(urls) > 0:
                 for url in sorted(urls):
                     if 'shore_i' in url:
                         file = '/'.join(url.split('/')[-3:])
@@ -1470,6 +1485,8 @@ class CANONLoader(LoadScript):
             setattr(self, platform  + '_startDatetime', startdate)
             setattr(self, platform + '_endDatetime', enddate)
 
+        except urllib.error.HTTPError as e:
+            self.logger.warn(f'{e}')
         except FileNotFound as e:
             self.logger.warn(f'{e}')
             if err_on_missing_file:

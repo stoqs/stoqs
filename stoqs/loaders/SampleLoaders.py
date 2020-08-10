@@ -18,7 +18,7 @@ from django.conf import settings
 from django.contrib.gis.geos import LineString, Point
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.db.models import Q, Min, Max, Avg
-from django.db.utils import IntegrityError
+from django.db.utils import IntegrityError, DataError
 
 from stoqs.models import (Activity, InstantPoint, Sample, SampleType, Resource,
                           SamplePurpose, SampleRelationship, Parameter, SampledParameter,
@@ -341,14 +341,10 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return sample_act, sample_ip, point, depth, maptrack
 
-    def _read_syslog(self, url):
+    def _read_syslog(self, url, levels=('IMPORTANT',), components=('ESPComponent',)):
         syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
-        self.logger.info(f"Getting ESP Sample information from {syslog_url} - first parsing into a json structure")
+        self.logger.info(f"Getting {levels} {components} information from {syslog_url}")
         log_rows = []
-
-        # Pull out only these log messages from the syslog
-        components = ('ESPComponent', )
-        levels = ('IMPORTANT', )
 
         with requests.get(syslog_url, stream=True) as resp:
             if resp.status_code != 200:
@@ -417,12 +413,13 @@ class ParentSamplesLoader(STOQS_Loader):
         Construct a TethysDash REST URL that looks like:
         https://okeanids.mbari.org/TethysDash/api/events?vehicles=tethys&from=2018-09-08T00:00&to=2018-09-08T06:00&eventTypes=logImportant&limit=1000
         Query it to build information on each sample in the url.
-        Note: The TethysDash database behind this REST URL is used for real-time command and control and is susiceptible to lost messages.
+        Note: The TethysDash database behind this REST URL is used for real-time command and control and is susceptible to lost messages.
               More complete information is in the syslog files.  Let's try and reuse this code by building a similar json data structure from the syslog.
         '''
         esp_s_filtering = []
         esp_s_stopping = []
         esp_log_summaries = []
+        esp_log_criticals = []
 
         FILTERING = 'ESP sampling state: S_FILTERING'
         PROCESSING = 'ESP sampling state: S_PROCESSING'
@@ -430,11 +427,12 @@ class ParentSamplesLoader(STOQS_Loader):
 
         if use_syslog:
             log_important = self._read_syslog(url)
+            log_critical = self._read_syslog(url, levels=('CRITICAL',))
         else:
             log_important = self._read_tethysdash(platform_name, url)
 
-        if not log_important:
-            return esp_s_filtering, esp_s_stopping, esp_log_summaries 
+        if not log_important and not log_critical:
+            return esp_s_filtering, esp_s_stopping, esp_log_summaries, esp_log_criticals 
 
         Log = namedtuple('Log', 'esec text')
         try:
@@ -449,6 +447,10 @@ class ParentSamplesLoader(STOQS_Loader):
             esp_log_summaries = [Log(d['unixTime']/1000.0, d['text']) for d in log_important if LOGSUMMARY in d['text']]
         except KeyError:
             self.logger.debug(f"No '{lsr_num_messages_re}' messages found in syslog for {url}")
+        try:
+            esp_log_criticals = [Log(d['unixTime']/1000.0, d['text']) for d in log_critical]
+        except KeyError:
+            self.logger.debug(f"No 'critical' messages found in syslog for {url}")
 
         if esp_s_filtering and esp_s_stopping and esp_log_summaries:
             self.logger.info(f"Parsed {len(esp_log_summaries)} Samples (esp_log_summaries) from syslog for {url}")
@@ -471,9 +473,9 @@ class ParentSamplesLoader(STOQS_Loader):
         else:
             self.logger.info(f"No ESP Samples parsed from syslog for {url}")
 
-        return esp_s_filtering, esp_s_stopping, esp_log_summaries 
+        return esp_s_filtering, esp_s_stopping, esp_log_summaries, esp_log_criticals
 
-    def _validate_summaries(self, filterings, stoppings, summaries):
+    def _validate_summaries(self, platform_name, filterings, stoppings, summaries, criticals):
         '''Ensure that there are the same number of items in filterings, stoppings, summaries and 
         that the sample #s match.  If not then attempt to repair with appropriate warnings.
         '''
@@ -497,27 +499,130 @@ class ParentSamplesLoader(STOQS_Loader):
                 filter_nums.append(ms.groupdict().get('seq_num'))
                 stop_nums.append(me.groupdict().get('seq_num'))
 
-            # 1. Correct case where we have an extra summary
+            # 1. Correct case where we have more summaries than filterings
             if len(summaries) > len(filterings):
                 to_del = []
+                self.logger.info(f"len(summaries) > len(filterings). Checking that numbers in filter_nums match '{sampling_start_re}'")
                 for index, summary in enumerate(summaries):
                     lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
                     if lsr_seq_num.groupdict().get('seq_num') not in filter_nums:
-                        self.logger.warn(f"Summary {summary} number not found in filterings: {filterings}")
+                        self.logger.warn(f"Sample seq_num ({lsr_seq_num.groupdict().get('seq_num')}) not found in filter_nums: {filter_nums}")
+                        self.logger.warn(f"Likely an error for this cartridge: {summary.text}")
+                        lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE).groupdict().get('cartridge_number')
+                        self.logger.info(f"Not loading Cartridge {lsr_cartridge_number} at index {index}")
+                        crit_err = ''
+                        for lc in criticals:
+                            lc_seq_num = re.search(lsr_seq_num_re, lc.text, re.MULTILINE)
+                            if lsr_seq_num.groupdict().get('seq_num') == lc_seq_num.groupdict().get('seq_num'):
+                                crit_err = lc.text
+                                break
+                        self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Not saving, no corresponding"
+                                         f" {no_num_sampling_start_re} for [sample #{lsr_seq_num.groupdict().get('seq_num')}]"
+                                         f" perhaps error indicated in summary.text: {summary.text!r} and"
+                                         f" critical error message: {crit_err!r}")
                         to_del.append(index)
+
+                        # Check for repeated 'Selecting Cartridge' in summary.text and report Disposition
+                        occurrences = 0
+                        while index < len(summary.text):
+                            index = summary.text.find('Selecting Cartridge', index)
+                            if index == -1:
+                                break
+                            occurrences += 1
+                            if occurrences > 1:
+                                lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text[index:], re.MULTILINE).groupdict().get('cartridge_number')
+                                self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Not saving, repeated entry"
+                                                 f" in [sample #{lsr_seq_num.groupdict().get('seq_num')}], see summarytext: {summary.text!r}")
+                            index += len('Selecting Cartridge')
 
                 for index in reversed(to_del):
                     self.logger.info(f"Deleting index {index} from summaries list")
                     del summaries[index]
 
+            # 2. Report case where we have more summaries than stoppings
+            if len(summaries) > len(stoppings):
+                self.logger.info(f"len(summaries) > len(stoppings). Checking that numbers in stop_nums match '{sampling_end_re}'")
+                to_del = []
+                for index, summary in enumerate(summaries):
+                    lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
+                    if lsr_seq_num.groupdict().get('seq_num') not in stop_nums:
+                        for lc in criticals:
+                            lc_seq_num = re.search(lsr_seq_num_re, lc.text, re.MULTILINE)
+                            if lsr_seq_num.groupdict().get('seq_num') == lc_seq_num.groupdict().get('seq_num'):
+                                lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE).groupdict().get('cartridge_number')
+                                self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Not saving, no corresponding"
+                                                 f" {no_num_sampling_end_re} for [sample #{lsr_seq_num.groupdict().get('seq_num')}] and critical"
+                                                 f" error message: {lc.text!r}")
+                                to_del.append(index)
+
+                for index in reversed(to_del):
+                    self.logger.info(f"Deleting index {index} from summaries list")
+                    del summaries[index]
+
+        # Check for and remove duplicate sample #s as in:
+        # http://dods.mbari.org/data/lrauv/daphne/missionlogs/2019/20190520_20190524/20190523T195841/syslog
+        num_dict = defaultdict(lambda:0)
+        for filtering, stopping, summary in zip(filterings, stoppings, summaries):
+            try:
+                fi_num = filtering.text.split(']')[0].split('#')[1]
+                st_num = stopping.text.split(']')[0].split('#')[1]
+                su_num = summary.text.split(']')[0].split('#')[1]
+                if fi_num == st_num == su_num:
+                    num_dict[fi_num] += 1
+            except IndexError:
+                self.logger.warning(f"Likely ESP state messages without 'sample #' text")
+                self.logger.info(f"filtering.text = {filtering.text}")
+                self.logger.info(f"stopping.text = {stopping.text}")
+                self.logger.info(f"summary.text = {summary.text}")
+
+        to_del = []
+        for num, count in num_dict.items():
+            if count > 1:
+                self.logger.warning(f"[sample #{num}] found more that once ({count}) in syslog")
+                # Find maximum length summary text
+                max_summ_len = 0
+                for index, summary in enumerate(summaries):
+                    lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
+                    if lsr_seq_num.groupdict().get('seq_num') == num:
+                        if len(summary.text) > max_summ_len:
+                            max_summ_len = len(summary.text)
+
+                for index, summary in enumerate(summaries):
+                    lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
+                    if lsr_seq_num.groupdict().get('seq_num') == num:
+                        self.logger.info(f"index {index:3}: summary.text = {summary.text}")
+                        if len(summary.text) < max_summ_len:
+                            self.logger.info(f"Will delete shorter summary.text with index = {index}")
+                            to_del.append(index)
+
+        for index in reversed(to_del):
+            self.logger.info(f"Deleting index {index} from filtering, stoppings, andsummaries lists")
+            del filterings[index]
+            del stoppings[index]
+            del summaries[index]
+
+        for summary in summaries:
+            try:
+                lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE).groupdict().get('cartridge_number')
+            except AttributeError:
+                self.logger.debug(f"Cannot parse Cartridge number from {summary.text}")
+                continue
+            lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
+            try:
+                self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Passed validation, marked for saving"
+                                 f" [sample #{lsr_seq_num.groupdict().get('seq_num')}]")
+            except AttributeError:
+                self.logger.warn(f"Likely lsr_seq_num ({lsr_seq_num}) is None and this log is before 'sample #' was implemented completely")
+                self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Passed validation, marked for saving")
+
         return filterings, stoppings, summaries
 
-    def _match_seq_to_cartridge(self, filterings, stoppings, summaries):
+    def _match_seq_to_cartridge(self, filterings, stoppings, summaries, before_seq_num_implemented=False):
         '''Take lists from parsing TethysDash log and build Sample names list with start and end times
         '''
         # Loop through exctractions from syslog to build dictionary
         sample_names = defaultdict(SampleInfo)
-        for filtering, stopping, summary in zip(reversed(filterings), reversed(stoppings), reversed(summaries)):
+        for filtering, stopping, summary in zip(filterings, stoppings, summaries):
             self.logger.debug(f"summary = {summary}")
             ms = (re.match(sampling_start_re, filtering.text) or 
                   re.match(no_num_sampling_start_re, filtering.text))
@@ -536,7 +641,9 @@ class ParentSamplesLoader(STOQS_Loader):
 
             # Ensure that sample # (seq) numbers match
             try:
-                if not (ms.groupdict().get('seq_num') == me.groupdict().get('seq_num') == lsr_seq_num.groupdict().get('seq_num')):
+                if before_seq_num_implemented:
+                    self.logger.info(f"This log is before seq_num was implemented - not checking for match")
+                elif not (ms.groupdict().get('seq_num') == me.groupdict().get('seq_num') == lsr_seq_num.groupdict().get('seq_num')):
                     self.logger.warn(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
             except AttributeError:
                 if filtering and stopping and not lsr_seq_num:
@@ -547,7 +654,10 @@ class ParentSamplesLoader(STOQS_Loader):
             else:
                 try:
                     sample_name = f"Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')}"
-                    self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}")
+                    if lsr_seq_num:
+                        self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}")
+                    else:
+                        self.logger.info(f"(No 'sample #' match) sample_name = {sample_name}")
                 except AttributeError:
                     # This should not happen. ESP log summary report should have a number of messages separated by newlines.
                     # - the TethysDash should deliver these messages in summary.text
@@ -646,7 +756,7 @@ class ParentSamplesLoader(STOQS_Loader):
 
         # Loop through exctractions from syslog to build dictionary
         sipper_names = defaultdict(SampleInfo)
-        for sample_at, sample_num_err in zip(reversed(samplings_at), reversed(sample_num_errs)):
+        for sample_at, sample_num_err in zip(samplings_at, sample_num_errs):
             self.logger.debug(f"sample_at = {sample_at}")
             sne = re.match(SIPPER_NUM_ERR, sample_num_err.text)
             sample_name = f"Sipper {sne.groupdict().get('sipper_num')}"
@@ -662,7 +772,7 @@ class ParentSamplesLoader(STOQS_Loader):
     def _save_samples(self, db_alias, platform_name, activity_name, sampletype, samples, log_text):
         # Load Samples and sample.text as a Resource associated with the Sample
         for sample_name, sample in samples.items():
-            self.logger.debug(f"Calling _create_activity_instantpoint_platform() for sample_name={sample_name}")
+            self.logger.info(f"Calling _create_activity_instantpoint_platform() for sample_name={sample_name}")
             try:
                 act, ip, point, depth, maptrack = self._create_activity_instantpoint_platform(
                                                 db_alias, platform_name, 
@@ -674,13 +784,18 @@ class ParentSamplesLoader(STOQS_Loader):
             if not act:
                 continue
 
-            samp, _ = (Sample.objects.using(db_alias).get_or_create( 
+            try:
+                samp, _ = (Sample.objects.using(db_alias).get_or_create( 
                             name = sample_name,
                             instantpoint = ip,
                             geom = point,
                             depth = depth,
                             sampletype = sampletype,
                             volume = sample.volume))
+            except DataError as e:
+                self.logger.error(f"{e}")
+                self.logger.info(f"It's possible that the sample_name is too long: {sample_name}")
+                raise
 
             # Update Activity with point and track of the Sampling event
             act.mappoint = point
@@ -699,9 +814,19 @@ class ParentSamplesLoader(STOQS_Loader):
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
         '''
 
-        filterings, stoppings, summaries = self._esps_from_json(platform_name, url, db_alias)
-        filterings, stoppings, summaries = self._validate_summaries(filterings, stoppings, summaries)
-        esp_names = self._match_seq_to_cartridge(filterings, stoppings, summaries)
+        filterings, stoppings, summaries, criticals = self._esps_from_json(platform_name, url, db_alias)
+        filterings, stoppings, summaries = self._validate_summaries(platform_name, filterings, stoppings, summaries, criticals)
+
+        # After 14 August 2018 a 'sample #<num>' is included in the log message:
+        # https://bitbucket.org/mbari/lrauv-application/pull-requests/76/add-sample-to-all-logimportant-entries/diff
+        # Before then don't require a seq_num match
+        before_seq_num_implemented = False
+        if datetime.strptime(url.split('/')[-1][:8], '%Y%m%d') < datetime(2018, 8, 14):
+            before_seq_num_implemented = True
+        esp_names = None
+        if filterings and stoppings and summaries:
+            esp_names = self._match_seq_to_cartridge(filterings, stoppings, summaries, 
+                                                     before_seq_num_implemented=before_seq_num_implemented)
 
         samplings_at, sample_num_errs = self._sippers_from_json(platform_name, url)
         sipper_names = self._match_sippers(samplings_at, sample_num_errs)

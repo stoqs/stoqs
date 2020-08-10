@@ -1867,6 +1867,8 @@ class STOQSQManager(object):
                         self.max_end_time = act.enddate
                     # Set self.mpq.qs_mp to None to bypass the Singleton nature of MPQuery and have _build_mpq_queryset() build new self.mpq items
                     self.mpq.qs_mp = None
+                    if saved_activitynames and act.name not in saved_activitynames:
+                        continue
                     self.kwargs['activitynames'] = [act.name]
                     parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
                     logger.info(f"Getting dataValues for pns='{pns}', act.name='{act.name}'")

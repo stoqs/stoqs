@@ -314,7 +314,7 @@
                                                                 <span>Lines</span>
                                                             </label>
                                                             <label class="checkbox" style="display:none;">
-                                                                <input type="checkbox" id="showfaces" checked />
+                                                                <input type="checkbox" id="showfaces" />
                                                                 <span>Polygons</span>
                                                             </label>
                                                         </form>
@@ -995,7 +995,8 @@
                                             <div class="span2">
                                                 <button id="show-all-parameters" hidden><span class="text">Show all Parameters</span></button>&nbsp;
                                             </div>
-                                            <div id="stride-info" class="span8"></div>
+                                            <div id="stride-info" class="span7" style="background-color: rgb(192, 211, 228)" ></div>
+                                            <div class="span1"></div>
                                         </div>
                                         <div id="time-parameter-flot" style="width:100%;height:90%;" class="disabled"></div>
                                         <div class="row-fluid">
@@ -1507,7 +1508,7 @@
     var runtime = null;
     var rtLeft, rtRight;
     var lastW, lastH;
-    var num_pt_colors = 16;
+    var num_pt_colors = 10;
     var render_shapes = {};
     var all_shapes = {};
     var frac_esec;
@@ -1524,6 +1525,9 @@
         });
         $.each($('#platform-animations > orientationinterpolator'), function(index, oi) {
             oi.setFieldValue('set_fraction', ts_fraction);
+        });
+        $.each($('#platform-animations > coordinateinterpolator'), function(index, ci) {
+            ci.setFieldValue('set_fraction', ts_fraction);
         });
     }
 
@@ -1910,11 +1914,13 @@
         var symbols = '';
         if ( ! $.isEmptyObject($('body').data().parameterplatforms[p]) ) {
             $.each($('body').data().parameterplatforms[p], function(index, plat) {
-                if ($('body').data().platformFeatureTypes[plat].toLowerCase() === 'trajectory') {
-                    symbols += '<span style="color:#' + $('body').data().platformColors[plat] + '">|</span>';
-                }
-                else {
-                    symbols += '<span style="color:#' + $('body').data().platformColors[plat] + '">*</span>';
+                if ( ! $.isEmptyObject($('body').data().platformFeatureTypes[plat]) ) {
+                    if ($('body').data().platformFeatureTypes[plat].toLowerCase() === 'trajectory') {
+                        symbols += '<span style="color:#' + $('body').data().platformColors[plat] + '">|</span>';
+                    }
+                    else {
+                        symbols += '<span style="color:#' + $('body').data().platformColors[plat] + '">*</span>';
+                    }
                 }
             });
             e.html(symbols);
@@ -2794,19 +2800,10 @@
     });
 
     $('input[name="showdataas"]').on('click', function (event) {
-        // Don't need to get everything from queryData, only the response with the PNG image
         if ($('#showgeox3dmeasurement').is(':checked')) {
-            if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
-                $('#showlines').parent().show();
-                $('#showpoints').parent().show();
-                $('#showfaces').parent().show();
-                $('#showfaces').css({'cursor' : 'auto'});
-                $('#showfaces').prop('disabled', false);
-                $('#showfaces').removeAttr('title');
-            }
+            // Don't need to get everything from queryData, but do need to add the x3d responses
             if ($('input:radio[name=showdataas]:checked').val() == 'scatter') {
-                rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
+                rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
                 $('#showlines').parent().show();
                 $('#showfaces').parent().show();
                 $('#showpoints').parent().show();
@@ -2815,12 +2812,21 @@
                 $('#showfaces').prop('disabled', true);
                 $('#showfaces').prop('checked', false);
                 $('#showfaces').attr('title', 'Click \'contour\' to enable');
+                $('#curtain-animations')[0].setAttribute('render', false);
             }
-            else {
-                rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
+            else if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+                rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
+                $('#showlines').parent().show();
+                $('#showpoints').parent().show();
+                $('#showfaces').parent().show();
+                $('#showfaces').css({'cursor' : 'auto'});
+                $('#showfaces').prop('disabled', false);
+                $('#showfaces').removeAttr('title');
+                $('#curtain-animations')[0].setAttribute('render', true);
             }
         }
         else {
+            // Don't need to get everything from queryData, only the response with the PNG image
             rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
         }
     });
@@ -2828,18 +2834,12 @@
     $('#showgeox3dmeasurement').on('change', function (event) {
         if ( $('#showgeox3dmeasurement').is(':checked') ) {
             $('#track-animations')[0].setAttribute('render', true);
-            $('#curtain-animations')[0].setAttribute('render', true);
+            $('#curtain-animations')[0].setAttribute('render', false);
             $('#points-animations')[0].setAttribute('render', true);
             $('input[name="show-mp-3d"]').parent().parent().parent().show()
             // Don't need to get everything from queryData, only the response with the X3D data
-            if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['curtainx3d', 'measuredparameterx3d']);
-                $('#showlines').parent().show();
-                $('#showfaces').parent().show();
-                $('#showpoints').parent().show();
-            }
             if ($('input:radio[name=showdataas]:checked').val() == 'scatter') {
-                rebuildFilters(['curtainx3d', 'measuredparameterx3d']);
+                rebuildFilters(['measuredparameterx3d']);
                 $('#showlines').parent().show();
                 $('#showpoints').parent().show();
                 // disabling polygon box when scatter is selected
@@ -2849,8 +2849,11 @@
                 $('#showfaces').prop('checked', false);
                 $('#showfaces').attr('title', 'Click \'contour\' to enable');
             }
-            else {
-                rebuildFilters(['measuredparameterx3d']);
+            else if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
+                rebuildFilters(['curtainx3d', 'measuredparameterx3d']);
+                $('#showpoints').parent().show();
+                $('#showlines').parent().show();
+                $('#showfaces').parent().show();
             }
         }
         else {
@@ -4541,7 +4544,7 @@ function enable_cardboard(){
 
         updateTemporal(false);
         rebuildFilters();
-        $('#time-depth-instr').html('Click and drag to zoom, right-click to un-zoom');
+        $('#time-depth-instr').html('Click and drag to zoom, right-click to undo');
 
     }
 
@@ -4661,7 +4664,12 @@ function enable_cardboard(){
                 var esec = parseInt(es);
                 if (bin_start <= esec && esec <= bin_end) {
                     $.each(shape_ids, function(index, shape_id) {
-                        render_shapes[grp_esec]['shapes'].push(shape_id);
+                        if ( $.inArray(shape_id, render_shapes[grp_esec]['shapes']) == -1 ) {
+                            render_shapes[grp_esec]['shapes'].push(shape_id);
+                            if ( shape_id.startsWith('ils') ) {
+                                render_shapes[grp_esec]['shapes'].push(shape_id.replace('ils', 'ps'));
+                            }
+                        }
                     });
                 }
 
@@ -4713,7 +4721,7 @@ function enable_cardboard(){
             }
         }
 
-        $('#time-parameter-instr').html('Click and drag zoom, right-click to un-zoom');
+        $('#time-parameter-instr').html('Click and drag zoom, right-click to undo');
     });
     $("#time-parameter-flot").bind("contextmenu",  ZoomOut);
 
@@ -5659,15 +5667,9 @@ function enable_cardboard(){
                     console.log('Setting series.points.show = true because "' + parmData.dataset[0].label + '": is single valued');
                     options.series.points.show = true;
                 }
-                timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, options);
 
                 recolorParameterTime($('input:radio[name=pt-colors]:checked').val());
 
-                $.each(timeparameterplot.getData(), function(index, series) {
-                    // TODO: color the lables
-                    series.label;
-                    series.color;
-                });
                 if ( ! $.isEmptyObject(data.parametertime.strides) ) {
                     // Sort by the Parameter names
                     var k, parameters = [], ik;
@@ -5689,7 +5691,7 @@ function enable_cardboard(){
                             continue;
                         }
                         $.each(act_value, function(act, value) {
-                            parm_act_html = '<b>' + parameters[ik] + '</b>: every ' + getValueOrdinal(value) + ' point from ' + act + '<br>';
+                            parm_act_html = '<span><b>' + parameters[ik] + '</b></span>: every ' + getValueOrdinal(value) + ' point from ' + act + '<br>';
                             parm_act_count += 1
                             if ( parm_act_count <= initial_parm_act_count ) {
                                 initial_text_html += parm_act_html;
@@ -5715,6 +5717,16 @@ function enable_cardboard(){
                         $('#stride-info').html(stride_html);
                     }
                 }
+
+                timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, options);
+                $.each(timeparameterplot.getData(), function(index, series) {
+                    $('#stride-info > div > span').each(function(index, elem) {
+                        if ( elem.textContent == series.label.split('-')[1].trim() ) {
+                            $(elem).css('color', series.color);
+                        }
+                    });
+                });
+
                 // Event data shown in plot may be inside original start-ems and end-ems bounds requested, update display with actual
                 var sd = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamin));
                 var ed = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamax));
@@ -6122,13 +6134,82 @@ function enable_cardboard(){
                 if ( ! $.isEmptyObject(data.measuredparameterx3d) ) {
                     merge_shape_id_dicts(data.measuredparameterx3d.shape_id_dict);
                     
+                    var ps_x3d_html = '';
                     var ils_x3d_html = '';
 
                     if($('#points-animations')[0].getAttribute('render')) {
                         $.each(data.measuredparameterx3d, function (shapeid, shapex3d) {
                             if ( ! $.isEmptyObject(shapex3d.points) ) {
-                                ils_x3d_html += '<Shape id="' + shapeid + '">' +
-                                        '<Appearance><PointProperties pointSizeScaleFactor="500"></PointProperties></Appearance>' +
+                                ps_x3d_html += '<Shape id="' + shapeid.replace('ils', 'ps') + '">' +
+                                        '<Appearance>' +
+                                            '<ImageTexture url="{{STATIC_URL}}images/circle_texture.png"></ImageTexture>' +
+                                            '<!--Material/-->' +
+                                            '<ComposedShader>' +
+                                            '    <! -- http://metagrid2.sv.vt.edu/~yansh93/archimedes_pp.html helps -->' +
+                                            '    <field id="minPointField" name="minPoint" type="SFFloat" value="0.1"></field>' +
+                                            '    <field id="maxPointField"  name="maxPoint"  type="SFFloat" value="30.0"></field>' +
+                                            '    <field id="scaleField" name="scale" type="SFFloat" value="20.0"></field>' +
+                                            '    <field id="attField" name="att" type="MFVec3f" value="[1.0, 0.0, 0.0]"></field>' +
+                                            '    <Field name="tex" type="SFInt32" value="0"></Field>' +
+                                            '' +
+                                            '    <ShaderPart type="VERTEX" style="display:none">\n' +
+                                            '        attribute vec3 position;\n' +
+                                            '        attribute vec3 color;\n' +
+                                            '        uniform mat4 modelViewMatrix;\n' +
+                                            '        uniform mat4 modelViewProjectionMatrix;\n' +
+                                            '        uniform vec3 bgSize;\n' +
+                                            '        uniform vec3 bgCenter;\n' +
+                                            '        uniform float bgPrecisionMax;\n' +
+                                            '        uniform float minPoint;\n' +
+                                            '        uniform float maxPoint;\n' +
+                                            '        uniform float scale;\n' +
+                                            '        uniform vec3 att;\n' +
+                                            '\n' +
+                                            '        varying vec3 col;\n' +
+                                            '        varying vec3 fragEyeVector;\n' +
+                                            '\n' +
+                                            '        void main()\n' +
+                                            '        {\n' +
+                                            '           vec3 vertPosition = bgCenter + bgSize * position.xyz / bgPrecisionMax;\n' +
+                                            '           gl_Position = modelViewProjectionMatrix * vec4(position, 1.0);\n' +
+                                            '           float depth = gl_Position.w;\n' +
+                                            '           gl_PointSize = clamp(scale*1.0 / (att.x + att.y*depth + att.z*depth*depth), minPoint, maxPoint);\n' +
+                                            '           fragEyeVector = -(modelViewMatrix * vec4(vertPosition, 0.0)).xyz;\n' + 
+                                            '           col = color;\n' +
+                                            '        }\n' +
+                                            '    </ShaderPart>\n' +
+                                            '\n' +
+                                            '    <ShaderPart type="FRAGMENT" style="display:none">\n' +
+                                            '        #ifdef GL_FRAGMENT_PRECISION_HIGH\n' +
+                                            '        precision highp float;\n' +
+                                            '        #else\n' +
+                                            '        precision mediump float;\n' +
+                                            '        #endif\n' +
+                                            '\n' +
+                                            '        uniform sampler2D tex;\n' +
+                                            '\n' +
+                                            '        varying vec3 col;\n' +
+                                            '        varying vec3 fragEyeVector;\n' +
+                                            '\n' +
+                                            '        void main()\n' +
+                                            '        {\n' +
+                                            '           //vec2 texCoord = clamp(gl_PointCoord, 0.01, 0.99);\n' +
+                                            '           vec4 texColor = texture2D(tex, gl_PointCoord);\n' +
+                                            '           vec4 color = vec4(col, 1.0);\n' +
+                                            '           vec2 cxy = gl_PointCoord * 2.0 - 1.0;\n' +
+                                            '           float r = dot(cxy, cxy);\n' +
+                                            '\n' +
+                                            '           if(texColor.a < 0.5)\n' +
+                                            '           {\n' +
+                                            '               discard;\n' +
+                                            '           }\n' +
+                                            '\n' +
+                                            '           gl_FragColor = color;\n' +
+                                            '        }\n' +
+                                            '\n' +
+                                            '                        </ShaderPart>\n' +
+                                            '                    </ComposedShader>' +
+                                        '</Appearance>' +
                                         '<pointset coordIndex="' + shapex3d.index + '">' +
                                             '<color color="' + shapex3d.colors + '"></color>' +
                                             '<geocoordinate point="' + shapex3d.points  + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>' +
@@ -6136,7 +6217,7 @@ function enable_cardboard(){
                                     '</Shape>'
                             }
                         });
-                        $('#points-animations').html(ils_x3d_html);
+                        $('#points-animations').html(ps_x3d_html);
                     }
                     
                     if($('#track-animations')[0].getAttribute('render')) {
@@ -6188,6 +6269,8 @@ function enable_cardboard(){
                                 '</Shape>'
                         }
                     });
+                    $('#showfaces').prop('checked', true);
+                    $('#curtain-animations')[0].setAttribute('render', true);
                     $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data.curtainx3d.colorbar + '" />');
                     $('#curtain-animations').html(curtainx3d_html);
                     if ( ! $('#animation3D').hasClass('in') ) {

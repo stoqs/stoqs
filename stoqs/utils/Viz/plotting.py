@@ -152,7 +152,7 @@ class BaseParameter(object):
 
         self.ticks = round_to_n(list(np.linspace(c_min, c_max, num=6)), 4)
         self.bounds = np.linspace(c_min, c_max, num_colors + 1)
-        self.norm = mpl.colors.BoundaryNorm(self.bounds, self.cm.N)
+        self.norm = mpl.colors.BoundaryNorm(self.bounds, num_colors)
 
         if num_colors == 8:
             self.ticks = self.bounds[::2]
@@ -588,8 +588,7 @@ class MeasuredParameter(BaseParameter):
                     ax.scatter(cx, cy, marker='.', s=2, c='k', lw = 0)
                 else:
                     self.logger.debug('parm_info = %s', parm_info)
-                    ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2],
-                               norm=self.norm)
+                    ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2], norm=self.norm)
                     # Draw any spanned data, e.g. NetTows
                     self.logger.debug(f"Drawing spanned data: {len(self.xspan)} samples")
                     for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):

@@ -55,8 +55,10 @@ class AutoLoad():
             self.logger.warning(f"Failed to load {self.loader.args.db}")
             return
 
-        self.logger.debug(f"Executing self.loader.updateprovenance()...")
-        self.loader.updateprovenance()
+        if not self.args.append:
+            self.logger.debug(f"Executing self.loader.updateprovenance()...")
+            self.loader.updateprovenance()
+
         self.logger.debug(f"Executing self.loader.pg_dump()...")
         self.loader.pg_dump()
 
@@ -85,6 +87,10 @@ class AutoLoad():
         self.loader.args.test = self.args.test
         self.loader.args.verbose = self.args.verbose
         self.loader.args.drop_if_fail = True
+        if self.args.append:
+            self.loader.args.append = True
+            self.loader.args.startdate = datetime.utcnow().strftime("%Y%m%d")
+            self.args.startdate = self.loader.args.startdate
 
         if self.args.YYYYMM:
             self._update_campaigns(int(self.args.YYYYMM[:4]))
@@ -95,15 +101,20 @@ class AutoLoad():
             for year in range(int(self.args.start_YYYYMM[:4]), int(self.args.end_YYYYMM[:4]) + 1):
                 self._update_campaigns(year)
             # Second, execute the loads
-            for year in range(int(self.args.start_YYYYMM[:4]), int(self.args.end_YYYYMM[:4]) + 1):
-                if year == int(self.args.start_YYYYMM[:4]):
+            start_year = int(self.args.start_YYYYMM[:4])
+            end_year = int(self.args.end_YYYYMM[:4])
+            for year in range(start_year, end_year + 1):
+                if year == start_year and year == end_year:
+                    for month in range(int(self.args.start_YYYYMM[4:]), int(self.args.end_YYYYMM[4:]) + 1):
+                        self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
+                elif year == start_year:
                     for month in range(int(self.args.start_YYYYMM[4:]), 13):
                         self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
-                if year != int(self.args.start_YYYYMM[:4]) and year != int(self.args.end_YYYYMM[:4]):
+                elif year != start_year and year != end_year:
                     for month in range(1, 13):
                         self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
-                if year == int(self.args.end_YYYYMM[:4]):
-                    for month in range(1, int(self.args.end_YYYYMM[4:])):
+                elif year == end_year:
+                    for month in range(1, int(self.args.end_YYYYMM[4:]) + 1):
                         self._do_the_load(self._YYYYMM_to_monyyyy(f"{year}{month:02d}"))
 
         elif self.args.previous_month:
@@ -129,6 +140,8 @@ class AutoLoad():
         parser.add_argument('--test', action='store_true', help='Load test database(s)')
         parser.add_argument('--realtime', action='store_true', help='Load realtime data')
         parser.add_argument('--missionlogs', action='store_true', help='Load delayed mode (missionlogs) data')
+        parser.add_argument('--append', action='store_true', help='Append data to existting database')
+        parser.add_argument('--startdate', help='Startdate in YYYYMMDD format for appending data')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, 
                             help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
 

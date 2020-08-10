@@ -55,18 +55,18 @@ sn_lookup = {
              'oxygen': 'mass_concentration_of_oxygen_in_sea_water',
             }
 
-logger = logging.getLogger(__name__)
-sh = logging.StreamHandler()
-f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
-sh.setFormatter(f)
-logger.addHandler(sh)
-logger.setLevel(logging.DEBUG)
 
 class MissingCoordinate(Exception):
     pass
 
 
 class InterpolatorWriter(BaseWriter):
+    logger = logging.getLogger(__name__)
+    sh = logging.StreamHandler()
+    f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
+    sh.setFormatter(f)
+    logger.addHandler(sh)
+    logger.setLevel(logging.DEBUG)
 
     df = []
     all_sub_ts = {}
@@ -127,7 +127,7 @@ class InterpolatorWriter(BaseWriter):
                 raise
 
         # Create the NetCDF file
-        logger.debug("Creating netCDF file %s", out_file)
+        self.logger.debug("Creating netCDF file %s", out_file)
         self.ncFile = Dataset(out_file, 'w')
 
         # Lead the title with the Deployment Name form the .dlist file - if it exists
@@ -152,7 +152,7 @@ class InterpolatorWriter(BaseWriter):
                 ts = self.all_sub_ts[key]
 
                 if not ts.empty:
-                    logger.debug("Adding in record variable %s", key)
+                    self.logger.debug("Adding in record variable %s", key)
                     v = self.initRecordVariable(key)
                     v[:] = self.all_sub_ts[key].values
             else:
@@ -164,14 +164,14 @@ class InterpolatorWriter(BaseWriter):
 
             if not ts.empty:
                 try:
-                    logger.debug("Adding in record variable %s", key)
+                    self.logger.debug("Adding in record variable %s", key)
                     v = self.initRecordVariable(key)
                     v[:] = self.all_sub_ts[key].values
                 except Exception as e:
-                    logger.error(e)
+                    self.logger.error(e)
                     continue
 
-        logger.debug("Adding in global metadata")
+        self.logger.debug("Adding in global metadata")
         self.add_global_metadata()
         if getattr(self, 'segment_count', None) and getattr(self, 'segment_minsum', None):
             self.ncFile.summary += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward GPS fixes"
@@ -192,7 +192,7 @@ class InterpolatorWriter(BaseWriter):
         x = np.asarray(times,dtype=np.float64)
         if np.any(np.diff(x) <= 0):
             x, counts = np.unique(x, return_counts=True)
-            logger.warning(f"Repeated values found in x array, counts = {counts}")
+            self.logger.warning(f"Repeated values found in x array, counts = {counts}")
 
         xp = np.asarray(data.index,dtype=np.float64)
         fp = np.asarray(data)
@@ -237,9 +237,10 @@ class InterpolatorWriter(BaseWriter):
         if fstart and fend:
             out_of_file_time_values = np.where((v_t[:] < fstart.timestamp()) | (v_t[:] > fend.timestamp()))[0]
             if out_of_file_time_values.any():
-                logger.info(f"{name}: v_t values found before {fstart} and after {fend}: {out_of_file_time_values}")
-                logger.info(f"Their times:  {[time.ctime(ti) for ti in v_t[out_of_file_time_values]]}")
-                logger.info(f"Removing them: {v_t[out_of_file_time_values]} for variable {name}")
+                self.logger.info(f"{name:9s}: {len(out_of_file_time_values):4d} v_t values found before {fstart} and after {fend}")
+                self.logger.debug(f"{name}: v_t values found before {fstart} and after {fend}: {out_of_file_time_values}")
+                self.logger.debug(f"Their times:  {[time.ctime(ti) for ti in v_t[out_of_file_time_values]]}")
+                self.logger.debug(f"Removing them: {v_t[out_of_file_time_values]} for variable {name}")
                 v_t = np.delete(v_t, out_of_file_time_values)
                 v = np.delete(v, out_of_file_time_values)
 
@@ -338,7 +339,7 @@ class InterpolatorWriter(BaseWriter):
         end = ts.index[-1]
 
         if pd.isnull(start) or pd.isnull(end):
-            logger.info('Invalid starting or ending time found. Searching for valid time range')
+            self.logger.info('Invalid starting or ending time found. Searching for valid time range')
             selector = np.where(~pd.isnull(ts.index))
 
             if len(selector) > 2:
@@ -365,7 +366,7 @@ class InterpolatorWriter(BaseWriter):
         try:
             self.df = pydap.client.open_url(url)
         except socket.error as e:
-            logger.error('Failed in attempt to open_url(%s)', url)
+            self.logger.error('Failed in attempt to open_url(%s)', url)
             raise e
 
         # Create pandas time series for each parameter and store attributes
@@ -379,9 +380,9 @@ class InterpolatorWriter(BaseWriter):
                 self.all_coord[key] = {'time':'time','depth':'depth','latitude':'latitude','longitude':'longitude'}
                 parm_valid.append(key)
                 all_ts[key] = ts
-                logger.info('Found parameter ' + key)
+                self.logger.info('Found parameter ' + key)
             except KeyError as e:
-                logger.info('Key error on parameter ' + key)
+                self.logger.info('Key error on parameter ' + key)
                 continue
 
         # Create another pandas time series for each coordinate
@@ -390,7 +391,7 @@ class InterpolatorWriter(BaseWriter):
                 ts = self.createSeriesPydap(key, key + '_time')
                 all_ts[key] = ts
             except KeyError as e:
-                logger.info('Key error on coordinate ' + key)
+                self.logger.info('Key error on coordinate ' + key)
                 raise e
 
         # create independent lat/lon/depth profiles for each parameter
@@ -453,11 +454,11 @@ class InterpolatorWriter(BaseWriter):
             self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
 
-        logger.info("%s", list(self.all_sub_ts.keys()))
+        self.logger.info("%s", list(self.all_sub_ts.keys()))
 
         # Write data to the file
         self.write_netcdf(out_file, url)
-        logger.info('Wrote ' + out_file)
+        self.logger.info('Wrote ' + out_file)
 
         # End processSingleParm
 
@@ -482,16 +483,16 @@ class InterpolatorWriter(BaseWriter):
 
                     # don't store or try to interpolate empty time series
                     if ts.size == 0:
-                        logger.info('Variable ' + c + ' empty so skipping')
+                        self.logger.info('Variable ' + c + ' empty so skipping')
                         continue
 
                     if c_rename.find('pitch') != -1 or c_rename.find('roll') != -1 or c_rename.find('yaw') != -1:
                         ts = ts * 180.0 / numpy.pi
 
                     # resample using the mean then interpolate on to the time dimension
-                    logger.debug(f"calling ts.resample() for {c_rename}")
+                    self.logger.debug(f"calling ts.resample() for {c_rename}")
                     ts_resample = ts.resample(resampleFreq).mean()[:]
-                    logger.debug(f"calling self.interpolate() for {c_rename}")
+                    self.logger.debug(f"calling self.interpolate() for {c_rename}")
                     i = self.interpolate(ts_resample, t_resample.index)
 
                     for name in self.df[c].ncattrs():
@@ -501,11 +502,11 @@ class InterpolatorWriter(BaseWriter):
                             attr[name] = 'platform_yaw_angle'
 
                     self.all_sub_ts[c_rename] = i
-                    logger.info(f"{c} -> {c_rename}: {attr.copy()}")
+                    self.logger.info(f"{c} -> {c_rename}: {attr.copy()}")
                     self.all_attrib[c_rename] = attr.copy()
                     self.all_coord[c_rename] = { 'time':'time', 'depth':'depth', 'latitude':'latitude', 'longitude':'longitude'}
                 except Exception as e:
-                    logger.error(str(e))
+                    self.logger.error(str(e))
                     continue
     # End createNav
 
@@ -520,32 +521,32 @@ class InterpolatorWriter(BaseWriter):
                 # Create pandas time series for each coordinate and store attributes
                 for c in coord:
                     try:
-                        ##logger.debug(f'For variable {v:>20} creating coordinate {c:>20}')
+                        ##self.logger.debug(f'For variable {v:>20} creating coordinate {c:>20}')
                         ts = self.createSeries(self.df.variables, c, c+'_'+'time')
                         all_ts[c] = ts
                     except KeyError:
                         # Likely the variable c is not in the NetCDF file
-                        logger.warn(f"Could not create coord {c}.  It's likely not in the file")
+                        self.logger.debug(f"Could not create coord {c}.  It's likely not in the file")
                     except ValueError as e:
-                        logger.error('Could not create coord {}: {}'.format(c, str(e)))
+                        self.logger.error('Could not create coord {}: {}'.format(c, str(e)))
                         continue
 
         return all_ts
     # End createCoord
 
-    def trackingdb_lat_lon(self, args, sec_extend=3600):
+    def trackingdb_lat_lon(self, in_file, sec_extend=3600):
         '''Query MBARI's Tracking Database and return Pandas time series
         of any acoustic fixes found.
         '''
-        logger.debug(f"Constructing trackingdb url to {sec_extend} seconds beyond time range of file")
+        self.logger.debug(f"Constructing trackingdb url to {sec_extend} seconds beyond time range of file")
         se = float(self.df['time'][0].data) - sec_extend
         ee = float(self.df['time'][-1].data) + sec_extend
         st = dt.datetime.utcfromtimestamp(se).strftime('%Y%m%dT%H%M%S')
         et = dt.datetime.utcfromtimestamp(ee).strftime('%Y%m%dT%H%M%S')
-        vehicle = args.inDir.split('/')[3]
+        vehicle = in_file.split('/')[3]
         url = f"http://odss.mbari.org/trackingdb/position/{vehicle}_ac/between/{st}/{et}/data.csv"
         self.trackingdb_url = url
-        logger.info(url)
+        self.logger.info(url)
 
         # Read positions from .csv response and collect into lists - expect less than 10^3 values
         ess = []
@@ -553,13 +554,13 @@ class InterpolatorWriter(BaseWriter):
         lats = []
         with closing(requests.get(url, stream=True)) as resp:
             if resp.status_code != 200:
-                logger.error('Cannot read %s, resp.status_code = %s', url, resp.status_code)
+                self.logger.error('Cannot read %s, resp.status_code = %s', url, resp.status_code)
                 return
 
             r_decoded = (line.decode('utf-8') for line in resp.iter_lines())
             lines = [line for line in csv.DictReader(r_decoded)]
             for r in reversed(lines):
-                logger.debug(f"{float(r['epochSeconds'])}, {float(r['longitude'])}, {float(r['latitude'])}")
+                self.logger.debug(f"{float(r['epochSeconds'])}, {float(r['longitude'])}, {float(r['latitude'])}")
                 ess.append(float(r['epochSeconds']))
                 lons.append(float(r['longitude']))
                 lats.append(float(r['latitude']))
@@ -568,7 +569,7 @@ class InterpolatorWriter(BaseWriter):
         v_time = pd.to_datetime(ess, unit='s',errors = 'coerce')
         lon_time_series = pd.Series(lons, index=v_time)
         lat_time_series = pd.Series(lats, index=v_time)
-        logger.info(f"Found {self.trackingdb_values} position values from the Tracking database")
+        self.logger.info(f"Found {self.trackingdb_values} position values from the Tracking database")
 
         return lon_time_series, lat_time_series
 
@@ -578,7 +579,7 @@ class InterpolatorWriter(BaseWriter):
         mt = np.ma.masked_outside(mt, tmin, tmax)
         bad_times = [str(dt.datetime.utcfromtimestamp(es)) for es in time_array[:][mt.mask]]
         if bad_times:
-            logger.info(f"Removing bad {data_array.name} times from {in_file} ([index], [values]): {np.where(mt.mask)[0]}, {bad_times}")
+            self.logger.info(f"Removing bad {data_array.name} times from {in_file} ([index], [values]): {np.where(mt.mask)[0]}, {bad_times}")
         v_time = pd.to_datetime(mt.compressed(), unit='s',errors = 'coerce')
         da = pd.Series(data_array[:][~mt.mask], index=v_time)
 
@@ -609,7 +610,7 @@ class InterpolatorWriter(BaseWriter):
             if np.max(np.abs(da)) <= np.pi:
                 rad_to_deg = True
 
-            logger.debug(f"{data_array.name}: rad_to_deg = {rad_to_deg}")
+            self.logger.debug(f"{data_array.name}: rad_to_deg = {rad_to_deg}")
             if rad_to_deg:
                 da = da * 180.0 / np.pi
 
@@ -621,7 +622,7 @@ class InterpolatorWriter(BaseWriter):
         reckoned positions are nudged so that they match the GPS fixes
         '''
         ds = self.df
-        logger.info(f"{in_file}")    
+        self.logger.info(f"{in_file}")    
        
         self.segment_count = None
         self.segment_minsum = None
@@ -635,11 +636,11 @@ class InterpolatorWriter(BaseWriter):
         except IndexError:
             # Encountered in http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2019/20190528_20190604/20190530T185218/201905301852_201905302040.nc4.html
             # just 1 longitude_fix
-            logger.warning(f"Apparently only one GPS fix in this log: lons = {ds['longitude_fix'][:]}, lats = {ds['latitude_fix'][:]}")
-            logger.info("Returning from nudge_coords() with original coords")
+            self.logger.warning(f"Apparently only one GPS fix in this log: lons = {ds['longitude_fix'][:]}, lats = {ds['latitude_fix'][:]}")
+            self.logger.info("Returning from nudge_coords() with original coords")
             return lon, lat
 
-        logger.info(f"{'seg#':4s}  {'end_sec_diff':12s} {'end_lon_diff':12s} {'end_lat_diff':12s} {'len(segi)':9s} {'seg_min':>9s} {'u_drift (cm/s)':14s} {'v_drift (cm/s)':14s} {'start datetime of segment':>29}")
+        self.logger.info(f"{'seg#':4s}  {'end_sec_diff':12s} {'end_lon_diff':12s} {'end_lat_diff':12s} {'len(segi)':9s} {'seg_min':>9s} {'u_drift (cm/s)':14s} {'v_drift (cm/s)':14s} {'start datetime of segment':>29}")
         
         # Any dead reckoned points before first GPS fix - usually empty as GPS fix happens before dive
         segi = np.where(lat.index < lat_fix.index[0])[0]
@@ -647,6 +648,7 @@ class InterpolatorWriter(BaseWriter):
             lon_nudged = lon[segi]
             lat_nudged = lat[segi]
             dt_nudged = lon.index[segi]
+            self.logger.debug(f"Filled _nudged arrays with {len(segi)} values starting at {lat.index[0]} which were before the first GPS fix at {lat_fix.index[0]}")
         else:
             lon_nudged = np.array([])
             lat_nudged = np.array([])
@@ -655,7 +657,7 @@ class InterpolatorWriter(BaseWriter):
             seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
         else:
             seg_min = 0
-        logger.info(f"{' ':4}  {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:9.2f} {'-':>14} {'-':>14} {'-':>29}")
+        self.logger.info(f"{' ':4}  {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:9.2f} {'-':>14} {'-':>14} {'-':>29}")
        
         seg_count = 0 
         seg_minsum = 0
@@ -663,9 +665,13 @@ class InterpolatorWriter(BaseWriter):
             # Segment of dead reckoned (under water) positions, each surrounded by GPS fixes
             segi = np.where(np.logical_and(lat.index > lat_fix.index[i], 
                                            lat.index < lat_fix.index[i+1]))[0]
+            if not segi.any():
+                self.logger.debug(f"No dead reckoned values found between GPS times of {lat_fix.index[i]} and {lat_fix.index[i+1]}")
+                continue
+
             end_sec_diff = (lat_fix.index[i+1] - lat.index[segi[-1]]).total_seconds()
             if end_sec_diff > max_sec_diff_at_end:
-                logger.warn(f"end_sec_diff ({end_sec_diff}) > max_sec_diff_at_end ({max_sec_diff_at_end})")
+                self.logger.warning(f"end_sec_diff ({end_sec_diff}) > max_sec_diff_at_end ({max_sec_diff_at_end})")
 
             end_lon_diff = lon_fix[i+1] - lon[segi[-1]]
             end_lat_diff = lat_fix[i+1] - lat[segi[-1]]
@@ -677,7 +683,7 @@ class InterpolatorWriter(BaseWriter):
                         / (lat.index[segi][-1] - lat.index[segi][0]).total_seconds())
             v_drift = (end_lat_diff * 60 * 185300 
                         / (lat.index[segi][-1] - lat.index[segi][0]).total_seconds())
-            logger.info(f"{i:4d}: {end_sec_diff:12.3f} {end_lon_diff:12.7f} {end_lat_diff:12.7f} {len(segi):-9d} {seg_min:9.2f} {u_drift:14.2f} {v_drift:14.2f} {lat.index[segi][-1]}")
+            self.logger.info(f"{i:4d}: {end_sec_diff:12.3f} {end_lon_diff:12.7f} {end_lat_diff:12.7f} {len(segi):-9d} {seg_min:9.2f} {u_drift:14.2f} {v_drift:14.2f} {lat.index[segi][-1]}")
 
             # Start with zero adjustment at begining and linearly ramp up to the diff at the end
             lon_nudge = np.interp( lon.index[segi].astype(np.int64), 
@@ -689,9 +695,9 @@ class InterpolatorWriter(BaseWriter):
 
             # Sanity checks
             if np.max(np.abs(lon[segi] + lon_nudge)) > 180 or np.max(np.abs(lat[segi] + lon_nudge)) > 90:
-                logger.warn(f"Nudged coordinate is way out of reasonable range - segment {seg_count}")
-                logger.warn(f" max(abs(lon)) = {np.max(np.abs(lon[segi] + lon_nudge))}")
-                logger.warn(f" max(abs(lat)) = {np.max(np.abs(lat[segi] + lat_nudge))}")
+                self.logger.warning(f"Nudged coordinate is way out of reasonable range - segment {seg_count}")
+                self.logger.warning(f" max(abs(lon)) = {np.max(np.abs(lon[segi] + lon_nudge))}")
+                self.logger.warning(f" max(abs(lat)) = {np.max(np.abs(lat[segi] + lat_nudge))}")
 
             lon_nudged = np.append(lon_nudged, lon[segi] + lon_nudge)
             lat_nudged = np.append(lat_nudged, lat[segi] + lat_nudge)
@@ -707,11 +713,11 @@ class InterpolatorWriter(BaseWriter):
             dt_nudged = np.append(dt_nudged, lon.index[segi])
             seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
        
-        logger.info(f"{seg_count+1:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:9.2f} {'-':>14} {'-':>14}")
+        self.logger.info(f"{seg_count+1:4d}: {'-':>12} {'-':>12} {'-':>12} {len(segi):-9d} {seg_min:9.2f} {'-':>14} {'-':>14}")
         self.segment_count = seg_count
         self.segment_minsum = seg_minsum
 
-        logger.info(f"Points in final series = {len(dt_nudged)}")
+        self.logger.info(f"Points in final series = {len(dt_nudged)}")
 
         return pd.Series(lon_nudged, index=dt_nudged), pd.Series(lat_nudged, index=dt_nudged)
 
@@ -730,25 +736,25 @@ class InterpolatorWriter(BaseWriter):
           try:
             ts = self.createSeriesPydap(key, key + '_time')
           except IndexError as e:
-            logger.warn(e)
+            self.logger.debug(e)
             continue
           try:
             if ts.size == 0:
-                logger.info('Variable ' + key + ' empty so skipping')
+                self.logger.info('Variable ' + key + ' empty so skipping')
                 continue
 
             attr = {}
             for name in self.df[key].ncattrs(): 
-                logger.debug(f"Getting attributes for {name}")
+                self.logger.debug(f"Getting attributes for {name}")
                 attr[name]=getattr(self.df[key],name)
             self.all_attrib[key] = attr
             self.all_coord[key] = {'time': 'time', 'depth': 'depth', 'latitude': 'latitude', 'longitude': 'longitude'}
             parm_valid.append(key)
             self.all_sub_ts[key] = ts
-            logger.info('Found parameter ' + key)
+            self.logger.debug('Found parameter ' + key)
           except Exception as e:
             # Likely no variable in the netCDF file
-            logger.warn(e)
+            self.logger.warning(e)
             continue
 
         # Create pandas time series for each parameter in each group and store attributes
@@ -770,7 +776,7 @@ class InterpolatorWriter(BaseWriter):
                 pkeys = group_parms[g]
 
             except Exception as e:
-                logger.error(e)
+                self.logger.error(e)
                 continue
 
             # Create pandas time series for each parameter and store attributes
@@ -784,7 +790,7 @@ class InterpolatorWriter(BaseWriter):
 
                         # don't store or try to interpolate empty time series
                         if ts.size == 0:
-                            logger.info('Variable ' + var + ' empty so skipping')
+                            self.logger.info('Variable ' + var + ' empty so skipping')
                             continue
 
                         for name in subgroup.variables[var].ncattrs():
@@ -806,13 +812,13 @@ class InterpolatorWriter(BaseWriter):
                         self.all_sub_ts[key] = ts
                         self.all_coord[key] = { 'time':'time', 'depth':'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
-                        logger.info('Found in group ' + group + ' parameter ' + var + ' renaming to ' + key)
+                        self.logger.debug('Found in group ' + group + ' parameter ' + var + ' renaming to ' + key)
                         parm_valid.append(key)
                     except KeyError as e:
-                        logger.error(e)
+                        self.logger.debug(e)
                         continue
                     except Exception as e:
-                        logger.error(e)
+                        self.logger.error(e)
                         continue
 
         # create independent lat/lon/depth profiles for each parameter
@@ -831,7 +837,7 @@ class InterpolatorWriter(BaseWriter):
                     ts = coord_ts[c]
                 except KeyError as e:
                     msg = f"Required coordinate {c} missing from {url}"
-                    logger.warn(msg)
+                    self.logger.warning(msg)
                     raise MissingCoordinate(msg)
 
                 # and interpolate using parameter time
@@ -865,11 +871,16 @@ class InterpolatorWriter(BaseWriter):
 
             self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
-        logger.info("%s", self.all_sub_ts.keys())
+        self.logger.info(f"Collected data from {url}")
+        for parm in parms:
+            try:
+                self.logger.info(f"{parm:11s} shape: {self.all_sub_ts[parm].shape}")
+            except KeyError:
+                pass
 
         # Write data to the file
         self.write_netcdf(out_file, url)
-        logger.info('Wrote ' + out_file)
+        self.logger.info('Wrote ' + out_file)
 
         # End processSingleParm
 
@@ -906,8 +917,8 @@ class InterpolatorWriter(BaseWriter):
                     break
 
             except Exception as e:
-                logger.error(e)
-                logger.warn('falling back to main group %s' % group)
+                self.logger.error(e)
+                self.logger.warning('falling back to main group %s' % group)
                 subgroup = self.df.groups[g]
                 pkeys = parm[g]
 
@@ -920,7 +931,7 @@ class InterpolatorWriter(BaseWriter):
 
                         # don't store or try to interpolate empty time series
                         if ts.size == 0:
-                            logger.info('Variable ' + v + ' empty so skipping')
+                            self.logger.info('Variable ' + v + ' empty so skipping')
                             continue
 
                         attr = {}
@@ -943,12 +954,12 @@ class InterpolatorWriter(BaseWriter):
                             self.all_coord[key + '_' + c] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+
                                                               '_latitude', 'longitude':key+'_longitude'}
 
-                        logger.info('Found parameter ' + key)
+                        self.logger.info('Found parameter ' + key)
                     except KeyError as e:
-                        logger.error(e)
+                        self.logger.error(e)
                         continue
                     except Exception as e:
-                        logger.error(e)
+                        self.logger.error(e)
                         continue
 
         # Get time parameter and align other coordinates to this
@@ -964,11 +975,11 @@ class InterpolatorWriter(BaseWriter):
             self.all_sub_ts[key] = i
             self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
-        logger.info("%s", list(self.all_sub_ts.keys()))
+        self.logger.info("%s", list(self.all_sub_ts.keys()))
 
         # Write data to the file
         self.write_netcdf(out_file, in_file)
-        logger.info('Wrote ' + out_file)
+        self.logger.info('Wrote ' + out_file)
 
         # End processNc4
 
@@ -986,26 +997,28 @@ class InterpolatorWriter(BaseWriter):
         fh = logging.FileHandler(log_file, 'w+')
         frm = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
         fh.setFormatter(frm)
-        logger.addHandler(fh)
+        self.logger.addHandler(fh)
 
         self.in_file = in_file
         base_name = os.path.basename(in_file)
         os.system(f"/bin/cp {in_file} /tmp/{base_name}")
-        logger.info('Reading %s file...' % in_file)
-        logger.info(f"After copying to /tmp/{base_name}")
+        self.logger.info('Reading %s file...' % in_file)
+        self.logger.info(f"After copying to /tmp/{base_name}")
         self.df = netCDF4.Dataset(f"/tmp/{base_name}", mode='r')
-        logger.info(f'Read file {in_file}')
+        self.logger.info(f'Read file {in_file}')
 
         coord_ts = self.createCoord(coord)
-        repeated_values = np.where(np.diff(coord_ts['time'].index.astype('int')) <= 0)[0]
-        if len(repeated_values) > 0:
-            logger.warning(f"Original time axis has repeated values at indices: {repeated_values}")
-            logger.warning(f"Dropping those indices from coords: {coord}")
-            for c in coord:
-                coord_ts[c].drop(coord_ts[c].index[repeated_values], inplace=True)
+
+        # Remove repeated or decreasing values from each coordinate - accumulate maxiumum to catch multiple decreased values
+        # See: https://stackoverflow.com/questions/28563711/make-a-numpy-array-monotonic-without-a-python-loop
+        for crd in coord:
+            repeated_values = np.where(np.diff(np.maximum.accumulate(coord_ts[crd].index.astype('int'))) <= 0)[0]
+            if len(repeated_values) > 0:
+                self.logger.warning(f"Dropping from {crd} repeated/decreasing values at indices: {repeated_values}")
+                coord_ts[crd].drop(coord_ts[crd].index[repeated_values], inplace=True)
 
         # Get time parameter and align everything to this
-        logger.info(f'Creating t variable of the time indexes')
+        self.logger.info(f'Creating t variable of the time indexes')
         t = pd.Series(index = coord_ts['time'].index)
 
         # resample
@@ -1029,7 +1042,7 @@ class InterpolatorWriter(BaseWriter):
                 pkeys = parm[g]
 
             except Exception as e:
-                logger.error(e)
+                self.logger.error(e)
                 raise e
 
             if subgroup is not None and pkeys is not None:
@@ -1043,7 +1056,7 @@ class InterpolatorWriter(BaseWriter):
 
                         # don't store or try to interpolate empty time series
                         if ts.size == 0:
-                            logger.info('Variable ' + var + ' empty so skipping')
+                            self.logger.info('Variable ' + var + ' empty so skipping')
                             continue
 
                         for name in subgroup.variables[var].ncattrs():
@@ -1080,18 +1093,16 @@ class InterpolatorWriter(BaseWriter):
                         i.plot(ax=axes[2],color='b')
                         plt.show()'''
 
-                        logger.info('Found in group ' + group + ' parameter ' + var + ' renaming to ' + key)
+                        self.logger.info('Found in group ' + group + ' parameter ' + var + ' renaming to ' + key)
                     except KeyError as e:
-                        logger.warn(f"{e} not in {in_file}")
+                        self.logger.debug(f"{e} not in {in_file}")
                         continue
                     except Exception as e:
-                        logger.error(e)
+                        self.logger.error(e)
                         continue
 
         # add in navigation
-        if resampleFreq == '2S':
-            # Add roll, pitch, and yaw to only the 2S_eng.nc file
-            self.createNav(t_resample, resampleFreq)
+        self.createNav(t_resample, resampleFreq)
 
         # add in coordinates
         for key in coord:
@@ -1111,7 +1122,7 @@ class InterpolatorWriter(BaseWriter):
                                 value = self.nudged_lats
                         if args.trackingdb:
                             if not self.tracking_file.get(in_file):
-                                self.ac_lons, self.ac_lats = self.trackingdb_lat_lon(args)
+                                self.ac_lons, self.ac_lats = self.trackingdb_lat_lon(in_file)
                                 self.tracking_file[in_file] = True
                             if key.find('longitude') != -1 and self.ac_lons.any():
                                 value = self.ac_lons
@@ -1122,8 +1133,8 @@ class InterpolatorWriter(BaseWriter):
                 if key == 'time':
                     repeated_values = np.where(np.diff(i.values) <= 0.1)[0]
                     if len(repeated_values) > 0:
-                        logger.warn(f"Interpolated 'time' variable has {len(repeated_values)} repeated values at indices {repeated_values}")
-                        logger.info(f"Overwriting interpolated repeated values with time's index values")
+                        self.logger.warning(f"Interpolated 'time' variable has {len(repeated_values)} repeated values at indices {repeated_values}")
+                        self.logger.info(f"Overwriting interpolated repeated values with time's index values")
                         # Useful debugging code for verifying proper interpolation, e.g. no wild outliers in time
                         ##for counter, (rv, indxv) in enumerate(zip(i[repeated_values], i[repeated_values].index.astype(np.int64)/1E9)):
                         ##    print(f"{str(dt.datetime.fromtimestamp(rv))} <= {str(dt.datetime.fromtimestamp(indxv))}")
@@ -1134,15 +1145,18 @@ class InterpolatorWriter(BaseWriter):
                 self.all_sub_ts[key] = i
                 self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
             except (IndexError, ValueError) as e:
-                logger.error(e)
-                logger.error(f"Not creating {out_file}")
+                self.logger.error(e)
+                self.logger.error(f"Not creating {out_file}")
                 return
 
-        logger.info("%s", list(self.all_sub_ts.keys()))
+        self.logger.info("%s", list(self.all_sub_ts.keys()))
 
         self.write_netcdf(out_file, in_file)
-        logger.info('Wrote ' + out_file)
-        logger.removeHandler(fh)
+        self.logger.info('Wrote ' + out_file)
+        self.logger.removeHandler(fh)
+
+        self.logger.info(f"Removing /tmp/{base_name}")
+        os.system(f"/bin/rm -f /tmp/{base_name}")
 
         # End processResampleNc4File
 
@@ -1157,10 +1171,10 @@ class InterpolatorWriter(BaseWriter):
         try:
             self.df = pydap.client.open_url(url)
         except socket.error as e:
-            logger.error('Failed in attempt to open_url(%s)', url)
+            self.logger.error('Failed in attempt to open_url(%s)', url)
             raise e
         except ValueError as e:
-            logger.error('Value error when opening open_url(%s)', url)
+            self.logger.error('Value error when opening open_url(%s)', url)
             raise e
 
         # Create pandas time series and get sampling metric for each
@@ -1169,7 +1183,7 @@ class InterpolatorWriter(BaseWriter):
                 p_ts = self.createSeriesPydap(key)
             except KeyError as e:
                 p_ts = pd.Series()
-                logger.info('Key error on ' + key)
+                self.logger.info('Key error on ' + key)
                 raise e
 
             all_ts[key] = p_ts
@@ -1178,7 +1192,7 @@ class InterpolatorWriter(BaseWriter):
                 start_times.append(start)
                 end_times.append(end)
             except Exception:
-                logger.info('Start/end ' + parm + ' time range invalid')
+                self.logger.info('Start/end ' + parm + ' time range invalid')
 
         # the full range should span all the time series data to store
         start_time = min(start_times)
@@ -1220,7 +1234,7 @@ class InterpolatorWriter(BaseWriter):
                     isub.plot(ax=axes[3],color='y')
                     plt.show()'''
                 except IndexError as e:
-                    logger.error(e)
+                    self.logger.error(e)
                     raise e
                 self.all_sub_ts[key] = isub
             else:
@@ -1228,7 +1242,7 @@ class InterpolatorWriter(BaseWriter):
 
         # Write data to the file
         self.write_netcdf(out_file, url)
-        logger.info('Wrote ' + out_file)
+        self.logger.info('Wrote ' + out_file)
 
         # End processResample
 
@@ -1271,7 +1285,7 @@ if __name__ == '__main__':
     f = nc4_file.rsplit('/',1)[1]
     out_file = outDir + '.'.join(f.split('.')[:-1]) + '_' + resample_freq + '.nc'
     ##pw.processResampleNc4File(nc4_file, out_file, json.loads(parms),resample_freq, rad_to_deg, args)
-    logger.debug(f"Testing processNc4FileDecimated() to create {out_file}...")
+    pw.logger.debug(f"Testing processNc4FileDecimated() to create {out_file}...")
     pw.processNc4FileDecimated(url_src, nc4_file, out_file, parms, json.loads(groupparms), 'depth')
 
     print('Done.')

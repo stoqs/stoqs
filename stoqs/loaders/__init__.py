@@ -24,6 +24,7 @@ from django.db import transaction, DatabaseError
 from django.db.models import Max, Min
 from stoqs import models as m
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 import time
 import re
@@ -120,7 +121,7 @@ class LoadScript(object):
         self.parser = ArgumentParser(formatter_class=RawTextHelpFormatter,
                                      description='STOQS load script for "%s"' % self.base_campaignName,
                                      epilog='Examples:' + '\n\n' + exampleString + '\n' +
-                                            '(Databases must be created, synced and defined in privateSettings - see INSTALL instructions)')
+                                            '(Databases must be created first, usually by execuing stoqs/loaders/load.py)')
 
     def process_command_line(self):
         '''
@@ -170,6 +171,14 @@ class LoadScript(object):
                             help='Stride value (default=1)')
         self.parser.add_argument('-a', '--append', action='store_true', 
                             help='Append data to existing activity - for use in repetative runs')
+        self.parser.add_argument('--startdate', action='store', 
+                            help='For loaders that use it set startdate, in format YYYYMMDD')
+        self.parser.add_argument('--enddate', action='store', 
+                            help='For loaders that use it set enddate, in format YYYYMMDD')
+        self.parser.add_argument('--previous_month', action='store_true', 
+                            help='For loaders that use startdate and enddate, load data from the previoius month')
+        self.parser.add_argument('--current_month', action='store_true', 
+                            help='For loaders that use startdate and enddate, load data from the current month')
         self.parser.add_argument('-v', '--verbose', action='store_true', 
                             help='Turn on DEBUG level logging output')
 
@@ -207,6 +216,20 @@ class LoadScript(object):
             self.logger.setLevel(logging.DEBUG)
         else:
             self.logger.setLevel(logging.INFO)
+
+        if self.args.previous_month:
+            prev_mon = datetime.today() - relativedelta(months=1)
+            prev_mon_st_dt = datetime(prev_mon.year, prev_mon.month, 1)
+            prev_mon_en_dt = prev_mon_st_dt + relativedelta(months=1)
+            self.args.startdate = prev_mon_st_dt.strftime('%Y%m%d')
+            self.args.enddate = prev_mon_en_dt.strftime('%Y%m%d')
+
+        if self.args.current_month:
+            curr_mon = datetime.today()
+            curr_mon_st_dt= datetime(curr_mon.year, curr_mon.month, 1)
+            curr_mon_en_dt = curr_mon_st_dt + relativedelta(months=1)
+            self.args.startdate = curr_mon_st_dt.strftime('%Y%m%d')
+            self.args.enddate = curr_mon_en_dt.strftime('%Y%m%d')
 
         self.commandline = ' '.join(sys.argv)
         self.logger.info('Executing command: %s', self.commandline)
@@ -295,7 +318,7 @@ class LoadScript(object):
         try:
             platform = m.Platform.objects.using(self.dbAlias).get(name=pName)
         except ObjectDoesNotExist:
-            self.logger.warn(f"Platform {pName} not found in database {self.dbAlias}. Can't add Resources.")
+            self.logger.debug(f"Platform {pName} not found in database {self.dbAlias}. Can't add Resources.")
             return
         
         r, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
@@ -1062,10 +1085,13 @@ class STOQS_Loader(object):
                     # Likely 'NoneType' object is not iterable because p is altitude of LOPC data
                     data = []
 
+            np_data = np.array([float(d) for d in data if d is not None])
+            if not np_data.any():
+                # Quietly skip over 'no valid data' - can't log because of @static method
+                continue
+
             ap, _ = m.ActivityParameter.objects.using(dbAlias).get_or_create(
                             parameter=p, activity=activity)
-
-            np_data = np.array([float(d) for d in data if d is not None])
             np_data.sort()
             ap.number = len(np_data)
             try:
@@ -1096,7 +1122,7 @@ class STOQS_Loader(object):
             else:
                 try:
                     (counts, bins) = np.histogram(np_data,100)
-                except IndexError:
+                except (IndexError, ValueError):
                     # Likely something like 'index -9223372036854775808 is out of bounds for axis 1 with size 101' 
                     # from numpy/lib/function_base.py.  Encoutered in really wild LRAUV data, e.g.:
                     # http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2015/20150824_20150825/20150825T055243/201508250552_201508250553_2S_eng.nc.ascii?control_inputs_mass_position[0:1:13]
@@ -1105,6 +1131,8 @@ class STOQS_Loader(object):
                     #  norm = n_equal_bins / (last_edge - first_edge)
                     #/vagrant/dev/stoqsgit/venv-stoqs/lib64/python3.6/site-packages/numpy/lib/function_base.py:788: RuntimeWarning: invalid value encountered in multiply
                     # tmp_a *= norm
+                    # ValueError: autodetected range of [-inf, inf] is not finite encountered in:
+                    # http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2016/20160801_20160809/20160807T120403/201608071204_201608091210_2S_scieng.nc
                     # Contunue silently (as this is a static method), with the above errors given as a warning.
                     continue
 
@@ -1131,6 +1159,7 @@ class STOQS_Loader(object):
             self.update_activityparameter_stats(self.dbAlias, act_to_update, self.parameter_counts, sampledFlag)
         except ValueError as e:
             self.logger.warn(f"{e}")
+            raise
         except IntegrityError as e:
             self.logger.warn('IntegrityError(%s): Cannot create ActivityParameter and '
                              'updated statistics for Activity %s.', (e, act_to_update))

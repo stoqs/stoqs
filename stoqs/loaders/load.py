@@ -265,7 +265,8 @@ class Loader(object):
             print('The stoqs/campaigns.py could not be loaded. '
                               'Create a symbolic link named "campaigns.py" '
                               'pointing to the file for your site.')
-            print('Use stoqs/mbari_campaigns.py as a model')
+            print('Use stoqs/mbari_campaigns.py or stoqs/mbari_lrauv_campaigns.py as'
+                  ' the source file or as a model for your own.')
             sys.exit()
 
         if self.args.db:
@@ -610,42 +611,60 @@ local   all             all                                     peer
                 settings.DATABASES[db] = settings.DATABASES.get('default').copy()
                 settings.DATABASES[db]['NAME'] = db
 
-            if self._db_exists(db) and self.args.clobber and (self.args.noinput or self.args.test):
-                self._dropdb(db)
-
-            try:
-                self._create_db(db)
-            except DatabaseCreationError as e:
-                self.logger.warning(e)
-                self.logger.warning('Use the --clobber option, or fix the problem indicated.')
-                if self.args.db and not self.args.test:
-                    raise Exception('Maybe use the --clobber option to recreate the database...')
-                else:
-                    # If running test for all databases just go on to next database
-                    continue
-
-            if self.args.drop_indexes:
-                self.logger.info('Dropping indexes...')
-                self._drop_indexes()
-            else:
-                try:
-                    call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
-                except TypeError:
-                    call_command('makemigrations', 'stoqs', settings='config.settings.local', interactive=False)
-
-            try:
-                call_command('migrate', settings='config.settings.local', noinput=True, database=db)
-            except TypeError:
-                call_command('migrate', settings='config.settings.local', interactive=False, database=db)
-
-            if create_only:
-                return
-
+            appending = False
             if cl_args:
                 if cl_args.realtime:
                     load_command += ' --realtime'
                 if cl_args.missionlogs:
                     load_command += ' --missionlogs'
+                if cl_args.append:
+                    appending = True
+            if hasattr(self.args, 'append'):
+                if self.args.append:
+                    appending = True
+
+            if appending:
+                load_command += ' --append'
+                if cl_args:
+                    if cl_args.startdate:
+                       load_command += f' --startdate {cl_args.startdate}' 
+                if '--startdate' not in load_command:
+                    if self.args.startdate:
+                       load_command += f' --startdate {self.args.startdate}' 
+                    elif self.args.current_day:
+                       load_command += f" --startdate {datetime.datetime.utcnow().strftime('%Y%m%d')}"
+
+            if not appending:
+                if self._db_exists(db) and self.args.clobber and (self.args.noinput or self.args.test):
+                    self._dropdb(db)
+
+                try:
+                    self._create_db(db)
+                except DatabaseCreationError as e:
+                    self.logger.warning(e)
+                    self.logger.warning('Use the --clobber option, or fix the problem indicated.')
+                    if self.args.db and not self.args.test:
+                        raise Exception('Maybe use the --clobber option to recreate the database...')
+                    else:
+                        # If running test for all databases just go on to next database
+                        continue
+
+                if self.args.drop_indexes:
+                    self.logger.info('Dropping indexes...')
+                    self._drop_indexes()
+                else:
+                    try:
+                        call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
+                    except TypeError:
+                        call_command('makemigrations', 'stoqs', settings='config.settings.local', interactive=False)
+
+                try:
+                    call_command('migrate', settings='config.settings.local', noinput=True, database=db)
+                except TypeError:
+                    call_command('migrate', settings='config.settings.local', interactive=False, database=db)
+
+                if create_only:
+                    return
 
             if hasattr(self.args, 'verbose') and not load_command.endswith('.sh'):
                 if self.args.verbose > 2:
@@ -657,7 +676,10 @@ local   all             all                                     peer
             if script.endswith('.sh'):
                 cmd = (f'cd {os.path.dirname(script)} && (STOQS_CAMPAIGNS={db} time {script}) > {log_file} 2>&1;')
             else:
-                cmd = (f'(STOQS_CAMPAIGNS={db} time {script}) > {log_file} 2>&1;')
+                if appending:
+                    cmd = (f'(STOQS_CAMPAIGNS={db} time {script}) >> {log_file} 2>&1;')
+                else:
+                    cmd = (f'(STOQS_CAMPAIGNS={db} time {script}) > {log_file} 2>&1;')
 
             if self.args.email:
                 # Send email on success or failure
@@ -722,11 +744,12 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
                 call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
                 call_command('migrate', settings='config.settings.local', noinput=True, database=db)
 
-            # Record details of the database load to the database
-            try:
-                self.recordprovenance(db, load_command, log_file)
-            except DatabaseLoadError as e:
-                self.logger.warning(str(e))
+            if not appending:
+                # Record details of the database load to the database
+                try:
+                    self.recordprovenance(db, load_command, log_file)
+                except DatabaseLoadError as e:
+                    self.logger.warning(str(e))
 
     def process_command_line(self):
         import argparse
@@ -831,6 +854,9 @@ To get any stdout/stderr output you must use -v, the default is no output.
         parser.add_argument('--pg_dump', action='store_true', help='Store a pg_dump(1) with "-Fc" option file on the server')
         parser.add_argument('--noinput', action='store_true', help='Execute without asking for a response, e.g. for --clobber')
         parser.add_argument('--drop_if_fail', action='store_true', help='Drop database if fail to load data')
+        parser.add_argument('--append', action='store_true', help='Append data to existing database')
+        parser.add_argument('--startdate', help='Startdate in YYYYMMDD format for appending data')
+        parser.add_argument('--current_day', action='store_true', help='Set startdate to current UTC day - useful for running directly from cron')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
     
