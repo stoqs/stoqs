@@ -9,7 +9,7 @@ dj-database-url==0.5.0
 Django==3.1.1
 django-cache-url==3.1.2
 django-configurations==2.2
-django-debug-toolbar==2.2
+django-debug-toolbar==3.1
 django-environ==0.4.5
 django-extensions==3.0.9
 django-model-utils==4.0.0
