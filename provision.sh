@@ -386,11 +386,11 @@ echo Executing pip install -r docker/requirements/development.txt...
 pip install -r docker/requirements/development.txt
 pip install -U git+https://github.com/matplotlib/basemap.git
 
-echo Adding LD_LIBRARY_PATH to ~/.bashrc
-echo "export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64" >> ~/.bashrc
+echo Adding LD_LIBRARY_PATH to /home/$USER/.bashrc
+echo "export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64" >> /home/$USER/.bashrc
 
-echo Creating ~/gmt.conf with GMT_CUSTOM_LIBS = /usr/local/lib/mbsystem.so
-echo "GMT_CUSTOM_LIBS = /usr/local/lib/mbsystem.so" > ~/gmt.conf
+echo Creating /home/$USER/gmt.conf with GMT_CUSTOM_LIBS = /usr/local/lib/mbsystem.so
+echo "GMT_CUSTOM_LIBS = /usr/local/lib/mbsystem.so" > /home/$USER/gmt.conf
 
 echo Giving user $USER ownership of everything in /home/$USER
 chown -R $USER /home/$USER
