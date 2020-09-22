@@ -12,6 +12,7 @@ PG_VER=11
 
 # For a minimal STOQS development system set to "false"
 INSTALL_MB_SYSTEM="true"
+INSTALL_OTPS="false"
 INSTALL_DESKTOP_GRAPHICS="true"
 INSTALL_DOCKER="true"
 
@@ -86,7 +87,7 @@ then
     ./configure
     make -j 2 && sudo make install
     cd ..
-    export LD_LIBRARY_PATH=/usr/local/lib
+    export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64
     wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-fortran-4.5.2.tar.gz
     tar -xzf netcdf-fortran-4.5.2.tar.gz
     cd netcdf-fortran-4.5.2
@@ -189,7 +190,7 @@ then
     ./configure
     make -j 2 && sudo make install
     cd ..
-    export LD_LIBRARY_PATH=/usr/local/lib
+    export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64
     wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-fortran-4.5.2.tar.gz
     tar -xzf netcdf-fortran-4.5.2.tar.gz
     cd netcdf-fortran-4.5.2
@@ -197,9 +198,9 @@ then
     make -j 2 && sudo make install
     cd ..
     echo Build and install GMT
-    wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-5.4.4-src.tar.gz
-    tar -xzf gmt-5.4.4-src.tar.gz
-    cd gmt-5.4.4
+    wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-6.1.1-src.tar.gz
+    tar -xzf gmt-6.1.1-src.tar.gz
+    cd gmt-6.1.1
     cp cmake/ConfigUserTemplate.cmake cmake/ConfigUser.cmake
     mkdir build
     cd build
@@ -212,39 +213,52 @@ fi
 
 if [ $INSTALL_MB_SYSTEM = "true" ];
 then
-    echo Build and install OSU Tidal Prediction Software
-    pushd /usr/local
-    wget -q -N ftp://ftp.oce.orst.edu/dist/tides/OTPS2.tar.Z
-    tar -xzf OTPS2.tar.Z
-    cd /usr/local/OTPS2
-    wget -q -N ftp://ftp.oce.orst.edu/dist/tides/TPXO8_compact/tpxo8_atlas_compact_v1.tar.Z
-    tar -xzf tpxo8_atlas_compact_v1.tar.Z
-    make extract_HC
-    make predict_tide
-    cp setup.inp setup.inp.bak
-    cat <<EOT > setup.inp
-DATA/Model_atlas_v1        ! 1. tidal model control file
-lat_lon_time               ! 2. latitude/longitude/<time> file
+    if [ $INSTALL_OTPS = "true" ];
+    then
+        # TODO: Verify that this build works
+        # During script maintenance in September 2020 I discovered
+        # that registration is required for obtaining the TPXO models:
+        #   https://www.tpxo.net/tpxo-products-and-registration
+        # Retaining code here in case tidal prediction is needed.
+        echo Build and install OSU Tidal Prediction Software
+        pushd /usr/local
+        wget -q -N ftp://ftp.oce.orst.edu/dist/tides/OTPS.tar.Z
+        tar -xzf OTPS.tar.Z
+        cd /usr/local/OTPS
+        make extract_HC
+        make predict_tide
+        cp setup.inp setup.inp.bak
+        cat <<EOT > setup.inp
+DATA/Model_tpxo9.v1        ! 1. tidal model control file
+lat_lon_time               ! 2. latitude/longitude/time file
 z                          ! 3. z/U/V/u/v
-m2,s2                      ! 4. tidal constituents to include
+m2,s2,n2,k2,k1,o1,p1,q1    ! 4. tidal constituents to include
 AP                         ! 5. AP/RI
 oce                        ! 6. oce/geo
 1                          ! 7. 1/0 correct for minor constituents
-sample.out                 ! 8. output file (ASCII)
+tmp                        ! 8. output file (ASCII)
 EOT
-    cp DATA/Model_atlas_v1 DATA/Model_atlas_v1.bak
-    cat <<EOT > DATA/Model_atlas_v1
-/usr/local/OTPS2/DATA/hf.tpxo8_atlas_30_v1
-/usr/local/OTPS2/DATA/uv.tpxo8_atlas_30_v1
-/usr/local/OTPS2/DATA/grid_tpxo8atlas_30_v1
+        cp DATA/Model_tpxo9.v1 DATA/Model_tpxo9.v1.bak
+        cat <<EOT > DATA/Model_tpxo9.v1
+/usr/local/OTPS/DATA/TPXO9v1/h_tpxo9.v1
+/usr/local/OTPS/DATA/TPXO9v1/u_tpxo9.v1
+/usr/local/OTPS/DATA/TPXO9v1/grid_tpxo9
 EOT
-    popd
+        popd
+    fi
 
     echo Build and install MB-System, set overcommit_memory to wizardry mode
-    wget -q -N ftp://ftp.ldeo.columbia.edu/pub/MB-System/mbsystem-5.5.2284.tar.gz
-    tar -xzf mbsystem-5.5.2284.tar.gz
-    cd mbsystem-5.5.2284/
-    ./configure --with-otps-dir=/usr/local/OTPS2
+    wget -q -N https://github.com/dwcaress/MB-System/archive/5.7.6beta55.tar.gz
+    tar -xzf 5.7.6beta55.tar.gz
+    cd MB-System-5.7.6beta55
+    if [ $INSTALL_OTPS = "true" ];
+    then
+        ./configure --with-otps-dir=/usr/local/OTPS
+    else
+        ./configure --with-gdal-config=/usr/local/bin \
+                    --with-gmt-config=/usr/local/bin
+    fi
+    export GMT_CUSTOM_LIBS=/usr/local/lib/libmbgmt.so
     make -j 2 && make install
     echo 1 > /proc/sys/vm/overcommit_memory
     cd ..
@@ -371,6 +385,12 @@ pip install numpy Cython
 echo Executing pip install -r docker/requirements/development.txt...
 pip install -r docker/requirements/development.txt
 pip install -U git+https://github.com/matplotlib/basemap.git
+
+echo Adding LD_LIBRARY_PATH to ~/.bashrc
+echo "export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64" >> ~/.bashrc
+
+echo Creating ~/gmt.conf with GMT_CUSTOM_LIBS = /usr/local/lib/mbsystem.so
+echo "GMT_CUSTOM_LIBS = /usr/local/lib/mbsystem.so" > ~/gmt.conf
 
 echo Giving user $USER ownership of everything in /home/$USER
 chown -R $USER /home/$USER
