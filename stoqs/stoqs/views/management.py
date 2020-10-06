@@ -30,7 +30,6 @@ from django.http import HttpResponse
 from utils import encoders
 import stoqs.models as mod
 from datetime import datetime, timedelta
-from stoqs import tasks
 import socket
 import logging
 import json
@@ -38,16 +37,6 @@ import sys
 
 logger = logging.getLogger(__name__)
 
-def deleteActivity(request, activityId):
-    '''Do a cascade delete of an activity given the `activityId`.  This will delete everything that has a foreign
-    key pointing to the activity which will result in removal of all the measurements and measured_parameters
-    associated with the activity.
-    '''
-    
-    tasks.delete_activity.delay(request.META['dbAlias'], activityId)
-    return render(request, 'deletion.html', context={'dbAlias': request.META['dbAlias'], 'activityId': activityId})
-    
-    
 class Act():
     '''A tiny class to hold all the information for an Activity that includes perhaps additional data from other
     parts of the model. The types are simple things (characters and numbers) that can appear in a web page.

@@ -17,7 +17,7 @@ from stoqs.views.app import (showMeasuredParameter, showSampledParameter,
                              showActivityParameterHistogram, showResourceActivity,
                              showSampleDT, showQuickLookPlots)
 from stoqs.views.query import queryData, queryMap, queryUI
-from stoqs.views.management import showCampaigns, showDatabase, deleteActivity, showActivitiesMBARICustom
+from stoqs.views.management import showCampaigns, showDatabase, showActivitiesMBARICustom
 from stoqs.views.permalinks import generate_permalink, load_permalink
 from stoqs.views.parameterinfo import parameterinfo
 
@@ -85,7 +85,6 @@ urlpatterns = [
     # Management, base of campaign, etc.
     url(r'campaigns.(?P<fmt>[^/]{3,5})$', showCampaigns, {}, name='show-campaigns'),
     url(pre + r'mgmt$', showDatabase, {}, name='show-database'),
-    url(pre + r'deleteActivity/(?P<activityId>[0-9]+)$', deleteActivity, {}, name='delete-activity'),
     url(pre + r'activitiesMBARICustom$', showActivitiesMBARICustom, {}, name='show-activities'),
 
     # WFS - Tesing for exposing Sample data to the OpenLayers map
