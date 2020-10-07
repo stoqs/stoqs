@@ -579,8 +579,13 @@ class Base_Loader(STOQS_Loader):
                         # Hard-coded CCE EPIC nominal depth
                         depths[v] = [float(self.ds.attributes['NC_GLOBAL']['nominal_sensor_depth'])]
                     else:
-                        # Hard-coded OASIS ADCP nominal depth
-                        depths[v] = [self.ds['ADCP_DEPTH'].data[:][0]]
+                        self.logger.warning(f"Could not find {ac['depth']} for variable {v} in {self.url}, attempting to hard-code the depth with 'ADCP_DEPTH'")
+                        if v == 'SW_FLUX_HR':
+                            self.logger.info(f"Attempting to hard-code the depth with the first value from 'HR_DEPTH_0'")
+                            depths[v] = [self.ds['HR_DEPTH_0'].data[:][0]]
+                        else:
+                            self.logger.info(f"Attempting to hard-code the depth with the first value from 'ADCP_DEPTH'")
+                            depths[v] = [self.ds['ADCP_DEPTH'].data[:][0]]
             elif self.getFeatureType() == TRAJECTORYPROFILE:
                 self.logger.debug('Initializing depths list for trajectoryprofile, ac = %s', ac)
                 depths[v] = self.ds[v][ac['depth']].data[:]
