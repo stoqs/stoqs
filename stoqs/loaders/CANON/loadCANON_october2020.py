@@ -45,17 +45,16 @@ cl.l_662a_parms = ['temperature', 'salinity', 'fluorescence','oxygen']
 cl.l_662a_startDatetime = startdate
 cl.l_662a_endDatetime = enddate
 
-# NPS_34a updated parameter names in netCDF file
-## The following loads decimated subset of data telemetered during deployment
-cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
-cl.nps34a_files = [ 'OS_Glider_NPS_G34_20200707_TS.nc' ]
-cl.nps34a_parms = ['temperature', 'salinity','fluorescence']
-cl.nps34a_startDatetime = startdate
-cl.nps34a_endDatetime = enddate
+# NPS_34 ##
+cl.nps34_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
+cl.nps34_files = [ 'OS_Glider_NPS_G34_20201006_TS.nc' ]
+cl.nps34_parms = ['TEMP', 'PSAL', 'FLU2', 'OXYG']
+cl.nps34_startDatetime = startdate
+cl.nps34_endDatetime = enddate
 
 # NPS_29 ##
 cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
-cl.nps29_files = [ 'OS_Glider_NPS_G29_20200722_TS.nc' ]
+cl.nps29_files = [ 'OS_Glider_NPS_G29_20201006_TS.nc' ]
 cl.nps29_parms = ['TEMP', 'PSAL', 'FLU2', 'OXYG']
 cl.nps29_startDatetime = startdate
 cl.nps29_endDatetime = enddate
@@ -120,8 +119,9 @@ elif cl.args.stride:
 
 cl.loadM1()  
 ##cl.loadL_662a()
-##cl.load_NPS29()
-##cl.load_NPS34a()
+cl.load_NPS29()
+cl.load_NPS34()
+sys.exit()
 cl.load_wg_Tiny()
 cl.load_wg_Hansen()
 cl.loadLRAUV('makai', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
