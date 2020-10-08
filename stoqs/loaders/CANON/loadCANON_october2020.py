@@ -84,7 +84,7 @@ cl.wg_Hansen_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20201005/realTime/20201005.nc'
+                      'wgTiny/20201006/realTime/20201005.nc'
                    ]
 
 
@@ -121,7 +121,6 @@ cl.loadM1()
 ##cl.loadL_662a()
 cl.load_NPS29()
 cl.load_NPS34()
-sys.exit()
 cl.load_wg_Tiny()
 cl.load_wg_Hansen()
 cl.loadLRAUV('makai', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
