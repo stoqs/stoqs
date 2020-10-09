@@ -127,7 +127,7 @@ cl.loadLRAUV('makai', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True
 cl.loadLRAUV('pontus', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
 cl.loadLRAUV('makai', startdate, enddate)
 cl.loadLRAUV('pontus', startdate, enddate)
-#cl.loadDorado(startdate, enddate, build_attrs=True)
+cl.loadDorado(startdate, enddate, build_attrs=True)
 
 ##cl.loadSubSamples() 
 
