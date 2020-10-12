@@ -123,8 +123,11 @@ cl.load_NPS29()
 cl.load_NPS34()
 cl.load_wg_Tiny()
 cl.load_wg_Hansen()
-cl.loadLRAUV('makai', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
-cl.loadLRAUV('pontus', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True)
+# Problem with loading both temperature & salinity - for now load just one of them
+cl.loadLRAUV('makai', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True,
+             parameters=['temperature', 'chlorophyll'])
+cl.loadLRAUV('pontus', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True,
+             parameters=['temperature', 'chlorophyll'])
 cl.loadLRAUV('makai', startdate, enddate)
 cl.loadLRAUV('pontus', startdate, enddate)
 cl.loadDorado(startdate, enddate, build_attrs=True)
