@@ -85,6 +85,7 @@ LONGITUDE = 'longitude'
 
 # Set batch_size such that we avoid swapping with bulk_create() on a 3 GB RAM system, a value = 10000 is good
 # Significant swap disk is used (12%) and loads of DEIMOS data take 20% longer with BATCH_SIZE=100000
+# Some loads (e.g. stoqs_canon_october2020) will crash postgresql unless BATCH_SIZE is reduced to 1000
 # Update on 6 March 2020:
 #   A more raw version of the DEIMOS data with 2619 depths in each profile runs out of memory unless it's
 #   run on a VM with more than 10 GB of RAM.  Reducing BATCH_SIZE to 4 helps some with the memory requirement
