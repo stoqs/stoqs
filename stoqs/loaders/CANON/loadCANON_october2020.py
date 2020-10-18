@@ -138,10 +138,10 @@ cl.load_wg_Hansen()
 ##cl.whoidhs_parms = ['mass_concentration_of_chlorophyll_in_sea_water', ]
 #_cl.loadLRAUV('whoidhs', critSimpleDepthTime=0.1, build_attrs=False)
 
-cl.loadLRAUV('makai', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True,
-             parameters=['chlorophyll', 'temperature'])
-cl.loadLRAUV('pontus', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True,
-             parameters=['chlorophyll', 'temperature'])
+##cl.loadLRAUV('makai', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True,
+##             parameters=['chlorophyll', 'temperature'])
+##cl.loadLRAUV('pontus', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True,
+##             parameters=['chlorophyll', 'temperature'])
 cl.loadLRAUV('makai', startdate, enddate)
 cl.loadLRAUV('pontus', startdate, enddate)
 cl.loadDorado(startdate, enddate, build_attrs=True)
