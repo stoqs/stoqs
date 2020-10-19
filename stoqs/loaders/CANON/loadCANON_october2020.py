@@ -123,11 +123,25 @@ cl.load_NPS29()
 cl.load_NPS34()
 cl.load_wg_Tiny()
 cl.load_wg_Hansen()
+
 # Problem with loading both temperature & salinity - for now load just one of them
-cl.loadLRAUV('makai', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True,
-             parameters=['temperature', 'chlorophyll'])
-cl.loadLRAUV('pontus', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True,
-             parameters=['temperature', 'chlorophyll'])
+#_cl.makai_base = 'http://dods.mbari.org/opendap/data/lrauv/makai/realtime/sbdlogs/2020/202010/'
+#_cl.makai_files = ['20201008T014813/shore_i.nc']
+#_cl.makai_parms = ['chlorophyll', 'temperature', 'salinity']
+#_cl.loadLRAUV('makai', critSimpleDepthTime=0.1, build_attrs=False)
+
+# Previously "fixed" load
+#_cl.whoidhs_base = 'http://dods.mbari.org/opendap/data/lrauv/whoidhs/realtime/sbdlogs/2019/201906/'
+#_cl.whoidhs_files = ['20190612T024430/shore_i.nc']
+#_cl.whoidhs_parms = ['concentration_of_chromophoric_dissolved_organic_matter_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water', ]
+##cl.whoidhs_parms = ['concentration_of_chromophoric_dissolved_organic_matter_in_sea_water']
+##cl.whoidhs_parms = ['mass_concentration_of_chlorophyll_in_sea_water', ]
+#_cl.loadLRAUV('whoidhs', critSimpleDepthTime=0.1, build_attrs=False)
+
+##cl.loadLRAUV('makai', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True,
+##             parameters=['chlorophyll', 'temperature'])
+##cl.loadLRAUV('pontus', startdate, enddate, critSimpleDepthTime=0.1, sbd_logs=True,
+##             parameters=['chlorophyll', 'temperature'])
 cl.loadLRAUV('makai', startdate, enddate)
 cl.loadLRAUV('pontus', startdate, enddate)
 cl.loadDorado(startdate, enddate, build_attrs=True)
