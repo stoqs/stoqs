@@ -21,7 +21,7 @@ ipython==7.18.1
 jdcal==1.4.1
 Jinja2==2.11.2
 jupyter==1.0.0
-lxml==4.5.2
+lxml==4.6.1
 mock==4.0.2
 matplotlib==3.3.2
 netCDF4==1.5.4
