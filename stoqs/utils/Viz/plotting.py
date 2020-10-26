@@ -16,7 +16,7 @@ import statsmodels.api as sm
 from matplotlib import rcParams
 from scipy.interpolate import griddata
 from scipy.stats import ttest_ind
-from matplotlib.colors import hex2color
+from matplotlib.colors import hex2color, LogNorm
 from operator import itemgetter
 from pylab import polyval
 from collections import namedtuple
@@ -136,7 +136,7 @@ class BaseParameter(object):
         self.clt = [self.cm(i) for i in range(256)]
 
     def set_ticks_bounds_norm(self, parm_info, use_ui_cmincmax=True, use_ui_num_colors=True):
-        '''Common parameters for colormap, scatter and countour plotting
+        '''Common parameters for colormap, scatter and contour plotting
         '''
         c_min, c_max = parm_info[1:]
         if use_ui_cmincmax:
@@ -509,7 +509,8 @@ class MeasuredParameter(BaseParameter):
             indx = len(clt.colors) - 1
         return clt.colors[indx]
 
-    def _make_image(self, tmin, tmax, dmin, dmax, xi, yi, cx, cy, cz, clx, cly, clz, contourFlag, cmocean_lookup_str):
+    def _make_image(self, tmin, tmax, dmin, dmax, xi, yi, cx, cy, cz, clx, cly, clz,
+                    contourFlag, cmocean_lookup_str, measurement_markers=True):
         '''Generate image from collected member variables
         '''
         if self.parameterID or self.contourParameterID:
@@ -585,10 +586,11 @@ class MeasuredParameter(BaseParameter):
                 if contourFlag:
                     ax.contourf(xi, yi, zi, cmap=self.cm, norm=self.norm, extend='both',
                             levels=np.linspace(parm_info[1], parm_info[2], self.num_colors+1))
-                    ax.scatter(cx, cy, marker='.', s=2, c='k', lw = 0)
+                    if measurement_markers:
+                        ax.scatter(cx, cy, marker='.', s=2, c='k', lw = 0)
                 else:
                     self.logger.debug('parm_info = %s', parm_info)
-                    ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2], norm=self.norm)
+                    ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, norm=self.norm)
                     # Draw any spanned data, e.g. NetTows
                     self.logger.debug(f"Drawing spanned data: {len(self.xspan)} samples")
                     for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
@@ -698,7 +700,8 @@ class MeasuredParameter(BaseParameter):
 
         return tmin, tmax, dmin, dmax
 
-    def renderDatavaluesNoAxes(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False, loadDataOnly=False, forFlot=True):
+    def renderDatavaluesNoAxes(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False,
+                               loadDataOnly=False, forFlot=True, measurement_markers=True):
         '''
         Produce a .png image without axes suitable for overlay on a Flot graphic or as X3D curtain plots 
 
@@ -802,7 +805,8 @@ class MeasuredParameter(BaseParameter):
             if loadDataOnly:
                 return None, None, 'loadDataOnly specified', self.cm_name, cmocean_lookup_str, self.standard_name
             else:
-                return self._make_image(tmin, tmax, dmin, dmax, xi, yi, cx, cy, cz, clx, cly, clz, contourFlag, cmocean_lookup_str)
+                return self._make_image(tmin, tmax, dmin, dmax, xi, yi, cx, cy, cz, clx, cly, clz, contourFlag,
+                                        cmocean_lookup_str, measurement_markers=measurement_markers)
         else:
             self.logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s', tmin, tmax, dmin, dmax)
             return None, None, 'Select a time-depth range', self.cm_name, cmocean_lookup_str, self.standard_name
@@ -931,7 +935,7 @@ class MeasuredParameter(BaseParameter):
         # 1. Image: Build image with potential Sampling Platforms included
         saved_platforms = self.kwargs['platforms']
         self.kwargs['platforms'] = platform_names.split(',')
-        sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(forFlot=False)
+        sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(forFlot=False, measurement_markers=False)
         if not sectionPngFile:
             self.kwargs['platforms'] = saved_platforms
             return x3d_results, shape_id_dict
@@ -952,7 +956,8 @@ class MeasuredParameter(BaseParameter):
             # Now, use renderDatavaluesNoAxes() to fill member variables without Sampling Platforms
             self.kwargs['platforms'] = [self.kwargs['platforms'][0]]
             self.logger.debug(f"renderDatavaluesNoAxes(loadDataOnly=True) for self.kwargs['platforms'] = {self.kwargs['platforms']}")
-            sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(forFlot=False, loadDataOnly=True)
+            sectionPngFile, colorbarPngFile, _, _, _, _ = self.renderDatavaluesNoAxes(forFlot=False, loadDataOnly=True,
+                                                                                      measurement_markers=False)
             if not sectionPngFile:
                 self.kwargs['platforms'] = saved_platforms
                 return x3d_results, shape_id_dict
@@ -1287,8 +1292,8 @@ class ParameterParameter(BaseParameter):
                     # Likely no color parameter selected
                     pass
 
-                ax.scatter(self.x, self.y, c=self.c, s=10, cmap=self.cm, lw=0, vmin=self.pMinMax['c'][1], 
-                           vmax=self.pMinMax['c'][2], clip_on=False, norm=self.norm)
+                ax.scatter(self.x, self.y, c=self.c, s=10, cmap=self.cm, lw=0,
+                           clip_on=False, norm=self.norm)
                 # Add colorbar to the image
                 cb_ax = fig.add_axes([0.2, 0.98, 0.6, 0.02]) 
                 cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=self.cm,

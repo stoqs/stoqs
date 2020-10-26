@@ -85,6 +85,7 @@ LONGITUDE = 'longitude'
 
 # Set batch_size such that we avoid swapping with bulk_create() on a 3 GB RAM system, a value = 10000 is good
 # Significant swap disk is used (12%) and loads of DEIMOS data take 20% longer with BATCH_SIZE=100000
+# Some loads (e.g. stoqs_canon_october2020) will crash postgresql unless BATCH_SIZE is reduced to 1000
 # Update on 6 March 2020:
 #   A more raw version of the DEIMOS data with 2619 depths in each profile runs out of memory unless it's
 #   run on a VM with more than 10 GB of RAM.  Reducing BATCH_SIZE to 4 helps some with the memory requirement
@@ -579,8 +580,13 @@ class Base_Loader(STOQS_Loader):
                         # Hard-coded CCE EPIC nominal depth
                         depths[v] = [float(self.ds.attributes['NC_GLOBAL']['nominal_sensor_depth'])]
                     else:
-                        # Hard-coded OASIS ADCP nominal depth
-                        depths[v] = [self.ds['ADCP_DEPTH'].data[:][0]]
+                        self.logger.warning(f"Could not find {ac['depth']} for variable {v} in {self.url}, attempting to hard-code the depth with 'ADCP_DEPTH'")
+                        if v == 'SW_FLUX_HR':
+                            self.logger.info(f"Attempting to hard-code the depth with the first value from 'HR_DEPTH_0'")
+                            depths[v] = [self.ds['HR_DEPTH_0'].data[:][0]]
+                        else:
+                            self.logger.info(f"Attempting to hard-code the depth with the first value from 'ADCP_DEPTH'")
+                            depths[v] = [self.ds['ADCP_DEPTH'].data[:][0]]
             elif self.getFeatureType() == TRAJECTORYPROFILE:
                 self.logger.debug('Initializing depths list for trajectoryprofile, ac = %s', ac)
                 depths[v] = self.ds[v][ac['depth']].data[:]
@@ -805,10 +811,18 @@ class Base_Loader(STOQS_Loader):
         http://dods.mbari.org/opendap/data/lrauv/whoidhs/realtime/sbdlogs/2019/201906/20190609T202208/shore_i.nc
         3. Very unequal lengths, pad with 41 zeros; fails with duplicate key value
         http://dods.mbari.org/opendap/data/lrauv/whoidhs/realtime/sbdlogs/2019/201906/20190612T024430/shore_i.nc
+        4. Horrendously bad result with coordinates and data represented badly in STOQS UI section plots.
+        (Implemented temporary fix by not loading salinity; problem occurs with loading both temperature & salinity)
+        http://dods.mbari.org/opendap/data/lrauv/makai/realtime/sbdlogs/2020/202010/20201008T014813/shore_i.nc
+    
+        The role of this method is to identify truely equal coordinates of variables to be loaded for the 
+        calling routine to determine whether a bulk_create() may be done or whether the variables need to be
+        loaded the old fashioned (slower) way - one element at a time, reusing previously loaded coordinates.
         '''
         coord_equals = {}
         for count, (axes, ac) in enumerate(coor_groups.items()):
             self.logger.info(f"Initializing coord_equals to all False for axes {axes}")
+            self.logger.info(f"Number of {ac[TIME]} values: {len(self.ds[ac[TIME]])}")
             coord_equals[axes] = np.full(len(self.ds[ac[TIME]]), False)
 
             variable = load_groups[axes][0]
@@ -816,7 +830,7 @@ class Base_Loader(STOQS_Loader):
                 if len(last_times) < len(self.ds[ac[TIME]]):
                     self.logger.info(f"len(last_times) ({len(last_times)}) < len(self.ds[ac[TIME]]) ({len(self.ds[ac[TIME]])})")
                     num_pad = len(self.ds[ac[TIME]]) - len(last_times)
-                    self.logger.info(f"Padding last_ coordinate arrays with {num_pad} zero(s) to match the self.ds coordinate arrays")
+                    self.logger.info(f"Padding last_ coordinate arrays with {num_pad} zero(s) to match (taking a chance) the self.ds coordinate arrays")
                     last_times = np.pad(last_times, [(0, num_pad)], mode='constant', constant_values=0)
                     last_depths = np.pad(last_depths, [(0, num_pad)], mode='constant', constant_values=0)
                     last_latitudes = np.pad(last_latitudes, [(0, num_pad)], mode='constant', constant_values=0)
@@ -824,8 +838,8 @@ class Base_Loader(STOQS_Loader):
 
                 if len(last_times) > len(self.ds[ac[TIME]]):
                     self.logger.warn(f"len(last_times) ({len(last_times)}) > len(self.ds[ac[TIME]]) ({len(self.ds[ac[TIME]])})")
-                    self.logger.warn(f"Not Padding self.ds arrays")
-                    return
+                    self.logger.warn(f"Not Padding self.ds arrays - not able to attempt a fix")
+                    continue
 
                 self.logger.debug(f"Comparing coords with those from {last_variables}")
                 times_equal = np.equal(last_times, self.ds[ac[TIME]])
@@ -849,7 +863,7 @@ class Base_Loader(STOQS_Loader):
                                                     np.logical_and(latitudes_equal, 
                                                                    longitudes_equal))
                 self.logger.debug(f"  {variable} .logical_and(): {coord_equals[axes]}")
-            
+        
             last_times = self.ds[ac[TIME]]
             last_depths = self.ds[ac[DEPTH]][ac[DEPTH]]
             last_latitudes = self.ds[ac[LATITUDE]][ac[LATITUDE]]
@@ -1190,9 +1204,15 @@ class Base_Loader(STOQS_Loader):
                                 else:
                                     meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k)
                             else:
-                                if coords_equal_hash:
+                                if coords_equal_hash[k].all():
                                     # For follow-on Parameters using same axes, pass in equal coordinates boolean array
                                     meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k, coords_equal_hash[k])
+                                else:
+                                    # Load Parameter one element at a time - the old fashioned (slower) way
+                                    self.logger.warning(f"Parameter {pname} does not share the same coordinates of previously loaded Parameters, skipping for now.")
+                                    self.logger.debug(f"coords_equal_hash[{k}] = {coords_equal_hash[k]}")
+                                    continue
+                                    # TODO: Implement one element at a time loader method
                         except CoordNotEqual as e:
                             self.logger.exception(e)
                             sys.exit(-1)

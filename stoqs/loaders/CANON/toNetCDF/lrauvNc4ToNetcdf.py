@@ -16,12 +16,13 @@ trajectory.
 @status: production
 @license: GPL
 '''
-
+import os
+import tempfile
+os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 import matplotlib as mpl
 mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import matplotlib.pyplot as plt
 import sys
-import os
 import errno
 # Add grandparent dir to pythonpath so that we can see the CANON and toNetCDF modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../") )
