@@ -28,7 +28,7 @@ cl = CANONLoader('stoqs_canon_october2020', 'CANON - October 2020',
                  )
 
 startdate = datetime(2020, 10, 4)
-enddate = datetime(2020, 10, 24)
+enddate = datetime(2020, 10, 29)
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
