@@ -27,7 +27,7 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
 
    a. Geocentric - no GeoOrigin:
 
-        grd2xyz Monterey25.grd --FORMAT_FLOAT_OUT=%f | sed '/NaN/d' | awk '{print $1, $2, 10 * $3}' | mapproject -E > Monterey25_10x.asc
+        gmt grd2xyz Monterey25.grd --FORMAT_FLOAT_OUT=%f | sed '/NaN/d' | awk '{print $1, $2, 10 * $3}' | gmt mapproject -E > Monterey25_10x.asc
 
    b. With a GeoOrigin:
 
