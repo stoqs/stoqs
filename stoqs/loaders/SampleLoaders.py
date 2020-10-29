@@ -221,26 +221,30 @@ class ParentSamplesLoader(STOQS_Loader):
                 except ClosestTimeNotFoundException:
                     self.logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
 
-    def _get_lrauv_esp_sample_platform(self, db_alias, lrauv_platform, sample_type):
+    def _get_lrauv_esp_sample_platform(self, db_alias, lrauv_platform, sample_type, esp_device=None):
         '''Use name of LRAUV platform to construct a new Platform for connecting to an ESP Sample Activity.
         Return existing Platform if it's already been created.
         '''
+        if esp_device:
+            p_name = f"{lrauv_platform.name}_{sample_type.name.replace('ESP', esp_device)}"
+        else:
+            p_name = f"{lrauv_platform.name}_{sample_type}"
         pt, _ = PlatformType.objects.using(db_alias).get_or_create(name='auv')
         platform, _ = Platform.objects.using(db_alias).get_or_create(
-                                name = f"{lrauv_platform.name}_{sample_type}",
+                                name = p_name,
                                 platformtype = pt,
                                 color = lrauv_platform.color
                             )
         return platform
 
     def _create_activity_instantpoint_platform(self, db_alias, platform_name, activity_name, sample_type, ses, ees,
-                                               sample_name):
+                                               sample_name, esp_device=None):
         '''Create an Activity for the Sample and copy the Measurement locations
         to create records for drawing the trace of the long duration sample in the UI
         '''
         campaign = Campaign.objects.using(db_alias).filter(activity__name=activity_name)[0]
         lrauv_platform = Platform.objects.using(db_alias).filter(activity__name=activity_name)[0]
-        platform = self._get_lrauv_esp_sample_platform(db_alias, lrauv_platform, sample_type)
+        platform = self._get_lrauv_esp_sample_platform(db_alias, lrauv_platform, sample_type, esp_device)
         at, _ = ActivityType.objects.using(db_alias).get_or_create(name=ESP_FILTERING)
 
         sdt = datetime.fromtimestamp(ses)
@@ -270,10 +274,14 @@ class ParentSamplesLoader(STOQS_Loader):
             self.logger.warn(f"Time duration of Sample '{sample_name}' is longer than {max_hours} hours: duration = {duration}")
 
         short_activity_name = '_'.join(activity_name.split('_')[:2])
+        if esp_device:
+            a_name = f"{short_activity_name}_{sample_type.name.replace('ESP', esp_device)}_{sample_name}"
+        else:
+            a_name = f"{short_activity_name}_{sample_type}_{sample_name}"
         sample_act, _ = Activity.objects.using(db_alias).get_or_create(
                             campaign = campaign,
                             activitytype = at,
-                            name = f"{short_activity_name}_{sample_type}_{sample_name}",
+                            name = a_name,
                             comment = f'{sample_type} Sample done in conjunction with LRAUV Activity {activity_name}',
                             platform = platform,
                             startdate = ip_qs[0].timevalue,
@@ -345,6 +353,7 @@ class ParentSamplesLoader(STOQS_Loader):
         syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
         self.logger.info(f"Getting {levels} {components} information from {syslog_url}")
         log_rows = []
+        esp_device = None
 
         with requests.get(syslog_url, stream=True) as resp:
             if resp.status_code != 200:
@@ -355,6 +364,7 @@ class ParentSamplesLoader(STOQS_Loader):
             prev_message = ''
             prev_line_has_component = False
             for line in (lb.decode(errors='ignore') for lb in resp.iter_lines()):
+
                 # Ugly logic to handle multiple line messages
                 lm = re.match(beg_syslog_re, line)
                 if lm:
@@ -366,6 +376,13 @@ class ParentSamplesLoader(STOQS_Loader):
                         prev_message = lm.groupdict().get('log_message')
                         following_lines = ''
                         prev_line_has_component = True
+                    elif lm.groupdict().get('log_component') == 'ESPComponent' and lm.groupdict().get('log_level') == 'INFO':
+                        # Messages like this started appearing in the syslogs in the Fall of 2018
+                        # 2020-10-14T05:24:53.794Z,1602653093.794 [ESPComponent](INFO): console:ESPmv1 login: Sending discover...
+                        esp_m = re.match('console:(ESP\S+) login', lm.groupdict().get('log_message'))
+                        if esp_m:
+                            esp_device = esp_m.group(1)
+
                     else:
                         message = prev_message
                         if prev_line_has_component:
@@ -380,7 +397,7 @@ class ParentSamplesLoader(STOQS_Loader):
                     if line:
                         following_lines += line + '\n'
 
-        return log_rows
+        return log_rows, esp_device
 
     def _read_tethysdash(self, platform_name, url):
         st = url.split('/')[-1].split('_')[0]
@@ -420,19 +437,20 @@ class ParentSamplesLoader(STOQS_Loader):
         esp_s_stopping = []
         esp_log_summaries = []
         esp_log_criticals = []
+        esp_device = None
 
         FILTERING = 'ESP sampling state: S_FILTERING'
         PROCESSING = 'ESP sampling state: S_PROCESSING'
         LOGSUMMARY = 'ESP log summary report'
 
         if use_syslog:
-            log_important = self._read_syslog(url)
-            log_critical = self._read_syslog(url, levels=('CRITICAL',))
+            log_important, esp_device = self._read_syslog(url)
+            log_critical, esp_device = self._read_syslog(url, levels=('CRITICAL',))
         else:
             log_important = self._read_tethysdash(platform_name, url)
 
         if not log_important and not log_critical:
-            return esp_s_filtering, esp_s_stopping, esp_log_summaries, esp_log_criticals 
+            return esp_s_filtering, esp_s_stopping, esp_log_summaries, esp_log_criticals, esp_device
 
         Log = namedtuple('Log', 'esec text')
         try:
@@ -473,7 +491,7 @@ class ParentSamplesLoader(STOQS_Loader):
         else:
             self.logger.info(f"No ESP Samples parsed from syslog for {url}")
 
-        return esp_s_filtering, esp_s_stopping, esp_log_summaries, esp_log_criticals
+        return esp_s_filtering, esp_s_stopping, esp_log_summaries, esp_log_criticals, esp_device
 
     def _validate_summaries(self, platform_name, filterings, stoppings, summaries, criticals):
         '''Ensure that there are the same number of items in filterings, stoppings, summaries and 
@@ -769,7 +787,7 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return sipper_names
 
-    def _save_samples(self, db_alias, platform_name, activity_name, sampletype, samples, log_text):
+    def _save_samples(self, db_alias, platform_name, activity_name, sampletype, samples, log_text, esp_device=None):
         # Load Samples and sample.text as a Resource associated with the Sample
         for sample_name, sample in samples.items():
             self.logger.info(f"Calling _create_activity_instantpoint_platform() for sample_name={sample_name}")
@@ -777,7 +795,7 @@ class ParentSamplesLoader(STOQS_Loader):
                 act, ip, point, depth, maptrack = self._create_activity_instantpoint_platform(
                                                 db_alias, platform_name, 
                                                 activity_name, sampletype, 
-                                                sample.start, sample.end, sample_name)
+                                                sample.start, sample.end, sample_name, esp_device)
             except IntegrityError as e:
                 self.logger.warn(f"Sample {sample_name} already loaded")
                 continue
@@ -809,12 +827,23 @@ class ParentSamplesLoader(STOQS_Loader):
             SampleResource.objects.using(db_alias).get_or_create(sample=samp, resource=res)
             self.logger.debug(f"Saved Resource {res}")
 
+            # Associate Resource (ESP device name) with Sample and warn if device name not found in syslog
+            if sampletype.name.startswith('ESP'):
+                if esp_device:
+                    res, _ = Resource.objects.using(db_alias).get_or_create(name='ESP_device_name', value=esp_device)
+                    SampleResource.objects.using(db_alias).get_or_create(sample=samp, resource=res)
+                    self.logger.debug(f"Saved Resource {res}")
+                else:
+                    # Likely an ESP Sample before Fall 2018 when "console:ESP... login" messages started appearing in the syslog
+                    self.logger.warn(f"SampleType is {sampletype.name}, but no ESP device name found in syslog for {samp}")
+
+
     def load_lrauv_samples(self, platform_name, activity_name, url, db_alias):
         '''
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
         '''
 
-        filterings, stoppings, summaries, criticals = self._esps_from_json(platform_name, url, db_alias)
+        filterings, stoppings, summaries, criticals, esp_device = self._esps_from_json(platform_name, url, db_alias)
         filterings, stoppings, summaries = self._validate_summaries(platform_name, filterings, stoppings, summaries, criticals)
 
         # After 14 August 2018 a 'sample #<num>' is included in the log message:
@@ -835,7 +864,7 @@ class ParentSamplesLoader(STOQS_Loader):
             (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_FILTERING)
             self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
             self._save_samples(db_alias, platform_name, activity_name, esp_archive_type, esp_names, 
-                               log_text='ESP log summary report')
+                               log_text='ESP log summary report', esp_device=esp_device)
 
         if sipper_names:
             (sipper_type, created) = SampleType.objects.using(db_alias).get_or_create(name=SIPPER)
