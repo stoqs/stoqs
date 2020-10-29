@@ -1,4 +1,4 @@
-aiohttp==3.6.3
+aiohttp==3.7.2
 beautifulsoup4==4.9.3
 cmocean==2.0
 coards==1.0.5
@@ -13,15 +13,16 @@ django-environ==0.4.5
 django-extensions==3.0.9
 django-model-utils==4.0.0
 django-picklefield==3.0.1
-GitPython==3.1.9
+GitPython==3.1.11
 euclid==1.2
 djangorestframework==3.12.1
 httplib2==0.18.1
+ipyleaflet==0.13.3
 ipython==7.18.1
 jdcal==1.4.1
 Jinja2==2.11.2
 jupyter==1.0.0
-lxml==4.5.2
+lxml==4.6.1
 mock==4.0.2
 matplotlib==3.3.2
 netCDF4==1.5.4
@@ -33,7 +34,7 @@ PasteDeploy==2.1.1
 Paste==3.5.0
 PasteScript==3.2.0
 pika==1.1.0
-Pillow==7.2.0
+Pillow==8.0.1
 pysher==1.0.6
 psycopg2-binary==2.8.6
 pupynere==1.0.15
@@ -46,7 +47,7 @@ pyzmq==19.0.2
 readline==6.2.4.1
 requests-oauthlib==1.3.0
 scikit-learn==0.23.2
-scipy==1.5.2
+scipy==1.5.3
 seawater==3.3.4
 selenium==3.141.0
 simplejson==3.17.2
