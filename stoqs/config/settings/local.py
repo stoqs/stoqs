@@ -58,6 +58,16 @@ TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 # Your local stuff: Below this line define 3rd party library settings
 
+# See: https://stackoverflow.com/questions/62193187/django-shell-plus-how-to-access-jupyter-notebook-in-docker-container
+NOTEBOOK_ARGUMENTS = [
+    "--ip",
+    "0.0.0.0",
+    "--port",
+    "8888",
+    "--allow-root",
+    "--no-browser",
+]
+
 # Home page link, logo and alt text - HOME_PAGE_LOGO must be in STATIC_URL/images
 HOME_PAGE_LINK = env('HOME_PAGE_LINK', default='http://www.mbari.org')
 HOME_PAGE_LOGO = env('HOME_PAGE_LOGO', default='new_mbari_logo.png')

@@ -1,4 +1,4 @@
-aiohttp==3.6.3
+aiohttp==3.7.2
 beautifulsoup4==4.9.3
 cmocean==2.0
 coards==1.0.5
@@ -13,10 +13,11 @@ django-environ==0.4.5
 django-extensions==3.0.9
 django-model-utils==4.0.0
 django-picklefield==3.0.1
-GitPython==3.1.9
+GitPython==3.1.11
 euclid==1.2
 djangorestframework==3.12.1
 httplib2==0.18.1
+ipyleaflet==0.13.3
 ipython==7.18.1
 jdcal==1.4.1
 Jinja2==2.11.2
@@ -33,7 +34,7 @@ PasteDeploy==2.1.1
 Paste==3.5.0
 PasteScript==3.2.0
 pika==1.1.0
-Pillow==8.0.0
+Pillow==8.0.1
 pysher==1.0.6
 psycopg2-binary==2.8.6
 pupynere==1.0.15
