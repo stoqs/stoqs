@@ -883,6 +883,9 @@ if __name__ == '__main__':
         l.print_list()
     elif l.args.updateprovenance:
         l.updateprovenance()
+    elif l.args.pg_dump and l.args.grant_everyone_select:
+        l.pg_dump()
+        l.grant_everyone_select()
     elif l.args.grant_everyone_select:
         l.grant_everyone_select()
     elif l.args.add_resource:
@@ -891,3 +894,5 @@ if __name__ == '__main__':
         l.pg_dump()
     else:
         l.load()
+        l.grant_everyone_select()
+
