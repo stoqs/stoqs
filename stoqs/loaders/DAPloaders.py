@@ -1198,7 +1198,7 @@ class Base_Loader(STOQS_Loader):
                         try:
                             # Expect CF Discrete Sampling Geometry or EPIC dataset
                             self.logger.info(f'Loading coordinates for axes {k}')
-                            if axis_count == 0:
+                            if coords_equal_hash == {}:
                                 if add_to_activity:
                                     meass, dup_times, mask = self._meass_from_activity(add_to_activity, tindx, ac)
                                 else:
