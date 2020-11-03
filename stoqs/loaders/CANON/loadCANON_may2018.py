@@ -82,7 +82,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 ######################################################################
 # Glider data files from CeNCOOS thredds server
 # L_662a updated parameter names in netCDF file
-cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line67/'
 cl.l_662a_files = [
                    'OS_Glider_L_662_20180430_TS.nc',
                   ]
@@ -92,7 +92,7 @@ cl.l_662a_endDatetime = enddate
 
 # NPS_34a updated parameter names in netCDF file
 ## The following loads decimated subset of data telemetered during deployment
-cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
 cl.nps34a_files = [ 'OS_Glider_NPS_G34_20180514_TS.nc' ]
 cl.nps34a_parms = ['temperature', 'salinity','fluorescence']
 cl.nps34a_startDatetime = startdate
@@ -103,7 +103,7 @@ cl.nps34a_endDatetime = enddate
 ## cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20170412T0000/'
 ## cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
 ##   from cencoos directory, single non-aggregated files
-cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201805/'
+cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/line66/nemesis_201805/'
 
 cl.slocum_nemesis_files = [
         'nemesis_20180615T125540_rt0.nc',
@@ -530,7 +530,8 @@ cl.loadLRAUV('makai', startdate, enddate)
 
 cl.loadWFuctd()
 cl.loadWFpctd()
-#-cl.loadWF_EK500()
+# WIP: TrajectoryProfile work
+##cl.loadWF_EK500()
 
 #cl.loadSubSamples() ## no subSamples yet...
 
