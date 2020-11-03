@@ -19,7 +19,7 @@ geopandas==0.8.1
 h5py==3.0.0
 MarkupSafe==1.1.1
 pandas==1.1.4
-numpy==1.19.3
+numpy==1.19.4
 requests==2.24.0
 Pygments==2.7.2
 pygraphviz==1.6
