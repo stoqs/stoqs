@@ -366,7 +366,7 @@ cl.slocum_nemesis_endDatetime = enddate
 # WG Sparky - All instruments combined into one file - one time coordinate
 cl.wg_Sparky_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Sparky_files = [
-                      'wgSparky/20180531/realTime/20180531.nc',
+                      'wgSparky/20180531/QC/20180531_QC.nc',
                      ]
 
 cl.wg_Sparky_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  'water_temp_sub', 
@@ -378,7 +378,7 @@ cl.wg_Sparky_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20180516/realTime/20180516.nc',
+                      'wgTiny/20180516/QC/20180516_QC.nc',
                    ]
 
 
