@@ -86,7 +86,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 ######################################################################
 # Glider data files from CeNCOOS thredds server
 # L_662a updated parameter names in netCDF file
-cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line67/'
 cl.l_662a_files = [
                    'OS_Glider_L_662_20180816_TS.nc',
                   ]
@@ -96,7 +96,7 @@ cl.l_662a_endDatetime = enddate
 
 # NPS_34a updated parameter names in netCDF file
 ## The following loads decimated subset of data telemetered during deployment
-cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
 cl.nps34a_files = [ 'OS_Glider_NPS_G34_20180514_TS.nc' ]
 cl.nps34a_parms = ['temperature', 'salinity','fluorescence']
 cl.nps34a_startDatetime = startdate
@@ -107,7 +107,7 @@ cl.nps34a_endDatetime = enddate
 ## cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20170412T0000/'
 ## cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
 ##   from cencoos directory, single non-aggregated files
-cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201808/'
+cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/nemesis_201808/'
 
 cl.slocum_nemesis_files = [
          'nemesis_20180912T155836_rt0.nc',  
@@ -514,12 +514,15 @@ cl.subsample_csv_files = [
    'STOQS_CN18F_CHLA.csv',     'STOQS_CN18F_O2.csv',      'STOQS_CN18F_PHAEO_5U.csv',   'STOQS_CN18F_SIG_T.csv',
    'STOQS_CN18F_ALK.csv',         'STOQS_CN18F_CHL_GFF.csv',  'STOQS_CN18F_OXY_ML.csv',  'STOQS_CN18F_PHAEO_GFF.csv',  'STOQS_CN18F_TCO2.csv',
    'STOQS_CN18F_ALTIMETER.csv',
-   'STOQS_CN18F_COND2.csv', 
+   # Extra column following 'Parameter Name' messes up the parsing in STOQS_CN18F_COND2.csv, don't load it
+## 'STOQS_CN18F_COND2.csv', 
    'STOQS_CN18F_OXY_PS.csv',  'STOQS_CN18F_POT_TMP2.csv',
-   'STOQS_CN18F_TEMP2.csv', 
+   # Extra column following 'Parameter Name' messes up the parsing in STOQS_CN18F_TEMP2.csv, don't load it
+## 'STOQS_CN18F_TEMP2.csv', 
    'STOQS_CN18F_CARBON_GFF.csv',  'STOQS_CN18F_CONDUCT.csv',  'STOQS_CN18F_PAR4PI.csv',  'STOQS_CN18F_POT_TMP.csv',    'STOQS_CN18F_TMP.csv',
    'STOQS_CN18F_CHL_1U.csv',      'STOQS_CN18F_FLUOR.csv',    'STOQS_CN18F_PARCOS.csv',
-   'STOQS_CN18F_SAL2.csv', 
+   # Extra column following 'Parameter Name' messes up the parsing in STOQS_CN18F_SAL2.csv, don't load it
+## 'STOQS_CN18F_SAL2.csv', 
    'STOQS_CN18F_TRANSBEAM.csv',
                           ]
 
@@ -547,7 +550,7 @@ cl.loadLRAUV('tethys', startdate, enddate)
 cl.loadWFuctd()
 cl.loadWFpctd()
 
-cl.loadSubSamples() ## no subSamples yet...
+cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
