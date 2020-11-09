@@ -1,14 +1,14 @@
 -r base.txt
 
 alabaster==0.7.12
-amqp==5.0.1
+amqp==5.0.2
 amqplib==1.0.2
 anyjson==0.3.3
 Babel==2.8.0
 backports.ssl-match-hostname==3.7.0.1
 billiard==3.6.3.0
 binaryornot==0.4.4
-certifi==2020.6.20
+certifi==2020.11.8
 cookiecutter==1.7.2
 docutils==0.16
 Cython==0.29.21
@@ -16,7 +16,7 @@ ephem==3.7.7.1
 ##GDAL==3.0.3
 Genshi==0.7.4
 geopandas==0.8.1
-h5py==3.0.0
+h5py==3.1.0
 MarkupSafe==1.1.1
 pandas==1.1.4
 numpy==1.19.4
