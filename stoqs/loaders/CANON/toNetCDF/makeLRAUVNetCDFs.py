@@ -144,6 +144,7 @@ class Make_netCDFs():
         parser.add_argument('--previous_month', action='store_true', help='Create files for the previous month')
         parser.add_argument('--current_month', action='store_true', help='Create files for the current month')
         parser.add_argument('--realtime', action='store_true', help='Processed realtime telemetered data rather that delayed mode log files')
+        parser.add_argument('--remove_gps_outliers', action='store_true', help='Remove bad GPS fixes before nudging positions')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. 1: INFO, 2:DEBUG, 3:TDS Crawler', const=1, default=0)
 
         self.args = parser.parse_args()
