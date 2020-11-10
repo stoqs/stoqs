@@ -91,7 +91,7 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 ######################################################################
 # Glider data files from CeNCOOS thredds server
 # L_662
-cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line67/'
 cl.l_662_files = [
                    'OS_Glider_L_662_20170328_TS.nc'  ] 
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
@@ -100,7 +100,7 @@ cl.l_662_endDatetime = enddate
 
 # Glider data files from CeNCOOS thredds server
 # L_662a updated parameter names in netCDF file
-cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line67/'
 cl.l_662a_files = [
                    'OS_Glider_L_662_20170328_TS.nc'  ]
 cl.l_662a_parms = ['temperature', 'salinity', 'fluorescence','oxygen']
@@ -124,7 +124,7 @@ cl.sg621_endDatetime = enddate
 
 # NPS_34a updated parameter names in netCDF file
 ## The following loads decimated subset of data telemetered during deployment
-cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
 cl.nps34a_files = [ 'OS_Glider_NPS_G34_20170405_TS.nc' ]
 cl.nps34a_parms = ['temperature', 'salinity','fluorescence']
 cl.nps34a_startDatetime = startdate
@@ -135,7 +135,7 @@ cl.nps34a_endDatetime = enddate
 ## cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20170412T0000/'
 ## cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
 ##   from cencoos directory, single non-aggregated files
-cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201704/'
+cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/line66/nemesis_201704/'
 cl.slocum_nemesis_files = [
        'nemesis_20170426T233417_rt0.nc',
        'nemesis_20170426T193433_rt0.nc',
@@ -440,7 +440,7 @@ cl.subsample_csv_files = [
 cl.process_command_line()
 
 if cl.args.test:
-    cl.stride = 100
+    cl.stride = 1000
 elif cl.args.optimal_stride:
     cl.stride = 2
 else:

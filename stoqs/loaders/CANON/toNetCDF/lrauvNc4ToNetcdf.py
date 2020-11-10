@@ -574,7 +574,25 @@ class InterpolatorWriter(BaseWriter):
 
         return lon_time_series, lat_time_series
 
-    def var_series(self, in_file, data_array, time_array, tmin=0, tmax=time.time(), angle=False):
+    def outlier_mask(self, signal, name, threshold=4):
+        # This method is relly only good for single point spikes as it relies on a difference between adjacent points
+        # See: https://ocefpaf.github.io/python4oceanographers/blog/2015/03/16/outlier_detection/
+        signal = signal.copy()
+        difference = np.abs(signal - np.median(signal))
+        median_difference = np.median(difference)
+        if median_difference == 0:
+            spike = 0
+        else:
+            spike = difference / float(median_difference)
+
+        mask = spike > threshold
+        if mask.any():
+            self.logger.info(f"Found {name} outliers {signal[mask].values} at times {signal[mask].index.tolist()}, indexes: {np.where(mask == True)[0]}")
+            self.logger.info(f"Median of {len(signal)} signal points: {np.median(signal)}")
+
+        return mask
+
+    def var_series(self, in_file, data_array, time_array, args, tmin=0, tmax=time.time(), angle=False):
         '''Return a Pandas series of the coordinate with invalid and out of range time values removed'''
         mt = np.ma.masked_invalid(time_array)
         mt = np.ma.masked_outside(mt, tmin, tmax)
@@ -590,6 +608,13 @@ class InterpolatorWriter(BaseWriter):
             if md.mask is not np.ma.nomask:
                 da = pd.Series(da[:][~md.mask], index=v_time)
 
+        if args.remove_gps_outliers:
+            # Remove gps fix outliers
+            if ('longitude_fix' in data_array.name or 'latitude_fix' in data_array.name):
+                # For /mbari/LRAUV/tethys/missionlogs/2018/20180829_20180830/20180829T225930/201808292259_201808300407.nc4 threshold=4 seems appropriate
+                mask = self.outlier_mask(da, data_array.name, threshold=4)
+                da = pd.Series(da[:][~mask], index=v_time)
+
         # Specific ad hoc QC fixes
         if ('daphne/missionlogs/2017/20171002_20171005/20171003T231731/201710032317_201710040517' in in_file or 
             'daphne/missionlogs/2017/20171002_20171005/20171004T170805/201710041708_201710042304' in in_file):
@@ -604,7 +629,7 @@ class InterpolatorWriter(BaseWriter):
             if data_array.name == 'longitude':
                 md = np.ma.masked_greater(data_array, -2.0)     # Remove points in Utah
                 da = pd.Series(da[:][~md.mask], index=v_time)
- 
+
         if angle:
             # Some universal positions are in degrees, some are in radians - make a guess based on mean values
             rad_to_deg = False
@@ -617,7 +642,7 @@ class InterpolatorWriter(BaseWriter):
 
         return da
 
-    def nudge_coords(self, in_file, max_sec_diff_at_end=10):
+    def nudge_coords(self, in_file, args, max_sec_diff_at_end=10):
         '''Given a ds object to an LRAUV .nc4 file return adjusted longitude
         and latitude arrays that reconstruct the trajectory so that the dead
         reckoned positions are nudged so that they match the GPS fixes
@@ -629,17 +654,22 @@ class InterpolatorWriter(BaseWriter):
         self.segment_minsum = None
  
         # Produce Pandas time series from the NetCDF variables
-        lon = self.var_series(in_file, ds['longitude'], ds['longitude_time'], angle=True)
-        lat = self.var_series(in_file, ds['latitude'], ds['latitude_time'], angle=True)
+        lon = self.var_series(in_file, ds['longitude'], ds['longitude_time'], args, angle=True).dropna()
+        lat = self.var_series(in_file, ds['latitude'], ds['latitude_time'], args, angle=True).dropna()
         try:
-            lon_fix = self.var_series(in_file, ds['longitude_fix'], ds['longitude_fix_time'], angle=True)
-            lat_fix = self.var_series(in_file, ds['latitude_fix'], ds['latitude_fix_time'], angle=True)
+            lon_fix = self.var_series(in_file, ds['longitude_fix'], ds['longitude_fix_time'], args, angle=True)
+            lat_fix = self.var_series(in_file, ds['latitude_fix'], ds['latitude_fix_time'], args, angle=True)
         except IndexError:
             # Encountered in http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2019/20190528_20190604/20190530T185218/201905301852_201905302040.nc4.html
             # just 1 longitude_fix
             self.logger.warning(f"Apparently only one GPS fix in this log: lons = {ds['longitude_fix'][:]}, lats = {ds['latitude_fix'][:]}")
             self.logger.info("Returning from nudge_coords() with original coords")
             return lon, lat
+
+        if args.remove_gps_outliers:
+            # Identify any bad GPS fixes 
+            bad_lat_fix_index = np.where(lat_fix.isna())
+            bad_lon_fix_index = np.where(lon_fix.isna())
 
         self.logger.info(f"{'seg#':4s}  {'end_sec_diff':12s} {'end_lon_diff':12s} {'end_lat_diff':12s} {'len(segi)':9s} {'seg_min':>9s} {'u_drift (cm/s)':14s} {'v_drift (cm/s)':14s} {'start datetime of segment':>29}")
         
@@ -666,6 +696,13 @@ class InterpolatorWriter(BaseWriter):
             # Segment of dead reckoned (under water) positions, each surrounded by GPS fixes
             segi = np.where(np.logical_and(lat.index > lat_fix.index[i], 
                                            lat.index < lat_fix.index[i+1]))[0]
+            if args.remove_gps_outliers:
+                if i in bad_lat_fix_index or i in bad_lon_fix_index:
+                    self.logger.debug(f"Setting to NaN dead reckoned values found between bad GPS times of {lat_fix.index[i]} and {lat_fix.index[i+1]}")
+                    lon[segi] = np.nan
+                    lat[segi] = np.nan
+                    continue
+
             if not segi.any():
                 self.logger.debug(f"No dead reckoned values found between GPS times of {lat_fix.index[i]} and {lat_fix.index[i+1]}")
                 continue
@@ -1115,7 +1152,7 @@ class InterpolatorWriter(BaseWriter):
                         # Navigation corrections, favor acoustic fixes over original nudged positions
                         if args.nudge:
                             if not self.nudged_file.get(in_file):
-                                self.nudged_lons, self.nudged_lats = self.nudge_coords(in_file)
+                                self.nudged_lons, self.nudged_lats = self.nudge_coords(in_file, args)
                                 self.nudged_file[in_file] = True
                             if key.find('longitude') != -1 and self.nudged_lons.any():
                                 value = self.nudged_lons
