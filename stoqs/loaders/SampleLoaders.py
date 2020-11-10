@@ -526,18 +526,23 @@ class ParentSamplesLoader(STOQS_Loader):
                     if lsr_seq_num.groupdict().get('seq_num') not in filter_nums:
                         self.logger.warn(f"Sample seq_num ({lsr_seq_num.groupdict().get('seq_num')}) not found in filter_nums: {filter_nums}")
                         self.logger.warn(f"Likely an error for this cartridge: {summary.text}")
-                        lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE).groupdict().get('cartridge_number')
-                        self.logger.info(f"Not loading Cartridge {lsr_cartridge_number} at index {index}")
                         crit_err = ''
                         for lc in criticals:
                             lc_seq_num = re.search(lsr_seq_num_re, lc.text, re.MULTILINE)
                             if lsr_seq_num.groupdict().get('seq_num') == lc_seq_num.groupdict().get('seq_num'):
                                 crit_err = lc.text
                                 break
-                        self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Not saving, no corresponding"
-                                         f" {no_num_sampling_start_re} for [sample #{lsr_seq_num.groupdict().get('seq_num')}]"
-                                         f" perhaps error indicated in summary.text: {summary.text!r} and"
-                                         f" critical error message: {crit_err!r}")
+                        try:
+                            lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE).groupdict().get('cartridge_number')
+                        except AttributeError as e:
+                            # Likely: AttributeError: 'NoneType' object has no attribute 'groupdict'
+                            self.logger.warn(f"{e}: Could not find cartridge_number in summary.text")
+                        else:
+                            self.logger.info(f"Not loading Cartridge {lsr_cartridge_number} at index {index}")
+                            self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Not saving, no corresponding"
+                                             f" {no_num_sampling_start_re} for [sample #{lsr_seq_num.groupdict().get('seq_num')}]"
+                                             f" perhaps error indicated in summary.text: {summary.text!r} and"
+                                             f" critical error message: {crit_err!r}")
                         to_del.append(index)
 
                         # Check for repeated 'Selecting Cartridge' in summary.text and report Disposition
