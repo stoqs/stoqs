@@ -545,8 +545,14 @@ cl.load_oa2()
 cl.loadDorado(startdate, enddate, build_attrs=True)
 cl.loadLRAUV('daphne', startdate, enddate)
 cl.loadLRAUV('tethys', startdate, enddate)
-##cl.loadRCuctd()  ## not in this campaign
-##cl.loadRCpctd()  ## not in this campaign
+
+# For testing of makeLRAUVNetCDFs.py's --remove_gps_outliers to fix the bad points in the first file below
+##cl.tethys_base = 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180829_20180830/'
+##cl.tethys_files = ['20180829T225930/201808292259_201808300407_2S_scieng.nc', 
+##                   '20180830T054928/201808300549_201808301410_2S_scieng.nc']
+##cl.tethys_parms = ['temperature']
+##cl.loadLRAUV('tethys', startdate, enddate, build_attrs=False)
+
 cl.loadWFuctd()
 cl.loadWFpctd()
 
