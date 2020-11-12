@@ -250,7 +250,7 @@ class CANONLoader(LoadScript):
                     'BackscatteringCoeff700nm',
                     'VolumeScatCoeff117deg700nm',
                     'petroleum_hydrocarbons',
-                    'mass_concentration_of_oxygen_in_sea_water',
+                    'mass_concentration_of_oxygen_in_sea_water', 'chl',
                   ],
                   stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True, 
                   dlist_str=None, err_on_missing_file=False, critSimpleDepthTime=10,

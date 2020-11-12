@@ -50,6 +50,7 @@ SCI_PARMS = {'Aanderaa_O2': [{'name': 'mass_concentration_of_oxygen_in_sea_water
                             'rename': 'PAR'}],
              'WetLabsBB2FL': [{'name': 'mass_concentration_of_chlorophyll_in_sea_water',
                                'rename': 'chlorophyll'},
+                              {'name': 'OutputChl', 'rename': 'chl'},
                               {'name': 'Output470', 'rename': 'bbp470'},
                               {'name': 'Output650', 'rename': 'bbp650'}],
              'WetLabsSeaOWL_UV_A': [{'name': 'concentration_of_chromophoric_dissolved_organic_matter_in_sea_water',
