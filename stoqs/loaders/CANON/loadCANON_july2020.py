@@ -39,7 +39,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 ######################################################################
 # Glider data files from CeNCOOS thredds server
 # L_662a updated parameter names in netCDF file
-cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line67/'
 cl.l_662a_files = [ 'OS_Glider_L_662_20200615_TS.nc', ]
 cl.l_662a_parms = ['temperature', 'salinity', 'fluorescence','oxygen']
 cl.l_662a_startDatetime = startdate
