@@ -150,6 +150,7 @@ class ParentSamplesLoader(STOQS_Loader):
     '''Holds methods customized for reading sample event information from mainly AUV syslog files
     '''
     esp_cartridge_number = 57       # Special for stoqs_canon_may2018
+    esp_devices = {}
 
     def load_gulps(self, activityName, auv_file, dbAlias):
         '''
@@ -237,7 +238,7 @@ class ParentSamplesLoader(STOQS_Loader):
                             )
         return platform
 
-    def _create_activity_instantpoint_platform(self, db_alias, platform_name, activity_name, sample_type, ses, ees,
+    def _create_activity_instantpoint_platform(self, db_alias, platform_name, activity_name, sample_type, url, ses, ees,
                                                sample_name, esp_device=None):
         '''Create an Activity for the Sample and copy the Measurement locations
         to create records for drawing the trace of the long duration sample in the UI
@@ -273,11 +274,17 @@ class ParentSamplesLoader(STOQS_Loader):
         if duration > timedelta(hours=max_hours):
             self.logger.warn(f"Time duration of Sample '{sample_name}' is longer than {max_hours} hours: duration = {duration}")
 
-        short_activity_name = '_'.join(activity_name.split('_')[:2])
+        dlist_dir = url.split('/')[9]
+        if not esp_device:
+            esp_device = self.esp_devices.get(dlist_dir)
+
+        log_dir = url.split('/')[10]
+        short_activity_name = f"{activity_name.split('_')[0]}_{log_dir}"
         if esp_device:
             a_name = f"{short_activity_name}_{sample_type.name.replace('ESP', esp_device)}_{sample_name}"
         else:
             a_name = f"{short_activity_name}_{sample_type}_{sample_name}"
+            self.logger.warning(f"esp_device not set, even after checking previous syslogs in dlist_dir: {'/'.join(url.split('/')[:10])}")
         sample_act, _ = Activity.objects.using(db_alias).get_or_create(
                             campaign = campaign,
                             activitytype = at,
@@ -792,14 +799,14 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return sipper_names
 
-    def _save_samples(self, db_alias, platform_name, activity_name, sampletype, samples, log_text, esp_device=None):
+    def _save_samples(self, db_alias, platform_name, activity_name, sampletype, samples, url, log_text, esp_device=None):
         # Load Samples and sample.text as a Resource associated with the Sample
         for sample_name, sample in samples.items():
             self.logger.info(f"Calling _create_activity_instantpoint_platform() for sample_name={sample_name}")
             try:
                 act, ip, point, depth, maptrack = self._create_activity_instantpoint_platform(
                                                 db_alias, platform_name, 
-                                                activity_name, sampletype, 
+                                                activity_name, sampletype, url,
                                                 sample.start, sample.end, sample_name, esp_device)
             except IntegrityError as e:
                 self.logger.warn(f"Sample {sample_name} already loaded")
@@ -840,7 +847,7 @@ class ParentSamplesLoader(STOQS_Loader):
                     self.logger.debug(f"Saved Resource {res}")
                 else:
                     # Likely an ESP Sample before Fall 2018 when "console:ESP... login" messages started appearing in the syslog
-                    self.logger.warn(f"SampleType is {sampletype.name}, but no ESP device name found in syslog for {samp}")
+                    self.logger.warn(f"SampleType is {sampletype.name}, but no ESP device name found in syslog for {platform_name} {samp}")
 
 
     def load_lrauv_samples(self, platform_name, activity_name, url, db_alias):
@@ -850,6 +857,10 @@ class ParentSamplesLoader(STOQS_Loader):
 
         filterings, stoppings, summaries, criticals, esp_device = self._esps_from_json(platform_name, url, db_alias)
         filterings, stoppings, summaries = self._validate_summaries(platform_name, filterings, stoppings, summaries, criticals)
+
+        if esp_device:
+            dlist_dir = url.split('/')[9]
+            self.esp_devices[dlist_dir] = esp_device
 
         # After 14 August 2018 a 'sample #<num>' is included in the log message:
         # https://bitbucket.org/mbari/lrauv-application/pull-requests/76/add-sample-to-all-logimportant-entries/diff
@@ -868,13 +879,13 @@ class ParentSamplesLoader(STOQS_Loader):
         if esp_names:
             (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_FILTERING)
             self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
-            self._save_samples(db_alias, platform_name, activity_name, esp_archive_type, esp_names, 
+            self._save_samples(db_alias, platform_name, activity_name, esp_archive_type, esp_names, url,
                                log_text='ESP log summary report', esp_device=esp_device)
 
         if sipper_names:
             (sipper_type, created) = SampleType.objects.using(db_alias).get_or_create(name=SIPPER)
             self.logger.debug('sampletype %s, created = %s', sipper_type, created)
-            self._save_samples(db_alias, platform_name, activity_name, sipper_type, sipper_names, 
+            self._save_samples(db_alias, platform_name, activity_name, sipper_type, sipper_names, url,
                                log_text='CANONSampler Sampled at message')
 
 class SeabirdLoader(STOQS_Loader):
