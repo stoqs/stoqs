@@ -367,10 +367,6 @@ elif cl.args.stride:
 ##cl.loadLRAUV('makai', startdate, enddate, build_attrs=False)
 ##sys.exit()
 
-cl.loadLRAUV('makai', startdate, enddate)
-cl.loadLRAUV('daphne', startdate, enddate)
-cl.loadLRAUV('tethys', startdate, enddate)
-
 cl.loadM1()  
 cl.loadDEIMOS(startdate, enddate)
 cl.loadL_662a()

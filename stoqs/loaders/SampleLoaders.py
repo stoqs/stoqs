@@ -274,17 +274,14 @@ class ParentSamplesLoader(STOQS_Loader):
         if duration > timedelta(hours=max_hours):
             self.logger.warn(f"Time duration of Sample '{sample_name}' is longer than {max_hours} hours: duration = {duration}")
 
-        dlist_dir = url.split('/')[9]
-        if not esp_device:
-            esp_device = self.esp_devices.get(dlist_dir)
-
         log_dir = url.split('/')[10]
         short_activity_name = f"{activity_name.split('_')[0]}_{log_dir}"
         if esp_device:
             a_name = f"{short_activity_name}_{sample_type.name.replace('ESP', esp_device)}_{sample_name}"
         else:
             a_name = f"{short_activity_name}_{sample_type}_{sample_name}"
-            self.logger.warning(f"esp_device not set, even after checking previous syslogs in dlist_dir: {'/'.join(url.split('/')[:10])}")
+            self.logger.warning(f"esp_device not set, even after checking all syslogs in dlist_dir: {'/'.join(url.split('/')[:10])}")
+        self.logger.info(f"Creating (or getting) Activity with name: {a_name}")
         sample_act, _ = Activity.objects.using(db_alias).get_or_create(
                             campaign = campaign,
                             activitytype = at,
@@ -431,6 +428,31 @@ class ParentSamplesLoader(STOQS_Loader):
 
             return resp.json()['result']
 
+    def _get_esp_device(self, url):
+        '''Search all syslogs in all log dirs of the parent dlist dir for the ESP device name.
+        Cache the results so that subsequent searches can be replaced by a get from the hash.
+        '''
+        dlist_url = '/'.join(url.split('/')[:10])
+        if esp_device := self.esp_devices.get(dlist_url):
+            self.logger.debug(f"Returning esp_device from cache: {esp_device}")
+            return esp_device
+
+        soup = BeautifulSoup(urlopen(dlist_url).read(), 'lxml')
+        link_list = soup.find_all('a')
+        sorted(link_list, key=lambda elem: elem.text)
+        for link in link_list:
+            self.logger.debug(f"Checking for log dir: {link.text}")
+            if re.match('\d\d\d\d\d\d\d\dT\d\d\d\d\d\d', link.text):
+                syslog_url = os.path.join(dlist_url, link.text, 'syslog')
+                self.logger.debug(f"Looking for esp_device in {syslog_url}")
+                _, esp_device = self._read_syslog(syslog_url)
+                if esp_device:
+                    self.esp_devices[dlist_url] = esp_device
+                    self.logger.debug(f"Found it: {esp_device}")
+                    break
+
+        return esp_device
+        
     def _esps_from_json(self, platform_name, url, db_alias, use_syslog=True):
         '''Retrieve Sample information that's available in the syslogurl from the TethysDash REST API
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
@@ -451,8 +473,9 @@ class ParentSamplesLoader(STOQS_Loader):
         LOGSUMMARY = 'ESP log summary report'
 
         if use_syslog:
-            log_important, esp_device = self._read_syslog(url)
-            log_critical, esp_device = self._read_syslog(url, levels=('CRITICAL',))
+            log_important, _ = self._read_syslog(url)
+            log_critical, _ = self._read_syslog(url, levels=('CRITICAL',))
+            esp_device = self._get_esp_device(url)
         else:
             log_important = self._read_tethysdash(platform_name, url)
 
@@ -857,10 +880,6 @@ class ParentSamplesLoader(STOQS_Loader):
 
         filterings, stoppings, summaries, criticals, esp_device = self._esps_from_json(platform_name, url, db_alias)
         filterings, stoppings, summaries = self._validate_summaries(platform_name, filterings, stoppings, summaries, criticals)
-
-        if esp_device:
-            dlist_dir = url.split('/')[9]
-            self.esp_devices[dlist_dir] = esp_device
 
         # After 14 August 2018 a 'sample #<num>' is included in the log message:
         # https://bitbucket.org/mbari/lrauv-application/pull-requests/76/add-sample-to-all-logimportant-entries/diff
