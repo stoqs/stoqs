@@ -6652,20 +6652,26 @@ function enable_cardboard(){
         save_zoom_from_permalink(parameters)
 
         // Click platform buttons first, then the rest of them
-        $.each(parameters['platform_clicks'], function (pos, item) {
-            $(item).click();
-        });
+        if ( ! $.isEmptyObject(parameters['platform_clicks']) ) {
+            $.each(parameters['platform_clicks'], function (pos, item) {
+                $(item).click();
+            });
+        }
 
         // Colormap stuff
         if ( $.inArray('colormap-anchor', parameters['accordion_shown']) > -1 ) {
             $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent().show();
         }
-        $.each(parameters['texts'], function (pos, item) {
-            $(item[0]).val(item[1]);
-        });
-        $.each(parameters['selects'], function (pos, item) {
-            $(item[0]).val(item[1]);
-        });
+        if ( ! $.isEmptyObject(parameters['texts']) ) {
+            $.each(parameters['texts'], function (pos, item) {
+                $(item[0]).val(item[1]);
+            });
+        }
+        if ( ! $.isEmptyObject(parameters['selects']) ) {
+            $.each(parameters['selects'], function (pos, item) {
+                $(item[0]).val(item[1]);
+            });
+        }
 
         // Open sections and tabs
         $.each(parameters, function (key, value) {
@@ -6712,11 +6718,13 @@ function enable_cardboard(){
         });
 
         // All clicks
-        $.each(parameters['clicks'], function (pos, item) {
-            if ( ! $(item).is(':checked') ) {
-                $(item).click();
-            }
-        });
+        if ( ! $.isEmptyObject(parameters['clicks']) ) {
+            $.each(parameters['clicks'], function (pos, item) {
+                if ( ! $(item).is(':checked') ) {
+                    $(item).click();
+                }
+            });
+        }
 
         permalink_bypass=false;        
         rebuild_from_permalink = true; 
