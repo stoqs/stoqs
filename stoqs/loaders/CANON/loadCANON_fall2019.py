@@ -73,7 +73,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 ######################################################################
 # Glider data files from CeNCOOS thredds server
 # L_662a updated parameter names in netCDF file
-cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line67/'
 cl.l_662a_files = [
                    'OS_Glider_L_662_20190717_TS.nc',
                   ]
@@ -83,14 +83,14 @@ cl.l_662a_endDatetime = enddate
 
 # NPS_34a updated parameter names in netCDF file
 ## The following loads decimated subset of data telemetered during deployment
-cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
 cl.nps34a_files = [ 'OS_Glider_NPS_G34_20180514_TS.nc' ]
 cl.nps34a_parms = ['temperature', 'salinity','fluorescence']
 cl.nps34a_startDatetime = startdate
 cl.nps34a_endDatetime = enddate
 
 # NPS_29 ##
-cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
 cl.nps29_files = [ 'OS_Glider_NPS_G29_20191001_TS.nc' ]
 cl.nps29_parms = ['TEMP', 'PSAL', 'FLU2', 'OXYG']
 cl.nps29_startDatetime = startdate
@@ -101,7 +101,7 @@ cl.nps29_endDatetime = enddate
 ## cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20170412T0000/'
 ## cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
 ##   from cencoos directory, single non-aggregated files
-cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201808/'
+cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/nemesis_201808/'
 
 cl.slocum_nemesis_files = [
                            'nemesis_20180912T155836_rt0.nc', 
@@ -123,7 +123,7 @@ cl.slocum_nemesis_endDatetime = enddate
 # WG 272 - All instruments combined into one file - one time coordinate
 cl.wg_272_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_272_files = [
-                   'wg272/20190522/realTime/20190522.nc',
+                   'wgHansen/20190522/realTime/20190522.nc',
                   ]
 
 cl.wg_272_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  'water_temp_sub',
@@ -148,7 +148,7 @@ cl.wg_Sparky_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20191001/realTime/20191001.nc',
+                      'wgTiny/20191001/QC/20191001_QC.nc',
                    ]
 
 
@@ -161,7 +161,7 @@ cl.wg_Tiny_endDatetime = enddate
 # WG Hansen - All instruments combined into one file - one time coordinate
 cl.wg_Hansen_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Hansen_files = [
-                      'wgHansen/20190927/realTime/20190927.nc',
+                      'wgHansen/20190927/QC/20190927_QC.nc',
                    ]
 
 cl.wg_Hansen_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 

@@ -150,6 +150,7 @@ class ParentSamplesLoader(STOQS_Loader):
     '''Holds methods customized for reading sample event information from mainly AUV syslog files
     '''
     esp_cartridge_number = 57       # Special for stoqs_canon_may2018
+    esp_devices = {}
 
     def load_gulps(self, activityName, auv_file, dbAlias):
         '''
@@ -237,7 +238,7 @@ class ParentSamplesLoader(STOQS_Loader):
                             )
         return platform
 
-    def _create_activity_instantpoint_platform(self, db_alias, platform_name, activity_name, sample_type, ses, ees,
+    def _create_activity_instantpoint_platform(self, db_alias, platform_name, activity_name, sample_type, url, ses, ees,
                                                sample_name, esp_device=None):
         '''Create an Activity for the Sample and copy the Measurement locations
         to create records for drawing the trace of the long duration sample in the UI
@@ -273,11 +274,14 @@ class ParentSamplesLoader(STOQS_Loader):
         if duration > timedelta(hours=max_hours):
             self.logger.warn(f"Time duration of Sample '{sample_name}' is longer than {max_hours} hours: duration = {duration}")
 
-        short_activity_name = '_'.join(activity_name.split('_')[:2])
+        log_dir = url.split('/')[10]
+        short_activity_name = f"{activity_name.split('_')[0]}_{log_dir}"
         if esp_device:
             a_name = f"{short_activity_name}_{sample_type.name.replace('ESP', esp_device)}_{sample_name}"
         else:
             a_name = f"{short_activity_name}_{sample_type}_{sample_name}"
+            self.logger.warning(f"esp_device not set, even after checking all syslogs in dlist_dir: {'/'.join(url.split('/')[:10])}")
+        self.logger.info(f"Creating (or getting) Activity with name: {a_name}")
         sample_act, _ = Activity.objects.using(db_alias).get_or_create(
                             campaign = campaign,
                             activitytype = at,
@@ -424,6 +428,31 @@ class ParentSamplesLoader(STOQS_Loader):
 
             return resp.json()['result']
 
+    def _get_esp_device(self, url):
+        '''Search all syslogs in all log dirs of the parent dlist dir for the ESP device name.
+        Cache the results so that subsequent searches can be replaced by a get from the hash.
+        '''
+        dlist_url = '/'.join(url.split('/')[:10])
+        if esp_device := self.esp_devices.get(dlist_url):
+            self.logger.debug(f"Returning esp_device from cache: {esp_device}")
+            return esp_device
+
+        soup = BeautifulSoup(urlopen(dlist_url).read(), 'lxml')
+        link_list = soup.find_all('a')
+        sorted(link_list, key=lambda elem: elem.text)
+        for link in link_list:
+            self.logger.debug(f"Checking for log dir: {link.text}")
+            if re.match('\d\d\d\d\d\d\d\dT\d\d\d\d\d\d', link.text):
+                syslog_url = os.path.join(dlist_url, link.text, 'syslog')
+                self.logger.debug(f"Looking for esp_device in {syslog_url}")
+                _, esp_device = self._read_syslog(syslog_url)
+                if esp_device:
+                    self.esp_devices[dlist_url] = esp_device
+                    self.logger.debug(f"Found it: {esp_device}")
+                    break
+
+        return esp_device
+        
     def _esps_from_json(self, platform_name, url, db_alias, use_syslog=True):
         '''Retrieve Sample information that's available in the syslogurl from the TethysDash REST API
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
@@ -444,8 +473,9 @@ class ParentSamplesLoader(STOQS_Loader):
         LOGSUMMARY = 'ESP log summary report'
 
         if use_syslog:
-            log_important, esp_device = self._read_syslog(url)
-            log_critical, esp_device = self._read_syslog(url, levels=('CRITICAL',))
+            log_important, _ = self._read_syslog(url)
+            log_critical, _ = self._read_syslog(url, levels=('CRITICAL',))
+            esp_device = self._get_esp_device(url)
         else:
             log_important = self._read_tethysdash(platform_name, url)
 
@@ -526,18 +556,23 @@ class ParentSamplesLoader(STOQS_Loader):
                     if lsr_seq_num.groupdict().get('seq_num') not in filter_nums:
                         self.logger.warn(f"Sample seq_num ({lsr_seq_num.groupdict().get('seq_num')}) not found in filter_nums: {filter_nums}")
                         self.logger.warn(f"Likely an error for this cartridge: {summary.text}")
-                        lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE).groupdict().get('cartridge_number')
-                        self.logger.info(f"Not loading Cartridge {lsr_cartridge_number} at index {index}")
                         crit_err = ''
                         for lc in criticals:
                             lc_seq_num = re.search(lsr_seq_num_re, lc.text, re.MULTILINE)
                             if lsr_seq_num.groupdict().get('seq_num') == lc_seq_num.groupdict().get('seq_num'):
                                 crit_err = lc.text
                                 break
-                        self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Not saving, no corresponding"
-                                         f" {no_num_sampling_start_re} for [sample #{lsr_seq_num.groupdict().get('seq_num')}]"
-                                         f" perhaps error indicated in summary.text: {summary.text!r} and"
-                                         f" critical error message: {crit_err!r}")
+                        try:
+                            lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE).groupdict().get('cartridge_number')
+                        except AttributeError as e:
+                            # Likely: AttributeError: 'NoneType' object has no attribute 'groupdict'
+                            self.logger.warn(f"{e}: Could not find cartridge_number in summary.text")
+                        else:
+                            self.logger.info(f"Not loading Cartridge {lsr_cartridge_number} at index {index}")
+                            self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Not saving, no corresponding"
+                                             f" {no_num_sampling_start_re} for [sample #{lsr_seq_num.groupdict().get('seq_num')}]"
+                                             f" perhaps error indicated in summary.text: {summary.text!r} and"
+                                             f" critical error message: {crit_err!r}")
                         to_del.append(index)
 
                         # Check for repeated 'Selecting Cartridge' in summary.text and report Disposition
@@ -787,14 +822,14 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return sipper_names
 
-    def _save_samples(self, db_alias, platform_name, activity_name, sampletype, samples, log_text, esp_device=None):
+    def _save_samples(self, db_alias, platform_name, activity_name, sampletype, samples, url, log_text, esp_device=None):
         # Load Samples and sample.text as a Resource associated with the Sample
         for sample_name, sample in samples.items():
             self.logger.info(f"Calling _create_activity_instantpoint_platform() for sample_name={sample_name}")
             try:
                 act, ip, point, depth, maptrack = self._create_activity_instantpoint_platform(
                                                 db_alias, platform_name, 
-                                                activity_name, sampletype, 
+                                                activity_name, sampletype, url,
                                                 sample.start, sample.end, sample_name, esp_device)
             except IntegrityError as e:
                 self.logger.warn(f"Sample {sample_name} already loaded")
@@ -835,7 +870,7 @@ class ParentSamplesLoader(STOQS_Loader):
                     self.logger.debug(f"Saved Resource {res}")
                 else:
                     # Likely an ESP Sample before Fall 2018 when "console:ESP... login" messages started appearing in the syslog
-                    self.logger.warn(f"SampleType is {sampletype.name}, but no ESP device name found in syslog for {samp}")
+                    self.logger.warn(f"SampleType is {sampletype.name}, but no ESP device name found in syslog for {platform_name} {samp}")
 
 
     def load_lrauv_samples(self, platform_name, activity_name, url, db_alias):
@@ -863,13 +898,13 @@ class ParentSamplesLoader(STOQS_Loader):
         if esp_names:
             (esp_archive_type, created) = SampleType.objects.using(db_alias).get_or_create(name=ESP_FILTERING)
             self.logger.debug('sampletype %s, created = %s', esp_archive_type, created)
-            self._save_samples(db_alias, platform_name, activity_name, esp_archive_type, esp_names, 
+            self._save_samples(db_alias, platform_name, activity_name, esp_archive_type, esp_names, url,
                                log_text='ESP log summary report', esp_device=esp_device)
 
         if sipper_names:
             (sipper_type, created) = SampleType.objects.using(db_alias).get_or_create(name=SIPPER)
             self.logger.debug('sampletype %s, created = %s', sipper_type, created)
-            self._save_samples(db_alias, platform_name, activity_name, sipper_type, sipper_names, 
+            self._save_samples(db_alias, platform_name, activity_name, sipper_type, sipper_names, url,
                                log_text='CANONSampler Sampled at message')
 
 class SeabirdLoader(STOQS_Loader):

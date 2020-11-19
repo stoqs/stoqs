@@ -82,7 +82,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 ######################################################################
 # Glider data files from CeNCOOS thredds server
 # L_662a updated parameter names in netCDF file
-cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line67/'
 cl.l_662a_files = [
                    'OS_Glider_L_662_20190328_TS.nc',
                   ]
@@ -92,14 +92,14 @@ cl.l_662a_endDatetime = enddate
 
 # NPS_34a updated parameter names in netCDF file
 ## The following loads decimated subset of data telemetered during deployment
-cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
 cl.nps34a_files = [ 'OS_Glider_NPS_G34_20180514_TS.nc' ]
 cl.nps34a_parms = ['temperature', 'salinity','fluorescence']
 cl.nps34a_startDatetime = startdate
 cl.nps34a_endDatetime = enddate
 
 # NPS_29 ##
-cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
 cl.nps29_files = [ 'OS_Glider_NPS_G29_20190528_TS.nc' ]
 cl.nps29_parms = ['TEMP', 'PSAL', 'FLU2', 'OXYG']
 cl.nps29_startDatetime = startdate
@@ -110,7 +110,7 @@ cl.nps29_endDatetime = enddate
 ## cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20170412T0000/'
 ## cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
 ##   from cencoos directory, single non-aggregated files
-cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/nemesis_201808/'
+cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/nemesis_201808/'
 
 cl.slocum_nemesis_files = [
                            'nemesis_20180912T155836_rt0.nc', 
@@ -336,6 +336,36 @@ if cl.args.test:
     cl.stride = 100
 elif cl.args.stride:
     cl.stride = cl.args.stride
+
+
+# Lot's of debugging in this Campaign - keep these lines here commented out (to be used if problems crop up)
+##startdate = datetime.datetime(2019, 5, 23, 18)
+##enddate = datetime.datetime(2019, 5, 24, 1)
+##cl.daphne_base = 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2019/20190528_20190606/20190529T194310'
+##cl.daphne_base = 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2019/20190528_20190606/20190529T194310'
+##cl.daphne_base = 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2019/20190528_20190606/20190601T142912'
+##cl.daphne_base = 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2019/20190528_20190606/20190602T025849'
+##cl.daphne_base = 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2019/20190528_20190606/20190529T115150'
+##cl.daphne_base = 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2019/20190528_20190606/20190604T233636'
+##cl.daphne_base = 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2019/20190528_20190606/20190602T170120/'
+##cl.daphne_files = ['201905291943_201905300048_2S_scieng.nc']
+##cl.daphne_files = ['201905291943_201905300048_2S_scieng.nc']
+##cl.daphne_files = ['201906011429_201906020258_2S_scieng.nc']
+##cl.daphne_files = ['201906020259_201906021701_2S_scieng.nc']
+##cl.daphne_files = ['201905291151_201905291713_2S_scieng.nc']
+##cl.daphne_files = ['201906042336_201906052235_2S_scieng.nc']
+##cl.daphne_files = ['201906021701_201906030901_2S_scieng.nc']
+##cl.daphne_parms = ['temperature']
+##cl.loadLRAUV('daphne', startdate, enddate, build_attrs=False)
+##cl.makai_base = 'http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20190528_20190530/20190528T183638'
+##cl.makai_base = 'http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20190528_20190530/20190529T081339'
+##cl.makai_base = 'http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20190528_20190530/20190530T005113'
+##cl.makai_files = ['201905281836_201905281946_2S_scieng.nc']
+##cl.makai_files = ['201905290813_201905300051_2S_scieng.nc']
+##cl.makai_files = ['201905300051_201905301829_2S_scieng.nc']
+##cl.makai_parms = ['temperature']
+##cl.loadLRAUV('makai', startdate, enddate, build_attrs=False)
+##sys.exit()
 
 cl.loadM1()  
 cl.loadDEIMOS(startdate, enddate)
