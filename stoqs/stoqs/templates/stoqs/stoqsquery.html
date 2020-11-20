@@ -6673,6 +6673,15 @@ function enable_cardboard(){
             });
         }
 
+        // Useful defaults so that only simple depth_time parameters can be put inito a permalink
+        // See: commit history of stoqs/contrib/notebooks/CANON_ESP_Sample_details.ipynb
+        if ( $.isEmptyObject(parameters['tabs']) ) {
+            parameters['tabs'] = [['#temporalTabs', 0], ['#spatialTabs', 0]];
+        }
+        if ( $.isEmptyObject(parameters['clicks']) ) {
+            parameters['clicks'] = ['input[type="checkbox"][id="zoomtoextentonupdate"]']
+        }
+
         // Open sections and tabs
         $.each(parameters, function (key, value) {
             switch(key) {
