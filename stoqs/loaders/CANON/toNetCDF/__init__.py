@@ -30,7 +30,6 @@ import urllib.request, urllib.error, urllib.parse
 import datetime
 import numpy as np
 from git import Repo
-from pupynere import netcdf_file
 
 class BaseWriter(object):
     '''
