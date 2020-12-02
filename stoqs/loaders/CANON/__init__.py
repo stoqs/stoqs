@@ -1441,10 +1441,13 @@ class CANONLoader(LoadScript):
                                 else:
                                     # Check .log file contents to confirm that we expect a url (.nc file)
                                     log_url = self._get_mission_url(nc_str[:-2] + 'log', mission_dir, mission_dods)
-                                    log_reason = self._scieng_file_state(log_url)
-                                    self.logger.debug(f"The .log file indication for .nc file: {log_reason}")
-                                    if log_reason == 'should_be_present':
-                                        self.logger.warn(f"Could not find {nc_str} file in {mission_dods}, it {log_reason}")
+                                    if log_url:
+                                        log_reason = self._scieng_file_state(log_url)
+                                        self.logger.debug(f"The .log file indication for .nc file: {log_reason}")
+                                        if log_reason == 'should_be_present':
+                                            self.logger.warn(f"Could not find {nc_str} file in {mission_dods}, it {log_reason}")
+                                    else:
+                                        self.logger.warning(f"Log directory {mission_dods} has no .log file from lrauvNc4ToNetcdf.py processing")
         return urls
 
     def build_lrauv_attrs(self, mission_year, platform, startdate, enddate, parameters, file_patterns,
