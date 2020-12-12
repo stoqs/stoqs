@@ -1,5 +1,5 @@
 
-FROM ubuntu:19.10
+FROM ubuntu:20.10
 
 MAINTAINER Mike McCann <mccann@mbari.org>
 
@@ -12,52 +12,42 @@ RUN apt-get update && \
     libnetcdf-dev \
     libgdal-dev \
     libyaml-dev \
-    python \
-    python-dev \
-    python-pip \
-    python-virtualenv \
-    cython \
     python3.8 \
     python3.8-dev \
     python3-pip \
+    python3-virtualenv \
     cython3 && \
     rm -rf /var/lib/apt/lists/*
 
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
 
-RUN pip install numpy && pip3 install numpy
+RUN gdal-config --version > ./gdal_version
 
-RUN pip install gdal==2.3.1 h5py netCDF4 psycopg2 PyYAML pillow
-
-RUN pip3 install gdal==2.3.1 h5py netCDF4 psycopg2 PyYAML pillow
+RUN pip3 install gdal==$(cat ./gdal_version) h5py netCDF4 numpy psycopg2 PyYAML pillow
 
 # Modeled after http://michal.karzynski.pl/blog/2015/04/19/packaging-django-applications-as-docker-container-images/
 
-# Additional requirements for stoqs not in pcic/geospatial-python
+# Additional requirements for stoqs
 RUN apt-get update && \
-    apt-get -qq -y install \
+    apt-get -yq install \
     firefox \
     freetds-dev \
     git \
     gmt \
-    imagemagick \
-    libncurses-dev \
+    locales \
+    postgresql-client\
     time \
     wget \
-    xvfb
+    xvfb \
+    && locale-gen en_US.UTF-8
 
-# The postgresql-11 client appears to work fine with postgis's postgresql-10 server
-RUN apt-get -qq -y install postgresql-11
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 
 # For running functional tests
 RUN wget -q "https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz" -O /tmp/geckodriver.tgz \
     && tar zxf /tmp/geckodriver.tgz -C /usr/bin/ \
     && rm /tmp/geckodriver.tgz
-
-# Set the locale
-RUN locale-gen en_US.UTF-8
-ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 
 # To fix multiprocessing-permission-denied for docker-compose execution
 RUN echo 'none /dev/shm tmpfs rw,nosuid,nodev,noexec 0 0' > /etc/fstab
