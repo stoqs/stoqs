@@ -556,7 +556,7 @@ class InterpolatorWriter(BaseWriter):
         with closing(requests.get(url, stream=True)) as resp:
             if resp.status_code != 200:
                 self.logger.error('Cannot read %s, resp.status_code = %s', url, resp.status_code)
-                return
+                return np.array(lons), np.array(lats)
 
             r_decoded = (line.decode('utf-8') for line in resp.iter_lines())
             lines = [line for line in csv.DictReader(r_decoded)]
@@ -674,16 +674,20 @@ class InterpolatorWriter(BaseWriter):
         self.logger.info(f"{'seg#':4s}  {'end_sec_diff':12s} {'end_lon_diff':12s} {'end_lat_diff':12s} {'len(segi)':9s} {'seg_min':>9s} {'u_drift (cm/s)':14s} {'v_drift (cm/s)':14s} {'start datetime of segment':>29}")
         
         # Any dead reckoned points before first GPS fix - usually empty as GPS fix happens before dive
-        segi = np.where(lat.index < lat_fix.index[0])[0]
-        if lon[:][segi].any():
-            lon_nudged = lon[segi]
-            lat_nudged = lat[segi]
-            dt_nudged = lon.index[segi]
-            self.logger.debug(f"Filled _nudged arrays with {len(segi)} values starting at {lat.index[0]} which were before the first GPS fix at {lat_fix.index[0]}")
+        lon_nudged = np.array([])
+        lat_nudged = np.array([])
+        dt_nudged = np.array([], dtype='datetime64[ns]')
+        if lat_fix.any():
+            segi = np.where(lat.index < lat_fix.index[0])[0]
+            if lon[:][segi].any():
+                lon_nudged = lon[segi]
+                lat_nudged = lat[segi]
+                dt_nudged = lon.index[segi]
+                self.logger.debug(f"Filled _nudged arrays with {len(segi)} values starting at {lat.index[0]} which were before the first GPS fix at {lat_fix.index[0]}")
         else:
-            lon_nudged = np.array([])
-            lat_nudged = np.array([])
-            dt_nudged = np.array([], dtype='datetime64[ns]')
+            self.logger.warning(f"No values in lat_fix. Returning from nudge_coords() with original coords")
+            return lon, lat
+
         if segi.any():
             seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
         else:
@@ -697,7 +701,7 @@ class InterpolatorWriter(BaseWriter):
             segi = np.where(np.logical_and(lat.index > lat_fix.index[i], 
                                            lat.index < lat_fix.index[i+1]))[0]
             if args.remove_gps_outliers:
-                if i in bad_lat_fix_index or i in bad_lon_fix_index:
+                if i in bad_lat_fix_index[0] or i in bad_lon_fix_index[0]:
                     self.logger.debug(f"Setting to NaN dead reckoned values found between bad GPS times of {lat_fix.index[i]} and {lat_fix.index[i+1]}")
                     lon[segi] = np.nan
                     lat[segi] = np.nan
