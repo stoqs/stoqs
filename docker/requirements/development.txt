@@ -18,7 +18,7 @@ Genshi==0.7.5
 geopandas==0.8.1
 h5py==3.1.0
 MarkupSafe==1.1.1
-pandas==1.1.5
+pandas==1.2.0
 numpy==1.19.4
 requests==2.25.1
 Pygments==2.7.3
