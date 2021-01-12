@@ -15,6 +15,7 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
 from datetime import datetime
+from loaders.LRAUV.make_load_scripts import lrauvs
 import timing
 
 cl = CANONLoader('stoqs_mbts', 'BOG - Monterey Bay Time Series',
@@ -69,7 +70,7 @@ elif cl.args.stride:
 #-cl.tethys_parms = ['temperature']
 #-cl.loadLRAUV('tethys', datetime(2016, 3, 29), datetime(2016, 4, 5), build_attrs=False)
 
-for lrauv in ('tethys', 'daphne'):
+for lrauv in lrauvs:
     cl.loadLRAUV(lrauv, syear, eyear, dlist_str='MBTS', err_on_missing_file=True)
 
 ##cl.loadSubSamples()
