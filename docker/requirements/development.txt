@@ -21,7 +21,7 @@ MarkupSafe==1.1.1
 pandas==1.2.0
 numpy==1.19.5
 requests==2.25.1
-Pygments==2.7.3
+Pygments==2.7.4
 pygraphviz==1.6
 pymssql-py38==2.1.4
 pyparsing==2.4.7
