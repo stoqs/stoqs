@@ -1,4 +1,4 @@
-FROM nginx:1.13
+FROM docker.io/nginx:1.13
 
 ARG NGINX_TMPL
 
