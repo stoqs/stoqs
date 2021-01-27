@@ -15,7 +15,7 @@ Cython==0.29.21
 ephem==3.7.7.1
 ##GDAL==3.0.3
 Genshi==0.7.5
-geopandas==0.8.1
+geopandas==0.8.2
 h5py==3.1.0
 MarkupSafe==1.1.1
 pandas==1.2.1
