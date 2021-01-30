@@ -1,0 +1,7 @@
+Here be programs to pull data out of a STOQS database and
+put it into Parquet format for use in Data Science software
+which is optimized to operate on data in a columnar format.
+
+--
+Mike McCann
+29 January 2021
