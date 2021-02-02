@@ -18,7 +18,7 @@ euclid==1.2
 djangorestframework==3.12.2
 httplib2==0.18.1
 ipyleaflet==0.13.6
-ipython==7.19.0
+ipython==7.20.0
 jdcal==1.4.1
 Jinja2==2.11.3
 jupyter==1.0.0
