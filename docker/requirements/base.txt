@@ -17,7 +17,7 @@ django-picklefield==3.0.1
 GitPython==3.1.12
 euclid==1.2
 djangorestframework==3.12.2
-httplib2==0.18.1
+httplib2==0.19.0
 hvplot==0.7.0
 ipyleaflet==0.13.6
 ipython==7.20.0
