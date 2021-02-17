@@ -247,7 +247,7 @@ static size_t parseField(const char *id, size_t suffixLen)
       if (!strncasecmp(*reversed, buf, suffixLen)) {
         index = reversed - revField;
         if (debug)
-          fprintf(stderr, "%.*s[%d]\n", suffixLen, id, index);
+          fprintf(stderr, "%.*s[%d]\n", (int)suffixLen, id, index);
         return index;
       }
       reversed++;
@@ -278,8 +278,8 @@ static size_t parseMap(const char *fieldList, struct map *map)
   }
   if (debug>1) {
     for(size_t i=0; i<map->indices-1; i++)
-      fprintf(stderr, "%d,", map->index[i]);
-    fprintf(stderr, "%d\n", map->index[map->indices-1]);
+      fprintf(stderr, "%d,", (int)(map->index[i]));
+    fprintf(stderr, "%d\n", (int)(map->index[map->indices-1]));
   }
 }
 
@@ -297,7 +297,7 @@ static void putMap(FILE *output, const char *cursor)
       const char *id = cursor++;
       while((c = *cursor) && c != ',')
         cursor++;
-      fprintf(output, "%.*s%c", cursor-id, id, *outputSeparator);
+      fprintf(output, "%.*s%c", (int)(cursor-id), id, *outputSeparator);
     }
   }
 }
@@ -534,7 +534,7 @@ gotAllOpts: ; //require argument specifying column id
           if (index < 0) {
             if (debug)
               fprintf(stderr, "Missing [%.*s] data in lines %u..%u\n",
-                      initialNameLen, initialName, startLine, lineno);
+                      (int)initialNameLen, initialName, startLine, lineno);
             dataValue = "";
           }else
             dataValue = fieldStart(extraLine, index, *outputSeparator);

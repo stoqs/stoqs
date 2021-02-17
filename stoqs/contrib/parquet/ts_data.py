@@ -4,6 +4,9 @@
 Pull all the temperature and salinity data out of a STOQS database no
 matter what platform and write it out in Parquet file format.
 
+This is a companion to select_data_in_columns_for_data_science.ipynb
+where we operationalize the explorations demonstrated in this Notebook.
+
 Mike McCann
 MBARI 29 January 2021
 """
@@ -27,11 +30,45 @@ except AttributeError:
 import argparse
 import pandas as pd
 from django.db import connections
-from stoqs.models import ActivityParameter
+from stoqs.models import ActivityParameter, Platform
+from time import time
 
 class Columnar():
 
-    def write_parquet(self):
+    def _set_platforms(self):
+        '''Set plats and plat_list member variables
+        '''
+        platforms = (self.args.platforms or 
+                     Platform.objects.using(self.args.db).all()
+                     .values_list('name', flat=True).order_by('name'))
+        print(platforms)
+        self.plats = ''
+        self.plat_list = []
+        for platform in platforms:
+            if platform in self.args.platforms_omit:
+                # Omit some platforms for shorter execution times
+                continue
+            self.plats += f"'{platform}',"
+            self.plat_list.append(platform)
+        self.plats = self.plats[:-2] + "'"
+
+    def _sql_to_df(self, sql):
+        print('Reading data into DataFrame...')
+        # More than 10 GB of RAM is needed in Docker Desktop for reading data 
+        # from stoqs_canon_october2020
+        stime = time()
+        df = pd.read_sql_query(sql, connections[self.args.db])
+        etime = time() - stime
+        print(f"df.shape: {df.shape} - read_sql_query() in {etime:.1f} sec")
+        ##print(df.head())
+        return df
+
+    def self_join_to_parquet(self):
+        '''Approach 1. Use the same kind of self-join query used for selecting 
+        data for Parameter-Parameter plots.
+        '''
+
+        self._set_platforms()
 
         sql_multp = '''SELECT DISTINCT stoqs_measuredparameter.id,
                         stoqs_platform.name,
@@ -53,41 +90,59 @@ class Columnar():
           AND (p_temp.standard_name = 'sea_water_salinity')
           AND stoqs_platform.name IN ({})'''
 
-        platforms = (ActivityParameter.objects.using(self.args.db)
-                                      .filter(parameter__standard_name='sea_water_salinity')
-                                      .values_list('activity__platform__name', flat=True)
-                                      .distinct())
-        plats = ''
-        if self.args.platforms:
-            platforms = self.args.platforms
-        for platform in platforms:
-            if platform == 'makai' or platform == 'pontus':
-                continue
-            plats += f"'{platform}',"
-        plats = plats[:-2] + "'"
-        sql = sql_multp.format(plats)
-        print(sql)
+        sql = sql_multp.format(self.plats)
+        df = self._sql_to_df(sql)
 
-        print('Reading data into DataFrame...')
-        # More than 10 GB of RAM is needed in Docker Desktop for reading data from stoqs_canon_october2020
-        df = pd.read_sql_query(sql, connections[self.args.db])
-        print(df.head())
+    def pivot_table_to_parquet(self):
+        '''Approach 4. Use Pandas do a pivot on data read into a DataFrame
+        '''
+        self._set_platforms()
+        
+        # Base query that's similar to the one behind the api/measuredparameter.csv request
+        sql_base = '''SELECT stoqs_platform.name as platform, stoqs_instantpoint.timevalue, stoqs_measurement.depth, 
+            ST_X(stoqs_measurement.geom) as longitude, ST_Y(stoqs_measurement.geom) as latitude,
+            stoqs_parameter.name, standard_name, datavalue 
+        FROM public.stoqs_measuredparameter
+        INNER JOIN stoqs_measurement ON (stoqs_measuredparameter.measurement_id = stoqs_measurement.id)
+        INNER JOIN stoqs_instantpoint ON (stoqs_measurement.instantpoint_id = stoqs_instantpoint.id)
+        INNER JOIN stoqs_activity ON (stoqs_instantpoint.activity_id = stoqs_activity.id)
+        INNER JOIN stoqs_platform ON (stoqs_activity.platform_id = stoqs_platform.id)
+        INNER JOIN stoqs_parameter ON (stoqs_measuredparameter.parameter_id = stoqs_parameter.id)
+        WHERE stoqs_platform.name IN ({})
+        ORDER BY stoqs_instantpoint.timevalue, stoqs_parameter.name'''
+        sql = sql_base.format(self.plats)
+        df = self._sql_to_df(sql)
+        context = ['platform', 'timevalue', 'depth', 'latitude', 'longitude']
+        dfp = df.pivot_table(index=context, columns=self.args.collect, values='datavalue')
+        print(dfp.shape)
+
         print(f'Writing data to file {self.args.output}...')
-        df.to_parquet(self.args.output)
+        stime = time()
+        dfp.to_parquet(self.args.output)
+        etime = time() - stime
+        print(f"dfp.shape: {dfp.shape} - to_parquet() in {etime:.1f} sec")
         print('Done')
 
     def process_command_line(self):
         parser = argparse.ArgumentParser(description='Transform STOQS data into columnar Parquet file format')
 
-        parser.add_argument('--platforms', action='store', nargs='*', help='Restrict to just these platforms')
-        parser.add_argument('--db', action='store', help='Database alias, e.g. stoqs_canon_october2020', required=True)
-        parser.add_argument('-o', '--output', action='store', help='Output file name', required=True)
+        parser.add_argument('--platforms', action='store', nargs='*', 
+                            help='Restrict to just these platforms')
+        parser.add_argument('--platforms_omit', action='store', nargs='*', default=[],
+                            help='Restrict to all but these platforms')
+        parser.add_argument('--collect', action='store', default='name',
+                            help='The column to collect: name or standard_name')
+        parser.add_argument('--db', action='store', required=True,
+                            help='Database alias, e.g. stoqs_canon_october2020')
+        parser.add_argument('-o', '--output', action='store', required=True,
+                            help='Output file name')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format',
                             default='19000101T000000')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format',
                             default='22000101T000000')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1, 2, 3], type=int,
-                            help='Turn on verbose output. Higher number = more output.', const=1, default=0)
+                            help='Turn on verbose output. Higher number = more output.', 
+                            const=1, default=0)
 
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
@@ -97,5 +152,6 @@ if __name__ == '__main__':
 
     c = Columnar()
     c.process_command_line()
-    c.write_parquet()
+    ##c.self_join_to_parquet()
+    c.pivot_table_to_parquet()
 

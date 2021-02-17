@@ -40,7 +40,14 @@ You can build it under Linux with the included Makefile or the command:
 
 $  gcc -o trimSTOQS -O2 trimSTOQS.c
 
+---
+
 or on the Vagrant VM used for STOQS development:
 
 $  gcc -std=gnu99 -o trimSTOQS -O2 trimSTOQS.c
+
+or on a Docker installation:
+
+$ cd $STOQS_HOME/docker
+$ docker-compose exec stoqs /bin/bash -c "cd stoqs/contrib/trimSTOQS && gcc -o trimSTOQS -O2 trimSTOQS.c"
 
