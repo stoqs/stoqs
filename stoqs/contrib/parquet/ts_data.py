@@ -112,9 +112,8 @@ class Columnar():
         ORDER BY stoqs_instantpoint.timevalue, stoqs_parameter.name'''
         sql = sql_base.format(self.plats)
         df = self._sql_to_df(sql)
-        breakpoint()
         context = ['platform', 'timevalue', 'depth', 'latitude', 'longitude']
-        dfp = df.pivot_table(index=context, columns='name', values='datavalue')
+        dfp = df.pivot_table(index=context, columns=self.args.collect, values='datavalue')
         print(dfp.shape)
 
         print(f'Writing data to file {self.args.output}...')
@@ -131,6 +130,8 @@ class Columnar():
                             help='Restrict to just these platforms')
         parser.add_argument('--platforms_omit', action='store', nargs='*', default=[],
                             help='Restrict to all but these platforms')
+        parser.add_argument('--collect', action='store', default='name',
+                            help='The column to collect: name or standard_name')
         parser.add_argument('--db', action='store', required=True,
                             help='Database alias, e.g. stoqs_canon_october2020')
         parser.add_argument('-o', '--output', action='store', required=True,
