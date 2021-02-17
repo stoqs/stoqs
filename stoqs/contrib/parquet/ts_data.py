@@ -38,14 +38,14 @@ class Columnar():
     def _set_platforms(self):
         '''Set plats and plat_list member variables
         '''
-        platforms = (ActivityParameter.objects.using(self.args.db)
-                     .filter(parameter__standard_name='sea_water_salinity')
-                     .values_list('activity__platform__name', flat=True)
-                     .order_by('activity__platform__name').distinct())
+        platforms = (platforms.objects.using(self.args.db).all()
+                     .values_list('name', flat=True).order_by('name'))
+        print(platforms)
+        breakpoint()
         self.plats = ''
         self.plat_list = []
         for platform in platforms:
-            if platform == 'makai' or platform == 'pontus' or platform == 'M1_Mooring':
+            if platform in self.args.platforms_omit:
                 # Omit some platforms for shorter execution times
                 continue
             self.plats += f"'{platform}',"
@@ -124,6 +124,8 @@ class Columnar():
 
         parser.add_argument('--platforms', action='store', nargs='*', 
                             help='Restrict to just these platforms')
+        parser.add_argument('--platforms_omit', action='store', nargs='*', 
+                            help='Restrict to all but these platforms')
         parser.add_argument('--db', action='store', required=True,
                             help='Database alias, e.g. stoqs_canon_october2020')
         parser.add_argument('-o', '--output', action='store', required=True,
