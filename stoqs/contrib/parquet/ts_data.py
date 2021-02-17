@@ -30,7 +30,7 @@ except AttributeError:
 import argparse
 import pandas as pd
 from django.db import connections
-from stoqs.models import ActivityParameter
+from stoqs.models import ActivityParameter, Platform
 from time import time
 
 class Columnar():
@@ -38,10 +38,10 @@ class Columnar():
     def _set_platforms(self):
         '''Set plats and plat_list member variables
         '''
-        platforms = (platforms.objects.using(self.args.db).all()
+        platforms = (self.args.platforms or 
+                     Platform.objects.using(self.args.db).all()
                      .values_list('name', flat=True).order_by('name'))
         print(platforms)
-        breakpoint()
         self.plats = ''
         self.plat_list = []
         for platform in platforms:
@@ -52,7 +52,7 @@ class Columnar():
             self.plat_list.append(platform)
         self.plats = self.plats[:-2] + "'"
 
-    def _execute_sql(self, sql):
+    def _sql_to_df(self, sql):
         print('Reading data into DataFrame...')
         # More than 10 GB of RAM is needed in Docker Desktop for reading data 
         # from stoqs_canon_october2020
@@ -61,13 +61,7 @@ class Columnar():
         etime = time() - stime
         print(f"df.shape: {df.shape} - read_sql_query() in {etime:.1f} sec")
         ##print(df.head())
-
-        print(f'Writing data to file {self.args.output}...')
-        stime = time()
-        df.to_parquet(self.args.output)
-        etime = time() - stime
-        print(f"df.shape: {df.shape} - to_parquet() in {etime:.1f} sec")
-        print('Done')
+        return df
 
     def self_join_to_parquet(self):
         '''Approach 1. Use the same kind of self-join query used for selecting 
@@ -97,7 +91,7 @@ class Columnar():
           AND stoqs_platform.name IN ({})'''
 
         sql = sql_multp.format(self.plats)
-        self._execute_sql(sql)
+        df = self._sql_to_df(sql)
 
     def pivot_table_to_parquet(self):
         '''Approach 4. Use Pandas do a pivot on data read into a DataFrame
@@ -117,14 +111,25 @@ class Columnar():
         WHERE stoqs_platform.name IN ({})
         ORDER BY stoqs_instantpoint.timevalue, stoqs_parameter.name'''
         sql = sql_base.format(self.plats)
-        self._execute_sql(sql)
+        df = self._sql_to_df(sql)
+        breakpoint()
+        context = ['platform', 'timevalue', 'depth', 'latitude', 'longitude']
+        dfp = df.pivot_table(index=context, columns='name', values='datavalue')
+        print(dfp.shape)
+
+        print(f'Writing data to file {self.args.output}...')
+        stime = time()
+        dfp.to_parquet(self.args.output)
+        etime = time() - stime
+        print(f"dfp.shape: {dfp.shape} - to_parquet() in {etime:.1f} sec")
+        print('Done')
 
     def process_command_line(self):
         parser = argparse.ArgumentParser(description='Transform STOQS data into columnar Parquet file format')
 
         parser.add_argument('--platforms', action='store', nargs='*', 
                             help='Restrict to just these platforms')
-        parser.add_argument('--platforms_omit', action='store', nargs='*', 
+        parser.add_argument('--platforms_omit', action='store', nargs='*', default=[],
                             help='Restrict to all but these platforms')
         parser.add_argument('--db', action='store', required=True,
                             help='Database alias, e.g. stoqs_canon_october2020')
