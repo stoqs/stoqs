@@ -2,6 +2,7 @@ aiohttp==3.7.3
 beautifulsoup4==4.9.3
 cmocean==2.0
 coards==1.0.5
+colorcet==2.0.6
 coverage==5.4
 datadiff==2.0.0
 datashader==0.12.0
