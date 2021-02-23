@@ -57,7 +57,8 @@ class Columnar():
         # More than 10 GB of RAM is needed in Docker Desktop for reading data 
         # from stoqs_canon_october2020
         stime = time()
-        df = pd.read_sql_query(sql, connections[self.args.db])
+        print('using chunksize...')
+        df = pd.read_sql_query(sql, connections[self.args.db], chunksize=10)
         etime = time() - stime
         print(f"df.shape: {df.shape} - read_sql_query() in {etime:.1f} sec")
         ##print(df.head())
