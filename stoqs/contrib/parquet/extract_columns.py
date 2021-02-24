@@ -28,6 +28,7 @@ except AttributeError:
     pass
 
 import argparse
+import logging
 import pandas as pd
 from django.db import connections
 from stoqs.models import ActivityParameter, Platform
@@ -35,13 +36,20 @@ from time import time
 
 class Columnar():
 
+    logger = logging.getLogger(__name__)
+    _handler = logging.StreamHandler()
+    _formatter = logging.Formatter('%(levelname)s %(asctime)s %(filename)s '
+                                   '%(funcName)s():%(lineno)d %(message)s')
+    _handler.setFormatter(_formatter)
+    _log_levels = (logging.WARN, logging.INFO, logging.DEBUG)
+
     def _set_platforms(self):
         '''Set plats and plat_list member variables
         '''
         platforms = (self.args.platforms or 
                      Platform.objects.using(self.args.db).all()
                      .values_list('name', flat=True).order_by('name'))
-        print(platforms)
+        self.logger.debug(platforms)
         self.plats = ''
         self.plat_list = []
         for platform in platforms:
@@ -53,15 +61,21 @@ class Columnar():
         self.plats = self.plats[:-2] + "'"
 
     def _sql_to_df(self, sql):
-        print('Reading data into DataFrame...')
+        self.logger.info('Reading from SQL query into DataFrame...')
+        self.logger.debug(f'sql = {sql}')
+
         # More than 10 GB of RAM is needed in Docker Desktop for reading data 
-        # from stoqs_canon_october2020
+        # from stoqs_canon_october2020. The chunksize option in read_sql_query()
+        # does not help reduce the server side memory usage.
+        # See: https://stackoverflow.com/a/31843091/1281657
+        #      https://github.com/pandas-dev/pandas/issues/12265#issuecomment-181809005
+        #      https://github.com/pandas-dev/pandas/issues/35689
         stime = time()
-        print('using chunksize...')
-        df = pd.read_sql_query(sql, connections[self.args.db], chunksize=10)
+        df = pd.read_sql_query(sql, connections[self.args.db])
         etime = time() - stime
-        print(f"df.shape: {df.shape} - read_sql_query() in {etime:.1f} sec")
-        ##print(df.head())
+        self.logger.info(f"df.shape: {df.shape} - read_sql_query() in {etime:.1f} sec")
+        self.logger.debug(df.head())
+
         return df
 
     def self_join_to_parquet(self):
@@ -115,14 +129,14 @@ class Columnar():
         df = self._sql_to_df(sql)
         context = ['platform', 'timevalue', 'depth', 'latitude', 'longitude']
         dfp = df.pivot_table(index=context, columns=self.args.collect, values='datavalue')
-        print(dfp.shape)
+        self.logger.debug(dfp.shape)
 
-        print(f'Writing data to file {self.args.output}...')
+        self.logger.info(f'Writing data to file {self.args.output}...')
         stime = time()
         dfp.to_parquet(self.args.output)
         etime = time() - stime
-        print(f"dfp.shape: {dfp.shape} - to_parquet() in {etime:.1f} sec")
-        print('Done')
+        self.logger.info(f"dfp.shape: {dfp.shape} - to_parquet() in {etime:.1f} sec")
+        self.logger.info('Done')
 
     def process_command_line(self):
         parser = argparse.ArgumentParser(description='Transform STOQS data into columnar Parquet file format')
@@ -141,12 +155,15 @@ class Columnar():
                             default='19000101T000000')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format',
                             default='22000101T000000')
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1, 2, 3], type=int,
-                            help='Turn on verbose output. Higher number = more output.', 
-                            const=1, default=0)
+        parser.add_argument('-v', '--verbose', type=int, choices=range(3),
+                            action='store', default=0, const=1, nargs='?',
+                            help="verbosity level: " + ', '.join(
+                                [f"{i}: {v}" for i, v, in enumerate(('WARN', 'INFO', 'DEBUG'))]))
+
 
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
+        self.logger.setLevel(self._log_levels[self.args.verbose])
 
 
 if __name__ == '__main__':
