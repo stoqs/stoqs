@@ -67,7 +67,7 @@ import argparse
 import logging
 import pandas as pd
 from django.db import connections
-from stoqs.models import ActivityParameter, Platform
+from stoqs.models import Platform
 from time import time
 
 class Columnar():
@@ -78,6 +78,10 @@ class Columnar():
                                    '%(funcName)s():%(lineno)d %(message)s')
     _handler.setFormatter(_formatter)
     _log_levels = (logging.WARN, logging.INFO, logging.DEBUG)
+
+    # Set to GB of RAM that have been resourced to the Docker engine
+    MAX_CONTAINER_MEMORY = 16
+    DF_TO_RAM_FACTOR = 12.3
 
     def _set_platforms(self):
         '''Set plats and plat_list member variables
@@ -111,41 +115,11 @@ class Columnar():
         etime = time() - stime
         if extract:
             self.logger.info(f"df.shape: {df.shape} - read_sql_query() in {etime:.1f} sec")
-            self.logger.info(f"df.memory_usage().sum(): {df.memory_usage().sum()}")
+            self.logger.info(f"Actual df.memory_usage().sum():"
+                             f" {(df.memory_usage().sum()/1.e9):.3f} GB")
             self.logger.debug(df.head())
 
         return df
-
-    def self_join_to_parquet(self):
-        '''Approach 1. Use the same kind of self-join query used for selecting 
-        data for Parameter-Parameter plots.
-        DEPRECATED.
-        '''
-
-        self._set_platforms()
-
-        sql_multp = '''SELECT DISTINCT stoqs_measuredparameter.id,
-                        stoqs_platform.name,
-                        stoqs_measurement.depth,
-                        mp_salt.datavalue AS salt,
-                        mp_temp.datavalue AS temp
-        FROM stoqs_measuredparameter
-        INNER JOIN stoqs_measurement ON (stoqs_measuredparameter.measurement_id = stoqs_measurement.id)
-        INNER JOIN stoqs_instantpoint ON (stoqs_measurement.instantpoint_id = stoqs_instantpoint.id)
-        INNER JOIN stoqs_activity ON (stoqs_instantpoint.activity_id = stoqs_activity.id)
-        INNER JOIN stoqs_platform ON (stoqs_activity.platform_id = stoqs_platform.id)
-        INNER JOIN stoqs_measurement m_salt ON m_salt.instantpoint_id = stoqs_instantpoint.id
-        INNER JOIN stoqs_measuredparameter mp_salt ON mp_salt.measurement_id = m_salt.id
-        INNER JOIN stoqs_parameter p_salt ON mp_salt.parameter_id = p_salt.id
-        INNER JOIN stoqs_measurement m_temp ON m_temp.instantpoint_id = stoqs_instantpoint.id
-        INNER JOIN stoqs_measuredparameter mp_temp ON mp_temp.measurement_id = m_temp.id
-        INNER JOIN stoqs_parameter p_temp ON mp_temp.parameter_id = p_temp.id
-        WHERE (p_salt.standard_name = 'sea_water_temperature')
-          AND (p_temp.standard_name = 'sea_water_salinity')
-          AND stoqs_platform.name IN ({})'''
-
-        sql = sql_multp.format(self.plats)
-        df = self._sql_to_df(sql)
 
     def _build_sql(self, limit=None, order=True, count=False):
         self._set_platforms()
@@ -180,7 +154,7 @@ class Columnar():
         return sql
 
     def _estimate_memory(self):
-        '''Perform a small query (using LIMIT) on the selection and extrapolate
+        '''Perform a small query on the selection and extrapolate
         to estimate the server-side memory required for the full extraction.
         '''
         SAMPLE_SIZE = 100
@@ -188,17 +162,27 @@ class Columnar():
         df = self._sql_to_df(sql)
 
         sample_memory = df.memory_usage().sum()
-        self.logger.debug(f"{sample_memory} B" f" for {SAMPLE_SIZE} records")
+        self.logger.debug(f"{sample_memory} B for {SAMPLE_SIZE} records")
 
         total_recs = self._sql_to_df(self._build_sql(count=True))['count'][0]
         self.logger.debug(f"total_recs = {total_recs}")
 
-        required_memory = total_recs * sample_memory / SAMPLE_SIZE
-        self.logger.info(f"Estimated required_memory = {required_memory}")
+        required_memory = total_recs * sample_memory / SAMPLE_SIZE / 1.e9
+        container_memory = self.DF_TO_RAM_FACTOR * required_memory 
+        self.logger.info(f"Estimated required_memory:"
+                         f" {required_memory:.3f} GB for DataFrame,"
+                         f" {container_memory:.3f} GB for container RAM,")
+
+        if container_memory > self.MAX_CONTAINER_MEMORY:
+            self.logger.exception(f"Request of {required_memory:.3f} GB df would"
+                                  f" exceed {self.MAX_CONTAINER_MEMORY} GB"
+                                  f" of RAM available")
+            sys.exit(-1)
 
     def pivot_table_to_parquet(self):
         '''Approach 4. Use Pandas do a pivot on data read into a DataFrame
         '''
+        self._estimate_memory()
         sql = self._build_sql()
         df = self._sql_to_df(sql, extract=True)
         context = ['platform', 'timevalue', 'depth', 'latitude', 'longitude']
@@ -243,6 +227,5 @@ if __name__ == '__main__':
 
     c = Columnar()
     c.process_command_line()
-    c._estimate_memory()
     c.pivot_table_to_parquet()
 
