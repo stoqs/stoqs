@@ -1,7 +1,5 @@
 -r base.txt
 
 ephem==3.7.7.1
-pandas==1.2.2
-numpy==1.20.1
 requests==2.25.1
 uWSGI==2.0.19.1
