@@ -114,10 +114,10 @@ class Columnar():
         df = pd.read_sql_query(sql, connections[self.args.db])
         etime = time() - stime
         if extract:
-            self.logger.info(f"df.shape: {df.shape} - read_sql_query() in {etime:.1f} sec")
+            self.logger.info(f"df.shape: {df.shape} <- read_sql_query() in {etime:.1f} sec")
             self.logger.info(f"Actual df.memory_usage().sum():"
                              f" {(df.memory_usage().sum()/1.e9):.3f} GB")
-            self.logger.debug(df.head())
+            self.logger.debug(f"Head of original df:\n{df.head()}")
 
         return df
 
@@ -125,28 +125,28 @@ class Columnar():
         self._set_platforms()
         
         # Base query that's similar to the one behind the api/measuredparameter.csv request
-        sql_base = '''
-        FROM public.stoqs_measuredparameter
+        sql = f'''\nFROM public.stoqs_measuredparameter
         INNER JOIN stoqs_measurement ON (stoqs_measuredparameter.measurement_id = stoqs_measurement.id)
         INNER JOIN stoqs_instantpoint ON (stoqs_measurement.instantpoint_id = stoqs_instantpoint.id)
         INNER JOIN stoqs_activity ON (stoqs_instantpoint.activity_id = stoqs_activity.id)
         INNER JOIN stoqs_platform ON (stoqs_activity.platform_id = stoqs_platform.id)
         INNER JOIN stoqs_parameter ON (stoqs_measuredparameter.parameter_id = stoqs_parameter.id)
-        WHERE stoqs_platform.name IN ({}) '''
+        WHERE stoqs_platform.name IN ({self.plats}) 
+          AND stoqs_parameter.{self.args.collect} is not null'''
 
         if count:
-            sql_base = 'SELECT count(*) ' + sql_base
+            sql = 'SELECT count(*) ' + sql
         else:
-            sql_base = '''SELECT stoqs_platform.name as platform, 
-                stoqs_instantpoint.timevalue, stoqs_measurement.depth, 
-                ST_X(stoqs_measurement.geom) as longitude, ST_Y(stoqs_measurement.geom) as latitude,
-                stoqs_parameter.name, stoqs_parameter.standard_name, 
-                stoqs_measuredparameter.datavalue ''' + sql_base
+            sql = f'''SELECT stoqs_platform.name as platform,
+                stoqs_instantpoint.timevalue, stoqs_measurement.depth,
+                ST_X(stoqs_measurement.geom) as longitude,
+                ST_Y(stoqs_measurement.geom) as latitude,
+                stoqs_parameter.{self.args.collect},
+                stoqs_measuredparameter.datavalue {sql}'''
             if order:
-                sql_base += ('\nORDER BY stoqs_platform.name, stoqs_instantpoint.timevalue,'
+                sql += ('\nORDER BY stoqs_platform.name, stoqs_instantpoint.timevalue,'
                             ' stoqs_measurement.depth, stoqs_parameter.name')
 
-        sql = sql_base.format(self.plats)
         if limit:
             sql += f"\nLIMIT {limit}"
         self.logger.debug(f'sql = {sql}')
@@ -193,7 +193,8 @@ class Columnar():
         stime = time()
         dfp.to_parquet(self.args.output)
         etime = time() - stime
-        self.logger.info(f"dfp.shape: {dfp.shape} - to_parquet() in {etime:.1f} sec")
+        self.logger.info(f"dfp.shape: {dfp.shape} -> to_parquet() in {etime:.1f} sec")
+        self.logger.debug(f"Head of pivoted df:\n{dfp.head()}")
         self.logger.info('Done')
 
     def process_command_line(self):
@@ -204,6 +205,7 @@ class Columnar():
         parser.add_argument('--platforms_omit', action='store', nargs='*', default=[],
                             help='Restrict to all but these platforms')
         parser.add_argument('--collect', action='store', default='name',
+                            choices=['name', 'standard_name'],
                             help='The column to collect: name or standard_name')
         parser.add_argument('--db', action='store', required=True,
                             help='Database alias, e.g. stoqs_canon_october2020')
