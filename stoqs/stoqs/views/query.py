@@ -302,6 +302,7 @@ def queryUI(request):
              ('csv', 'Comma Separated Values', ),
              ('tsv', 'Tabbed Separated Values', ),
              ('html', 'Hyper Text Markup Language table', ),
+             ('parquet', 'Apache Parquet binary column format', ),
             ]
 
     config_settings = {'site_uri': request.build_absolute_uri('/')[:-1],
