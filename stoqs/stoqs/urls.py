@@ -26,8 +26,8 @@ app_name = 'stoqs'
 # The database alias (the key of the DATABASES dictionary) will prefix all of our requests
 pre = r'^(?P<dbAlias>[^/]+)/'  
 
-# format is one of: 'html', 'csv', 'kml', 'json'
-formatPat = r'(?P<fmt>[^/]{0,5})'
+# format is one of: 'html', 'csv', 'kml', 'json', 'parquet', 'estimate'
+formatPat = r'(?P<fmt>[^/]{0,8})'
 
 urlpatterns = [
     # New Map interfaces with inheritence of bootstrap template

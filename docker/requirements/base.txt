@@ -1,8 +1,8 @@
-aiohttp==3.7.3
+aiohttp==3.7.4
 beautifulsoup4==4.9.3
 cmocean==2.0
 coards==1.0.5
-coverage==5.4
+coverage==5.5
 datadiff==2.0.0
 datashader==0.12.0
 dj-database-url==0.5.0
@@ -14,15 +14,15 @@ django-environ==0.4.5
 django-model-utils==4.1.1
 django-extensions==3.1.1
 django-picklefield==3.0.1
-GitPython==3.1.13
+GitPython==3.1.14
 euclid==1.2
 djangorestframework==3.12.2
 fastparquet==0.5.0
 httplib2==0.19.0
-holoviews==1.14.1
+holoviews==1.14.2
 hvplot==0.7.0
 ipyleaflet==0.13.6
-ipython==7.20.0
+ipython==7.21.0
 jdcal==1.4.1
 Jinja2==2.11.3
 jupyter==1.0.0
@@ -42,6 +42,7 @@ pika==1.2.0
 pyarrow==3.0.0
 pysher==1.0.6
 psycopg2-binary==2.8.6
+psutil==5.8.0
 pupynere==1.0.15
 Pydap==3.2.2
 python-dateutil==2.8.1
@@ -62,5 +63,5 @@ sphinx-rtd-theme==0.5.1
 sqlparse==0.4.1
 thredds-crawler==1.5.4
 watchdog==2.0.2
-websocket-client==0.57.0
-xarray==0.16.2
+websocket-client==0.58.0
+xarray==0.17.0
