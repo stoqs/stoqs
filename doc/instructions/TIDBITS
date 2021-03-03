@@ -99,8 +99,13 @@ aStart = Activity.objects.using(dbAlias).filter(name__contains=aName).values_lis
 aEnd = Activity.objects.using(dbAlias).filter(name__contains=aName).values_list('enddate')[0][0]
 
 
-(This is a change for testing purposes)
-(This is yet another change for testing purposes)
+Restart nginx in Docker for development of UI using production Django server
+----------------------------------------------------------------------------
+cd $STOQS_HOME/docker
+docker-compose exec stoqs touch /etc/uwsgi/django-uwsgi.ini
+docker-compose logs -f
+
+
 --
 Mike McCann
 MBARI 11 February 2014

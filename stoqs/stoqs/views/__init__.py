@@ -16,7 +16,7 @@ positions, it also delivers measured_paramaters based on various common query cr
 
 from django.shortcuts import render
 from django.template import RequestContext
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, FileResponse
 from django.conf import settings
 from django.core import serializers
 
@@ -29,6 +29,7 @@ from utils.utils import postgresifySQL
 from utils.MPQuery import MPQuery, MPQuerySet
 from utils.PQuery import PQuery
 from utils import encoders
+from utils.Parquet import Columnar
 from utils.Viz.KML import KML
 
 logger = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ class BaseOutputer(object):
         self.html_tmpl_path = tempfile.NamedTemporaryFile(dir='/tmp', prefix=self.stoqs_object_name+'_', suffix='.html').name
 
         # May be overridden by classes that provide other responses, such as '.png' in an overridden process_request() method
-        self.responses = ['.help', '.html', '.json', '.csv', '.tsv', '.xml', '.count']
+        self.responses = ['.help', '.html', '.json', '.csv', '.tsv', '.xml', '.count', 'parquet', 'estimate']
 
     def build_html_template(self):
         '''
@@ -310,6 +311,22 @@ class BaseOutputer(object):
                             self.distanceLookups, self.spatialLookups)
             helpText += '\n\nResponses: %s' % (self.responses,)
             response = HttpResponse(helpText, content_type="text/plain")
+            return response
+
+        elif self.format == 'estimate':
+            col = Columnar()
+            info = col.request_estimate(self.request)
+            logger.debug(f"info = {info}")
+            resp = json.dumps(info, cls=encoders.STOQSJSONEncoder)
+            return HttpResponse(resp, content_type='application/json')
+
+        elif self.format == 'parquet':
+            col = Columnar()
+            filename = col.request_to_parquet(self.request)
+            logger.debug(f"Sending contents of {filename}...")
+            response = FileResponse(open(filename, 'rb'))
+            response['Content-type'] = 'application/octet-stream'
+            response['Content-Disposition'] = f"attachment; filename={self.request.META['dbAlias']}.parquet"
             return response
 
         else:
