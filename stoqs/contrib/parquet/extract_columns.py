@@ -174,7 +174,7 @@ class Columnar():
                          f" {container_memory:.3f} GB for container RAM,")
 
         if container_memory > self.MAX_CONTAINER_MEMORY:
-            self.logger.exception(f"Request of {required_memory:.3f} GB df would"
+            self.logger.exception(f"Request of {container_memory:.3f} GB would"
                                   f" exceed {self.MAX_CONTAINER_MEMORY} GB"
                                   f" of RAM available")
             sys.exit(-1)
@@ -223,6 +223,8 @@ class Columnar():
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
         self.logger.setLevel(self._log_levels[self.args.verbose])
+        self.logger.debug(f"Using databases at DATABASE_URL ="
+                          f" {os.environ['DATABASE_URL']}")
 
 
 if __name__ == '__main__':
