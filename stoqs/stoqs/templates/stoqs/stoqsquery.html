@@ -914,7 +914,21 @@
                                         {% if format.0 == 'sql' %}
                                             <pre id="mp-{{format.0}}-field" style="font-size:xx-small;"></pre>
                                         {% else %}
-                                            <pre id="mp-{{format.0}}-field"></pre>
+                                            {% if format.0 == 'parquet' %}
+                                                <div class="row-fluid">
+                                                    <div class="span3">
+                                                        <button id="parquet-estimate" class="btn btn-mini btn-primary">Estimate requirements</button>
+                                                    </div>
+                                                    <div class="span9">
+                                                        <span id="parquet-estimate-req"></span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <pre id="mp-{{format.0}}-field"></pre>
+                                                </div>
+                                            {% else %}
+                                                <pre id="mp-{{format.0}}-field"></pre>
+                                            {% endif %}
                                         {% endif %}
                                     {% endif %}
                                 </div>
@@ -2095,6 +2109,7 @@
                 mp_param = mp_param + 'mplabels=' + params['mplabels'][i] + '&';
             }
         }
+        mp_param = mp_param.substring(0, mp_param.length - 1);
 
         return mp_param
     }
@@ -2184,6 +2199,12 @@
             }
             else if (value == 'html') {
                 var url = base_url + 'html' + mp_param;
+                url = url.replace(/ /g, '%20');
+                $('#'+group+'-'+value+'-field').text(url);
+                $('#'+group+'-'+value+'-link').attr('href',url);
+            }
+            else if (value == 'parquet') {
+                var url = base_url + 'parquet' + mp_param;
                 url = url.replace(/ /g, '%20');
                 $('#'+group+'-'+value+'-field').text(url);
                 $('#'+group+'-'+value+'-link').attr('href',url);
@@ -2611,6 +2632,8 @@
         updateSummaryData();
 
         polyLayer.removeAllFeatures();
+        $("#parquet-estimate").addClass('btn-primary');
+        $("#parquet-estimate-req").css( { 'color': 'grey' } );
 
     } // rebuildFilters()
     
@@ -3380,6 +3403,32 @@
 
     $('#parameter-parameter-sql').click( function() { 
         SelectText('parameter-parameter-sql') 
+    });
+
+    $("#parquet-estimate").click(function() {
+        estimate_url = $('#mp-parquet-field').text().replace('.parquet', '.estimate')
+        $.ajax({
+                type : 'GET',
+                beforeSend: function() {
+                    $('#parquet-estimate-req').parent().addClass('.stoqs-background-ajax-loader-3d-topright');
+                    $('#parquet-estimate-req').html('Estimating...');
+                },
+                url: estimate_url,
+                success: function (data) {
+                    est_str = data.records.toLocaleString() + ' records requiring ';
+                    est_str += data.RAM_GB.toLocaleString(undefined, {minimumFractionDigits: 3});
+                    est_str += ' GB RAM to download in ';
+                    est_str += data.time_min.toLocaleString(undefined, {minimumFractionDigits: 1});
+                    est_str += ' minutes for a ';
+                    est_str += data.size_MB.toLocaleString(undefined, {minimumFractionDigits: 3});
+                    est_str += ' MB file'
+                    $('#parquet-estimate-req').html(est_str);
+                    $('#parquet-estimate-req').parent().removeClass('.stoqs-background-ajax-loader-3d-topright');
+                    $("#parquet-estimate").removeClass('btn-primary');
+                    $("#parquet-estimate-req").css( { 'color': 'black' } );
+                },
+                dataType: "json"
+        });
     });
 
     var formats=[{% for format in formats %}'{{format.0}}'{% if not forloop.last %},{% endif %}{%endfor%}]
