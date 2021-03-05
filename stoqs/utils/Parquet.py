@@ -22,21 +22,18 @@ logger = logging.getLogger(__name__)
 
 class Columnar():
 
-    logger = logging.getLogger(__name__)
-    _handler = logging.StreamHandler()
-    _formatter = logging.Formatter('%(levelname)s %(asctime)s %(filename)s '
-                                   '%(funcName)s():%(lineno)d %(message)s')
-    _handler.setFormatter(_formatter)
-    _log_levels = (logging.WARN, logging.INFO, logging.DEBUG)
-
     # Set to GB of RAM that have been resourced to the Docker engine
     MAX_CONTAINER_MEMORY = psutil.virtual_memory().total / 1024 / 1024 / 1024
     DF_TO_RAM_FACTOR = 12.3
 
+    context = ['platform', 'timevalue', 'depth', 'latitude', 'longitude']
 
-    def _sql_to_df(self, sql, extract=False):
+    def _sql_to_df(self, sql, extract=False, request=None):
         if extract:
-            self.logger.info('Reading from SQL query into DataFrame...')
+            where_clause = self.request_to_sql_where(request) 
+            total_recs = self._sql_to_df(self._build_sql(count=True,
+                                         where_clause=where_clause))[0]['count'][0]
+            logger.info(f'Extracting {total_recs} records from SQL query into DataFrame...')
 
         # More than 10 GB of RAM is needed in Docker Desktop for reading data 
         # from stoqs_canon_october2020. The chunksize option in read_sql_query()
@@ -48,12 +45,12 @@ class Columnar():
         df = pd.read_sql_query(sql, connections[self.db])
         etime = time() - stime
         if extract:
-            self.logger.info(f"df.shape: {df.shape} <- read_sql_query() in {etime:.1f} sec")
-            self.logger.info(f"Actual df.memory_usage().sum():"
+            logger.info(f"df.shape: {df.shape} <- read_sql_query() in {etime:.1f} sec")
+            logger.info(f"Actual df.memory_usage().sum():"
                              f" {(df.memory_usage().sum()/1.e9):.3f} GB")
-            self.logger.debug(f"Head of original df:\n{df.head()}")
+            logger.debug(f"Head of original df:\n{df.head()}")
 
-        return df
+        return df, etime
 
     def _build_sql(self, limit=None, order=True, count=False, where_clause=None):
         
@@ -91,7 +88,7 @@ class Columnar():
 
         if limit:
             sql += f"\nLIMIT {limit}"
-        self.logger.debug(f'sql = {sql}')
+        logger.debug(f'sql = {sql}')
 
         return sql
 
@@ -101,29 +98,43 @@ class Columnar():
         '''
         SAMPLE_SIZE = 100
         sql = self._build_sql(limit=SAMPLE_SIZE, order=False, where_clause=where_clause)
-        df = self._sql_to_df(sql)
+        df, sample_time = self._sql_to_df(sql)
 
         sample_memory = df.memory_usage().sum()
-        self.logger.debug(f"{sample_memory} Bytes for {SAMPLE_SIZE} records")
+        logger.debug(f"{sample_memory} Bytes for {SAMPLE_SIZE} records")
 
         total_recs = self._sql_to_df(self._build_sql(count=True,
-                                     where_clause=where_clause))['count'][0]
-        self.logger.debug(f"total_recs = {total_recs}")
+                                     where_clause=where_clause))[0]['count'][0]
+        logger.debug(f"total_recs = {total_recs}")
 
         required_memory = total_recs * sample_memory / SAMPLE_SIZE / 1.e9
         container_memory = self.DF_TO_RAM_FACTOR * required_memory 
-        self.logger.info(f"Estimated required_memory:"
+        logger.info(f"Estimated required_memory:"
                          f" {required_memory:.3f} GB for DataFrame,"
                          f" {container_memory:.3f} GB for container RAM,")
 
+        sample_time = sample_time / 60
+        required_time = total_recs * sample_time / SAMPLE_SIZE /60
+        logger.info(f"sample_time = {sample_time} min,"
+                    f" required_time = {required_time} min")
+
+        dfp = df.pivot_table(index=self.context, columns=self.collect, values='datavalue')
+        sample_est_records = dfp.shape[0]
+        est_records = int(total_recs * sample_est_records / SAMPLE_SIZE)
+        logger.info(f"sample_est_records = {sample_est_records},"
+                    f" est_records = {est_records}")
+
         if container_memory > self.MAX_CONTAINER_MEMORY:
-            self.logger.exception(f"Request of {container_memory:.3f} GB would"
+            logger.exception(f"Request of {container_memory:.3f} GB would"
                                   f" exceed {self.MAX_CONTAINER_MEMORY} GB"
                                   f" of RAM available")
-            sys.exit(-1)
 
-        return {'RAM_GB': container_memory, 'size_MB': required_memory * 1.e3,
-                'records': total_recs, 'time_min': 'TDB'}
+        return {'RAM_GB': container_memory, 
+                'avl_RAM_GB': self.MAX_CONTAINER_MEMORY,
+                'size_MB': required_memory * 1.e3,
+                'est_records': est_records, 
+                'time_min': required_time, 
+                'time_avl': float(os.environ['UWSGI_READ_TIMEOUT']) / 60}
 
     def request_to_sql_where(self, request):
         '''Convert query sring parameters to SQL WHERE statements
@@ -154,9 +165,8 @@ class Columnar():
 
     def request_to_parquet(self, request):
         sql = self._build_sql(where_clause=self.request_to_sql_where(request))
-        df = self._sql_to_df(sql, extract=True)
-        context = ['platform', 'timevalue', 'depth', 'latitude', 'longitude']
-        dfp = df.pivot_table(index=context, columns=self.collect, values='datavalue')
+        df, _ = self._sql_to_df(sql, extract=True, request=request)
+        dfp = df.pivot_table(index=self.context, columns=self.collect, values='datavalue')
         logger.debug(dfp.shape)
 
         stime = time()
@@ -167,4 +177,5 @@ class Columnar():
         logger.debug(f"Head of pivoted df {fn}:\n{dfp.head()}")
         logger.info(f'Done creating {fn}')
 
+        # TODO: return actuals & fn in dictionary
         return fn
