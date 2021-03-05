@@ -24,6 +24,7 @@ import json
 import stoqs.models as mod
 import csv
 import logging 
+import os
 import tempfile
 from utils.utils import postgresifySQL
 from utils.MPQuery import MPQuery, MPQuerySet
@@ -323,7 +324,7 @@ class BaseOutputer(object):
         elif self.format == 'parquet':
             col = Columnar()
             filename = col.request_to_parquet(self.request)
-            logger.debug(f"Sending contents of {filename}...")
+            logger.info(f"Sending {os.stat(filename).st_size/1.e6} MB file: {filename}...")
             response = FileResponse(open(filename, 'rb'))
             response['Content-type'] = 'application/octet-stream'
             response['Content-Disposition'] = f"attachment; filename={self.request.META['dbAlias']}.parquet"

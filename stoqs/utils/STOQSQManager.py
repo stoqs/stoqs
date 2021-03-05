@@ -45,7 +45,6 @@ import re
 import locale
 import time
 import os
-import tempfile
 import numpy as np
 
 logger = logging.getLogger(__name__)
