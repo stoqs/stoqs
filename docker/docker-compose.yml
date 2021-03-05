@@ -66,6 +66,7 @@ services:
       - MEDIA_URL=/media/
       - MEDIA_ROOT=/srv/media-files
       - NGINX_SERVER_NAME=${NGINX_SERVER_NAME}
+      - UWSGI_READ_TIMEOUT=${UWSGI_READ_TIMEOUT}
       - DJANGO_DEBUG=${DJANGO_DEBUG}
       - USER=${USER}
     container_name: stoqs
