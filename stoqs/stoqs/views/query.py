@@ -295,14 +295,15 @@ def queryUI(request):
         logger.debug("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
     # Use list of tuples to preserve order
-    formats=[('kml', 'Keyhole Markup Language - click on icon to view in Google Earth', ),
+    formats=[
+             ('parquet', 'Apache Parquet binary column format', ),
+             ('kml', 'Keyhole Markup Language - click on icon to view in Google Earth', ),
              ('sql', 'Structured Query Language for PostgreSQL', ),
              ('matlab', 'Matlab - Load data into Matlab structure array', ),
              ('json', 'JavaScript Object Notation', ),
              ('csv', 'Comma Separated Values', ),
              ('tsv', 'Tabbed Separated Values', ),
              ('html', 'Hyper Text Markup Language table', ),
-             ('parquet', 'Apache Parquet binary column format', ),
             ]
 
     config_settings = {'site_uri': request.build_absolute_uri('/')[:-1],
