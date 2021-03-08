@@ -71,11 +71,17 @@ class Columnar():
                 ST_X(stoqs_measurement.geom) as longitude,
                 ST_Y(stoqs_measurement.geom) as latitude,'''
             if self.collect:
-                selects += f'''
-                stoqs_parameter.{self.collect},
-                stoqs_measuredparameter.datavalue'''
+                if 'standard_name' in self.collect:
+                    selects += f'\nstoqs_parameter.standard_name,'
+                elif 'name' in self.collect:
+                    selects += f'\nstoqs_parameter.name,'
+                if 'activity__name' in self.collect:
+                    selects += '\nstoqs_activity.name as activity__name,'
+                    self.context = ['platform', 'activity__name', 'timevalue', 
+                                    'depth', 'latitude', 'longitude']
+                selects += '\nstoqs_measuredparameter.datavalue'
             else:
-                selects += '''stoqs_measuredparameter.datavalue'''
+                selects += '\nstoqs_measuredparameter.datavalue'
 
         sql = selects + joins
 
@@ -145,19 +151,19 @@ class Columnar():
         logger.debug(f"db = {self.db}") 
         self.platforms = request.GET.getlist("measurement__instantpoint__activity__platform__name")
         logger.debug(f"platforms = {self.platforms}")
-        self.collect = request.GET.get("collect", 'standard_name')
+        self.collect = request.GET.getlist("collect", 'standard_name')
         logger.debug(f"collect = {self.collect}")
 
         where_list = []
         if self.platforms:
             where_list.append(f"stoqs_platform.name IN ({repr(self.platforms)[1:-1]})")
-        if self.collect:
+        if self.collect in ('standard_name', 'name'):
             where_list.append(f"stoqs_parameter.{self.collect} is not null")
 
+        where_clause = ''
         if where_list:
             where_clause = 'WHERE\n' + ' AND '.join(where_list)
-
-        logger.debug(f"where_clause = {where_clause}")
+            logger.debug(f"where_clause = {where_clause}")
 
         return where_clause
 

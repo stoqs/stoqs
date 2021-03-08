@@ -924,13 +924,30 @@
                                         {% else %}
                                             {% if format.0 == 'parquet' %}
                                                 <div class="row-fluid">
-                                                    <div class="span5">
-                                                        Collect: 
-                                                        <input type="radio" name="parq-collect" value="standard_name" checked="checked" /> standard_name(s)
-                                                        <input type="radio" name="parq-collect" value="name" /> name(s)
-                                                        <button id="parquet-estimate" class="btn btn-mini btn-primary">Estimate requirements</button>
+                                                    <div class="span6">
+                                                        <table>
+                                                            <tr>
+                                                                <td>
+                                                                    Collect: 
+                                                                </td>
+                                                                <td>
+                                                                    <input type="radio" name="parq-collect" value="standard_name" checked="checked" /> standard_name(s)
+                                                                    <input type="radio" name="parq-collect" value="name" /> name(s)
+                                                                </td>
+                                                            <tr>
+                                                                <td> </td>
+                                                                <td>
+                                                                    <input type="checkbox" name='parq-collect' value="activity__name"> Activity names
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td colspan="2">
+                                                                    <button id="parquet-estimate" class="btn btn-mini btn-primary">Estimate requirements</button>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
                                                     </div>
-                                                    <div class="span7">
+                                                    <div class="span6">
                                                         <table border="1" style="float: right;">
                                                             <tr>
                                                                 <th></th>
@@ -3048,6 +3065,9 @@
             }
         }
         parq_params.append('collect', $('input:radio[name=parq-collect]:checked').val());
+        if ( ! $.isEmptyObject($('input:checkbox[name=parq-collect]:checked').val()) ) {
+            parq_params.append('collect', $('input:checkbox[name=parq-collect]:checked').val());
+        }
         url = base_url + '?' + parq_params.toString();
         $('#mp-parquet-field').text(url);
         $('#mp-parquet-link').attr('href', url);
