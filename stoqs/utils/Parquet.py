@@ -153,12 +153,18 @@ class Columnar():
         logger.debug(f"platforms = {self.platforms}")
         self.collect = request.GET.getlist("collect", 'standard_name')
         logger.debug(f"collect = {self.collect}")
+        self.parameters = request.GET.getlist("parameter__name")
+        logger.debug(f"parameters = {self.parameters}")
 
         where_list = []
         if self.platforms:
             where_list.append(f"stoqs_platform.name IN ({repr(self.platforms)[1:-1]})")
-        if self.collect in ('standard_name', 'name'):
-            where_list.append(f"stoqs_parameter.{self.collect} is not null")
+        if 'standard_name' in self.collect:
+            where_list.append(f"stoqs_parameter.standard_name is not null")
+        if 'name' in self.collect:
+            where_list.append(f"stoqs_parameter.name is not null")
+        if self.parameters:
+            where_list.append(f"stoqs_parameter.name IN ({repr(self.parameters)[1:-1]})")
 
         where_clause = ''
         if where_list:
