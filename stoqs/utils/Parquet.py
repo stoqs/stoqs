@@ -134,7 +134,8 @@ class Columnar():
                 'size_MB': required_memory * 1.e3,
                 'est_records': est_records, 
                 'time_min': required_time, 
-                'time_avl': float(os.environ['UWSGI_READ_TIMEOUT']) / 60}
+                'time_avl': float(os.environ['UWSGI_READ_TIMEOUT']) / 60,
+                'preview': dfp.head(2).to_html()}
 
     def request_to_sql_where(self, request):
         '''Convert query sring parameters to SQL WHERE statements

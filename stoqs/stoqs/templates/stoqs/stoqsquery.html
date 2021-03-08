@@ -833,7 +833,7 @@
                                 </div>
                                 {% for format in formats %}
                                     {% if format.0 == 'kml' %}
-                                <div class="tab-pane active" id="sp-{{format.0}}">
+                                <div class="tab-pane" id="sp-{{format.0}}">
                                     {% else %}
                                 <div class="tab-pane" id="sp-{{format.0}}">
                                     {% endif %} 
@@ -882,7 +882,7 @@
 
                             <ul id="mp-dataaccessdownloadtabs" class="nav nav-tabs">
                                 {% for format in formats %}
-                                    {% if format.0 == 'kml' %}
+                                    {% if format.0 == 'parquet' %}
                                         <li class="active"><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                     {% else %}
                                         {% if format.0 == 'sql' %}
@@ -895,7 +895,7 @@
                             </ul>
                             <div class="tab-content">
                                 {% for format in formats %}
-                                    {% if format.0 == 'kml' %}
+                                    {% if format.0 == 'parquet' %}
                                         <div class="tab-pane active" id="mp-{{format.0}}">
                                     {% else %}
                                         <div class="tab-pane" id="mp-{{format.0}}">
@@ -931,7 +931,7 @@
                                                         <button id="parquet-estimate" class="btn btn-mini btn-primary">Estimate requirements</button>
                                                     </div>
                                                     <div class="span7">
-                                                        <table border="1">
+                                                        <table border="1" style="float: right;">
                                                             <tr>
                                                                 <th></th>
                                                                 <th>Estimated</th>
@@ -962,6 +962,7 @@
                                                     </div>
                                                 </div>
                                                 <div id="parq-warning" style="color: red;">&nbsp;</div>
+                                                <div id="parq-preview" style="overflow-x: scroll"></div>
                                                 <div>(Click "Estimate requirements" button before using this Data Access URL)</div>
                                                 <div class="row-fluid">
                                                     <pre id="mp-{{format.0}}-field"></pre>
@@ -3498,6 +3499,7 @@
                     $("#parq-est-time").html(data.time_min.toLocaleString());
                     $("#parq-avl-time").html(data.time_avl.toLocaleString());
                     $("#parq-est-size").html(data.size_MB.toLocaleString());
+                    $("#parq-preview").html('Preview of first 2 rows:' + data.preview);
                     $("#parquet-estimate").removeClass('btn-primary');
                     $('.parq-cell').removeClass('blink_me');
 
