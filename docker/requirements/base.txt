@@ -1,4 +1,4 @@
-aiohttp==3.7.4
+aiohttp==3.7.4.post0
 beautifulsoup4==4.9.3
 channels==3.0.3
 cmocean==2.0
@@ -59,7 +59,7 @@ selenium==3.141.0
 simplejson==3.17.2
 slacker==0.14.0
 statsmodels==0.12.2
-Sphinx==3.5.1
+Sphinx==3.5.2
 sphinx-rtd-theme==0.5.1
 sqlparse==0.4.1
 thredds-crawler==1.5.4
