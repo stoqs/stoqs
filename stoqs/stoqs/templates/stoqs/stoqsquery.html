@@ -979,7 +979,7 @@
                                                 <div id="parq-warning" style="color: red;">&nbsp;</div>
                                                 <div id="parq-preview" style="overflow-x: scroll"></div>
                                                 <div>&nbsp;</div>
-                                                <div id="parq-instructions">(Click "Estimate requirements" button before using this Data Access URL)</div>
+                                                <div id="parq-instructions">Click "Estimate requirements" button before using this Data Access URL</div>
                                                 <div class="row-fluid">
                                                     <pre id="mp-{{format.0}}-field"></pre>
                                                 </div>
@@ -2775,11 +2775,11 @@
         var url = base_url + '?' + parq_params.toString();
         if ( ! $('#parquet-estimate').hasClass('btn-primary') ) {
             $('#parquet-estimate').addClass('btn-primary');
-            $('.parq-cell').css( { 'color': 'lightgrey' });
+            $('.parq-cell').css({ 'color': 'lightgrey' });
+            $('#parq-preview').css({ 'color': 'lightgrey' });
             $('#parq-warning').html('&nbsp;');
-        }
-        else {
-            $('#parq-instructions').html('Use this URL to download the data:')
+            $('#parq-instructions').html('Click "Estimate requirements" button before using this Data Access URL');
+            $('#parq-instructions').css({ 'font-weight': 'normal' });
         }
         return url;
     }
@@ -3516,6 +3516,7 @@
                     $("#parq-avl-time").html('...');
                     $("#parq-est-size").html('...');
                     $('.parq-cell').css( { 'color': 'black' });
+                    $('#parq-preview').css( { 'color': 'black' });
                     $('.parq-cell').addClass('blink_me');
                     $('#parq-warning').html('&nbsp;');
                 },
@@ -3530,6 +3531,8 @@
                     $("#parq-preview").html('Preview of first 2 rows:' + data.preview);
                     $("#parquet-estimate").removeClass('btn-primary');
                     $('.parq-cell').removeClass('blink_me');
+                    $('#parq-instructions').html('Use this URL to download the data:')
+                    $('#parq-instructions').css({ 'font-weight': 'bold' });
 
                     // Highlight cells that would cause a download to fail
                     if ( data.RAM_GB > data.avl_RAM_GB ) {
