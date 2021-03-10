@@ -28,7 +28,7 @@ class Columnar():
 
     context = ['platform', 'timevalue', 'depth', 'latitude', 'longitude']
 
-    def _sql_to_df(self, sql, extract=False, request=None):
+    def _sql_to_df(self, sql, extract=False, request=None, set_index=False):
         if extract:
             where_clause = self.request_to_sql_where(request) 
             total_recs = self._sql_to_df(self._build_sql(count=True,
@@ -42,7 +42,10 @@ class Columnar():
         #      https://github.com/pandas-dev/pandas/issues/12265#issuecomment-181809005
         #      https://github.com/pandas-dev/pandas/issues/35689
         stime = time()
-        df = pd.read_sql_query(sql, connections[self.db])
+        if set_index or extract:
+            df = pd.read_sql_query(sql, connections[self.db], index_col=self.context)
+        else:
+            df = pd.read_sql_query(sql, connections[self.db])
         etime = time() - stime
         if extract:
             logger.info(f"df.shape: {df.shape} <- read_sql_query() in {etime:.1f} sec")
@@ -75,7 +78,7 @@ class Columnar():
                     selects += f'\nstoqs_parameter.standard_name,'
                 elif 'name' in self.collect:
                     selects += f'\nstoqs_parameter.name,'
-                if 'activity__name' in self.collect:
+                if 'activity__name' in self.include:
                     selects += '\nstoqs_activity.name as activity__name,'
                     self.context = ['platform', 'activity__name', 'timevalue', 
                                     'depth', 'latitude', 'longitude']
@@ -104,7 +107,7 @@ class Columnar():
         '''
         SAMPLE_SIZE = 100
         sql = self._build_sql(limit=SAMPLE_SIZE, order=False, where_clause=where_clause)
-        df, sample_time = self._sql_to_df(sql)
+        df, sample_time = self._sql_to_df(sql, set_index=True)
 
         sample_memory = df.memory_usage().sum()
         logger.debug(f"{sample_memory} Bytes for {SAMPLE_SIZE} records")
@@ -124,7 +127,9 @@ class Columnar():
         logger.info(f"sample_time = {sample_time} min,"
                     f" required_time = {required_time} min")
 
+        logger.debug(f"pivot_table(index={self.context}, columns={self.collect} ...")
         dfp = df.pivot_table(index=self.context, columns=self.collect, values='datavalue')
+        logger.debug(f"dfp.head() = {dfp.head()}")
         sample_est_records = dfp.shape[0]
         est_records = int(total_recs * sample_est_records / SAMPLE_SIZE)
         logger.info(f"sample_est_records = {sample_est_records},"
@@ -149,12 +154,27 @@ class Columnar():
         logger.debug(f"request = {request}") 
         self.db = request.META['dbAlias']
         logger.debug(f"db = {self.db}") 
+
         self.platforms = request.GET.getlist("measurement__instantpoint__activity__platform__name")
         logger.debug(f"platforms = {self.platforms}")
+
         self.collect = request.GET.getlist("collect", 'standard_name')
         logger.debug(f"collect = {self.collect}")
+        self.include = request.GET.getlist("include")
+        logger.debug(f"include = {self.include}")
+
         self.parameters = request.GET.getlist("parameter__name")
         logger.debug(f"parameters = {self.parameters}")
+
+        self.stime = request.GET.get('measurement__instantpoint__timevalue__gt')
+        logger.debug(f"stime = {self.stime}")
+        self.etime = request.GET.get('measurement__instantpoint__timevalue__lt')
+        logger.debug(f"etime = {self.etime}")
+
+        self.min_depth = request.GET.get('measurement__depth__gte')
+        logger.debug(f"stime = {self.min_depth}")
+        self.max_depth = request.GET.get('measurement__depth__lte')
+        logger.debug(f"etime = {self.max_depth}")
 
         where_list = []
         if self.platforms:
@@ -165,10 +185,18 @@ class Columnar():
             where_list.append(f"stoqs_parameter.name is not null")
         if self.parameters:
             where_list.append(f"stoqs_parameter.name IN ({repr(self.parameters)[1:-1]})")
+        if self.stime:
+            where_list.append(f"stoqs_instantpoint.timevalue >= '{self.stime}'")
+        if self.etime:
+            where_list.append(f"stoqs_instantpoint.timevalue <= '{self.etime}'")
+        if self.min_depth:
+            where_list.append(f"stoqs_measurement.depth >= '{self.min_depth}'")
+        if self.max_depth:
+            where_list.append(f"stoqs_measurement.depth <= '{self.max_depth}'")
 
         where_clause = ''
         if where_list:
-            where_clause = 'WHERE\n' + ' AND '.join(where_list)
+            where_clause = 'WHERE ' + '\n  AND '.join(where_list)
             logger.debug(f"where_clause = {where_clause}")
 
         return where_clause
