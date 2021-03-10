@@ -927,17 +927,15 @@
                                                     <div class="span6">
                                                         <table>
                                                             <tr>
-                                                                <td>
-                                                                    Collect: 
-                                                                </td>
+                                                                <td>Collect:</td>
                                                                 <td>
                                                                     <input type="radio" name="parq-collect" value="standard_name" checked="checked" /> standard_name(s)
                                                                     <input type="radio" name="parq-collect" value="name" /> name(s)
                                                                 </td>
                                                             <tr>
-                                                                <td> </td>
+                                                                <td>Include:</td>
                                                                 <td>
-                                                                    <input type="checkbox" name='parq-collect' value="activity__name"> Activity names
+                                                                    <input type="checkbox" name='parq-include' value="activity__name"> Activity names
                                                                 </td>
                                                             </tr>
                                                             <tr>
@@ -966,7 +964,7 @@
                                                                 <td id="parq-avl-time" class="parq-cell">...</td>
                                                             </tr>
                                                             <tr>
-                                                                <td style="font-weight: bold;">Records</td>
+                                                                <td style="font-weight: bold;">Rows</td>
                                                                 <td id="parq-est-rec" class="parq-cell">...</td>
                                                                 <td id="parq-avl-rec"></td>
                                                             </tr>
@@ -980,7 +978,8 @@
                                                 </div>
                                                 <div id="parq-warning" style="color: red;">&nbsp;</div>
                                                 <div id="parq-preview" style="overflow-x: scroll"></div>
-                                                <div>(Click "Estimate requirements" button before using this Data Access URL)</div>
+                                                <div>&nbsp;</div>
+                                                <div id="parq-instructions">(Click "Estimate requirements" button before using this Data Access URL)</div>
                                                 <div class="row-fluid">
                                                     <pre id="mp-{{format.0}}-field"></pre>
                                                 </div>
@@ -2266,6 +2265,9 @@
                 url = url.replace(/ /g, '%20');
                 $('#'+group+'-'+value+'-field').text(url);
                 $('#'+group+'-'+value+'-link').attr('href',url);
+                url = updateParquet();
+                $('#'+group+'-'+value+'-field').text(url);
+                $('#'+group+'-'+value+'-link').attr('href',url);
             }
             else {
                 $('#'+group+'-'+value+'-field').text(url);
@@ -2685,18 +2687,13 @@
 
         // Since the old link (if there was one) for the permalink is no longer valid, hide it
         $('#permalink-box').hide();
-        
+       
+
         //updateShowDataInfo();
         updateSummaryData();
 
         polyLayer.removeAllFeatures();
         
-        if ( ! $("#parquet-estimate").hasClass('btn-primary') ) {
-            $("#parquet-estimate").addClass('btn-primary');
-            $('.parq-cell').css( { 'color': 'lightgrey' });
-            $('#parq-warning').html('&nbsp;');
-        }
-
     } // rebuildFilters()
     
 
@@ -2750,6 +2747,41 @@
         $.each($('body').data()['platformAnimation'], function (index, platform) {
             $('#' + platform + '_SCALE > transform > shape')[0].setAttribute('render', show_hide_flag);
         });
+    }
+
+    function updateParquet() {
+        var url_fields = $('#mp-parquet-field').text().split('?');
+        var base_url = url_fields[0];
+        var query_string = url_fields[1];
+        var parq_params;
+        if ( $.isEmptyObject(query_string) ) {
+            parq_params = new URLSearchParams();
+        }
+        else {
+            parq_params = new URLSearchParams(query_string);
+        }
+        if ( ! $.isEmptyObject(parq_params) ) {
+            if ( ! $.isEmptyObject(parq_params.get('collect')) ) {
+                parq_params.delete('collect');
+            }
+            if ( ! $.isEmptyObject(parq_params.get('include')) ) {
+                parq_params.delete('include');
+            }
+        }
+        parq_params.append('collect', $('input:radio[name=parq-collect]:checked').val());
+        if ( ! $.isEmptyObject($('input:checkbox[name=parq-include]:checked').val()) ) {
+            parq_params.append('include', $('input:checkbox[name=parq-include]:checked').val());
+        }
+        var url = base_url + '?' + parq_params.toString();
+        if ( ! $('#parquet-estimate').hasClass('btn-primary') ) {
+            $('#parquet-estimate').addClass('btn-primary');
+            $('.parq-cell').css( { 'color': 'lightgrey' });
+            $('#parq-warning').html('&nbsp;');
+        }
+        else {
+            $('#parq-instructions').html('Use this URL to download the data:')
+        }
+        return url;
     }
 
 
@@ -3048,34 +3080,10 @@
         recolorParameterTime($('input:radio[name=pt-colors]:checked').val());
     });
 
-    $('input[name="parq-collect"]').on('click', function (e) {
-        var url_fields = $('#mp-parquet-field').text().split('?');
-        var base_url = url_fields[0];
-        var query_string = url_fields[1];
-        var parq_params;
-        if ( $.isEmptyObject(query_string) ) {
-            parq_params = new URLSearchParams();
-        }
-        else {
-            parq_params = new URLSearchParams(query_string);
-        }
-        if ( ! $.isEmptyObject(parq_params) ) {
-            if ( ! $.isEmptyObject(parq_params.get('collect')) ) {
-                parq_params.delete('collect');
-            }
-        }
-        parq_params.append('collect', $('input:radio[name=parq-collect]:checked').val());
-        if ( ! $.isEmptyObject($('input:checkbox[name=parq-collect]:checked').val()) ) {
-            parq_params.append('collect', $('input:checkbox[name=parq-collect]:checked').val());
-        }
-        url = base_url + '?' + parq_params.toString();
+    $('input[name="parq-collect"], input[name="parq-include"]').on('click', function (e) {
+        var url = updateParquet();
         $('#mp-parquet-field').text(url);
         $('#mp-parquet-link').attr('href', url);
-        if ( ! $('#parquet-estimate').hasClass('btn-primary') ) {
-            $('#parquet-estimate').addClass('btn-primary');
-            $('.parq-cell').css( { 'color': 'lightgrey' });
-            $('#parq-warning').html('&nbsp;');
-        }
     });
 
     $('#show-filtered-sp-checkbox').on('click', function (e) {
