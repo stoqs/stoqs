@@ -1,3 +1,4 @@
+{% load humanize %}
 <!DOCTYPE html> <!--  HTML5 Doctype -->
 <html lang="en">
   <head>
@@ -78,7 +79,7 @@
                             <td><a href="{{site_uri}}{% url 'stoqs:stoqs-query-ui' dbAlias=c.dbAlias %}">{{ c.name }}</a></td><td>{{ c.description }}</td>
                             <td>{{ c.startdate }}</td><td>{{ c.enddate }}</td>
                             <td>{{ c.Platform_count }}</td><td>{{ c.Parameter_count }}</td><td>{{ c.Activity_count }}</td>
-                            <td>{{ c.MeasuredParameter_count }}</td><td>{{ c.SampledParameter_count }}</td>
+                            <td>{{ c.MeasuredParameter_count|intcomma }}</td><td>{{ c.SampledParameter_count|intcomma }}</td>
                             <td><a href="{{ c.loadlog }}">{{ c.minutes_to_load }}</a></td>
                             </tr>
                             {% endfor %}
