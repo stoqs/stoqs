@@ -51,7 +51,7 @@ http {
         location / {
             uwsgi_pass      django;
             include         uwsgi_params;
-            uwsgi_read_timeout ${UWSGI_READ_TIMEOUT};
+            uwsgi_read_timeout ${UWSGI_READ_TIMEOUT}s;
         }
     }
 
@@ -92,7 +92,7 @@ http {
         location / {
             uwsgi_pass      django;
             include         uwsgi_params;
-            uwsgi_read_timeout 300s;         # 5 minute timeout for AJAX requests            
+            uwsgi_read_timeout ${UWSGI_READ_TIMEOUT}s;
         }
     }
 }
