@@ -127,7 +127,7 @@ class Columnar():
         logger.info(f"sample_time = {sample_time} min,"
                     f" required_time = {required_time} min")
 
-        logger.debug(f"pivot_table(index={self.context}, columns={self.collect} ...")
+        logger.debug(f"pivot_table(index={self.context}, columns={self.collect}, values='datavalue')")
         dfp = df.pivot_table(index=self.context, columns=self.collect, values='datavalue')
         logger.debug(f"dfp.head() = {dfp.head()}")
         sample_est_records = dfp.shape[0]
