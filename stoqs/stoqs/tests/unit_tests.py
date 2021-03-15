@@ -559,6 +559,65 @@ class ParquetTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
     multi_db = False
 
+    def test_platform(self):
+        for fmt in  ['.estimate', '.parquet',]:
+            logger.debug('fmt = %s', fmt)
+            base = reverse('stoqs:show-measuredparmeter', kwargs={ 'fmt': fmt,
+                                                            'dbAlias': 'default'})
+
+            # Default: standard_name
+            params = { 'measurement__instantpoint__activity__platform__name': 'dorado', }
+            qstring = ''
+            for k,v in list(params.items()):
+                qstring = qstring + k + '=' + str(v) + '&'
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.estimate':
+                data = json.loads(response.content)
+                logger.debug(data)
+                self.assertEqual(data.get('est_records'), 52, 'Should be "52" est_records for %s' % req)
+
+            # name
+            params = { 'measurement__instantpoint__activity__platform__name': 'dorado', 
+                        'collect': 'name'}
+            qstring = ''
+            for k,v in list(params.items()):
+                qstring = qstring + k + '=' + str(v) + '&'
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.estimate':
+                data = json.loads(response.content)
+                logger.debug(data)
+                self.assertEqual(data.get('est_records'), 55, 'Should be "55" est_records for %s' % req)
+
+    def test_inlude_activity_names(self):
+        for fmt in  ['.estimate', '.parquet',]:
+            logger.debug('fmt = %s', fmt)
+            base = reverse('stoqs:show-measuredparmeter', kwargs={ 'fmt': fmt,
+                                                            'dbAlias': 'default'})
+
+            # Default: standard_name
+            params = { 'include': 'activity__name', }
+            qstring = ''
+            for k,v in list(params.items()):
+                qstring = qstring + k + '=' + str(v) + '&'
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.estimate':
+                data = json.loads(response.content)
+                logger.debug(data)
+                self.assertEqual(data.get('est_records'), 333, 'Should be "333" est_records for %s' % req)
+                self.assertTrue('Dorado389_2010_300_00_300_00_decim.nc (stride=1000)' in data.get('preview'))
+
     def test_parameter(self):
         for fmt in  ['.estimate', '.parquet',]:
             logger.debug('fmt = %s', fmt)
@@ -576,7 +635,7 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), 333, 'Should  be "333" est_records for %s' % req)
+                self.assertEqual(data.get('est_records'), 333, 'Should be "333" est_records for %s' % req)
 
     def test_single_activitynames(self):
         for fmt in  ['.estimate', '.parquet',]:
@@ -596,7 +655,7 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), 52, 'Should  be "52" est_records for %s' % req)
+                self.assertEqual(data.get('est_records'), 52, 'Should be "52" est_records for %s' % req)
 
             # Single activity__name__contains
             params = { 'activity__name__contains': 'Dorado389_2010_', }
@@ -611,7 +670,7 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), 52, 'Should  be "52" est_records for %s' % req)
+                self.assertEqual(data.get('est_records'), 52, 'Should be "52" est_records for %s' % req)
 
     def test_multiple_activitynames(self):
         for fmt in  ['.estimate', '.parquet',]:
@@ -629,7 +688,7 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), 333, 'Should  be "333" est_records for %s' % req)
+                self.assertEqual(data.get('est_records'), 333, 'Should be "333" est_records for %s' % req)
 
             # Multiple activity__name__contains
             qstring = ('activity__name__contains=Dorado389_2010_&'
@@ -642,4 +701,4 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), 333, 'Should  be "333" est_records for %s' % req)
+                self.assertEqual(data.get('est_records'), 333, 'Should be "333" est_records for %s' % req)
