@@ -35,7 +35,7 @@ from django.urls import reverse
 from stoqs.models import Activity, Parameter, Resource, MeasuredParameter
 
 logger = logging.getLogger('stoqs.tests')
-settings.LOGGING['loggers']['stoqs.tests']['level'] = 'DEBUG'
+settings.LOGGING['loggers']['stoqs.tests']['level'] = 'INFO'
 
 class BaseAndMeasurementViewsTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
@@ -558,6 +558,8 @@ class BugsFoundTestCase(TestCase):
 class ParquetTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
     multi_db = False
+    travis_full_count = 369
+    travis_partial_count = 51
 
     def test_platform(self):
         for fmt in  ['.estimate', '.parquet',]:
@@ -578,7 +580,8 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), 52, 'Should be "52" est_records for %s' % req)
+                self.assertEqual(data.get('est_records'), travis_partial_count, 
+                                 f'Should be "{travis_partial_count}" est_records for {req}')'
 
             # name
             params = { 'measurement__instantpoint__activity__platform__name': 'dorado', 
@@ -615,7 +618,8 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), 333, 'Should be "333" est_records for %s' % req)
+                self.assertEqual(data.get('est_records'), travis_full_count, 
+                                 f'Should be "{travis_full_count}" est_records for {req}')
                 self.assertTrue('Dorado389_2010_300_00_300_00_decim.nc (stride=1000)' in data.get('preview'))
 
     def test_parameter(self):
@@ -635,7 +639,8 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), 333, 'Should be "333" est_records for %s' % req)
+                self.assertEqual(data.get('est_records'), travis_full_count, 
+                                 f'Should be "{travis_full_count}" est_records for {req}')
 
     def test_single_activitynames(self):
         for fmt in  ['.estimate', '.parquet',]:
@@ -655,7 +660,8 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), 52, 'Should be "52" est_records for %s' % req)
+                self.assertEqual(data.get('est_records'), travis_partial_count, 
+                                 f'Should be "{travis_partial_count}" est_records for {req}')'
 
             # Single activity__name__contains
             params = { 'activity__name__contains': 'Dorado389_2010_', }
@@ -688,7 +694,8 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), 333, 'Should be "333" est_records for %s' % req)
+                self.assertEqual(data.get('est_records'), travis_full_count, 
+                                 f'Should be "{travis_full_count}" est_records for {req}')
 
             # Multiple activity__name__contains
             qstring = ('activity__name__contains=Dorado389_2010_&'
@@ -701,4 +708,5 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), 333, 'Should be "333" est_records for %s' % req)
+                self.assertEqual(data.get('est_records'), travis_full_count, 
+                                 f'Should be "{travis_full_count}" est_records for {req}')
