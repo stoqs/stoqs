@@ -596,7 +596,7 @@ class ParquetTestCase(TestCase):
                 logger.debug(data)
                 self.assertEqual(data.get('est_records'), 55, 'Should be "55" est_records for %s' % req)
 
-    def test_inlude_activity_names(self):
+    def test_include_activity_names(self):
         for fmt in  ['.estimate', '.parquet',]:
             logger.debug('fmt = %s', fmt)
             base = reverse('stoqs:show-measuredparmeter', kwargs={ 'fmt': fmt,
