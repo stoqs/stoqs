@@ -583,7 +583,23 @@ class ParquetTestCase(TestCase):
             logger.debug('fmt = %s', fmt)
             base = reverse('stoqs:show-measuredparmeter', kwargs={ 'fmt': fmt,
                                                             'dbAlias': 'default'})
+            # Single activitynames
             params = { 'activitynames': 'Dorado389_2010_300_00_300_00_decim.nc+(stride%3D1000)', }
+            qstring = ''
+            for k,v in list(params.items()):
+                qstring = qstring + k + '=' + str(v) + '&'
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.estimate':
+                data = json.loads(response.content)
+                logger.debug(data)
+                self.assertEqual(data.get('est_records'), 52, 'Should  be "52" est_records for %s' % req)
+
+            # Single activity__name__contains
+            params = { 'activity__name__contains': 'Dorado389_2010_', }
             qstring = ''
             for k,v in list(params.items()):
                 qstring = qstring + k + '=' + str(v) + '&'
