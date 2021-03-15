@@ -209,8 +209,12 @@ class Columnar():
             where_list.append(f"stoqs_measurement.depth <= '{self.max_depth}'")
         if self.activitynames:
             where_list.append(f"stoqs_activity.name IN ({repr(self.activitynames)[1:-1]})")
-        for name in self.activity__name__contains:
-            where_list.append(f"stoqs_activity.name LIKE '%{name}%'")
+        if self.activity__name__contains:
+            anc_list = []
+            for name in self.activity__name__contains:
+                anc_list.append(f"stoqs_activity.name LIKE '%{name}%'")
+            logger.debug('(' + ' OR '.join(anc_list) + ')')
+            where_list.append('(' + ' OR '.join(anc_list) + ')')
 
         where_clause = ''
         if where_list:
