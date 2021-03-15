@@ -146,7 +146,7 @@ class Columnar():
             logger.info("UWSGI_READ_TIMEOUT environment variable not set."
                         " Setting time_available to 60 seconds.")
             time_available = 60
-            
+
         return {'RAM_GB': container_memory, 
                 'avl_RAM_GB': self.MAX_CONTAINER_MEMORY,
                 'size_MB': required_memory * 1.e3,
@@ -183,6 +183,13 @@ class Columnar():
         self.max_depth = request.GET.get('measurement__depth__lte')
         logger.debug(f"etime = {self.max_depth}")
 
+        self.activitynames = request.GET.getlist("activitynames")
+        logger.debug(f"activitynames = {self.activitynames}")
+        self.activity__name__contains = []
+        for name in request.GET.getlist("activity__name__contains"):
+            self.activity__name__contains.append(name)
+        logger.debug(f"activity__name__contains = {self.activity__name__contains}")
+
         where_list = []
         if self.platforms:
             where_list.append(f"stoqs_platform.name IN ({repr(self.platforms)[1:-1]})")
@@ -200,6 +207,10 @@ class Columnar():
             where_list.append(f"stoqs_measurement.depth >= '{self.min_depth}'")
         if self.max_depth:
             where_list.append(f"stoqs_measurement.depth <= '{self.max_depth}'")
+        if self.activitynames:
+            where_list.append(f"stoqs_activity.name IN ({repr(self.activitynames)[1:-1]})")
+        for name in self.activity__name__contains:
+            where_list.append(f"stoqs_activity.name LIKE '%{name}%'")
 
         where_clause = ''
         if where_list:
