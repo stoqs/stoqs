@@ -35,7 +35,7 @@ from django.urls import reverse
 from stoqs.models import Activity, Parameter, Resource, MeasuredParameter
 
 logger = logging.getLogger('stoqs.tests')
-settings.LOGGING['loggers']['stoqs.tests']['level'] = 'INFO'
+settings.LOGGING['loggers']['stoqs.tests']['level'] = 'DEBUG'
 
 class BaseAndMeasurementViewsTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
@@ -554,3 +554,27 @@ class BugsFoundTestCase(TestCase):
         act = Activity.objects.get(name__contains='Dorado')
         self.assertIsNotNone(act.maptrack, 'Dorado activity should have maptrack set')
 
+
+class ParquetTestCase(TestCase):
+    fixtures = ['stoqs_test_data.json']
+    multi_db = False
+
+    def test_parameter(self):
+        for fmt in  ['.estimate', '.parquet',]:
+            logger.debug('fmt = %s', fmt)
+            base = reverse('stoqs:show-measuredparmeter', kwargs={ 'fmt': fmt,
+                                                            'dbAlias': 'default'})
+            params = {  'parameter__name__contains': 'temperature',
+                     }
+            qstring = ''
+            for k,v in list(params.items()):
+                qstring = qstring + k + '=' + str(v) + '&'
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.estimate':
+                data = json.loads(response.content)
+                logger.debug(data)
+                self.assertEqual(data.get('est_records'), 333, 'Sould  be "333" est_records for %s' % req)
