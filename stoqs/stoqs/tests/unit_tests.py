@@ -558,8 +558,15 @@ class BugsFoundTestCase(TestCase):
 class ParquetTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
     multi_db = False
+
+    # (Not sure why the counts are different on travis-ci vs. a local docker)
     travis_full_count = 369
     travis_partial_count = 51
+    local_full_count = 333
+    local_partial_count = 52
+    # Set to travis_... values following local testing and before pushing
+    full_count = travis_full_count
+    partial_count = travis_partial_count
 
     def test_platform(self):
         for fmt in  ['.estimate', '.parquet',]:
@@ -580,8 +587,8 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), travis_partial_count, 
-                                 f'Should be "{travis_partial_count}" est_records for {req}')'
+                self.assertEqual(data.get('est_records'), self.partial_count, 
+                                 f'Should be "{self.partial_count}" est_records for {req}')
 
             # name
             params = { 'measurement__instantpoint__activity__platform__name': 'dorado', 
@@ -618,8 +625,8 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), travis_full_count, 
-                                 f'Should be "{travis_full_count}" est_records for {req}')
+                self.assertEqual(data.get('est_records'), self.full_count, 
+                                 f'Should be "{self.full_count}" est_records for {req}')
                 self.assertTrue('Dorado389_2010_300_00_300_00_decim.nc (stride=1000)' in data.get('preview'))
 
     def test_parameter(self):
@@ -639,8 +646,8 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), travis_full_count, 
-                                 f'Should be "{travis_full_count}" est_records for {req}')
+                self.assertEqual(data.get('est_records'), self.full_count, 
+                                 f'Should be "{self.full_count}" est_records for {req}')
 
     def test_single_activitynames(self):
         for fmt in  ['.estimate', '.parquet',]:
@@ -660,8 +667,8 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), travis_partial_count, 
-                                 f'Should be "{travis_partial_count}" est_records for {req}')'
+                self.assertEqual(data.get('est_records'), self.partial_count, 
+                                 f'Should be "{self.partial_count}" est_records for {req}')
 
             # Single activity__name__contains
             params = { 'activity__name__contains': 'Dorado389_2010_', }
@@ -694,8 +701,8 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), travis_full_count, 
-                                 f'Should be "{travis_full_count}" est_records for {req}')
+                self.assertEqual(data.get('est_records'), self.full_count, 
+                                 f'Should be "{self.full_count}" est_records for {req}')
 
             # Multiple activity__name__contains
             qstring = ('activity__name__contains=Dorado389_2010_&'
@@ -708,5 +715,5 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), travis_full_count, 
-                                 f'Should be "{travis_full_count}" est_records for {req}')
+                self.assertEqual(data.get('est_records'), self.full_count, 
+                                 f'Should be "{self.full_count}" est_records for {req}')
