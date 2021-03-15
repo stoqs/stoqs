@@ -140,12 +140,19 @@ class Columnar():
                                   f" exceed {self.MAX_CONTAINER_MEMORY} GB"
                                   f" of RAM available")
 
+        try:
+            time_available = float(os.environ['UWSGI_READ_TIMEOUT'])
+        except KeyError:
+            logger.info("UWSGI_READ_TIMEOUT environment variable not set."
+                        " Setting time_available to 60 seconds.")
+            time_available = 60
+            
         return {'RAM_GB': container_memory, 
                 'avl_RAM_GB': self.MAX_CONTAINER_MEMORY,
                 'size_MB': required_memory * 1.e3,
                 'est_records': est_records, 
                 'time_min': required_time, 
-                'time_avl': float(os.environ['UWSGI_READ_TIMEOUT']) / 60,
+                'time_avl': time_available / 60,    # minutes
                 'preview': dfp.head(2).to_html()}
 
     def request_to_sql_where(self, request):
