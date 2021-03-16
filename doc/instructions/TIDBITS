@@ -105,6 +105,9 @@ cd $STOQS_HOME/docker
 docker-compose exec stoqs touch /etc/uwsgi/django-uwsgi.ini
 docker-compose logs -f
 
+Run unit test in Docker container
+---------------------------------
+docker-compose exec -e DATABASE_URL=postgis://postgres:changeme@postgis:5432/stoqs stoqs stoqs/manage.py test stoqs.tests.unit_tests.ParquetTestCase --settings=config.settings.ci
 
 --
 Mike McCann

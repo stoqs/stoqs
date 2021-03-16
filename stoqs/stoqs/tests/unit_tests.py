@@ -554,3 +554,182 @@ class BugsFoundTestCase(TestCase):
         act = Activity.objects.get(name__contains='Dorado')
         self.assertIsNotNone(act.maptrack, 'Dorado activity should have maptrack set')
 
+
+class ParquetTestCase(TestCase):
+    fixtures = ['stoqs_test_data.json']
+    multi_db = False
+
+    # (Not sure why the counts are different on travis-ci vs. a local docker)
+    travis_full_count = 369
+    travis_partial_count = 51
+    travis_name_count = 51
+    travis_single_count = 51
+    local_full_count = 333
+    local_partial_count = 52
+    local_name_count = 55
+    local_single_count = 52
+
+    # Set to travis = True following local testing and before pushing
+    travis = True
+    if travis:
+        full_count = travis_full_count
+        partial_count = travis_partial_count
+        name_count = travis_name_count
+        single_count = travis_single_count
+    else:
+        full_count = local_full_count
+        partial_count = local_partial_count
+        name_count = local_name_count
+        single_count = local_single_count
+
+    def test_platform(self):
+        for fmt in  ['.estimate', '.parquet',]:
+            logger.debug('fmt = %s', fmt)
+            base = reverse('stoqs:show-measuredparmeter', kwargs={ 'fmt': fmt,
+                                                            'dbAlias': 'default'})
+
+            # Default: standard_name
+            params = { 'measurement__instantpoint__activity__platform__name': 'dorado', }
+            qstring = ''
+            for k,v in list(params.items()):
+                qstring = qstring + k + '=' + str(v) + '&'
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.estimate':
+                data = json.loads(response.content)
+                logger.debug(data)
+                self.assertEqual(data.get('est_records'), self.partial_count, 
+                                 f'Should be "{self.partial_count}" est_records for {req}')
+
+            # name
+            params = { 'measurement__instantpoint__activity__platform__name': 'dorado', 
+                        'collect': 'name'}
+            qstring = ''
+            for k,v in list(params.items()):
+                qstring = qstring + k + '=' + str(v) + '&'
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.estimate':
+                data = json.loads(response.content)
+                logger.debug(data)
+                self.assertEqual(data.get('est_records'), self.name_count, 
+                                 f'Should be "{self.name_count}" est_records for {req}')
+
+    def test_include_activity_names(self):
+        for fmt in  ['.estimate', '.parquet',]:
+            logger.debug('fmt = %s', fmt)
+            base = reverse('stoqs:show-measuredparmeter', kwargs={ 'fmt': fmt,
+                                                            'dbAlias': 'default'})
+
+            # Default: standard_name
+            params = { 'include': 'activity__name', }
+            qstring = ''
+            for k,v in list(params.items()):
+                qstring = qstring + k + '=' + str(v) + '&'
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.estimate':
+                data = json.loads(response.content)
+                logger.debug(data)
+                self.assertEqual(data.get('est_records'), self.full_count, 
+                                 f'Should be "{self.full_count}" est_records for {req}')
+                self.assertTrue('Dorado389_2010_300_00_300_00_decim.nc (stride=1000)' in data.get('preview'))
+
+    def test_parameter(self):
+        for fmt in  ['.estimate', '.parquet',]:
+            logger.debug('fmt = %s', fmt)
+            base = reverse('stoqs:show-measuredparmeter', kwargs={ 'fmt': fmt,
+                                                            'dbAlias': 'default'})
+            params = { 'parameter__name__contains': 'temperature', }
+            qstring = ''
+            for k,v in list(params.items()):
+                qstring = qstring + k + '=' + str(v) + '&'
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.estimate':
+                data = json.loads(response.content)
+                logger.debug(data)
+                self.assertEqual(data.get('est_records'), self.full_count, 
+                                 f'Should be "{self.full_count}" est_records for {req}')
+
+    def test_single_activitynames(self):
+        for fmt in  ['.estimate', '.parquet',]:
+            logger.debug('fmt = %s', fmt)
+            base = reverse('stoqs:show-measuredparmeter', kwargs={ 'fmt': fmt,
+                                                            'dbAlias': 'default'})
+            # Single activitynames
+            params = { 'activitynames': 'Dorado389_2010_300_00_300_00_decim.nc+(stride%3D1000)', }
+            qstring = ''
+            for k,v in list(params.items()):
+                qstring = qstring + k + '=' + str(v) + '&'
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.estimate':
+                data = json.loads(response.content)
+                logger.debug(data)
+                self.assertEqual(data.get('est_records'), self.partial_count, 
+                                 f'Should be "{self.partial_count}" est_records for {req}')
+
+            # Single activity__name__contains
+            params = { 'activity__name__contains': 'Dorado389_2010_', }
+            qstring = ''
+            for k,v in list(params.items()):
+                qstring = qstring + k + '=' + str(v) + '&'
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.estimate':
+                data = json.loads(response.content)
+                logger.debug(data)
+                self.assertEqual(data.get('est_records'), self.single_count, 
+                                 f'Should be "{self.single_count}" est_records for {req}')
+
+    def test_multiple_activitynames(self):
+        for fmt in  ['.estimate', '.parquet',]:
+            logger.debug('fmt = %s', fmt)
+            base = reverse('stoqs:show-measuredparmeter', kwargs={ 'fmt': fmt,
+                                                            'dbAlias': 'default'})
+            # Multiple activitynames
+            qstring = ('activitynames=Dorado389_2010_300_00_300_00_decim.nc+(stride%3D1000)&'
+                       'activitynames=201010%2FOS_M1_20101027hourly_CMSTV.nc+starting+at+2010-10-27+00%3A00%3A00+(stride%3D2)')
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.estimate':
+                data = json.loads(response.content)
+                logger.debug(data)
+                self.assertEqual(data.get('est_records'), self.full_count, 
+                                 f'Should be "{self.full_count}" est_records for {req}')
+
+            # Multiple activity__name__contains
+            qstring = ('activity__name__contains=Dorado389_2010_&'
+                       'activity__name__contains=201010')
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.estimate':
+                data = json.loads(response.content)
+                logger.debug(data)
+                self.assertEqual(data.get('est_records'), self.full_count, 
+                                 f'Should be "{self.full_count}" est_records for {req}')

@@ -127,7 +127,7 @@ class Columnar():
         logger.info(f"sample_time = {sample_time} min,"
                     f" required_time = {required_time} min")
 
-        logger.debug(f"pivot_table(index={self.context}, columns={self.collect} ...")
+        logger.debug(f"pivot_table(index={self.context}, columns={self.collect}, values='datavalue')")
         dfp = df.pivot_table(index=self.context, columns=self.collect, values='datavalue')
         logger.debug(f"dfp.head() = {dfp.head()}")
         sample_est_records = dfp.shape[0]
@@ -140,12 +140,19 @@ class Columnar():
                                   f" exceed {self.MAX_CONTAINER_MEMORY} GB"
                                   f" of RAM available")
 
+        try:
+            time_available = float(os.environ['UWSGI_READ_TIMEOUT'])
+        except KeyError:
+            logger.info("UWSGI_READ_TIMEOUT environment variable not set."
+                        " Setting time_available to 60 seconds.")
+            time_available = 60
+
         return {'RAM_GB': container_memory, 
                 'avl_RAM_GB': self.MAX_CONTAINER_MEMORY,
                 'size_MB': required_memory * 1.e3,
                 'est_records': est_records, 
                 'time_min': required_time, 
-                'time_avl': float(os.environ['UWSGI_READ_TIMEOUT']) / 60,
+                'time_avl': time_available / 60,    # minutes
                 'preview': dfp.head(2).to_html()}
 
     def request_to_sql_where(self, request):
@@ -176,6 +183,13 @@ class Columnar():
         self.max_depth = request.GET.get('measurement__depth__lte')
         logger.debug(f"etime = {self.max_depth}")
 
+        self.activitynames = request.GET.getlist("activitynames")
+        logger.debug(f"activitynames = {self.activitynames}")
+        self.activity__name__contains = []
+        for name in request.GET.getlist("activity__name__contains"):
+            self.activity__name__contains.append(name)
+        logger.debug(f"activity__name__contains = {self.activity__name__contains}")
+
         where_list = []
         if self.platforms:
             where_list.append(f"stoqs_platform.name IN ({repr(self.platforms)[1:-1]})")
@@ -193,6 +207,14 @@ class Columnar():
             where_list.append(f"stoqs_measurement.depth >= '{self.min_depth}'")
         if self.max_depth:
             where_list.append(f"stoqs_measurement.depth <= '{self.max_depth}'")
+        if self.activitynames:
+            where_list.append(f"stoqs_activity.name IN ({repr(self.activitynames)[1:-1]})")
+        if self.activity__name__contains:
+            anc_list = []
+            for name in self.activity__name__contains:
+                anc_list.append(f"stoqs_activity.name LIKE '%{name}%'")
+            logger.debug('(' + ' OR '.join(anc_list) + ')')
+            where_list.append('(' + ' OR '.join(anc_list) + ')')
 
         where_clause = ''
         if where_list:
