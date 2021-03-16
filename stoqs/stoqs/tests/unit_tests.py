@@ -562,7 +562,7 @@ class ParquetTestCase(TestCase):
     # (Not sure why the counts are different on travis-ci vs. a local docker)
     travis_full_count = 369
     travis_partial_count = 51
-    travis_name_count = 52
+    travis_name_count = 51
     travis_single_count = 51
     local_full_count = 333
     local_partial_count = 52
