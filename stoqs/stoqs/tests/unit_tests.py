@@ -562,11 +562,25 @@ class ParquetTestCase(TestCase):
     # (Not sure why the counts are different on travis-ci vs. a local docker)
     travis_full_count = 369
     travis_partial_count = 51
+    travis_name_count = 52
+    travis_single_count = 51
     local_full_count = 333
     local_partial_count = 52
-    # Set to travis_... values following local testing and before pushing
-    full_count = travis_full_count
-    partial_count = travis_partial_count
+    local_name_count = 55
+    local_single_count = 52
+
+    # Set to travis = True following local testing and before pushing
+    travis = True
+    if travis:
+        full_count = travis_full_count
+        partial_count = travis_partial_count
+        name_count = travis_name_count
+        single_count = travis_single_count
+    else:
+        full_count = local_full_count
+        partial_count = local_partial_count
+        name_count = local_name_count
+        single_count = local_single_count
 
     def test_platform(self):
         for fmt in  ['.estimate', '.parquet',]:
@@ -604,7 +618,8 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), 55, 'Should be "55" est_records for %s' % req)
+                self.assertEqual(data.get('est_records'), self.name_count, 
+                                 f'Should be "{self.name_count}" est_records for {req}')
 
     def test_include_activity_names(self):
         for fmt in  ['.estimate', '.parquet',]:
@@ -683,7 +698,8 @@ class ParquetTestCase(TestCase):
             if fmt == '.estimate':
                 data = json.loads(response.content)
                 logger.debug(data)
-                self.assertEqual(data.get('est_records'), 52, 'Should be "52" est_records for %s' % req)
+                self.assertEqual(data.get('est_records'), self.single_count, 
+                                 f'Should be "{self.single_count}" est_records for {req}')
 
     def test_multiple_activitynames(self):
         for fmt in  ['.estimate', '.parquet',]:
