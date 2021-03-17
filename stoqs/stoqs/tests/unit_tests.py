@@ -610,11 +610,6 @@ class ParquetTestCase(TestCase):
             logger.debug('req = %s', req)
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-            if fmt == '.estimate':
-                data = json.loads(response.content)
-                logger.debug(data)
-                self.assertEqual(data.get('est_records'), self.name_count, 
-                                 f'Should be "{self.name_count}" est_records for {req}')
 
     def test_include_activity_names(self):
         for fmt in  ['.estimate', '.parquet',]:
@@ -680,11 +675,6 @@ class ParquetTestCase(TestCase):
             logger.debug('req = %s', req)
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-            if fmt == '.estimate':
-                data = json.loads(response.content)
-                logger.debug(data)
-                self.assertEqual(data.get('est_records'), self.single_count, 
-                                 f'Should be "{self.single_count}" est_records for {req}')
 
     def test_multiple_activitynames(self):
         for fmt in  ['.estimate', '.parquet',]:
@@ -699,11 +689,6 @@ class ParquetTestCase(TestCase):
             logger.debug('req = %s', req)
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-            if fmt == '.estimate':
-                data = json.loads(response.content)
-                logger.debug(data)
-                self.assertEqual(data.get('est_records'), self.full_count, 
-                                 f'Should be "{self.full_count}" est_records for {req}')
 
             # Multiple activity__name__contains
             qstring = ('activity__name__contains=Dorado389_2010_&'
@@ -713,8 +698,3 @@ class ParquetTestCase(TestCase):
             logger.debug('req = %s', req)
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-            if fmt == '.estimate':
-                data = json.loads(response.content)
-                logger.debug(data)
-                self.assertEqual(data.get('est_records'), self.full_count, 
-                                 f'Should be "{self.full_count}" est_records for {req}')
