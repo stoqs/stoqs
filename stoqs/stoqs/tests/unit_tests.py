@@ -698,8 +698,3 @@ class ParquetTestCase(TestCase):
             logger.debug('req = %s', req)
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-            if fmt == '.estimate':
-                data = json.loads(response.content)
-                logger.debug(data)
-                self.assertEqual(data.get('est_records'), self.full_count, 
-                                 f'Should be "{self.full_count}" est_records for {req}')
