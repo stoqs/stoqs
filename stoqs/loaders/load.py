@@ -698,6 +698,9 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
             if self.args.background:
                 cmd = '({}) &'.format(cmd)
 
+            if self.args.create_only:
+                return
+
             # Execute as system call - Allows for repeatable loading and output captue by executing the load script in cmd
             self.logger.info('Executing: %s', cmd)
             ret = os.system(cmd)
@@ -857,6 +860,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
         parser.add_argument('--append', action='store_true', help='Append data to existing database')
         parser.add_argument('--startdate', help='Startdate in YYYYMMDD format for appending data')
         parser.add_argument('--current_day', action='store_true', help='Set startdate to current UTC day - useful for running directly from cron')
+        parser.add_argument('--create_only', action='store_true', help='Just create the database and do not load the data')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
     
