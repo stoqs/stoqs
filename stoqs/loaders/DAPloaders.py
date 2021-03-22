@@ -909,11 +909,12 @@ class Base_Loader(STOQS_Loader):
                 yield None
 
     def _meass(self, depths, longitudes, latitudes):
-        for de, lo, la in zip(depths, longitudes, latitudes):
+        for i, (de, lo, la) in enumerate(zip(depths, longitudes, latitudes)):
             # Accept depths that are 0.0, but not latitudes and longitudes that are zero
             if de is not None and lo and la:
                 yield Measurement(depth=repr(de), geom=Point(float(lo), float(la)))
             else:
+                self.logger.debug(f"Bad coordinate from {self.url} at index {i}")
                 yield None
 
     def _find_dup_coords(self, ips, meass, coords_equal):
@@ -1114,6 +1115,14 @@ class Base_Loader(STOQS_Loader):
 
             yield value
 
+    def _mask_data(self, vd, vm):
+        # Yield only good values (not masked)
+        for i, (v, m) in enumerate(zip(vd, vm)):
+            if not m:
+                yield v
+            else:
+                self.logger.debug(f"Removing bad data value at index {i}")
+
     def _meass_from_activity(self, add_to_activity, tindx, ac):
         '''Retreive Measurements from existing Activity and confirm that the coordinates
         are identical to what's in the netCDF we are loading from.  Initially developed
@@ -1166,7 +1175,8 @@ class Base_Loader(STOQS_Loader):
             except ValueError as e:
                 self.logger.warning(f"Skipping {self.url}: {e}")
 
-        total_loaded = 0   
+        total_loaded = 0
+        mask = []
         for axis_count, (k, pnames) in enumerate(load_groups.items()):
             ac = coor_groups[k]
             try:
@@ -1251,15 +1261,21 @@ class Base_Loader(STOQS_Loader):
 
                 # Test whether we need to make values iterable
                 try:
-                    len(values)
+                    self.logger.debug(f"len(values) = {len(values)}")
                 except TypeError:
                     # Likely values is a single valued array, e.g. nemesis u, v data
                     values = [float(values)]
 
+                if mask:
+                    # Mask the values and dup_times where coordinates are bad
+                    # Need values as a list() because of LOPC test below
+                    values = list(self._mask_data(values, mask))
+                    dup_times = self._mask_data(dup_times, mask)
+
                 self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
                 if hasattr(values[0], '__iter__'):
                     # For data like LOPC data - expect all values to be non-nan, load array and the sum of it
-                    self.param_by_key[pname].description = 'Sum of counts saved in datavalue, spectrum of counts saves in dataarray'
+                    self.param_by_key[pname].description = 'Sum of counts saved in datavalue, spectrum of counts saved in dataarray'
                     self.param_by_key[pname].save(using=self.dbAlias)
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
                                                 dataarray=list(va), datavalue=sum(va)) 
@@ -1268,8 +1284,8 @@ class Base_Loader(STOQS_Loader):
                     # Need to bulk_create() all values, set bad ones to None and remove them after insert
                     values = self._good_value_generator(pname, values)
                     mps = (MeasuredParameter(measurement=me, parameter=self.param_by_key[pname], 
-                                                datavalue=va) for me, va, dt, mk in zip(
-                                                meass, values, dup_times, mask) if not dt and not mk)
+                                                datavalue=va) for me, va, dt in zip(
+                                                meass, values, dup_times) if not dt)
 
                 # All items but meass are generators, so we can call len() on it
                 self.logger.info(f'Bulk loading {len(meass)} {self.param_by_key[pname]} datavalues into MeasuredParameter {constraint_string} with batch_size = {BATCH_SIZE}')
