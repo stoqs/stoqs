@@ -1244,15 +1244,15 @@ class Base_Loader(STOQS_Loader):
                         meass = self._load_coords_from_instr_ds(tindx, ac)
                 try:
                     if isinstance(self.ds[pname], pydap.model.GridType):
-                        constraint_string = f"using python slice: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        constraint_string = f"(GridType) using python slice: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                         values = self.ds[pname][pname].data[tindx[0]:tindx[-1]:self.stride]
                     elif multidim_trajectory:
-                        self.logger.info(f"Loading {pname} from multidimensional trajectory file")
+                        self.logger.info(f"(multidim) loading {pname} from multidimensional trajectory file")
                         constraint_string = f"using python slice: ds['{pname}'][0][0][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                         # TODO: Deal with (as yet unseen) case where multiple trajectories exist in a netCDF file
                         values = self.ds[pname].data[0][0][tindx[0]:tindx[-1]:self.stride]
                     else:
-                        constraint_string = f"using python slice: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
+                        constraint_string = f"(default) using python slice: ds['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
                         values = self.ds[pname].data[tindx[0]:tindx[-1]:self.stride]
                 except ValueError:
                     self.logger.warn(f'Stride of {self.stride} likely greater than range of data: {tindx[0]}:{tindx[-1]}')
@@ -1270,7 +1270,6 @@ class Base_Loader(STOQS_Loader):
                     # Mask the values and dup_times where coordinates are bad
                     # Need values as a list() because of LOPC test below
                     values = list(self._mask_data(values, mask))
-                    dup_times = self._mask_data(dup_times, mask)
 
                 self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
                 if hasattr(values[0], '__iter__'):
