@@ -14,9 +14,6 @@ done
 echo ${PGHOST}:\*:\*:postgres:${POSTGRES_PASSWORD} > /root/.pgpass &&\
     chmod 600 /root/.pgpass
 
-# Ensure that shared volume for Mapserver map files is readable by nginx's uwsgi
-chmod 777 /dev/shm
-
 export PYTHONPATH="${STOQS_SRVPROJ}:${PYTHONPATH}"
 
 # Monterey Bay bathymetry data is needed for default (and many other) database loads
@@ -40,6 +37,8 @@ if [[ ! -e ${MAPFILE_DIR} ]]; then
     echo "mkdir ${MAPFILE_DIR}"
     mkdir ${MAPFILE_DIR}
 fi
+# Ensure that shared volume for Mapserver map files is readable by nginx's uwsgi
+chmod 777 ${MAPFILE_DIR}
 
 # If default stoqs database doesn't exist then load it - also running the unit and functional tests
 echo "Checking for presence of stoqs database..."

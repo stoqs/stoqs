@@ -27,7 +27,7 @@ ipython==7.21.0
 jdcal==1.4.1
 Jinja2==2.11.3
 jupyter==1.0.0
-lxml==4.6.2
+lxml==4.6.3
 lzstring==1.0.4
 mock==4.0.3
 matplotlib==3.3.4
@@ -59,7 +59,7 @@ selenium==3.141.0
 simplejson==3.17.2
 slacker==0.14.0
 statsmodels==0.12.2
-Sphinx==3.5.2
+Sphinx==3.5.3
 sphinx-rtd-theme==0.5.1
 sqlparse==0.4.1
 thredds-crawler==1.5.4

@@ -22,6 +22,7 @@ import stoqs.models as mod
 import logging 
 import os
 import random
+import string
 import tempfile
 from utils.utils import addAttributeToListItems
 
