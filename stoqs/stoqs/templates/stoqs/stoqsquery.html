@@ -983,6 +983,60 @@
                                                 <div class="row-fluid">
                                                     <pre id="mp-{{format.0}}-field"></pre>
                                                 </div>
+                                                <div>
+                                                    <br>
+                                                    In addition to using the above <i>ad hoc</i> .parquet request generation capability
+                                                    you may also script up requests by <tt>activity__name</tt>, inherently reducing
+                                                    server-side memory and time requirements. Here is an example of reading
+                                                    Dorado data survey-by-survey into a Matlab session:
+                                                    <pre>
+% File: read_parquet.m
+% Read parquet files from STOQS and report the time it takes
+campaign_url = "https://stoqs.mbari.org/stoqs_all_dorado";
+api_call = "/api/measuredparameter.parquet?collect=name&activity__name__contains=";
+surveys = ["Dorado389_2020_006_06_006_06_decim", "Dorado389_2020_035_00_035_00_decim"];
+wo = weboptions('CertificateFilename', '', 'Timeout', 300);
+for i=1:length(surveys),
+    tic;
+    disp(strcat("Reading ", surveys(i), " as .parquet"));
+    parquet_url = strcat(campaign_url, api_call, surveys(i));
+    file = websave(strcat(surveys(i), '.parquet'), parquet_url, wo);
+    disp(strcat("Wrote ", file));
+    toc;
+    tic;
+    info = parquetinfo(file);
+    T = parquetread(file);
+    disp(strcat("Read ", file));
+    toc;
+end
+disp(info.VariableNames)
+
+—————————————————
+
+>> read_parquet
+Reading Dorado389_2020_006_06_006_06_decim as .parquet
+Wrote /u/mccann/matlab/Dorado389_2020_006_06_006_06_decim.parquet
+Elapsed time is 14.278701 seconds.
+Read /u/mccann/matlab/Dorado389_2020_006_06_006_06_decim.parquet
+Elapsed time is 0.410685 seconds.
+Reading Dorado389_2020_035_00_035_00_decim as .parquet
+Wrote /u/mccann/matlab/Dorado389_2020_035_00_035_00_decim.parquet
+Elapsed time is 14.070438 seconds.
+Read /u/mccann/matlab/Dorado389_2020_035_00_035_00_decim.parquet
+Elapsed time is 0.097718 seconds.
+    Columns 1 through 11
+
+    "adinos"    "altitude"    "bbp420 (m-1)"    "bbp700 (m-1)"    "bg_biolum (ph L^..."    "biolume"    "diatoms"    "fl700_uncorr"    "fluo"    "hdinos"    "intflash (ph s^{..."
+
+    Columns 12 through 19
+
+    "mepCountList (co..."    "nbflash_high (L^..."    "nbflash_low (L^{..."    "nitrate (micromo..."    "oxygen (ml/l)"    "pitch (degree)"    "profile"    "roll (degree)"
+
+    Columns 20 through 30
+
+    "salinity"    "sepCountList (co..."    "sigmat"    "spice"    "temperature (Cel..."    "yaw (degree)"    "platform"    "timevalue"    "depth"    "latitude"    "longitude"
+                                                    </pre>
+                                                </div>
                                             {% else %}
                                                 <pre id="mp-{{format.0}}-field"></pre>
                                             {% endif %}
