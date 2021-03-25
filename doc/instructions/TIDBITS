@@ -109,6 +109,11 @@ Run unit test in Docker container
 ---------------------------------
 docker-compose exec -e DATABASE_URL=postgis://postgres:changeme@postgis:5432/stoqs stoqs stoqs/manage.py test stoqs.tests.unit_tests.ParquetTestCase --settings=config.settings.ci
 
+Generate self-signed certificate for an internal server
+-------------------------------------------------------
+openssl req -x509 -newkey rsa:4096 -keyout kraken2.key -out kraken2.crt -days 365 -nodes
+
+
 --
 Mike McCann
 MBARI 11 February 2014
