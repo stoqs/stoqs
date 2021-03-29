@@ -55,6 +55,14 @@ if cl.args.test:
     enddate = datetime(2008, 10, 22, 16)
     cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
 
+    # Standard test load - for testing loading all Parameters
+    cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
+    cl.dorado_files = [ 'Dorado389_2010_300_00_300_00_decim.nc' ]
+    cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
+                        'fl700_uncorr', 'salinity', 'biolume', 'roll', 'pitch', 'yaw',
+                        'sepCountList', 'mepCountList' ]
+    cl.loadDorado(stride=100, plankton_proxies=False)
+
     # Survey with 0 mps_loaded
     cl.dorado_base = 'http://dods.mbari.org/thredds/dodsC/auv/dorado/2004/netcdf/'
     cl.dorado_files = ['Dorado389_2004_251_00_251_00_decim.nc']
@@ -70,6 +78,15 @@ if cl.args.test:
     startdate = datetime(2007, 9, 11)
     enddate = datetime(2007, 9, 13)
     cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
+
+    # IndexError discovered on test production load 29 April 2021
+    # - Should now continue on with bad coordinates warning
+    cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2011/netcdf/'
+    cl.dorado_files = [ 'Dorado389_2011_158_00_158_00_decim.nc' ]
+    cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
+                        'fl700_uncorr', 'salinity', 'biolume', 'roll', 'pitch', 'yaw',
+                        'sepCountList', 'mepCountList' ]
+    cl.loadDorado(stride=1, plankton_proxies=True)
 
 elif cl.args.stride:
     cl.stride = cl.args.stride
