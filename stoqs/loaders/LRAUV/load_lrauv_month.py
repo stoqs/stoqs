@@ -59,6 +59,8 @@ class AutoLoad():
             self.logger.debug(f"Executing self.loader.updateprovenance()...")
             self.loader.updateprovenance()
 
+        self.logger.debug(f"Executing self.loader.grant_everyone_select()...")
+        self.loader.grant_everyone_select()
         self.logger.debug(f"Executing self.loader.pg_dump()...")
         self.loader.pg_dump()
 
@@ -87,6 +89,7 @@ class AutoLoad():
         self.loader.args.test = self.args.test
         self.loader.args.verbose = self.args.verbose
         self.loader.args.drop_if_fail = True
+        self.loader.args.create_only = False
         if self.args.append:
             self.loader.args.append = True
             self.loader.args.startdate = datetime.utcnow().strftime("%Y%m%d")
