@@ -1117,11 +1117,15 @@ class Base_Loader(STOQS_Loader):
 
     def _mask_data(self, vd, vm):
         # Yield only good values (not masked)
+        good_count = 0
         for i, (v, m) in enumerate(zip(vd, vm)):
             if not m:
                 yield v
+                good_count += 1
             else:
                 self.logger.debug(f"Removing bad data value at index {i}")
+        if good_count == 0:
+            self.logger.warning(f"No good data yielded. Coordinate values in {self.url} are likely bad.")
 
     def _meass_from_activity(self, add_to_activity, tindx, ac):
         '''Retreive Measurements from existing Activity and confirm that the coordinates
@@ -1272,7 +1276,13 @@ class Base_Loader(STOQS_Loader):
                     values = list(self._mask_data(values, mask))
 
                 self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
-                if hasattr(values[0], '__iter__'):
+                if not values:
+                    self.logger.warning(f'Coordinates likely bad - check them here:')
+                    self.logger.warning(f"Depth data: {self.url}.ascii?{ac[DEPTH]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
+                    self.logger.warning(f"Latitude data: {self.url}.ascii?{ac[LATITUDE]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
+                    self.logger.warning(f"Longitude data: {self.url}.ascii?{ac[LONGITUDE]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
+                    return total_loaded
+                elif hasattr(values[0], '__iter__'):
                     # For data like LOPC data - expect all values to be non-nan, load array and the sum of it
                     self.param_by_key[pname].description = 'Sum of counts saved in datavalue, spectrum of counts saved in dataarray'
                     self.param_by_key[pname].save(using=self.dbAlias)
