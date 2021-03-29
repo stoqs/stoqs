@@ -1276,7 +1276,7 @@ class Base_Loader(STOQS_Loader):
                     values = list(self._mask_data(values, mask))
 
                 self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
-                if not values:
+                if not values.any():
                     self.logger.warning(f'Coordinates likely bad - check them here:')
                     self.logger.warning(f"Depth data: {self.url}.ascii?{ac[DEPTH]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
                     self.logger.warning(f"Latitude data: {self.url}.ascii?{ac[LATITUDE]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
