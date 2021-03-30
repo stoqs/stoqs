@@ -1117,11 +1117,15 @@ class Base_Loader(STOQS_Loader):
 
     def _mask_data(self, vd, vm):
         # Yield only good values (not masked)
+        good_count = 0
         for i, (v, m) in enumerate(zip(vd, vm)):
             if not m:
                 yield v
+                good_count += 1
             else:
                 self.logger.debug(f"Removing bad data value at index {i}")
+        if good_count == 0:
+            self.logger.warning(f"No good data yielded. Coordinate values in {self.url} are likely bad.")
 
     def _meass_from_activity(self, add_to_activity, tindx, ac):
         '''Retreive Measurements from existing Activity and confirm that the coordinates
@@ -1270,6 +1274,12 @@ class Base_Loader(STOQS_Loader):
                     # Mask the values and dup_times where coordinates are bad
                     # Need values as a list() because of LOPC test below
                     values = list(self._mask_data(values, mask))
+                    if not values:
+                        self.logger.warning(f'Coordinates likely bad - check them here:')
+                        self.logger.warning(f"Depth data: {self.url}.ascii?{ac[DEPTH]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
+                        self.logger.warning(f"Latitude data: {self.url}.ascii?{ac[LATITUDE]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
+                        self.logger.warning(f"Longitude data: {self.url}.ascii?{ac[LONGITUDE]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
+                        return total_loaded
 
                 self.logger.info(f"Time data: {self.url}.ascii?{ac[TIME]}[{tindx[0]}:{self.stride}:{tindx[-1] - 1}]")
                 if hasattr(values[0], '__iter__'):
