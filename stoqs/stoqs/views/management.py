@@ -137,7 +137,7 @@ def showCampaigns(request,format=None):
                 for cr in mod.CampaignResource.objects.using(dbAlias).filter(campaign=c):
                     r[cr.resource.name] = cr.resource.value
                 rHash[dbAlias].append(r)
-        except mod.Campaign.DoesNotExist:
+        except (mod.Campaign.DoesNotExist, mod.Resource.DoesNotExist):
             logger.warn("Database alias %s does not exist", dbAlias)
             continue
         except DatabaseError:
