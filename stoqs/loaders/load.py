@@ -863,8 +863,21 @@ A typical workflow to build up a production server is:
     docker-compose run stoqs createdb -U postgres stoqs_simz_aug2013_restored
     docker-compose run stoqs pg_restore -Fc -U postgres -d stoqs_simz_aug2013_restored /srv/media-files/pg_dumps/stoqs_simz_aug2013.pg_dump
     (If the server hosts the original database as well, then the Campaign name must be changed for it to show on the campaign list.)
-18. To restore all databases from another server:
+18. To restore all databases from a source server, e.g.:
     docker-compose run stoqs stoqs/loaders/load.py --restore stoqs.shore.mbari.org
+    Then copy the loadlog files over, preserving file modification times:
+        On the source server:
+            docker-compose exec nginx /bin/bash
+            cp -a /srv/media-files/loadlogs /srv/html           # Copy files from container to host
+        On the destination server:
+            (using an account with sudo privs, e.g. mccann):
+                sudo chown stoqsadm /opt/docker_stoqs_vols/html
+            (logged in as stoqsadm, e.g. use mccann account on source server)
+                scp -rp mccann@stoqs.shore.mbari.org:/opt/docker_stoqs_vols/html/loadlogs /opt/docker_stoqs_vols/html
+                docker-compose exec nginx /bin/bash
+                cp -a /srv/html/loadlogs /srv/media-files/      # Copy files from host to container
+    Check that loadlogs are web accessible, e.g.:
+        https://kraken2.shore.mbari.org/media/loadlogs/loadCANON_october2020.out.txt
 
 
 To get any stdout/stderr output you must use -v, the default is no output.
