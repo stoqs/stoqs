@@ -109,16 +109,17 @@ class Loader(object):
 
             raise DatabaseCreationError(('Failed to create {}').format(db))
 
-        # Create postgis extensions as superuser
-        create_ext = ('psql -p {port} -c \"CREATE EXTENSION postgis;\" -d {db} -U postgres && '
-                    ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
-        create_ext += ('psql -p {port} -c \"CREATE EXTENSION postgis_topology;\" -d {db} -U postgres'
-                    ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
+        if self.args.restore:
+            # Create postgis extensions as superuser
+            create_ext = ('psql -p {port} -c \"CREATE EXTENSION postgis;\" -d {db} -U postgres && '
+                        ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
+            create_ext += ('psql -p {port} -c \"CREATE EXTENSION postgis_topology;\" -d {db} -U postgres'
+                        ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
 
-        self.logger.info('Creating postgis extensions for database %s', db)
-        self.logger.debug('create_ext = %s', create_ext)
-        ret = os.system(create_ext)
-        self.logger.debug('ret = %s', ret)
+            self.logger.info('Creating postgis extensions for database %s', db)
+            self.logger.debug('create_ext = %s', create_ext)
+            ret = os.system(create_ext)
+            self.logger.debug('ret = %s', ret)
 
     def _copy_log_file(self, log_file):
         loadlogs_dir = os.path.join(settings.MEDIA_ROOT, 'loadlogs')
@@ -298,7 +299,7 @@ local   all             all                                     peer
             self.logger.info(suggestion)
 
         # That the user really wants to reload all production databases
-        if self.args.clobber and not self.args.test:
+        if self.args.clobber and not self.args.test and not self.args.restore:
             print(("On the server running on port =", settings.DATABASES['default']['PORT']))
             print("You are about to drop all database(s) in the list below and reload them:")
             print((('{:30s} {:>15s}').format('Database', 'Last Load time (min)')))
@@ -347,7 +348,10 @@ local   all             all                                     peer
             print(("On the server running on port =", settings.DATABASES['default']['PORT']))
             print("You are about to operate on all of these databases:")
             print((' '.join(list(campaigns.campaigns.keys()))))
-            ans = input('\nAre you sure you want load all these databases? [y/N] ') or 'N'
+            if self.args.restore:
+                ans = input('\nAre you sure you want restore all these databases? [y/N] ') or 'N'
+            else:
+                ans = input('\nAre you sure you want load all these databases? [y/N] ') or 'N'
             if ans.lower() != 'y':
                 print('Exiting')
                 sys.exit()
@@ -496,7 +500,7 @@ local   all             all                                     peer
 
             try:
                 self._assign_rt_campaign(db)
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, DatabaseLoadError):
                 self.logger.warning('Skipping')
                 continue
 
@@ -526,6 +530,28 @@ local   all             all                                     peer
         if ret != 0:
             self.logger.warning('Failed to drop %s', db)
             self._show_activity(db)
+
+    def _restore_db(self , db):
+        if self._db_exists(db) and self.args.clobber:
+            self._dropdb(db)
+        self.logger.info('Creating database: %s', db)
+        ret = os.system(f'createdb -U postgres {db}')
+        self.logger.debug(f'ret = {ret}')
+        if ret != 0:
+            raise DatabaseCreationError(f'Could not create database: {db}. Perhaps use the --clobber option?')
+
+        # Note that pg_dump(1)s should be done with the same version of Postgresql 
+        # to avoid spurious error messages upon restore.  This can be done with
+        # 'docker-compose run stoqs stoqs/loaders/load.py --pg_dump' on the source server.
+        self.logger.info('Restoring database: %s', db)
+        cmd = (f'wget --no-check-certificate -qO- http://{self.args.restore}/media/pg_dumps/{db}.pg_dump | pg_restore -Fc -U postgres -d {db}')
+        t1 = time.time()
+        self.logger.info(f'Executing: {cmd}')
+        ret = os.system(cmd)
+        self.logger.debug(f'ret = {ret}')
+        if ret != 0:
+            raise DatabaseCreationError(f'Could not create database: {db}. Perhaps use the --clobber option?')
+        self.logger.info(f"Time to restore: {(time.time() - t1) / 60:.2f} minutes")
 
     def removetest(self):
         self.logger.info('Removing test databases from sever running on port %s', 
@@ -634,7 +660,7 @@ local   all             all                                     peer
                     elif self.args.current_day:
                        load_command += f" --startdate {datetime.datetime.utcnow().strftime('%Y%m%d')}"
 
-            if not appending:
+            if not appending and not self.args.restore:
                 if self._db_exists(db) and self.args.clobber and (self.args.noinput or self.args.test):
                     self._dropdb(db)
 
@@ -670,16 +696,23 @@ local   all             all                                     peer
                 if self.args.verbose > 2:
                     load_command += ' -v'
 
-            # === Execute the load
-            script = os.path.join(app_dir, 'loaders', load_command)
-            log_file = self._log_file(script, db, load_command)
-            if script.endswith('.sh'):
-                cmd = (f'cd {os.path.dirname(script)} && (STOQS_CAMPAIGNS={db} time {script}) > {log_file} 2>&1;')
+            if self.args.restore:
+                try:
+                    self._restore_db(db)
+                except DatabaseCreationError as e:
+                    self.logger.warning(f'{e}')
+                continue
             else:
-                if appending:
-                    cmd = (f'(STOQS_CAMPAIGNS={db} time {script}) >> {log_file} 2>&1;')
+                # === Execute the load
+                script = os.path.join(app_dir, 'loaders', load_command)
+                log_file = self._log_file(script, db, load_command)
+                if script.endswith('.sh'):
+                    cmd = (f'cd {os.path.dirname(script)} && (STOQS_CAMPAIGNS={db} time {script}) > {log_file} 2>&1;')
                 else:
-                    cmd = (f'(STOQS_CAMPAIGNS={db} time {script}) > {log_file} 2>&1;')
+                    if appending:
+                        cmd = (f'(STOQS_CAMPAIGNS={db} time {script}) >> {log_file} 2>&1;')
+                    else:
+                        cmd = (f'(STOQS_CAMPAIGNS={db} time {script}) > {log_file} 2>&1;')
 
             if self.args.email:
                 # Send email on success or failure
@@ -830,6 +863,8 @@ A typical workflow to build up a production server is:
     docker-compose run stoqs createdb -U postgres stoqs_simz_aug2013_restored
     docker-compose run stoqs pg_restore -Fc -U postgres -d stoqs_simz_aug2013_restored /srv/media-files/pg_dumps/stoqs_simz_aug2013.pg_dump
     (If the server hosts the original database as well, then the Campaign name must be changed for it to show on the campaign list.)
+18. To restore all databases from another server:
+    docker-compose run stoqs stoqs/loaders/load.py --restore stoqs.shore.mbari.org
 
 
 To get any stdout/stderr output you must use -v, the default is no output.
@@ -861,6 +896,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
         parser.add_argument('--startdate', help='Startdate in YYYYMMDD format for appending data')
         parser.add_argument('--current_day', action='store_true', help='Set startdate to current UTC day - useful for running directly from cron')
         parser.add_argument('--create_only', action='store_true', help='Just create the database and do not load the data')
+        parser.add_argument('--restore', action='store', help='Restore databases from specified server, e.g.: stoqs.shore.mbari.org')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
     
