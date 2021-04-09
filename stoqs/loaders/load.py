@@ -109,17 +109,16 @@ class Loader(object):
 
             raise DatabaseCreationError(('Failed to create {}').format(db))
 
-        if self.args.restore:
-            # Create postgis extensions as superuser
-            create_ext = ('psql -p {port} -c \"CREATE EXTENSION postgis;\" -d {db} -U postgres && '
-                        ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
-            create_ext += ('psql -p {port} -c \"CREATE EXTENSION postgis_topology;\" -d {db} -U postgres'
-                        ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
+        # Create postgis extensions as superuser
+        create_ext = ('psql -p {port} -c \"CREATE EXTENSION postgis;\" -d {db} -U postgres && '
+                    ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
+        create_ext += ('psql -p {port} -c \"CREATE EXTENSION postgis_topology;\" -d {db} -U postgres'
+                    ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
 
-            self.logger.info('Creating postgis extensions for database %s', db)
-            self.logger.debug('create_ext = %s', create_ext)
-            ret = os.system(create_ext)
-            self.logger.debug('ret = %s', ret)
+        self.logger.info('Creating postgis extensions for database %s', db)
+        self.logger.debug('create_ext = %s', create_ext)
+        ret = os.system(create_ext)
+        self.logger.debug('ret = %s', ret)
 
     def _copy_log_file(self, log_file):
         loadlogs_dir = os.path.join(settings.MEDIA_ROOT, 'loadlogs')
