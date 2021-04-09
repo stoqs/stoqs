@@ -129,6 +129,8 @@ DATABASES = {
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
+DEFAULT_AUTO_FIELD='django.db.models.AutoField'
+
 # Functional tests require a separate MAPSERVER_DATABASE_URL setting
 MAPSERVER_DATABASE_URL = env('MAPSERVER_DATABASE_URL', default=env('DATABASE_URL'))
 if MAPSERVER_DATABASE_URL == env('DATABASE_URL'):
