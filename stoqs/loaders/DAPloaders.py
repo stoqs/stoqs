@@ -1240,15 +1240,16 @@ class Base_Loader(STOQS_Loader):
                         meass = self._load_coords_from_instr_ds(tindx, ac)
                 else:
                     # Parameters after the first one
-                    if coords_equal_hash[k].all():
-                        # For follow-on Parameters using same axes, pass in equal coordinates boolean array
-                        meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k, coords_equal_hash[k])
-                    else:
-                        # Load Parameter one element at a time - the old fashioned (slower) way
-                        self.logger.warning(f"Parameter {pname} does not share the same coordinates of previously loaded Parameters, skipping for now.")
-                        self.logger.debug(f"coords_equal_hash[{k}] = {coords_equal_hash[k]}")
-                        continue
-                        # TODO: Implement one element at a time loader method
+                    if k in coords_equal_hash:
+                        if coords_equal_hash[k].all():
+                            # For follow-on Parameters using same axes, pass in equal coordinates boolean array
+                            meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k, coords_equal_hash[k])
+                        else:
+                            # Load Parameter one element at a time - the old fashioned (slower) way
+                            self.logger.warning(f"Parameter {pname} does not share the same coordinates of previously loaded Parameters, skipping for now.")
+                            self.logger.debug(f"coords_equal_hash[{k}] = {coords_equal_hash[k]}")
+                            continue
+                            # TODO: Implement one element at a time loader method
                 try:
                     if isinstance(self.ds[pname], pydap.model.GridType):
                         constraint_string = f"(GridType) using python slice: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
