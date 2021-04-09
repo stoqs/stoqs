@@ -1218,15 +1218,7 @@ class Base_Loader(STOQS_Loader):
                                 else:
                                     meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k)
                             else:
-                                if coords_equal_hash[k].all():
-                                    # For follow-on Parameters using same axes, pass in equal coordinates boolean array
-                                    meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k, coords_equal_hash[k])
-                                else:
-                                    # Load Parameter one element at a time - the old fashioned (slower) way
-                                    self.logger.warning(f"Parameter {pname} does not share the same coordinates of previously loaded Parameters, skipping for now.")
-                                    self.logger.debug(f"coords_equal_hash[{k}] = {coords_equal_hash[k]}")
-                                    continue
-                                    # TODO: Implement one element at a time loader method
+                                meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k, coords_equal_hash[k])
                         except CoordNotEqual as e:
                             self.logger.exception(e)
                             sys.exit(-1)
@@ -1246,6 +1238,17 @@ class Base_Loader(STOQS_Loader):
                         # Expect instrument (time-coordinate-only) dataset
                         self.logger.warn(f'{pname} has no {ac[DEPTH]} coordinate - processing as time-coordinate-only, e.g. LOPC')
                         meass = self._load_coords_from_instr_ds(tindx, ac)
+                else:
+                    # Parameters after the first one
+                    if coords_equal_hash[k].all():
+                        # For follow-on Parameters using same axes, pass in equal coordinates boolean array
+                        meass, dup_times, mask = self._load_coords_from_dsg_ds(tindx, ac, pnames, k, coords_equal_hash[k])
+                    else:
+                        # Load Parameter one element at a time - the old fashioned (slower) way
+                        self.logger.warning(f"Parameter {pname} does not share the same coordinates of previously loaded Parameters, skipping for now.")
+                        self.logger.debug(f"coords_equal_hash[{k}] = {coords_equal_hash[k]}")
+                        continue
+                        # TODO: Implement one element at a time loader method
                 try:
                     if isinstance(self.ds[pname], pydap.model.GridType):
                         constraint_string = f"(GridType) using python slice: ds['{pname}']['{pname}'][{tindx[0]}:{tindx[-1]}:{self.stride}]"
