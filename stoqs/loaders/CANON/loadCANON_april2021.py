@@ -72,8 +72,8 @@ cl.nps29_endDatetime = enddate
 # WG Hansen - All instruments combined into one file - one time coordinate
 cl.wg_Hansen_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Hansen_files = [
-                   'wgHansen/20201005/realTime/20201005.nc'
-                  ]
+                        'wgHansen/20210409/realTime/20210409.nc'
+                     ]
 
 cl.wg_Hansen_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp_float', 'sal_float',  'water_temp_sub',
                      'sal_sub', 'bb_470', 'bb_650', 'chl', 'beta_470', 'beta_650', 'pH', 'O2_conc_float','O2_conc_sub' ] # two ctds (_float, _sub), no CO2
@@ -84,7 +84,7 @@ cl.wg_Hansen_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                      'wgTiny/20201006/realTime/20201005.nc'
+                      'wgTiny/20210408/realTime/20210408.nc'
                    ]
 
 
