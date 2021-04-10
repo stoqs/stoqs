@@ -90,6 +90,7 @@ class AutoLoad():
         self.loader.args.verbose = self.args.verbose
         self.loader.args.drop_if_fail = True
         self.loader.args.create_only = False
+        self.loader.args.restore = ''
         if self.args.append:
             self.loader.args.append = True
             self.loader.args.startdate = datetime.utcnow().strftime("%Y%m%d")
