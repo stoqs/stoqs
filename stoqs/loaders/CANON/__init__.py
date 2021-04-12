@@ -370,11 +370,14 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.nps29_files], self.nps29_files):
             url = self.nps29_base + f
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                       'NPS_Glider_29', self.colors['nps29'], 'glider', 'Glider Mission', 
-                                        self.nps29_parms, self.dbAlias, stride, self.nps29_startDatetime, 
-                                        self.nps29_endDatetime, grdTerrain=self.grdTerrain, 
-                                        command_line_args=self.args)
+            try:
+                DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
+                                        'NPS_Glider_29', self.colors['nps29'], 'glider', 'Glider Mission', 
+                                            self.nps29_parms, self.dbAlias, stride, self.nps29_startDatetime, 
+                                            self.nps29_endDatetime, grdTerrain=self.grdTerrain, 
+                                            command_line_args=self.args)
+            except (DAPloaders.OpendapError, DAPloaders.NoValidData, webob.exc.HTTPError) as e:
+                self.logger.warn(str(e))
 
     def load_SG539(self, stride=None):
         '''
