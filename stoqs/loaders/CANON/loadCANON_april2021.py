@@ -47,7 +47,7 @@ cl.l_662a_endDatetime = enddate
 
 # NPS_34 ##
 cl.nps34_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
-cl.nps34_files = [ 'OS_Glider_NPS_G34_20201006_TS.nc' ]
+cl.nps34_files = [ 'OS_Glider_NPS_G34_20210414_TS.nc' ]
 cl.nps34_parms = ['TEMP', 'PSAL', 'FLU2', 'OXYG']
 cl.nps34_startDatetime = startdate
 cl.nps34_endDatetime = enddate
@@ -119,6 +119,7 @@ elif cl.args.stride:
 
 cl.loadM1()
 cl.load_NPS29()
+cl.load_NPS34()
 cl.load_wg_Tiny()
 cl.load_wg_Hansen()
 
@@ -132,7 +133,7 @@ cl.loadLRAUV('pontus', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs
 ##cl.loadLRAUV('brizo', startdate, enddate)
 ##cl.loadLRAUV('pontus', startdate, enddate)
 
-##cl.loadDorado(startdate, enddate, build_attrs=True)
+cl.loadDorado(startdate, enddate, build_attrs=True)
 
 ##cl.loadSubSamples() 
 
