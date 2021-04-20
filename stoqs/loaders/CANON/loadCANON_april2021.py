@@ -130,8 +130,14 @@ cl.loadLRAUV('brizo', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=
              parameters=lrauv_parms)
 cl.loadLRAUV('pontus', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
              parameters=lrauv_parms)
+cl.loadLRAUV('makai', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
+             parameters=lrauv_parms)
+cl.loadLRAUV('daphne', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
+             parameters=lrauv_parms)
 ##cl.loadLRAUV('brizo', startdate, enddate)
 ##cl.loadLRAUV('pontus', startdate, enddate)
+##cl.loadLRAUV('makai', startdate, enddate)
+##cl.loadLRAUV('daphne', startdate, enddate)
 
 cl.loadDorado(startdate, enddate, build_attrs=True)
 
