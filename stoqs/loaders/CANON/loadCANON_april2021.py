@@ -99,11 +99,13 @@ cl.wg_Tiny_endDatetime = enddate
 ######################################################################
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
 cl.m1_files = [
-  '202008/OS_M1_20200825hourly_CMSTV.nc', ]
+  '202008/OS_M1_20200825hourly_CMSTV.nc', 
+  '202008/m1_hs2_0m_20200825.nc' ]
 cl.m1_parms = [
   'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
   'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
-  'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
+  'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR',
+  'bb470', 'bb676', 'fl676'
 ]
 
 cl.m1_startDatetime = startdate
@@ -134,10 +136,11 @@ cl.loadLRAUV('makai', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=
              parameters=lrauv_parms)
 cl.loadLRAUV('daphne', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
              parameters=lrauv_parms)
-##cl.loadLRAUV('brizo', startdate, enddate)
-##cl.loadLRAUV('pontus', startdate, enddate)
-##cl.loadLRAUV('makai', startdate, enddate)
-##cl.loadLRAUV('daphne', startdate, enddate)
+
+cl.loadLRAUV('brizo', startdate, enddate)
+cl.loadLRAUV('pontus', startdate, enddate)
+cl.loadLRAUV('makai', startdate, enddate)
+cl.loadLRAUV('daphne', startdate, enddate)
 
 cl.loadDorado(startdate, enddate, build_attrs=True)
 
