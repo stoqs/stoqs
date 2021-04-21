@@ -5943,8 +5943,13 @@ function enable_cardboard(){
                 timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, options);
                 $.each(timeparameterplot.getData(), function(index, series) {
                     $('#stride-info > div > span').each(function(index, elem) {
-                        if ( elem.textContent == series.label.split('-')[1].trim() ) {
-                            $(elem).css('color', series.color);
+                        if ( $.isEmptyObject(series.label.split('-')[1]) ) {
+                            // Hos no standard_name to use for setting color
+                        }
+                        else {
+                            if ( elem.textContent == series.label.split('-')[1].trim() ) {
+                                $(elem).css('color', series.color);
+                            }
                         }
                     });
                 });
