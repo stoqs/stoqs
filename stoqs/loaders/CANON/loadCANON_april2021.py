@@ -13,7 +13,7 @@ sys.path.insert(0, parentDir)
 from CANON import CANONLoader
 import timing
 
-cl = CANONLoader('stoqs_canon_april2021', 'CANON - April 2021',
+cl = CANONLoader('stoqs_canon_april2021', 'CANON ECOHAB - April 2021',
                  description='October 2021 CANON campaign in Monterey Bay (CN21S)',
                  x3dTerrains={
                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
@@ -47,7 +47,7 @@ cl.l_662a_endDatetime = enddate
 
 # NPS_34 ##
 cl.nps34_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/MBARI/'
-cl.nps34_files = [ 'OS_Glider_NPS_G34_20201006_TS.nc' ]
+cl.nps34_files = [ 'OS_Glider_NPS_G34_20210414_TS.nc' ]
 cl.nps34_parms = ['TEMP', 'PSAL', 'FLU2', 'OXYG']
 cl.nps34_startDatetime = startdate
 cl.nps34_endDatetime = enddate
@@ -99,15 +99,40 @@ cl.wg_Tiny_endDatetime = enddate
 ######################################################################
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
 cl.m1_files = [
-  '202008/OS_M1_20200825hourly_CMSTV.nc', ]
+  '202008/OS_M1_20200825hourly_CMSTV.nc', 
+  '202008/m1_hs2_0m_20200825.nc' ]
 cl.m1_parms = [
   'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
   'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
-  'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
+  'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR',
+  'bb470', 'bb676', 'fl676'
 ]
-
 cl.m1_startDatetime = startdate
 cl.m1_endDatetime = enddate
+
+# Mooring 0A1
+cl.oa1_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA1/202010/'
+cl.oa1_files = [
+               'realTime/OA1_202010.nc'
+               ]
+cl.oa1_parms = [
+               'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
+               'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
+               ]
+cl.oa1_startDatetime = startdate
+cl.oa1_endDatetime = enddate
+
+# Mooring 0A2
+cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201912/'
+cl.oa2_files = [
+               'realTime/OA2_201912.nc'
+               ]
+cl.oa2_parms = [
+               'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
+               'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
+               ]
+cl.oa2_startDatetime = startdate
+cl.oa2_endDatetime = enddate
 
 # Execute the load
 cl.process_command_line()
@@ -118,7 +143,10 @@ elif cl.args.stride:
     cl.stride = cl.args.stride
 
 cl.loadM1()
+cl.load_oa1()
+cl.load_oa2()
 cl.load_NPS29()
+cl.load_NPS34()
 cl.load_wg_Tiny()
 cl.load_wg_Hansen()
 
@@ -129,10 +157,17 @@ cl.loadLRAUV('brizo', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=
              parameters=lrauv_parms)
 cl.loadLRAUV('pontus', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
              parameters=lrauv_parms)
-##cl.loadLRAUV('brizo', startdate, enddate)
-##cl.loadLRAUV('pontus', startdate, enddate)
+cl.loadLRAUV('makai', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
+             parameters=lrauv_parms)
+cl.loadLRAUV('daphne', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
+             parameters=lrauv_parms)
 
-##cl.loadDorado(startdate, enddate, build_attrs=True)
+cl.loadLRAUV('brizo', startdate, enddate)
+cl.loadLRAUV('pontus', startdate, enddate)
+cl.loadLRAUV('makai', startdate, enddate)
+cl.loadLRAUV('daphne', startdate, enddate)
+
+cl.loadDorado(startdate, enddate, build_attrs=True)
 
 ##cl.loadSubSamples() 
 
