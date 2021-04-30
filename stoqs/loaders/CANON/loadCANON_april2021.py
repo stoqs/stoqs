@@ -13,7 +13,7 @@ sys.path.insert(0, parentDir)
 from CANON import CANONLoader
 import timing
 
-cl = CANONLoader('stoqs_canon_april2021', 'CANON ECOHAB - April 2021',
+cl = CANONLoader('stoqs_canon_april2021', 'CANON-ECOHAB - April 2021',
                  description='October 2021 CANON campaign in Monterey Bay (CN21S)',
                  x3dTerrains={
                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
@@ -134,6 +134,56 @@ cl.oa2_parms = [
 cl.oa2_startDatetime = startdate
 cl.oa2_endDatetime = enddate
 
+######################################################################
+#  WESTERN FLYER
+######################################################################
+# UCTD
+cl.wfuctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/uctd/'
+cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
+cl.wfuctd_files = [
+                  'CN21Sm01.nc',
+                  'CN21Sm02.nc',
+                  'CN21Sm03.nc',
+                  'CN21Sm04.nc',
+                  'CN21Sm05.nc',
+                  'CN21Sm06.nc',
+                  ]
+
+# PCTD
+cl.wfpctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/pctd/'
+cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
+cl.wfpctd_files = [
+        'CN21SC01.nc',
+        'CN21SC02.nc',
+        'CN21SC03.nc',
+        'CN21SC04.nc',
+        'CN21SC05.nc',
+        'CN21SC06.nc',
+        'CN21SC07.nc',
+        'CN21SC08.nc',
+        'CN21SC09.nc',
+        'CN21SC10.nc',
+        'CN21SC11.nc',
+        'CN21SC12.nc',
+        'CN21SC13.nc',
+        'CN21SC14.nc',
+        'CN21SC15.nc',
+        'CN21SC16.nc',
+        'CN21SC17.nc',
+        'CN21SC18.nc',
+        'CN21SC19.nc',
+        'CN21SC20.nc',
+        'CN21SC21.nc',
+        'CN21SC22.nc',
+        'CN21SC23.nc',
+        'CN21SC24.nc',
+        'CN21SC25.nc',
+        'CN21SC26.nc',
+        'CN21SC27.nc',
+        'CN21SC28.nc',
+        'CN21SC29.nc',
+                  ]
+
 # Execute the load
 cl.process_command_line()
 
@@ -168,6 +218,9 @@ cl.loadLRAUV('makai', startdate, enddate)
 cl.loadLRAUV('daphne', startdate, enddate)
 
 cl.loadDorado(startdate, enddate, build_attrs=True)
+
+cl.loadWFuctd()
+cl.loadWFpctd()
 
 ##cl.loadSubSamples() 
 
