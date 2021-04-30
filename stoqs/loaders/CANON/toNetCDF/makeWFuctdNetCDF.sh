@@ -26,8 +26,10 @@ DIR=/data/other/routine/Platforms/Ships/WesternFlyer/uctd
 ##TITLE="Underway CTD data from R/V Western Flyer during CANON - May 2018"
 ##PATTERN="cn18f*"
 ##TITLE="Underway CTD data from R/V Western Flyer during CANON - September 2018"
-PATTERN="CN19SM*"
-TITLE="Underway CTD data from R/V Western Flyer during CANON - May 2019"
+##PATTERN="CN19SM*"
+##TITLE="Underway CTD data from R/V Western Flyer during CANON - May 2019"
+PATTERN="CN21Sm*"
+TITLE="Underway CTD data from R/V Western Flyer during CANON - April 2021"
 # Set local processing directory
 LOCALDIR=`basename $DIR`
 
@@ -42,5 +44,10 @@ fi
 
 # Copy the .nc files back to the MBARI DAP host - You will be prompted for credentials 
 scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
-rm -r $LOCALDIR
+if [ "$1" == "docker" ]
+then
+    rm -r $LOCALDIR
+else
+    echo "Not removing $LOCALDIR"
+fi
 
