@@ -23,7 +23,7 @@ httplib2==0.19.1
 holoviews==1.14.2
 hvplot==0.7.0
 ipyleaflet==0.13.6
-ipython==7.22.0
+ipython==7.23.0
 jdcal==1.4.1
 Jinja2==2.11.3
 jupyter==1.0.0
