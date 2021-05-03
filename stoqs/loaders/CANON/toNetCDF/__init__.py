@@ -155,6 +155,7 @@ Write a paragraph or abstract about the data contained within the file, expandin
                             help='''Pattern for matching input files in inDir. Specify a pattern according to the rules used by the Unix shell. Quote wild card characters.''')
         parser.add_argument('-a', '--analog', action='store', 
                             help='''Specify an analog channel to process into a netCDF variable. The format is <chan>:<var>:<units>, e.g. V0:rhodmain:volts''')
+        parser.add_argument('--min_psal', action='store', type=float, help='Do not convert salinity values below this number')
         parser.add_argument('-v', '--verbose', action='store_true',
                             help='Turn on verbose output')
 

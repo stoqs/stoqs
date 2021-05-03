@@ -110,7 +110,11 @@ class ParserWriter(BaseWriter):
                 
                 self.t1_list.append(r['T090C'])
 
-                self.sal_list.append(r['Sal00'])
+                psal = r['Sal00']
+                if self.args.min_psal:
+                    if float(r['Sal00']) < self.args.min_psal:
+                        psal = self.missing_value
+                self.sal_list.append(psal)
                 self.xmiss_list.append(r['Xmiss'])
                 self.wetstar_list.append(r['WetStar'])
 
