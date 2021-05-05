@@ -64,5 +64,5 @@ sphinx-rtd-theme==0.5.2
 sqlparse==0.4.1
 thredds-crawler==1.5.4
 watchdog==2.0.3
-websocket-client==0.58.0
+websocket-client==0.59.0
 xarray==0.17.0
