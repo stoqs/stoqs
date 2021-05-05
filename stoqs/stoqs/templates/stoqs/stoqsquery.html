@@ -6910,6 +6910,7 @@ function enable_cardboard(){
         }
 
         // Open sections and tabs
+        var temporal_parameters = false;
         $.each(parameters, function (key, value) {
             switch(key) {
                 case 'map-center':
@@ -6940,9 +6941,15 @@ function enable_cardboard(){
                     $.each(value, function (pos, item) {
                         if ( item[0] != '#parameterParameterTabs' ) {
                             // ParameterParameter tab clicks happen on ajax success - don't do them here
-                            var $elem=$('li > a', item[0]);
-                            $elem.removeClass('active');
-                            $($elem[item[1]]).click();
+                            if (item[0] == '#temporalTabs' && item[1] == 1 ) {
+                                // If Temporal -> Parameters (1) tab is active then defer until after All clicks
+                                temporal_parameters = true;
+                            }
+                            else {
+                                var $elem=$('li > a', item[0]);
+                                $elem.removeClass('active');
+                                $($elem[item[1]]).click();
+                            }
                         }
                     });
                     break;
@@ -6960,6 +6967,12 @@ function enable_cardboard(){
                     $(item).click();
                 }
             });
+        }
+
+        if ( temporal_parameters ) {
+            var $elem=$('li > a', '#temporalTabs');
+            $elem.removeClass('active');
+            $($elem[1]).click(); 
         }
 
         permalink_bypass=false;        
