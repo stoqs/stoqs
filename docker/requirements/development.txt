@@ -19,7 +19,7 @@ geopandas==0.9.0
 h5py==3.2.1
 MarkupSafe==1.1.1
 requests==2.25.1
-Pygments==2.8.1
+Pygments==2.9.0
 pygraphviz==1.7
 pymssql-py38==2.1.4
 pyparsing==2.4.7

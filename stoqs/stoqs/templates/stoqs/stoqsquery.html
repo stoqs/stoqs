@@ -1038,6 +1038,9 @@ Elapsed time is 0.097718 seconds.
                                                     </pre>
                                                     Here is <a href="https://nbviewer.jupyter.org/github/stoqs/stoqs/blob/master/stoqs/contrib/notebooks/visualize_parquet.ipynb" target="blank">visualize_parquet.ipynb</a>
                                                     which shows how to read and visualize parquet data in Python.
+                                                    <br>
+                                                    Here is <a href="https://raw.githubusercontent.com/stoqs/stoqs/master/stoqs/contrib/parquet/parquet2csv.py" target="blank">parquet2csv.py</a>
+                                                    which you can execute at the command line to convert parquet data to a comma separated value file.
                                                 </div>
                                             {% else %}
                                                 <pre id="mp-{{format.0}}-field"></pre>
@@ -6910,6 +6913,7 @@ function enable_cardboard(){
         }
 
         // Open sections and tabs
+        var temporal_parameters = false;
         $.each(parameters, function (key, value) {
             switch(key) {
                 case 'map-center':
@@ -6940,9 +6944,15 @@ function enable_cardboard(){
                     $.each(value, function (pos, item) {
                         if ( item[0] != '#parameterParameterTabs' ) {
                             // ParameterParameter tab clicks happen on ajax success - don't do them here
-                            var $elem=$('li > a', item[0]);
-                            $elem.removeClass('active');
-                            $($elem[item[1]]).click();
+                            if (item[0] == '#temporalTabs' && item[1] == 1 ) {
+                                // If Temporal -> Parameters (1) tab is active then defer until after All clicks
+                                temporal_parameters = true;
+                            }
+                            else {
+                                var $elem=$('li > a', item[0]);
+                                $elem.removeClass('active');
+                                $($elem[item[1]]).click();
+                            }
                         }
                     });
                     break;
@@ -6960,6 +6970,12 @@ function enable_cardboard(){
                     $(item).click();
                 }
             });
+        }
+
+        if ( temporal_parameters ) {
+            var $elem=$('li > a', '#temporalTabs');
+            $elem.removeClass('active');
+            $($elem[1]).click(); 
         }
 
         permalink_bypass=false;        

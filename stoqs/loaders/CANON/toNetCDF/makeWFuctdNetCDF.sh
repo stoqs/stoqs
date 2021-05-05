@@ -37,7 +37,7 @@ LOCALDIR=`basename $DIR`
 rsync -rv $LOGIN@$RH:$DIR/$PATTERN $LOCALDIR
 if [ "$1" == "docker" ]
 then
-    docker-compose exec stoqs stoqs/loaders/CANON/toNetCDF/uctdToNetcdf.py -i /srv/docker/$LOCALDIR -p "$PATTERN" -t "$TITLE" -d 2.0
+    docker-compose exec stoqs stoqs/loaders/CANON/toNetCDF/uctdToNetcdf.py -i /srv/docker/$LOCALDIR -p "$PATTERN" -t "$TITLE" -d 2.0 --min_psal 30
 else
     ./uctdToNetcdf.py --inDir $LOCALDIR --pattern "$PATTERN" --title "$TITLE" --depth 2.0
 fi
