@@ -192,6 +192,20 @@ if cl.args.test:
 elif cl.args.stride:
     cl.stride = cl.args.stride
 
+# Test correction of Sample name for leaked ESP Cartridges and spare used
+##cl.makai_base = ' http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2021/20210420_20210426/20210421T033242'
+##cl.makai_files = ['202104210332_202104211941_2S_scieng.nc']
+##cl.makai_parms = ['temperature']
+##cl.loadLRAUV('makai', startdate, enddate, build_attrs=False)
+##sys.exit()
+
+lrauv_start = datetime(2021, 4, 11)
+lrauv_end = datetime(2021, 4, 29)
+cl.loadLRAUV('brizo', lrauv_start, lrauv_end)
+cl.loadLRAUV('pontus', lrauv_start, lrauv_end)
+cl.loadLRAUV('makai', lrauv_start, lrauv_end)
+cl.loadLRAUV('daphne', lrauv_start, lrauv_end)
+
 cl.loadM1()
 cl.load_oa1()
 cl.load_oa2()
@@ -200,22 +214,16 @@ cl.load_NPS34()
 cl.load_wg_Tiny()
 cl.load_wg_Hansen()
 
-lrauv_parms = ['chlorophyll', 'temperature']
-lrauv_start = datetime(2021, 4, 11)
-lrauv_end = datetime(2021, 4, 29)
-cl.loadLRAUV('brizo', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
-             parameters=lrauv_parms)
-cl.loadLRAUV('pontus', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
-             parameters=lrauv_parms)
-cl.loadLRAUV('makai', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
-             parameters=lrauv_parms)
-cl.loadLRAUV('daphne', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
-             parameters=lrauv_parms)
-
-cl.loadLRAUV('brizo', startdate, enddate)
-cl.loadLRAUV('pontus', startdate, enddate)
-cl.loadLRAUV('makai', startdate, enddate)
-cl.loadLRAUV('daphne', startdate, enddate)
+# Realtime LRAUV loads - to be executed during the Campaign
+##lrauv_parms = ['chlorophyll', 'temperature']
+##cl.loadLRAUV('brizo', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
+##             parameters=lrauv_parms)
+##cl.loadLRAUV('pontus', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
+##             parameters=lrauv_parms)
+##cl.loadLRAUV('makai', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
+##             parameters=lrauv_parms)
+##cl.loadLRAUV('daphne', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
+##             parameters=lrauv_parms)
 
 cl.loadDorado(startdate, enddate, build_attrs=True)
 
