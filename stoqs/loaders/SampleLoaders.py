@@ -523,6 +523,28 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return esp_s_filtering, esp_s_stopping, esp_log_summaries, esp_log_criticals, esp_device
 
+    def _check_leaked_cartridge(self, platform_name, summary):
+        # Check for repeated 'Selecting Cartridge' in summary.text and report Disposition
+        index = 0
+        occurrences = 0
+        while index < len(summary.text):
+            index = summary.text.find('Selecting Cartridge', index)
+            if index == -1:
+                break
+            occurrences += 1
+            if occurrences > 1:
+                self.logger.info(f"Repeated 'Selecting Cartridge' message found in {platform_name}'s summary.text: {summary.text}")
+                if 'Cmd::SpareCartridge' in summary.text:
+                    # Assumes that there are 2 'Selecting Cartridge' messages in summary.text: first is leaked & second is the spare used
+                    self.logger.info(f"Found 'Cmd::SpareCartridge' message, using second Cartridge number for sample name")
+                    leaked = re.search(lsr_cartridge_number_re, summary.text[:index], re.MULTILINE).groupdict().get('cartridge_number')
+                    spare_used = re.search(lsr_cartridge_number_re, summary.text[index:], re.MULTILINE).groupdict().get('cartridge_number')
+                    return leaked, spare_used
+
+            index += len('Selecting Cartridge')
+
+        return None, None
+
     def _validate_summaries(self, platform_name, filterings, stoppings, summaries, criticals):
         '''Ensure that there are the same number of items in filterings, stoppings, summaries and 
         that the sample #s match.  If not then attempt to repair with appropriate warnings.
@@ -612,6 +634,15 @@ class ParentSamplesLoader(STOQS_Loader):
                     self.logger.info(f"Deleting index {index} from summaries list")
                     del summaries[index]
 
+        # Check for use of spare Cartridge following a leak - brute force replacement of number in summary.text
+        for index, summary in enumerate(summaries):
+            leaked, spare_used = self._check_leaked_cartridge(platform_name, summary)
+            if leaked and spare_used:
+                Log = namedtuple('Log', 'esec text')
+                summaries[index] = Log(summary.esec, summary.text.replace(f"Cartridge {leaked}", f"Cartridge {spare_used}"))
+                self.logger.info(f"Replaced first (leaked={leaked}) Cartridge number with second (spare_used={spare_used})"
+                                 f" Cartridge number in summary.text: {summaries[index].text}")
+
         # Check for and remove duplicate sample #s as in:
         # http://dods.mbari.org/data/lrauv/daphne/missionlogs/2019/20190520_20190524/20190523T195841/syslog
         num_dict = defaultdict(lambda:0)
@@ -649,7 +680,7 @@ class ParentSamplesLoader(STOQS_Loader):
                             to_del.append(index)
 
         for index in reversed(to_del):
-            self.logger.info(f"Deleting index {index} from filtering, stoppings, andsummaries lists")
+            self.logger.info(f"Deleting index {index} from filtering, stoppings, and summaries lists")
             del filterings[index]
             del stoppings[index]
             del summaries[index]

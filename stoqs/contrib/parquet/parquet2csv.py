@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Convert STOQS Measured Parameter Data Access .parquet output to CVS format.
+Convert STOQS Measured Parameter Data Access .parquet output to CSV format.
 '''
 
 import argparse
