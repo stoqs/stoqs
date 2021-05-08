@@ -534,7 +534,7 @@ class ParentSamplesLoader(STOQS_Loader):
             occurrences += 1
             if occurrences > 1:
                 self.logger.info(f"Repeated 'Selecting Cartridge' message found in {platform_name}'s summary.text: {summary.text}")
-                if 'Cmd::SpareCartridge' in summary.text:
+                if 'Cmd::SpareCartridge' in summary.text or 'Cartridge::Sampler::Leak' in summary.text:
                     # Assumes that there are 2 'Selecting Cartridge' messages in summary.text: first is leaked & second is the spare used
                     self.logger.info(f"Found 'Cmd::SpareCartridge' message, using second Cartridge number for sample name")
                     leaked = re.search(lsr_cartridge_number_re, summary.text[:index], re.MULTILINE).groupdict().get('cartridge_number')
