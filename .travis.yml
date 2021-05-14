@@ -21,7 +21,7 @@ env:
   - DJANGO=2.2
 install:
   - pip install --upgrade pip
-  - pip install -r requirements/travis-ci.txt
+  - travis_wait 30 pip install -r requirements/travis-ci.txt
 before_script:
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
