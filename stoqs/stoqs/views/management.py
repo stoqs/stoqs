@@ -171,6 +171,8 @@ def showCampaigns(request,format=None):
 
     # Build list of hashes to pass to the campaigns.html template
     camList = []
+    sum_MeasuredParameter_count = 0
+    sum_SampledParameter_count = 0
     for d in sorted(list(timeSortHash.keys()), reverse=True):
         logger.debug("d = %s, timeSortHash[d] = %s", d, timeSortHash[d])
         for k,(c, r) in list(timeSortHash[d].items()):
@@ -185,6 +187,9 @@ def showCampaigns(request,format=None):
                 startdate = c.startdate.strftime('%d %b %Y')
             if c.enddate:
                 enddate = c.enddate.strftime('%d %b %Y')
+            
+            sum_SampledParameter_count += int(r.get('MeasuredParameter_count', 0))
+            sum_MeasuredParameter_count += int(r.get('SampledParameter_count', 0))
             camList.append({'name': c.name, 'dbAlias': k, 'description': description,
                             'startdate': startdate, 'enddate': enddate,
                             'MeasuredParameter_count': r.get('MeasuredParameter_count', ''),
@@ -196,6 +201,8 @@ def showCampaigns(request,format=None):
                             'loadlog': r.get('load_logfile', '')})
 
     logger.debug("camList = %s", camList)
+    logger.info(f"Total SampledParameter_count = {sum_SampledParameter_count}")
+    logger.info(f"Total MeasuredParameter_count = {sum_MeasuredParameter_count}")
     if format == 'json':
         return HttpResponse(json.dumps(camList, cls=encoders.STOQSJSONEncoder), 'application/json')
     elif format == 'count':
