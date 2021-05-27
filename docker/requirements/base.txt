@@ -20,8 +20,8 @@ euclid==1.2
 djangorestframework==3.12.4
 fastparquet==0.5.0
 httplib2==0.19.1
-holoviews==1.14.2
 hvplot==0.7.2
+holoviews==1.14.4
 ipyleaflet==0.13.6
 ipython==7.23.1
 jdcal==1.4.1
@@ -58,10 +58,10 @@ selenium==3.141.0
 simplejson==3.17.2
 slacker==0.14.0
 statsmodels==0.12.2
-Sphinx==4.0.1
+Sphinx==4.0.2
 sphinx-rtd-theme==0.5.2
 sqlparse==0.4.1
 thredds-crawler==1.5.4
 watchdog==2.1.2
-websocket-client==1.0.0
-xarray==0.18.1
+websocket-client==1.0.1
+xarray==0.18.2
