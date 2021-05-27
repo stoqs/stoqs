@@ -64,4 +64,4 @@ sqlparse==0.4.1
 thredds-crawler==1.5.4
 watchdog==2.1.2
 websocket-client==1.0.0
-xarray==0.18.1
+xarray==0.18.2
