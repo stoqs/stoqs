@@ -42,7 +42,7 @@ PasteScript==3.2.1
 pika==1.2.0
 pyarrow==4.0.0
 pysher==1.0.6
-psycopg2-binary==2.8.6
+psycopg2-binary==2.9.1
 psutil==5.8.0
 pupynere==1.0.15
 Pydap==3.2.2
