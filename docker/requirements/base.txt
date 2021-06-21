@@ -22,7 +22,7 @@ fastparquet==0.5.0
 httplib2==0.19.1
 hvplot==0.7.2
 holoviews==1.14.4
-ipyleaflet==0.13.6
+ipyleaflet==0.14.0
 ipython==7.24.1
 jdcal==1.4.1
 Jinja2==3.0.1
