@@ -78,6 +78,7 @@ class Columnar():
                                    '%(funcName)s():%(lineno)d %(message)s')
     _handler.setFormatter(_formatter)
     _log_levels = (logging.WARN, logging.INFO, logging.DEBUG)
+    logger.addHandler(_handler)
 
     # Set to GB of RAM that have been resourced to the Docker engine
     MAX_CONTAINER_MEMORY = 16

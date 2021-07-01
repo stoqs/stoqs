@@ -25,7 +25,7 @@ MBARI Jan 9, 2012
 from django.shortcuts import render
 from django.template import RequestContext
 from django.conf import settings
-from django.db import DatabaseError
+from django.db import DatabaseError, connections
 from django.http import HttpResponse
 from utils import encoders
 import stoqs.models as mod
@@ -146,8 +146,7 @@ def showCampaigns(request,format=None):
             continue
 
         # Close the database connection, before connecting to the next database
-        # TODO: Check for how Django1.7+ does this
-        ##close_connection()
+        connections.close_all()
 
     # Create a hash keyed by startdate of the dbAliases and campaigns so that we display a time sorted list of campaigns
     timeSortHash = {}
