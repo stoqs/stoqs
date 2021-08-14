@@ -42,6 +42,13 @@ cl = CANONLoader('$db_alias', '$title',
                      'VerticalExaggeration': '10',
                      'speed': '0.1',
                     },
+                    'https://stoqs.mbari.org/x3d/michigan_lld_10x/michigan_lld_10x_src_scene.x3d': {
+                      'position': '260508.70011 -4920934.73726 4257472.30926',
+                      'orientation': '1.00000 0.00113 -0.00025 1.66609',
+                      'centerOfRotation': '239815.39152 -4691345.97184 4297950.38875',
+                      'VerticalExaggeration': '10',
+                      'speed': '0.1',
+                    },
                  },
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
