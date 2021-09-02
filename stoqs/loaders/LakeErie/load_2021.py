@@ -37,12 +37,12 @@ cl = CANONLoader('stoqs_erie2021', 'Lake Erie ESP 2021',
 brizo_sdate = datetime(2021, 8, 4)
 brizo_edate = datetime(2021, 8, 17)
 makai_sdate = datetime(2021, 8, 3)
-makai_edate = datetime(2021, 8, 9)
+makai_edate = datetime(2021, 8, 8)
 
 cl.process_command_line()
 
 if cl.args.test:
-    cl.stride = 10
+    cl.stride = 100
     cl.loadLRAUV('brizo', brizo_sdate, brizo_edate, critSimpleDepthTime=0.1, build_attrs=True)
     cl.loadLRAUV('makai', makai_sdate, makai_edate, critSimpleDepthTime=0.1, build_attrs=True)
 elif cl.args.stride:
