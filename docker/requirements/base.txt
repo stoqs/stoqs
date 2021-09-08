@@ -1,5 +1,5 @@
 aiohttp==3.7.4.post0
-beautifulsoup4==4.9.3
+beautifulsoup4==4.10.0
 channels==3.0.4
 cmocean==2.0
 coards==1.0.5
