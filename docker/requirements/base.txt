@@ -21,7 +21,7 @@ djangorestframework==3.12.4
 fastparquet==0.7.0
 httplib2==0.19.1
 hvplot==0.7.2
-holoviews==1.14.4
+holoviews==1.14.6
 ipyleaflet==0.14.0
 ipython==7.27.0
 jdcal==1.4.1
