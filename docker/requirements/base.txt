@@ -59,7 +59,7 @@ simplejson==3.17.5
 slacker==0.14.0
 statsmodels==0.12.2
 Sphinx==4.2.0
-sphinx-rtd-theme==0.5.2
+sphinx-rtd-theme==1.0.0
 sqlparse==0.4.2
 thredds-crawler==1.5.4
 watchdog==2.1.5
