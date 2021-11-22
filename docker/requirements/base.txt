@@ -18,7 +18,7 @@ django-picklefield==3.0.1
 GitPython==3.1.24
 euclid==1.2
 djangorestframework==3.12.4
-fastparquet==0.7.0
+fastparquet==0.7.2
 httplib2==0.20.2
 hvplot==0.7.2
 holoviews==1.14.6
