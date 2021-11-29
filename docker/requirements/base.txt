@@ -57,8 +57,8 @@ seawater==3.3.4
 selenium==4.1.0
 simplejson==3.17.5
 slacker==0.14.0
+Sphinx==4.3.1
 statsmodels==0.13.1
-Sphinx==4.3.0
 sphinx-rtd-theme==1.0.0
 sqlparse==0.4.2
 thredds-crawler==1.5.4
