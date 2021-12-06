@@ -11,7 +11,7 @@ binaryornot==0.4.4
 certifi==2021.10.8
 cookiecutter==1.7.3
 docutils==0.18
-Cython==0.29.24
+Cython==0.29.25
 ephem==4.1.1
 ##GDAL==3.0.3
 Genshi==0.7.5
