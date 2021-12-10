@@ -22,8 +22,8 @@ fastparquet==0.7.2
 httplib2==0.20.2
 hvplot==0.7.2
 holoviews==1.14.6
-ipyleaflet==0.14.0
-ipython==7.28.0
+ipyleaflet==0.15.0
+ipython==7.30.1
 jdcal==1.4.1
 Jinja2==3.0.3
 jupyter==1.0.0
@@ -63,5 +63,5 @@ sphinx-rtd-theme==1.0.0
 sqlparse==0.4.2
 thredds-crawler==1.5.4
 watchdog==2.1.6
-websocket-client==1.2.1
+websocket-client==1.2.3
 xarray==0.20.1
