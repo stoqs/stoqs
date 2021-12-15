@@ -1838,7 +1838,7 @@ Elapsed time is 0.097718 seconds.
         var frac_ems = $('body').data()['timesensor-start-ems'] + ts_fraction * ($('body').data()['timesensor-end-ems'] - $('body').data()['timesensor-start-ems']);
         frac_esec = parseInt(frac_ems / 1000.0);
 
-        // See https://stackoverflow.com/questions/10004723/html5-input-type-range-show-range-value
+        // See https://stackoverflow.com/a/35391072/1281657
         var myRange = document.querySelector('#spatial-3d-x3d-slider');
         var myValue = document.querySelector('#slider-time');
         var px = (myRange.valueAsNumber * myRange.offsetWidth) - (myValue.offsetParent.offsetWidth / 2);
