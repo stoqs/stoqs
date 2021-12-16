@@ -156,7 +156,7 @@ class CANONLoader(LoadScript):
                     'sepCountList', 'mepCountList', 'roll', 'pitch', 'yaw', ], stride=None,
                     file_patterns=('.*_decim.nc$'), build_attrs=False, plankton_proxies=False):
         '''
-        Support legacy use of loadDorad() and permit wider use by specifying startdate and endate
+        Support legacy use of loadDorado() and permit wider use by specifying startdate and endate
         '''
         pname = 'dorado'
         psl = ParentSamplesLoader('', '', dbAlias=self.dbAlias)
@@ -179,6 +179,46 @@ class CANONLoader(LoadScript):
             try:
                 mps_loaded = DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aname, 
                                            pname, self.colors[pname], 'auv', 'AUV mission', 
+                                           self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
+                                           plotTimeSeriesDepth=0.0, plankton_proxies=plankton_proxies)
+                if mps_loaded:
+                    psl.load_gulps(aname, dfile, self.dbAlias)
+            except DAPloaders.DuplicateData as e:
+                self.logger.warn(str(e))
+                self.logger.info(f"Skipping load of {url}")
+
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pname,
+                                  scalefactor=2)
+
+    def load_i2MAP(self, startdate=None, enddate=None,
+                   parameters=[ 'seabird25p_temperature', 'seabird25p_salinity',
+                                'navigation_roll', 'navigation_pitch', 'navigation_yaw' ],
+                    stride=None,
+                    file_patterns=('.*_1S.nc$'), build_attrs=False, plankton_proxies=False):
+        '''
+        With i2map_*_1S.nc files in the AUVCTD/surveys directories we can use the Dorado loading code
+        '''
+        pname = 'i2map'
+        psl = ParentSamplesLoader('', '', dbAlias=self.dbAlias)
+        if build_attrs:
+            self.logger.info(f'Building load parameter attributes for {pname} by crawling TDS')
+            self.build_dorado_attrs('dorado', startdate, enddate, parameters, file_patterns)
+        else:
+            self.logger.info(f'Using load {pname} attributes set in load script')
+            parameters = getattr(self, f'{pname}_parms')
+
+        stride = stride or self.stride
+        if hasattr(self, 'dorado_base'):
+            urls = [os.path.join(self.dorado_base, f) for f in self.dorado_files]
+        else:
+            urls = self.dorado_urls
+
+        for url in urls:
+            dfile = url.split('/')[-1]
+            aname = dfile + getStrideText(stride)
+            try:
+                mps_loaded = DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aname, 
+                                           pname, self.colors['dorado'], 'auv', 'i2MAP mission', 
                                            self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
                                            plotTimeSeriesDepth=0.0, plankton_proxies=plankton_proxies)
                 if mps_loaded:
@@ -1507,15 +1547,18 @@ class CANONLoader(LoadScript):
         c = Crawl(catalog_url, select=[search_str])
         d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
         for url in d:
-            yyyy_yd = '_'.join(url.split('/')[-1].split('_')[1:3])
-            file_dt = datetime.strptime(yyyy_yd, '%Y_%j')
-            sd = startdate.replace(hour=0, minute=0, second=0, microsecond=0)
-            ed = enddate.replace(hour=0, minute=0, second=0, microsecond=0)
-            if sd <= file_dt and file_dt <= ed:
+            try:
+                yyyy_yd = '_'.join(url.split('/')[-1].split('_')[1:3])
+                file_dt = datetime.strptime(yyyy_yd, '%Y_%j')
+                sd = startdate.replace(hour=0, minute=0, second=0, microsecond=0)
+                ed = enddate.replace(hour=0, minute=0, second=0, microsecond=0)
+                if sd <= file_dt and file_dt <= ed:
+                    urls.append(url)
+                    self.logger.debug(f'* {url}')
+                else:
+                    self.logger.debug(f'{url}')
+            except ValueError:
                 urls.append(url)
-                self.logger.debug(f'* {url}')
-            else:
-                self.logger.debug(f'{url}')
 
         if not urls:
             raise FileNotFound('No urls matching "{search_str}" found in {catalog_url}')

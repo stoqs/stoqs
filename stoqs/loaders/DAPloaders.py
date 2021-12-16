@@ -1959,7 +1959,7 @@ class Dorado_Loader(Trajectory_Loader):
         '''
         In addition to the NC_GLOBAL attributes that are added in the base class also add the quick-look plots that are on the dods server.
         '''
-        if self.url.endswith('lopc.nc'):
+        if not self.url.endswith('_decim.nc'):
             return super(Dorado_Loader, self).addResources()
 
         baseUrl = 'http://dods.mbari.org/data/auvctd/surveys'

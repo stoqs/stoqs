@@ -270,7 +270,8 @@ class LoadScript(object):
         # Add default clipping planes to avoid z-buffer problems with curtainx3d terrain intersections 
         for url, viewpoint in list(self.x3dTerrains.items()):
             self.logger.debug('url = %s, viewpoint = %s', url, viewpoint)
-            if 'zNear' not in viewpoint.values() and 'zFar' not in viewpoint.values():
+            self.logger.debug('url = %s, viewpoint.keys() = %s', url, viewpoint.keys())
+            if 'zNear' not in viewpoint.keys() and 'zFar' not in viewpoint.keys():
                 self.logger.info('Adding default clipping plane zNear, zFar values: 100.0, 300000.0')
                 resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                               uristring=url, name='zNear', value=100.0, resourcetype=resourceType)
