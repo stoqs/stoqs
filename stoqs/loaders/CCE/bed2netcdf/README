@@ -1,0 +1,33 @@
+Visualization/py directory:
+---------------------------
+
+Scripts and sample data files for producing X3D/VRML and NetCDF output.  Requires Python 2.6 or higher.
+
+1. Compile decode.c for your system by running make
+
+2. Create a virtual environment for the python code and install required modules:
+   Note: As of 19 March 2019
+        bed2netcdf.py uses euclid that is not supported in Python 3.  
+        Use Python 2.7 for now. 
+
+    virtualenv venv-beds
+    source venv-beds/bin/activate
+    pip install -r requirements.txt
+
+3. Build transformations.c:
+
+    # The transformations.py and transformations.c code was downloaded from http://www.lfd.uci.edu/~gohlke/
+    python setup.py build_ext --inplace
+
+4. Further executions must just enter the venv:
+
+    source venv-beds/bin/activate
+
+5. Execute the scripts:
+
+    ./bed2netcdf.py --input BED00012.EVT --output BED00012.nc
+    ./bed2x3d.py --input BED00038.EVT --output BED00038.x3d
+
+--
+Mike McCann
+25 March 2015
