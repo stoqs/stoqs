@@ -798,7 +798,7 @@ struct Material {
   std::string extras_json_string;
   std::string extensions_json_string;
 
-  Material() : alphaMode("OPAQUE"), alphaCutoff(0.5), doubleSided(false) {}
+  Material() : alphaMode("OPAQUE"), alphaCutoff(0.5), doubleSided(true) {}
   DEFAULT_METHODS(Material)
 
   bool operator==(const Material &) const;

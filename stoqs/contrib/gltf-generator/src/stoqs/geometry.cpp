@@ -1,9 +1,12 @@
 #include <stoqs/geometry.h>
 
 // standard library
-#include <math.h>
+#include <cmath>
+#include <iostream>
 
 #define EARTH_RADIUS_M 6371000.0
+#define WGS_84_SEMI_MAJOR_AXIS 6378137.0
+#define WGS_84_INVERSE_FLATTENING 298.257223563
 
 namespace stoqs
 {
@@ -24,11 +27,24 @@ namespace stoqs
 
 	double Geometry::get_latitude(const Bathymetry& bathymetry, size_t y)
 	{
-		return bathymetry.latitude_min() + bathymetry.latitude_spacing() * (double)y;
+		//std::cerr << std::fixed;
+		//std::cerr << "bathymetry.latitude_min(): " << bathymetry.latitude_min() << '\n';
+		//std::cerr << "bathymetry.latitude_max(): " << bathymetry.latitude_max() << '\n';
+		//return bathymetry.latitude_min() + bathymetry.latitude_spacing() * (double)y;
+		return bathymetry.latitude_max() - bathymetry.latitude_spacing() * (double)y;
 	}
 
 	Vertex Geometry::get_earth_centered_vertex(double longitude, double latitude, double altitude, uint32_t id)
 	{
+		// Test with:
+		// longitude, latitude, altitude: -122.503094 37.058946 -1020
+		// x, y, z:                       -2737902.2652    -4297133.60787    3822000.89563
+		//longitude = -122.503094;
+		//latitude = 37.058946;
+		//altitude = -1020;
+
+		//std::cerr << std::fixed;
+		//std::cerr << "longitude, latitude, altitude: " << longitude << ' ' << latitude << ' ' << altitude << '\n';
 		double phi = to_radians(latitude);
 		double theta = to_radians(longitude);
 
@@ -39,12 +55,41 @@ namespace stoqs
 		double rho = EARTH_RADIUS_M + altitude;
 
 		// this assumes z is up
-		float x = rho * cos_phi * cos_theta;
-		float y = rho * cos_phi * sin_theta;
-		float z = rho * sin_phi;
+		double x = rho * cos_phi * cos_theta;
+		double y = rho * cos_phi * sin_theta;
+		double z = rho * sin_phi;
+
+		//std::cerr << "x, y, z: " << x << ' ' << y << ' ' << z << '\n';
+
+		// Mimic https://github.com/GenericMappingTools/gmt/blob/be890649579be45e94269632786d08890a26dfea/src/gmt_map.c#L9094-L9108
+		// and   https://github.com/x3dom/x3dom/blob/3ace18318cd192e424546569932abfe3e1e2346a/src/nodes/Geospatial/GeoCoordinate.js#L380-L443
+		double F = 1.0 / WGS_84_INVERSE_FLATTENING;
+		double e_squared = F * ( 2.0 - F );
+
+		double sin_lon = sin(to_radians(longitude));
+		double cos_lon = cos(to_radians(longitude));
+		double sin_lat = sin(to_radians(latitude));
+		double cos_lat = cos(to_radians(latitude));
+
+		double N = WGS_84_SEMI_MAJOR_AXIS / sqrt (1.0 - e_squared * sin_lat * sin_lat);
+		double tmp = (N + altitude) * cos_lat;
+		x = tmp * cos_lon;
+		y = tmp * sin_lon;
+		z = (N * (1 - e_squared) + altitude) * sin_lat;
+
+		//std::cerr << "WGS-84 x, y, z: " << x << ' ' << y << ' ' << z << '\n';
+		// [vagrant@localhost build]$ ./grd-to-gltf Monterey25.grd -e 10 -b
+		// longitude, latitude, altitude: -122.503094 36.440848 -1020.000000
+		// x, y, z: -2753604.329500 -4321778.000725 3783720.828683
+		// WGS-84 x, y, z: -2759951.394247 -4331739.709638 3767050.208608
+		// [vagrant@localhost build]$ echo "-122.503094 36.440848 -1020.000000" | gmt mapproject -E
+		// -2759951.41997    -4331739.72409    3767050.17337
+		//exit(0);
+
 
 		// gltf assumes y is up
-		return Vertex(x, z, y, id);
+		// With "return Vertex(x, z, y, id)" terrain ends up south of Australia
+		return Vertex(x, y, z, id);
 	}
 
 	Matrix<Vertex> Geometry::get_vertices(const Bathymetry& bathymetry, double vertical_exaggeration)
@@ -64,7 +109,6 @@ namespace stoqs
 					double longitude = get_longitude(bathymetry, x);
 					double latitude = get_latitude(bathymetry, y);
 					double adjusted_altitude = (double)altitude * vertical_exaggeration;
-					
 					out.at(x, y) = get_earth_centered_vertex(longitude, latitude, adjusted_altitude, vertex_id++);
 				}
 			}
