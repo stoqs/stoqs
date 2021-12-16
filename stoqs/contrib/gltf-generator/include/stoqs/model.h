@@ -10,7 +10,7 @@ namespace stoqs
 	namespace model
 	{
 		void write_gltf(const Geometry& geometry, const Options& options);
-	};
+	}
 }
 
 #endif

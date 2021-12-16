@@ -1,21 +1,23 @@
 cmake_minimum_required(VERSION 3.13)
 project("grd-to-gltf")
 
+list(APPEND CMAKE_PREFIX_PATH "/home/vagrant/Downloads/netcdf-cxx4/build")
+
 # getting libraries
-find_package(netCDF CONFIG REQUIRED)
+find_package(netCDFCxx CONFIG REQUIRED)
 
 if (WIN32)
 	add_library(netcdf SHARED IMPORTED)
 	set_target_properties(netcdf PROPERTIES IMPORTED_IMPLIB "${netCDF_LIB_DIR}/netcdf.lib")
 	set(LIBRARIES "netcdf")
 else()
-	set(LIBRARIES ${netCDF_LIBRARIES})
+	set(LIBRARIES "netcdf")
 endif()
 
 if (MSVC)
 	add_compile_options(/W4)
 else()
-	add_compile_options(-Wall -Wextra -pedantic)
+	add_compile_options(-Wall -Wextra -pedantic -std=c++11)
 endif()
 
 # getting sources & include dirs
