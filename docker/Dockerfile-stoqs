@@ -1,4 +1,4 @@
-FROM docker.io/ubuntu:22.04
+FROM docker.io/ubuntu:20.04
 
 MAINTAINER Mike McCann <mccann@mbari.org>
 
