@@ -49,6 +49,13 @@ cl = CANONLoader('$db_alias', '$title',
                       'VerticalExaggeration': '10',
                       'speed': '0.1',
                     },
+                    'https://stoqs.mbari.org/x3d/GMRTv3_9_20220109topo/GMRTv3_9_20220109topo.glb': {
+                      'position': '1700789.00462 -4894584.45935 3999701.63222',
+                      'orientation': '0.99079 0.11407 0.07294 1.79952',
+                      'centerOfRotation': '1643409.77755 -4620318.75966 4062958.74412',
+                      'VerticalExaggeration': '10',
+                      'speed': '0.1',
+                    },
                  },
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
