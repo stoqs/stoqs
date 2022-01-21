@@ -329,6 +329,9 @@
                                                         <span>
                                                             in <input id="slice_minutes" type="text" class="text-3d-input" value="5"/> minute slices (for contour curtain images)
                                                         </span>
+                                                        <span style="display:none;">
+                                                            <a href="javascript: setViewpoint();">Center viewpoint over data</a>
+                                                        </span>
                                                         <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
                                                             <div id="geo3d-colorbar"></div>
                                                         </a>
@@ -442,7 +445,7 @@
         <NavigationInfo id="spatial-3d-navinfo"></NavigationInfo>
         <Viewpoint id="mp-x3d-viewpoint1" def="vp" onviewpointChanged="setScale(event)"></Viewpoint>
         <!-- Test GeoViewpoint for Monterey Bay area, user must page-down or enter Cardboard to bind to it -->
-        <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" position="36.8 -122.1 100000" orientation="1 0 0 -1.57" centerofrotation="36.8 -122.1 0" onviewpointChanged="setScale(event)">
+        <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" position="36.8 -122.1 100000" orientation="1 0 0 -1.57" onviewpointChanged="setScale(event)">
         </GeoViewpoint>
         <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
         <Group id='spatial-3d-root' render='true'>
@@ -3012,7 +3015,8 @@ Elapsed time is 0.097718 seconds.
             $('#track-animations')[0].setAttribute('render', true);
             $('#curtain-animations')[0].setAttribute('render', false);
             $('#points-animations')[0].setAttribute('render', true);
-            $('input[name="show-mp-3d"]').parent().parent().parent().show()
+            $('input[name="show-mp-3d"]').parent().parent().parent().show();
+            $('a[href*="setViewpoint"]').parent().show();
             // Don't need to get everything from queryData, only the response with the X3D data
             if ($('input:radio[name=showdataas]:checked').val() == 'scatter') {
                 rebuildFilters(['measuredparameterx3d']);
@@ -3037,6 +3041,7 @@ Elapsed time is 0.097718 seconds.
             $('#curtain-animations')[0].setAttribute('render', false);
             $('#points-animations')[0].setAttribute('render', false);
             $('input[name="show-mp-3d"]').parent().parent().parent().hide()
+            $('a[href*="setViewpoint"]').parent().hide();
             $('#showlines').parent().hide();
             $('#showfaces').parent().hide();
             $('#showpoints').parent().hide();
@@ -4158,10 +4163,10 @@ function enable_cardboard(){
             $('#spatial-3d-x3d > Scene > Background').attr('skyColor', '.9608 .9608 .9608');
             var newSpeed = $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed') / 100000;
             $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed', newSpeed);
-            $('#mp-x3d-viewpoint1').attr('zNear', '10');
-            $('#mp-x3d-viewpoint1').attr('zFar', '300000');
-            $('#mp-x3d-geoviewpoint1').attr('zNear', '100');
-            $('#mp-x3d-geoviewpoint1').attr('zFar', '300000');
+            //$('#mp-x3d-viewpoint1').attr('zNear', '10');
+            //$('#mp-x3d-viewpoint1').attr('zFar', '300000');
+            //$('#mp-x3d-geoviewpoint1').attr('zNear', '100');
+            //$('#mp-x3d-geoviewpoint1').attr('zFar', '300000');
             $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 1000');
             $('#mp-x3d-geoviewpoint1').attr('orientation', '1 0 0 -1.57');
             $('#left-column').parent().parent().css( { 'padding-left': '20px' } );
@@ -4179,10 +4184,10 @@ function enable_cardboard(){
             // Fly mode still has the flipping problem, assume Examine mode is used which has a higher speed factor (100000)
             var newSpeed = $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed') * 100000;
             $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed', newSpeed);
-            $('#mp-x3d-viewpoint1').attr('zNear', '10');
-            $('#mp-x3d-viewpoint1').attr('zFar', '300000');
-            $('#mp-x3d-geoviewpoint1').attr('zNear', '100');
-            $('#mp-x3d-geoviewpoint1').attr('zFar', '30000');
+            //$('#mp-x3d-viewpoint1').attr('zNear', '10');
+            //$('#mp-x3d-viewpoint1').attr('zFar', '300000');
+            //$('#mp-x3d-geoviewpoint1').attr('zNear', '100');
+            //$('#mp-x3d-geoviewpoint1').attr('zFar', '30000');
             // put this viewpoint in the center of the horizontal extent and 100 units above sea level 
             $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 100');
             $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
@@ -7028,6 +7033,14 @@ function enable_cardboard(){
          : null;
     }
 
+    function setViewpoint() {
+        $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 10000');
+        $('#mp-x3d-geoviewpoint1').attr('orientation', '1 0 0 -1.57');
+        // Setting the centerOfRotation does not appear to work
+        //var cor_string = $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' ' + $('body').data()['extent'][3] * -10;
+        //$('#mp-x3d-geoviewpoint1').attr('centerOfRotation', cor_string);
+        $('#mp-x3d-geoviewpoint1').attr('bind', 'True');
+    }
 
     $(function () { 
         // Initialize the accordion fields.

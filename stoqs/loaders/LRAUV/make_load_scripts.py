@@ -32,7 +32,7 @@ script_template = 'load_lrauv.template'
 
 # Construct list of lrauvs with: ls -d /mbari/LRAUV/*/missionlogs | cut -d/ -f4
 lrauvs = ('ahi', 'aku', 'brezo', 'brizo', 'daphne', 'galene', 'makai', 'opah', 'pontus', 
-          'tethys', 'triton', 'whoidhs', )
+          'tethys', 'triton', 'whoidhs', 'polaris', )
 
 title_base = 'LRAUV - Routine Operational data'
 description_base='MBARI Long Range Autonomous Vehicle data'
