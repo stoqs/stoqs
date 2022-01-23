@@ -197,7 +197,7 @@ class InterpolatorWriter(BaseWriter):
 
         xp = np.asarray(data.index,dtype=np.float64)
         fp = np.asarray(data)
-        ts = pd.Series(index=times)
+        ts = pd.Series(index=times, dtype='float64')
         # interpolate to get data onto spacing of datetimes in times variable
         # this can be irregularly spaced
         ts[:] = np.interp(x,xp,fp)
@@ -867,7 +867,7 @@ class InterpolatorWriter(BaseWriter):
         for key in parm_valid:
             # Get independent parameter to interpolate on - remove NaNs first
             self.all_sub_ts[key] = self.all_sub_ts[key].dropna()
-            t = pd.Series(index = self.all_sub_ts[key].index)
+            t = pd.Series(index = self.all_sub_ts[key].index, dtype='float64')
             self.all_coord[key] = { 'time': key+'_time', 'depth': key+'_depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
 
             # interpolate each coordinate to the time of the parameter
@@ -895,7 +895,7 @@ class InterpolatorWriter(BaseWriter):
             self.all_sub_ts[key + '_time'] = pd.Series(esec_list,index=v_time)
 
         # Get independent parameter to interpolate on
-        t = pd.Series(index = self.all_sub_ts[interp_key].index)
+        t = pd.Series(index = self.all_sub_ts[interp_key].index, dtype='float64')
 
         # store time using interpolation parameter
         v_time = self.all_sub_ts[interp_key].index
