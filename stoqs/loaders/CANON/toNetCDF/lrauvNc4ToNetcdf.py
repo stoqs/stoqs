@@ -189,11 +189,14 @@ class InterpolatorWriter(BaseWriter):
         # End write_netcdf()
 
 
-    def interpolate(self, data, times):
-        x = np.asarray(times,dtype=np.float64)
+    def interpolate(self, data, times, fillin=None):
+        '''For use in shore.nc4 files by processNc4FileDecimated(). fillin will fill in
+        values between telemetered measurements at interval specified.
+        '''
+        x = np.asarray(times, dtype=np.float64)
         if np.any(np.diff(x) <= 0):
             x, counts = np.unique(x, return_counts=True)
-            self.logger.warning(f"Repeated values found in x array, counts = {counts}")
+            self.logger.warning(f"Removed repeated times values, counts = {counts}")
 
         xp = np.asarray(data.index,dtype=np.float64)
         fp = np.asarray(data)
@@ -201,6 +204,13 @@ class InterpolatorWriter(BaseWriter):
         # interpolate to get data onto spacing of datetimes in times variable
         # this can be irregularly spaced
         ts[:] = np.interp(x,xp,fp)
+        if fillin:
+            # https://stackoverflow.com/a/47148740/1281657
+            oidx = ts.index
+            nidx = pd.date_range(oidx.min(), oidx.max(), freq=fillin)
+            self.logger.info("Filling in between %d original values between %s and %s with frequency '%s'", len(ts), oidx.min(), oidx.max(), fillin)
+            ts = ts.reindex(oidx.union(nidx)).interpolate('index').reindex(nidx)
+            self.logger.info("Number of upsampled values now in time series: %s", len(ts))
         return ts
         # End interpolate
 
@@ -763,7 +773,7 @@ class InterpolatorWriter(BaseWriter):
 
         return pd.Series(lon_nudged, index=dt_nudged), pd.Series(lat_nudged, index=dt_nudged)
 
-    def processNc4FileDecimated(self, url, in_file, out_file, parms, group_parms, interp_key):
+    def processNc4FileDecimated(self, url, in_file, out_file, parms, fillin_freq, group_parms, interp_key):
         self.reset()
         self.group_parms = group_parms
         parm_valid = []
@@ -787,7 +797,7 @@ class InterpolatorWriter(BaseWriter):
 
             attr = {}
             for name in self.df[key].ncattrs(): 
-                self.logger.debug(f"Getting attributes for {name}")
+                self.logger.debug(f"Variable {key} has attribute {name}")
                 attr[name]=getattr(self.df[key],name)
             self.all_attrib[key] = attr
             self.all_coord[key] = {'time': 'time', 'depth': 'depth', 'latitude': 'latitude', 'longitude': 'longitude'}
@@ -828,6 +838,8 @@ class InterpolatorWriter(BaseWriter):
                         key = p["rename"]
                         var = p["name"]
                         ts = self.createSeries(subgroup.variables, var, var+'_'+'time')
+                        self.logger.info("Upsampling %s to '%s'", var, fillin_freq)
+                        ts = self.interpolate(ts, ts.index, fillin=fillin_freq)
                         attr = {}
 
                         # don't store or try to interpolate empty time series
@@ -863,7 +875,7 @@ class InterpolatorWriter(BaseWriter):
                         self.logger.error(e)
                         continue
 
-        # create independent lat/lon/depth profiles for each parameter
+        # create aligned lat/lon/depth coordinates for each parameter
         for key in parm_valid:
             # Get independent parameter to interpolate on - remove NaNs first
             self.all_sub_ts[key] = self.all_sub_ts[key].dropna()
@@ -885,6 +897,7 @@ class InterpolatorWriter(BaseWriter):
                 # and interpolate using parameter time
                 if not ts.empty:
 
+                    self.logger.info("Variable %s, interpolating coordinate %s", key, c)
                     i = self.interpolate(ts, t.index)
                     self.all_sub_ts[key + '_' + c] = i
                     self.all_coord[key + '_' + c] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
@@ -905,11 +918,12 @@ class InterpolatorWriter(BaseWriter):
         for key in coord:
             value = coord_ts[key]
             self.all_sub_ts[key] = value
-            if not value.empty :
-               i = self.interpolate(value, t.index)
-               self.all_sub_ts[key] = i
+            if not value.empty:
+                self.logger.info("Interpolating coordinate %s", key)
+                i = self.interpolate(value, t.index)
+                self.all_sub_ts[key] = i
             else:
-               self.all_sub_ts[key] = value
+                self.all_sub_ts[key] = value
 
             self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
@@ -1328,6 +1342,6 @@ if __name__ == '__main__':
     out_file = outDir + '.'.join(f.split('.')[:-1]) + '_' + resample_freq + '.nc'
     ##pw.processResampleNc4File(nc4_file, out_file, json.loads(parms),resample_freq, rad_to_deg, args)
     pw.logger.debug(f"Testing processNc4FileDecimated() to create {out_file}...")
-    pw.processNc4FileDecimated(url_src, nc4_file, out_file, parms, json.loads(groupparms), 'depth')
+    pw.processNc4FileDecimated(url_src, nc4_file, out_file, parms, '2S', json.loads(groupparms), 'depth')
 
     print('Done.')
