@@ -190,14 +190,14 @@ class InterpolatorWriter(BaseWriter):
 
 
     def interpolate(self, data, times):
-        x = np.asarray(times,dtype=np.float64)
+        x = np.asarray(times, dtype=np.float64)
         if np.any(np.diff(x) <= 0):
             x, counts = np.unique(x, return_counts=True)
-            self.logger.warning(f"Repeated values found in x array, counts = {counts}")
+            self.logger.warning(f"Removed repeated times values, counts = {counts}")
 
         xp = np.asarray(data.index,dtype=np.float64)
         fp = np.asarray(data)
-        ts = pd.Series(index=times)
+        ts = pd.Series(index=times, dtype='float64')
         # interpolate to get data onto spacing of datetimes in times variable
         # this can be irregularly spaced
         ts[:] = np.interp(x,xp,fp)
@@ -227,8 +227,12 @@ class InterpolatorWriter(BaseWriter):
             return None, None
 
     def createSeries(self, subgroup, name, tname):
-        v = subgroup[name]
-        v_t = subgroup[tname]
+        if subgroup:
+            v = subgroup[name]
+            v_t = subgroup[tname]
+        else:
+            v = self.df[name]
+            v_t = self.df[tname]
 
         # Discovered in /mbari/LRAUV/whoidhs/missionlogs/2019/20190610_20190613/20190611T165616/201906111656_201906111829.nc4
         # Also in http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2019/20191001_20191010/20191007T152538/201910071525_201910080007.nc4.ascii?latitude[13618:1:13622]
@@ -763,41 +767,75 @@ class InterpolatorWriter(BaseWriter):
 
         return pd.Series(lon_nudged, index=dt_nudged), pd.Series(lat_nudged, index=dt_nudged)
 
-    def processNc4FileDecimated(self, url, in_file, out_file, parms, group_parms, interp_key):
+    def _common_time_index(self):
+        '''Create a union of all time indexes for all parameters to load and fillin values at
+        fillin_freq. This ensures that all parameters can use a common set of coordinates 
+        making the data more useful when loaded into STOQS.
+        '''
+        # Use member variables assigned in processNc4FileDecimated()
+        min_time = pd.Timestamp.max
+        max_time = pd.Timestamp.min
+        common_times = pd.DatetimeIndex([], dtype='datetime64[ns]')
+        for group in self.df.groups:
+            if group in self.group_parms.keys():
+                self.logger.debug("Examining group %s from %s", group, self.in_file)
+                for parameter in self.group_parms[group]:
+                    self.logger.debug("parameter: %s", parameter)
+                    for variable in self.df.groups[group].variables:
+                        self.logger.debug("variable: %s", variable)
+                        if parameter['name'] == variable:
+                            self.logger.debug("Variable %s marked for loading", variable)
+                            oidx = self.createSeries(self.df.groups[group].variables, variable, variable+'_'+'time').index
+                            min_time = oidx.min() if oidx.min() < min_time else min_time
+                            max_time = oidx.max() if oidx.max() > max_time else max_time
+                            self.logger.info("Unionifying %d time index values from %s", len(oidx), variable)
+                            common_times = common_times.union(oidx)
+
+        common_times = common_times.drop_duplicates()
+        self.logger.info("Final count of unioned times is %d between %s and %s", len(common_times), min_time, max_time) 
+        return common_times, min_time, max_time
+
+    def processNc4FileDecimated(self, url, in_file, out_file, parms, fillin_freq, group_parms, interp_key):
         self.reset()
         self.group_parms = group_parms
         parm_valid = []
-        coord =  ['latitude','longitude','depth']
+        coord =  ['latitude', 'longitude', 'depth']
 
         self.df = netCDF4.Dataset(in_file, mode='r')
         self.in_file = in_file
         coord_ts = self.createCoord(coord)
 
-        # Create pandas time series for each parameter and store attributes
+        # Scan all netCDF variables to assemble a common time axis for all varaibles
+        common_times, min_time, max_time = self._common_time_index()
+        nidx = pd.date_range(min_time, max_time, freq=fillin_freq)
+
+        # Create pandas time series for each parameter and store attributes - root group from .nc4 file
         for key in parms:
-          try:
-            ts = self.createSeriesPydap(key, key + '_time')
-          except IndexError as e:
-            self.logger.debug(e)
-            continue
-          try:
+            try:
+                ts = self.createSeries({}, key, key + '_time')
+            except IndexError:
+                ##self.logger.debug("Parameter %s not in root group of %s", key, in_file)
+                continue
+            ts = ts[~ts.index.duplicated(keep='first')]
+            self.logger.info("Upsampling %s's %d values to '%s'", key, len(ts), fillin_freq)
+            common_interp = common_times.union(nidx).drop_duplicates()
+            ts = ts.reindex(common_interp).interpolate('index').reindex(nidx)
+            self.logger.info("Number of upsampled values now in %s: %d", key, len(ts))
+            ts = self.interpolate(ts, ts.index)
+
             if ts.size == 0:
                 self.logger.info('Variable ' + key + ' empty so skipping')
                 continue
 
             attr = {}
             for name in self.df[key].ncattrs(): 
-                self.logger.debug(f"Getting attributes for {name}")
+                self.logger.debug(f"Variable {key} has attribute {name}")
                 attr[name]=getattr(self.df[key],name)
             self.all_attrib[key] = attr
             self.all_coord[key] = {'time': 'time', 'depth': 'depth', 'latitude': 'latitude', 'longitude': 'longitude'}
             parm_valid.append(key)
             self.all_sub_ts[key] = ts
             self.logger.debug('Found parameter ' + key)
-          except Exception as e:
-            # Likely no variable in the netCDF file
-            self.logger.warning(e)
-            continue
 
         # Create pandas time series for each parameter in each group and store attributes
         for group in self.df.groups:
@@ -828,6 +866,12 @@ class InterpolatorWriter(BaseWriter):
                         key = p["rename"]
                         var = p["name"]
                         ts = self.createSeries(subgroup.variables, var, var+'_'+'time')
+                        ts = ts[~ts.index.duplicated(keep='first')]
+                        self.logger.info("Upsampling %s's %d values to '%s'", var, len(ts), fillin_freq)
+                        common_interp = common_times.union(nidx).drop_duplicates()
+                        ts = ts.reindex(common_interp).interpolate('index').reindex(nidx)
+                        self.logger.info("Number of upsampled values now in %s: %d", p, len(ts))
+                        ts = self.interpolate(ts, ts.index)
                         attr = {}
 
                         # don't store or try to interpolate empty time series
@@ -863,17 +907,15 @@ class InterpolatorWriter(BaseWriter):
                         self.logger.error(e)
                         continue
 
-        # create independent lat/lon/depth profiles for each parameter
+        # create aligned lat/lon/depth coordinates for each parameter
         for key in parm_valid:
             # Get independent parameter to interpolate on - remove NaNs first
             self.all_sub_ts[key] = self.all_sub_ts[key].dropna()
-            t = pd.Series(index = self.all_sub_ts[key].index)
-            self.all_coord[key] = { 'time': key+'_time', 'depth': key+'_depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
+            t = pd.Series(index = self.all_sub_ts[key].index, dtype='float64')
+            self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude': 'latitude', 'longitude': 'longitude'}
 
             # interpolate each coordinate to the time of the parameter
-            # key looks like sea_water_temperature_depth, sea_water_temperature_lat, sea_water_temperature_lon, etc.
             for c in coord:
-
                 try:
                     # get coordinate
                     ts = coord_ts[c]
@@ -885,17 +927,18 @@ class InterpolatorWriter(BaseWriter):
                 # and interpolate using parameter time
                 if not ts.empty:
 
+                    self.logger.info("Variable %s, interpolating coordinate %s", key, c)
                     i = self.interpolate(ts, t.index)
-                    self.all_sub_ts[key + '_' + c] = i
-                    self.all_coord[key + '_' + c] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
+                    self.all_sub_ts[c] = i
+                    self.all_coord[c] = { 'time': 'time', 'depth': 'depth', 'latitude': 'latitude', 'longitude': 'longitude'}
 
             # add in time coordinate separately
             v_time = self.all_sub_ts[key].index
             esec_list = v_time.values.astype(dt.datetime)/1E9
-            self.all_sub_ts[key + '_time'] = pd.Series(esec_list,index=v_time)
+            self.all_sub_ts['time'] = pd.Series(esec_list,index=v_time)
 
         # Get independent parameter to interpolate on
-        t = pd.Series(index = self.all_sub_ts[interp_key].index)
+        t = pd.Series(index = self.all_sub_ts[interp_key].index, dtype='float64')
 
         # store time using interpolation parameter
         v_time = self.all_sub_ts[interp_key].index
@@ -905,24 +948,29 @@ class InterpolatorWriter(BaseWriter):
         for key in coord:
             value = coord_ts[key]
             self.all_sub_ts[key] = value
-            if not value.empty :
-               i = self.interpolate(value, t.index)
-               self.all_sub_ts[key] = i
+            if not value.empty:
+                self.logger.info("Interpolating coordinate %s", key)
+                i = self.interpolate(value, t.index)
+                self.all_sub_ts[key] = i
             else:
-               self.all_sub_ts[key] = value
+                self.all_sub_ts[key] = value
 
             self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
         self.logger.info(f"Collected data from {url}")
-        for parm in parms:
-            try:
+        shape_count = 0
+        for parm in self.all_sub_ts.keys():
+            if parm in parms:
                 self.logger.info(f"{parm:11s} shape: {self.all_sub_ts[parm].shape}")
-            except KeyError:
-                pass
+            else:
+                self.logger.info(f"coordinate {parm:11s} shape: {self.all_sub_ts[parm].shape}")
+            shape_count += self.all_sub_ts[parm].shape[0]
 
-        # Write data to the file
-        self.write_netcdf(out_file, url)
-        self.logger.info('Wrote ' + out_file)
+        self.logger.debug("shape_count = %s", shape_count)
+        if shape_count > 0:
+            # Write data to the file
+            self.write_netcdf(out_file, url)
+            self.logger.info('Wrote ' + out_file)
 
         # End processSingleParm
 
@@ -1328,6 +1376,6 @@ if __name__ == '__main__':
     out_file = outDir + '.'.join(f.split('.')[:-1]) + '_' + resample_freq + '.nc'
     ##pw.processResampleNc4File(nc4_file, out_file, json.loads(parms),resample_freq, rad_to_deg, args)
     pw.logger.debug(f"Testing processNc4FileDecimated() to create {out_file}...")
-    pw.processNc4FileDecimated(url_src, nc4_file, out_file, parms, json.loads(groupparms), 'depth')
+    pw.processNc4FileDecimated(url_src, nc4_file, out_file, parms, '2S', json.loads(groupparms), 'depth')
 
     print('Done.')

@@ -38,7 +38,9 @@ from loaders.LRAUV.make_load_scripts import lrauvs
 
 # Set up global variables for logging output to STDOUT
 
-SCI_PARMS = {'Aanderaa_O2': [{'name': 'mass_concentration_of_oxygen_in_sea_water',
+SCI_PARMS = {'/':           [{'name': 'concentration_of_colored_dissolved_organic_matter_in_sea_water',
+                              'rename': 'colored_dissolved_organic_matter'}],
+             'Aanderaa_O2': [{'name': 'mass_concentration_of_oxygen_in_sea_water',
                               'rename': 'oxygen'}],
              'CTD_NeilBrown': [{'name': 'sea_water_salinity', 'rename': 'salinity'},
                                {'name': 'sea_water_temperature', 'rename': 'temperature'}],
@@ -108,14 +110,14 @@ for group, parmlist in REALTIME_SCIENG_PARMS.items():
         for k, parm in parmdict.items():
             if k == 'name':
                 if parm == 'sea_water_salinity':
-                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_mean_{parm}", 'rename': 'salinity'})
-                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_median_{parm}", 'rename': 'salinity'})
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_mean_{parm}", 'rename': f"bin_mean_{parm}"})
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_median_{parm}", 'rename': f"bin_median_{parm}"})
                 if parm == 'sea_water_temperature':
-                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_mean_{parm}", 'rename': 'temperature'})
-                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_median_{parm}", 'rename': 'temperature'})
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_mean_{parm}", 'rename': f"bin_mean_{parm}"})
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_median_{parm}", 'rename': f"bin_median_{parm}"})
                 if parm == 'mass_concentration_of_chlorophyll_in_sea_water':
-                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_mean_{parm}", 'rename': 'chlorophyll'})
-                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_median_{parm}", 'rename': 'chlorophyll'})
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_mean_{parm}", 'rename': f"bin_mean_{parm}"})
+                    REALTIME_SCIENG_PARMS[group].append({'name': f"bin_median_{parm}", 'rename': f"bin_median_{parm}"})
 
 
 class ServerError(Exception):
@@ -396,7 +398,16 @@ class Make_netCDFs():
             return url_i, None, None
 
         # The renamed parameters to put into the shore_i.nc file, need 'depth' for interp parameter
-        parms = ['depth', 'chlorophyll', 'temperature', 'salinity', 'mass_concentration_of_oxygen_in_sea_water']
+        # - include all possible parms, but no coordiantes except depth
+        parms = set()
+        for group, parmlist in REALTIME_SCIENG_PARMS.items():
+            for parmdict in parmlist:
+                for k, parm in parmdict.items():
+                    if k == 'name':
+                        if 'latitude' in parm or 'longitude' in parm or 'time' in parm:
+                            continue
+                        parms.add(parm)
+        parms = sorted(list(parms))
 
         if (start <= file_start and file_start <= end) or (start  <= file_end and file_end <= end):
             try:
@@ -405,7 +416,7 @@ class Make_netCDFs():
                     if current_log:
                         mn.logger.info(f"current_log = {current_log}")
                     self.logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
-                    pw.processNc4FileDecimated(url, inFile, outFile_i, parms, REALTIME_SCIENG_PARMS, 'depth')
+                    pw.processNc4FileDecimated(url, inFile, outFile_i, parms, '2S', REALTIME_SCIENG_PARMS, 'depth')
                 else:
                     self.logger.info(f"Not calling processNc4FileDecimated() for {outFile_i}: file exists")
             except (KeyError, TypeError, IndexError, ValueError, lrauvNc4ToNetcdf.MissingCoordinate) as e :

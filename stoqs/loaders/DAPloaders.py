@@ -815,11 +815,18 @@ class Base_Loader(STOQS_Loader):
         (Implemented temporary fix by not loading salinity; problem occurs with loading both temperature & salinity)
         http://dods.mbari.org/opendap/data/lrauv/makai/realtime/sbdlogs/2020/202010/20201008T014813/shore_i.nc
     
-        The role of this method is to identify truely equal coordinates of variables to be loaded for the 
+        The role of this method is to identify truly equal coordinates of variables to be loaded for the 
         calling routine to determine whether a bulk_create() may be done or whether the variables need to be
         loaded the old fashioned (slower) way - one element at a time, reusing previously loaded coordinates.
+
+        N.B.: In Janurary 2022 stoqs/loaders/CANON/toNetCDF/lrauvNc4ToNetcdf.py was modified to re-interpolate
+        the decimated data to '2S' frequency and use common coordinate axes for all variables - so this finction
+        isn't really needed for those new shore_i.nc files.
         '''
         coord_equals = {}
+        if len(coor_groups) == 1:
+            self.logger.info(f"Single set of coordinates as would be found in a modern shore_i.nc file")
+            return coord_equals
         for count, (axes, ac) in enumerate(coor_groups.items()):
             self.logger.info(f"Initializing coord_equals to all False for axes {axes}")
             self.logger.info(f"Number of {ac[TIME]} values: {len(self.ds[ac[TIME]])}")
