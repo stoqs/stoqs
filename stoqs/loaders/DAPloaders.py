@@ -307,6 +307,8 @@ class Base_Loader(STOQS_Loader):
         Do the intial Database activities that are required before the data are processed: getPlatorm and createActivity.
         Can be overridden by sub class.  An overriding method can do such things as setting startDatetime and endDatetime.
         '''
+        if self.command_line_args.append and self.command_line_args.remove_appended_activities:
+            self.remove_appended_activities()
         if self.checkForValidData():
             self.platform = self.getPlatform(self.platformName, self.platformTypeName)
             self.add_parameters(self.ds)
