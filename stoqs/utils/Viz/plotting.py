@@ -97,7 +97,7 @@ class BaseParameter(object):
     def __init__(self):
         # Default colormap - a perceptually uniform, color blind safe one
         self.cm_name = 'cividis'
-        self.num_colors = 512
+        self.num_colors = 256
         self.cmin = None
         self.cmax = None
         self.cm = plt.get_cmap(self.cm_name)
