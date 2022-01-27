@@ -642,6 +642,8 @@ local   all             all                                     peer
                     load_command += ' --realtime'
                 if cl_args.missionlogs:
                     load_command += ' --missionlogs'
+                if cl_args.remove_appended_activities:
+                    load_command += ' --remove_appended_activities'
                 if cl_args.append:
                     appending = True
             if hasattr(self.args, 'append'):

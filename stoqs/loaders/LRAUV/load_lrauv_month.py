@@ -146,6 +146,7 @@ class AutoLoad():
         parser.add_argument('--missionlogs', action='store_true', help='Load delayed mode (missionlogs) data')
         parser.add_argument('--append', action='store_true', help='Append data to existting database')
         parser.add_argument('--startdate', help='Startdate in YYYYMMDD format for appending data')
+        parser.add_argument('--remove_appended_activities', action='store_true', help='First remove activities loaded after load_date_gmt')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, 
                             help='Turn on verbose output. If > 2 load is verbose too.', const=1, default=0)
 

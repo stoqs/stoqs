@@ -179,6 +179,8 @@ class LoadScript(object):
                             help='For loaders that use startdate and enddate, load data from the previoius month')
         self.parser.add_argument('--current_month', action='store_true', 
                             help='For loaders that use startdate and enddate, load data from the current month')
+        self.parser.add_argument('--remove_appended_activities', action='store_true',
+                            help='First remove activities loaded after load_date_gmt')
         self.parser.add_argument('-v', '--verbose', action='store_true', 
                             help='Turn on DEBUG level logging output')
 
@@ -549,6 +551,15 @@ class STOQS_Loader(object):
             self.campaign.save(using=self.dbAlias)
             self.logger.info('Created campaign = %s', self.campaign)
  
+    def remove_appended_activities(self):
+        for dt_str in m.Resource.objects.using(self.dbAlias).filter(name='load_date_gmt').values_list('value', flat=True):
+            # 2022-01-26 10:28:53.535769 - simply use the last one if there are multiples
+            loaded_date = datetime.fromisoformat(dt_str)
+
+        for act in m.Activity.objects.using(self.dbAlias).filter(enddate__gt=loaded_date):
+            self.logger.info("Removing Activity %s before appending", act)
+            act.delete(using=self.dbAlias)
+
     def createActivity(self):
         '''
         Use provided activity information to add the activity to the database.
