@@ -552,9 +552,14 @@ class STOQS_Loader(object):
             self.logger.info('Created campaign = %s', self.campaign)
  
     def remove_appended_activities(self):
+        loaded_date = None
         for dt_str in m.Resource.objects.using(self.dbAlias).filter(name='load_date_gmt').values_list('value', flat=True):
             # 2022-01-26 10:28:53.535769 - simply use the last one if there are multiples
             loaded_date = datetime.fromisoformat(dt_str)
+
+        if not loaded_date:
+            self.logger.info("--remove_appended_activities requested, but loaded_date not found in %s.  Perhaps another load is in process.", self.dbAlias)
+            return
 
         for act in m.Activity.objects.using(self.dbAlias).filter(enddate__gt=loaded_date):
             self.logger.info("Removing Activity %s before appending", act)
