@@ -20,7 +20,7 @@ euclid==1.2
 djangorestframework==3.13.1
 fastparquet==0.7.2
 Flask-SQLAlchemy==2.5.1
-httplib2==0.20.2
+httplib2==0.20.4
 hvplot==0.7.2
 holoviews==1.14.7
 ipyleaflet==0.15.0
