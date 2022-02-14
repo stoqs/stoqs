@@ -465,6 +465,45 @@ class BEDS(object):
 
         self.process_bed_depth()
 
+    def readBEDs_csv_File(self, infile, decode=False):
+        '''
+        Open @infile, read values, apply offsets and scaling.
+        Return numpy arrays of the acceleration and rotation data as originally recorded.
+
+        Output from 'decodeBEDS.py -o 20200995.EVT.OUT 20200995.EVT' looks like:
+
+            recNum,epoch_time,date_time,accel_x,accel_y,accel_z,roll,pitch,heading,quat_w,quat_x,quat_y,quat_z,pressureCnts,pressure,units,startTimeEpoch,startTime,duration,maxAccel,filename,startTimeEpoch,startTime,battV,minModemBatt,extPressure,intPresssure,intTemp,intHumidity,
+            0,1641329599.200,2022-01-04 20:53:19.200000,-0.06299,-0.01514,1.003,179.5,18.85,175.8,0.1635,-0.03646,-0.009919,0.9858,,,,,,,,,,,,,,,,,
+            1,1641329599.200,2022-01-04 20:53:19.200000,-0.0708,0.009766,1.0,179.6,18.82,175.8,0.1633,-0.03629,-0.009298,0.9859,,,,,,,,,,,,,,,,,
+            2,1641329599.000,2022-01-04 20:53:19,-0.0708,0.009766,1.0,179.6,18.82,175.8,0.1633,-0.03629,-0.009298,0.9859,,,,,,,,,,,,,,,,,
+        '''
+
+        self.rateHz = 50
+
+        for r in csv.DictReader(open(infile), delimiter=','):
+            if self.args.verbose > 1: 
+                print r
+            self.secList.append(float(r['epoch_time'])
+            self.axList.append(float(r['accel_x']))
+            self.ayList.append(float(r['accel_y']))
+            self.azList.append(float(r['accel_z']))
+            self.quatList.append( (float(r['quat_w'), float(r['quat_x'), float(r['quat_y'), float(r['quat_z')) )
+            self.pBarList.append(float(r['pressure']))
+
+
+        # Make the Lists numpy arrays so that we can do matrix math operations; they have units of seconds and bar
+        self.s = np.array(self.secList)
+        self.s2013 = self.s - 1356998400.0      # (date(2013,1,1)-date(1970,1,1)).total_seconds() in python2.7
+        # In csv file pressure is at same time intervalsa as the IMU data
+        self.ps = np.array(self.secList)
+        self.ps2013 = self.s - 1356998400.0      # (date(2013,1,1)-date(1970,1,1)).total_seconds() in python2.7
+        self.pr = np.array(self.pBarList)
+
+        breakpoint()
+        self.process_bed_depth()
+
+
+
     def process_bed_depth(self):
         '''Build depth paramters that will be the coordinate variable for trajectory data
         and record variables for both timeseries and trajectory data. Original sampled
