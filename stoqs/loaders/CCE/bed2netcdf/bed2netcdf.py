@@ -60,7 +60,10 @@ class BEDS_NetCDF(BEDS):
 
             if self.sensorType == 'Invensense':
                 try:
-                    self.readBEDsFile(fileName)
+                    if self.args.read_csv:
+                        self.readBEDs_csv_File(fileName)
+                    else:
+                        self.readBEDsFile(fileName)
                     self.processAccelerations()
                     self.processRotations(useMatlabCode=False)
                 except NoPressureData as e:
@@ -691,6 +694,7 @@ class BEDS_NetCDF(BEDS):
         parser.add_argument('--stride_imu', type=int, action='store', help='Records of IMU data to skip', default=1)
         parser.add_argument('--no_tide_removal', action='store_true', help='Default is to remove tides using OSTP2')
         parser.add_argument('--compare_euler', action='store_true', help='Report differences between Quaternion.get_euler() and transforms3d.euler.quat2euler()')
+        parser.add_argument('--read_csv', action='store_true', help='Read from the csv format produced by decodeBEDS.py')
 
         parser.add_argument('-v', '--verbose', type=int, choices=range(3), action='store', default=0, help="Specify verbosity level, values greater than 1 give more details ")
 
