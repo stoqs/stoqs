@@ -111,7 +111,7 @@ class BEDS(object):
                     self.traj_depth.append(-float(r['topo_m']))
 
         if not self.traj_lat:
-            print "No downhill trajectory read, trying uphill"
+            print("No downhill trajectory read, trying uphill")
             with open(self.args.trajectory) as fp:
                 for r in reversed(list(csv.DictReader((row for row in fp if not row.startswith('#')), delimiter=' '))):
                     if abs(float(r['topo_m'])) <= beg_depth and abs(float(r['topo_m'])) >= end_depth:
@@ -345,7 +345,7 @@ class BEDS(object):
             dp = eos80.dpth(p * 10, 36.8)
             self.readTrajectory(dp, dp + 10)
             lat = np.mean(self.traj_lat)
-            print "Initial extraction of thalweg between depths {} and {} to get latitude for depth calculation: {}".format(dp, dp + 10, lat)
+            print("Initial extraction of thalweg between depths {} and {} to get latitude for depth calculation: {}".format(dp, dp + 10, lat))
 
         # Convert pressures from bar to dbar here
         p = p * 10
@@ -394,7 +394,7 @@ class BEDS(object):
         imu_count = 0
         for line in reader:
             if self.args.verbose > 1: 
-                    print line
+                    print(line)
 
             if line.startswith('FileHdr'):
                 # FileHdr ver=1 ID=0 rate=3000 2013/02/11 09:23:53.700 dur=26.614
@@ -411,11 +411,11 @@ class BEDS(object):
 
                 esec_diff = abs(self.second_marker_to_esec(dt_str) - esec)
                 if self.args.verbose > 1:
-                    print 'esec_diff =', esec_diff
+                    print('esec_diff =', esec_diff)
 
                 if esec_diff > 2 and 'WAT' not in infile:
                     # Ignore warning from .WAT.OUT files
-                    print "WARNING: esec_diff is greater than 2", esec_diff
+                    print("WARNING: esec_diff is greater than 2", esec_diff)
 
             if line.startswith('Ext Pressure'):
                 count = float(line.split()[2])
@@ -449,7 +449,7 @@ class BEDS(object):
 
                 esec += self.args.stride_imu / self.rateHz
                 if self.args.verbose > 1:
-                    print esec
+                    print(esec)
 
         # Bail out if no pressure data - event must be at least a second in duration
         if len(self.pSecList) == 0:
@@ -481,7 +481,7 @@ class BEDS(object):
 
         for r in csv.DictReader(open(infile), delimiter=','):
             if self.args.verbose > 1: 
-                print r
+                print(r)
             self.secList.append(float(r['epoch_time']))
             self.axList.append(float(r['accel_x']))
             self.ayList.append(float(r['accel_y']))
@@ -544,7 +544,7 @@ class BEDS(object):
         # Default behaviour is to remove the tide
         if not self.args.no_tide_removal:
             tide_command = self.computeTide()
-            print "Subtracting tide, mean value = {} m".format(np.mean(self.tide))
+            print("Subtracting tide, mean value = {} m".format(np.mean(self.tide)))
             self.bed_depth_comment += " Tide removed using output from: {}".format(tide_command)
             self.bed_depth -= self.tide
 
@@ -554,7 +554,7 @@ class BEDS(object):
         try:
             spline_func = interp1d(self.ps2013, self.bed_depth, kind='cubic')
         except (TypeError, ValueError) as e:
-            print(str(e))
+            print((str(e)))
             print('Not able to calculate spline interpolation of depth data')
         else:
             self.p_mask = ma.masked_less(ma.masked_greater(self.s2013, np.max(self.ps2013)), np.min(self.ps2013))
@@ -599,7 +599,7 @@ class BEDS(object):
         diffrot_sum = 0
         for i, quat in enumerate(self.quatList):
             if self.args.verbose > 1:
-                print "quat = ",  quat
+                print("quat = ",  quat)
 
             if useMatlabCode:
                 # Convert to Euler angles using same code that Brian's Matlab conversion uses
@@ -624,9 +624,9 @@ class BEDS(object):
                 if self.args.compare_euler:
                     tyRot, tzRot, txRot = quat2euler((q.w, q.x, q.y, q.z), axes='ryzx')
                     if not np.allclose((yRot, zRot, xRot), (tyRot, tzRot, txRot), atol=0.01):
-                        print('Quaternion.get_euler() does not agree with transforms3d.euler.quat2euler() at i = {}:'.format(i))
-                        print('.get_euler()  y, z, x: {:7.3f} {:7.3f} {:7.3f}'.format(yRot, zRot, xRot))
-                        print('.quat2euler() y, z, x: {:7.3f} {:7.3f} {:7.3f}'.format(tyRot, tzRot, txRot))
+                        print(('Quaternion.get_euler() does not agree with transforms3d.euler.quat2euler() at i = {}:'.format(i)))
+                        print(('.get_euler()  y, z, x: {:7.3f} {:7.3f} {:7.3f}'.format(yRot, zRot, xRot)))
+                        print(('.quat2euler() y, z, x: {:7.3f} {:7.3f} {:7.3f}'.format(tyRot, tzRot, txRot)))
                     
                 ##self.euler_comment = 'Converted from recorded Quaternion with Python transforms3d.taitbryan package quat2euler() function'
 
@@ -642,8 +642,8 @@ class BEDS(object):
                 try:
                     prot, pvec = q.get_angle_axis()
                 except ValueError as e:
-                    print e
-                    print 'WARNING: Using previous quaternion at index %d' % i
+                    print(e)
+                    print('WARNING: Using previous quaternion at index %d' % i)
                     q = Quaternion(*last_quat)
                     prot, pvec = q.get_angle_axis()
 
@@ -675,8 +675,8 @@ class BEDS(object):
                     try:
                         diffrot, vec = dq.get_angle_axis()
                     except ValueError as e:
-                        print e
-                        print 'WARNING: Using previous quaternion difference at index %d' % i
+                        print(e)
+                        print('WARNING: Using previous quaternion difference at index %d' % i)
                         diffrot, vec = last_dq.get_angle_axis()
 
                     self.m_angle_axis_comment = 'Computed with dq = Quaternion(*quat) * Quaternion(*last_quat).conjugated(); dq.get_angle_axis()'
@@ -698,7 +698,7 @@ class BEDS(object):
                     self.difftumbleList.append(0.0)
 
                 if self.args.verbose > 1:
-                    print "diffrot = ",  diffrot
+                    print("diffrot = ",  diffrot)
 
                 diffrot_sum += diffrot
                 last_dq = dq
@@ -711,7 +711,7 @@ class BEDS(object):
             if self.args.verbose:
                 fmtStr = "%2d. xRot, yRot, zRot, diffrot, diffrot_sum = %6.3f %6.3f %6.3f %6.3f %6.3f"
                 fmtStr += "  px, py, pz, prot = %6.3f %6.3f %6.3f %6.3f"
-                print fmtStr % (i+1, xRot, yRot, zRot, diffrot, diffrot_sum, px, py, pz, prot)
+                print(fmtStr % (i+1, xRot, yRot, zRot, diffrot, diffrot_sum, px, py, pz, prot))
 
         self.rx = np.array(self.rxList)
         self.ry = np.array(self.ryList)
@@ -762,7 +762,7 @@ class BEDS(object):
         tide_file = 'mbotps_out.txt'
         cmd = cmd_fmt.format(start_time, end_time, lon, lat, tide_file)
         if self.args.verbose:
-            print "Executing: {}".format(cmd)
+            print("Executing: {}".format(cmd))
         os.system(cmd + '&> /dev/null')
 
         # Read the tide time series data into member items
@@ -783,7 +783,7 @@ class BEDS(object):
 
         for fn in glob.glob('tmp_mbotps*.txt') + [tide_file]:
             if self.args.verbose:
-                print "Removing file {}".format(fn)
+                print("Removing file {}".format(fn))
             os.remove(fn)
             
         return cmd
