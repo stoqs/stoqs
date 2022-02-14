@@ -17,7 +17,6 @@ import csv
 import time
 import coards
 import glob
-import urllib2
 import numpy as np
 import numpy.ma as ma
 from collections import namedtuple
@@ -483,11 +482,11 @@ class BEDS(object):
         for r in csv.DictReader(open(infile), delimiter=','):
             if self.args.verbose > 1: 
                 print r
-            self.secList.append(float(r['epoch_time'])
+            self.secList.append(float(r['epoch_time']))
             self.axList.append(float(r['accel_x']))
             self.ayList.append(float(r['accel_y']))
             self.azList.append(float(r['accel_z']))
-            self.quatList.append( (float(r['quat_w'), float(r['quat_x'), float(r['quat_y'), float(r['quat_z')) )
+            self.quatList.append( (float(r['quat_w']), float(r['quat_x']), float(r['quat_y']), float(r['quat_z'])) )
             self.pBarList.append(float(r['pressure']))
 
 
