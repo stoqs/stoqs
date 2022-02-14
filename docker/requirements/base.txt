@@ -63,6 +63,7 @@ statsmodels==0.13.2
 sphinx-rtd-theme==1.0.0
 sqlparse==0.4.2
 thredds-crawler==1.5.4
+transforms3d==0.3.1
 watchdog==2.1.6
 websocket-client==1.2.3
 xarray==0.21.1
