@@ -487,7 +487,10 @@ class BEDS(object):
             self.ayList.append(float(r['accel_y']))
             self.azList.append(float(r['accel_z']))
             self.quatList.append( (float(r['quat_w']), float(r['quat_x']), float(r['quat_y']), float(r['quat_z'])) )
-            self.pBarList.append(float(r['pressure']))
+            if r.get('pressure'):
+                self.pBarList.append(float(r['pressure']))
+            else:
+                self.pBarList.append(np.nan)
 
 
         # Make the Lists numpy arrays so that we can do matrix math operations; they have units of seconds and bar
@@ -498,7 +501,6 @@ class BEDS(object):
         self.ps2013 = self.s - 1356998400.0      # (date(2013,1,1)-date(1970,1,1)).total_seconds() in python2.7
         self.pr = np.array(self.pBarList)
 
-        breakpoint()
         self.process_bed_depth()
 
 
