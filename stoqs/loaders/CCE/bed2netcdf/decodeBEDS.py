@@ -53,7 +53,8 @@ class Record():
     def readFromFile(self, inputfile):
         self.count +=1
         data = inputfile.read(self.parseLen)
-        self.varlist = struct.unpack(self.parseString, data)
+        # Need as list for adding fractional seconds to SecMarkerType's varlist
+        self.varlist = list(struct.unpack(self.parseString, data))
 
     def outputSparse(self, rec):
         if rec.headerType == self.headerType:
@@ -341,6 +342,7 @@ def main(internal_arguments=None):
     # read the first inputfile, it is the file header type which we'll use for timing until we get a secRec
     rec = FileHdrType()
     rec.readFromFile(inputfile)
+    sample_rate = rec.varlist[4]
     startTime = rec.startTime()
     secrec = SecMarkerType()
     secrec.varlist = [secrec.headerType, startTime]
@@ -349,6 +351,8 @@ def main(internal_arguments=None):
     # read in the file
     rec = recList.LookUp(peek(inputfile,1)) 
     recNum = 0 
+    frac_sec = 0.0
+    last_esec = secrec.varlist[1]
     while rec is not None:
         line = "{},".format(recNum)
         recNum += 1
@@ -356,6 +360,13 @@ def main(internal_arguments=None):
         recList.setRec(rec)
         for recType in recList:
             rt = recList.getRecOfType(recType)
+            if isinstance(rt, SecMarkerType):
+                # Fill in the fractional seconds between the second markers
+                if int(rt.varlist[1]) > last_esec:
+                    frac_sec = 0.0
+                rt.varlist[1] = int(rt.varlist[1]) + frac_sec
+                frac_sec += 1 / sample_rate
+                last_esec = int(rt.varlist[1])
             if args.sparse_output:
                 line += rt.outputSparse()
             else:
