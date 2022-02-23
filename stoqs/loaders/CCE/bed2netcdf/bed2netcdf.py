@@ -46,12 +46,12 @@ class BEDS_NetCDF(BEDS):
         np.seterr(all='ignore')
 
         if self.args.trajectory and self.args.beg_depth and self.args.end_depth:
-            print "Extracting thalweg data between command line specified depths {} and {}".format(self.args.beg_depth, self.args.end_depth)
+            print("Extracting thalweg data between command line specified depths {} and {}".format(self.args.beg_depth, self.args.end_depth))
             self.readTrajectory(self.args.beg_depth, self.args.end_depth)
 
         for fileName in self.inputFileNames:
             # Make sure input file is openable
-            print 'Input fileName = ', fileName
+            print('Input fileName = ', fileName)
             try:
                 with open(fileName): 
                     pass
@@ -60,11 +60,14 @@ class BEDS_NetCDF(BEDS):
 
             if self.sensorType == 'Invensense':
                 try:
-                    self.readBEDsFile(fileName)
+                    if self.args.read_csv:
+                        self.readBEDs_csv_File(fileName)
+                    else:
+                        self.readBEDsFile(fileName)
                     self.processAccelerations()
                     self.processRotations(useMatlabCode=False)
                 except NoPressureData as e:
-                    print str(e)
+                    print(str(e))
                     continue
             else:
                 raise Exception("No handler for sensorType = %s" % self.sensorType)
@@ -93,7 +96,7 @@ class BEDS_NetCDF(BEDS):
 
         if self.args.trajectory and self.args.bed_name:
             # Expect we have well-calibrated and tide-corrected depths in bed_depth[] array
-            print "Extracting thalweg data between depths {} and {}".format(self.bed_depth[0], self.bed_depth[-1])
+            print("Extracting thalweg data between depths {} and {}".format(self.bed_depth[0], self.bed_depth[-1]))
             self.readTrajectory(self.bed_depth[0], self.bed_depth[-1])
 
         if (not self.traj_lat or not self.traj_lon) and self.args.trajectory:
@@ -349,7 +352,7 @@ class BEDS_NetCDF(BEDS):
 
         elif self.featureType == 'trajectory':
             ifmt = '{var} linearly intepolated onto thalweg data from file {traj_file} using formula {formula}'
-            print "Writing trajectory data"
+            print("Writing trajectory data")
             # Coordinate variables for trajectory 
             # Interpolate trajectory lat and lon onto the times of the data
             self.latitude = self.ncFile.createVariable('latitude', 'float64', ('time',))
@@ -567,7 +570,7 @@ class BEDS_NetCDF(BEDS):
                 bed_depth_csi[ma.clump_unmasked(self.p_mask)] = self.bed_depth_inside_spline
 
             else:
-                print "Not creating cubic-spline interpolated variables, time series too long: {} points".format(len(self.ps2013))
+                print("Not creating cubic-spline interpolated variables, time series too long: {} points".format(len(self.ps2013)))
 
             # First difference of pressure sensor data interpolated to IMU samples
             p_rate = self.ncFile.createVariable('P_RATE', 'float64', ('time',))
@@ -691,8 +694,9 @@ class BEDS_NetCDF(BEDS):
         parser.add_argument('--stride_imu', type=int, action='store', help='Records of IMU data to skip', default=1)
         parser.add_argument('--no_tide_removal', action='store_true', help='Default is to remove tides using OSTP2')
         parser.add_argument('--compare_euler', action='store_true', help='Report differences between Quaternion.get_euler() and transforms3d.euler.quat2euler()')
+        parser.add_argument('--read_csv', action='store_true', help='Read from the csv format produced by decodeBEDS.py')
 
-        parser.add_argument('-v', '--verbose', type=int, choices=range(3), action='store', default=0, help="Specify verbosity level, values greater than 1 give more details ")
+        parser.add_argument('-v', '--verbose', type=int, choices=list(range(3)), action='store', default=0, help="Specify verbosity level, values greater than 1 give more details ")
 
         self.args = parser.parse_args()
 
@@ -715,7 +719,7 @@ class BEDS_NetCDF(BEDS):
             self.dpth = self.args.depth
             self.featureType = 'timeseries'
             if self.args.verbose > 0:
-                print "self.lat = %f, self.lon = %f, self.dpth = %f" % (self.lat, self.lon, self.dpth)
+                print("self.lat = %f, self.lon = %f, self.dpth = %f" % (self.lat, self.lon, self.dpth))
         elif self.args.trajectory:
             self.featureType = 'trajectory'
         else:
@@ -736,5 +740,5 @@ if __name__ == '__main__':
 
     beds_netcdf.createNetCDFfromFile()
 
-    print "Wrote file %s\n" % beds_netcdf.outFile
+    print("Wrote file %s\n" % beds_netcdf.outFile)
 
