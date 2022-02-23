@@ -26,7 +26,7 @@ import timing
 # 
 # ./2021-12-30-Test-124min:
 
-files_124 = [f"2021-12-30-Test-124min/{f}" for f in """
+files_124 = [f"2021-12-30-Test-124min/{f}" for f in sorted("""
 20200654_full.nc  20200674_full.nc  20200694_full.nc  20200714_full.nc	20200734_full.nc  20200754_full.nc  20200774_full.nc
 20200655_full.nc  20200675_full.nc  20200695_full.nc  20200715_full.nc	20200735_full.nc  20200755_full.nc  20200775_full.nc
 20200656_full.nc  20200676_full.nc  20200696_full.nc  20200716_full.nc	20200736_full.nc  20200756_full.nc  20200776_full.nc
@@ -46,10 +46,10 @@ files_124 = [f"2021-12-30-Test-124min/{f}" for f in """
 20200670_full.nc  20200690_full.nc  20200710_full.nc  20200730_full.nc	20200750_full.nc  20200770_full.nc
 20200671_full.nc  20200691_full.nc  20200711_full.nc  20200731_full.nc	20200751_full.nc  20200771_full.nc
 20200672_full.nc  20200692_full.nc  20200712_full.nc  20200732_full.nc	20200752_full.nc  20200772_full.nc
-20200673_full.nc  20200693_full.nc  20200713_full.nc  20200733_full.nc	20200753_full.nc  20200773_full.nc""".split()]
+20200673_full.nc  20200693_full.nc  20200713_full.nc  20200733_full.nc	20200753_full.nc  20200773_full.nc""".split())]
 
 # ./2022-01-03-Test-244min-Acoustic:
-files_244 = [f"2022-01-03-Test-244min-Acoustic/{f}" for f in """
+files_244 = [f"2022-01-03-Test-244min-Acoustic/{f}" for f in sorted("""
 20200857_full.nc  20200877_full.nc  20200897_full.nc  20200917_full.nc	20200937_full.nc  20200957_full.nc  20200977_full.nc
 20200858_full.nc  20200878_full.nc  20200898_full.nc  20200918_full.nc	20200938_full.nc  20200958_full.nc  20200978_full.nc
 20200859_full.nc  20200879_full.nc  20200899_full.nc  20200919_full.nc	20200939_full.nc  20200959_full.nc  20200979_full.nc
@@ -69,10 +69,10 @@ files_244 = [f"2022-01-03-Test-244min-Acoustic/{f}" for f in """
 20200873_full.nc  20200893_full.nc  20200913_full.nc  20200933_full.nc	20200953_full.nc  20200973_full.nc  20200993_full.nc
 20200874_full.nc  20200894_full.nc  20200914_full.nc  20200934_full.nc	20200954_full.nc  20200974_full.nc  20200994_full.nc
 20200875_full.nc  20200895_full.nc  20200915_full.nc  20200935_full.nc	20200955_full.nc  20200975_full.nc
-20200876_full.nc  20200896_full.nc  20200916_full.nc  20200936_full.nc	20200956_full.nc  20200976_full.nc""".split()]
+20200876_full.nc  20200896_full.nc  20200916_full.nc  20200936_full.nc	20200956_full.nc  20200976_full.nc""".split())]
 
 # ./2022-01-04-Test-484min:
-files_484 = [f"2022-01-04-Test-484min/{f}" for f in """
+files_484 = [f"2022-01-04-Test-484min/{f}" for f in sorted("""
 20200995_full.nc  20201014_full.nc  20201033_full.nc  20201052_full.nc	20201071_full.nc  20201090_full.nc  20201109_full.nc
 20200996_full.nc  20201015_full.nc  20201034_full.nc  20201053_full.nc	20201072_full.nc  20201091_full.nc  20201110_full.nc
 20200997_full.nc  20201016_full.nc  20201035_full.nc  20201054_full.nc	20201073_full.nc  20201092_full.nc  20201111_full.nc
@@ -91,7 +91,7 @@ files_484 = [f"2022-01-04-Test-484min/{f}" for f in """
 20201010_full.nc  20201029_full.nc  20201048_full.nc  20201067_full.nc	20201086_full.nc  20201105_full.nc  20201124_full.nc
 20201011_full.nc  20201030_full.nc  20201049_full.nc  20201068_full.nc	20201087_full.nc  20201106_full.nc  20201125_full.nc
 20201012_full.nc  20201031_full.nc  20201050_full.nc  20201069_full.nc	20201088_full.nc  20201107_full.nc  20201126_full.nc
-20201013_full.nc  20201032_full.nc  20201051_full.nc  20201070_full.nc	20201089_full.nc  20201108_full.nc""".split()]
+20201013_full.nc  20201032_full.nc  20201051_full.nc  20201070_full.nc	20201089_full.nc  20201108_full.nc""".split())]
 
 
 class CCE_2015_Campaign:
@@ -138,7 +138,8 @@ class CCE_2015_Campaign:
                         'ROT_X', 'ROT_Y', 'ROT_Z', 'AXIS_X', 'AXIS_Y', 'AXIS_Z', 'ANGLE']
 
 
-        self.cl.bed_files = files_124
+        ##self.cl.bed_files = files_124
+        self.cl.bed_files = files_244
         self.cl.bed_platforms = ["BED00" for f in self.cl.bed_files ]
         self.cl.bed_depths = [-10 for f in self.cl.bed_files ]
         self.cl.bed_framegrabs = ["" for f in self.cl.bed_files ]
