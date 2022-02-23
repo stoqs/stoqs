@@ -479,10 +479,15 @@ class BEDS(object):
 
         self.rateHz = 50
 
+        last_esec = 0.0
         for r in csv.DictReader(open(infile), delimiter=','):
             if self.args.verbose > 1: 
                 print(r)
+            if float(r['epoch_time']) <= last_esec:
+                print(f"Skipping duplicate or decreasing time: {float(r['epoch_time'])}")
+                continue
             self.secList.append(float(r['epoch_time']))
+            last_esec = float(r['epoch_time'])
             self.axList.append(float(r['accel_x']))
             self.ayList.append(float(r['accel_y']))
             self.azList.append(float(r['accel_z']))
