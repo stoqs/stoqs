@@ -110,7 +110,7 @@ class CCELoader(LoadScript):
         '''
         stride = stride or self.stride
         for (aName, pName, file, plotTimeSeriesDepth, fg) in zip(
-                            [ a.split('/')[-1] + ' (stride=%d)' % stride for a in self.bed_files], 
+                            [ '/'.join(a.split('/')[-2:]) + ' (stride=%d)' % stride for a in self.bed_files], 
                             self.bed_platforms, self.bed_files, self.bed_depths, self.bed_framegrabs):
             url = os.path.join(self.bed_base, file)
             try:
