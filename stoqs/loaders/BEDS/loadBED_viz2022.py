@@ -132,14 +132,12 @@ class CCE_2015_Campaign:
         # Base OPeNDAP server
         self.cl.bed_base = 'http://dods.mbari.org/opendap/data/beds/BenchTests/'
 
-        self.cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT_RATE', 'ROT_COUNT', 'P', 'P_ADJUSTED',
-                        'P_RATE', 'P_SPLINE', 'P_SPLINE_RATE', 'ROT_DIST', 'IMPLIED_VELOCITY', 'BED_DEPTH_CSI',
-                        'BED_DEPTH', 'BED_DEPTH_LI', 'DIST_TOPO', 'TUMBLE_RATE', 'TUMBLE_COUNT', 'TIDE',
+        self.cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT_RATE', 'ROT_COUNT',
+                        'BED_DEPTH', 'BED_DEPTH_LI', 'TUMBLE_RATE', 'TUMBLE_COUNT',
                         'ROT_X', 'ROT_Y', 'ROT_Z', 'AXIS_X', 'AXIS_Y', 'AXIS_Z', 'ANGLE']
 
 
-        ##self.cl.bed_files = files_124
-        self.cl.bed_files = files_244
+        self.cl.bed_files = files_124 + files_244 + files_484
         self.cl.bed_platforms = ["BED00" for f in self.cl.bed_files ]
         self.cl.bed_depths = [-10 for f in self.cl.bed_files ]
         self.cl.bed_framegrabs = ["" for f in self.cl.bed_files ]
