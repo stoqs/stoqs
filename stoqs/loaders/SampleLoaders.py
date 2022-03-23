@@ -406,8 +406,8 @@ class ParentSamplesLoader(STOQS_Loader):
     def _read_tethysdash(self, platform_name, url):
         st = url.split('/')[-1].split('_')[0]
         et = url.split('/')[-1].split('_')[1]
-        from_time = f"{st[0:4]}-{st[4:6]}-{st[6:8]}T{st[8:10]}:{st[10:12]}"
-        to_time = f"{et[0:4]}-{et[4:6]}-{et[6:8]}T{et[8:10]}:{et[10:12]}"
+        from_time = f"{st[0:4]}-{st[4:6]}-{st[6:8]}T{st[8:10]}:{st[10:12]}Z"
+        to_time = f"{et[0:4]}-{et[4:6]}-{et[6:8]}T{et[8:10]}:{et[10:12]}Z"
 
         # Sanity check the ending year
         try:
@@ -790,8 +790,16 @@ class ParentSamplesLoader(STOQS_Loader):
         
         st = url.split('/')[-1].split('_')[0]
         et = url.split('/')[-1].split('_')[1]
-        from_time = f"{st[0:4]}-{st[4:6]}-{st[6:8]}T{st[8:10]}:{st[10:12]}"
-        to_time = f"{et[0:4]}-{et[4:6]}-{et[6:8]}T{et[8:10]}:{et[10:12]}"
+        from_time = f"{st[0:4]}-{st[4:6]}-{st[6:8]}T{st[8:10]}:{st[10:12]}Z"
+        to_time = f"{et[0:4]}-{et[4:6]}-{et[6:8]}T{et[8:10]}:{et[10:12]}Z"
+        # MBTS Missions in feb and mar 2022 need to subrtact 7 hours (GMT offset?) to get the right time slice from https://okeanids.mbari.org/TethysDash/api/events
+        # - Turns out that unless 'Z' is appended then local time is assumed
+        ##subtract_7_hours = True
+        ##if subtract_7_hours:
+        ##    from_dt = datetime.strptime(from_time, "%Y-%m-%dT%H:%M") - timedelta(hours=7)
+        ##    to_dt = datetime.strptime(to_time, "%Y-%m-%dT%H:%M") - timedelta(hours=7)
+        ##    from_time = datetime.strftime(from_dt, "%Y-%m-%dT%H:%M")
+        ##    to_time = datetime.strftime(to_dt, "%Y-%m-%dT%H:%M")
 
         # Sanity check the ending year
         try:
