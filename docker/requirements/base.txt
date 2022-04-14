@@ -23,7 +23,7 @@ Flask-SQLAlchemy==2.5.1
 httplib2==0.20.4
 hvplot==0.7.2
 holoviews==1.14.8
-ipyleaflet==0.15.0
+ipyleaflet==0.16.0
 ipython==8.1.1
 jdcal==1.4.1
 Jinja2==3.0.3
