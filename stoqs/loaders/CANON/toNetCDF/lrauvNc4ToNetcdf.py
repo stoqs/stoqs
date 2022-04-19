@@ -751,7 +751,8 @@ class InterpolatorWriter(BaseWriter):
             seg_count += 1
         
         # Any dead reckoned points after first GPS fix - not possible to nudge, just copy in
-        segi = np.where(lat.index > lat_fix.index[-1])[0]
+        # Don't include last point, otherwise get a "positional indexers are out-of-bounds" exception
+        segi = np.where(lat.index > lat_fix.index[-1])[0][:-1]
         seg_min = 0
         if segi.any():
             lon_nudged = np.append(lon_nudged, lon[segi])
