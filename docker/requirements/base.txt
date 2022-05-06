@@ -41,7 +41,7 @@ PasteDeploy==2.1.1
 Paste==3.5.0
 PasteScript==3.2.1
 pika==1.2.0
-pyarrow==6.0.1
+pyarrow==8.0.0
 pysher==1.0.6
 psycopg2-binary==2.9.3
 psutil==5.8.0
