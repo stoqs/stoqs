@@ -69,8 +69,8 @@ cl = CANONLoader('stoqs_all_i2map', 'Midwater All i2MAP Missions',
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
 
-startdate = datetime(2020, 1, 1)
-enddate = datetime(2020, 12, 31)
+startdate = datetime(2017, 1, 1)
+enddate = datetime(2022, 12, 31)
 
 # Execute the load
 cl.process_command_line()
@@ -81,7 +81,7 @@ if cl.args.test:
 elif cl.args.stride:
     cl.stride = cl.args.stride
 
-cl.load_i2MAP(startdate, enddate, build_attrs=True, file_patterns=('.*_2S.nc$'))
+cl.load_i2MAP(startdate, enddate, build_attrs=True, file_patterns=('.*_1S.nc$'))
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
