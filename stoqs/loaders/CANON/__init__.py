@@ -191,7 +191,12 @@ class CANONLoader(LoadScript):
                                   scalefactor=2)
 
     def load_i2MAP(self, startdate=None, enddate=None,
-                   parameters=[ 'seabird25p_temperature', 'seabird25p_salinity',
+                   parameters=[ 'seabird25p_temperature_onboard', 'seabird25p_temperature',
+                                'seabird25p_conductivity_onboard', 'seabird25p_conductivity',
+                                'seabird25p_salinity_onboard', 'seabird25p_salinity',
+                                'seabird25p_dissolvedO2_onboard', 'seabird25p_dissolvedO2',
+                                'seabird25p_dissolvedO2_port_onboard', 'seabird25p_dissolvedO2_port',
+                                'seabird25p_dissolvedO2_stbd_onboard', 'seabird25p_dissolvedO2_stbd',
                                 'navigation_roll', 'navigation_pitch', 'navigation_yaw' ],
                     stride=None,
                     file_patterns=('.*_1S.nc$'), build_attrs=False, plankton_proxies=False):
