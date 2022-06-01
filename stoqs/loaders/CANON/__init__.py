@@ -197,6 +197,9 @@ class CANONLoader(LoadScript):
                                 'seabird25p_dissolvedO2_onboard', 'seabird25p_dissolvedO2',
                                 'seabird25p_dissolvedO2_port_onboard', 'seabird25p_dissolvedO2_port',
                                 'seabird25p_dissolvedO2_stbd_onboard', 'seabird25p_dissolvedO2_stbd',
+                                'seabird25p_oxygen_mll', 'seabird25p_oxygen_umolkg',
+                                'seabird25p_oxygen_mll_port', 'seabird25p_oxygen_umolkg_port',
+                                'seabird25p_oxygen_mll_stbd', 'seabird25p_oxygen_umolkg_stbd',
                                 'navigation_roll', 'navigation_pitch', 'navigation_yaw' ],
                     stride=None,
                     file_patterns=('.*_1S.nc$'), build_attrs=False, plankton_proxies=False):
