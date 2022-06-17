@@ -36,7 +36,7 @@ elif cl.args.stride:
     cl.stride = cl.args.stride
 
 lrauv_start = datetime(2022, 5, 16)
-lrauv_end = datetime(2022, 6, 9)
+lrauv_end = datetime(2022, 6, 15)
 cl.loadLRAUV('brizo', lrauv_start, lrauv_end)
 cl.loadLRAUV('makai', lrauv_start, lrauv_end)
 
