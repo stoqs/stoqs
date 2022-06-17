@@ -70,7 +70,6 @@ campaigns = OrderedDict([
     ('stoqs_michigan2021',          'LakeMichigan/load_2021.py'),
     ('stoqs_erie2021',              'LakeErie/load_2021.py'),
     ('stoqs_all_i2map',             'Midwater/load_i2map.py'),
-    ('stoqs_all_i2map_t',             'Midwater/load_i2map.py -t'),
     ('stoqs_beds_viz2022',            'BEDS/loadBED_viz2022.py'),
     ('stoqs_ecohab_may2022',        'CANON/load_ecohab_may2022.py'),
 ])

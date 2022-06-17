@@ -572,8 +572,8 @@ class InterpolatorWriter(BaseWriter):
 
         self.trackingdb_values = len(ess)
         v_time = pd.to_datetime(ess, unit='s',errors = 'coerce')
-        lon_time_series = pd.Series(lons, index=v_time)
-        lat_time_series = pd.Series(lats, index=v_time)
+        lon_time_series = pd.Series(lons, index=v_time, dtype=np.float64)
+        lat_time_series = pd.Series(lats, index=v_time, dtype=np.float64)
         self.logger.info(f"Found {self.trackingdb_values} position values from the Tracking database")
 
         return lon_time_series, lat_time_series
@@ -1110,7 +1110,7 @@ class InterpolatorWriter(BaseWriter):
 
         # Get time parameter and align everything to this
         self.logger.info(f'Creating t variable of the time indexes')
-        t = pd.Series(index = coord_ts['time'].index)
+        t = pd.Series(index = coord_ts['time'].index, dtype=np.float64)
 
         # resample
         t_resample = t.resample(resampleFreq).asfreq()[:]
