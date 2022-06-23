@@ -166,7 +166,11 @@ class Loader(object):
             # Inserted when load executed with or without --background
             self.prov['load_command'] = load_command
             self.prov['gitorigin'] = repo.remotes.origin.url
-            self.prov['gitcommit'] = repo.head.commit.hexsha
+            try:
+                self.prov['gitcommit'] = repo.head.commit.hexsha
+            except ValueError as e:
+                self.logger.warning('could not get head commit sha for %s: %s', repo.remotes.origin.url, e)
+                self.prov['gitcommit'] = ""
             self.prov['environment'] = platform.platform() + " python " + sys.version.split('\n')[0]
             self.prov['load_date_gmt'] = datetime.datetime.utcnow()
 
@@ -735,7 +739,7 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
             if self.args.create_only:
                 return
 
-            # Execute as system call - Allows for repeatable loading and output captue by executing the load script in cmd
+            # Execute as system call - Allows for repeatable loading and output capture by executing the load script in cmd
             self.logger.info('Executing: %s', cmd)
             ret = os.system(cmd)
             self.logger.debug(f'ret = {ret}')
