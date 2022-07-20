@@ -93,7 +93,8 @@ class AutoLoad():
         self.loader.args.restore = ''
         if self.args.append:
             self.loader.args.append = True
-            self.loader.args.startdate = datetime.utcnow().strftime("%Y%m%d")
+            yesterday = datetime.utcnow() - timedelta(days=1)
+            self.loader.args.startdate = yesterday.strftime("%Y%m%d")
             self.args.startdate = self.loader.args.startdate
 
         if self.args.YYYYMM:
