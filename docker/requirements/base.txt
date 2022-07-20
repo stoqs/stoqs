@@ -1,6 +1,6 @@
 aiohttp==3.8.1
 beautifulsoup4==4.11.1
-channels==3.0.4
+channels==3.0.5
 cmocean==2.0
 coards==1.0.5
 coverage==6.4.1
