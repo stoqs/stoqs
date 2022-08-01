@@ -56,7 +56,7 @@ class wait_for_child_elements(object):
         self.locator = locator
 
     def __call__(self, driver):
-        children = self.locator.find_elements_by_xpath(".//*")
+        children = self.locator.find_elements(By.XPATH, ".//*")
         if children:
             return children
         else:
@@ -164,7 +164,7 @@ class BaseTestCase(StaticLiveServerTestCase):
         share_view = self.browser.find_element(By.ID, 'permalink')
         self._wait_until_visible_then_click(share_view)
         permalink = self.browser.find_element(By.ID, 'permalink-box'
-                             ).find_element_by_name('permalink')
+                             ).find_element(By.NAME, 'permalink')
         self._wait_until_visible_then_click(permalink)
         permalink_url = permalink.get_attribute('value')
 
@@ -221,8 +221,8 @@ class BrowserTestCase(BaseTestCase):
         self._wait_until_visible_then_click(showgeox3dmeasurement)
 
         # See that there are shapes in the -animations groups
-        self._test_for_child_elements('track-animations', 588)
-        self._test_for_child_elements('points-animations', 294)
+        self._test_for_child_elements('track-animations', 294)
+        self._test_for_child_elements('points-animations', 686)
 
     def test_curtain(self):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
@@ -251,7 +251,7 @@ class BrowserTestCase(BaseTestCase):
         shape_id = 'ifs_dorado_1288217606'
         self._wait_until_id_is_visible(shape_id, delay=10)
         self.assertEquals(1, len(self.browser.find_element(By.ID, shape_id)
-                                     .find_elements_by_xpath(".//indexedfaceset")),
+                                     .find_elements(By.XPATH, ".//indexedfaceset")),
                                      f"Did not find a single indexedfaceset in {shape_id}")
         
     def test_dorado_trajectory(self):
@@ -282,8 +282,8 @@ class BrowserTestCase(BaseTestCase):
         self._wait_until_visible_then_click(showgeox3dmeasurement)
 
         # See that there are shapes in the -animations groups
-        self._test_for_child_elements('track-animations', 588)
-        self._test_for_child_elements('points-animations', 294)
+        self._test_for_child_elements('track-animations', 294)
+        self._test_for_child_elements('points-animations', 686)
 
         # - 3D Platform animation
         showplatforms = self.browser.find_element(By.ID, 'showplatforms')
