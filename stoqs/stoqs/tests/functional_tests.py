@@ -95,7 +95,7 @@ class BaseTestCase(StaticLiveServerTestCase):
         wait = WebDriverWait(self.browser, delay)
         try:
             wait.until(lambda display: self.browser
-                        .find_element_by_id('metadata-loading')
+                        .find_element(By.ID, 'metadata-loading')
                         .get_attribute('innerHTML') == '')
         except TimeoutException as e:
             return ('Time-depth images did not load after waiting ' +
@@ -145,7 +145,7 @@ class BaseTestCase(StaticLiveServerTestCase):
 
     def _test_for_child_elements(self, parent_id, expected_num, delay=2):
         self._wait_until_id_is_visible(parent_id)
-        parent_element = self.browser.find_element_by_id(parent_id)
+        parent_element = self.browser.find_element(By.ID, parent_id)
         wait = WebDriverWait(self.browser, delay, poll_frequency=.5)
         try:
             elements = wait.until(wait_for_child_elements(parent_element))
@@ -161,9 +161,9 @@ class BaseTestCase(StaticLiveServerTestCase):
         # Generic for any func_name that creates a view to share
         getattr(self, func_name)()
 
-        share_view = self.browser.find_element_by_id('permalink')
+        share_view = self.browser.find_element(By.ID, 'permalink')
         self._wait_until_visible_then_click(share_view)
-        permalink = self.browser.find_element_by_id('permalink-box'
+        permalink = self.browser.find_element(By.ID, 'permalink-box'
                              ).find_element_by_name('permalink')
         self._wait_until_visible_then_click(permalink)
         permalink_url = permalink.get_attribute('value')
@@ -189,7 +189,7 @@ class BrowserTestCase(BaseTestCase):
     def _select_dorado(self):
         try:
             # Click on Platforms to expand
-            platforms_anchor = self.browser.find_element_by_id(
+            platforms_anchor = self.browser.find_element(By.ID, 
                                     'platforms-anchor')
             self._wait_until_visible_then_click(platforms_anchor)
         except NoSuchElementException as e:
@@ -198,7 +198,7 @@ class BrowserTestCase(BaseTestCase):
             return
 
         # Finds <tr> for 'dorado' then gets the button for clicking
-        dorado_button = self.browser.find_element_by_id('dorado'
+        dorado_button = self.browser.find_element(By.ID, 'dorado'
                             ).find_element_by_tag_name('button')
         self._wait_until_visible_then_click(dorado_button)
 
@@ -207,7 +207,7 @@ class BrowserTestCase(BaseTestCase):
         self._select_dorado()
 
         # Make contour plot of salinity
-        measuredparameters_anchor = self.browser.find_element_by_id('measuredparameters-anchor')
+        measuredparameters_anchor = self.browser.find_element(By.ID, 'measuredparameters-anchor')
         self._wait_until_visible_then_click(measuredparameters_anchor, delay=4)
         salinity_id = Parameter.objects.get(name__contains='salinity').id
         salinity_plot_button = self.browser.find_element(By.XPATH,
@@ -215,9 +215,9 @@ class BrowserTestCase(BaseTestCase):
         self._wait_until_visible_then_click(salinity_plot_button)
 
         # Make 3D plot and test for shapes in points and lines elements
-        spatial_3d_anchor = self.browser.find_element_by_id('spatial-3d-anchor')
+        spatial_3d_anchor = self.browser.find_element(By.ID, 'spatial-3d-anchor')
         self._wait_until_visible_then_click(spatial_3d_anchor)
-        showgeox3dmeasurement = self.browser.find_element_by_id('showgeox3dmeasurement')
+        showgeox3dmeasurement = self.browser.find_element(By.ID, 'showgeox3dmeasurement')
         self._wait_until_visible_then_click(showgeox3dmeasurement)
 
         # See that there are shapes in the -animations groups
@@ -229,7 +229,7 @@ class BrowserTestCase(BaseTestCase):
         self._select_dorado()
 
         # Make contour plot of temperature
-        measuredparameters_anchor = self.browser.find_element_by_id('measuredparameters-anchor')
+        measuredparameters_anchor = self.browser.find_element(By.ID, 'measuredparameters-anchor')
         self._wait_until_visible_then_click(measuredparameters_anchor, delay=4)
         temperature_id = Parameter.objects.get(name__contains='temperature').id
         temperature_plot_button = self.browser.find_element(By.XPATH,
@@ -239,9 +239,9 @@ class BrowserTestCase(BaseTestCase):
         self._wait_until_visible_then_click(contour_button)
 
         # Make 3D plot and test for curtain element
-        spatial_3d_anchor = self.browser.find_element_by_id('spatial-3d-anchor')
+        spatial_3d_anchor = self.browser.find_element(By.ID, 'spatial-3d-anchor')
         self._wait_until_visible_then_click(spatial_3d_anchor)
-        showgeox3dmeasurement = self.browser.find_element_by_id('showgeox3dmeasurement')
+        showgeox3dmeasurement = self.browser.find_element(By.ID, 'showgeox3dmeasurement')
         self._wait_until_visible_then_click(showgeox3dmeasurement)
 
         # See that there are shapes in the curtain-animation group
@@ -250,7 +250,7 @@ class BrowserTestCase(BaseTestCase):
         # See that there is at least one indexedfaceset in the curtain-animations group
         shape_id = 'ifs_dorado_1288217606'
         self._wait_until_id_is_visible(shape_id, delay=10)
-        self.assertEquals(1, len(self.browser.find_element_by_id(shape_id)
+        self.assertEquals(1, len(self.browser.find_element(By.ID, shape_id)
                                      .find_elements_by_xpath(".//indexedfaceset")),
                                      f"Did not find a single indexedfaceset in {shape_id}")
         
@@ -262,10 +262,10 @@ class BrowserTestCase(BaseTestCase):
         self._mapserver_loading_panel_test()
 
         # Test Spatial 3D - provides test coverage in utils/Viz
-        spatial_3d_anchor = self.browser.find_element_by_id('spatial-3d-anchor')
+        spatial_3d_anchor = self.browser.find_element(By.ID, 'spatial-3d-anchor')
         self._wait_until_visible_then_click(spatial_3d_anchor)
         # - Measurement data
-        measuredparameters_anchor = self.browser.find_element_by_id('measuredparameters-anchor')
+        measuredparameters_anchor = self.browser.find_element(By.ID, 'measuredparameters-anchor')
         self._wait_until_visible_then_click(measuredparameters_anchor, delay=4)
         temperature_id = Parameter.objects.get(name__contains='temperature').id
         temperature_plot_button = self.browser.find_element(By.XPATH,
@@ -273,12 +273,12 @@ class BrowserTestCase(BaseTestCase):
         self._wait_until_visible_then_click(temperature_plot_button)
         self._wait_until_src_is_visible('dorado_colorbar', delay=6)
         # - Colormap
-        colorbar = self.browser.find_element_by_id('mp-colormap')
+        colorbar = self.browser.find_element(By.ID, 'mp-colormap')
         self._wait_until_visible_then_click(colorbar)
         colormap = self._wait_until_src_is_visible('deep.png', delay=4)
         self._wait_until_visible_then_click(colormap)
         # - 3D measurement data
-        showgeox3dmeasurement = self.browser.find_element_by_id('showgeox3dmeasurement')
+        showgeox3dmeasurement = self.browser.find_element(By.ID, 'showgeox3dmeasurement')
         self._wait_until_visible_then_click(showgeox3dmeasurement)
 
         # See that there are shapes in the -animations groups
@@ -286,22 +286,22 @@ class BrowserTestCase(BaseTestCase):
         self._test_for_child_elements('points-animations', 294)
 
         # - 3D Platform animation
-        showplatforms = self.browser.find_element_by_id('showplatforms')
+        showplatforms = self.browser.find_element(By.ID, 'showplatforms')
         self._wait_until_visible_then_click(showplatforms)
 
         self._wait_until_id_is_visible('dorado_LOCATION', delay=4)
-        self.assertEquals('geolocation', self.browser.find_element_by_id('dorado_LOCATION').tag_name)
+        self.assertEquals('geolocation', self.browser.find_element(By.ID, 'dorado_LOCATION').tag_name)
 
     def test_m1_timeseries(self):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
         # Test Temporal->Parameter for timeseries plots
         self._wait_until_id_is_visible('temporal-parameter-li', delay=4)
-        parameter_tab = self.browser.find_element_by_id('temporal-parameter-li')
+        parameter_tab = self.browser.find_element(By.ID, 'temporal-parameter-li')
         self._temporal_loading_panel_test(delay=6)
         self._wait_until_visible_then_click(parameter_tab, delay=4)
         expected_text = 'every single point'
         self._wait_until_text_is_visible('stride-info', expected_text, delay=6)
-        self.assertIn(expected_text, self.browser.find_element_by_id('stride-info').text)
+        self.assertIn(expected_text, self.browser.find_element(By.ID, 'stride-info').text)
 
     def test_share_view_trajectory(self):
         self._test_share_view('test_dorado_trajectory')
@@ -309,28 +309,28 @@ class BrowserTestCase(BaseTestCase):
         self._wait_until_id_is_visible('track-animations')
 
         # Hack to make test pass: click checkbox twice to make dorado_LOCATION appear
-        showplatforms = self.browser.find_element_by_id('showplatforms')
+        showplatforms = self.browser.find_element(By.ID, 'showplatforms')
         self._wait_until_visible_then_click(showplatforms)
         self._wait_until_visible_then_click(showplatforms)
 
         self._wait_until_id_is_visible('dorado_LOCATION', delay=8)
-        self.assertEquals('geolocation', self.browser.find_element_by_id('dorado_LOCATION').tag_name)
+        self.assertEquals('geolocation', self.browser.find_element(By.ID, 'dorado_LOCATION').tag_name)
 
     def test_share_view_timeseries(self):
         self._test_share_view('test_m1_timeseries')
         expected_text = 'every single point'
         self._wait_until_text_is_visible('stride-info', expected_text, delay=10)
-        self.assertIn(expected_text, self.browser.find_element_by_id('stride-info').text)
+        self.assertIn(expected_text, self.browser.find_element(By.ID, 'stride-info').text)
 
     def test_contour_plots(self):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
 
         # Open Measured Parameters section
-        mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
+        mp_section = self.browser.find_element(By.ID, 'measuredparameters-anchor')
         self._wait_until_visible_then_click(mp_section)
 
         # Expand Temporal window
-        expand_temporal = self.browser.find_element_by_id('td-zoom-rc-button')
+        expand_temporal = self.browser.find_element(By.ID, 'td-zoom-rc-button')
         self._wait_until_visible_then_click(expand_temporal)
 
         # Make contour color plot of M1 northward_sea_water_velocity and hide Django toolbar
@@ -346,7 +346,7 @@ class BrowserTestCase(BaseTestCase):
         expected_text = 'Color: northward_sea_water_velocity_HR (cm s-1) from M1_Mooring'
         self._temporal_loading_panel_test(delay=6)
         self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text, delay=6)
-        self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo').text)
+        self.assertEquals(expected_text, self.browser.find_element(By.ID, 'temporalparameterplotinfo').text)
 
         # Contour line of M1 northward_sea_water_velocity - same as color plot
         parameter_contour_plot_radio_button = self.browser.find_element(By.XPATH,
@@ -354,7 +354,7 @@ class BrowserTestCase(BaseTestCase):
         parameter_contour_plot_radio_button.click()
 
         # Test that at least the color bar image appears
-        self.assertIn('_M1_Mooring_colorbar_', self.browser.find_element_by_id('sectioncolorbarimg').get_property('src'))
+        self.assertIn('_M1_Mooring_colorbar_', self.browser.find_element(By.ID, 'sectioncolorbarimg').get_property('src'))
 
         # Contour line of M1 SEA_WATER_SALINITY_HR_id - different from color plot
         SEA_WATER_SALINITY_HR_id = Parameter.objects.get(name__contains='SEA_WATER_SALINITY_HR').id
@@ -365,10 +365,10 @@ class BrowserTestCase(BaseTestCase):
         expected_text = 'Lines: SEA_WATER_SALINITY_HR ( ) from M1_Mooring'
         self._temporal_loading_panel_test(delay=6)
         self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text, delay=6)
-        self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
+        self.assertEquals(expected_text, self.browser.find_element(By.ID, 'temporalparameterplotinfo_lines').text)
 
         # Clear the Color plot leaving just the Lines plot
-        clear_color_plot_radio_button = self.browser.find_element_by_id('mp_parameters_plot_clear')
+        clear_color_plot_radio_button = self.browser.find_element(By.ID, 'mp_parameters_plot_clear')
         clear_color_plot_radio_button.click()
         self.browser.execute_script("window.scrollTo(0, 0)")
 
@@ -377,8 +377,8 @@ class BrowserTestCase(BaseTestCase):
         self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text_color, delay=6)
         self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text_lines, delay=6)
         self._temporal_loading_panel_test(delay=6)
-        self.assertEquals(expected_text_color, self.browser.find_element_by_id('temporalparameterplotinfo').text)
-        self.assertEquals(expected_text_lines, self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
+        self.assertEquals(expected_text_color, self.browser.find_element(By.ID, 'temporalparameterplotinfo').text)
+        self.assertEquals(expected_text_lines, self.browser.find_element(By.ID, 'temporalparameterplotinfo_lines').text)
 
         # Uncomment to visually inspect the plot for correctness
         ##self.browser.execute_script("window.scrollTo(0, 0)")
@@ -395,7 +395,7 @@ class BugsFoundTestCase(BaseTestCase):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
 
         # Open Measured Parameters section and plot Parameter bb470 from M1
-        mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
+        mp_section = self.browser.find_element(By.ID, 'measuredparameters-anchor')
         self._wait_until_visible_then_click(mp_section)
         bb470_button = self.browser.find_element(By.XPATH,
                 "//input[@name='parameters_plot' and @value='{}']".format(
@@ -404,16 +404,16 @@ class BugsFoundTestCase(BaseTestCase):
         self._temporal_loading_panel_test(delay=6)
 
         # Select 'dorado' Platform - bb470 will not be in the selection
-        platforms_anchor = self.browser.find_element_by_id('platforms-anchor')
+        platforms_anchor = self.browser.find_element(By.ID, 'platforms-anchor')
         self._wait_until_visible_then_click(platforms_anchor)
-        dorado_button = self.browser.find_element_by_id('dorado'
+        dorado_button = self.browser.find_element(By.ID, 'dorado'
                             ).find_element_by_tag_name('button')
         self._wait_until_visible_then_click(dorado_button)
 
         expected_text = 'Cannot plot Parameter'
         self._temporal_loading_panel_test(delay=6)
         self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
-        self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo').text)
+        self.assertEquals(expected_text, self.browser.find_element(By.ID, 'temporalparameterplotinfo').text)
 
         # Uncomment to visually inspect the plot for correctness
         ##self.browser.execute_script("window.scrollTo(0, 0)")
