@@ -199,7 +199,7 @@ class BrowserTestCase(BaseTestCase):
 
         # Finds <tr> for 'dorado' then gets the button for clicking
         dorado_button = self.browser.find_element(By.ID, 'dorado'
-                            ).find_element_by_tag_name('button')
+                            ).find_element(By.TAG_NAME, 'button')
         self._wait_until_visible_then_click(dorado_button)
 
     def test_points_lines(self):
@@ -407,7 +407,7 @@ class BugsFoundTestCase(BaseTestCase):
         platforms_anchor = self.browser.find_element(By.ID, 'platforms-anchor')
         self._wait_until_visible_then_click(platforms_anchor)
         dorado_button = self.browser.find_element(By.ID, 'dorado'
-                            ).find_element_by_tag_name('button')
+                            ).find_element(By.TAG_NAME, 'button')
         self._wait_until_visible_then_click(dorado_button)
 
         expected_text = 'Cannot plot Parameter'
