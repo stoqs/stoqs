@@ -38,6 +38,7 @@ loader.args.clobber = True
 loader.args.db = db_alias
 loader.args.drop_indexes = False
 loader.args.noinput = False
+loader.args.restore = False
 
 campaigns.campaigns = {db_alias: 'CCE/loadCCE_2015.py'}
 try:
@@ -54,7 +55,7 @@ campaign.load_ccemoorings(stride=500, start_mooring=2, end_mooring=2)
 campaign.load_ccemoorings_ev(low_res_stride=500, start_mooring=2, end_mooring=2)
 
 # Add Trajectory data for the same time period
-l_662_url = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/OS_Glider_L_662_20151124_TS.nc'
+l_662_url = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line67/OS_Glider_L_662_20151124_TS.nc'
 l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 runGliderLoader(l_662_url, campaign_name, '', '/'.join(l_662_url.split('/')[-1:]),
                 'SPRAY_L66a_Glider', '38978f', 'glider', 'Glider Mission',
@@ -63,7 +64,7 @@ runGliderLoader(l_662_url, campaign_name, '', '/'.join(l_662_url.split('/')[-1:]
 
 
 # Add Glider Trajectory data for a time period when we have LRAUV oxygen data
-l_662_url = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/OS_Glider_L_662_20180816_TS.nc'
+l_662_url = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line67/OS_Glider_L_662_20180816_TS.nc'
 l_662_parms = ['TEMP', 'PSAL', 'FLU2', 'oxygen']
 oxygen_start = datetime(2018, 9, 4, 22, 22, 0)
 oxygen_end = datetime(2018, 9, 5, 1, 58, 0)
