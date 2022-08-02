@@ -44,7 +44,7 @@ RUN apt-get update && \
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 
 # For running functional tests
-RUN wget -q "https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux32.tar.gz" -O /tmp/geckodriver.tgz \
+RUN wget -q "https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodriver-v0.31.0-linux32.tar.gz" -O /tmp/geckodriver.tgz \
     && tar zxf /tmp/geckodriver.tgz -C /usr/bin/ \
     && rm /tmp/geckodriver.tgz
 
