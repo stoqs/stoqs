@@ -14,6 +14,7 @@ import logging
 import pandas as pd
 import psutil
 import tempfile
+import warnings
 from django.db import connections
 from stoqs.models import Platform
 from time import time
@@ -42,10 +43,14 @@ class Columnar():
         #      https://github.com/pandas-dev/pandas/issues/12265#issuecomment-181809005
         #      https://github.com/pandas-dev/pandas/issues/35689
         stime = time()
-        if set_index or extract:
-            df = pd.read_sql_query(sql, connections[self.db], index_col=self.context)
-        else:
-            df = pd.read_sql_query(sql, connections[self.db])
+        # See https://github.com/pandas-dev/pandas/issues/45660#issuecomment-1077355514
+        with warnings.catch_warnings():
+            # Ignore warning for non-SQLAlchemy Connecton
+            warnings.simplefilter('ignore', UserWarning)
+            if set_index or extract:
+                df = pd.read_sql_query(sql, connections[self.db], index_col=self.context)
+            else:
+                df = pd.read_sql_query(sql, connections[self.db])
         etime = time() - stime
         if extract:
             logger.info(f"df.shape: {df.shape} <- read_sql_query() in {etime:.1f} sec")
