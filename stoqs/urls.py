@@ -2,7 +2,7 @@
 
 
 from django.conf import settings
-from django.conf.urls import include, url
+from django.urls import include, re_path
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 
@@ -11,25 +11,25 @@ from django.views.generic import TemplateView
 ##admin.autodiscover()
 
 urlpatterns = [
-    ##url(r'^$',  # noqa
+    ##re_path(r'^$',  # noqa
     ##    TemplateView.as_view(template_name='pages/home.html'),
     ##    name="home"),
-    ##url(r'^about/$',
+    ##re_path(r'^about/$',
     ##    TemplateView.as_view(template_name='pages/about.html'),
     ##    name="about"),
 
     # Uncomment the next line to enable the admin:
-    ##url(r'^admin/', admin.site.urls),
+    ##re_path(r'^admin/', admin.site.urls),
 
     # User management
-    ##url(r'^users/', include("users.urls", namespace="users")),
-    ##url(r'^accounts/', include('allauth.urls')),
+    ##re_path(r'^users/', include("users.urls", namespace="users")),
+    ##re_path(r'^accounts/', include('allauth.urls')),
 
     # Uncomment the next line to enable avatars
-    ##url(r'^avatar/', include('avatar.urls')),
+    ##re_path(r'^avatar/', include('avatar.urls')),
 
     # Your stuff: custom urls go here
-    url(r'', include('stoqs.urls', namespace='stoqs')),
+    re_path(r'', include('stoqs.urls', namespace='stoqs')),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
@@ -37,5 +37,5 @@ urlpatterns = [
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns += [
-        url(r'^__debug__/', include(debug_toolbar.urls)),
+        re_path(r'^__debug__/', include(debug_toolbar.urls)),
     ]
