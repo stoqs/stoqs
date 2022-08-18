@@ -55,7 +55,7 @@ scikit-learn==1.1.1
 pyzmq==23.2.0
 scipy==1.9.0
 seawater==3.3.4
-selenium==4.3.0
+selenium==4.4.3
 simplejson==3.17.6
 slacker==0.14.0
 Sphinx==5.1.1
