@@ -1,4 +1,4 @@
-version: '2.2'
+version: '3.4'
 
 # docker-compose-stoqs_mbari_org.yml file to be used for stoqs.mbari.org public STOQS server
 # Notable differences from docker-compose.yml used for internal STOQS servers:
@@ -97,7 +97,6 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-postgres}
     volumes:
-##      - db-data:/var/lib/postgresql/data
       - ${POSTGRES_DATA}:/var/lib/postgresql/data
       - ${POSTGRES_WALDIR}:/var/lib/postgresql/waldir
     ports:
@@ -106,3 +105,29 @@ services:
       - ./.env
   redis:
     image: redis:${REDIS_TAG:-latest}
+  ur_l:
+    image: adamwojt/adamwojt:ur_l_${TARGET_ENV:?Target Environment}
+    environment:
+      - COV_FAIL_THRESHOLD=90
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:?Django Secret}
+      - POSTGRES_DB=${POSTGRES_DB:-postgres}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_TIMEOUT_CREATE=${CACHE_TIMEOUT_CREATE:-900}
+      - CACHE_TIMEOUT_READ=${CACHE_TIMEOUT_READ:-900}
+      - LOG_TOKEN_COLLISION=${LOG_TOKEN_COLLISION:-1}
+      - NUM_GUNICORN_WORKERS=${NUM_GUNICORN_WORKERS:-4}
+      - UR_L_PORT=${UR_L_PORT:-8000}
+      - URL_USE_CACHE=${URL_USE_CACHE:-1}
+    command: runserver
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - static-files:/app/staticfiles
+    expose:
+      - ${UR_L_PORT:-8000}
