@@ -88,3 +88,20 @@ services:
       - stoqs
     env_file:
       - ./.env
+
+  # From: ur_l
+  postgres:
+    image: postgres:${POSTGRES_TAG:-latest}
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-postgres}
+    volumes:
+##      - db-data:/var/lib/postgresql/data
+      - ${POSTGRES_DATA}:/var/lib/postgresql/data
+      - ${POSTGRES_WALDIR}:/var/lib/postgresql/waldir
+    ports:
+      - ${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}
+    env_file:
+      - ./.env
+
