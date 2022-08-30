@@ -89,7 +89,7 @@ services:
     env_file:
       - ./.env
 
-  # From: ur_l
+  # postgres, redic, ur_l services adapted from: https://github.com/adamwojt/ur_l
   postgres:
     image: postgres:${POSTGRES_TAG:-latest}
     environment:
@@ -104,4 +104,5 @@ services:
       - ${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}
     env_file:
       - ./.env
-
+  redis:
+    image: redis:${REDIS_TAG:-latest}
