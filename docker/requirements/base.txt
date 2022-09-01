@@ -9,7 +9,7 @@ datashader==0.14.1
 dj-database-url==1.0.0
 Django==4.0.6
 django-cache-url==3.4.2
-django-configurations==2.3.2
+django-configurations==2.4
 django-debug-toolbar==3.5.0
 django-environ==0.9.0
 django-model-utils==4.2.0
