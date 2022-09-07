@@ -7353,6 +7353,10 @@ function enable_cardboard(){
                     .done(function (data, response, jqXHR) {
                         $el.val(data.short_url);
                         $('#permalink-box').show();
+                    })
+                    .fail(function() {
+                        $el.val(url);
+                        $('#permalink-box').show();
                     });
 
                 } else {
