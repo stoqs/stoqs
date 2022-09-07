@@ -201,7 +201,7 @@
     </div>
   </div>
 
-  <div id="permalink-popup" class="modal hide fade in" style="display:none;width:700px;">
+  <div id="permalink-popup" class="modal hide fade in" style="display:none;">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">×</a>
         <h3>Share this view</h3>
@@ -7348,8 +7348,12 @@ function enable_cardboard(){
                     var params=$url.param();
                     params['permalink_id']=LZString.compressToEncodedURIComponent(collect_parameters_for_permalink());
                     var url=$url.attr('source').split('?')[0]+'?'+$.param(params)
-                    $el.val(url);
-                    $('#permalink-box').show();
+                    // Use ur_l shortener service to get shortened URL
+                    $.post('https://stoqs.mbari.org/p/api/urls/', {'long_url': url })
+                    .done(function (data, response, jqXHR) {
+                        $el.val(data.short_url);
+                        $('#permalink-box').show();
+                    });
 
                 } else {
                     $.post(url, {'parameters': collect_parameters_for_permalink() })
