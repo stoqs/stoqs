@@ -9,7 +9,10 @@ version: '3.4'
 #    cd /opt/stoqsgit/docker && docker-compose -f docker-compose-stoqs_mbari_org.yml up -d
 #    docker-compose -f docker-compose-stoqs_mbari_org.yml logs -f
 # 4. The postgres container here is for storing shortened 'Share this view' URLs
-#    by the ur_l service
+#    by the shortener service, it's location for backup is specified in the .env file
+# 5. The shortener service code is cloned from https://github.com/MBARIMike/ur_l into
+#    /opt/ur_l and started with `docker-compose build ur_l` and `docker-compose up -d`
+#    from that directory
 
 volumes:
     static-files:
@@ -89,7 +92,7 @@ services:
     env_file:
       - ./.env
 
-  # postgres, redic, ur_l services adapted from: https://github.com/adamwojt/ur_l
+  # postgres, redis, shortener services adapted from: https://github.com/adamwojt/ur_l
   postgres:
     image: postgres:${POSTGRES_TAG:-latest}
     environment:
@@ -103,10 +106,13 @@ services:
       - ${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}
     env_file:
       - ./.env
+
   redis:
     image: redis:${REDIS_TAG:-latest}
-  ur_l:
-    image: adamwojt/adamwojt:ur_l_${TARGET_ENV:?Target Environment}
+
+  shortener:
+    image: adamwojt/adamwojt:ur_l_production
+    container_name: stoqs-shortener
     environment:
       - COV_FAIL_THRESHOLD=90
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:?Django Secret}
@@ -121,13 +127,11 @@ services:
       - CACHE_TIMEOUT_READ=${CACHE_TIMEOUT_READ:-900}
       - LOG_TOKEN_COLLISION=${LOG_TOKEN_COLLISION:-1}
       - NUM_GUNICORN_WORKERS=${NUM_GUNICORN_WORKERS:-4}
-      - UR_L_PORT=${UR_L_PORT:-8000}
       - URL_USE_CACHE=${URL_USE_CACHE:-1}
+      - NGINX_LOCATION=${NGINX_LOCATION:-/p}
     command: runserver
     depends_on:
       - postgres
       - redis
     volumes:
       - static-files:/app/staticfiles
-    expose:
-      - ${UR_L_PORT:-8000}
