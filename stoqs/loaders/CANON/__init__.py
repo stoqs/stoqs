@@ -210,16 +210,16 @@ class CANONLoader(LoadScript):
         psl = ParentSamplesLoader('', '', dbAlias=self.dbAlias)
         if build_attrs:
             self.logger.info(f'Building load parameter attributes for {pname} by crawling TDS')
-            self.build_dorado_attrs('dorado', startdate, enddate, parameters, file_patterns)
+            self.build_i2map_attrs(pname, startdate, enddate, parameters, file_patterns)
         else:
             self.logger.info(f'Using load {pname} attributes set in load script')
             parameters = getattr(self, f'{pname}_parms')
 
         stride = stride or self.stride
-        if hasattr(self, 'dorado_base'):
-            urls = [os.path.join(self.dorado_base, f) for f in self.dorado_files]
+        if hasattr(self, 'i2map_base'):
+            urls = [os.path.join(self.i2map_base, f) for f in self.i2map_files]
         else:
-            urls = self.dorado_urls
+            urls = self.i2map_urls
 
         for url in urls:
             dfile = url.split('/')[-1]
@@ -227,7 +227,7 @@ class CANONLoader(LoadScript):
             try:
                 mps_loaded = DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aname, 
                                            pname, self.colors['dorado'], 'auv', 'i2MAP mission', 
-                                           self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
+                                           self.i2map_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
                                            plotTimeSeriesDepth=0.0, plankton_proxies=plankton_proxies)
                 if mps_loaded:
                     psl.load_gulps(aname, dfile, self.dbAlias)
@@ -1235,7 +1235,7 @@ class CANONLoader(LoadScript):
             except FileNotFound as e:
                 self.logger.debug(f'{e}')
 
-        # Send signal that urls span years by not setting dorado_base so that dorado_urls is used instead
+        # Send signal that urls span years by not setting _base so that _urls is used instead
         if startdate.year == enddate.year:
             setattr(self, platform_name + '_base', dods_base)
         else:
@@ -1603,6 +1603,67 @@ class CANONLoader(LoadScript):
             self.logger.warn(f"No files found for {platform} between {startdate} and {enddate} in {dods_base}")
 
         # Send signal that urls span years by not setting dorado_base so that dorado_urls is used instead
+        if startdate.year == enddate.year:
+            setattr(self, platform + '_base', dods_base)
+        else:
+            setattr(self, platform + '_urls', sorted(urls))
+
+        setattr(self, platform + '_files', files)
+        setattr(self, platform  + '_startDatetime', startdate)
+        setattr(self, platform + '_endDatetime', enddate)
+
+    def find_i2map_urls(self, base, search_str, startdate, enddate):
+        '''Use Thredds Crawler to return a list of DAP urls.  Initially written for LRAUV data, for
+        which we don't initially know the urls.
+        '''
+        urls = []
+        catalog_url = os.path.join(base, 'catalog.xml')
+        c = Crawl(catalog_url, select=[search_str])
+        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+        for url in d:
+            try:
+                # breakpoint()s don't work inside this loop, use debug()s to debug
+                self.logger.debug(f'url = {url}')
+                yyyy_yd = '_'.join(url.split('_')[1].split('.')[:2])
+                self.logger.debug(f'yyyy_yd = {yyyy_yd}')
+                file_dt = datetime.strptime(yyyy_yd, '%Y_%j')
+                self.logger.debug(f'file_dt = {file_dt}')
+                sd = startdate.replace(hour=0, minute=0, second=0, microsecond=0)
+                ed = enddate.replace(hour=0, minute=0, second=0, microsecond=0)
+                if sd <= file_dt and file_dt <= ed:
+                    urls.append(url)
+                    self.logger.debug(f'* {url}')
+                else:
+                    self.logger.debug(f'{url}')
+            except ValueError:
+                urls.append(url)
+
+        if not urls:
+            raise FileNotFound('No urls matching "{search_str}" found in {catalog_url}')
+        return urls
+
+    def build_i2map_attrs(self, platform, startdate, enddate, parameters, file_patterns):
+        '''Set loader attributes to load auv-python processed i2map data
+        '''
+        setattr(self, platform + '_parms' , parameters)
+
+        urls = []
+        files = []
+        for year in range(startdate.year, enddate.year+1):
+            # i2map files are placed in dorado auvctd catalog
+            base = f'http://dods.mbari.org/thredds/catalog/auv/dorado/{year}/netcdf/'
+            dods_base = f'http://dods.mbari.org/opendap/data/auvctd/surveys/{year}/netcdf/'
+            try:
+                urls += self.find_i2map_urls(base, file_patterns, startdate, enddate)
+                for url in sorted(urls):
+                    files.append(url.split('/')[-1])
+            except FileNotFound as e:
+                self.logger.debug(f'{e}')
+
+        if not files:
+            self.logger.warn(f"No files found for {platform} between {startdate} and {enddate} in {dods_base}")
+
+        # Send signal that urls span years by not setting i2map_base so that i2map_urls is used instead
         if startdate.year == enddate.year:
             setattr(self, platform + '_base', dods_base)
         else:
