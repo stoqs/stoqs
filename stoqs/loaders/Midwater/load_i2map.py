@@ -69,8 +69,9 @@ cl = CANONLoader('stoqs_all_i2map', 'Midwater All i2MAP Missions',
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
 
+# Default is entrire i2map time range
 startdate = datetime(2017, 1, 1)
-enddate = datetime(2022, 12, 31)
+enddate = datetime.utcnow()
 
 # Execute the load
 cl.process_command_line()
@@ -80,6 +81,13 @@ if cl.args.test:
     cl.stride = 10
 elif cl.args.stride:
     cl.stride = cl.args.stride
+
+# Override default time range with command line settings
+# (The --previous_month or --current_month argument will set startdate & startdate)
+if cl.args.startdate:
+    startdate = datetime.strptime(cl.args.startdate, '%Y%m%d')
+if cl.args.enddate:
+    enddate = datetime.strptime(cl.args.enddate, '%Y%m%d')
 
 cl.load_i2MAP(startdate, enddate, build_attrs=True, file_patterns=('.*_1S.nc$'))
 
