@@ -207,9 +207,9 @@
         <h3>Share this view</h3>
     </div>
     <div class="modal-body">
-        <h4>Share this link to replicate this view of data</h4>
-        <div id="permalink-box" style="display:none">
-            <input type="text" name="permalink" style="width: 100%" />
+        This URL will replicate this view of data in the STOQS UI:
+        <div>
+            <input type="text" name="permalink-url" style="width: 100%" value="Generating URL..." />
         </div>
     </div>
     <div class="modal-footer">
@@ -2746,10 +2746,6 @@ Elapsed time is 0.097718 seconds.
         if ( $('#speedup-value').val() ) {
             params['speedup'] = $('#speedup-value').val();
         }
-
-        // Since the old link (if there was one) for the permalink is no longer valid, hide it
-        $('#permalink-box').hide();
-       
 
         //updateShowDataInfo();
         updateSummaryData();
@@ -7336,37 +7332,30 @@ function enable_cardboard(){
             if (typeof params === 'undefined') {
                 params=''
             }
-            // If the permalink is visible, then there's no point in getting
-            // another one - since the one they are seeing is alredy current so just
-            // ignore the clicks if that's the case.
-            if ($('#permalink-box').is(":visible") == false) {
-                //$.post(url, {'parameters': params })
-                var $el=$('input[name="permalink"]')
-                if ((typeof client_side_permalink !== 'undefined') &&
-                    (client_side_permalink)) {
-                    var $url=$.url();
-                    var params=$url.param();
-                    params['permalink_id']=LZString.compressToEncodedURIComponent(collect_parameters_for_permalink());
-                    var url=$url.attr('source').split('?')[0]+'?'+$.param(params)
-                    // Use ur_l shortener service to get shortened URL
-                    $.post('https://stoqs.mbari.org/p/api/urls/', {'long_url': url })
-                    .done(function (data, response, jqXHR) {
-                        $el.val(data.short_url);
-                        $('#permalink-box').show();
-                    })
-                    .fail(function() {
-                        $el.val(url);
-                        $('#permalink-box').show();
-                    });
 
-                } else {
-                    $.post(url, {'parameters': collect_parameters_for_permalink() })
-                    .done(function (data, response, jqXHR) {
-                        $el.val(data);
-                        $('#permalink-box').show();
-                    });
-                }
+            var $el=$('input[name="permalink-url"]')
+            if ((typeof client_side_permalink !== 'undefined') &&
+                (client_side_permalink)) {
+                var $url=$.url();
+                var params=$url.param();
+                params['permalink_id']=LZString.compressToEncodedURIComponent(collect_parameters_for_permalink());
+                var url=$url.attr('source').split('?')[0]+'?'+$.param(params)
+                // Use ur_l shortener service to get shortened URL
+                $.post('https://stoqs.mbari.org/p/api/urls/', {'long_url': url })
+                .done(function (data, response, jqXHR) {
+                    $el.val(data.short_url);
+                })
+                .fail(function() {
+                    $el.val(url);
+                });
+
+            } else {
+                $.post(url, {'parameters': collect_parameters_for_permalink() })
+                .done(function (data, response, jqXHR) {
+                    $el.val(data);
+                });
             }
+
         });
     });
 
