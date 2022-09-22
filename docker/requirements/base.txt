@@ -1,4 +1,4 @@
-aiohttp==3.8.1
+aiohttp==3.8.3
 beautifulsoup4==4.11.1
 channels==3.0.5
 cmocean==2.0
@@ -17,7 +17,7 @@ django-extensions==3.2.1
 django-picklefield==3.1
 GitPython==3.1.27
 euclid==1.2
-djangorestframework==3.13.1
+djangorestframework==3.14.0
 fastparquet==0.8.3
 Flask-SQLAlchemy==2.5.1
 httplib2==0.20.4
@@ -51,7 +51,7 @@ python-dateutil==2.8.2
 python3-memcached==1.51
 python-openid==2.2.5
 pytz==2022.2.1
-pyzmq==24.0.0
+pyzmq==24.0.1
 scikit-learn==1.1.2
 scipy==1.9.1
 seawater==3.3.4
