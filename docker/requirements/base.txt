@@ -1,4 +1,4 @@
-aiohttp==3.8.1
+aiohttp==3.8.3
 beautifulsoup4==4.11.1
 channels==3.0.5
 cmocean==2.0
