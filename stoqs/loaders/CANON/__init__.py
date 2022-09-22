@@ -202,14 +202,14 @@ class CANONLoader(LoadScript):
                                 'seabird25p_oxygen_mll_stbd', 'seabird25p_oxygen_umolkg_stbd',
                                 'navigation_roll', 'navigation_pitch', 'navigation_yaw' ],
                     stride=None,
-                    file_patterns=('.*_1S.nc$'), build_attrs=False, plankton_proxies=False):
+                    file_patterns=r".*netcdf/i2map_.*1S.nc", build_attrs=False, plankton_proxies=False):
         '''
         With i2map_*_1S.nc files in the AUVCTD/surveys directories we can use the Dorado loading code
         '''
         pname = 'i2map'
         psl = ParentSamplesLoader('', '', dbAlias=self.dbAlias)
         if build_attrs:
-            self.logger.info(f'Building load parameter attributes for {pname} by crawling TDS')
+            self.logger.info(f"Building load parameter attributes for {pname} by crawling TDS with file_patterns={file_patterns}")
             self.build_i2map_attrs(pname, startdate, enddate, parameters, file_patterns)
         else:
             self.logger.info(f'Using load {pname} attributes set in load script')
