@@ -89,6 +89,7 @@ if cl.args.startdate:
 if cl.args.enddate:
     enddate = datetime.strptime(cl.args.enddate, '%Y%m%d')
 
+#cl.load_i2MAP(datetime(2022, 3, 1), datetime(2022, 4, 1), build_attrs=True)
 cl.load_i2MAP(startdate, enddate, build_attrs=True)
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
