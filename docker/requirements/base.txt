@@ -61,7 +61,7 @@ slacker==0.14.0
 Sphinx==5.1.1
 statsmodels==0.13.2
 sphinx-rtd-theme==1.0.0
-sqlparse==0.4.2
+sqlparse==0.4.3
 thredds-crawler==1.5.4
 transforms3d==0.4.1
 watchdog==2.1.9

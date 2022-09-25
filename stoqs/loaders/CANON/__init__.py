@@ -200,7 +200,8 @@ class CANONLoader(LoadScript):
                                 'seabird25p_oxygen_mll', 'seabird25p_oxygen_umolkg',
                                 'seabird25p_oxygen_mll_port', 'seabird25p_oxygen_umolkg_port',
                                 'seabird25p_oxygen_mll_stbd', 'seabird25p_oxygen_umolkg_stbd',
-                                'navigation_roll', 'navigation_pitch', 'navigation_yaw' ],
+                                'navigation_roll', 'navigation_pitch', 'navigation_yaw',
+                                'navigation_mWaterSpeed', 'tailcone_propRpm' ],
                     stride=None,
                     file_patterns=r".*netcdf/i2map_.*1S.nc", build_attrs=False, plankton_proxies=False):
         '''
