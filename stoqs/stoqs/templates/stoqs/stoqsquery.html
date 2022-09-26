@@ -7340,15 +7340,20 @@ function enable_cardboard(){
                 var params=$url.param();
                 params['permalink_id']=LZString.compressToEncodedURIComponent(collect_parameters_for_permalink());
                 var url=$url.attr('source').split('?')[0]+'?'+$.param(params)
-                // Use ur_l shortener service to get shortened URL
-                $.post('https://stoqs.mbari.org/p/api/urls/', {'long_url': url })
-                .done(function (data, response, jqXHR) {
-                    $el.val(data.short_url);
-                })
-                .fail(function() {
+                if (url.indexOf('localhost') !== -1) {
+                    // Keep functional test long_urls out of ur_l database
                     $el.val(url);
-                });
-
+                }
+                else {
+                    // Use ur_l shortener service to get shortened URL
+                    $.post('https://stoqs.mbari.org/p/api/urls/', {'long_url': url })
+                    .done(function (data, response, jqXHR) {
+                        $el.val(data.short_url);
+                    })
+                    .fail(function() {
+                        $el.val(url);
+                    });
+                }
             } else {
                 $.post(url, {'parameters': collect_parameters_for_permalink() })
                 .done(function (data, response, jqXHR) {

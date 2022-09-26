@@ -10,7 +10,7 @@ dj-database-url==1.0.0
 Django==4.0.7
 django-cache-url==3.4.2
 django-configurations==2.4
-django-debug-toolbar==3.5.0
+django-debug-toolbar==3.7.0
 django-environ==0.9.0
 django-model-utils==4.2.0
 django-extensions==3.2.1
@@ -58,7 +58,7 @@ seawater==3.3.4
 selenium==4.4.3
 simplejson==3.17.6
 slacker==0.14.0
-Sphinx==5.1.1
+Sphinx==5.2.1
 statsmodels==0.13.2
 sphinx-rtd-theme==1.0.0
 sqlparse==0.4.3
