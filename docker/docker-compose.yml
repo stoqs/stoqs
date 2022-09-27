@@ -27,6 +27,7 @@ services:
       - POSTGRES_INITDB_WALDIR=/var/lib/postgresql/waldir
     container_name: stoqs-postgis
     oom_kill_disable: true
+    restart: always
     env_file:
       - ./.env
 
@@ -38,6 +39,7 @@ services:
     # Expose port 80 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##ports:
     ##  - "80:80"
+    restart: always
     env_file:
       - ./.env
 
@@ -77,6 +79,7 @@ services:
       - "8888:8888"
     # Expose port 8000 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##  - "8000:8000"
+    restart: always
     env_file:
       - ./.env
 
@@ -100,15 +103,6 @@ services:
       - "443:443"
     depends_on:
       - stoqs
+    restart: always
     env_file:
       - ./.env
-
-  # Uncomment to restart services when new images pushed to docker hub, for continuous deployment
-  # - Requires also a 'git pull' from https://github.com/stoqs/stoqs.git
-  ##watchtower:
-  ##  container_name: watchtower
-  ##  image: containrrr/watchtower
-  ##  volumes:
-  ##    - /var/run/docker.sock:/var/run/docker.sock
-  ##  restart: unless-stopped
-  ##  command: stoqs mapserver postgis nginx --interval 30
