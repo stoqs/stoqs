@@ -2253,11 +2253,23 @@ def _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName,
     # http://dods.mbari.org/opendap/data/ssdsdata/ssds/generated/netcdf/files/ssds.shore.mbari.org/auvctd/missionlogs/2010/2010300/2010.300.00/lopc.nc
     # from url that looks like: http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/Dorado389_2010_300_00_300_00_decim.nc
     #                  or like: http://odss.mbari.org/thredds/dodsC/CANON_march2013/dorado/Dorado389_2013_074_02_074_02_decim.nc
+    # or from auv-python generated netCDFs:
+    #                           http://dods.mbari.org/thredds/dodsC/auv/dorado/2022/netcdf/dorado_2022.054.01_1S.nc.html
+    #                           http://dods.mbari.org/opendap/data/auvctd/surveys/2022/netcdf/dorado_2022.054.01_1S.nc.html
     # TODO: Handle multiple missions that compose a survey
-    survey = url[url.find('Dorado389'):]
-    yr = survey.split('_')[1]
-    yd = survey.split('_')[2]
-    mn = survey.split('_')[3]
+    if 'Dorado389' in url:
+        survey = url[url.find('Dorado389'):]
+        yr = survey.split('_')[1]
+        yd = survey.split('_')[2]
+        mn = survey.split('_')[3]
+    elif 'dorado_' in url:
+        survey = url[url.find('dorado_'):]
+        yr = survey.split('_')[1].split('.')[0]
+        yd = survey.split('_')[1].split('.')[1]
+        mn = survey.split('_')[1].split('.')[2]
+    else:
+        self.logger.warning("Could not parse yr, td, mn from url = %s", url)
+        return
     lopc_url = ('http://dods.mbari.org/opendap/data/ssdsdata/ssds/generated/netcdf/'
                   'files/ssds.shore.mbari.org/auvctd/missionlogs/{}/{}/{}.{}.{}/'
                   'lopc.nc').format(yr, yr + yd, yr, yd, mn)

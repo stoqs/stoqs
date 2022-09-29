@@ -150,11 +150,26 @@ class CANONLoader(LoadScript):
         colors[b] = rgb2hex(c)[1:]
 
     def loadDorado(self, startdate=None, enddate=None,
-                   parameters=[ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
+                   parameters=[
+                    # Legacy Matlab built parameters
+                    'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine', 'par',
                     'bbp470', 'bbp676', 'fl676_uncorr',
-                    'sepCountList', 'mepCountList', 'roll', 'pitch', 'yaw', ], stride=None,
-                    file_patterns=('.*_decim.nc$'), build_attrs=False, plankton_proxies=False):
+                    'sepCountList', 'mepCountList', 'roll', 'pitch', 'yaw', 
+                    # New auv-python built parameters
+                    'ctd_temperature_onboard', 'ctd_temperature',
+                    'ctd_conductivity_onboard', 'ctd_conductivity',
+                    'ctd_salinity_onboard', 'ctd_salinity',
+                    'ctd2_temperature_onboard', 'ctd2_temperature',
+                    'ctd2_conductivity_onboard', 'ctd2_conductivity',
+                    'ctd2_salinity_onboard', 'ctd2_salinity',
+                    'ctd_dissolvedO2', 'ctd_oxygen_mll', 'ctd_oxygen_umolkg',
+                    'hs2_bb420', 'hs2_bb700', 'hs2_fl700',
+                    'navigation_roll', 'navigation_pitch', 'navigation_yaw',
+                    'navigation_mWaterSpeed', 'tailcone_propRpm',
+                    ], stride=None,
+                    file_patterns=(r".*_decim.nc$", r".*netcdf/dorado_.*1S.nc"),
+                    build_attrs=False, plankton_proxies=False):
         '''
         Support legacy use of loadDorado() and permit wider use by specifying startdate and endate
         '''
@@ -1562,11 +1577,22 @@ class CANONLoader(LoadScript):
         '''
         urls = []
         catalog_url = os.path.join(base, 'catalog.xml')
-        c = Crawl(catalog_url, select=[search_str])
+        if isinstance(search_str, str):
+            # Accommodate either string or Sequence in search_str
+            search_str = [search_str]
+        c = Crawl(catalog_url, select=search_str)
         d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
         for url in d:
             try:
-                yyyy_yd = '_'.join(url.split('/')[-1].split('_')[1:3])
+                if 'Dorado389' in url:
+                    # http://dods.mbari.org/thredds/dodsC/auv/dorado/2022/netcdf/Dorado389_2022_243_00_243_00_decim.nc
+                    yyyy_yd = '_'.join(url.split('/')[-1].split('_')[1:3])
+                elif 'dorado_' in url:
+                    # http://dods.mbari.org/thredds/dodsC/auv/dorado/2022/netcdf/dorado_2022.243.00_1S.nc
+                    yyyy_yd = '_'.join(url.split('/')[-1].split('_')[1].split('.')[:2])
+                else:
+                    self.logger.warning("Could not parse yyyy_yd from url = %s", url)
+                    continue
                 file_dt = datetime.strptime(yyyy_yd, '%Y_%j')
                 sd = startdate.replace(hour=0, minute=0, second=0, microsecond=0)
                 ed = enddate.replace(hour=0, minute=0, second=0, microsecond=0)
