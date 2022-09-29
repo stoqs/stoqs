@@ -72,4 +72,5 @@ campaigns = OrderedDict([
     ('stoqs_all_i2map',             'Midwater/load_i2map.py'),
     ('stoqs_beds_viz2022',            'BEDS/loadBED_viz2022.py'),
     ('stoqs_ecohab_may2022',        'CANON/load_ecohab_may2022.py'),
+    ('stoqs_auv_compare',           'PlanktonProxies/load_auv_compare.py'),
 ])
