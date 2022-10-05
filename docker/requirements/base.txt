@@ -3,7 +3,7 @@ beautifulsoup4==4.11.1
 channels==3.0.5
 cmocean==2.0
 coards==1.0.5
-coverage==6.4.4
+coverage==6.5.0
 datadiff==2.0.0
 datashader==0.14.2
 dj-database-url==1.0.0
@@ -19,11 +19,11 @@ GitPython==3.1.27
 euclid==1.2
 djangorestframework==3.14.0
 fastparquet==0.8.3
-Flask-SQLAlchemy==2.5.1
+Flask-SQLAlchemy==3.0.0
 httplib2==0.20.4
 hvplot==0.8.1
 ipython==8.4.0
-holoviews==1.15.0
+holoviews==1.15.1
 ipyleaflet==0.17.1
 jdcal==1.4.1
 Jinja2==3.1.2
@@ -50,7 +50,7 @@ Pydap==3.2.2
 python-dateutil==2.8.2
 python3-memcached==1.51
 python-openid==2.2.5
-pytz==2022.2.1
+pytz==2022.4
 pyzmq==24.0.1
 scikit-learn==1.1.2
 scipy==1.9.1
@@ -58,12 +58,12 @@ seawater==3.3.4
 selenium==4.5.0
 simplejson==3.17.6
 slacker==0.14.0
-Sphinx==5.2.2
+Sphinx==5.2.3
 statsmodels==0.13.2
 sphinx-rtd-theme==1.0.0
 sqlparse==0.4.3
 thredds-crawler==1.5.4
 transforms3d==0.4.1
 watchdog==2.1.9
-xarray==2022.6.0
+xarray==2022.9.0
 websocket-client==1.4.1

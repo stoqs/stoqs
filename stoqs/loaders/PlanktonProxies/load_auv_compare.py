@@ -17,7 +17,7 @@ from CANON import CANONLoader
 import timing
 
 cl = CANONLoader('stoqs_auv_compare', 'Compare legacy and auv-python processed Dorado data',
-                 description='A recent mission that has most all of the Parameters',
+                 description='Variables from Matlab & auv-python processing loaded together for visual comparison in the STOQS UI',
                  x3dTerrains={
                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
