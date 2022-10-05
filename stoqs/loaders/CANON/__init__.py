@@ -167,6 +167,8 @@ class CANONLoader(LoadScript):
                     'hs2_bb420', 'hs2_bb700', 'hs2_fl700',
                     'navigation_roll', 'navigation_pitch', 'navigation_yaw',
                     'navigation_mWaterSpeed', 'tailcone_propRpm',
+                    'lopc_countListSum', 'lopc_transCount', 'lopc_nonTransCount',
+                    'lopc_LCcount', 'flowSpeed',
                     ], stride=None,
                     file_patterns=(r".*_decim.nc$", r".*netcdf/dorado_.*1S.nc"),
                     build_attrs=False, plankton_proxies=False):
