@@ -168,9 +168,9 @@ class CANONLoader(LoadScript):
                     'navigation_roll', 'navigation_pitch', 'navigation_yaw',
                     'navigation_mWaterSpeed', 'tailcone_propRpm',
                     'lopc_countListSum', 'lopc_transCount', 'lopc_nonTransCount',
-                    'lopc_LCcount', 'flowSpeed',
+                    'lopc_LCcount', 'lopc_flowSpeed',
                     ], stride=None,
-                    file_patterns=(r".*_decim.nc$", r".*netcdf/dorado_.*1S.nc"),
+                    file_patterns=(r".*_decim.nc$", r".*netcdf/dorado_.*1S.nc", ),
                     build_attrs=False, plankton_proxies=False):
         '''
         Support legacy use of loadDorado() and permit wider use by specifying startdate and endate
