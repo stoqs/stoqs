@@ -29,7 +29,7 @@ import django
 import logging
 
 from argparse import ArgumentParser, Namespace
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from make_load_scripts import LoaderMaker
 from loaders.load import Loader, DatabaseLoadError
