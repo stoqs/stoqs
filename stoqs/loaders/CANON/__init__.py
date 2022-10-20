@@ -204,7 +204,7 @@ class CANONLoader(LoadScript):
                 self.logger.warn(str(e))
                 self.logger.info(f"Skipping load of {url}")
 
-        self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pname,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/dorado_scan1.glb', pname,
                                   scalefactor=2)
 
     def load_i2MAP(self, startdate=None, enddate=None,
@@ -1569,7 +1569,10 @@ class CANONLoader(LoadScript):
         except urllib.error.HTTPError as e:
             self.logger.warn(f'{e}')
         except FileNotFound as e:
-            self.logger.warn(f'{e}')
+            if dlist_str:
+                self.logger.warn(f'{e} for dlist_str = {dlist_str}')
+            else:
+                self.logger.warn(f'{e} between {startdate} and {enddate}')
             if err_on_missing_file:
                 raise
 
