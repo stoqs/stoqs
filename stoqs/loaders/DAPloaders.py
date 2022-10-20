@@ -2325,10 +2325,19 @@ def _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName,
 
 def _load_plankton_proxies(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, 
                            pColor, pTypeName, grdTerrain, plotTimeSeriesDepth):
-    survey = url[url.find('Dorado389'):]
-    yr = survey.split('_')[1]
-    yd = survey.split('_')[2]
-    mn = survey.split('_')[3]
+    if 'Dorado389' in url:
+        survey = url[url.find('Dorado389'):]
+        yr = survey.split('_')[1]
+        yd = survey.split('_')[2]
+        mn = survey.split('_')[3]
+    elif 'dorado_' in url:
+        survey = url[url.find('dorado_'):]
+        yr = survey.split('_')[1].split('.')[0]
+        yd = survey.split('_')[1].split('.')[1]
+        mn = survey.split('_')[1].split('.')[2]
+    else:
+        self.logger.warning("Could not parse yr, td, mn from url = %s", url)
+        return
 
     # http://odss.mbari.org/thredds/dodsC/Other/routine/Products/Dorado/netcdf_proxies/2003/Dorado_2003_340_02_proxies.nc
     pp_url = ('http://odss.mbari.org/thredds/dodsC/Other/routine/Products/Dorado/'
