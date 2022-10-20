@@ -37,7 +37,7 @@ cl = CANONLoader('stoqs_canon_october2022', 'CANON - October 2022',
                  )
 
 startdate = datetime(2022, 10, 5)
-enddate = datetime(2022, 10, 31)
+enddate = datetime(2022, 10, 30)
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -52,8 +52,8 @@ cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line67/'
 cl.l_662a_files = [ 'OS_Glider_L_662_20220726_TS.nc', ]
 cl.l_662a_parms = ['temperature', 'salinity', 'fluorescence','oxygen']
 # Just the time period its in Monterey Bay
-cl.l_662a_startDatetime = datetime(2022, 10, 0)
-cl.l_662a_endDatetime = enddate
+cl.l_662a_startDatetime = datetime(2022, 10, 9)
+cl.l_662a_endDatetime = datetime(2022, 10, 15)
 
 ######################################################################
 # Wavegliders
@@ -110,16 +110,17 @@ elif cl.args.stride:
     cl.stride = cl.args.stride
 
 cl.loadL_662a()
-cl.loadLRAUV('makai', startdate, enddate, sbd_logs=True)
+##cl.loadLRAUV('makai', startdate, enddate, sbd_logs=True)
 cl.loadLRAUV('makai', startdate, enddate)
-cl.loadLRAUV('daphne', startdate, enddate, sbd_logs=True)
+##cl.loadLRAUV('daphne', startdate, enddate, sbd_logs=True)
 cl.loadLRAUV('daphne', startdate, enddate)
+cl.loadLRAUV('galene', startdate, enddate, sbd_logs=True)
 cl.loadM1()
 #cl.load_wg_Tiny()
 #cl.load_wg_Hansen()
 cl.loadDorado(startdate, enddate, build_attrs=True)
 
-cl.loadSubSamples() 
+##cl.loadSubSamples() 
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
