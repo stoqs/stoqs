@@ -37,7 +37,7 @@ netifaces==0.11.0
 nose==1.3.7
 oauthlib==3.2.2
 ordereddict==1.1
-PasteDeploy==2.1.1
+PasteDeploy==3.0.1
 Paste==3.5.2
 PasteScript==3.2.1
 pika==1.3.0
