@@ -36,8 +36,8 @@ cl = CANONLoader('stoqs_canon_october2022', 'CANON - October 2022',
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
 
-startdate = datetime(2022, 10, 5)
-enddate = datetime(2022, 10, 30)
+startdate = datetime(2022, 10, 7)
+enddate = datetime(2022, 10, 20)
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -114,7 +114,8 @@ cl.loadL_662a()
 cl.loadLRAUV('makai', startdate, enddate)
 ##cl.loadLRAUV('daphne', startdate, enddate, sbd_logs=True)
 cl.loadLRAUV('daphne', startdate, enddate)
-cl.loadLRAUV('galene', startdate, enddate, sbd_logs=True)
+cl.loadLRAUV('pontus', startdate, enddate, sbd_logs=True)
+cl.loadLRAUV('pontus', startdate)
 cl.loadM1()
 #cl.load_wg_Tiny()
 #cl.load_wg_Hansen()
