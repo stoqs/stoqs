@@ -36,14 +36,17 @@ cl = CANONLoader('stoqs_auv_compare', 'Compare legacy and auv-python processed D
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
 
-startdate = datetime(2022, 8, 30)
-enddate = datetime(2022, 9, 2)
+# Beginning of Monterey Bay overnight diamond runs
+startdate = datetime(2016, 6, 5)
+enddate = datetime(2017, 9, 13)
 
 # Execute the load
 cl.process_command_line()
 
 #cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
-cl.loadDorado(startdate, enddate, build_attrs=True)
+#cl.loadDorado(startdate, enddate, build_attrs=True)
+cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", r".*netcdf/dorado_.*1S.nc", ), plankton_proxies=True)
+#cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*netcdf/dorado_.*1S.nc", ))
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
