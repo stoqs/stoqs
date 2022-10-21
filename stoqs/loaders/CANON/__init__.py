@@ -159,10 +159,10 @@ class CANONLoader(LoadScript):
                     # New auv-python built parameters
                     'ctd_temperature_onboard', 'ctd_temperature',
                     'ctd_conductivity_onboard', 'ctd_conductivity',
-                    'ctd_salinity_onboard', 'ctd_salinity',
+                    'ctd_salinity_onboard', 'ctd_salinity', 'ctd_flow1',
                     'ctd2_temperature_onboard', 'ctd2_temperature',
                     'ctd2_conductivity_onboard', 'ctd2_conductivity',
-                    'ctd2_salinity_onboard', 'ctd2_salinity',
+                    'ctd2_salinity_onboard', 'ctd2_salinity', 'ctd2_flow2',
                     'ctd_dissolvedO2', 'ctd_oxygen_mll', 'ctd_oxygen_umolkg',
                     'hs2_bb420', 'hs2_bb700', 'hs2_fl700',
                     'navigation_roll', 'navigation_pitch', 'navigation_yaw',
