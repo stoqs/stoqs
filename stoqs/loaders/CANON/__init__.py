@@ -1608,7 +1608,7 @@ class CANONLoader(LoadScript):
                 urls.append(url)
 
         if not urls:
-            raise FileNotFound('No urls matching "{search_str}" found in {catalog_url}')
+            raise FileNotFound(f'No urls matching "{search_str}" found in {catalog_url}')
 
         return urls
 
