@@ -997,31 +997,6 @@ class STOQS_Loader(object):
 
         return row
 
-    def _is_any_value_good(self, dap_type):
-        '''Return True if any data element in dap_type (numpy array) is not NaN
-        '''
-        # Retreiving data via .array[:] can take some time, do initial retrieval of small number first
-        try:
-            values = dap_type.array[:10].data.flatten()
-        except AttributeError:
-            values = dap_type.data[:10].flatten()
-
-        for value in values:
-            if not np.isnan(value).all():
-                return True
-
-        # No good data found in initial records, test the entire dataset
-        try:
-            values = dap_type.array[:].data.flatten()
-        except AttributeError:
-            values = dap_type.data[:].flatten()
-
-        for value in values:
-            if not np.isnan(value).all():
-                return True
-
-        return False
-
     def checkForValidData(self):
         '''
         Do a pre- check on the OPeNDAP url for the include_names variables. If there are non-NaN data in
@@ -1035,7 +1010,20 @@ class STOQS_Loader(object):
             allNaNFlag[v] = True
             self.logger.debug("include_name: %s", v)
             try:
-                anyValidData = self._is_any_value_good(self.ds[v])
+                if len(self.ds[v].shape) == 1:
+                    anyValidData = not np.isnan(np.array(self.ds[v].data[:])).all()
+                elif len(self.ds[v].shape) == 2:
+                    # Likely lopc data - look at just first bin values [time][bin]
+                    anyValidData = not np.isnan(np.array(self.ds[v].data[:][0])).all()
+                elif len(self.ds[v].shape) == 3:
+                    # Likely USGS EPIC ADCP variables with missing depth coordinate, but having nominal sensor depth metadata
+                    anyValidData = not np.isnan(np.array(self.ds[v].data[:][0][0])).all()
+                elif len(self.ds[v].shape) == 4:
+                    # Likely mooring data with fully specified coords: [time][depth][lat][lon]
+                    anyValidData = not np.isnan(np.array(self.ds[v].data[:][:][0][0])).all()
+                else:
+                    self.logger.error('Parameter %s shape length of %s not handled', v, len(self.ds[v].shape))
+                    raise Exception(f"Parameter {v} with shape {len(self.ds[v].shape)} length of not handled")
             except KeyError:
                 self.logger.debug('Parameter %s not in %s. Skipping.', v, list(self.ds.keys()))
                 if v.find('.') != -1:
@@ -1051,6 +1039,7 @@ class STOQS_Loader(object):
             if not allNaNFlag[v]:
                 self.varsLoaded.append(v)
         self.logger.info(f"Variables that have data: {self.varsLoaded}")
+        anyValidData = not all(allNaNFlag.values())
 
         return anyValidData
     

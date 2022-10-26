@@ -157,13 +157,11 @@ class CANONLoader(LoadScript):
                     'bbp470', 'bbp676', 'fl676_uncorr',
                     'sepCountList', 'mepCountList', 'roll', 'pitch', 'yaw', 
                     # New auv-python built parameters
-                    'ctd_temperature_onboard', 'ctd_temperature',
-                    'ctd_conductivity_onboard', 'ctd_conductivity',
-                    'ctd_salinity_onboard', 'ctd_salinity',
+                    'ctd1_temperature_onboard', 'ctd1_temperature',
+                    'ctd1_salinity_onboard', 'ctd1_salinity', 'ctd1_flow1',
                     'ctd2_temperature_onboard', 'ctd2_temperature',
-                    'ctd2_conductivity_onboard', 'ctd2_conductivity',
-                    'ctd2_salinity_onboard', 'ctd2_salinity',
-                    'ctd_dissolvedO2', 'ctd_oxygen_mll', 'ctd_oxygen_umolkg',
+                    'ctd2_salinity_onboard', 'ctd2_salinity', 'ctd2_flow2',
+                    'ctd1_dissolvedO2', 'ctd1_oxygen_mll', 'ctd1_oxygen_umolkg',
                     'hs2_bb420', 'hs2_bb700', 'hs2_fl700',
                     'navigation_roll', 'navigation_pitch', 'navigation_yaw',
                     'navigation_mWaterSpeed', 'tailcone_propRpm',
@@ -1610,7 +1608,7 @@ class CANONLoader(LoadScript):
                 urls.append(url)
 
         if not urls:
-            raise FileNotFound('No urls matching "{search_str}" found in {catalog_url}')
+            raise FileNotFound(f'No urls matching "{search_str}" found in {catalog_url}')
 
         return urls
 
