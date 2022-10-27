@@ -39,7 +39,6 @@ from datetime import datetime
 from django.contrib.gis import gdal
 import logging
 import matplotlib.pyplot as plt
-import pprint
 import calendar
 import re
 import locale
@@ -2037,7 +2036,6 @@ class STOQSQManager(object):
         logger.debug("Begining to loop though ActivityResource query to build qlHash...")
         for ar in models.ActivityResource.objects.using(self.dbname).filter(activity__in=self.qs, resource__resourcetype__name='quick_look').values(
                         'activity__platform__name', 'activity__name', 'resource__name', 'resource__uristring'):
-            logger.debug("qlHash[ar['activity__platform__name']] = %s", pprint.pprint(qlHash[ar['activity__platform__name']]))
             logger.debug("activity__name = %s", ar['activity__name'])
             qlHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__uristring']
         logger.debug("Done building qlHash.")
