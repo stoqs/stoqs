@@ -5187,18 +5187,31 @@ function enable_cardboard(){
                             dsLink += '<span style="overflow:hidden;text-overflow:ellipsis;display:block;">' + activity + '</span></a>';
                         }
                         var title = attributes.title;
+                        if ( $.isEmptyObject(title) ) {
+                            title = attributes['nc_global.title']
+                        }
                         var summary = attributes.summary;
+                        if ( $.isEmptyObject(summary) ) {
+                            summary = attributes['nc_global.summary']
+                        }
+                        // Do not use Activity comment, only the netCDF nc_global comment where data QC info will be
+                        comment = attributes['nc_global.comment']
+
                         if ( $.isEmptyObject(title) ) {
                             title = '(No title in NetCDF file)';
                         }
                         if ( $.isEmptyObject(summary) ) {
                             summary = '(No summary in NetCDF file)';
                         }
+                        if ( $.isEmptyObject(comment) ) {
+                            comment = '(No comment in NetCDF file)';
+                        }
+                        comment += '<br><br>Loaded into STOQS:<br>' + attributes.loaded_date.split('.')[0];
                         platformActivitiesHtml += '<div id="' + activity + '" class="row-fluid netcdf-activity-row">' +
                             '<div class="span3">' + dsLink + '</div>' +
-                            '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + title + '</span></div>' +
-                            '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + summary + '</span></div>' +
-                            '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + attributes.comment + '</span></div>' +
+                            '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;" title="title">' + title + '</span></div>' +
+                            '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;" title="summary">' + summary + '</span></div>' +
+                            '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;" title="comment">' + comment + '</span></div>' +
                             '</div>';
 
                         if ( ! $.isEmptyObject(data.resources.quick_look[plat]) ) {

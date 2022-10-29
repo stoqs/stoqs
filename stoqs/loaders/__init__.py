@@ -627,9 +627,9 @@ class STOQS_Loader(object):
         self.logger.debug("ds.attributes.keys() = %s", list(self.ds.attributes.keys()) )
         resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'nc_global')
         for rn, value in list(self.ds.attributes['NC_GLOBAL'].items()):
-            self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
+            self.logger.debug("Getting or Creating Resource with name = %s, value = %s", f"nc_global.{rn}", value )
             resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
-                        name=rn, value=value, resourcetype=resourceType)
+                        name=f"nc_global.{rn}", value=value, resourcetype=resourceType)
             ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
                         activity=self.activity, resource=resource)
 
@@ -656,9 +656,9 @@ class STOQS_Loader(object):
             self.logger.debug('v = %s', v)
             try:
                 for rn, value in list(self.ds[v].attributes.items()):
-                    self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
+                    self.logger.debug("Getting or Creating Resource with name = %s, value = %s", f"{v}.{rn}", value )
                     resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
-                                          name=rn, value=value, resourcetype=resourceType)
+                                          name=f"{v}.{rn}", value=value, resourcetype=resourceType)
                     pn, _ = self.parameter_name(v)
                     m.ParameterResource.objects.using(self.dbAlias).get_or_create(
                                     parameter=self.getParameterByName(pn), resource=resource)
