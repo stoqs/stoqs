@@ -39,7 +39,6 @@ from datetime import datetime
 from django.contrib.gis import gdal
 import logging
 import matplotlib.pyplot as plt
-import pprint
 import calendar
 import re
 import locale
@@ -2014,12 +2013,24 @@ class STOQSQManager(object):
         netcdfHash = {}
         # Simple name/value attributes
         logger.debug("Begining to loop though ActivityResource query to build netcdfHash...")
+        # Original way of loading netCDF nc_global attributes
+        nc_global_names = ['title', 'summary', 'comment']
+        ars = models.ActivityResource.objects.using(self.dbname).filter(activity__in=self.qs
+                    ,resource__name__in=nc_global_names
+                    ).values('activity__platform__name', 'activity__name', 'activity__comment', 'resource__name', 'resource__value')
+        if not ars:
+            # Check if new way, since October 2022, of loading netCDF metadata Resources
+            nc_global_names = ['nc_global.title', 'nc_global.summary', 'nc_global.comment']
+            ars = models.ActivityResource.objects.using(self.dbname).filter(activity__in=self.qs
+                        ,resource__name__in=nc_global_names
+                        ).values('activity__platform__name', 'activity__name', 'activity__comment', 'resource__name', 'resource__value')
         for ar in models.ActivityResource.objects.using(self.dbname).filter(activity__in=self.qs
-                        ,resource__name__in=['title', 'summary', 'opendap_url']
-                        ).values('activity__platform__name', 'activity__name', 'activity__comment', 'resource__name', 'resource__value'):
+                        ,resource__name__in=nc_global_names + ['opendap_url']
+                        ).values('activity__platform__name', 'activity__name', 'activity__comment', 'resource__name', 'resource__value', 'activity__loaded_date'):
             try:
                 netcdfHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__value']
                 netcdfHash[ar['activity__platform__name']][ar['activity__name']]['comment'] = ar['activity__comment']
+                netcdfHash[ar['activity__platform__name']][ar['activity__name']]['loaded_date'] = ar['activity__loaded_date']
             except KeyError:
                 try:
                     netcdfHash[ar['activity__platform__name']][ar['activity__name']] = {}
@@ -2029,6 +2040,7 @@ class STOQSQManager(object):
 
                 netcdfHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__value']
                 netcdfHash[ar['activity__platform__name']][ar['activity__name']]['comment'] = ar['activity__comment']
+                netcdfHash[ar['activity__platform__name']][ar['activity__name']]['loaded_date'] = ar['activity__loaded_date']
 
         logger.debug("Done building netcdfHash.")
 
@@ -2037,7 +2049,6 @@ class STOQSQManager(object):
         logger.debug("Begining to loop though ActivityResource query to build qlHash...")
         for ar in models.ActivityResource.objects.using(self.dbname).filter(activity__in=self.qs, resource__resourcetype__name='quick_look').values(
                         'activity__platform__name', 'activity__name', 'resource__name', 'resource__uristring'):
-            logger.debug("qlHash[ar['activity__platform__name']] = %s", pprint.pprint(qlHash[ar['activity__platform__name']]))
             logger.debug("activity__name = %s", ar['activity__name'])
             qlHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__uristring']
         logger.debug("Done building qlHash.")
