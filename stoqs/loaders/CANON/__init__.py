@@ -34,6 +34,7 @@ except AttributeError:
 import DAPloaders
 import requests
 import urllib
+import xarray as xr
 
 from SampleLoaders import SeabirdLoader, SubSamplesLoader, ParentSamplesLoader
 from lrauv_support import MissionLoader
@@ -169,7 +170,7 @@ class CANONLoader(LoadScript):
                     'lopc_LCcount', 'lopc_flowSpeed',
                     ], stride=None,
                     file_patterns=(r".*_decim.nc$", r".*netcdf/dorado_.*1S.nc", ),
-                    build_attrs=False, plankton_proxies=False):
+                    build_attrs=False, plankton_proxies=False, title_match=""):
         '''
         Support legacy use of loadDorado() and permit wider use by specifying startdate and endate
         '''
@@ -177,7 +178,7 @@ class CANONLoader(LoadScript):
         psl = ParentSamplesLoader('', '', dbAlias=self.dbAlias)
         if build_attrs:
             self.logger.info(f'Building load parameter attributes from crawling TDS')
-            self.build_dorado_attrs(pname, startdate, enddate, parameters, file_patterns)
+            self.build_dorado_attrs(pname, startdate, enddate, parameters, file_patterns, title_match)
         else:
             self.logger.info(f'Using load {pname} attributes set in load script')
             parameters = getattr(self, f'{pname}_parms')
@@ -1574,7 +1575,18 @@ class CANONLoader(LoadScript):
             if err_on_missing_file:
                 raise
 
-    def find_dorado_urls(self, base, search_str, startdate, enddate):
+    def _title_match(self, url, title_match):
+        '''Customized for findinfind_dorado_urlsg urls produced by auv-python with proper metadata
+        in dorado_info.py. Initially used to find all Dorado Monterey Bay Diamond
+        missions that do not have 'REMOVE from analysis' in the comment.
+        '''
+        ds = xr.open_dataset(url)
+        if title_match in ds.attrs['title'] and 'REMOVE' not in ds.attrs['comment']:
+            return True
+        else:
+            return False
+
+    def find_dorado_urls(self, base, search_str, startdate, enddate, title_match=""):
         '''Use Thredds Crawler to return a list of DAP urls.  Initially written for LRAUV data, for
         which we don't initially know the urls.
         '''
@@ -1599,20 +1611,26 @@ class CANONLoader(LoadScript):
                 file_dt = datetime.strptime(yyyy_yd, '%Y_%j')
                 sd = startdate.replace(hour=0, minute=0, second=0, microsecond=0)
                 ed = enddate.replace(hour=0, minute=0, second=0, microsecond=0)
+                if title_match:
+                    self.logger.debug(f"Checking if '{title_match}' is in title of {url}")
+                    if not self._title_match(url, title_match):
+                        self.logger.debug(f"'{title_match}' NOT in title of {url}")
+                        continue
                 if sd <= file_dt and file_dt <= ed:
                     urls.append(url)
-                    self.logger.debug(f'* {url}')
+                    self.logger.debug(f'Using {url}')
                 else:
                     self.logger.debug(f'{url}')
-            except ValueError:
-                urls.append(url)
+            except ValueError as e:
+                self.logger.warning(f'ValueError: {e}')
+                urls.append(f"Using {url}")
 
         if not urls:
             raise FileNotFound(f'No urls matching "{search_str}" found in {catalog_url}')
 
         return urls
 
-    def build_dorado_attrs(self, platform, startdate, enddate, parameters, file_patterns):
+    def build_dorado_attrs(self, platform, startdate, enddate, parameters, file_patterns, title_match=""):
         '''Set loader attributes for each Dorado vehicle
         '''
         setattr(self, platform + '_parms' , parameters)
@@ -1623,7 +1641,8 @@ class CANONLoader(LoadScript):
             base = f'http://dods.mbari.org/thredds/catalog/auv/{platform}/{year}/netcdf/'
             dods_base = f'http://dods.mbari.org/opendap/data/auvctd/surveys/{year}/netcdf/'
             try:
-                urls += self.find_dorado_urls(base, file_patterns, startdate, enddate)
+                self.logger.debug(f'Searching {base}')
+                urls += self.find_dorado_urls(base, file_patterns, startdate, enddate, title_match)
                 for url in sorted(urls):
                     files.append(url.split('/')[-1])
             except FileNotFound as e:
