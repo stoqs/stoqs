@@ -198,7 +198,12 @@ class CANONLoader(LoadScript):
                                            self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
                                            plotTimeSeriesDepth=0.0, plankton_proxies=plankton_proxies)
                 if mps_loaded:
-                    psl.load_gulps(aname, dfile, self.dbAlias)
+                    if aname.startswith("Dorado389"):
+                        # Legacy Gulper loads
+                        psl.load_gulps(aname, dfile, self.dbAlias)
+                    elif aname.startswith("dorado_"):
+                        # New Gulper loads as Activities
+                        psl.load_gulper_activities(aname, dfile, self.dbAlias, url, self.colors[pname])
             except DAPloaders.DuplicateData as e:
                 self.logger.warn(str(e))
                 self.logger.info(f"Skipping load of {url}")
