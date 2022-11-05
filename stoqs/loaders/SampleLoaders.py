@@ -26,11 +26,13 @@ from stoqs.models import (Activity, InstantPoint, Sample, SampleType, Resource,
                           Platform, PlatformType, ActivityType, ActivityResource,
                           SampleResource, ResourceType, ParameterResource)
 from loaders.seabird import get_year_lat_lon
+from loaders.gulper import Gulper
 from loaders import STOQS_Loader, SkipRecord
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pydap.model import BaseType, DatasetType
+import argparse
 import csv
 from urllib.request import urlopen, HTTPError
 import requests
@@ -221,6 +223,32 @@ class ParentSamplesLoader(STOQS_Loader):
                     self.logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
                 except ClosestTimeNotFoundException:
                     self.logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
+
+    def load_gulper_activities(self, activity_name, auv_file, db_alias, url, platform_color):
+        '''Use gulper.Gulper from auv-python to get Gulper bottle times and load Samples
+        as Activities like for LRAUV ESPs and Sippers.  auv_file looks like 'dorado_2022.286.01_1S.nc'
+        '''
+        gulper = Gulper()
+        gulper.args = argparse.Namespace()
+        gulper.args.mission = auv_file.split("_")[1]
+        gulper.args.start_esecs = None
+        gulper.args.local = False
+        gulper.args.verbose = 0
+        bottle_times = gulper.parse_gulpers()
+        gulper_names = {}
+        for sample_name, sample_esecs in bottle_times.items():
+            summary = f"Gulper {sample_name} sampled at esecs = {sample_esecs}"
+            gulper_names[sample_name] = SampleInfo(int(sample_esecs)-1, int(sample_esecs)+2, 0.8, summary)
+
+        pt, _ = PlatformType.objects.using(db_alias).get_or_create(name='auv')
+        platform, _ = Platform.objects.using(db_alias).get_or_create(
+                                name = "dorado_Gulper",
+                                platformtype = pt,
+                                color = platform_color
+                            )
+        gulper_type, _ = SampleType.objects.using(db_alias).get_or_create(name=GULPER)
+        self._save_samples(db_alias, platform.name, activity_name, gulper_type, gulper_names, url,
+                               log_text='3 seconds around Gulper fire time parsed from syslog')
 
     def _get_lrauv_esp_sample_platform(self, db_alias, lrauv_platform, sample_type, esp_device=None):
         '''Use name of LRAUV platform to construct a new Platform for connecting to an ESP Sample Activity.
@@ -704,7 +732,7 @@ class ParentSamplesLoader(STOQS_Loader):
     def _match_seq_to_cartridge(self, filterings, stoppings, summaries, before_seq_num_implemented=False):
         '''Take lists from parsing TethysDash log and build Sample names list with start and end times
         '''
-        # Loop through exctractions from syslog to build dictionary
+        # Loop through extractions from syslog to build dictionary
         sample_names = defaultdict(SampleInfo)
         for filtering, stopping, summary in zip(filterings, stoppings, summaries):
             self.logger.debug(f"summary = {summary}")
