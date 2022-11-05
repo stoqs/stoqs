@@ -66,4 +66,4 @@ thredds-crawler==1.5.4
 transforms3d==0.4.1
 watchdog==2.1.9
 xarray==2022.9.0
-websocket-client==1.4.1
+websocket-client==1.4.2
