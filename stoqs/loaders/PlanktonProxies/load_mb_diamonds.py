@@ -50,7 +50,7 @@ if cl.args.test:
 #cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", r".*netcdf/dorado_.*1S.nc", ), plankton_proxies=True)
 #cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*netcdf/dorado_.*1S.nc", ), plankton_proxies=True)
 cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*netcdf/dorado_.*1S.nc", ), title_match="Monterey Bay Diamond")
-#cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", ))
+cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", ), title_match="Monterey Bay Diamond")
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
