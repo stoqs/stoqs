@@ -2420,7 +2420,8 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     loader.logger.info(f"Loaded Activity {aName} with {mps_loaded} MeasuredParameters")
 
     if mps_loaded:
-        if 'sepCountList' in loader.include_names or 'mepCountList' in loader.include_names:
+        if 'Dorado389' in url and ('sepCountList' in loader.include_names or 'mepCountList' in loader.include_names):
+            # Load these only for legacy Matlab processed data, e.g. netCDF files named 'Dorado389...'
             _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName, pColor, pTypeName, grdTerrain, plotTimeSeriesDepth)
 
         if plankton_proxies:
