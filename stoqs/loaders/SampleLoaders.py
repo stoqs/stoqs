@@ -247,8 +247,9 @@ class ParentSamplesLoader(STOQS_Loader):
                                 color = platform_color
                             )
         gulper_type, _ = SampleType.objects.using(db_alias).get_or_create(name=GULPER)
+        self.logger.debug('_save_samples() for gulper_names = %s', gulper_names)
         self._save_samples(db_alias, platform.name, activity_name, gulper_type, gulper_names, url,
-                               log_text='3 seconds around Gulper fire time parsed from syslog')
+                           log_text='3 seconds around Gulper fire time parsed from syslog')
 
     def _get_lrauv_esp_sample_platform(self, db_alias, lrauv_platform, sample_type, esp_device=None):
         '''Use name of LRAUV platform to construct a new Platform for connecting to an ESP Sample Activity.

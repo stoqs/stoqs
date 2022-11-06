@@ -146,6 +146,7 @@ class Gulper:
                 number = int(match.group(1))
                 esecs = float(match.group(2))
                 self.logger.debug(f"number = {number}, esecs = {esecs}")
+                bottles[number] = esecs
 
             if match := num_fire_gulper_cmd_re.search(line):
                 # ": (\d+) Gulper::fireGulper - cmd is \$(\d\d)1Fff
