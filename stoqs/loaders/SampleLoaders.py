@@ -302,8 +302,12 @@ class ParentSamplesLoader(STOQS_Loader):
         if duration > timedelta(hours=max_hours):
             self.logger.warn(f"Time duration of Sample '{sample_name}' is longer than {max_hours} hours: duration = {duration}")
 
-        log_dir = url.split('/')[10]
-        short_activity_name = f"{activity_name.split('_')[0]}_{log_dir}"
+        try:
+            log_dir = url.split('/')[10]
+            short_activity_name = f"{activity_name.split('_')[0]}_{log_dir}"
+        except IndexError:
+            # Likely not a LRAUV url, a dorado one instead
+            short_activity_name = f"{activity_name}"
         if esp_device:
             a_name = f"{short_activity_name}_{sample_type.name.replace('ESP', esp_device)}_{sample_name}"
         else:
