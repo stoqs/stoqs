@@ -1586,9 +1586,13 @@ class CANONLoader(LoadScript):
         missions that do not have 'REMOVE from analysis' in the comment.
         '''
         ds = xr.open_dataset(url)
-        if title_match in ds.attrs['title'] and 'REMOVE' not in ds.attrs['comment']:
-            return True
-        else:
+        try:
+            if title_match in ds.attrs['title'] and 'REMOVE' not in ds.attrs['comment']:
+                return True
+            else:
+                return False
+        except KeyError as e:
+            self.logger.warn(f'{e} missing from {url}')
             return False
 
     def find_dorado_urls(self, base, search_str, startdate, enddate, title_match=""):
