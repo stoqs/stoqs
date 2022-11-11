@@ -208,7 +208,7 @@ class CANONLoader(LoadScript):
                 self.logger.warn(str(e))
                 self.logger.info(f"Skipping load of {url}")
 
-        self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/dorado_scan1.glb', pname,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/dorado_scan3.glb', pname,
                                   scalefactor=2)
 
     def load_i2MAP(self, startdate=None, enddate=None,
@@ -1586,9 +1586,13 @@ class CANONLoader(LoadScript):
         missions that do not have 'REMOVE from analysis' in the comment.
         '''
         ds = xr.open_dataset(url)
-        if title_match in ds.attrs['title'] and 'REMOVE' not in ds.attrs['comment']:
-            return True
-        else:
+        try:
+            if title_match in ds.attrs['title'] and 'REMOVE' not in ds.attrs['comment']:
+                return True
+            else:
+                return False
+        except KeyError as e:
+            self.logger.warn(f'{e} missing from {url}')
             return False
 
     def find_dorado_urls(self, base, search_str, startdate, enddate, title_match=""):

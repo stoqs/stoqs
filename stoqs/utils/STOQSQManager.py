@@ -394,7 +394,13 @@ class STOQSQManager(object):
         We assume here that the name is unique and is also used for the id
         '''
         # Django makes it easy to do sub-queries: Get Parameters from list of Activities matching current selection
-        p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
+        # Better to use 'exclude' to get remaining Activities so as to include those Activities
+        # (dorado_Gulper, daphne_Sipper, makai_ESP, etc.) that aren't in the checkbox list
+        qs_acts = self.qs
+        if self.kwargs.get('exclude_ans'):
+            qs_acts = qs_acts.exclude(name__in=self.kwargs.get('exclude_ans'))
+        p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=qs_acts))
+
         if 'mplabels' in self.kwargs:
             if self.kwargs['mplabels']:
                 # Get all Parameters that have common Measurements given the filter of the selected labels
@@ -407,9 +413,6 @@ class STOQSQManager(object):
 
         if groupName:
             p_qs = p_qs.filter(parametergroupparameter__parametergroup__name=groupName)
-
-        if self.kwargs.get('activitynames'):
-            p_qs = p_qs.filter(activityparameter__activity__name__in=self.kwargs.get('activitynames'))
 
         p_qs = p_qs.values('name', 'standard_name', 'id', 'units', 'long_name', 'description').distinct()
 
@@ -673,8 +676,10 @@ class STOQSQManager(object):
         qs = (self.qs_platform.filter(~Q(activitytype__name=LRAUV_MISSION))
                               .values('platform__uuid', 'platform__name', 'platform__color', 
                                       'platform__platformtype__name').distinct().order_by('platform__name'))
-        if self.kwargs.get('activitynames'):
-            qs = qs.filter(name__in=self.kwargs.get('activitynames'))
+        # Better to use 'exclude' to get remaining Activities so as to include those Activities
+        # (dorado_Gulper, daphne_Sipper, makai_ESP, etc.) that aren't in the checkbox list
+        if self.kwargs.get('exclude_ans'):
+            qs = qs.exclude(name__in=self.kwargs.get('exclude_ans'))
 
         platformTypeHash = defaultdict(list)
         logger.debug(f"Begining to build platformTypeHash...")
@@ -864,8 +869,6 @@ class STOQSQManager(object):
                 for p in plats:
                     logger.debug('Platform name: ' + p[0])
                     plq = Q(platform__name = p[0])
-                    if self.kwargs.get('activitynames'):
-                        plq = plq & Q(name__in=self.kwargs.get('activitynames'))
                     sdt_groups[act_type]['sdt'][p[0]] = defaultdict(list)
                     if act_type == 'default':
                         sdt_groups[act_type]['colors'][p[0]] = p[2]
@@ -888,6 +891,11 @@ class STOQSQManager(object):
                         # within a platform__name key. This will let flot plot the series with 
                         # gaps between the surveys -- not connected
                         logger.debug(f"-trajectory, filling sdt_groups['{act_type}']['sdt']['{p[0]}'][]")
+                        # Better to use 'exclude' to get remaining Activities so as to include those Activities
+                        # (dorado_Gulper, daphne_Sipper, makai_ESP, etc.) that aren't in the checkbox list
+                        if self.kwargs.get('exclude_ans'):
+                            logger.debug('exclude_ans = %s', self.kwargs.get('exclude_ans'))
+                            qs_traj = qs_traj.exclude(name__in=self.kwargs.get('exclude_ans'))
                         for s in qs_traj:
                             if s[1] is not None:
                                 sdt_groups[act_type]['sdt'][p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
@@ -929,6 +937,10 @@ class STOQSQManager(object):
                                                       'simpledepthtime__epochmilliseconds')
                                             .distinct())
 
+                        # Better to use 'exclude' to get remaining Activities so as to include those Activities
+                        # (dorado_Gulper, daphne_Sipper, makai_ESP, etc.) that aren't in the checkbox list
+                        if self.kwargs.get('exclude_ans'):
+                            qs_tp = qs_tp.exclude(name__in=self.kwargs.get('exclude_ans'))
                         # Add to sdt hash date-time series organized by activity__name_nominallocation__depth 
                         # key within a platform__name key - use real depths
                         for sd in qs_tp:
@@ -1282,8 +1294,10 @@ class STOQSQManager(object):
                 qs_mp = pt_qs_mp.filter(parameter__name=p)
                 qs_awp = self.qs.filter(activityparameter__parameter__name=p)
 
-            if self.kwargs.get('activitynames'):
-                qs_awp = qs_awp.filter(name__in=self.kwargs.get('activitynames'))
+            # Better to use 'exclude' to get remaining Activities so as to include those Activities
+            # (dorado_Gulper, daphne_Sipper, makai_ESP, etc.) that aren't in the checkbox list
+            if self.kwargs.get('exclude_ans'):
+                qs_awp = qs_awp.exclude(name__in=self.kwargs.get('exclude_ans'))
 
             qs_awp = qs_awp.filter(Q(activityresource__resource__value__icontains='timeseries') |
                                    Q(activityparameter__parameter__parameterresource__resource__name__icontains='plotTimeSeriesDepth')).distinct()
@@ -1408,8 +1422,10 @@ class STOQSQManager(object):
                                     'name'
                                 ).order_by('instantpoint__timevalue')
 
-            if self.kwargs.get('activitynames'):
-                qs = qs.filter(instantpoint__activity__name__in=self.kwargs.get('activitynames'))
+            # Better to use 'exclude' to get remaining Activities so as to include those Activities
+            # (dorado_Gulper, daphne_Sipper, makai_ESP, etc.) that aren't in the checkbox list
+            if self.kwargs.get('exclude_ans'):
+                qs = qs.exclude(instantpoint__activity__name__in=self.kwargs.get('exclude_ans'))
 
             for s in qs:
                 ems = int(1000 * to_udunits(s[0], 'seconds since 1970-01-01'))
@@ -1865,8 +1881,11 @@ class STOQSQManager(object):
                         self.max_end_time = act.enddate
                     # Set self.mpq.qs_mp to None to bypass the Singleton nature of MPQuery and have _build_mpq_queryset() build new self.mpq items
                     self.mpq.qs_mp = None
-                    if saved_activitynames and act.name not in saved_activitynames:
-                        continue
+                    # Better to use 'exclude' to get remaining Activities so as to include those Activities
+                    # (dorado_Gulper, daphne_Sipper, makai_ESP, etc.) that aren't in the checkbox list
+                    if self.kwargs.get('exclude_ans'):
+                        if act.name in self.kwargs.get('exclude_ans'):
+                            continue
                     self.kwargs['activitynames'] = [act.name]
                     parameterID, platformName, contourparameterID, contourplatformName, parameterGroups, contourparameterGroups = self._build_mpq_queryset()
                     logger.info(f"Getting dataValues for pns='{pns}', act.name='{act.name}'")
@@ -1911,7 +1930,7 @@ class STOQSQManager(object):
         Based on the current selected query criteria for activities, 
         return the associated PlatformAnimation time series of X3D scene graph.
         If roll, pitch and yaw exist as the platform standard names include
-        orienation angles, otherwise returns just the position animation scene.
+        orientation angles, otherwise returns just the position animation scene.
         '''
         orientDict = {}
         if self.request.GET.get('showplatforms', False):
@@ -1956,8 +1975,10 @@ class STOQSQManager(object):
                                          .filter(activity__in=self.qs)
                                          .values('parameter__id', 'activity__platform__name')
                                          .distinct())
-        if self.kwargs.get('activitynames'):
-            pp_qs = pp_qs.filter(activity__name__in=self.kwargs.get('activitynames'))
+        # Better to use 'exclude' to get remaining Activities so as to include those Activities
+        # (dorado_Gulper, daphne_Sipper, makai_ESP, etc.) that aren't in the checkbox list
+        if self.kwargs.get('exclude_ans'):
+            pp_qs = pp_qs.exclude(activity__name__in=self.kwargs.get('exclude_ans'))
 
         for ap in pp_qs:
             try:
@@ -2350,8 +2371,10 @@ class STOQSQManager(object):
         # Add any more filters (Q objects) if specified
         if Q_object:
             qs = qs.filter(Q_object)
-        if self.kwargs.get('activitynames'):
-            qs = qs.filter(name__in=self.kwargs.get('activitynames'))
+        # Better to use 'exclude' to get remaining Activities so as to include those Activities
+        # (dorado_Gulper, daphne_Sipper, makai_ESP, etc.) that aren't in the checkbox list
+        if self.kwargs.get('exclude_ans'):
+            qs = qs.exclude(name__in=self.kwargs.get('exclude_ans'))
 
         # Query for mapserver
         geo_query = 'geom from (%s) as subquery using unique gid using srid=4326' % postgresifySQL(qs.query, pointFlag).rstrip()
@@ -2370,8 +2393,10 @@ class STOQSQManager(object):
         # Add any more filters (Q objects) if specified
         if Q_object:
             qs = self.sample_qs.using(self.dbname).filter(Q_object)
-        if self.kwargs.get('activitynames'):
-            qs = qs.filter(instantpoint__activity__name__in=self.kwargs.get('activitynames'))
+        # Better to use 'exclude' to get remaining Activities so as to include those Activities
+        # (dorado_Gulper, daphne_Sipper, makai_ESP, etc.) that aren't in the checkbox list
+        if self.kwargs.get('exclude_ans'):
+            qs = qs.exclude(instantpoint__activity__name__in=self.kwargs.get('exclude_ans'))
 
         # Query for mapserver
         geo_query = 'geom from (%s) as subquery using unique gid using srid=4326' % postgresifySQL(qs.query, sampleFlag=True)
