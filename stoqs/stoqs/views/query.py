@@ -96,6 +96,7 @@ query_parms = {
                    'ppns': 'ppns',                          # Parameter-Parameter no-stride flag
                    'mplabels': 'mplabels',                  # MeasuredParameter labels from Attributes selections
                    'activitynames': 'activitynames',        # Activities (NetCDF files) selected for plotting
+                   'exclude_ans': 'exclude_ans',            # Activitie names (NetCDF files) excluded for plotting
                    'full_screen': 'full_screen',            # For making higher resolution graphics
                    'cmincmax_lock': 'cmincmax_lock',        # Preserve colormap min and max values from the UI
                    'speedup': 'speedup',                    # platformanimation speed factor

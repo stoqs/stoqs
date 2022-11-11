@@ -2721,6 +2721,12 @@ Elapsed time is 0.097718 seconds.
                         params['activitynames'].push(elem.value);
                     }
                 });
+                params['exclude_ans'] = [];
+                $('input:checkbox[name=activity_select_cb]:not(:checked)').each(function (index, elem) {
+                    if ( $(elem).parent().parent().is(':visible') ) {
+                        params['exclude_ans'].push(elem.defaultValue);
+                    }
+                });
             }
         }
 
