@@ -221,6 +221,7 @@ class CANONLoader(LoadScript):
                                 'seabird25p_oxygen_mll', 'seabird25p_oxygen_umolkg',
                                 'seabird25p_oxygen_mll_port', 'seabird25p_oxygen_umolkg_port',
                                 'seabird25p_oxygen_mll_stbd', 'seabird25p_oxygen_umolkg_stbd',
+                                'seabird25p_beam_transmittance',
                                 'navigation_roll', 'navigation_pitch', 'navigation_yaw',
                                 'navigation_mWaterSpeed', 'tailcone_propRpm' ],
                     stride=None,
