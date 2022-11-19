@@ -526,7 +526,12 @@ class STOQSQManager(object):
                         qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Min('p025'), Max('p975'))
                         plot_results = [parameterID, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
                     else:
-                        qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Avg('p025'), Avg('p975'))
+                        # Eliminate Gulper Activities which skew the result badly resulting in a bad color lookup table
+                        qs = self.getActivityParametersQS().filter(parameter__id=parameterID, number__gt=4)
+                        if qs.count() == 0:
+                            # Relax the constraint eliminating Gulper Activities that have a number of 4 or less
+                            qs = self.getActivityParametersQS().filter(parameter__id=parameterID)
+                        qs = qs.aggregate(Avg('p025'), Avg('p975'))
                         plot_results = [parameterID, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError as e:
                     # Likely 'Cannot plot Parameter' that is not in selection, ignore for cleaner functional tests
@@ -1033,22 +1038,15 @@ class STOQSQManager(object):
             if nds == 0 and plotTimeSeriesDepths == []:
                 continue
 
+            if not parameter.units:
+                unit = 'no_units'
             if parameter.standard_name == 'sea_water_salinity':
                 unit = 'PSU'
-            if parameter.standard_name and parameter.standard_name.strip() != '':
-                logger.debug('Parameter name "%s" has standard_name = %s', parameter.name, parameter.standard_name)
-                pa_units[parameter.standard_name] = unit
-                is_standard_name[parameter.standard_name] = True
-                ndCounts[parameter.standard_name] = nds
-                colors[parameter.standard_name] = parameter.id
-                strides[parameter.standard_name] = {}
-            else:
-                logger.debug('Parameter name "%s" does not have a standard_name', parameter.name)
-                pa_units[parameter.name] = unit
-                is_standard_name[parameter.name] = False
-                ndCounts[parameter.name] = nds
-                colors[parameter.name] = parameter.id
-                strides[parameter.name] = {}
+            pa_units[parameter.name] = unit
+            is_standard_name[parameter.name] = False
+            ndCounts[parameter.name] = nds
+            colors[parameter.name] = parameter.id
+            strides[parameter.name] = {}
 
             # Initialize pt dictionary of dictionaries with its keys
             if unit not in list(pt.keys()):

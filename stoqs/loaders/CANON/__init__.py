@@ -1587,7 +1587,7 @@ class CANONLoader(LoadScript):
         '''
         ds = xr.open_dataset(url)
         try:
-            if title_match in ds.attrs['title'] and 'REMOVE' not in ds.attrs['comment']:
+            if title_match in ds.attrs['title']:
                 return True
             else:
                 return False
@@ -1650,7 +1650,7 @@ class CANONLoader(LoadScript):
             base = f'http://dods.mbari.org/thredds/catalog/auv/{platform}/{year}/netcdf/'
             dods_base = f'http://dods.mbari.org/opendap/data/auvctd/surveys/{year}/netcdf/'
             try:
-                self.logger.debug(f'Searching {base}')
+                self.logger.info(f'Searching for file_patterns = {file_patterns}')
                 urls += self.find_dorado_urls(base, file_patterns, startdate, enddate, title_match)
                 for url in sorted(urls):
                     files.append(url.split('/')[-1])
@@ -1658,7 +1658,10 @@ class CANONLoader(LoadScript):
                 self.logger.debug(f'{e}')
 
         if not files:
-            self.logger.warn(f"No files found for {platform} between {startdate} and {enddate} in {dods_base}")
+            if title_match:
+                self.logger.warn(f"No files found with title_match = '{title_match}' for {platform} between {startdate} and {enddate} in {dods_base} using file_patterns = {file_patterns}")
+            else:
+                self.logger.warn(f"No files found for {platform} between {startdate} and {enddate} in {dods_base}")
 
         # Send signal that urls span years by not setting dorado_base so that dorado_urls is used instead
         if startdate.year == enddate.year:
