@@ -526,7 +526,12 @@ class STOQSQManager(object):
                         qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Min('p025'), Max('p975'))
                         plot_results = [parameterID, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
                     else:
-                        qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Avg('p025'), Avg('p975'))
+                        # Eliminate Gulper Activities which skew the result badly resulting in a bad color lookup table
+                        qs = self.getActivityParametersQS().filter(parameter__id=parameterID, number__gt=4)
+                        if qs.count() == 0:
+                            # Relax the constraint eliminating Gulper Activities that have a number of 4 or less
+                            qs = self.getActivityParametersQS().filter(parameter__id=parameterID)
+                        qs = qs.aggregate(Avg('p025'), Avg('p975'))
                         plot_results = [parameterID, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError as e:
                     # Likely 'Cannot plot Parameter' that is not in selection, ignore for cleaner functional tests
