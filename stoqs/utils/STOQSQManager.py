@@ -1038,22 +1038,15 @@ class STOQSQManager(object):
             if nds == 0 and plotTimeSeriesDepths == []:
                 continue
 
+            if not parameter.units:
+                unit = 'no_units'
             if parameter.standard_name == 'sea_water_salinity':
                 unit = 'PSU'
-            if parameter.standard_name and parameter.standard_name.strip() != '':
-                logger.debug('Parameter name "%s" has standard_name = %s', parameter.name, parameter.standard_name)
-                pa_units[parameter.standard_name] = unit
-                is_standard_name[parameter.standard_name] = True
-                ndCounts[parameter.standard_name] = nds
-                colors[parameter.standard_name] = parameter.id
-                strides[parameter.standard_name] = {}
-            else:
-                logger.debug('Parameter name "%s" does not have a standard_name', parameter.name)
-                pa_units[parameter.name] = unit
-                is_standard_name[parameter.name] = False
-                ndCounts[parameter.name] = nds
-                colors[parameter.name] = parameter.id
-                strides[parameter.name] = {}
+            pa_units[parameter.name] = unit
+            is_standard_name[parameter.name] = False
+            ndCounts[parameter.name] = nds
+            colors[parameter.name] = parameter.id
+            strides[parameter.name] = {}
 
             # Initialize pt dictionary of dictionaries with its keys
             if unit not in list(pt.keys()):
