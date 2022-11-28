@@ -22,7 +22,7 @@ fastparquet==2022.11.0
 Flask-SQLAlchemy==3.0.2
 httplib2==0.21.0
 hvplot==0.8.1
-ipython==8.6.0
+ipython==8.7.0
 holoviews==1.15.2
 ipyleaflet==0.17.2
 jdcal==1.4.1
