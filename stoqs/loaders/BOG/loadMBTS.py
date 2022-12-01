@@ -38,9 +38,8 @@ cl = CANONLoader('stoqs_mbts', 'BOG - Monterey Bay Time Series',
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
 
-# Will likely need to adjust eyear as time goes on
 syear = datetime(2015, 1, 1)
-eyear = datetime(2020, 12, 31)
+eyear = datetime.utcnow()
 
 # Execute the load
 cl.process_command_line()
