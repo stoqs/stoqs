@@ -31,8 +31,8 @@ for act in acts:
     yyyy, yd, mn = act.name.split("_")[1].split(".")
     diamond_decims.append(f"Dorado389_{yyyy}_{yd}_{mn}_{yd}_{mn}_decim.nc")
 
-acts_to_delete = Activity.objects.using("stoqs_mb_diamonds").exclude(name__in=diamond_decims).filter(name__contains="Dorado389_")
-print(acts_to_delete.order_by('startdate'))
+acts_to_delete = Activity.objects.using("stoqs_mb_diamonds").exclude(name__in=diamond_decims).filter(name__contains="Dorado389_").order_by('startdate')
+print(acts_to_delete)
 ans = input("Delete these non-Diamond Activities? [yN] ") or "N"
 if ans.upper() == "Y":
     for act_to_delete in acts_to_delete:
