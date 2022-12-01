@@ -472,7 +472,7 @@ class STOQSQManager(object):
 
         # pid takes precedence over parameterplot being specified in kwargs
         if pid:
-            try:            
+            try:
                 if percentileAggregateType == 'extrema':
                     logger.debug('self.getActivityParametersQS().filter(parameter__id=%s) = %s', pid, str(self.getActivityParametersQS().filter(parameter__id=pid).query))
                     qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'), Avg('median'))
@@ -482,7 +482,13 @@ class STOQSQManager(object):
                     except TypeError:
                         logger.warn('Failed to get plot_results for qs = %s', qs)
                 else:
-                    qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
+                    # Eliminate Gulper Activities which skew the result badly resulting in a bad color lookup table
+                    qs = self.getActivityParametersQS().filter(parameter__id=pid, number__gt=4)
+                    if qs.count() == 0:
+                        # Relax the constraint eliminating Gulper Activities that have a number of 4 or less
+                        qs = self.getActivityParametersQS().filter(parameter__id=parameterID)
+                    qs = qs.aggregate(Avg('p025'), Avg('p975'))
+
                     try:
                         plot_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                         if plot_results[1] == plot_results[2]:
