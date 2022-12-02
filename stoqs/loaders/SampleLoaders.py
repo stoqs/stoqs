@@ -405,7 +405,8 @@ class ParentSamplesLoader(STOQS_Loader):
                 # Ugly logic to handle multiple line messages
                 lm = re.match(beg_syslog_re, line)
                 if lm:
-                    if lm.groupdict().get('log_component') in components and lm.groupdict().get('log_level') in levels:
+                    if lm.groupdict().get('log_component') in ('ESPComponent',) and lm.groupdict().get('log_level') in levels:
+                        # December 2022 while adding Sipper capture: Not sure why there is this prev_line logic...
                         if prev_line_has_component:
                             log_rows.append({'unixTime': float(prev_esec) * 1000, 'text': prev_message})
 
@@ -413,6 +414,12 @@ class ParentSamplesLoader(STOQS_Loader):
                         prev_message = lm.groupdict().get('log_message')
                         following_lines = ''
                         prev_line_has_component = True
+                    elif 'CANONSampler' in components and 'CANONSampler' in line:
+                        if lm.groupdict().get('log_level') in levels:
+                            # 'CANONSampler sampling at' text can have components like '[spiral_cast:SampleAtDepth:SampleWrapper:SampleCANONSampler:D]'
+                            # Collect all log_rows that match levels, as only err_code=0 has component '[CANONSampler]', let calling routine pull out relevant lines
+                            log_rows.append({'unixTime': float(lm.groupdict().get('log_esec')) * 1000, 'text': lm.groupdict().get('log_message')})
+
                     elif lm.groupdict().get('log_component') == 'ESPComponent' and lm.groupdict().get('log_level') == 'INFO':
                         # Messages like this started appearing in the syslogs in the Fall of 2018
                         # 2020-10-14T05:24:53.794Z,1602653093.794 [ESPComponent](INFO): console:ESPmv1 login: Sending discover...
@@ -810,7 +817,7 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return sample_names
 
-    def _sippers_from_json(self, platform_name, url):
+    def _sippers_from_json(self, platform_name, url, use_syslog=True):
         '''Retrieve Sipper (CANONSampler) information that's available in the syslogurl from the TethysDash REST API
         url looks like     'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2018/20180220_20180221/20180221T074336/201802210743_201802211832_2S_scieng.nc',
         syslog_url is like 'http://dods.mbari.org/opendap/data/lrauv/daphne/missionlogs/2018/20180220_20180221/20180221T074336/syslog'
@@ -821,10 +828,6 @@ class ParentSamplesLoader(STOQS_Loader):
         samplings_at = []
         sample_num_errs = []
         
-        st = url.split('/')[-1].split('_')[0]
-        et = url.split('/')[-1].split('_')[1]
-        from_time = f"{st[0:4]}-{st[4:6]}-{st[6:8]}T{st[8:10]}:{st[10:12]}Z"
-        to_time = f"{et[0:4]}-{et[4:6]}-{et[6:8]}T{et[8:10]}:{et[10:12]}Z"
         # MBTS Missions in feb and mar 2022 need to subrtact 7 hours (GMT offset?) to get the right time slice from https://okeanids.mbari.org/TethysDash/api/events
         # - Turns out that unless 'Z' is appended then local time is assumed
         ##subtract_7_hours = True
@@ -833,43 +836,30 @@ class ParentSamplesLoader(STOQS_Loader):
         ##    to_dt = datetime.strptime(to_time, "%Y-%m-%dT%H:%M") - timedelta(hours=7)
         ##    from_time = datetime.strftime(from_dt, "%Y-%m-%dT%H:%M")
         ##    to_time = datetime.strftime(to_dt, "%Y-%m-%dT%H:%M")
-
-        # Sanity check the ending year
-        try:
-            if int(et[0:4]) > datetime.now().year:
-                self.logger.warn(f"Not looking for Samples for url = {url} as the to date is > {datetime.now().year}")
-                return samplings_at, sample_num_errs
-        except ValueError:
-            # Likely an old slate.nc4 file that got converted to a .nc file
-            self.logger.warn(f"Could not parse end date year from url = {url}")
-            return samplings_at, sample_num_errs
-            
-        td_url = f"https://okeanids.mbari.org/TethysDash/api/events?vehicles={platform_name}&from={from_time}&to={to_time}&eventTypes=logImportant&limit=100000"
+        # Assuming that when use_syslog use began in December 2022 the above code is no longer needed
 
         SIPPERING = 'CANONSampler sampling at'
-
-        self.logger.debug(f"Opening td_url = {td_url}")
-        with requests.get(td_url) as resp:
-            if resp.status_code != 200:
-                self.logger.error('Cannot read %s, resp.status_code = %s', td_url, resp.status_code)
-                return
-            log_important = resp.json()['result']
+        if use_syslog:
+            log_important, _ = self._read_syslog(url, components=('CANONSampler',))
+            log_critical, _ = self._read_syslog(url, components=('CANONSampler',), levels=('CRITICAL',))
+        else:
+            log_important = self._read_tethysdash(platform_name, url)
 
         Log = namedtuple('Log', 'esec text')
         try:
             samplings_at = [Log(d['unixTime']/1000.0, d['text']) for d in log_important if SIPPERING in d['text']]
         except KeyError:
-            self.logger.debug(f"No '{SIPPERING}' messages found in {td_url}")
+            self.logger.debug(f"No '{SIPPERING}' messages found {url}'s syslog")
         try:
             sample_num_errs = [Log(d['unixTime']/1000.0, d['text']) for d in log_important if re.match(SIPPER_NUM_ERR, d['text'])]
         except KeyError:
-            self.logger.debug(f"No '{SIPPERING}' messages found in {td_url}")
+            self.logger.debug(f"No '{SIPPERING}' messages found in {url}'s syslog")
 
         if samplings_at and sample_num_errs:
-            self.logger.info(f"Parsed {len(samplings_at)} '{SIPPERING}' strings and {len(sample_num_errs)} Sample numbers from {td_url}")
+            self.logger.info(f"Parsed {len(samplings_at)} '{SIPPERING}' strings and {len(sample_num_errs)} Sample numbers from {url}'s syslog")
         else:
-            self.logger.info(f"No Sippers (CANONSampler) parsed from {td_url}")
-       
+            self.logger.info(f"No Sippers (CANONSampler) parsed from {url}'s syslog")
+      
         return samplings_at, sample_num_errs
 
     def _match_sippers(self, samplings_at, sample_num_errs):
