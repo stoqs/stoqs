@@ -168,7 +168,7 @@ class Loader(object):
             self.prov['gitorigin'] = repo.remotes.origin.url
             try:
                 self.prov['gitcommit'] = repo.head.commit.hexsha
-            except ValueError as e:
+            except (ValueError, BrokenPipeError) as e:
                 self.logger.warning('could not get head commit sha for %s: %s', repo.remotes.origin.url, e)
                 self.prov['gitcommit'] = ""
             self.prov['environment'] = platform.platform() + " python " + sys.version.split('\n')[0]
