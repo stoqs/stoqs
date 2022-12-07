@@ -12,6 +12,11 @@ STOQS Query manager for building ajax responses to selections made for QueryUI
 @license: GPL
 '''
 
+# To debug this on a docker production development system run:
+#   docker-compose exec stoqs /bin/bash
+#   stoqs/manage.py runserver_plus 0.0.0.0:8001 --settings=config.settings.local
+# Place breakpoint()s in this code and hit http://localhost:8001 from your host
+
 from collections import defaultdict, Mapping
 from django.conf import settings
 from django.db import transaction
