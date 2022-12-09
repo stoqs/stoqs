@@ -24,6 +24,6 @@ pygraphviz==1.10
 pymssql-py38==2.1.4
 pyparsing==3.0.9
 python-coveralls==2.9.3
-scikit-bio==0.5.7
+scikit-bio==0.5.8
 snowballstemmer==2.2.0
 thredds-crawler==1.5.4
