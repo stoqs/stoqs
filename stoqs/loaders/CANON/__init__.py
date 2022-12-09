@@ -168,6 +168,7 @@ class CANONLoader(LoadScript):
                     'navigation_mWaterSpeed', 'tailcone_propRpm',
                     'lopc_countListSum', 'lopc_transCount', 'lopc_nonTransCount',
                     'lopc_LCcount', 'lopc_flowSpeed',
+                    'ecopuck_BB_Sig', 'ecopuck_CDOM_Sig', 'ecopuck_Chl_Sig',
                     ], stride=None,
                     file_patterns=(r".*_decim.nc$", r".*netcdf/dorado_.*1S.nc", ),
                     build_attrs=False, plankton_proxies=False, title_match=""):

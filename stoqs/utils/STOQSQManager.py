@@ -1013,6 +1013,17 @@ class STOQSQManager(object):
 
         return({'sbdt': sbdt})
 
+    def _assign_no_units(self, parameter, pa_units):
+        "Need to assign a unit for organizing plot hashes"
+        if parameter.name in pa_units.keys():
+            return pa_units[parameter.name]
+        num = 1
+        for val in pa_units.values():
+            # Use separate units so as not to share axes
+            if val.startswith('no_units'):
+                num = int(val.split('_')[-1]) + 1
+        return f'no_units_{num}'
+
     #
     # The following set of private (_...) methods are for building the parametertime response
     #
@@ -1050,9 +1061,10 @@ class STOQSQManager(object):
                 continue
 
             if not parameter.units:
-                unit = 'no_units'
+                unit = self._assign_no_units(parameter, pa_units)
             if parameter.standard_name == 'sea_water_salinity':
                 unit = 'PSU'
+            logger.debug(f"Adding pa_units, key = {parameter.name}, value = {unit}")
             pa_units[parameter.name] = unit
             is_standard_name[parameter.name] = False
             ndCounts[parameter.name] = nds
