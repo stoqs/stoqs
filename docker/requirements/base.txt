@@ -3,7 +3,7 @@ beautifulsoup4==4.11.1
 channels==4.0.0
 cmocean==2.0
 coards==1.0.5
-coverage==6.5.0
+coverage==7.0.3
 datadiff==2.0.0
 datashader==0.14.3
 dj-database-url==1.0.0
