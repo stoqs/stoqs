@@ -10,7 +10,7 @@ billiard==4.1.0
 binaryornot==0.4.4
 certifi==2022.9.14
 docutils==0.19
-Cython==0.29.32
+Cython==0.29.33
 ephem==4.1.4
 ##GDAL==3.0.3
 h5py==3.7.0
