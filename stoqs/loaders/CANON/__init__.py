@@ -168,7 +168,9 @@ class CANONLoader(LoadScript):
                     'navigation_mWaterSpeed', 'tailcone_propRpm',
                     'lopc_countListSum', 'lopc_transCount', 'lopc_nonTransCount',
                     'lopc_LCcount', 'lopc_flowSpeed',
-                    'ecopuck_BB_Sig', 'ecopuck_CDOM_Sig', 'ecopuck_Chl_Sig',
+                    'ecopuck_bbp700', 'ecopuck_cdom', 'ecopuck_chl',
+                    'biolume_flow', 'biolume_raw', 'biolume_avg_biolume',
+                    'biolume_nbflash_high', 'biolume_nbflash_low', 'biolume_bg_biolume',
                     ], stride=None,
                     file_patterns=(r".*_decim.nc$", r".*netcdf/dorado_.*1S.nc", ),
                     build_attrs=False, plankton_proxies=False, title_match=""):
@@ -1650,6 +1652,7 @@ class CANONLoader(LoadScript):
         files = []
         for year in range(startdate.year, enddate.year+1):
             base = f'http://dods.mbari.org/thredds/catalog/auv/{platform}/{year}/netcdf/'
+            # dods_base = f'http://dods.mbari.org:8181/opendap/data/auvctd/surveys/{year}/netcdf/'
             dods_base = f'http://dods.mbari.org/opendap/data/auvctd/surveys/{year}/netcdf/'
             try:
                 self.logger.info(f'Searching for file_patterns = {file_patterns}')
