@@ -12,7 +12,7 @@ docutils==0.19
 Cython==0.29.33
 ephem==4.1.4
 ##GDAL==3.0.3
-h5py==3.7.0
+h5py==3.8.0
 Genshi==0.7.7
 geopandas==0.12.2
 MarkupSafe==2.1.1
