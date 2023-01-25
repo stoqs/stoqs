@@ -171,6 +171,7 @@ class CANONLoader(LoadScript):
                     'ecopuck_bbp700', 'ecopuck_cdom', 'ecopuck_chl',
                     'biolume_flow', 'biolume_raw', 'biolume_avg_biolume',
                     'biolume_nbflash_high', 'biolume_nbflash_low', 'biolume_bg_biolume',
+                    'biolume_proxy_adinos', 'biolume_proxy_hdinos',
                     ], stride=None,
                     file_patterns=(r".*_decim.nc$", r".*netcdf/dorado_.*1S.nc", ),
                     build_attrs=False, plankton_proxies=False, title_match=""):
