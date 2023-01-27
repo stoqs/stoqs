@@ -39,6 +39,9 @@ cl = CANONLoader('stoqs_mb_diamonds', 'All Monterey Bay Diamond missions',
 # Beginning of Monterey Bay overnight diamond runs
 startdate = datetime(2016, 6, 5)
 enddate = datetime.utcnow()
+# Test mission: 2021.102.02
+# startdate = datetime(2021, 4, 12)
+# enddate = datetime(2021, 4, 13)
 
 # Execute the load
 cl.process_command_line()
@@ -47,11 +50,11 @@ if cl.args.test:
 
 #cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
 #cl.loadDorado(startdate, enddate, build_attrs=True)
-#cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", r".*netcdf/dorado_.*1S.nc", ), plankton_proxies=True)
+cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", ), plankton_proxies=True)
 #cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*netcdf/dorado_.*1S.nc", ), plankton_proxies=True)
 cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*netcdf/dorado_.*1S.nc", ), title_match="Monterey Bay Diamond")
 # Legacy .nc files will not have proper title & comment metadata and this will load non-Diamond missions 
-cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", ))
+#cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", ))
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
