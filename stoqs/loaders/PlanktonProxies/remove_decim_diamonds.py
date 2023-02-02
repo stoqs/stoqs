@@ -22,8 +22,9 @@ django.setup()
 
 from stoqs.models import Activity
 
+db_alias = "stoqs_mb_diamonds"
 diamond_decims = []
-acts = Activity.objects.using("stoqs_mb_diamonds").filter(name__contains="1S.nc")
+acts = Activity.objects.using(db_alias).filter(name__contains="1S.nc")
 for act in acts:
     if not act.name.endswith("1S.nc"):
         continue
@@ -31,11 +32,11 @@ for act in acts:
     yyyy, yd, mn = act.name.split("_")[1].split(".")
     diamond_decims.append(f"Dorado389_{yyyy}_{yd}_{mn}_{yd}_{mn}_decim.nc")
 
-acts_to_delete = Activity.objects.using("stoqs_mb_diamonds").exclude(name__in=diamond_decims).filter(name__contains="Dorado389_").order_by('startdate')
+acts_to_delete = Activity.objects.using(db_alias).exclude(name__in=diamond_decims).filter(name__contains="Dorado389_").order_by('startdate')
 print(acts_to_delete)
 ans = input("Delete these non-Diamond Activities? [yN] ") or "N"
 if ans.upper() == "Y":
     for act_to_delete in acts_to_delete:
-        act_to_delete.delete(using="stoqs_mb_diamonds")
+        act_to_delete.delete(using=db_alias)
         print(f"Deleted {act_to_delete}")
 
