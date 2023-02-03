@@ -491,7 +491,7 @@ class STOQSQManager(object):
                     qs = self.getActivityParametersQS().filter(parameter__id=pid, number__gt=4)
                     if qs.count() == 0:
                         # Relax the constraint eliminating Gulper Activities that have a number of 4 or less
-                        qs = self.getActivityParametersQS().filter(parameter__id=parameterID)
+                        qs = self.getActivityParametersQS().filter(parameter__id=pid)
                     qs = qs.aggregate(Avg('p025'), Avg('p975'))
 
                     try:
