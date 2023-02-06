@@ -575,11 +575,9 @@ class ParentSamplesLoader(STOQS_Loader):
             if occurrences > 1:
                 self.logger.info(f"Repeated 'Selecting Cartridge' message found in {platform_name}'s summary.text: {summary.text}")
                 if 'Cmd::SpareCartridge' in summary.text or 'Cartridge::Sampler::Leak' in summary.text:
-                    # Assumes that there are 2 'Selecting Cartridge' messages in summary.text: first is leaked & second is the spare used
-                    self.logger.info(f"Found 'Cmd::SpareCartridge' message, using second Cartridge number for sample name")
-                    leaked = re.search(lsr_cartridge_number_re, summary.text[:index], re.MULTILINE).groupdict().get('cartridge_number')
-                    spare_used = re.search(lsr_cartridge_number_re, summary.text[index:], re.MULTILINE).groupdict().get('cartridge_number')
-                    return leaked, spare_used
+                    # Assumes that there are multiple 'Selecting Cartridge' messages in summary.text: the last is the one used, the others leaked
+                    self.logger.info(f"Found 'Cmd::SpareCartridge' message, using last Cartridge number for sample name")
+                    return re.findall(lsr_cartridge_number_re, summary.text, re.MULTILINE)
 
             index += len('Selecting Cartridge')
 
@@ -676,11 +674,11 @@ class ParentSamplesLoader(STOQS_Loader):
 
         # Check for use of spare Cartridge following a leak - brute force replacement of number in summary.text
         for index, summary in enumerate(summaries):
-            leaked, spare_used = self._check_leaked_cartridge(platform_name, summary)
-            if leaked and spare_used:
+            mult_carts = self._check_leaked_cartridge(platform_name, summary)
+            if len(mult_carts) > 1:
                 Log = namedtuple('Log', 'esec text')
-                summaries[index] = Log(summary.esec, summary.text.replace(f"Cartridge {leaked}", f"Cartridge {spare_used}"))
-                self.logger.info(f"Replaced first (leaked={leaked}) Cartridge number with second (spare_used={spare_used})"
+                summaries[index] = Log(summary.esec, summary.text.replace(f"Cartridge {mult_carts[0]}", f"Cartridge {mult_carts[-1]}"))
+                self.logger.info(f"Replaced first (leaked={mult_carts[:-1]}) Cartridge number(s) with last (spare_used={mult_carts[-1]})"
                                  f" Cartridge number in summary.text: {summaries[index].text}")
 
         # Check for and remove duplicate sample #s as in:
