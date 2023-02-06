@@ -115,6 +115,11 @@ cl.process_command_line()
 
 if cl.args.test:
     cl.stride = 10
+    ##cl.brizo_base = 'http://dods.mbari.org/opendap/data/lrauv/brizo/missionlogs/2020/20200720_20200723/20200722T034643'
+    ##cl.brizo_files = ['202007220346_202007222332_2S_scieng.nc', ]
+    ##cl.brizo_parms = [ 'pitch', ]
+    ##cl.loadLRAUV('brizo', startdate, enddate, build_attrs=False)
+    ##cl.addTerrainResources()
 elif cl.args.stride:
     cl.stride = cl.args.stride
 
