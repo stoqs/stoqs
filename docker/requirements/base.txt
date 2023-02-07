@@ -65,5 +65,5 @@ sqlparse==0.4.3
 thredds-crawler==1.5.4
 transforms3d==0.4.1
 watchdog==2.2.0
-xarray==2023.1.0
+xarray==2023.2.0
 websocket-client==1.5.1
