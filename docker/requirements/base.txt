@@ -18,7 +18,7 @@ django-picklefield==3.1
 GitPython==3.1.30
 euclid==1.2
 djangorestframework==3.14.0
-fastparquet==2023.1.0
+fastparquet==2023.2.0
 Flask-SQLAlchemy==3.0.3
 httplib2==0.21.0
 ipython==8.9.0
