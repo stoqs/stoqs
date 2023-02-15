@@ -520,7 +520,7 @@ class STOQS_Loader(object):
                                         standard_name = vattr.get('standard_name'),
                                         long_name = vattr.get('long_name'),
                                         type = vattr.get('type'),
-                                        description =  vattr.get('description'),
+                                        description =  vattr.get('description') or vattr.get('comment', '')[:512],
                                         origin = self.activityName 
                                     )) 
                 parm = self.parameter_dict[parameter_name]

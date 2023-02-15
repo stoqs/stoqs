@@ -299,7 +299,7 @@ class Base_Loader(STOQS_Loader):
         if not maxDT or not minDT:
             raise NoValidData('No valid dates')
 
-        self.logger.info('Activity startDatetime = %s, endDatetime = %s', startDatetime, endDatetime)
+        self.logger.info('Activity from %s: startDatetime = %s, endDatetime = %s', self.url, startDatetime, endDatetime)
         return startDatetime, endDatetime
 
     def initDB(self):
@@ -317,7 +317,9 @@ class Base_Loader(STOQS_Loader):
 
             if hasattr(self, 'add_to_activity'):
                 # Allow use of existing Activity for loading additional data, e.g. Dorado plankton_proxies
-                self.logger.info(f"Will add these data to Activity {self.add_to_activity}")
+                self.logger.info(f"Will add these data to Activity (likely plankton_proxies) {self.add_to_activity}")
+            elif hasattr(self, 'associatedActivityName'):
+                self.logger.info(f"Will associate these data (likely lopc) to Activity {self.associatedActivityName}")
             else:
                 # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
                 if not self.startDatetime or not self.endDatetime:
@@ -1672,6 +1674,8 @@ class Base_Loader(STOQS_Loader):
         path = None
         if add_to_activity:
             self.activity = add_to_activity
+        if not hasattr(self, 'activity') and hasattr(self, 'associatedActivityName'):
+            self.activity = Activity.objects.using(self.dbAlias).get(name=self.associatedActivityName)
 
         linestringPoints = Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=self.activity
                                                        ).order_by('instantpoint__timevalue').values_list('geom')
@@ -2287,8 +2291,9 @@ def _loadLOPC(url, stride, loader, cName, cDesc, dbAlias, aTypeName, pName,
                                     platformName = pName, platformColor = pColor,
                                     platformTypeName = pTypeName, stride = stride,
                                     grdTerrain = grdTerrain)
-    except Exception:
+    except Exception as e:
         # Fail somewhat silently
+        loader.logger.debug(str(e))
         loader.logger.warn('No LOPC data to load at %s', lopc_url)
         return
 
