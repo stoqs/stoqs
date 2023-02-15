@@ -94,7 +94,7 @@ services:
 
   # postgres, redis, shortener services adapted from: https://github.com/adamwojt/ur_l
   postgres:
-    image: postgres:${POSTGRES_TAG:-latest}
+    image: postgres:${POSTGRES_TAG:-14}
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
