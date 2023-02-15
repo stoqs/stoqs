@@ -172,7 +172,7 @@ class CANONLoader(LoadScript):
                     'biolume_flow', 'biolume_raw', 'biolume_avg_biolume',
                     'biolume_nbflash_high', 'biolume_nbflash_low', 'biolume_bg_biolume',
                     'biolume_proxy_adinos', 'biolume_proxy_hdinos', 'biolume_proxy_diatoms',
-                    'biolume_intflash',
+                    'biolume_intflash', 'profile_number',
                     ], stride=None,
                     file_patterns=(r".*_decim.nc$", r".*netcdf/dorado_.*1S.nc", ),
                     build_attrs=False, plankton_proxies=False, title_match=""):
