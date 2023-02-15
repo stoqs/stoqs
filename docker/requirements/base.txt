@@ -7,7 +7,7 @@ coverage==7.1.0
 datadiff==2.1.0
 datashader==0.14.4
 dj-database-url==1.2.0
-Django==4.0.10
+Django==4.1.7
 django-cache-url==3.4.4
 django-configurations==2.4
 django-debug-toolbar==3.8.1
