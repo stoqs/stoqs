@@ -8,6 +8,12 @@
 # a development system is to execute like: './test.sh <DB_PASSWORD>'; optional
 # arguments like './test.sh CHANGEME load noextraload' may be used, e.g. on travis-ci,
 # to skip some of the loading tests.
+#
+# To run tests in a docker-based development system set some env variable first, e.g.:
+#   docker-compose run --rm stoqs /bin/bash
+#   export DATABASE_URL=postgis://stoqsadm:CHANGEME@stoqs-postgis:5432/stoqs
+#   export DATABASE_SUPERUSER_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
+#   ./test.sh CHANGEME load noextraload
 
 if [ -z $1 ]
 then
@@ -81,6 +87,7 @@ then
         exit -1
     fi
     psql -p $PGPORT -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
+    psql -p $PGPORT -c "GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
 
     echo "Copy x3dom javascript library version that works with SRC binary terrain"
     mkdir static/x3dom-1.8.1
