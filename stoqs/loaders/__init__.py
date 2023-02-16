@@ -1092,7 +1092,7 @@ class STOQS_Loader(object):
                     data = []
 
             np_data = np.array([float(d) for d in data if d is not None])
-            if not np_data.any():
+            if not len(np_data):
                 # Quietly skip over 'no valid data' - can't log because of @static method
                 continue
 
