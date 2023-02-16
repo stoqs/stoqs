@@ -36,21 +36,20 @@ cl = CANONLoader('stoqs_auv_compare', 'Compare legacy and auv-python processed D
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
 
-# Beginning of Monterey Bay overnight diamond runs
-startdate = datetime(2016, 6, 5)
-enddate = datetime(2017, 9, 13)
+# Monterey Bay overnight diamond runs
+startdate = datetime(2020, 9, 1)
+enddate = datetime.utcnow()
+# The first nighttime Diamond misssion - Temporal: 2016-06-27 14:56:41 to 2016-06-28 07:55:37
+##startdate = datetime(2016, 6, 29)
+##enddate = datetime(2016, 7, 2)
 
 # Execute the load
 cl.process_command_line()
 if cl.args.test:
     cl.stride = 1000
 
-#cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
-#cl.loadDorado(startdate, enddate, build_attrs=True)
-#cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", r".*netcdf/dorado_.*1S.nc", ), plankton_proxies=True)
-#cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*netcdf/dorado_.*1S.nc", ), plankton_proxies=True)
 cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*netcdf/dorado_.*1S.nc", ), title_match="Monterey Bay Diamond")
-cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", ), title_match="Monterey Bay Diamond")
+cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", ), plankton_proxies=True)
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
