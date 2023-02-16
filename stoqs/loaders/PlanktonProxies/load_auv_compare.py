@@ -37,7 +37,7 @@ cl = CANONLoader('stoqs_auv_compare', 'Compare legacy and auv-python processed D
                  )
 
 # Monterey Bay overnight diamond runs
-startdate = datetime(2020, 9, 1)
+startdate = datetime(2016, 6, 5)
 enddate = datetime.utcnow()
 # The first nighttime Diamond misssion - Temporal: 2016-06-27 14:56:41 to 2016-06-28 07:55:37
 ##startdate = datetime(2016, 6, 29)
