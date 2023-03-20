@@ -53,7 +53,7 @@ python-openid==2.2.5
 pytz==2022.7.1
 pyzmq==25.0.0
 scikit-learn==1.2.1
-scipy==1.10.0
+scipy==1.10.1
 seawater==3.3.4
 selenium==4.8.2
 simplejson==3.18.3
