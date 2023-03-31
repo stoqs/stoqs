@@ -14,7 +14,7 @@ from CANON import CANONLoader
 import timing
 
 cl = CANONLoader('stoqs_canon_april2021', 'CANON-ECOHAB - April 2021',
-                 description='October 2021 CANON campaign in Monterey Bay (CN21S)',
+                 description='April 2021 CANON campaign in Monterey Bay (CN21S)',
                  x3dTerrains={
                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'name': 'Monterey25_10x',
@@ -202,17 +202,17 @@ elif cl.args.stride:
 lrauv_start = datetime(2021, 4, 11)
 lrauv_end = datetime(2021, 4, 29)
 cl.loadLRAUV('brizo', lrauv_start, lrauv_end)
-cl.loadLRAUV('pontus', lrauv_start, lrauv_end)
-cl.loadLRAUV('makai', lrauv_start, lrauv_end)
-cl.loadLRAUV('daphne', lrauv_start, lrauv_end)
+##-cl.loadLRAUV('pontus', lrauv_start, lrauv_end)
+##-cl.loadLRAUV('makai', lrauv_start, lrauv_end)
+##-cl.loadLRAUV('daphne', lrauv_start, lrauv_end)
 
-cl.loadM1()
-cl.load_oa1()
-cl.load_oa2()
-cl.load_NPS29()
-cl.load_NPS34()
-cl.load_wg_Tiny()
-cl.load_wg_Hansen()
+##-cl.loadM1()
+##-cl.load_oa1()
+##-cl.load_oa2()
+##-cl.load_NPS29()
+##-cl.load_NPS34()
+##-cl.load_wg_Tiny()
+##-cl.load_wg_Hansen()
 
 # Realtime LRAUV loads - to be executed during the Campaign
 ##lrauv_parms = ['chlorophyll', 'temperature']
@@ -225,10 +225,10 @@ cl.load_wg_Hansen()
 ##cl.loadLRAUV('daphne', lrauv_start, lrauv_end, critSimpleDepthTime=0.1, sbd_logs=True,
 ##             parameters=lrauv_parms)
 
-cl.loadDorado(startdate, enddate, build_attrs=True)
+##-cl.loadDorado(startdate, enddate, build_attrs=True)
 
-cl.loadWFuctd()
-cl.loadWFpctd()
+##-cl.loadWFuctd()
+##-cl.loadWFpctd()
 
 ##cl.loadSubSamples() 
 
