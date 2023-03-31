@@ -14,7 +14,7 @@ from CANON import CANONLoader
 import timing
 
 cl = CANONLoader('stoqs_canon_april2021', 'CANON-ECOHAB - April 2021',
-                 description='October 2021 CANON campaign in Monterey Bay (CN21S)',
+                 description='April 2021 CANON campaign in Monterey Bay (CN21S)',
                  x3dTerrains={
                    'https://stoqs.mbari.org/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'name': 'Monterey25_10x',
