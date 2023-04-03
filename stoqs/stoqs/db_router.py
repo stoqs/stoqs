@@ -39,7 +39,7 @@ class RouterMiddleware(object):
 
         if 'dbAlias' in kwargs:
             if kwargs['dbAlias'] not in settings.DATABASES.keys():
-                return HttpResponseBadRequest('Bad request: Database "' + kwargs['dbAlias'] + '" Does Not Exist')
+                return HttpResponseBadRequest('Bad request: Database "' + kwargs['dbAlias'] + '" Does Not Exist in settings.DATABASES')
 
             # Add a thread local variable, and remove the dbAlias, since it's handled by the middleware.
             _thread_local_vars.dbAlias = kwargs.pop('dbAlias')
