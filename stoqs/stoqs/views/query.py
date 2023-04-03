@@ -27,6 +27,7 @@ from utils import encoders
 import json
 import pprint
 import csv
+import psycopg2
 import random
 import string
 import time
@@ -233,7 +234,7 @@ def queryData(request, fmt=None):
         start_time = time.time()
         options = json.dumps(qm.generateOptions(), cls=encoders.STOQSJSONEncoder)
         logger.info(f"generateOptions() took {1000*(time.time()- start_time):6.1f} ms to build query/summary response")
-    except ConnectionDoesNotExist as e:
+    except (ConnectionDoesNotExistr, psycopg2.OperationalError) as e:
         logger.warn(e)
         return HttpResponseNotFound('The database alias <b>%s</b> does not exist on this server.' % dbAlias)
 
