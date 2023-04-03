@@ -20,7 +20,7 @@ from django.conf import settings
 from django.core import serializers
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from django.db.utils import ConnectionDoesNotExist
+from django.db.utils import ConnectionDoesNotExist, OperationalError
 from django.views.decorators.cache import cache_page
 from utils.STOQSQManager import STOQSQManager
 from utils import encoders
@@ -234,9 +234,9 @@ def queryData(request, fmt=None):
         start_time = time.time()
         options = json.dumps(qm.generateOptions(), cls=encoders.STOQSJSONEncoder)
         logger.info(f"generateOptions() took {1000*(time.time()- start_time):6.1f} ms to build query/summary response")
-    except (ConnectionDoesNotExistr, psycopg2.OperationalError) as e:
+    except (ConnectionDoesNotExist, psycopg2.OperationalError, OperationalError) as e:
         logger.warn(e)
-        return HttpResponseNotFound('The database alias <b>%s</b> does not exist on this server.' % dbAlias)
+        return HttpResponseBadRequest('Bad request: Database "' + request.META['dbAlias'] + '" Does Not Exist')
 
     ##logger.debug('options = %s', pprint.pformat(options))
     ##logger.debug('len(simpledepthtime) = %d', len(json.loads(options)['simpledepthtime']))
