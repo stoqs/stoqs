@@ -44,6 +44,7 @@ import socket
 import json
 import csv
 import requests
+import xarray as xr
 
 # Map common LRAUV variable names to CF standard names: http://cfconventions.org/standard-names.html
 sn_lookup = {
@@ -127,9 +128,12 @@ class InterpolatorWriter(BaseWriter):
             if e.errno != errno.EEXIST:
                 raise
 
-        # Create the NetCDF file
-        self.logger.debug("Creating netCDF file %s", out_file)
-        self.ncFile = Dataset(out_file, 'w')
+        # Create the NetCDF file - leave most of the netCDF4 calls in place, but don't write out the file
+        self.logger.debug("Creating netCDF file %s", out_file + '.old')
+        self.ncFile = Dataset(out_file + '.old', 'w')
+        # Create xarray-driven NetCDF file as it is smarter about matching indexes and doesn't fail!
+        self.logger.debug("Creating xarray Dataset to write to file %s", out_file)
+        self.Dataset = xr.Dataset()
 
         # Lead the title with the Deployment Name form the .dlist file - if it exists
         # also save it in a 'deployment_name' global attribute
@@ -138,13 +142,18 @@ class InterpolatorWriter(BaseWriter):
         if deployment_name:
             self.ncFile.title = deployment_name + ' - LRAUV interpolated data'
             self.ncFile.deployment_name = deployment_name
+            self.Dataset.attrs["title"] = deployment_name + ' - LRAUV interpolated data'
+            self.Dataset.attrs["deployment_name"] = deployment_name
         elif 'shore' in out_file:
             self.ncFile.title = 'LRAUV interpolated realtime data'
+            self.Dataset.attrs["title"] = 'LRAUV interpolated realtime data'
         else:
             self.ncFile.title = 'LRAUV interpolated data'
+            self.Dataset.attrs["title"] = 'LRAUV interpolated data'
 
         # Combine any summary text specified on command line with the generic summary stating the original source file
         self.ncFile.summary = 'Observational oceanographic data translated with modification from original data file %s' % in_url
+        self.Dataset.attrs["summary"] = 'Observational oceanographic data translated with modification from original data file %s' % in_url
 
         # add in time dimensions first
         ts_key = []
@@ -164,28 +173,61 @@ class InterpolatorWriter(BaseWriter):
             ts = self.all_sub_ts[key]
 
             if not ts.empty:
+                # xarray is much smarter about matching different shapes to the same index
+                self.logger.debug("Saving to xarray Dataset: %s", key)
+                # Integerize time so that we don't have ns precision that coards.from_udunits() can't handle
+                ts = ts.resample('2S').interpolate("linear")
+                self.Dataset[key] =  xr.DataArray(
+                    ts.values,
+                    coords=[ts.index],
+                    dims={"time"},
+                    name=key,
+                )
                 try:
-                    self.logger.debug("Adding in record variable %s", key)
-                    v = self.initRecordVariable(key)
-                    v[:] = self.all_sub_ts[key].values
-                except Exception as e:
-                    self.logger.error(e)
-                    continue
+                    self.Dataset[key].attrs = self.all_attrib[key]
+                except KeyError:
+                    self.logger.debug(f"{key} has no attributes")
+                if key in ("depth", "latitude", "longitude"):
+                    self.Dataset[key].attrs["standard_name"] = key
+                else:
+                    self.Dataset[key].attrs["coordinates"] = "time depth latitude longitude"
+            try:
+                #self.logger.debug("Adding in record variable %s", key)
+                # We no longer write out these variables, but initRecordVariable() likely has side effects that we still want
+                v = self.initRecordVariable(key)
+                v[:] = self.all_sub_ts[key].values
+            except Exception as e:
+                # Likely shape mismatch error as data from different instruments have different time bases
+                # Getting around this error by using xarray to write the netCDF file
+                self.logger.debug(e)
+                continue
+
+        # We let xarray write its own time coordinate then add standard_name as the STOQS loader needs it
+        self.Dataset["time"].attrs["standard_name"] = "time"
 
         self.logger.debug("Adding in global metadata")
         self.add_global_metadata()
+        self.add_xarray_global_metadata()
         if getattr(self, 'segment_count', None) and getattr(self, 'segment_minsum', None):
             self.ncFile.summary += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward GPS fixes"
+            self.Dataset.attrs["summary"] += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward GPS fixes"
         if getattr(self, 'trackingdb_values', None):
             self.ncFile.comment = f"latitude and longitude values interpolated from {self.trackingdb_values} values retrieved from {self.trackingdb_url}"
             self.ncFile.summary += f" {self.trackingdb_values} acoustic navigation fixes retrieved from tracking database with {self.trackingdb_url}"
             self.ncFile.title += " with acoustic navigation data retrieved from Tracking Database"
+            self.Dataset.attrs["comment"] = f"latitude and longitude values interpolated from {self.trackingdb_values} values retrieved from {self.trackingdb_url}"
+            self.Dataset.attrs["summary"] += f" {self.trackingdb_values} acoustic navigation fixes retrieved from tracking database with {self.trackingdb_url}"
+            self.Dataset.attrs["title"] += " with acoustic navigation data retrieved from Tracking Database"
         if getattr(self, 'esp_log_url', None):
             self.ncFile.summary += f". Associated with ESP Log file {self.esp_log_url}"
+            self.Dataset.attrs["summary"] += f". Associated with ESP Log file {self.esp_log_url}"
 
         self.ncFile.summary += "."
+        self.Dataset.attrs["summary"] += "."
 
-        self.ncFile.close()
+        # Commented out so the the .old file does not get written
+        # self.ncFile.close()
+        self.Dataset.to_netcdf(path=out_file, format="NETCDF4_CLASSIC")
         # End write_netcdf()
 
 
@@ -822,7 +864,10 @@ class InterpolatorWriter(BaseWriter):
             common_interp = common_times.union(nidx).drop_duplicates()
             ts = ts.reindex(common_interp).interpolate('index').reindex(nidx)
             self.logger.info("Number of upsampled values now in %s: %d", key, len(ts))
-            ts = self.interpolate(ts, ts.index)
+            try:
+                ts = self.interpolate(ts, ts.index)
+            except ValueError:
+                self.logger.warning("Cannot interpolate %s", key)
 
             if ts.size == 0:
                 self.logger.info('Variable ' + key + ' empty so skipping')
