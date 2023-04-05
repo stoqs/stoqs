@@ -103,6 +103,65 @@ class BaseWriter(object):
         self.ncFile.useconst = 'Not intended for legal use. Data may contain inaccuracies.'
         self.ncFile.history = 'Created by STOQS software command "%s" on %s' % (' '.join(sys.argv), iso_now,)
 
+    def add_xarray_global_metadata(self, featureType='trajectory'):
+        '''
+        This is the main advantage of using a class for these methods.  This method uses the
+        instance variables to write metadata specific for the data that are written.
+        Used by lrauvNc4ToNetcdf.py ==> Need to manually maintain constency with add_global_metadata()  :-(
+        '''
+
+        iso_now = datetime.datetime.now().isoformat()
+
+        self.Dataset.attrs["netcdf_version"] = '3.6'
+        self.Dataset.attrs["Conventions"] = 'CF-1.6'
+        self.Dataset.attrs["date_created"] = iso_now
+        self.Dataset.attrs["date_update"] = iso_now
+        self.Dataset.attrs["date_modified"] = iso_now
+        self.Dataset.attrs["featureType"] = featureType
+        self.Dataset.attrs["data_mode"] = 'R'
+        if os.environ.get('USER'):
+            self.Dataset.attrs["user"] = os.environ.get('USER')
+        if os.environ.get('HOSTNAME'):
+            self.Dataset.attrs["hostname"] = os.environ.get('HOSTNAME')
+
+        # Record source of the software producing this file
+        app_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
+        repo = Repo(app_dir, search_parent_directories=True)
+        self.Dataset.attrs["gitorigin"] = repo.remotes.origin.url
+        self.Dataset.attrs["gitcommit"] = repo.head.commit.hexsha
+
+        # Likely TypeError: 'float' object is not subscriptable
+        try:
+            self.Dataset.attrs["geospatial_lat_min"] = np.min(self.latitude[:])
+        except TypeError:
+            self.Dataset.attrs["geospatial_lat_min"] = self.latitude
+        try:
+            self.Dataset.attrs["geospatial_lat_max"] = np.max(self.latitude[:])
+        except TypeError:
+            self.Dataset.attrs["geospatial_lat_max"] = self.latitude
+        try:
+            self.Dataset.attrs["geospatial_lon_min"] = np.min(self.longitude[:])
+        except TypeError:
+            self.Dataset.attrs["geospatial_lon_min"] = self.longitude
+        try:
+            self.Dataset.attrs["geospatial_lon_max"] = np.max(self.longitude[:])
+        except TypeError:
+            self.Dataset.attrs["geospatial_lon_max"] = self.longitude
+
+        self.Dataset.attrs["geospatial_lat_units"] = 'degree_north'
+        self.Dataset.attrs["geospatial_lon_units"] = 'degree_east'
+
+        self.Dataset.attrs["geospatial_vertical_min"] = np.min(self.depth[:])
+        self.Dataset.attrs["geospatial_vertical_max"] = np.max(self.depth[:])
+        self.Dataset.attrs["geospatial_vertical_units"] = 'm'
+        self.Dataset.attrs["geospatial_vertical_positive"] = 'down'
+
+        self.Dataset.attrs["time_coverage_start"] = coards.from_udunits(self.time[0], self.time.units).isoformat()
+        self.Dataset.attrs["time_coverage_end"] = coards.from_udunits(self.time[-1], self.time.units).isoformat()
+
+        self.Dataset.attrs["useconst"] = 'Not intended for legal use. Data may contain inaccuracies.'
+        self.Dataset.attrs["history"] = 'Created by STOQS software command "%s" on %s' % (' '.join(sys.argv), iso_now,)
+
     def process_command_line(self):
         '''
         The argparse library is included in Python 2.7 and is an added package for STOQS. 
