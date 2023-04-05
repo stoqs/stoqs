@@ -81,7 +81,13 @@ else:
     cl.stride = 1
 
 cl.loadM1()
-cl.load_wg_Tiny()
+##cl.load_wg_Tiny()
+
+# For testing a specific file
+##cl.daphne_base = 'http://dods.mbari.org/thredds/dodsC/LRAUV/daphne/realtime/sbdlogs/2023/'
+##cl.daphne_files = ['202304/20230403T164827/shore_i.nc', ]
+##cl.daphne_parms = ['bin_median_sea_water_salinity', 'bin_median_sea_water_temperature', 'bin_median_mass_concentration_of_chlorophyll_in_sea_water']
+##cl.loadLRAUV('daphne', sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True, build_attrs=False)
 for lrauv in ('galene', 'pontus', 'daphne', 'makai', 'brizo'):
     # Realtime
     cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True)
