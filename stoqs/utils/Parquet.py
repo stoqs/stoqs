@@ -53,6 +53,7 @@ class Columnar():
                 df = pd.read_sql_query(sql, connections[self.db])
         etime = time() - stime
         if extract:
+            logger.info(f"sql = {sql}")
             logger.info(f"df.shape: {df.shape} <- read_sql_query() in {etime:.1f} sec")
             logger.info(f"Actual df.memory_usage().sum():"
                              f" {(df.memory_usage().sum()/1.e9):.3f} GB")
@@ -192,6 +193,9 @@ class Columnar():
         logger.debug(f"activitynames = {self.activitynames}")
         self.activity__name__contains = []
         for name in request.GET.getlist("activity__name__contains"):
+            self.activity__name__contains.append(name)
+        for name in request.GET.getlist("measurement__instantpoint__activity__name__contains"):
+            # To match similar .html request
             self.activity__name__contains.append(name)
         logger.debug(f"activity__name__contains = {self.activity__name__contains}")
 
