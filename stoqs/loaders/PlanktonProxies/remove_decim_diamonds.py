@@ -24,6 +24,7 @@ from stoqs.models import Activity
 
 db_alias = "stoqs_mb_diamonds"
 diamond_decims = []
+print(f"Finding non-Diamond missions in db_alias = {db_alias}")
 acts = Activity.objects.using(db_alias).filter(name__contains="1S.nc")
 for act in acts:
     if not act.name.endswith("1S.nc"):
