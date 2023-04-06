@@ -49,8 +49,11 @@ import xarray as xr
 # Map common LRAUV variable names to CF standard names: http://cfconventions.org/standard-names.html
 sn_lookup = {
              'bin_mean_temperature': 'sea_water_temperature',
+             'bin_median_sea_water_temperature': 'sea_water_temperature',
              'bin_mean_salinity': 'sea_water_salinity',
+             'bin_median_sea_water_salinity': 'sea_water_salinity',
              'bin_mean_chlorophyll': 'mass_concentration_of_chlorophyll_in_sea_water', 
+             'bin_median_mass_concentration_of_chlorophyll_in_sea_water': 'mass_concentration_of_chlorophyll_in_sea_water',
              'temperature': 'sea_water_temperature',
              'salinity': 'sea_water_salinity',
              'chlorophyll': 'mass_concentration_of_chlorophyll_in_sea_water', 
@@ -191,6 +194,8 @@ class InterpolatorWriter(BaseWriter):
                     self.Dataset[key].attrs["standard_name"] = key
                 else:
                     self.Dataset[key].attrs["coordinates"] = "time depth latitude longitude"
+                    if key in sn_lookup.keys():
+                        self.Dataset[key].attrs["standard_name"] = sn_lookup[key]
             try:
                 #self.logger.debug("Adding in record variable %s", key)
                 # We no longer write out these variables, but initRecordVariable() likely has side effects that we still want
