@@ -224,9 +224,10 @@ class ParentSamplesLoader(STOQS_Loader):
                 except ClosestTimeNotFoundException:
                     self.logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
 
-    def load_gulper_activities(self, activity_name, auv_file, db_alias, url, platform_color):
+    def load_gulper_activities(self, activity_name, auv_file, db_alias, url, platform_color, sec_bnds: int=1):
         '''Use gulper.Gulper from auv-python to get Gulper bottle times and load Samples
-        as Activities like for LRAUV ESPs and Sippers.  auv_file looks like 'dorado_2022.286.01_1S.nc'
+        as Activities like for LRAUV ESPs and Sippers.  auv_file looks like 'dorado_2022.286.01_1S.nc'.
+        Look forward and back sec_bnds seconds from Sample time to match measurement data.
         '''
         gulper = Gulper()
         gulper.args = argparse.Namespace()
@@ -238,7 +239,7 @@ class ParentSamplesLoader(STOQS_Loader):
         gulper_names = {}
         for sample_name, sample_esecs in bottle_times.items():
             summary = f"Gulper {sample_name} sampled at esecs = {sample_esecs}"
-            gulper_names[sample_name] = SampleInfo(int(sample_esecs)-1, int(sample_esecs)+2, 0.8, summary)
+            gulper_names[sample_name] = SampleInfo(sample_esecs-sec_bnds, sample_esecs+sec_bnds, 0.8, summary)
 
         pt, _ = PlatformType.objects.using(db_alias).get_or_create(name='auv')
         platform, _ = Platform.objects.using(db_alias).get_or_create(
