@@ -58,6 +58,7 @@ cl.m1_startDatetime = datetime(2023, 3, 31)
 cl.m1_endDatetime = datetime(2023, 4, 25)
 
 # WG Tiny - All instruments combined into one file - one time coordinate
+# Liquid Robotics changed their data portal - usual data products not available as of 11 April 2023
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
                       'wgTiny/20230302/realTime/20230302.nc',
@@ -92,7 +93,7 @@ for lrauv in ('galene', 'pontus', 'daphne', 'makai', 'brizo'):
     # Realtime
     cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True)
     # Delayed mode
-    # cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1)
+    cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1)
 
 ##cl.loadSubSamples()
 
