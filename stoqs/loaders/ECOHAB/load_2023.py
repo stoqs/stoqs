@@ -40,7 +40,7 @@ cl = CANONLoader('stoqs_ecohab_april2023', 'ECOHAB - April 2023',
 
 # Overall Campaign times used for LRAUV loads
 sdate = datetime(2023, 4, 3)
-edate = datetime(2023, 4, 20)
+edate = datetime(2023, 4, 30)
 
 # M1 Mooring
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
@@ -89,6 +89,12 @@ cl.loadM1()
 ##cl.daphne_files = ['202304/20230403T164827/shore_i.nc', ]
 ##cl.daphne_parms = ['bin_median_sea_water_salinity', 'bin_median_sea_water_temperature', 'bin_median_mass_concentration_of_chlorophyll_in_sea_water']
 ##cl.loadLRAUV('daphne', sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True, build_attrs=False)
+
+# brizo/missionlogs/2023/20230411_20230420/20230411T192116/syslog, resp.status_code = 404
+##cl.brizo_base = 'http://dods.mbari.org/thredds/dodsC/LRAUV/brizo/missionlogs/2023/20230411_20230420/20230411T192116/'
+##cl.brizo_files = ['202304111921_202304112324_2S_scieng.nc', ]
+##cl.brizo_parms = ['temperature']
+##cl.loadLRAUV('brizo', sdate, edate, critSimpleDepthTime=0.1, build_attrs=False)
 for lrauv in ('galene', 'pontus', 'daphne', 'makai', 'brizo'):
     # Realtime
     cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True)

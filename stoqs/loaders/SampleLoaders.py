@@ -396,7 +396,7 @@ class ParentSamplesLoader(STOQS_Loader):
         with requests.get(syslog_url, stream=True) as resp:
             if resp.status_code != 200:
                 self.logger.error(f'Cannot read {syslog_url}, resp.status_code = {resp.status_code}')
-                return
+                raise FileNotFoundError(f'Cannot read {syslog_url}, resp.status_code = {resp.status_code}')
 
             following_lines = ''
             prev_message = ''

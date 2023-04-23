@@ -299,6 +299,9 @@ class CANONLoader(LoadScript):
                 self.logger.info("No valid data in %s" % url)
             except (webob.exc.HTTPError, UnboundLocalError) as e:
                 self.logger.warn(f"{e}")
+            except FileNotFoundError as e:
+                # Likely missing syslog for LRAUV mission - should be reported as a failed unserialize
+                self.logger.error(str(e))
             except Exception as e:
                 if 'shore_i.nc' in url:
                     self.logger.warn(f"{e}")
