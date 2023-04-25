@@ -21,6 +21,11 @@ from time import time
 
 logger = logging.getLogger(__name__)
 
+# To debug this on a docker production development system run:
+#   docker-compose exec stoqs /bin/bash
+#   stoqs/manage.py runserver_plus 0.0.0.0:8001 --settings=config.settings.local
+# Place breakpoint()s in this code and hit http://localhost:8001 from your host
+
 class Columnar():
 
     # Set to GB of RAM that have been resourced to the Docker engine
@@ -194,6 +199,9 @@ class Columnar():
         self.activity__name__contains = []
         for name in request.GET.getlist("activity__name__contains"):
             self.activity__name__contains.append(name)
+        self.activity__name = []
+        for name in request.GET.getlist("activity__name"):
+            self.activity__name.append(name)
         for name in request.GET.getlist("measurement__instantpoint__activity__name__contains"):
             # To match similar .html request
             self.activity__name__contains.append(name)
@@ -224,6 +232,12 @@ class Columnar():
                 anc_list.append(f"stoqs_activity.name LIKE '%{name}%'")
             logger.debug('(' + ' OR '.join(anc_list) + ')')
             where_list.append('(' + ' OR '.join(anc_list) + ')')
+        if self.activity__name:
+            an_list = []
+            for name in self.activity__name:
+                an_list.append(f"stoqs_activity.name = '{name}'")
+            logger.debug('(' + ' OR '.join(an_list) + ')')
+            where_list.append('(' + ' OR '.join(an_list) + ')')
 
         where_clause = ''
         if where_list:
