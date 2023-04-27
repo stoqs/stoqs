@@ -36,20 +36,30 @@ cl = CANONLoader('stoqs_auv_compare', 'Compare legacy and auv-python processed D
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
 
-# Monterey Bay overnight diamond runs
-startdate = datetime(2016, 6, 5)
+# Start with begining of available eDNA samples
+startdate = datetime(2014, 7, 1)
 enddate = datetime.utcnow()
-# The first nighttime Diamond misssion - Temporal: 2016-06-27 14:56:41 to 2016-06-28 07:55:37
+# The first nighttime Diamond misssion - Temporal: 2016-06-27 14:56:41 to 2016-06-28 07:55:37 - 2016.181.00
 ##startdate = datetime(2016, 6, 29)
 ##enddate = datetime(2016, 7, 2)
+# Mission used in auv-python//notebooks/5.2-mpm-bg_biolume-PiO-paper.ipynb: dorado 2021.102.02
+##startdate = datetime(2021, 4, 12)
+##enddate = datetime(2021, 4, 13)
+# Mission with hs2 data marked bad by auv-python, but not by Matlab: dorado 2021.301.00
+##startdate = datetime(2021, 10, 28)
+##enddate = datetime(2021, 10, 30)
+# Mission with bad ctd1 data that also removed data from other instruments due to ctd1_depth being used for pitch correction: 2017.044.00
+##startdate = datetime(2017, 2, 13)
+##enddate = datetime(2017, 2, 15)
+
 
 # Execute the load
 cl.process_command_line()
 if cl.args.test:
-    cl.stride = 1000
+    cl.stride = 1
 
-cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*netcdf/dorado_.*1S.nc", ), title_match="Monterey Bay Diamond")
 cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", ), plankton_proxies=True)
+cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*netcdf/dorado_.*1S.nc", ), title_match="Monterey Bay Diamond")
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
