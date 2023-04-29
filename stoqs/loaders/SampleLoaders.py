@@ -392,6 +392,9 @@ class ParentSamplesLoader(STOQS_Loader):
         self.logger.info(f"Getting {levels} {components} information from {syslog_url}")
         log_rows = []
         esp_device = None
+        if 'realtime' in syslog_url:
+            self.logger.info(f"String 'realtime' found in {syslog_url} - not attempting to read it")
+            return log_rows, esp_device
 
         with requests.get(syslog_url, stream=True) as resp:
             if resp.status_code != 200:
