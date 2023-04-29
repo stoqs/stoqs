@@ -152,7 +152,7 @@ class Gulper:
                 # ": (\d+) Gulper::fireGulper - cmd is \$(\d\d)1Fff
                 esecs = float(match.group(1))
                 number = int(match.group(2))
-                self.logger.debug(f"eseconds = {eses}, number = {number}")
+                self.logger.debug(f"eseconds = {esecs}, number = {number}")
                 if etime:
                     # After first instance of bottle number undef $etime so we don't re-set it
                     bottles[number] = etime + mission_start_esecs
