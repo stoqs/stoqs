@@ -125,6 +125,7 @@ class Gulper:
 
         # Logic translated to here from parseGulperLog.pl Perl script
         bottles = {}
+        etime = None
         number = None
         for line in lines:
             if "t = 0.000000" in line:
