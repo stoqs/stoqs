@@ -20,7 +20,7 @@ from collections import defaultdict
 from django.conf import settings
 from django.contrib.gis.geos import Polygon, Point
 from django.db.utils import IntegrityError
-from django.db import transaction, DatabaseError
+from django.db import transaction, DatabaseError, connections
 from django.db.models import Max, Min
 from stoqs import models as m
 from datetime import datetime
@@ -1442,41 +1442,77 @@ class STOQS_Loader(object):
         temp_pn = ''
         sal_pn = ''
         # Pick Parameter names that have sea_water_temperature and sea_water_salinity standard_names
-        temp_mp = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=ms[0], parameter__standard_name='sea_water_temperature').order_by('parameter__name')
-        sal_mp = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=ms[0], parameter__standard_name=salinity_standard_name).order_by('parameter__name')
+        temp_mp = (m.MeasuredParameter.objects.using(self.dbAlias)
+                    .filter(measurement__in=ms, parameter__standard_name='sea_water_temperature')
+                    .values_list('parameter__name', flat=True).order_by('parameter__name').distinct())
+        sal_mp = (m.MeasuredParameter.objects.using(self.dbAlias)
+                    .filter(measurement__in=ms, parameter__standard_name=salinity_standard_name)
+                    .values_list('parameter__name', flat=True).order_by('parameter__name').distinct())
 
         # See if we have "Best CTD is ..." in our netCDF metadata and set parameter - expect either 'ctd1' or 'ctd2'
-        best_ctd_is_re = re.compile("Best CTD is (ctd1|ctd2)")
+        best_ctd_is_re = re.compile("Best CTD is (ctd1|ctd2)", re.IGNORECASE)
         if "NC_GLOBAL" in self.ds.attributes:
             if "comment" in self.ds.attributes["NC_GLOBAL"]:
+                self.logger.info(f'netCDF comment = {self.ds.attributes["NC_GLOBAL"]["comment"]}')
                 if best_ctd := best_ctd_is_re.search(self.ds.attributes["NC_GLOBAL"]["comment"]):
+                    self.logger.info(f"Looking for Best CTD in temp_mp list: {temp_mp}")
+                    self.logger.info(f"Looking for Best CTD in sal_mp list: {sal_mp}")
                     for tn, sn in zip(temp_mp, sal_mp):
-                        if best_ctd.group(1).lower() in tn.parameter.name:
-                            temp_pn = tn.parameter.name
-                        if best_ctd.group(1).lower() in sn.parameter.name:
-                            sal_pn = sn.parameter.name
+                        if best_ctd.group(1).lower() in tn:
+                            temp_pn = tn
+                        if best_ctd.group(1).lower() in sn:
+                            sal_pn = sn
+                    self.logger.info(f"temp_pn = {temp_pn}, sal_pn = {sal_pn}")
         if not temp_pn:
             # Choose the first one
-            temp_pn = temp_mp[0].parameter.name
+            temp_pn = temp_mp[0]
         if not sal_pn:
             # Choose the first one
-            sal_pn = sal_mp[0].parameter.name
+            sal_pn = sal_mp[0]
         return temp_pn, sal_pn
+
+    def _combined_temp_sal(self, temp_pn, sal_pn, ms):
+        '''Use Parameter-Parameter like query to get paired T & S values.
+        We need to do this in case we have missing/bad values for one and not the other.
+        '''
+        temps = []
+        salts = []
+        depths = []
+        lats = []
+        with connections[self.dbAlias].cursor() as cursor:
+            sql = f"""
+            SELECT DISTINCT mp_x.datavalue AS temp,
+                            mp_y.datavalue AS sal,
+                            stoqs_measurement.depth AS depth,
+                            ST_Y(stoqs_measurement.geom) AS lat
+            FROM stoqs_measuredparameter
+            INNER JOIN stoqs_measurement ON (stoqs_measuredparameter.measurement_id = stoqs_measurement.id)
+            INNER JOIN stoqs_instantpoint ON (stoqs_measurement.instantpoint_id = stoqs_instantpoint.id)
+            INNER JOIN stoqs_activity ON (stoqs_instantpoint.activity_id = stoqs_activity.id)
+            INNER JOIN stoqs_platform ON (stoqs_activity.platform_id = stoqs_platform.id)
+            INNER JOIN stoqs_measurement m_x ON m_x.instantpoint_id = stoqs_instantpoint.id
+            INNER JOIN stoqs_measuredparameter mp_x ON mp_x.measurement_id = m_x.id
+            INNER JOIN stoqs_parameter p_x ON mp_x.parameter_id = p_x.id
+            INNER JOIN stoqs_measurement m_y ON m_y.instantpoint_id = stoqs_instantpoint.id
+            INNER JOIN stoqs_measuredparameter mp_y ON mp_y.measurement_id = m_y.id
+            INNER JOIN stoqs_parameter p_y ON mp_y.parameter_id = p_y.id
+            WHERE (p_x.name = '{temp_pn}')
+              AND (p_y.name = '{sal_pn}')
+              AND (stoqs_measurement.id IN ({','.join([str(meas.id) for meas in ms])}));
+            """
+            cursor.execute(sql)
+            for row in cursor.fetchall():
+                temps.append(row[0])
+                salts.append(row[1])
+                depths.append(row[2])
+                lats.append(row[3])
+        return temps, salts, depths, lats
 
     def _calculate_sigmat_mps(self, temp_pn, sal_pn, p_sigmat, ms, salinity_standard_name):
         '''Return calculated sigmat list from ms QuerySet
         '''
         self.logger.info("Using Parameters '%s' and '%s' to compute sigmat", temp_pn, sal_pn)
-        temps = (m.MeasuredParameter.objects.using(self.dbAlias)
-                    .filter(measurement__in=ms, parameter__name=temp_pn)
-                    .order_by('measurement__instantpoint__timevalue')
-                    .values_list('datavalue', flat=True))
-        salts = (m.MeasuredParameter.objects.using(self.dbAlias)
-                    .filter(measurement__in=ms, parameter__name=sal_pn)
-                    .order_by('measurement__instantpoint__timevalue')
-                    .values_list('datavalue', flat=True))
-        depths = [meas.depth for meas in ms]
-        lats = [meas.geom.y for meas in ms]
+        temps, salts, depths, lats = self._combined_temp_sal(temp_pn, sal_pn, ms)
         sigmats = sw.pden(salts, temps, sw.pres(depths, lats)) - 1000.0
         sigmat_mps = []
         for measurement, sigmat in zip(ms, sigmats):
@@ -1488,14 +1524,7 @@ class STOQS_Loader(object):
         '''Return calculated spice list from ms QuerySet
         '''
         self.logger.info("Using Parameters %s and %s to compute spice", temp_pn, sal_pn)
-        temps = (m.MeasuredParameter.objects.using(self.dbAlias)
-                    .filter(measurement__in=ms, parameter__name=temp_pn)
-                    .order_by('measurement__instantpoint__timevalue')
-                    .values_list('datavalue', flat=True))
-        salts = (m.MeasuredParameter.objects.using(self.dbAlias)
-                    .filter(measurement__in=ms, parameter__name=sal_pn)
-                    .order_by('measurement__instantpoint__timevalue')
-                    .values_list('datavalue', flat=True))
+        temps, salts, _, _ = self._combined_temp_sal(temp_pn, sal_pn, ms)
         spices = spiciness(temps, salts)
         spice_mps = []
         for measurement, spice in zip(ms, spices):
