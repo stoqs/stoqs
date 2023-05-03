@@ -1469,6 +1469,7 @@ class STOQS_Loader(object):
         if not sal_pn:
             # Choose the first one
             sal_pn = sal_mp[0]
+        self.logger.info("Using Parameters '%s' and '%s' to compute sigmat and spice", temp_pn, sal_pn)
         return temp_pn, sal_pn
 
     def _combined_temp_sal(self, temp_pn, sal_pn, ms):
@@ -1477,14 +1478,17 @@ class STOQS_Loader(object):
         '''
         temps = []
         salts = []
+        mids = []
         depths = []
         lats = []
         with connections[self.dbAlias].cursor() as cursor:
             sql = f"""
             SELECT DISTINCT mp_x.datavalue AS temp,
                             mp_y.datavalue AS sal,
+                            stoqs_measurement.id AS mid,
                             stoqs_measurement.depth AS depth,
-                            ST_Y(stoqs_measurement.geom) AS lat
+                            ST_Y(stoqs_measurement.geom) AS lat,
+                            stoqs_instantpoint.timevalue as time
             FROM stoqs_measuredparameter
             INNER JOIN stoqs_measurement ON (stoqs_measuredparameter.measurement_id = stoqs_measurement.id)
             INNER JOIN stoqs_instantpoint ON (stoqs_measurement.instantpoint_id = stoqs_instantpoint.id)
@@ -1498,37 +1502,38 @@ class STOQS_Loader(object):
             INNER JOIN stoqs_parameter p_y ON mp_y.parameter_id = p_y.id
             WHERE (p_x.name = '{temp_pn}')
               AND (p_y.name = '{sal_pn}')
-              AND (stoqs_measurement.id IN ({','.join([str(meas.id) for meas in ms])}));
+              AND (stoqs_measurement.id IN ({','.join([str(meas.id) for meas in ms])}))
+            ORDER BY stoqs_instantpoint.timevalue;
             """
+            breakpoint()
             cursor.execute(sql)
             for row in cursor.fetchall():
                 temps.append(row[0])
                 salts.append(row[1])
-                depths.append(row[2])
-                lats.append(row[3])
-        return temps, salts, depths, lats
+                mids.append(row[2])
+                depths.append(row[3])
+                lats.append(row[4])
+        return temps, salts, mids, depths, lats
 
-    def _calculate_sigmat_mps(self, temp_pn, sal_pn, p_sigmat, ms, salinity_standard_name):
-        '''Return calculated sigmat list from ms QuerySet
+    def _calculate_sigmat_mps(self, temps, salts, mids, depths, lats, p_sigmat, salinity_standard_name):
+        '''Return calculated sigmat list of MeasuredParameters
         '''
-        self.logger.info("Using Parameters '%s' and '%s' to compute sigmat", temp_pn, sal_pn)
-        temps, salts, depths, lats = self._combined_temp_sal(temp_pn, sal_pn, ms)
+        meass = m.Measurement.objects.using(self.dbAlias).filter(id__in=mids).order_by('instantpoint__timevalue')
         sigmats = sw.pden(salts, temps, sw.pres(depths, lats)) - 1000.0
         sigmat_mps = []
-        for measurement, sigmat in zip(ms, sigmats):
-            sigmat_mp = m.MeasuredParameter(measurement=measurement, parameter=p_sigmat, datavalue=sigmat)
+        for meas, sigmat in zip(meass, sigmats):
+            sigmat_mp = m.MeasuredParameter(measurement=meas, parameter=p_sigmat, datavalue=sigmat)
             sigmat_mps.append(sigmat_mp)
         return sigmat_mps
 
-    def _calculate_spice_mps(self, temp_pn, sal_pn, p_spice, ms, salinity_standard_name):
-        '''Return calculated spice list from ms QuerySet
+    def _calculate_spice_mps(self, temps, salts, mids, p_spice, salinity_standard_name):
+        '''Return calculated spice list of MeasuredParameters
         '''
-        self.logger.info("Using Parameters %s and %s to compute spice", temp_pn, sal_pn)
-        temps, salts, _, _ = self._combined_temp_sal(temp_pn, sal_pn, ms)
+        meass = m.Measurement.objects.using(self.dbAlias).filter(id__in=mids).order_by('instantpoint__timevalue')
         spices = spiciness(temps, salts)
         spice_mps = []
-        for measurement, spice in zip(ms, spices):
-            spice_mp = m.MeasuredParameter(measurement=measurement, parameter=p_spice, datavalue=spice)
+        for meas, spice in zip(meass, spices):
+            spice_mp = m.MeasuredParameter(measurement=meas, parameter=p_spice, datavalue=spice)
             spice_mps.append(spice_mp)
         return spice_mps
 
@@ -1643,8 +1648,9 @@ class STOQS_Loader(object):
 
         self.logger.info(f'Calculating {self.parameter_counts[p_sigmat]} sigmat & spice MeasuredParameters')
         temp_pn, sal_pn = self._best_ts_parameter_names(ms, salinity_standard_name)
-        sigmat_mps = self._calculate_sigmat_mps(temp_pn, sal_pn, p_sigmat, ms, salinity_standard_name)
-        spice_mps = self._calculate_spice_mps(temp_pn, sal_pn, p_spice, ms, salinity_standard_name)
+        temps, salts, mids, depths, lats = self._combined_temp_sal(temp_pn, sal_pn, ms)
+        sigmat_mps = self._calculate_sigmat_mps(temps, salts, mids, depths, lats, p_sigmat, salinity_standard_name)
+        spice_mps = self._calculate_spice_mps(temps, salts, mids, p_spice, salinity_standard_name)
 
         self.logger.info(f'Bulk loading {self.parameter_counts[p_sigmat]} sigmat MeasuredParameters')
         m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(sigmat_mps)
@@ -1747,6 +1753,7 @@ class STOQS_Loader(object):
         self.assignParameterGroup(groupName=MEASUREDINSITU)
 
         # Read values from the grid sampling (bottom depths) and add datavalues to the altitude parameter using the save Measurements
+        self.logger.info("Saving altitude MeasuredParameters")
         count = 0
         with open(bdepthFileName) as altFH:
             try:
@@ -1766,6 +1773,7 @@ class STOQS_Loader(object):
                 self.logger.warn(e)
             except DatabaseError as e:
                 self.logger.warn(e)
+        self.logger.info("Done saving altitude MeasuredParameters")
 
         # Cleanup and sanity check
         os.remove(xyFileName)
