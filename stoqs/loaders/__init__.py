@@ -1447,12 +1447,14 @@ class STOQS_Loader(object):
 
         # See if we have "Best CTD is ..." in our netCDF metadata and set parameter - expect either 'ctd1' or 'ctd2'
         best_ctd_is_re = re.compile("Best CTD is (ctd1|ctd2)")
-        if best_ctd := best_ctd_is_re.search(self.ds.attributes["NC_GLOBAL"]["comment"]):
-            for tn, sn in zip(temp_mp, sal_mp):
-                if best_ctd.group(1).lower() in tn.parameter.name:
-                    temp_pn = tn.parameter.name
-                if best_ctd.group(1).lower() in sn.parameter.name:
-                    sal_pn = sn.parameter.name
+        if "NC_GLOBAL" in self.ds.attributes:
+            if "comment" in self.ds.attributes["NC_GLOBAL"]:
+                if best_ctd := best_ctd_is_re.search(self.ds.attributes["NC_GLOBAL"]["comment"]):
+                    for tn, sn in zip(temp_mp, sal_mp):
+                        if best_ctd.group(1).lower() in tn.parameter.name:
+                            temp_pn = tn.parameter.name
+                        if best_ctd.group(1).lower() in sn.parameter.name:
+                            sal_pn = sn.parameter.name
         if not temp_pn:
             # Choose the first one
             temp_pn = temp_mp[0].parameter.name
