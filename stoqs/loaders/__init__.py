@@ -1505,7 +1505,6 @@ class STOQS_Loader(object):
               AND (stoqs_measurement.id IN ({','.join([str(meas.id) for meas in ms])}))
             ORDER BY stoqs_instantpoint.timevalue;
             """
-            breakpoint()
             cursor.execute(sql)
             for row in cursor.fetchall():
                 temps.append(row[0])
@@ -1755,6 +1754,7 @@ class STOQS_Loader(object):
         # Read values from the grid sampling (bottom depths) and add datavalues to the altitude parameter using the save Measurements
         self.logger.info("Saving altitude MeasuredParameters")
         count = 0
+        alt_mps = []
         with open(bdepthFileName) as altFH:
             try:
                 with transaction.atomic():
@@ -1767,12 +1767,14 @@ class STOQS_Loader(object):
                         alt = -float(bdepth)-depthList.pop(0)
                         meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
                         mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
-                        mp_alt.save(using=self.dbAlias)
+                        alt_mps.append(mp_alt)
                         count += 1
             except IntegrityError as e:
                 self.logger.warn(e)
             except DatabaseError as e:
                 self.logger.warn(e)
+            self.logger.info(f'Bulk loading {count} altitude MeasuredParameters')
+            m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(alt_mps)
         self.logger.info("Done saving altitude MeasuredParameters")
 
         # Cleanup and sanity check
