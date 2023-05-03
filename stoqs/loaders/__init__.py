@@ -1435,33 +1435,71 @@ class STOQS_Loader(object):
                 except Exception as e:
                     self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
-    def _generate_sigmat_mps(self, p_sigmat, ms, salinity_standard_name):
-        '''Yield calculated sigmat from ms QuerySet
+    def _best_ts_parameter_names(self, ms, salinity_standard_name):
+        '''Find the best sea_water_temperature and seawater_salinity Parameter names
+        to use for sigmat and spice calculations
         '''
-        for measurement in ms:
-            mps = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=measurement)
+        temp_pn = ''
+        sal_pn = ''
+        # Pick Parameter names that have sea_water_temperature and sea_water_salinity standard_names
+        temp_mp = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=ms[0], parameter__standard_name='sea_water_temperature').order_by('parameter__name')
+        sal_mp = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=ms[0], parameter__standard_name=salinity_standard_name).order_by('parameter__name')
 
-            temp_mp = mps.filter(parameter__standard_name='sea_water_temperature')
-            sal_mp = mps.filter(parameter__standard_name=salinity_standard_name)
+        # See if we have "Best CTD is ..." in our netCDF metadata and set parameter - expect either 'ctd1' or 'ctd2'
+        best_ctd_is_re = re.compile("Best CTD is (ctd1|ctd2)")
+        if best_ctd := best_ctd_is_re.search(self.ds.attributes["NC_GLOBAL"]["comment"]):
+            for tn, sn in zip(temp_mp, sal_mp):
+                if best_ctd.group(1).lower() in tn.parameter.name:
+                    temp_pn = tn.parameter.name
+                if best_ctd.group(1).lower() in sn.parameter.name:
+                    sal_pn = sn.parameter.name
+        if not temp_pn:
+            # Choose the first one
+            temp_pn = temp_mp[0].parameter.name
+        if not sal_pn:
+            # Choose the first one
+            sal_pn = sal_mp[0].parameter.name
+        return temp_pn, sal_pn
 
-            sigmat = sw.pden(sal_mp[0].datavalue, temp_mp[0].datavalue, sw.pres(measurement.depth, measurement.geom.y)) - 1000.0
+    def _calculate_sigmat_mps(self, temp_pn, sal_pn, p_sigmat, ms, salinity_standard_name):
+        '''Return calculated sigmat list from ms QuerySet
+        '''
+        self.logger.info("Using Parameters '%s' and '%s' to compute sigmat", temp_pn, sal_pn)
+        temps = (m.MeasuredParameter.objects.using(self.dbAlias)
+                    .filter(measurement__in=ms, parameter__name=temp_pn)
+                    .order_by('measurement__instantpoint__timevalue')
+                    .values_list('datavalue', flat=True))
+        salts = (m.MeasuredParameter.objects.using(self.dbAlias)
+                    .filter(measurement__in=ms, parameter__name=sal_pn)
+                    .order_by('measurement__instantpoint__timevalue')
+                    .values_list('datavalue', flat=True))
+        depths = [meas.depth for meas in ms]
+        lats = [meas.geom.y for meas in ms]
+        sigmats = sw.pden(salts, temps, sw.pres(depths, lats)) - 1000.0
+        sigmat_mps = []
+        for measurement, sigmat in zip(ms, sigmats):
             sigmat_mp = m.MeasuredParameter(measurement=measurement, parameter=p_sigmat, datavalue=sigmat)
+            sigmat_mps.append(sigmat_mp)
+        return sigmat_mps
 
-            yield sigmat_mp
-
-    def _generate_spice_mps(self, p_spice, ms, salinity_standard_name):
-        '''Yield calculated spice from ms QuerySet
+    def _calculate_spice_mps(self, temp_pn, sal_pn, p_spice, ms, salinity_standard_name):
+        '''Return calculated spice list from ms QuerySet
         '''
-        for measurement in ms:
-            mps = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=measurement)
-
-            temp_mp = mps.filter(parameter__standard_name='sea_water_temperature')
-            sal_mp = mps.filter(parameter__standard_name=salinity_standard_name)
-
-            spice = spiciness(temp_mp[0].datavalue, sal_mp[0].datavalue)
+        self.logger.info("Using Parameters %s and %s to compute spice", temp_pn, sal_pn)
+        temps = (m.MeasuredParameter.objects.using(self.dbAlias)
+                    .filter(measurement__in=ms, parameter__name=temp_pn)
+                    .order_by('measurement__instantpoint__timevalue')
+                    .values_list('datavalue', flat=True))
+        salts = (m.MeasuredParameter.objects.using(self.dbAlias)
+                    .filter(measurement__in=ms, parameter__name=sal_pn)
+                    .order_by('measurement__instantpoint__timevalue')
+                    .values_list('datavalue', flat=True))
+        spices = spiciness(temps, salts)
+        spice_mps = []
+        for measurement, spice in zip(ms, spices):
             spice_mp = m.MeasuredParameter(measurement=measurement, parameter=p_spice, datavalue=spice)
-            
-            yield spice_mp
+            spice_mps.append(spice_mp)
+        return spice_mps
 
     def _get_sea_water_parameters(self):
         '''Check for more than one set of sea_water_temperature nand sea_water_salinity standard names as in
@@ -1572,11 +1610,10 @@ class STOQS_Loader(object):
         self.assignParameterGroup(groupName=MEASUREDINSITU)
         self.assignParameterGroup(groupName=MEASUREDINSITU)
 
-        sigmat_mps = []
-        spice_mps = []
         self.logger.info(f'Calculating {self.parameter_counts[p_sigmat]} sigmat & spice MeasuredParameters')
-        sigmat_mps = self._generate_sigmat_mps(p_sigmat, ms, salinity_standard_name)
-        spice_mps = self._generate_spice_mps(p_spice, ms, salinity_standard_name)
+        temp_pn, sal_pn = self._best_ts_parameter_names(ms, salinity_standard_name)
+        sigmat_mps = self._calculate_sigmat_mps(temp_pn, sal_pn, p_sigmat, ms, salinity_standard_name)
+        spice_mps = self._calculate_spice_mps(temp_pn, sal_pn, p_spice, ms, salinity_standard_name)
 
         self.logger.info(f'Bulk loading {self.parameter_counts[p_sigmat]} sigmat MeasuredParameters')
         m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(sigmat_mps)
