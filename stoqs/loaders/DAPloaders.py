@@ -1711,7 +1711,7 @@ class Base_Loader(STOQS_Loader):
         self.logger.info("Adding SigmaT and Spiciness to the Measurements...")
         self.addSigmaTandSpice(self.activity)
 
-        if self.grdTerrain:
+        if self.grdTerrain and 'netcdf_proxies' not in self.url:
             self.logger.info("Adding altitude to the Measurements...")
             try:
                 self.addAltitude(self.activity)
