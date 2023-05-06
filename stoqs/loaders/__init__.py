@@ -1723,8 +1723,8 @@ class STOQS_Loader(object):
         self.logger.info('Executing %s' % cmd)
         os.system(cmd)
         if self.totalRecords > 1e6:
-            self.logger.info('This is lame... Sleeping 60 seconds to give time for system call to finish writing to %s', bdepthFileName)
-            time.sleep(60)
+            self.logger.info('This is lame... Sleeping 5 seconds to give time for system call to finish writing to %s', bdepthFileName)
+            time.sleep(5)
         if self.totalRecords > 1e7:
             self.logger.info('Sleeping another 300 seconds to give time for system call to'
                              ' finish writing to %s for more than 10 million records', bdepthFileName)
@@ -1753,19 +1753,19 @@ class STOQS_Loader(object):
 
         # Read values from the grid sampling (bottom depths) and add datavalues to the altitude parameter using the save Measurements
         self.logger.info("Saving altitude MeasuredParameters")
+        meass = m.Measurement.objects.using(self.dbAlias).filter(id__in=mList).order_by('instantpoint__activity__id', 'instantpoint__timevalue')
         count = 0
         alt_mps = []
         with open(bdepthFileName) as altFH:
             try:
                 with transaction.atomic():
-                    for line in altFH:
+                    for line, meas in zip(altFH, meass):
                         try:
                             bdepth = line.split()[2]
                         except IndexError:
                             # Likely list index out of range
                             continue
                         alt = -float(bdepth)-depthList.pop(0)
-                        meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
                         mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
                         alt_mps.append(mp_alt)
                         count += 1
