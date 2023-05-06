@@ -1774,7 +1774,10 @@ class STOQS_Loader(object):
             except DatabaseError as e:
                 self.logger.warn(e)
             self.logger.info(f'Bulk loading {count} altitude MeasuredParameters')
-            m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(alt_mps)
+            try:
+                m.MeasuredParameter.objects.using(self.dbAlias).bulk_create(alt_mps)
+            except IntegrityError as e:
+                self.logger.warning("Cannot load altitudes: %s", e)
         self.logger.info("Done saving altitude MeasuredParameters")
 
         # Cleanup and sanity check
