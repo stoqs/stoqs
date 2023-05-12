@@ -163,6 +163,7 @@ class CANONLoader(LoadScript):
                     'ctd2_temperature_onboard', 'ctd2_temperature',
                     'ctd2_salinity_onboard', 'ctd2_salinity', 'ctd2_flow2',
                     'ctd1_dissolvedO2', 'ctd1_oxygen_mll', 'ctd1_oxygen_umolkg',
+                    'hs2_bb470', 'hs2_bb676', 'hs2_fl676',
                     'hs2_bb420', 'hs2_bb700', 'hs2_fl700',
                     'navigation_roll', 'navigation_pitch', 'navigation_yaw',
                     'navigation_mWaterSpeed', 'tailcone_propRpm',
