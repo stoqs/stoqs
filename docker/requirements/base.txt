@@ -46,7 +46,7 @@ pysher==1.0.8
 psycopg2-binary==2.9.4
 psutil==5.9.4
 pupynere==1.0.15
-Pydap==3.4.0
+Pydap==3.4.1
 python-dateutil==2.8.2
 python3-memcached==1.51
 python-openid==2.2.5
