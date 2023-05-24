@@ -1,6 +1,4 @@
-# Select version (10 or 11) - must correspond what what is in Dockerfile-stoqs
-FROM docker.io/mdillon/postgis:10
-##FROM mdillon/postgis:11
+FROM postgis/postgis:15-3.3
 
 # The base image already has 'postgis.sh' under /docker-entrypoint-initdb.d/.
 # Since the initialization files will be executed in sorted name order,
