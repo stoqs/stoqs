@@ -29,6 +29,7 @@ services:
     container_name: stoqs-postgis
     oom_kill_disable: true
     restart: always
+    shm_size: 1g
     env_file:
       - ./.env
 
