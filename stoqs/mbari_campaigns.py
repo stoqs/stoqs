@@ -78,4 +78,5 @@ campaigns = OrderedDict([
     ('stoqs_mb_diamonds',           'PlanktonProxies/load_mb_diamonds.py'),
     ('stoqs_greatlakes2022',           'GreatLakes/load_2022.py'),
     ('stoqs_ecohab_april2023',      'ECOHAB/load_2023.py'),
+    ('stoqs_canon_may2023',         'CANON/loadCANON_may2023.py'),
 ])
