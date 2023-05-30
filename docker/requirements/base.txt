@@ -3,9 +3,9 @@ beautifulsoup4==4.12.2
 channels==4.0.0
 cmocean==3.0.3
 coards==1.0.5
-coverage==7.2.6
+coverage==7.2.7
 datadiff==2.1.0
-datashader==0.14.4
+datashader==0.15.0
 dj-database-url==2.0.0
 Django==4.0.10
 django-cache-url==3.4.4
@@ -51,7 +51,7 @@ python-dateutil==2.8.2
 python3-memcached==1.51
 python-openid==2.2.5
 pytz==2023.3
-pyzmq==25.0.2
+pyzmq==25.1.0
 scikit-learn==1.2.2
 scipy==1.10.1
 seawater==3.3.4
