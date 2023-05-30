@@ -62,7 +62,7 @@ class Gulper:
 
     def parse_gulpers(self) -> dict:
         "Parse the Gulper times and bottle numbers from the auvctd syslog file"
-
+        bottles = {}
         if self.args.local:
             # Read from local file - useful for testing in auv-python
             base_path = os.path.abspath(
@@ -93,7 +93,13 @@ class Gulper:
                     self.logger.error(
                         f"Cannot read {syslog_url}, resp.status_code = {resp.status_code}"
                     )
-                    raise FileNotFoundError(f"Cannot read {syslog_url}")
+                    if self.args.mission in ("2012.256.00", "2012.257.01", "2012.258.00"):
+                        # Hans created tarballs for offshore missions do not include syslogs
+                        # per email thread on 12 September 2012 - Mike McCann
+                        self.logger.info(f"Known missing syslog for mission {self.args.mission}")
+                        return bottles
+                    else:
+                        raise FileNotFoundError(f"Cannot read {syslog_url}")
                 lines = [line.decode(errors="ignore") for line in resp.iter_lines()]
 
         mission_start_esecs = self.mission_start_esecs()
@@ -124,7 +130,6 @@ class Gulper:
         gulper_number_re = re.compile("GulperServer - firing gulper (\d+)")
 
         # Logic translated to here from parseGulperLog.pl Perl script
-        bottles = {}
         etime = None
         number = None
         for line in lines:
