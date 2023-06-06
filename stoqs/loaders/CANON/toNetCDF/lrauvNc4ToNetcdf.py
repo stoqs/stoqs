@@ -1270,6 +1270,11 @@ class InterpolatorWriter(BaseWriter):
                             if key.find('latitude') != -1 and self.ac_lats.any():
                                 value = self.ac_lats
 
+                if key == 'depth':
+                    # Ad hoc QC for special cases
+                    if 'brizo/missionlogs/2023/20230512_20230517/20230517T035153/202305170352_202305171120' in in_file:
+                        value = value.mask(value > 1000, np.nan)  # Remove the 5 depth values greater than 1000 m
+
                 i = self.interpolate(value, t_resample.index)
                 if key == 'time':
                     repeated_values = np.where(np.diff(i.values) <= 0.1)[0]
