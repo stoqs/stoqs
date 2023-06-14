@@ -9,10 +9,14 @@ RUN apt-get update && \
     apt-get -yq install \
     libgdal-dev \
     libyaml-dev \
+    lsb-core \
+    wget \
     python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-# Modeled after http://michal.karzynski.pl/blog/2015/04/19/packaging-django-applications-as-docker-container-images/
+# Needed so that postgresql-client is version 15
+RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' \
+    && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc > /etc/apt/trusted.gpg.d/pgdg.asc
 
 # Additional requirements for stoqs
 RUN apt-get update && \
@@ -21,9 +25,8 @@ RUN apt-get update && \
     git \
     gmt \
     locales \
-    postgresql-client\
+    postgresql-client \
     time \
-    wget \
     xvfb \
     && locale-gen en_US.UTF-8
 
