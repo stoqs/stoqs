@@ -82,7 +82,6 @@ services:
       - postgis
     ports:
       - "8888:8888"
-      - "8001:8001"
     # Expose port 8000 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##  - "8000:8000"
     restart: always
