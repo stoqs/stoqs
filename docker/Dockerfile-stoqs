@@ -1,4 +1,4 @@
-FROM docker.io/ubuntu:20.04
+FROM osgeo/gdal:ubuntu-small-3.6.0
 
 MAINTAINER Mike McCann <mccann@mbari.org>
 
@@ -7,30 +7,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Inlined FROM pcic/geospatial-python
 RUN apt-get update && \
     apt-get -yq install \
-    libhdf5-dev \
-    libnetcdf-dev \
     libgdal-dev \
     libyaml-dev \
-    python3.8 \
-    python3.8-dev \
-    python3-pip \
-    python3-virtualenv \
-    cython3 && \
+    python3-pip && \
     rm -rf /var/lib/apt/lists/*
-
-ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
-ENV C_INCLUDE_PATH=/usr/include/gdal
-
-RUN gdal-config --version > ./gdal_version
-
-RUN pip3 install gdal==$(cat ./gdal_version) h5py netCDF4 numpy psycopg2 PyYAML pillow
 
 # Modeled after http://michal.karzynski.pl/blog/2015/04/19/packaging-django-applications-as-docker-container-images/
 
 # Additional requirements for stoqs
 RUN apt-get update && \
     apt-get -yq install \
-    firefox \
     freetds-dev \
     git \
     gmt \
@@ -43,18 +29,13 @@ RUN apt-get update && \
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 
-# For running functional tests
-RUN wget -q "https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodriver-v0.31.0-linux32.tar.gz" -O /tmp/geckodriver.tgz \
-    && tar zxf /tmp/geckodriver.tgz -C /usr/bin/ \
-    && rm /tmp/geckodriver.tgz
-
 # To fix multiprocessing-permission-denied for docker-compose execution
 RUN echo 'none /dev/shm tmpfs rw,nosuid,nodev,noexec 0 0' > /etc/fstab
 
 # Make sure python and python-config refer to corresponding Python 3 versions
 RUN cd /usr/bin/ &&\
-    ln -fs python3.8 python &&\
-    ln -fs python3.8-config python-config
+    ln -fs python3.10 python && \
+    ln -fs python3.10-config python-config
 
 WORKDIR /srv
 
@@ -64,6 +45,10 @@ RUN /bin/bash -c 'pip install -r /requirements/production.txt'
 
 # Connection to uwsgi/nginx
 COPY docker-stoqs-uwsgi.ini /etc/uwsgi/django-uwsgi.ini
+
+# For functional tests and running development/debug/ci
+COPY stoqs-start-run_server.sh /
+RUN chmod +x /stoqs-start-run_server.sh
 
 CMD ["docker/stoqs-start.sh"]
 
