@@ -14,6 +14,10 @@
 #   export DATABASE_URL=postgis://stoqsadm:CHANGEME@stoqs-postgis:5432/stoqs
 #   export DATABASE_SUPERUSER_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
 #   ./test.sh CHANGEME load noextraload
+#   To run just the functional tests:
+#   DATABASE_URL=$DATABASE_SUPERUSER_URL stoqs/manage.py test stoqs.tests.functional_tests --settings=config.settings.ci
+#   and just one of them:
+#   DATABASE_URL=$DATABASE_SUPERUSER_URL stoqs/manage.py test stoqs.tests.functional_tests.BrowserTestCase.test_campaign_page --settings=config.settings.ci
 
 if [ -z $1 ]
 then
