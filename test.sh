@@ -143,6 +143,7 @@ echo "docker-compose -f docker-compose-ci.yml up -d --build"
 echo "docker-compose -f docker-compose-ci.yml run --rm stoqs /bin/bash"
 echo "DATABASE_URL=\$DATABASE_SUPERUSER_URL stoqs/manage.py test stoqs.tests.functional_tests --settings=config.settings.ci"
 echo "===================================================================================================================="
+echo "Open http://localhost:7900/?autoconnect=1&resize=scale&password=secret to monitor progress of the tests
 
 # Report results of unit and functional tests
 coverage report -m --omit utils/geo.py,utils/utils.py
