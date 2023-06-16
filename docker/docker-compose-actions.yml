@@ -1,0 +1,137 @@
+version: '2.2'
+
+volumes:
+    static-files:
+    media-files:
+
+services:
+
+  postgis:
+    image: mbari/stoqs-postgis
+    build:
+        context: .
+        dockerfile: Dockerfile-postgis
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data:Z
+      - local_postgres_data_backups:/backups:z
+      - ./postgres15-stoqs.conf:/etc/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql.conf
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_HOST=postgis
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=stoqs
+      - POSTGRES_USER=ci_user
+      - POSTGRES_PASSWORD=ci_password
+      - DATABASE_URL=postgis://ci_user:ci_password@postgis:5432/default
+    container_name: stoqs-postgis
+    oom_kill_disable: true
+    restart: always
+    shm_size: 1g
+    env_file:
+      - ./.env
+
+  mapserver:
+    image: mbari/stoqs-mapserver
+    build:
+        context: .
+        dockerfile: Dockerfile-mapserver
+    container_name: stoqs-mapserver
+    # Expose port 80 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
+    ##ports:
+    ##  - "80:80"
+    restart: always
+    env_file:
+      - ./.env
+
+  stoqs:
+    image: mbari/stoqs
+    build:
+        context: .
+        dockerfile: Dockerfile-stoqs
+    volumes:
+      - .:/srv
+      - static-files:/srv/static-files
+      - media-files:/srv/media-files
+    environment:
+      - DATABASE_URL=postgis://ci_user:ci_password@postgis:5432/default
+      - PGHOST=postgis
+      - POSTGRES_PASSWORD=ci_password
+      - MAPSERVER_HOST=mapserver
+      - URL_MAPFILE_DIR=/maps
+      - STATIC_URL=/static/
+      - STATIC_ROOT=/srv/static-files
+      - MEDIA_URL=/media/
+      - MEDIA_ROOT=/srv/media-files
+      - NGINX_SERVER_NAME=nginx
+      - UWSGI_READ_TIMEOUT=300
+      - DJANGO_DEBUG=True
+
+
+      - USE_DOCKER=yes
+      - IPYTHONDIR=/app/.ipython
+      - POSTGRES_HOST=postgis
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=stoqs
+      - POSTGRES_USER=ci_user
+      - POSTGRES_PASSWORD=ci_password
+      - DATABASE_URL=postgis://ci_user:ci_password@postgres:5432/default
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,django
+
+    container_name: stoqs
+    depends_on:
+      - mapserver
+      - postgis
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    # Expose port 8000 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
+    ##  - "8000:8000"
+    restart: always
+    env_file:
+      - ./.env
+    command: /stoqs-start-run_server.sh
+
+  # https://github.com/SeleniumHQ/docker-selenium#version-3
+  # Open http://localhost:7900/?autoconnect=1&resize=scale&password=secret to monitor browser progress
+  chrome:
+    image: selenium/node-chrome:4.2.2-20220609
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    ports:
+      - "7900:7900"
+
+  edge:
+    image: selenium/node-edge:4.2.2-20220609
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  firefox:
+    image: selenium/node-firefox:4.2.2-20220609
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  selenium-hub:
+    image: selenium/hub:4.2.2-20220609
+    container_name: selenium-hub
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
+

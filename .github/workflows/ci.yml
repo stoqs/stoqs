@@ -23,7 +23,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Stack and run tests
-      run: docker-compose -f docker/docker-compose-ci.yml up -d --build
+      run: docker-compose -f docker/docker-compose-actions.yml up -d --build
         
     - name: Tear down the Stack
-      run: docker-compose -f docker/docker-compose-ci.yml down
+      run: docker-compose -f docker/docker-compose-actions.yml down
