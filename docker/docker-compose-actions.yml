@@ -29,8 +29,6 @@ services:
     oom_kill_disable: true
     restart: always
     shm_size: 1g
-    env_file:
-      - ./.env
 
   mapserver:
     image: mbari/stoqs-mapserver
@@ -42,8 +40,6 @@ services:
     ##ports:
     ##  - "80:80"
     restart: always
-    env_file:
-      - ./.env
 
   stoqs:
     image: mbari/stoqs
@@ -87,8 +83,6 @@ services:
     # Expose port 8000 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##  - "8000:8000"
     restart: always
-    env_file:
-      - ./.env
     command: /stoqs-start-run_server.sh
 
   # https://github.com/SeleniumHQ/docker-selenium#version-3
