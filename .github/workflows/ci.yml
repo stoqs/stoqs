@@ -22,8 +22,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Build the Stack and run tests
+    - name: Build the Stack
       run: docker-compose -f docker/docker-compose-actions.yml up -d --build
-        
+    - name: Run tests
+      run: docker-compose run --rm stoqs ./test.sh CHANGEME load noextraload
     - name: Tear down the Stack
       run: docker-compose -f docker/docker-compose-actions.yml down
