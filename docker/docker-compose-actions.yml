@@ -1,8 +1,10 @@
 version: '2.2'
 
 volumes:
-    static-files:
-    media-files:
+  static-files:
+  media-files:
+  local_postgres_data: {}
+  local_postgres_data_backups: {}
 
 services:
 
