@@ -60,7 +60,7 @@ WORKDIR /srv
 
 # Symlink to requirements from docker directory used to minimize context
 COPY requirements /requirements
-RUN /bin/bash -c 'pip install -r /requirements/production.txt'
+RUN /bin/bash -c 'pip install -r /requirements/production.txt --root-user-action=ignore'
 
 # Connection to uwsgi/nginx
 COPY docker-stoqs-uwsgi.ini /etc/uwsgi/django-uwsgi.ini
