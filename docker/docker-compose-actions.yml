@@ -55,9 +55,7 @@ services:
       - static-files:/srv/static-files
       - media-files:/srv/media-files
     environment:
-      - DATABASE_URL=postgis://ci_user:ci_password@postgis:5432/default
       - PGHOST=postgis
-      - POSTGRES_PASSWORD=ci_password
       - MAPSERVER_HOST=mapserver
       - URL_MAPFILE_DIR=/maps
       - STATIC_URL=/static/
@@ -77,7 +75,7 @@ services:
       - POSTGRES_USER=ci_user
       - POSTGRES_PASSWORD=ci_password
       - DATABASE_URL=postgis://ci_user:ci_password@postgres:5432/default
-      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,django
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,stoqs
 
     container_name: stoqs
     depends_on:
