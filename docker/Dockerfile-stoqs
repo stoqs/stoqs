@@ -18,6 +18,9 @@ RUN apt-get update && \
     cython3 && \
     rm -rf /var/lib/apt/lists/*
 
+# Need at least pip 22.1 for --root-user-action option below
+RUN pip install -U pip
+
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
 
