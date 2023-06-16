@@ -17,7 +17,8 @@ STOQS Query manager for building ajax responses to selections made for QueryUI
 #   stoqs/manage.py runserver_plus 0.0.0.0:8001 --settings=config.settings.local
 # Place breakpoint()s in this code and hit http://localhost:8001 from your host
 
-from collections import defaultdict, Mapping
+from collections import defaultdict
+from collections.abc import Mapping
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q, Max, Min, Sum, Avg

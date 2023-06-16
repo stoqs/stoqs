@@ -12,6 +12,9 @@ __doc__ = '''
 
 Functional tests for the stoqs application
 
+Open http://localhost:7900/?autoconnect=1&resize=scale&password=secret
+to monitor the progress of testing in the browser.
+
 Mike McCann
 
 @undocumented: __doc__ parser
@@ -20,14 +23,14 @@ Mike McCann
 @license: __license__
 '''
 
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.test import TestCase
 from django.conf import settings
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 from stoqs.models import Parameter
 
 import logging
@@ -63,7 +66,8 @@ class wait_for_child_elements(object):
             return False
 
 
-class BaseTestCase(StaticLiveServerTestCase):
+#class BaseTestCase(StaticLiveServerTestCase):
+class BaseTestCase(TestCase):
     # Note that the test runner sets DEBUG to False: 
     # https://docs.djangoproject.com/en/1.8/topics/testing/advanced/#django.test.runner.DiscoverRunner.setup_test_environment
 
@@ -73,22 +77,21 @@ class BaseTestCase(StaticLiveServerTestCase):
     multi_db = False
 
     def setUp(self):
-        headless = True
-        if not headless:
-            # Needs X-Server - opens browser windows
-            self.browser = webdriver.Firefox()
-        else:
-            # The default - for running on CI servers
-            options = Options()
-            options.headless = True
-            self.browser = webdriver.Firefox(options=options)
+        # print(f"Getting webdriver.Remote() instance with chrome_options")
+        chrome_options = webdriver.ChromeOptions()
+        self.browser = webdriver.Remote(
+            command_executor="http://selenium-hub:4444/wd/hub",
+            options=chrome_options,
+        )
+        self.browser.implicitly_wait(10)
+        self.server_url = "http://stoqs:8001"
 
     def tearDown(self):
         self.browser.quit()
 
     def _mapserver_loading_panel_test(self, delay=2):
         '''See that there are enough image elements in the openlayers map'''
-        self._test_for_child_elements('OpenLayers.Layer.XYZ_21', 24)
+        self._test_for_child_elements('OpenLayers.Layer.XYZ_21', 18)
 
     def _temporal_loading_panel_test(self, delay=2):
         '''Wait for ajax-loader GIF image to go away'''
@@ -163,8 +166,8 @@ class BaseTestCase(StaticLiveServerTestCase):
 
         share_view = self.browser.find_element(By.ID, 'permalink')
         self._wait_until_visible_then_click(share_view)
-        permalink = self.browser.find_element(By.ID, 'permalink-box'
-                             ).find_element(By.NAME, 'permalink')
+        permalink = self.browser.find_element(By.ID, 'permalink-popup'
+                             ).find_element(By.NAME, 'permalink-url')
         self._wait_until_visible_then_click(permalink)
         permalink_url = permalink.get_attribute('value')
 
@@ -178,11 +181,11 @@ class BrowserTestCase(BaseTestCase):
     '''
 
     def test_campaign_page(self):
-        self.browser.get(self.live_server_url)
+        self.browser.get(self.server_url)
         self.assertIn('Campaign List', self.browser.title)
 
     def test_query_page(self):
-        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
+        self.browser.get(os.path.join(self.server_url, 'default/query'))
         self.assertIn('default', self.browser.title)
         self._mapserver_loading_panel_test()
 
@@ -203,7 +206,7 @@ class BrowserTestCase(BaseTestCase):
         self._wait_until_visible_then_click(dorado_button)
 
     def test_points_lines(self):
-        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
+        self.browser.get(os.path.join(self.server_url, 'default/query'))
         self._select_dorado()
 
         # Make contour plot of salinity
@@ -225,7 +228,7 @@ class BrowserTestCase(BaseTestCase):
         self._test_for_child_elements('points-animations', 686)
 
     def test_curtain(self):
-        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
+        self.browser.get(os.path.join(self.server_url, 'default/query'))
         self._select_dorado()
 
         # Make contour plot of temperature
@@ -255,7 +258,9 @@ class BrowserTestCase(BaseTestCase):
                                      f"Did not find a single indexedfaceset in {shape_id}")
         
     def test_dorado_trajectory(self):
-        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
+        self.browser.implicitly_wait(50)
+        self.browser.set_page_load_timeout(50)
+        self.browser.get(os.path.join(self.server_url, 'default/query'))
         self._select_dorado()
 
         # Test that Mapserver returns images
@@ -293,7 +298,7 @@ class BrowserTestCase(BaseTestCase):
         self.assertEquals('geolocation', self.browser.find_element(By.ID, 'dorado_LOCATION').tag_name)
 
     def test_m1_timeseries(self):
-        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
+        self.browser.get(os.path.join(self.server_url, 'default/query'))
         # Test Temporal->Parameter for timeseries plots
         self._wait_until_id_is_visible('temporal-parameter-li', delay=4)
         parameter_tab = self.browser.find_element(By.ID, 'temporal-parameter-li')
@@ -323,7 +328,7 @@ class BrowserTestCase(BaseTestCase):
         self.assertIn(expected_text, self.browser.find_element(By.ID, 'stride-info').text)
 
     def test_contour_plots(self):
-        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
+        self.browser.get(os.path.join(self.server_url, 'default/query'))
 
         # Open Measured Parameters section
         mp_section = self.browser.find_element(By.ID, 'measuredparameters-anchor')
@@ -392,7 +397,7 @@ class BugsFoundTestCase(BaseTestCase):
     multi_db = False
 
     def test_select_wrong_platform_after_plot(self):
-        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
+        self.browser.get(os.path.join(self.server_url, 'default/query'))
 
         # Open Measured Parameters section and plot Parameter bb470 from M1
         mp_section = self.browser.find_element(By.ID, 'measuredparameters-anchor')

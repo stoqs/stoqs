@@ -32,6 +32,8 @@ CACHES = {
     }
 }
 
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=default_allowed_hosts)
+
 # django-debug-toolbar
 # See: http://django-debug-toolbar.readthedocs.io/en/1.0/installation.html#explicit-setup
 # ------------------------------------------------------------------------------

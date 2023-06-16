@@ -14,6 +14,10 @@
 #   export DATABASE_URL=postgis://stoqsadm:CHANGEME@stoqs-postgis:5432/stoqs
 #   export DATABASE_SUPERUSER_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
 #   ./test.sh CHANGEME load noextraload
+#   To run just the functional tests:
+#   DATABASE_URL=$DATABASE_SUPERUSER_URL stoqs/manage.py test stoqs.tests.functional_tests --settings=config.settings.ci
+#   and just one of them:
+#   DATABASE_URL=$DATABASE_SUPERUSER_URL stoqs/manage.py test stoqs.tests.functional_tests.BrowserTestCase.test_campaign_page --settings=config.settings.ci
 
 if [ -z $1 ]
 then
@@ -129,11 +133,16 @@ DATABASE_URL=$DATABASE_SUPERUSER_URL
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
 unit_tests_status=$?
 
-# MAPSERVER_DATABASE_URL needs to use postgres role for proper mapfile CONNECTION settings
-MAPSERVER_DATABASE_URL="postgis://stoqsadm:$1@127.0.0.1:$PGPORT/stoqs"
-echo "Functional tests..."
-coverage run -a --source=utils,stoqs manage.py test stoqs.tests.functional_tests --settings=config.settings.ci
-functional_tests_status=$?
+# Instructions for running functional tests, instead of running them here
+echo "===================================================================================================================="
+echo "Functional tests may be run in a separate session using a different docker-compose yml file..."
+echo "----------------------------------------------------------------------------------------------"
+echo "cd docker"
+echo "docker-compose down"
+echo "docker-compose -f docker-compose-ci.yml up -d --build"
+echo "docker-compose -f docker-compose-ci.yml run --rm stoqs /bin/bash"
+echo "DATABASE_URL=\$DATABASE_SUPERUSER_URL stoqs/manage.py test stoqs.tests.functional_tests --settings=config.settings.ci"
+echo "===================================================================================================================="
 
 # Report results of unit and functional tests
 coverage report -m --omit utils/geo.py,utils/utils.py

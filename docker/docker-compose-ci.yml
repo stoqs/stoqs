@@ -81,33 +81,54 @@ services:
       - mapserver
       - postgis
     ports:
-      - "8888:8888"
+      - "8000:8000"
+      - "8001:8001"
     # Expose port 8000 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##  - "8000:8000"
     restart: always
     env_file:
       - ./.env
+    command: /stoqs-start-run_server.sh
 
-  # Disable nginx service if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
-  nginx:
-    image: mbari/stoqs-nginx
-    build:
-        context: .
-        dockerfile: Dockerfile-nginx
-    volumes:
-      - ${STOQS_VOLS_DIR}/html:/srv/html
-      - ${STOQS_VOLS_DIR}/pg_dumps:/srv/media-files/pg_dumps
-      - static-files:/srv/static-files
-      - media-files:/srv/media-files
-    environment:
-      - NGINX_TMPL=${NGINX_TMPL}
-    container_name: stoqs-nginx
-    ports:
-      - "80:80"
-      - "8000:8000"
-      - "443:443"
+  # https://github.com/SeleniumHQ/docker-selenium#version-3
+  # Open http://localhost:7900/?autoconnect=1&resize=scale&password=secret to monitor browser progress
+  chrome:
+    image: selenium/node-chrome:4.2.2-20220609
+    shm_size: 2gb
     depends_on:
-      - stoqs
-    restart: always
-    env_file:
-      - ./.env
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    ports:
+      - "7900:7900"
+
+  edge:
+    image: selenium/node-edge:4.2.2-20220609
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  firefox:
+    image: selenium/node-firefox:4.2.2-20220609
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  selenium-hub:
+    image: selenium/hub:4.2.2-20220609
+    container_name: selenium-hub
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
+

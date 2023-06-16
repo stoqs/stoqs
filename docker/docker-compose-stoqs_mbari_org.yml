@@ -21,7 +21,10 @@ volumes:
 services:
 
   mapserver:
-    image: geodata/mapserver:7.0.1
+    image: mbari/stoqs-mapserver
+    build:
+        context: .
+        dockerfile: Dockerfile-mapserver
     volumes:
       - ${STOQS_VOLS_DIR}/maps:${URL_MAPFILE_DIR}:ro
     container_name: stoqs-mapserver

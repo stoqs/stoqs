@@ -121,7 +121,7 @@ class InterpolatorWriter(BaseWriter):
         else:
             return None
 
-    def write_netcdf(self, out_file, in_url):
+    def write_netcdf(self, out_file, in_url, nudge_to_platform=None, nudge_interval=None, replace_with_platform=None):
 
         # Check parent directory and create if needed
         dirName = os.path.dirname(out_file)
@@ -214,8 +214,15 @@ class InterpolatorWriter(BaseWriter):
         self.add_global_metadata()
         self.add_xarray_global_metadata()
         if getattr(self, 'segment_count', None) and getattr(self, 'segment_minsum', None):
-            self.ncFile.summary += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward GPS fixes"
-            self.Dataset.attrs["summary"] += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward GPS fixes"
+            if nudge_to_platform:
+                self.ncFile.summary += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward {nudge_to_platform} fixes at {nudge_interval} minute intervals"
+                self.Dataset.attrs["summary"] += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward {nudge_to_platform} fixes at {nudge_interval} minute intervals"
+            else:
+                self.ncFile.summary += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward GPS fixes"
+                self.Dataset.attrs["summary"] += f". {self.segment_count} underwater segments over {self.segment_minsum:.1f} minutes nudged toward GPS fixes"
+        if replace_with_platform:
+            self.ncFile.summary += f". Entire mission's latitude and longitude replaced with positions from {replace_with_platform}"
+            self.Dataset.attrs["summary"] += f". Entire mission's latitude and longitude replaced with positions from {replace_with_platform}"
         if getattr(self, 'trackingdb_values', None):
             self.ncFile.comment = f"latitude and longitude values interpolated from {self.trackingdb_values} values retrieved from {self.trackingdb_url}"
             self.ncFile.summary += f" {self.trackingdb_values} acoustic navigation fixes retrieved from tracking database with {self.trackingdb_url}"
@@ -586,9 +593,18 @@ class InterpolatorWriter(BaseWriter):
         return all_ts
     # End createCoord
 
-    def trackingdb_lat_lon(self, in_file, sec_extend=3600):
+    def trackingdb_lat_lon(self, in_file, sec_extend=3600, nudge_to_platform=None, nudge_interval=None, replace_with_platform=None):
         '''Query MBARI's Tracking Database and return Pandas time series
         of any acoustic fixes found.
+
+        sec_extend: int
+            Seconds beyond time range of in_file for query of tracking database
+        nudge_to_platform: str
+            If GPS fixes or <platform>_ac aren't available nudge to this platform's position from the Tracking database
+            e.g. "wgTiny"
+        nudge_interval: int
+            How frequently (in minutes) to nudge back to nudge_to_platform's position
+            e.g. 15
         '''
         self.logger.debug(f"Constructing trackingdb url to {sec_extend} seconds beyond time range of file")
         se = float(self.df['time'][0].data) - sec_extend
@@ -596,7 +612,12 @@ class InterpolatorWriter(BaseWriter):
         st = dt.datetime.utcfromtimestamp(se).strftime('%Y%m%dT%H%M%S')
         et = dt.datetime.utcfromtimestamp(ee).strftime('%Y%m%dT%H%M%S')
         vehicle = in_file.split('/')[3]
-        url = f"http://odss.mbari.org/trackingdb/position/{vehicle}_ac/between/{st}/{et}/data.csv"
+        if nudge_to_platform:
+            url = f"http://odss.mbari.org/trackingdb/position/{nudge_to_platform}/between/{st}/{et}/data.csv"
+        elif replace_with_platform:
+            url = f"http://odss.mbari.org/trackingdb/position/{replace_with_platform}/between/{st}/{et}/data.csv"
+        else:
+            url = f"http://odss.mbari.org/trackingdb/position/{vehicle}_ac/between/{st}/{et}/data.csv"
         self.trackingdb_url = url
         self.logger.info(url)
 
@@ -618,10 +639,16 @@ class InterpolatorWriter(BaseWriter):
                 lats.append(float(r['latitude']))
 
         self.trackingdb_values = len(ess)
-        v_time = pd.to_datetime(ess, unit='s',errors = 'coerce')
-        lon_time_series = pd.Series(lons, index=v_time, dtype=np.float64)
-        lat_time_series = pd.Series(lats, index=v_time, dtype=np.float64)
         self.logger.info(f"Found {self.trackingdb_values} position values from the Tracking database")
+        v_time = pd.to_datetime(ess, unit='s',errors = 'coerce')
+        if nudge_interval:
+            nidx = pd.date_range(v_time.min(), v_time.max(), freq=f"{nudge_interval}min")
+            lon_time_series = pd.Series(lons, index=v_time, dtype=np.float64).reindex(nidx, method='nearest', limit=1).interpolate()
+            lat_time_series = pd.Series(lats, index=v_time, dtype=np.float64).reindex(nidx, method='nearest', limit=1).interpolate()
+            self.logger.info(f"Sampled values at {nudge_interval} minute intervals reulting in {len(lon_time_series)} values")
+        else:
+            lon_time_series = pd.Series(lons, index=v_time, dtype=np.float64)
+            lat_time_series = pd.Series(lats, index=v_time, dtype=np.float64)
 
         return lon_time_series, lat_time_series
 
@@ -693,10 +720,19 @@ class InterpolatorWriter(BaseWriter):
 
         return da
 
-    def nudge_coords(self, in_file, args, max_sec_diff_at_end=10):
+    def nudge_coords(self, in_file, args, max_sec_diff_at_end=10, nudge_to_platform=None, nudge_interval=15, replace_with_platform=None):
         '''Given a ds object to an LRAUV .nc4 file return adjusted longitude
         and latitude arrays that reconstruct the trajectory so that the dead
-        reckoned positions are nudged so that they match the GPS fixes
+        reckoned positions are nudged so that they match the GPS fixes.
+
+        max_sec_diff_at_end: int
+            Number of seconds that need to agree at end to avoid a warning
+        nudge_to_platform: str
+            If GPS fixes or <platform>_ac aren't available nudge to this platform's position from the Tracking database
+            e.g. "wgTiny"
+        nudge_interval: int
+            How frequently (in minutes) to nudge back to nudge_to_platform's position
+            e.g. 15
         '''
         ds = self.df
         self.logger.info(f"{in_file}")    
@@ -707,9 +743,34 @@ class InterpolatorWriter(BaseWriter):
         # Produce Pandas time series from the NetCDF variables
         lon = self.var_series(in_file, ds['longitude'], ds['longitude_time'], args, angle=True).dropna()
         lat = self.var_series(in_file, ds['latitude'], ds['latitude_time'], args, angle=True).dropna()
+        self.logger.info(f"Using {len(lon)} vehicle dead reckoned longitude and latitude values")
+        self.logger.debug(lon)
         try:
-            lon_fix = self.var_series(in_file, ds['longitude_fix'], ds['longitude_fix_time'], args, angle=True)
-            lat_fix = self.var_series(in_file, ds['latitude_fix'], ds['latitude_fix_time'], args, angle=True)
+            if nudge_to_platform:
+                lon_fix, lat_fix = self.trackingdb_lat_lon(in_file, 3600, nudge_to_platform, nudge_interval)
+                self.logger.info(f"Using {len(lon_fix)} lon_fix and lat_fix values from {nudge_to_platform} at {nudge_interval} minute intervals")
+                self.logger.debug(lon_fix)
+            elif replace_with_platform:
+                self.logger.info(f"replace_with_platform = {replace_with_platform} passed in meaning that GPS values are not trusted and need to be replaced")
+                if len(ds['latitude_fix']) == 0:
+                    self.logger.warning(f"No values in lat_fix. Returning from nudge_coords() with replaced position values")
+                else:
+                    self.logger.info(f"A sample of the {len(ds['latitude_fix'])} points in the _fix variables:")
+                    self.logger.info(self.var_series(in_file, ds['longitude_fix'], ds['longitude_fix_time'], args, angle=True))
+                    self.logger.info(self.var_series(in_file, ds['latitude_fix'], ds['latitude_fix_time'], args, angle=True))
+                lon_fix, lat_fix = self.trackingdb_lat_lon(in_file, 3600, replace_with_platform=replace_with_platform)
+                # See https://stackoverflow.com/a/47148740
+                oidx=lon_fix.index
+                nidx = lon.index
+                lon_replaced = lon_fix.reindex(oidx.union(nidx)).interpolate('index').reindex(nidx)
+                lat_replaced = lat_fix.reindex(oidx.union(nidx)).interpolate('index').reindex(nidx)
+                self.logger.info(f"Replaced latitude longitude positions from {in_file} with reindexed values from {replace_with_platform}")
+                return lon_replaced, lat_replaced
+            else:
+                lon_fix = self.var_series(in_file, ds['longitude_fix'], ds['longitude_fix_time'], args, angle=True)
+                lat_fix = self.var_series(in_file, ds['latitude_fix'], ds['latitude_fix_time'], args, angle=True)
+                self.logger.info(f"Using {len(lon_fix)} longitude_fix and latititude_fix values from {in_file}")
+                self.logger.debug(lon_fix)
         except IndexError:
             # Encountered in http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2019/20190528_20190604/20190530T185218/201905301852_201905302040.nc4.html
             # just 1 longitude_fix
@@ -1165,6 +1226,9 @@ class InterpolatorWriter(BaseWriter):
         # resample
         t_resample = t.resample(resampleFreq).asfreq()[:]
 
+        nudge_to_platform=None
+        nudge_interval=None
+        replace_with_platform=None
         for group in self.df.groups:
             g = None
             variables = None
@@ -1255,7 +1319,32 @@ class InterpolatorWriter(BaseWriter):
                         # Navigation corrections, favor acoustic fixes over original nudged positions
                         if args.nudge:
                             if not self.nudged_file.get(in_file):
-                                self.nudged_lons, self.nudged_lats = self.nudge_coords(in_file, args)
+                                # Log files that have no GPS _fix variables can be found with:
+                                # grep "No values in lat_fix" /mbari/LRAUV/brizo/missionlogs/2023/2023051*/*/*scieng.log
+
+                                # But all ESP Cartridges were sampled under wgTiny in stoqs_canon_may2023, those missoins are found with:
+                                # grep "Selecting Cart" /mbari/LRAUV/brizo/missionlogs/2023/202305*/*/syslog | cut -d/ -f1-8 | sort | uniq | xargs find | grep "nc4"
+                                # Whose output are the values in this list:
+                                bad_gps_files = [
+                                    "/mbari/LRAUV/brizo/missionlogs/2023/20230518_20230525/20230519T145926/202305191459_202305191937.nc4",
+                                    "/mbari/LRAUV/brizo/missionlogs/2023/20230518_20230525/20230519T193838/202305191938_202305200021.nc4",
+                                    "/mbari/LRAUV/brizo/missionlogs/2023/20230518_20230525/20230520T002111/202305200021_202305210151.nc4",
+                                    "/mbari/LRAUV/brizo/missionlogs/2023/20230518_20230525/20230521T015109/202305210151_202305220151.nc4",
+                                    "/mbari/LRAUV/brizo/missionlogs/2023/20230518_20230525/20230522T015111/202305220151_202305221752.nc4",
+                                    "/mbari/LRAUV/brizo/missionlogs/2023/20230518_20230525/20230522T175201/202305221752_202305232031.nc4",
+                                    "/mbari/LRAUV/brizo/missionlogs/2023/20230518_20230525/20230523T203113/202305232031_202305241858.nc4",
+                                ]
+                                if in_file in bad_gps_files:
+                                    replace_with_platform="wgTiny"
+                                    # nudge_to_platform='wgTiny' doesn't seem to work well -- all dead reckoned postions drift egregiously to the west
+                                    #nudge_to_platform="wgTiny"
+                                    #nudge_interval=15
+                                    #self.logger.info(f'Special handling of brizo during CANON May 2023: nudging underwater positions to {nudge_to_platform} every {nudge_interval} minutes')
+                                    #self.nudged_lons, self.nudged_lats = self.nudge_coords(in_file, args, 10, nudge_to_platform, nudge_interval, replace_with_platform)
+                                    self.logger.info(f'Special handling of brizo during CANON May 2023: replacing underwater positions with {replace_with_platform} values')
+                                    self.nudged_lons, self.nudged_lats = self.nudge_coords(in_file, args, 10, replace_with_platform=replace_with_platform)
+                                else:
+                                    self.nudged_lons, self.nudged_lats = self.nudge_coords(in_file, args)
                                 self.nudged_file[in_file] = True
                             if key.find('longitude') != -1 and self.nudged_lons.any():
                                 value = self.nudged_lons
@@ -1269,6 +1358,11 @@ class InterpolatorWriter(BaseWriter):
                                 value = self.ac_lons
                             if key.find('latitude') != -1 and self.ac_lats.any():
                                 value = self.ac_lats
+
+                if key == 'depth':
+                    # Ad hoc QC for special cases
+                    if 'brizo/missionlogs/2023/20230512_20230517/20230517T035153/202305170352_202305171120' in in_file:
+                        value = value.mask(value > 1000, np.nan)  # Remove the 5 depth values greater than 1000 m
 
                 i = self.interpolate(value, t_resample.index)
                 if key == 'time':
@@ -1292,7 +1386,7 @@ class InterpolatorWriter(BaseWriter):
 
         self.logger.info("%s", list(self.all_sub_ts.keys()))
 
-        self.write_netcdf(out_file, in_file)
+        self.write_netcdf(out_file, in_file, nudge_to_platform, nudge_interval, replace_with_platform)
         self.logger.info('Wrote ' + out_file)
         self.logger.removeHandler(fh)
 
