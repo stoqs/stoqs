@@ -19,7 +19,7 @@ GitPython==3.1.31
 euclid==1.2
 djangorestframework==3.14.0
 fastparquet==2023.2.0
-Flask-SQLAlchemy==3.0.3
+Flask-SQLAlchemy==3.0.5
 httplib2==0.22.0
 holoviews==1.16.2
 hvplot==0.8.4
