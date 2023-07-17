@@ -215,7 +215,7 @@ class CANONLoader(LoadScript):
                 self.logger.warn(str(e))
                 self.logger.info(f"Skipping load of {url}")
 
-        self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/dorado_scan3.glb', pname,
+        self.addPlatformResources('https://stoqs.mbari.org/x3d/dorado/dorado_scan3.x3d', pname,
                                   scalefactor=2)
 
     def load_i2MAP(self, startdate=None, enddate=None,
