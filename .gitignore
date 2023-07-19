@@ -59,7 +59,3 @@ stoqs/loaders/CANON/toNetCDF/notebooks/.ipynb_checkpoints/
 # Automatically generated load scripts
 stoqs/loaders/LRAUV/load_lrauv*[0-9][0-9][0-9][0-9].py
 stoqs/mbari_lrauv_campaigns.py
-
-# Temporary copy of working x3dom - until we start making .glbs
-stoqs/static/x3dom-1.8.1/
-
