@@ -60,8 +60,12 @@ class Gulper:
         ds = xr.open_dataset(url)
         return ds.time[0].values.astype("float64") / 1e9
 
-    def parse_gulpers(self) -> dict:
-        "Parse the Gulper times and bottle numbers from the auvctd syslog file"
+    def parse_gulpers(self, sec_delay: int = 1) -> dict:
+        """Parse the Gulper times and bottle numbers from the auvctd syslog file.
+        Subtract bottle times by sec_delay seconds to account for the time it takes
+        the gulper midsection to reach the water that's measured by the nosecone
+        sensors."""
+
         bottles = {}
         if self.args.local:
             # Read from local file - useful for testing in auv-python
@@ -193,6 +197,12 @@ class Gulper:
                         f"Saving time {etime + mission_start_esecs} for bottle number {number}"
                     )
                     etime = None
+        self.logger.info(f"Subtracting {sec_delay = } second(s) from bottle times")
+        for number, esecs in bottles.items():
+            self.logger.debug(
+                f"number = {number}, esecs = {esecs}, new esecs = {esecs - sec_delay}"
+            )
+            bottles[number] = esecs - sec_delay
         return bottles
 
     def process_command_line(self) -> None:
