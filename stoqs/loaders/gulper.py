@@ -93,10 +93,16 @@ class Gulper:
                     self.logger.error(
                         f"Cannot read {syslog_url}, resp.status_code = {resp.status_code}"
                     )
-                    if self.args.mission in ("2012.256.00", "2012.257.01", "2012.258.00"):
+                    if self.args.mission in (
+                        "2012.256.00",
+                        "2012.257.01",
+                        "2012.258.00",
+                    ):
                         # Hans created tarballs for offshore missions do not include syslogs
                         # per email thread on 12 September 2012 - Mike McCann
-                        self.logger.info(f"Known missing syslog for mission {self.args.mission}")
+                        self.logger.info(
+                            f"Known missing syslog for mission {self.args.mission}"
+                        )
                         return bottles
                     else:
                         raise FileNotFoundError(f"Cannot read {syslog_url}")
