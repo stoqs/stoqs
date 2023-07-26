@@ -1,5 +1,7 @@
 #!/bin/bash
 #
+# *** Note: Superceded by loadTransectDives_mw93.sh ***
+#
 # Load all Midwater Lab transect dives as provided by Rob Sherlock:
 
 # From: Rob Sherlock <robs@mbari.org>
