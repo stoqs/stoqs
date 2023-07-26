@@ -304,7 +304,7 @@ class Base_Loader(STOQS_Loader):
 
     def initDB(self):
         '''
-        Do the intial Database activities that are required before the data are processed: getPlatorm and createActivity.
+        Do the intial Database activities that are required before the data are processed: getPlatform and createActivity.
         Can be overridden by sub class.  An overriding method can do such things as setting startDatetime and endDatetime.
         '''
         if hasattr(self, 'command_line_args'):
@@ -409,10 +409,14 @@ class Base_Loader(STOQS_Loader):
         '''
         conventions = ''
         if hasattr(self, 'ds'):
-            try:
-                nc_global_keys = self.ds.attributes['NC_GLOBAL']
-            except KeyError:
-                self.logger.warn('Dataset does not have an NC_GLOBAL attribute! Setting featureType to "trajectory" assuming that this is an old Tethys file')
+            if hasattr(self.ds, 'attributes'):
+                try:
+                    nc_global_keys = self.ds.attributes['NC_GLOBAL']
+                except KeyError:
+                    self.logger.warn('Dataset does not have an NC_GLOBAL attribute! Setting featureType to "trajectory" assuming that this is an old Tethys file')
+                    return TRAJECTORY
+            else:
+                self.logger.warn('Loader has no ds attribute. Setting featureType to "trajectory" assuming that this is an ROVCTD Loader.')
                 return TRAJECTORY
         else:
             self.logger.warn('Loader has no ds attribute. Setting featureType to "trajectory" assuming that this is an ROVCTD Loader.')
