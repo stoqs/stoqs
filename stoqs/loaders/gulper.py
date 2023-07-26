@@ -60,8 +60,12 @@ class Gulper:
         ds = xr.open_dataset(url)
         return ds.time[0].values.astype("float64") / 1e9
 
-    def parse_gulpers(self) -> dict:
-        "Parse the Gulper times and bottle numbers from the auvctd syslog file"
+    def parse_gulpers(self, sec_delay: int = 1) -> dict:
+        """Parse the Gulper times and bottle numbers from the auvctd syslog file.
+        Subtract bottle times by sec_delay seconds to account for the time it takes
+        the gulper midsection to reach the water that's measured by the nosecone
+        sensors."""
+
         bottles = {}
         if self.args.local:
             # Read from local file - useful for testing in auv-python
@@ -93,10 +97,16 @@ class Gulper:
                     self.logger.error(
                         f"Cannot read {syslog_url}, resp.status_code = {resp.status_code}"
                     )
-                    if self.args.mission in ("2012.256.00", "2012.257.01", "2012.258.00"):
+                    if self.args.mission in (
+                        "2012.256.00",
+                        "2012.257.01",
+                        "2012.258.00",
+                    ):
                         # Hans created tarballs for offshore missions do not include syslogs
                         # per email thread on 12 September 2012 - Mike McCann
-                        self.logger.info(f"Known missing syslog for mission {self.args.mission}")
+                        self.logger.info(
+                            f"Known missing syslog for mission {self.args.mission}"
+                        )
                         return bottles
                     else:
                         raise FileNotFoundError(f"Cannot read {syslog_url}")
@@ -187,6 +197,12 @@ class Gulper:
                         f"Saving time {etime + mission_start_esecs} for bottle number {number}"
                     )
                     etime = None
+        self.logger.info(f"Subtracting {sec_delay = } second(s) from bottle times")
+        for number, esecs in bottles.items():
+            self.logger.debug(
+                f"number = {number}, esecs = {esecs}, new esecs = {esecs - sec_delay}"
+            )
+            bottles[number] = esecs - sec_delay
         return bottles
 
     def process_command_line(self) -> None:

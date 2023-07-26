@@ -299,7 +299,7 @@ ORDER BY divenumber''' % (self.platformName, self.diveNumber)
         parmList = list(self.parmDict.keys())
         # Allow time series plotting of all Parameters with psedo-depth of 0 m
         self.plotTimeSeriesDepth = dict.fromkeys(parmList + [ALTITUDE, SIGMAT, SPICE], 0)
-        self.add_parameters(self.parmDict)
+        self.add_parameters(self.parmDict, append_units_to_name=False)
 
         # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
         if not self.startDatetime or not self.endDatetime:

@@ -481,18 +481,18 @@ class STOQS_Loader(object):
 
         return platform
 
-    def parameter_name(self, variable):
+    def parameter_name(self, variable, append_units_to_name=True):
         if variable not in self.ds:
             raise ParameterNotFound(f"variable {variable} not in self.ds")
         parameter_units = self.ds[variable].attributes.get('units')
-        if parameter_units:
+        if parameter_units and append_units_to_name:
             parameter_name = f"{variable} ({parameter_units})"
         else:
             parameter_name = f"{variable}"
    
         return parameter_name, parameter_units
 
-    def add_parameters(self, ds):
+    def add_parameters(self, ds, append_units_to_name=True):
         '''
         Rely on Django's get_or_create() to add unique Parameters to the database.
         '''
@@ -500,12 +500,14 @@ class STOQS_Loader(object):
         self.parameter_dict = {} 
 
         # Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
+        if not hasattr(self, "ds"):
+            self.ds = ds
         for variable in (set(self.include_names) & set(self.ds.keys())):
             if (variable in self.ignored_names):
                 self.logger.debug(f"variable {variable} is in ignored_names")
                 continue
 
-            parameter_name, parameter_units = self.parameter_name(variable)
+            parameter_name, parameter_units = self.parameter_name(variable, append_units_to_name)
 
             self.logger.info(f"variable: {variable}, parameter_name: {parameter_name}")
             try:
@@ -614,7 +616,7 @@ class STOQS_Loader(object):
         m.Activity.objects.using(self.dbAlias).filter(
                     id=self.activity.id).update(enddate = self.endDatetime)
 
-    def _add_nc_global_attrs(self, all_names):
+    def _add_nc_global_attrs(self, all_names, append_units_to_name=True):
         # The source of the data - this OPeNDAP URL
         resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'opendap_url')
         self.logger.debug("Getting or Creating Resource with name = %s, value = %s", 'opendap_url', self.url )
@@ -659,7 +661,7 @@ class STOQS_Loader(object):
                     self.logger.debug("Getting or Creating Resource with name = %s, value = %s", f"{v}.{rn}", value )
                     resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                                           name=f"{v}.{rn}", value=value, resourcetype=resourceType)
-                    pn, _ = self.parameter_name(v)
+                    pn, _ = self.parameter_name(v, append_units_to_name)
                     m.ParameterResource.objects.using(self.dbAlias).get_or_create(
                                     parameter=self.getParameterByName(pn), resource=resource)
                     m.ActivityResource.objects.using(self.dbAlias).get_or_create(
@@ -675,7 +677,7 @@ class STOQS_Loader(object):
             except ParameterNotFound as e:
                 self.logger.warn('Could not get Parameter for v = %s: %s', v, e)
 
-    def _add_plot_timeseries_depth_resources(self, all_names):
+    def _add_plot_timeseries_depth_resources(self, all_names, append_units_to_name=True):
         self.logger.info('Adding plotTimeSeriesDepth Resource for Parameters we want plotted in Parameter tab')
         for v in all_names:
             if hasattr(self, 'plotTimeSeriesDepth'):
@@ -688,7 +690,7 @@ class STOQS_Loader(object):
                     except ParameterNotFound as e:
                         self.logger.warn('Could not get_or_create uiResType or resource for v = %s: %s', v, e)
                     try:
-                        pn, _ = self.parameter_name(v)
+                        pn, _ = self.parameter_name(v, append_units_to_name)
                         m.ParameterResource.objects.using(self.dbAlias).get_or_create(
                                         parameter=self.getParameterByName(pn), resource=resource)
                     except ParameterNotFound as e:
@@ -728,8 +730,11 @@ class STOQS_Loader(object):
                 self.logger.info(f"Not adding NC_GLOBAL attributes from {self.url} as we are associated with Activity {self.associatedActivityName}")
                 return
         if hasattr(self, 'ds'):
-            if 'NC_GLOBAL' in self.ds.attributes:
-                self._add_nc_global_attrs(all_names)
+            if hasattr(self.ds, 'attributes'):
+                if 'NC_GLOBAL' in self.ds.attributes:
+                    self._add_nc_global_attrs(all_names)
+                else:
+                    self.logger.warn("No NC_GLOBAL attribute in %s", self.url)
             else:
                 self.logger.warn("No NC_GLOBAL attribute in %s", self.url)
         
@@ -1451,18 +1456,19 @@ class STOQS_Loader(object):
 
         # See if we have "Best CTD is ..." in our netCDF metadata and set parameter - expect either 'ctd1' or 'ctd2'
         best_ctd_is_re = re.compile("Best CTD is (ctd1|ctd2)", re.IGNORECASE)
-        if "NC_GLOBAL" in self.ds.attributes:
-            if "comment" in self.ds.attributes["NC_GLOBAL"]:
-                self.logger.info(f'netCDF comment = {self.ds.attributes["NC_GLOBAL"]["comment"]}')
-                if best_ctd := best_ctd_is_re.search(self.ds.attributes["NC_GLOBAL"]["comment"]):
-                    self.logger.info(f"Looking for Best CTD in temp_mp list: {temp_mp}")
-                    self.logger.info(f"Looking for Best CTD in sal_mp list: {sal_mp}")
-                    for tn, sn in zip(temp_mp, sal_mp):
-                        if best_ctd.group(1).lower() in tn:
-                            temp_pn = tn
-                        if best_ctd.group(1).lower() in sn:
-                            sal_pn = sn
-                    self.logger.info(f"temp_pn = {temp_pn}, sal_pn = {sal_pn}")
+        if hasattr(self.ds, "attributes"):
+            if "NC_GLOBAL" in self.ds.attributes:
+                if "comment" in self.ds.attributes["NC_GLOBAL"]:
+                    self.logger.info(f'netCDF comment = {self.ds.attributes["NC_GLOBAL"]["comment"]}')
+                    if best_ctd := best_ctd_is_re.search(self.ds.attributes["NC_GLOBAL"]["comment"]):
+                        self.logger.info(f"Looking for Best CTD in temp_mp list: {temp_mp}")
+                        self.logger.info(f"Looking for Best CTD in sal_mp list: {sal_mp}")
+                        for tn, sn in zip(temp_mp, sal_mp):
+                            if best_ctd.group(1).lower() in tn:
+                                temp_pn = tn
+                            if best_ctd.group(1).lower() in sn:
+                                sal_pn = sn
+                        self.logger.info(f"temp_pn = {temp_pn}, sal_pn = {sal_pn}")
         if not temp_pn:
             # Choose the first one
             temp_pn = temp_mp[0]

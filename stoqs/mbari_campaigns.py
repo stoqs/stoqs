@@ -13,7 +13,7 @@ from collections import OrderedDict
 # path of 'stoqs/loaders/' is prepended to the value and then executed.
 campaigns = OrderedDict([
     ('stoqs_rovctd_mb',     'ROVCTD/loadMB_Dives.sh'),
-    ('stoqs_rovctd_mw93',   'ROVCTD/loadAllTransectDives.sh'),
+    ('stoqs_rovctd_mw93',   'ROVCTD/loadTransectDives_mw93.sh'),
     ('stoqs_rovctd_mw97',   'ROVCTD/loadTransectDives_mw97.sh'),
     ('stoqs_oceansites_o',   'OceanSITES/load_moorings.py -o'),
     ('stoqs_rovctd_goc',    'ROVCTD/loadGoC_Dives.sh'),
