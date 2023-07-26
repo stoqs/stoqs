@@ -42,6 +42,7 @@ Paste==3.5.3
 PasteScript==3.3.0
 pika==1.3.2
 pyarrow==12.0.1
+pymssql==2.2.7
 pysher==1.0.8
 psycopg2-binary==2.9.4
 psutil==5.9.4
