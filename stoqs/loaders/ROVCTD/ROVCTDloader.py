@@ -283,6 +283,8 @@ ORDER BY divenumber''' % (self.platformName, self.diveNumber)
         cur.execute(sql)
         r = cur.fetchone()
         try:
+            logger.debug(repr(sql))
+            logger.debug(f"{r = }")
             sdt = datetime.strptime(r['divestartdtg'].strip(), '%Y-%m-%dT%H:%M:%S')
             edt = datetime.strptime(r['diveenddtg'].strip(), '%Y-%m-%dT%H:%M:%S')
         except TypeError:
@@ -512,7 +514,7 @@ def get_grdTerrain(file='Monterey25.grd'):
 def processDiveList(args):
     '''Given a list of dives to load
     '''
-    logger.info(f'Loading dives in list: {args.dives[:5]}...')
+    logger.info(f'Loading dives in list: {args.dives = }')
     for diveName in args.dives:
         if diveName[0].lower() == 'v':
             pName = 'vnta'
@@ -623,9 +625,13 @@ def process_command_line():
     parser.add_argument('--stride', action='store', help='Longer name explaining purpose for having these dives together', type=int, default=1)
     parser.add_argument('--bbox', action='store', help='Bounding box for measurements to include in degrees: ll_lon ll_lat ur_lon ur_lat', nargs=4, default=[])
     parser.add_argument('--useNode', action='store_true', help='To use the Node.js server, otherwise query database directly', default=False)
+    parser.add_argument('-v', '--verbose', action='store_true', help='Show debug log messages')
 
     args = parser.parse_args()
     commandline = ' '.join(sys.argv)
+
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
 
     return args, commandline
 
