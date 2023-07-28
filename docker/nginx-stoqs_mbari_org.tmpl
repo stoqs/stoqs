@@ -54,7 +54,7 @@ http {
             proxy_pass      http://stoqs-mapserver;
         }
 
-	# /x3d and /terrain are needed on the stoqs.mbari.org server
+	# /x3d, /terrain, and /simulation are needed on the stoqs.mbari.org server
         location /x3d {
             alias /srv/html/x3d;
             include /etc/nginx/mime.types;
@@ -62,6 +62,11 @@ http {
 
         location /terrain {
             alias /srv/html/terrain;
+            include /etc/nginx/mime.types;
+        }
+
+        location /simulation {
+            alias /srv/html/simulation;
             include /etc/nginx/mime.types;
         }
 
