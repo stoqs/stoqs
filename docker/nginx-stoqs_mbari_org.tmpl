@@ -36,7 +36,7 @@ http {
         # Serve legacy port 8000 requests
         listen 8000;
         server_name ${NGINX_SERVER_NAME};
-	access_log /srv/html/log/nginx/stoqs-nginx-access.log;
+        access_log /srv/html/log/nginx/stoqs-nginx-access.log;
 
         location /static {
             alias /srv/static-files;
@@ -52,22 +52,6 @@ http {
 
         location /cgi-bin/mapserv {
             proxy_pass      http://stoqs-mapserver;
-        }
-
-	# /x3d, /terrain, and /simulation are needed on the stoqs.mbari.org server
-        location /x3d {
-            alias /srv/html/x3d;
-            include /etc/nginx/mime.types;
-        }
-
-        location /terrain {
-            alias /srv/html/terrain;
-            include /etc/nginx/mime.types;
-        }
-
-        location /simulation {
-            alias /srv/html/simulation;
-            include /etc/nginx/mime.types;
         }
 
         location / {
@@ -104,7 +88,7 @@ http {
             proxy_pass      http://stoqs-mapserver;
         }
 
-	# /x3d and /terrain are needed on the stoqs.mbari.org server
+        # /x3d, /terrain, and /simulation are needed on the stoqs.mbari.org server
         location /x3d {
             alias /srv/html/x3d;
             include /etc/nginx/mime.types;
@@ -113,6 +97,11 @@ http {
 
         location /terrain {
             alias /srv/html/terrain;
+            include /etc/nginx/mime.types;
+        }
+
+        location /simulation {
+            alias /srv/html/simulation;
             include /etc/nginx/mime.types;
         }
 
