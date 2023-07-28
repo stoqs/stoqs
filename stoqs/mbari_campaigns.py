@@ -15,6 +15,7 @@ campaigns = OrderedDict([
     ('stoqs_rovctd_mb',     'ROVCTD/loadMB_Dives.sh'),
     ('stoqs_rovctd_mw93',   'ROVCTD/loadTransectDives_mw93.sh'),
     ('stoqs_rovctd_mw97',   'ROVCTD/loadTransectDives_mw97.sh'),
+    ('stoqs_rovctd_mwtopo',   'ROVCTD/loadTopoDives_mw.sh'),
     ('stoqs_oceansites_o',   'OceanSITES/load_moorings.py -o'),
     ('stoqs_rovctd_goc',    'ROVCTD/loadGoC_Dives.sh'),
     ('stoqs_september2010',  'CANON/loadCANON_september2010.py'),
