@@ -31,6 +31,7 @@ import re
 import subprocess
 import math
 import numpy as np
+import xarray as xr
 from coards import to_udunits
 import seawater.eos80 as sw
 import csv
@@ -42,6 +43,7 @@ from tempfile import NamedTemporaryFile
 import pprint
 from netCDF4 import Dataset
 from argparse import ArgumentParser, RawTextHelpFormatter
+import netpbmfile
 
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
@@ -99,13 +101,14 @@ class LoadScript(object):
 
     logger = logging.getLogger(__name__)
 
-    def __init__(self, base_dbAlias, base_campaignName, description=None, stride=1, x3dTerrains=None, grdTerrain=None):
+    def __init__(self, base_dbAlias, base_campaignName, description=None, stride=1, x3dTerrains=None, grdTerrain=None, simulations=None):
         self.base_dbAlias = base_dbAlias
         self.base_campaignName = base_campaignName
         self.campaignDescription = description
         self.stride = stride
         self.x3dTerrains = x3dTerrains
         self.grdTerrain = grdTerrain
+        self.simulations = simulations
 
         exampleString = ''
         for dbType in ('', '_t', '_o', '_s10'):
@@ -155,6 +158,8 @@ class LoadScript(object):
         Optional arguments for associating X3D Terrains and Viewpoints with this Campaign: 
             - x3dTerrains: Dict of absolute URL hashes to X3D GeoElevationGrids with hashes of 
                            viewpoint position, orientation, and centerOfRotation
+            - simulations: Dict of absolute URL hashes to netcdf source files and base name
+                           for ImageTextureAtlas files that this load will generate
 
         '''
 
@@ -283,6 +288,129 @@ class LoadScript(object):
                               uristring=url, name='zFar', value=300000.0, resourcetype=resourceType)
                 m.CampaignResource.objects.using(self.dbAlias).get_or_create(
                               campaign=campaign, resource=resource)
+
+    def _build_image_atlases(self):
+        for simulation in self.simulations.keys():
+            self.logger.info(f"Construcing image atlases for {self.simulations[simulation]['source']}")
+            ds = xr.open_dataset(self.simulations[simulation]["source"])
+            data_range = [float(n) for n in self.simulations[simulation]["data_range"].split()]
+            scaled_range = [int(n) for n in self.simulations[simulation]["scaled_range"].split()]
+            simulation_dir = os.path.join(settings.MEDIA_ROOT, 'simulations', self.simulations[simulation]["directory"])
+            variable = self.simulations[simulation]["variable"]
+            time_adjustment = int(self.simulations[simulation]["time_adjustment"])
+            tile_dims = self.simulations[simulation]["tile_dims"]
+            os.makedirs(simulation_dir, exist_ok=True)
+            for itime in range(ds.dims["time"]):
+                slices = []
+                for idepth in range(ds.dims["depth"]):
+                    self.logger.debug(f"{itime = } {idepth = } Max value = {getattr(ds, variable).isel(time=itime, depth=idepth).values.max()}") 
+                    # Replace step 1 & 2 above with writing .pgm files that we'll mosaic with montage
+                    pgm_name = os.path.join(simulation_dir, f"{idepth:02d}.pgm")
+                    data = getattr(ds, variable).isel(time=itime, depth=idepth).values
+                    scaled_data = (scaled_range[0] + (scaled_range[1] - scaled_range[0]) * data / (data_range[1] - data_range[0])).astype(np.uint8)
+                    netpbmfile.imwrite(pgm_name, scaled_data)
+                    slices.append(pgm_name)
+                    self.logger.debug(f"{pgm_name = } scaled_data range = [{scaled_data.min()} {scaled_data.max()}]") 
+                # Assemble this timestep to an ImageMagick montage - expect no more than 9999 time slices (04d)
+                adjusted_time = int(ds.time[itime].astype(int)/1e9) + time_adjustment
+                image_atlas_file = os.path.join(simulation_dir, f"sim_{adjusted_time}.png")
+                os.system(f"cd {simulation_dir} && ls -1 *.pgm> slices")
+                os.system(f"cd {simulation_dir} && montage @slices -geometry +0+0 -tile {tile_dims} {image_atlas_file}")
+                os.system(f"cd {simulation_dir} && rm {' '.join(slices)} slices")
+                self.logger.info(f"{itime:03d} of {ds.dims['time']}: {image_atlas_file = }") 
+
+    def addSimulationResources(self):
+        '''
+        If simulations information is specified then create 8-bit grey scale images of each slice saved
+        into an image atlas organized by time of the volume.  The resulting set of images will be saved
+        to the database as Reources that can be animated in the X3D scene.
+        First used in stoqs_greatlakes2023.
+
+        Posted to x3dom-users mail list https://sourceforge.net/p/x3dom/mailman/message/34770224/
+
+            Re: [x3dom-users] textureatlas use
+            From: Andreas P. <and...@gm...> - 2016-01-15 20:57:02
+             I am interested in showing volumetric data in a geospatial scene. For
+            x3dom, the main (only?) 3d texture format is the Texture Atlas, and there
+            is a special ImageTextureAtlas node. A texture atlas image is a simple
+            mosaic of slices through the volume, in a (lossless) image format such as
+            png. To keep texture image sizes low, 8bit gray scale and a color transfer
+            function is (most often?) used.
+            Here is my workflow using good command line tools to go from a volume of
+            raw binary (floats) data to a
+            texture atlas image. I would be interested in what tools/workflows others
+            may use.
+
+            1) use gdal vrt xml description to read data:
+            http://www.gdal.org/gdal_vrttut.html
+            - deals with endianness: ByteOrder
+            - deals with floats (also all other types): dataType, pixelOffset
+            - deals with no data values (say -99999.0): NoDataValue
+            - define a vertical strip of appended slices: rasterXSize="xSize"
+            rasterYSize="ySize * slices"
+
+            2) use gdal_translate to convert to png
+            - use -scale min max (say 0 8000) to scale from data range to 0-255 range
+            - produces gray scale 8 bit png
+            $ gdal_translate -scale 0 8000 -of PNG vox.vrt vox.png
+
+            3) use image magick montage to generate mosaic png for atlas use
+            - montage can extract subregions of an input image
+            - needs -geometry +0+0 to get rid of borders
+            - use -tile nxm to define mosaic layout
+            - generate input slice file names with subregion modifier in a bash script:
+            $ for a in `seq 0 196 19599`; do echo vox.png[185x196+0+$a] ; done >
+            vox_slices
+            - Then use
+            $ montage @vox_slices -geometry +0+0 -tile 10x10 atlas.png
+
+            4) done ! Potentially rescale mosaic to power of two sizes
+            - I found that this was not necessary but probably improves performance.
+
+            This work flow worked very well, is adjustable to many situations and can
+            be automated. gdal came to the rescue after I tried to use pfmtopam, gmt,
+            and od | awk to convert MSB floats to LSB floats.
+
+            I looked through the examples of volume rendering on x3dom.org but would be
+            interested in any tips and tricks, or other examples of x3dom volume
+            rendering.
+
+            The plan for now is to Geolocate the VolumeData box which should not be too
+            bad for maybe up to 10km size. I cannot think of a way to properly project
+            positions from inside the geospatially referenced volume to their
+            geocentric position. I think it would need be done inside the shader. I
+            have a vague idea of using a second volume as lookup table (texture) to map
+            local positions to geocentric positions.
+            I probably could also just resample the volume data in geocentric space in
+            the first place and regenerate the texture atlas.
+
+            -Andreas
+        '''
+        if not self.simulations:
+            return
+
+        # Use xarray, netpbmfile, and ImageMagick  to loop through the netcdf and make grey scale 8-bit image atlases
+        self._build_image_atlases()
+
+        # Add all the simulation resources to the database
+        resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(
+                          name='x3dsimulation', description='X3D Simulation information for Spatial 3D visualization')
+
+        self.logger.info('Adding to ResourceType: %s', resourceType)
+        self.logger.debug('Looking in database %s for Campaign name = %s', self.dbAlias, self.campaignName)
+        try:
+            campaign = m.Campaign.objects.using(self.dbAlias).get(name=self.campaignName)
+        except m.Campaign.DoesNotExist:
+            self.logger.error(f"Could not find Campaign record in {self.dbAlias} at end of load. Perhaps no data was loaded?")
+            sys.exit(-1)
+
+        for url, attributes in list(self.simulations.items()):
+            for name, value in list(attributes.items()):
+                resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                              uristring=url, name=name, value=value, resourcetype=resourceType)
+                m.CampaignResource.objects.using(self.dbAlias).get_or_create(
+                              campaign=campaign, resource=resource)
+                self.logger.info('Resource uristring=%s, name=%s, value=%s', url, name, value)
 
     def addPlaybackResources(self, x3dmodelurl, aName):
         '''
