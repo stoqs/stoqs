@@ -290,28 +290,36 @@ class LoadScript(object):
                               campaign=campaign, resource=resource)
 
     def _build_image_atlases(self):
+        '''
+        self.simulations is a dictionary keyed by a standard url to the netcdf file.
+        Intend to follow up with https://sourceforge.net/p/x3dom/mailman/message/34770224/ on this approach.
+        '''
         for simulation in self.simulations.keys():
-            self.logger.info(f"Construcing image atlases for {self.simulations[simulation]['source']}")
-            ds = xr.open_dataset(self.simulations[simulation]["source"])
+            self.logger.info(f"Construcing image atlases for {simulation}")
+            # It's 50x faster to use a local file rather than an opendap url, wget it and open locally
+            os.system(f"wget --no-clobber '{simulation}'")
+            ds = xr.open_dataset(os.path.basename(simulation))
             data_range = [float(n) for n in self.simulations[simulation]["data_range"].split()]
             scaled_range = [int(n) for n in self.simulations[simulation]["scaled_range"].split()]
             simulation_dir = os.path.join(settings.MEDIA_ROOT, 'simulations', self.simulations[simulation]["directory"])
             variable = self.simulations[simulation]["variable"]
             time_adjustment = int(self.simulations[simulation]["time_adjustment"])
             tile_dims = self.simulations[simulation]["tile_dims"]
+            time_step_secs = self.simulations[simulation]["time_step_secs"]
             os.makedirs(simulation_dir, exist_ok=True)
             for itime in range(ds.dims["time"]):
                 slices = []
-                for idepth in range(ds.dims["depth"]):
-                    self.logger.debug(f"{itime = } {idepth = } Max value = {getattr(ds, variable).isel(time=itime, depth=idepth).values.max()}") 
-                    # Replace step 1 & 2 above with writing .pgm files that we'll mosaic with montage
-                    pgm_name = os.path.join(simulation_dir, f"{idepth:02d}.pgm")
-                    data = getattr(ds, variable).isel(time=itime, depth=idepth).values
+                for iy in range(ds.dims["y"]):
+                    self.logger.debug(f"{itime = } {iy = } Max value = {getattr(ds, variable).isel(time=itime, y=iy).values.max()}") 
+                    # Write this slice out as a scaled 8-bit portable grey map image - expect no more than 9999 (:04d) slices
+                    pgm_name = os.path.join(simulation_dir, f"{iy:04d}.pgm")
+                    data = getattr(ds, variable).isel(time=itime, y=iy).values
                     scaled_data = (scaled_range[0] + (scaled_range[1] - scaled_range[0]) * data / (data_range[1] - data_range[0])).astype(np.uint8)
                     netpbmfile.imwrite(pgm_name, scaled_data)
+                    os.system(f"mogrify -flip {pgm_name}")
                     slices.append(pgm_name)
                     self.logger.debug(f"{pgm_name = } scaled_data range = [{scaled_data.min()} {scaled_data.max()}]") 
-                # Assemble this timestep to an ImageMagick montage - expect no more than 9999 time slices (04d)
+                # Assemble this timestep to an ImageMagick montage
                 adjusted_time = int(ds.time[itime].astype(int)/1e9) + time_adjustment
                 image_atlas_file = os.path.join(simulation_dir, f"sim_{adjusted_time}.png")
                 os.system(f"cd {simulation_dir} && ls -1 *.pgm> slices")
@@ -325,66 +333,6 @@ class LoadScript(object):
         into an image atlas organized by time of the volume.  The resulting set of images will be saved
         to the database as Reources that can be animated in the X3D scene.
         First used in stoqs_greatlakes2023.
-
-        Posted to x3dom-users mail list https://sourceforge.net/p/x3dom/mailman/message/34770224/
-
-            Re: [x3dom-users] textureatlas use
-            From: Andreas P. <and...@gm...> - 2016-01-15 20:57:02
-             I am interested in showing volumetric data in a geospatial scene. For
-            x3dom, the main (only?) 3d texture format is the Texture Atlas, and there
-            is a special ImageTextureAtlas node. A texture atlas image is a simple
-            mosaic of slices through the volume, in a (lossless) image format such as
-            png. To keep texture image sizes low, 8bit gray scale and a color transfer
-            function is (most often?) used.
-            Here is my workflow using good command line tools to go from a volume of
-            raw binary (floats) data to a
-            texture atlas image. I would be interested in what tools/workflows others
-            may use.
-
-            1) use gdal vrt xml description to read data:
-            http://www.gdal.org/gdal_vrttut.html
-            - deals with endianness: ByteOrder
-            - deals with floats (also all other types): dataType, pixelOffset
-            - deals with no data values (say -99999.0): NoDataValue
-            - define a vertical strip of appended slices: rasterXSize="xSize"
-            rasterYSize="ySize * slices"
-
-            2) use gdal_translate to convert to png
-            - use -scale min max (say 0 8000) to scale from data range to 0-255 range
-            - produces gray scale 8 bit png
-            $ gdal_translate -scale 0 8000 -of PNG vox.vrt vox.png
-
-            3) use image magick montage to generate mosaic png for atlas use
-            - montage can extract subregions of an input image
-            - needs -geometry +0+0 to get rid of borders
-            - use -tile nxm to define mosaic layout
-            - generate input slice file names with subregion modifier in a bash script:
-            $ for a in `seq 0 196 19599`; do echo vox.png[185x196+0+$a] ; done >
-            vox_slices
-            - Then use
-            $ montage @vox_slices -geometry +0+0 -tile 10x10 atlas.png
-
-            4) done ! Potentially rescale mosaic to power of two sizes
-            - I found that this was not necessary but probably improves performance.
-
-            This work flow worked very well, is adjustable to many situations and can
-            be automated. gdal came to the rescue after I tried to use pfmtopam, gmt,
-            and od | awk to convert MSB floats to LSB floats.
-
-            I looked through the examples of volume rendering on x3dom.org but would be
-            interested in any tips and tricks, or other examples of x3dom volume
-            rendering.
-
-            The plan for now is to Geolocate the VolumeData box which should not be too
-            bad for maybe up to 10km size. I cannot think of a way to properly project
-            positions from inside the geospatially referenced volume to their
-            geocentric position. I think it would need be done inside the shader. I
-            have a vague idea of using a second volume as lookup table (texture) to map
-            local positions to geocentric positions.
-            I probably could also just resample the volume data in geocentric space in
-            the first place and regenerate the texture atlas.
-
-            -Andreas
         '''
         if not self.simulations:
             return
