@@ -38,6 +38,29 @@ cl = CANONLoader('stoqs_greatlakes2023', 'Great Lakes LRAUV Deployments - June-O
                                     },
                                     # TODO: Add glb model for Lake Superior
                     },
+                    simulations = {
+                                    # It's 50x faster to use a local file rather than an opendap url, the code will wget it and open locally
+                                    "http://stoqs.mbari.org/simulation/LakeMichigan/BurgerOilfieldSpillCoarse.nc3": {
+                                        "variable": "oil_concentration",
+                                        "data_range": "0 43",       # Must encompass actual range of data
+                                        "scaled_range": "0 255",    # Can reverse to make high data values black
+                                        "dimensions": "143100 261 28800",           # X (easting) Y (exaggerated depth) Z (northing) ranges
+                                        "tile_dims": "3x11",                        # For montage's --tile and ImageTextureAtlas's X and Y
+                                        "time_adjustment": "456967801",             # Seconds to add for matching time of data in STOQS
+                                        "directory": "BurgerOilfieldSpillCoarse",   # dir in media/simulation holding ImageAtlas files for ea time step
+                                        "time_step_secs": "900",                    # Needed to restrict animation to just one ImageTextureAtlas at a time
+                                    },
+                                    "http://stoqs.mbari.org/simulation/LakeMichigan/BurgerOilfieldSpillMed.nc3": {
+                                        "variable": "oil_concentration",
+                                        "data_range": "0 43",       # Must encompass actual range of data
+                                        "scaled_range": "0 255",    # Can reverse to make high data values black
+                                        "dimensions": "143100 261 28800",           # X (easting) Y (exaggerated depth) Z (northing) ranges
+                                        "tile_dims": "3x11",                        # For montage's --tile and ImageTextureAtlas's X and Y
+                                        "time_adjustment": "456970501",             # Seconds to add for matching time of data in STOQS
+                                        "directory": "BurgerOilfieldSpillMed",      # dir in media/simulation holding ImageAtlas files for ea time step
+                                        "time_step_secs": "900",                    # Needed to restrict animation to just one ImageTextureAtlas at a time
+                                    },
+                                  },
                     grdTerrain = os.path.join(parentDir, 'michigan_lld.grd')
                  )
 
@@ -47,6 +70,9 @@ triton_sdate = datetime(2023, 6, 23)
 triton_edate = datetime(2023, 10, 18)
 
 cl.process_command_line()
+
+cl.addSimulationResources()
+breakpoint()
 
 if cl.args.test:
     cl.stride = 100
@@ -65,6 +91,7 @@ elif cl.args.stride:
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
+cl.addSimulationResources()
 
 print("All Done.")
 
