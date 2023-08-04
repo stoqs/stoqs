@@ -423,6 +423,18 @@
                                                     </div>
                                                 </div> <!-- row-fluid -->
 
+
+                                                <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
+                                                    <h5><a id="simulation-3d" class="accordion-toggle" data-toggle="collapse" href="#simulation3D" title="Show Simulation Options" style="padding:0px;color:black;">
+                                                        Simulation
+                                                    </a></h5>
+                                                    <div id="simulation3D" class="accordion-body" style="float:none;display:inline-block;overflow-x:auto;white-space:nowrap;" >
+                                                        <form id="simulation3D-choices" class="form-inline" style="margin:0px;">
+                                                        </form>
+                                                    </div>
+                                                </div> <!-- row-fluid -->
+
+
                                                 <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
                                                     <h5><a id="terrain-3d" class="accordion-toggle" data-toggle="collapse" href="#terrain3D" title="Show Terrain Options" style="padding:0px;color:black;">
                                                         Terrain
@@ -458,6 +470,7 @@
             <Group id="platform-animations"></Group>
             <Group id="curtain-animations"></Group>
             <Group id="points-animations"></Group>
+            <Group id="simulation-animations"></Group>
             <Group id="animations"></Group>
             <Group id="platform-models"></Group>
           </Group>
@@ -1668,6 +1681,10 @@ Elapsed time is 0.097718 seconds.
         $.each($('#platform-animations > coordinateinterpolator'), function(index, ci) {
             ci.setFieldValue('set_fraction', ts_fraction);
         });
+    }
+
+    function stepSimulation(ts_fraction) {
+        // Render only the ImageTextureAtlas that's within time_step_secs of ts_fraction
     }
 
     function slider(e) {
@@ -5675,6 +5692,19 @@ function enable_cardboard(){
                     $("#temporal-parameter-li").show();
                 }
             }
+            else if (key == 'x3dsimulations') {
+                // Save all the simulations for selection in simulation-3d
+                $('body').data()['simulations'] = data['x3dsimulations'];
+                if ( ! $.isEmptyObject(data[key]) ) {
+                    $.each(data[key], function (simulation_url, simulation) {
+                        $('#simulation3D-choices').append('<label class="radio" style="padding:0px;">' +
+                                            '<input type="radio" style="margin:3px;" name="simulation_choice" class="simulation-choice"' + 
+                                            ' value="' + simulation + '"/>' + simulation.directory + '</label><br>');
+                        $('#mp-x3d-simulation').append('<Inline id="simulation-' + simulation.directory + '"></Inline>');
+                        $('#simulation-' + simulation.directory).attr('url', simulation_url);
+                    });
+                }
+            }
             else if (key == 'x3dterrains') {
                 function get_tname(terrain, item) {
                     if ( $.isEmptyObject(item.name) ) {
@@ -5688,6 +5718,7 @@ function enable_cardboard(){
                     tname = tname.replace(/[\+\.]+/g, '');
                     return tname;
                 }
+
                 // Save all the terrains for selection in terrain-3d
                 $('body').data()['terrains'] = data['x3dterrains'];
                 if ( ! $.isEmptyObject(data[key]) ) {
@@ -6494,6 +6525,63 @@ function enable_cardboard(){
                                 }
                             });
                         $('#track-animations').html(ils_x3d_html);
+                    }
+
+                    if($('#simulation-animations')[0].getAttribute('render')) {
+                       if ( ! $.isEmptyObject(data.x3dsimulations) ) {
+                           $.each(data.x3dsimulations, function (simulation_url, simulation) {
+                                var sim_x3d_html = '';
+                                for (var i=0; i < simulation.image_atlases.length; i++) {
+                                    var image_atlas = simulation.image_atlases[i];
+                                    sim_x3d_html += '<GeoLocation geoSystem="GD" geoCoords="43.56554774552445 -86.41570382896799 0">' +
+                                  '<Transform scale="' + simulation.dimensions + '">' +
+                                    '<VolumeData id="subsurface" dimensions="1 1 1">' +
+                                      '<ImageTextureAtlas id="' + image_atlas.split('.')[0] + '" url="{{MEDIA_URL}}simulations/' +
+                                        simulation.directory + '/' + image_atlas + '" numberOfSlices="' +
+                                        simulation.numberOfSlices + '" slicesOverX="' + simulation.slicesOverX + '" slicesOverY="' +
+                                        simulation.slicesOverY + '"/>' +
+                                      '<OpacityMapVolumeStyle id="OpVS" lightFactor="1.5" opacityFactor="6">' +
+                                       '<ImageTexture id="texture" containerField="transferFunction" url="{{STATIC_URL}}images/colormaps/cividis.png"/>' +
+                                      '</OpacityMapVolumeStyle>' +
+                                    '</VolumeData>' +
+                                  '</Transform>' +
+                                  '</GeoLocation>'
+                                }
+                                $('#simulation-animations').html(sim_x3d_html);
+                            });
+
+                           $.each(data.x3dsimulations, function (simulation_url, simulation) {
+                                // Simulations: VolumeData + ImageTextureAtlas
+                                //sim_x3d_html = '<GeoLocation geoSystem="\'UTM\', \'Z3\'" geoCoords="551750 7895681 0">' +
+                                  // Hard-coded for now, replace with loop over time series of ImageTextureAtlas files
+                                  sim_x3d_html = '<Appearance DEF="geotop_boundary">' +
+                                    '<Material ambientIntensity="0.2" emissiveColor="1.0 0.4 0.4"/>' +
+                                  '</Appearance>' +
+                                  '<GeoLocation geoSystem="GD" geoCoords="43.56554774552445 -86.41570382896799 0">' +
+                                  //'<GeoLocation geoSystem="\'UTM\', \'Z16\'" geoCoords="7895681 -51750.0 0">' +
+                                  //'<GeoLocation geoSystem="\'UTM\', \'Z16\', \'easting_first\'" geoCoords="1051750 4770938 0">' +
+                                  //'<Transform scale="143100 261 28800">' +
+                                  '<Transform scale="' + simulation.dimensions + '">' +
+                                  '<Transform>' +
+
+                                    '<VolumeData id="subsurface" dimensions="1 1 1">' +
+                                      '<ImageTextureAtlas id="atlas" url="{{MEDIA_URL}}simulations/BurgerOilfieldSpillCoarse/sim_1688253301.png" numberOfSlices="33" slicesOverX="3" slicesOverY="11"/>' +
+                                      '<OpacityMapVolumeStyle id="OpVS" lightFactor="1.5" opacityFactor="6">' +
+                                       //'<ImageTexture id="texture" containerField="transferFunction" url="{{STATIC_URL}}images/transfer_zand_matig_grof.png"/>' +
+                                       '<ImageTexture id="texture" containerField="transferFunction" url="{{STATIC_URL}}images/colormaps/cividis.png"/>' +
+                                      '</OpacityMapVolumeStyle>' +
+                                    '</VolumeData>' +
+                                    '<Shape id="subsurface_box">' +
+                                      '<IndexedLineSet coordIndex="0 1 2 3 0 4 5 1 -1 5 6 2 -1 6 7 3 -1 7 4"><Coordinate point="-0.5 0.5 0.5 0.5 0.5 0.5 0.5' +
+                                      ' -0.5 0.5 -0.5 -0.5 0.5 -0.5 0.5 -0.5 0.5 0.5 -0.5 0.5 -0.5 -0.5 -0.5 -0.5 -0.5" /></IndexedLineSet>' +
+                                      '<Appearance USE="geotop_boundary"/>' +
+                                    '</Shape>' +
+                                  '</Transform>' +
+                                  '</GeoLocation>' +
+                                  ''
+                           });
+                            //$('#simulation-animations').html(sim_x3d_html);
+                       }
                     }
 
                     $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data.measuredparameterx3d.colorbar + '" />');
