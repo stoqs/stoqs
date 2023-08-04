@@ -25,6 +25,7 @@ RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-
 RUN apt-get update && \
     apt-get -yq install \
     freetds-dev \
+    imagemagick \
     git \
     gmt \
     locales \
