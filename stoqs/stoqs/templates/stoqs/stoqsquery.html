@@ -1683,8 +1683,23 @@ Elapsed time is 0.097718 seconds.
         });
     }
 
-    function stepSimulation(ts_fraction) {
-        // Render only the ImageTextureAtlas that's within time_step_secs of ts_fraction
+    function stepSimulation(frac_esec) {
+        // Render only the VolumeData/ImageTextureAtlas that's within time_step_secs of frac_esec
+        if (! $.isEmptyObject($('body').data()['simulations'])) {
+            if (! $.isEmptyObject($('input:radio[name=simulation_choice]:checked'))) {
+                $('.simulation[render="true"]').each(function (index, element) {
+                    document.getElementById(element.id).setAttribute('render', 'false');
+                });
+                time_step_secs = $('body').data()['simulations'][$('input:radio[name=simulation_choice]:checked').val()]['time_step_secs'];
+                if (! $.isEmptyObject(time_step_secs)) {
+                    $('.simulation').each(function (index, element) {
+                        if (Math.abs(element.id.split('sim_')[1] - frac_esec) < time_step_secs) {
+                            document.getElementById(element.id).setAttribute('render', 'true');
+                        }
+                    });
+                }
+            }
+        }
     }
 
     function slider(e) {
@@ -1863,6 +1878,7 @@ Elapsed time is 0.097718 seconds.
         // Called from TimeSensor onoutputchanged() event or on HTML slider mousemove event
         var frac_ems = $('body').data()['timesensor-start-ems'] + ts_fraction * ($('body').data()['timesensor-end-ems'] - $('body').data()['timesensor-start-ems']);
         frac_esec = parseInt(frac_ems / 1000.0);
+        stepSimulation(frac_esec);
 
         // See https://stackoverflow.com/a/35391072/1281657
         var myRange = document.querySelector('#spatial-3d-x3d-slider');
@@ -5699,7 +5715,7 @@ function enable_cardboard(){
                     $.each(data[key], function (simulation_url, simulation) {
                         $('#simulation3D-choices').append('<label class="radio" style="padding:0px;">' +
                                             '<input type="radio" style="margin:3px;" name="simulation_choice" class="simulation-choice"' + 
-                                            ' value="' + simulation + '"/>' + simulation.directory + '</label><br>');
+                                            ' value="' + simulation_url + '"/>' + simulation.directory + '</label><br>');
                         $('#mp-x3d-simulation').append('<Inline id="simulation-' + simulation.directory + '"></Inline>');
                         $('#simulation-' + simulation.directory).attr('url', simulation_url);
                     });
@@ -6533,54 +6549,26 @@ function enable_cardboard(){
                                 var sim_x3d_html = '';
                                 for (var i=0; i < simulation.image_atlases.length; i++) {
                                     var image_atlas = simulation.image_atlases[i];
-                                    sim_x3d_html += '<GeoLocation geoSystem="GD" geoCoords="43.56554774552445 -86.41570382896799 0">' +
+                                    sim_x3d_html += '' +
+                                  '<Group id="' + image_atlas.split('.')[0] + '" render="false" class="simulation">' +
+                                  '<GeoLocation geoSystem="GD" geoCoords="43.56554774552445 -86.41570382896799 0">' +
                                   '<Transform scale="' + simulation.dimensions + '">' +
-                                    '<VolumeData id="subsurface" dimensions="1 1 1">' +
-                                      '<ImageTextureAtlas id="' + image_atlas.split('.')[0] + '" url="{{MEDIA_URL}}simulations/' +
+                                    '<VolumeData dimensions="1 1 1">' +
+                                      '<ImageTextureAtlas url="{{MEDIA_URL}}simulations/' +
                                         simulation.directory + '/' + image_atlas + '" numberOfSlices="' +
-                                        simulation.numberOfSlices + '" slicesOverX="' + simulation.slicesOverX + '" slicesOverY="' +
+                                        simulation.numberOfSlices + '" slicesOverX="' + 
+                                        simulation.slicesOverX + '" slicesOverY="' +
                                         simulation.slicesOverY + '"/>' +
                                       '<OpacityMapVolumeStyle id="OpVS" lightFactor="1.5" opacityFactor="6">' +
                                        '<ImageTexture id="texture" containerField="transferFunction" url="{{STATIC_URL}}images/colormaps/cividis.png"/>' +
                                       '</OpacityMapVolumeStyle>' +
                                     '</VolumeData>' +
                                   '</Transform>' +
-                                  '</GeoLocation>'
+                                  '</GeoLocation>' +
+                                  '</Group>'
                                 }
                                 $('#simulation-animations').html(sim_x3d_html);
                             });
-
-                           $.each(data.x3dsimulations, function (simulation_url, simulation) {
-                                // Simulations: VolumeData + ImageTextureAtlas
-                                //sim_x3d_html = '<GeoLocation geoSystem="\'UTM\', \'Z3\'" geoCoords="551750 7895681 0">' +
-                                  // Hard-coded for now, replace with loop over time series of ImageTextureAtlas files
-                                  sim_x3d_html = '<Appearance DEF="geotop_boundary">' +
-                                    '<Material ambientIntensity="0.2" emissiveColor="1.0 0.4 0.4"/>' +
-                                  '</Appearance>' +
-                                  '<GeoLocation geoSystem="GD" geoCoords="43.56554774552445 -86.41570382896799 0">' +
-                                  //'<GeoLocation geoSystem="\'UTM\', \'Z16\'" geoCoords="7895681 -51750.0 0">' +
-                                  //'<GeoLocation geoSystem="\'UTM\', \'Z16\', \'easting_first\'" geoCoords="1051750 4770938 0">' +
-                                  //'<Transform scale="143100 261 28800">' +
-                                  '<Transform scale="' + simulation.dimensions + '">' +
-                                  '<Transform>' +
-
-                                    '<VolumeData id="subsurface" dimensions="1 1 1">' +
-                                      '<ImageTextureAtlas id="atlas" url="{{MEDIA_URL}}simulations/BurgerOilfieldSpillCoarse/sim_1688253301.png" numberOfSlices="33" slicesOverX="3" slicesOverY="11"/>' +
-                                      '<OpacityMapVolumeStyle id="OpVS" lightFactor="1.5" opacityFactor="6">' +
-                                       //'<ImageTexture id="texture" containerField="transferFunction" url="{{STATIC_URL}}images/transfer_zand_matig_grof.png"/>' +
-                                       '<ImageTexture id="texture" containerField="transferFunction" url="{{STATIC_URL}}images/colormaps/cividis.png"/>' +
-                                      '</OpacityMapVolumeStyle>' +
-                                    '</VolumeData>' +
-                                    '<Shape id="subsurface_box">' +
-                                      '<IndexedLineSet coordIndex="0 1 2 3 0 4 5 1 -1 5 6 2 -1 6 7 3 -1 7 4"><Coordinate point="-0.5 0.5 0.5 0.5 0.5 0.5 0.5' +
-                                      ' -0.5 0.5 -0.5 -0.5 0.5 -0.5 0.5 -0.5 0.5 0.5 -0.5 0.5 -0.5 -0.5 -0.5 -0.5 -0.5" /></IndexedLineSet>' +
-                                      '<Appearance USE="geotop_boundary"/>' +
-                                    '</Shape>' +
-                                  '</Transform>' +
-                                  '</GeoLocation>' +
-                                  ''
-                           });
-                            //$('#simulation-animations').html(sim_x3d_html);
                        }
                     }
 
