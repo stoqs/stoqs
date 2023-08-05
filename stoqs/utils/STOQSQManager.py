@@ -1897,9 +1897,12 @@ class STOQSQManager(object):
             x3d_dict[similation_url]["directory"] = (models.Resource.objects.using(self.request.META["dbAlias"])
                 .filter(resourcetype__name="x3dsimulation", name="directory", uristring=similation_url)
                 .values_list("value", flat=True))[0]
-            x3d_dict[similation_url]["time_step_secs"] = float((models.Resource.objects.using(self.request.META["dbAlias"])
-                .filter(resourcetype__name="x3dsimulation", name="time_step_secs", uristring=similation_url)
+            x3d_dict[similation_url]["half_time_step_secs"] = float((models.Resource.objects.using(self.request.META["dbAlias"])
+                .filter(resourcetype__name="x3dsimulation", name="half_time_step_secs", uristring=similation_url)
                 .values_list("value", flat=True))[0])
+            x3d_dict[similation_url]["variable"] = (models.Resource.objects.using(self.request.META["dbAlias"])
+                .filter(resourcetype__name="x3dsimulation", name="variable", uristring=similation_url)
+                .values_list("value", flat=True))[0]
 
             tile_dims = (models.Resource.objects.using(self.request.META["dbAlias"])
                 .filter(resourcetype__name="x3dsimulation", name="tile_dims", uristring=similation_url)
@@ -1914,7 +1917,11 @@ class STOQSQManager(object):
                 .values_list("value", flat=True))[0]
             x3d_dict[similation_url]["image_atlases"] = []
             for file in sorted(glob.glob(os.path.join(settings.MEDIA_ROOT, "simulations", similation_dir, "sim_*.png"))):
-                esec = int(file.split("_")[-1].split(".")[0])
+                try:
+                    esec = int(file.split("_")[-1].split(".")[0])
+                except ValueError:
+                    # Likely bad image_atlas file name
+                    logger.warning(f"Cannot parse esecs from {file = }")
                 if start_esec < esec and esec < end_esec:
                     x3d_dict[similation_url]["image_atlases"].append(os.path.basename(file))
                     logger.info(file)

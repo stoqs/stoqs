@@ -1684,16 +1684,16 @@ Elapsed time is 0.097718 seconds.
     }
 
     function stepSimulation(frac_esec) {
-        // Render only the VolumeData/ImageTextureAtlas that's within time_step_secs of frac_esec
+        // Render only the VolumeData/ImageTextureAtlas that's within half_time_step_secs of frac_esec
         if (! $.isEmptyObject($('body').data()['simulations'])) {
             if (! $.isEmptyObject($('input:radio[name=simulation_choice]:checked'))) {
                 $('.simulation[render="true"]').each(function (index, element) {
                     document.getElementById(element.id).setAttribute('render', 'false');
                 });
-                time_step_secs = $('body').data()['simulations'][$('input:radio[name=simulation_choice]:checked').val()]['time_step_secs'];
-                if (! $.isEmptyObject(time_step_secs)) {
+                half_time_step_secs = $('body').data()['simulations'][$('input:radio[name=simulation_choice]:checked').val()]['half_time_step_secs'];
+                if (! $.isEmptyObject(half_time_step_secs)) {
                     $('.simulation').each(function (index, element) {
-                        if (Math.abs(element.id.split('sim_')[1] - frac_esec) < time_step_secs) {
+                        if (Math.abs(element.id.split('sim_')[1] - frac_esec) < half_time_step_secs) {
                             document.getElementById(element.id).setAttribute('render', 'true');
                         }
                     });
@@ -5712,10 +5712,13 @@ function enable_cardboard(){
                 // Save all the simulations for selection in simulation-3d
                 $('body').data()['simulations'] = data['x3dsimulations'];
                 if ( ! $.isEmptyObject(data[key]) ) {
+                    $('#simulation3D-choices').append('<label class="radio" style="padding:0px;">' +
+                                        '<input type="radio" style="margin:3px;" name="simulation_choice" class="simulation-choice" checked' +
+                                        ' value=""/>None</label><br>');
                     $.each(data[key], function (simulation_url, simulation) {
                         $('#simulation3D-choices').append('<label class="radio" style="padding:0px;">' +
                                             '<input type="radio" style="margin:3px;" name="simulation_choice" class="simulation-choice"' + 
-                                            ' value="' + simulation_url + '"/>' + simulation.directory + '</label><br>');
+                                            ' value="' + simulation_url + '"/>' + simulation.directory + ' ' + simulation.variable + '</label><br>');
                         $('#mp-x3d-simulation').append('<Inline id="simulation-' + simulation.directory + '"></Inline>');
                         $('#simulation-' + simulation.directory).attr('url', simulation_url);
                     });
