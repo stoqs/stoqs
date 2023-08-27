@@ -9,7 +9,7 @@ backports.ssl-match-hostname==3.7.0.1
 billiard==4.1.0
 binaryornot==0.4.4
 docutils==0.20.1
-Cython==3.0.0
+Cython==3.0.2
 ephem==4.1.4
 ##GDAL==3.0.3
 h5py==3.8.0
