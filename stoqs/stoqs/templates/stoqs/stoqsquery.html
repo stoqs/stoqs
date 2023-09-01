@@ -423,6 +423,18 @@
                                                     </div>
                                                 </div> <!-- row-fluid -->
 
+
+                                                <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
+                                                    <h5><a id="simulation-3d" class="accordion-toggle" data-toggle="collapse" href="#simulation3D" title="Show Simulation Options" style="padding:0px;color:black;">
+                                                        Simulation
+                                                    </a></h5>
+                                                    <div id="simulation3D" class="accordion-body" style="float:none;display:inline-block;overflow-x:auto;white-space:nowrap;" >
+                                                        <form id="simulation3D-choices" class="form-inline" style="margin:0px;">
+                                                        </form>
+                                                    </div>
+                                                </div> <!-- row-fluid -->
+
+
                                                 <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
                                                     <h5><a id="terrain-3d" class="accordion-toggle" data-toggle="collapse" href="#terrain3D" title="Show Terrain Options" style="padding:0px;color:black;">
                                                         Terrain
@@ -458,6 +470,7 @@
             <Group id="platform-animations"></Group>
             <Group id="curtain-animations"></Group>
             <Group id="points-animations"></Group>
+            <Group id="simulation-animations"></Group>
             <Group id="animations"></Group>
             <Group id="platform-models"></Group>
           </Group>
@@ -1670,6 +1683,25 @@ Elapsed time is 0.097718 seconds.
         });
     }
 
+    function stepSimulation(frac_esec) {
+        // Render only the VolumeData/ImageTextureAtlas that's within half_time_step_secs of frac_esec
+        if (! $.isEmptyObject($('body').data()['x3dsimulations'])) {
+            if (! $.isEmptyObject($('input:radio[name=simulation_choice]:checked'))) {
+                $('.simulation[render="true"]').each(function (index, element) {
+                    document.getElementById(element.id).setAttribute('render', 'false');
+                });
+                half_time_step_secs = $('body').data()['x3dsimulations'][$('input:radio[name=simulation_choice]:checked').val()]['half_time_step_secs'];
+                if (! $.isEmptyObject(half_time_step_secs)) {
+                    $('.simulation').each(function (index, element) {
+                        if (Math.abs(element.id.split('sim_')[1] - frac_esec) < half_time_step_secs) {
+                            document.getElementById(element.id).setAttribute('render', 'true');
+                        }
+                    });
+                }
+            }
+        }
+    }
+
     function slider(e) {
         var click_time = new Date().getTime() / 1000.0;
         $('#PLATFORMS_TS')[0].setAttribute('stopTime', click_time);
@@ -1846,6 +1878,7 @@ Elapsed time is 0.097718 seconds.
         // Called from TimeSensor onoutputchanged() event or on HTML slider mousemove event
         var frac_ems = $('body').data()['timesensor-start-ems'] + ts_fraction * ($('body').data()['timesensor-end-ems'] - $('body').data()['timesensor-start-ems']);
         frac_esec = parseInt(frac_ems / 1000.0);
+        stepSimulation(frac_esec);
 
         // See https://stackoverflow.com/a/35391072/1281657
         var myRange = document.querySelector('#spatial-3d-x3d-slider');
@@ -3142,7 +3175,6 @@ Elapsed time is 0.097718 seconds.
             $('#showgeox3denuaxes').parent().hide();
         }
     });
-
 
     $('#showsensortracks').on('click', function (event) {
         update_sensortrackskml();
@@ -5675,6 +5707,27 @@ function enable_cardboard(){
                     $("#temporal-parameter-li").show();
                 }
             }
+            else if (key == 'x3dsimulations') {
+                // Save all the simulations for selection in simulation-3d
+                $('body').data()['x3dsimulations'] = data['x3dsimulations'];
+                if ( ! $.isEmptyObject(data[key]) ) {
+                    $('#simulation3D-choices').append('<label class="radio" style="padding:0px;">' +
+                                        '<input type="radio" style="margin:3px;" name="simulation_choice" class="simulation-choice" checked' +
+                                        ' value=""/>None</label><br>');
+                    $.each(data[key], function (simulation_url, simulation) {
+                        $('#simulation3D-choices').append('<label class="radio" style="padding:0px;">' +
+                                            '<input type="radio" style="margin:3px;" name="simulation_choice" class="simulation-choice"' + 
+                                            ' value="' + simulation_url + '"/>' + simulation.directory + ' ' + simulation.variable + '</label><br>');
+                        $('#mp-x3d-simulation').append('<Inline id="simulation-' + simulation.directory + '"></Inline>');
+                        $('#simulation-' + simulation.directory).attr('url', simulation_url);
+                    });
+
+                    // Register listener for simulation selection
+                    $('.simulation-choice').on('click', function (event) {
+                        loadSimulation();
+                    });
+                }
+            }
             else if (key == 'x3dterrains') {
                 function get_tname(terrain, item) {
                     if ( $.isEmptyObject(item.name) ) {
@@ -5688,6 +5741,7 @@ function enable_cardboard(){
                     tname = tname.replace(/[\+\.]+/g, '');
                     return tname;
                 }
+
                 // Save all the terrains for selection in terrain-3d
                 $('body').data()['terrains'] = data['x3dterrains'];
                 if ( ! $.isEmptyObject(data[key]) ) {
@@ -6051,6 +6105,40 @@ function enable_cardboard(){
             $('#animations').html(ts);
             if ($('#spatial-3d-x3d-pause-play').hasClass('icon-play')) {
                 $('#spatial-3d-x3d-pause-play').click();
+            }
+        }
+
+        function loadSimulation() {
+            if($('#simulation-animations')[0].getAttribute('render')) {
+                x3dsimulations = $('body').data()['x3dsimulations'];
+                if ( ! $.isEmptyObject(x3dsimulations) ) {
+                    simulation_url = $('input:radio[name=simulation_choice]:checked').val()
+                    if ( ! $.isEmptyObject(simulation_url) ) {
+                        simulation = x3dsimulations[simulation_url];
+                        var sim_x3d_html = '';
+                        for (var i=0; i < simulation.image_atlases.length; i++) {
+                            var image_atlas = simulation.image_atlases[i];
+                            sim_x3d_html += '' +
+                          '<Group id="' + image_atlas.split('.')[0] + '" render="false" class="simulation">' +
+                          '<GeoLocation geoSystem="GD" geoCoords="43.56554774552445 -86.41570382896799 0">' +
+                          '<Transform scale="' + simulation.dimensions + '">' +
+                            '<VolumeData dimensions="1 1 1">' +
+                              '<ImageTextureAtlas url="{{MEDIA_URL}}simulations/' +
+                                simulation.directory + '/' + image_atlas + '" numberOfSlices="' +
+                                simulation.numberOfSlices + '" slicesOverX="' + 
+                                simulation.slicesOverX + '" slicesOverY="' +
+                                simulation.slicesOverY + '"/>' +
+                              '<OpacityMapVolumeStyle id="OpVS" lightFactor="1.5" opacityFactor="6">' +
+                               '<ImageTexture id="texture" containerField="transferFunction" url="{{STATIC_URL}}images/colormaps/cividis.png"/>' +
+                              '</OpacityMapVolumeStyle>' +
+                            '</VolumeData>' +
+                          '</Transform>' +
+                          '</GeoLocation>' +
+                          '</Group>'
+                        }
+                        $('#simulation-animations').html(sim_x3d_html);
+                    }
+               }
             }
         }
 
@@ -6495,6 +6583,7 @@ function enable_cardboard(){
                             });
                         $('#track-animations').html(ils_x3d_html);
                     }
+
 
                     $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data.measuredparameterx3d.colorbar + '" />');
                     if ( ! $('#animation3D').hasClass('in') ) {

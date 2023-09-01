@@ -31,6 +31,7 @@ import re
 import subprocess
 import math
 import numpy as np
+import xarray as xr
 from coards import to_udunits
 import seawater.eos80 as sw
 import csv
@@ -42,6 +43,7 @@ from tempfile import NamedTemporaryFile
 import pprint
 from netCDF4 import Dataset
 from argparse import ArgumentParser, RawTextHelpFormatter
+import netpbmfile
 
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
@@ -99,13 +101,14 @@ class LoadScript(object):
 
     logger = logging.getLogger(__name__)
 
-    def __init__(self, base_dbAlias, base_campaignName, description=None, stride=1, x3dTerrains=None, grdTerrain=None):
+    def __init__(self, base_dbAlias, base_campaignName, description=None, stride=1, x3dTerrains=None, grdTerrain=None, simulations=None):
         self.base_dbAlias = base_dbAlias
         self.base_campaignName = base_campaignName
         self.campaignDescription = description
         self.stride = stride
         self.x3dTerrains = x3dTerrains
         self.grdTerrain = grdTerrain
+        self.simulations = simulations
 
         exampleString = ''
         for dbType in ('', '_t', '_o', '_s10'):
@@ -155,6 +158,8 @@ class LoadScript(object):
         Optional arguments for associating X3D Terrains and Viewpoints with this Campaign: 
             - x3dTerrains: Dict of absolute URL hashes to X3D GeoElevationGrids with hashes of 
                            viewpoint position, orientation, and centerOfRotation
+            - simulations: Dict of absolute URL hashes to netcdf source files and base name
+                           for ImageTextureAtlas files that this load will generate
 
         '''
 
@@ -283,6 +288,77 @@ class LoadScript(object):
                               uristring=url, name='zFar', value=300000.0, resourcetype=resourceType)
                 m.CampaignResource.objects.using(self.dbAlias).get_or_create(
                               campaign=campaign, resource=resource)
+
+    def _build_image_atlases(self):
+        '''
+        self.simulations is a dictionary keyed by a standard url to the netcdf file.
+        Intend to follow up with https://sourceforge.net/p/x3dom/mailman/message/34770224/ on this approach.
+        '''
+        for simulation in self.simulations.keys():
+            self.logger.info(f"Construcing image atlases for {simulation}")
+            # It's 50x faster to use a local file rather than an opendap url, wget it and open locally
+            os.system(f"wget --no-clobber '{simulation}'")
+            ds = xr.open_dataset(os.path.basename(simulation))
+            data_range = [float(n) for n in self.simulations[simulation]["data_range"].split()]
+            scaled_range = [int(n) for n in self.simulations[simulation]["scaled_range"].split()]
+            simulation_dir = os.path.join(settings.MEDIA_ROOT, 'simulations', self.simulations[simulation]["directory"])
+            variable = self.simulations[simulation]["variable"]
+            time_adjustment = int(self.simulations[simulation]["time_adjustment"])
+            tile_dims = self.simulations[simulation]["tile_dims"]
+            time_step_secs = self.simulations[simulation]["time_step_secs"]
+            os.makedirs(simulation_dir, exist_ok=True)
+            for itime in range(ds.dims["time"]):
+                slices = []
+                for iy in range(ds.dims["y"]):
+                    self.logger.debug(f"{itime = } {iy = } Max value = {getattr(ds, variable).isel(time=itime, y=iy).values.max()}") 
+                    # Write this slice out as a scaled 8-bit portable grey map image - expect no more than 9999 (:04d) slices
+                    pgm_name = os.path.join(simulation_dir, f"{iy:04d}.pgm")
+                    data = getattr(ds, variable).isel(time=itime, y=iy).values
+                    scaled_data = (scaled_range[0] + (scaled_range[1] - scaled_range[0]) * data / (data_range[1] - data_range[0])).astype(np.uint8)
+                    netpbmfile.imwrite(pgm_name, scaled_data)
+                    os.system(f"mogrify -flip {pgm_name}")
+                    slices.append(pgm_name)
+                    self.logger.debug(f"{pgm_name = } scaled_data range = [{scaled_data.min()} {scaled_data.max()}]") 
+                # Assemble this timestep to an ImageMagick montage
+                adjusted_time = int(ds.time[itime].astype(int)/1e9) + time_adjustment
+                image_atlas_file = os.path.join(simulation_dir, f"sim_{adjusted_time}.png")
+                os.system(f"cd {simulation_dir} && ls -1 *.pgm> slices")
+                os.system(f"cd {simulation_dir} && montage @slices -geometry +0+0 -tile {tile_dims} {image_atlas_file}")
+                os.system(f"cd {simulation_dir} && rm {' '.join(slices)} slices")
+                self.logger.info(f"{itime:03d} of {ds.dims['time']}: {image_atlas_file = }") 
+
+    def addSimulationResources(self):
+        '''
+        If simulations information is specified then create 8-bit grey scale images of each slice saved
+        into an image atlas organized by time of the volume.  The resulting set of images will be saved
+        to the database as Reources that can be animated in the X3D scene.
+        First used in stoqs_greatlakes2023.
+        '''
+        if not self.simulations:
+            return
+
+        # Use xarray, netpbmfile, and ImageMagick  to loop through the netcdf and make grey scale 8-bit image atlases
+        self._build_image_atlases()
+
+        # Add all the simulation resources to the database
+        resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(
+                          name='x3dsimulation', description='X3D Simulation information for Spatial 3D visualization')
+
+        self.logger.info('Adding to ResourceType: %s', resourceType)
+        self.logger.debug('Looking in database %s for Campaign name = %s', self.dbAlias, self.campaignName)
+        try:
+            campaign = m.Campaign.objects.using(self.dbAlias).get(name=self.campaignName)
+        except m.Campaign.DoesNotExist:
+            self.logger.error(f"Could not find Campaign record in {self.dbAlias} at end of load. Perhaps no data was loaded?")
+            sys.exit(-1)
+
+        for url, attributes in list(self.simulations.items()):
+            for name, value in list(attributes.items()):
+                resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                              uristring=url, name=name, value=value, resourcetype=resourceType)
+                m.CampaignResource.objects.using(self.dbAlias).get_or_create(
+                              campaign=campaign, resource=resource)
+                self.logger.info('Resource uristring=%s, name=%s, value=%s', url, name, value)
 
     def addPlaybackResources(self, x3dmodelurl, aName):
         '''
