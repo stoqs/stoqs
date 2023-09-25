@@ -1,6 +1,8 @@
 #!/bin/env python
 '''
 Generate images of colormaps to populate static/images/colormaps.
+Executed on development system with generated .png files committed
+to source code control and pushed to the remote repo.
 '''
 
 import os
@@ -60,11 +62,17 @@ for cmap_category, cmap_list in cmaps:
 jetplus_clt = readCLT(os.path.join(str(settings.ROOT_DIR.path('static')), 
                                    'colormaps', 'jetplus.txt'))
 
-def _plot_color_bar(category, cmap):
-    '''Make an image file for each colormap
+def _plot_color_bar(category, cmap, with_alpha=False):
+    '''Make an image file for each colormap.
+    Use with_alpha = True to generate colormaps suitable for use in VolumeData/ImageTextureAtlas
+    3D simulation visualization.
     '''
     gradient = np.linspace(0, 1, 256)
     gradient = np.vstack((gradient, gradient))
+    if with_alpha:
+        # First half ramps transparency from full to none
+        alpha = list(np.arange(0.0, 1.0, 1.0/128.0)) + 128 * [1.0]
+        alpha = np.vstack((alpha, alpha))
 
     cb_fig = plt.figure(figsize=(2.56, 0.15))
     cb_ax = cb_fig.add_axes([0., 0., 1., 1.])
@@ -76,13 +84,23 @@ def _plot_color_bar(category, cmap):
         cb_ax.imshow(gradient, aspect='auto', cmap=cm_jetplus)
     else:
         if category == 'Ocean':
-            cb_ax.imshow(gradient, aspect='auto', cmap=getattr(cmocean.cm, cmap))
+            if with_alpha:
+                cb_ax.imshow(gradient, alpha=alpha, aspect='auto', cmap=getattr(cmocean.cm, cmap))
+            else:
+                cb_ax.imshow(gradient, aspect='auto', cmap=getattr(cmocean.cm, cmap))
         else:
-            cb_ax.imshow(gradient, aspect='auto', cmap=plt.get_cmap(cmap))
+            if with_alpha:
+                cb_ax.imshow(gradient, alpha=alpha, aspect='auto', cmap=plt.get_cmap(cmap))
+            else:
+                cb_ax.imshow(gradient, aspect='auto', cmap=plt.get_cmap(cmap))
 
     cb_ax.set_axis_off()
-    file_name = os.path.join(str(settings.ROOT_DIR.path('static')), 'images', 'colormaps', cmap)
-    cb_fig.savefig(file_name, dpi=100)
+    if with_alpha:
+        file_name = os.path.join(str(settings.ROOT_DIR.path('static')), 'images', 'colormaps_alpha', cmap)
+        cb_fig.savefig(file_name, dpi=100, transparent=True)
+    else:
+        file_name = os.path.join(str(settings.ROOT_DIR.path('static')), 'images', 'colormaps', cmap)
+        cb_fig.savefig(file_name, dpi=100)
     plt.close()
 
 def generate_colormaps():
@@ -92,8 +110,10 @@ def generate_colormaps():
     for cmap_category, cmap_list in cmaps_with_r:
         print('\t{}:'.format(cmap_category))
         for cmap in cmap_list:
-            print('\t\t{}'.format(cmap))
+            print(f'\t\t{cmap:15s}: ', end='')
             _plot_color_bar(cmap_category, cmap)
+            print('and with_alpha to colormaps_alpha')
+            _plot_color_bar(cmap_category, cmap, with_alpha=True)
 
         
 if __name__ == '__main__':
