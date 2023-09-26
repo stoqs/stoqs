@@ -260,7 +260,7 @@
                                     <div id="samplePoint"></div>
                                 </div>
                                 <div class="tab-pane" id="geo3d" style="height:100%;">
-                                    <div id="geo-3dplot" style="height:500px;">
+                                    <div id="geo-3dplot" style="height:600px;">
                                         <div id="geo-3dplot-control" class="span6" style='position:absolute;z-index:1000;;margin:0px;'>
                                         <div id="limit-div-width" class="span6" style="padding:0px;margin:0px;">
                                             <!-- Uncomment and comment out next div for video capture -->
@@ -3693,7 +3693,7 @@ Elapsed time is 0.097718 seconds.
                 $('#parameter-parameter-group').children().show();
                 $('#spatial-anchor').parent().show();
                 $('#spatialTabs').show();
-                $('#geo-3dplot').css( { 'height': '500px',
+                $('#geo-3dplot').css( { 'height': '600px',
                                         'width': '',
                                         'position': ''
                                       } );
@@ -6114,13 +6114,24 @@ function enable_cardboard(){
                 if ( ! $.isEmptyObject(x3dsimulations) ) {
                     simulation_url = $('input:radio[name=simulation_choice]:checked').val()
                     if ( ! $.isEmptyObject(simulation_url) ) {
-                        simulation = x3dsimulations[simulation_url];
+                        var simulation = x3dsimulations[simulation_url];
+                        var colormap = $('input:radio[name=colormap_choice]:checked').val();
                         var sim_x3d_html = '';
+                        sim_x3d_html += '<OpacityMapVolumeStyle id="OpVS" DEF="OpVS" lightFactor="1.5" opacityFactor="6">' +
+                          '<ImageTexture id="VolIT" DEF="VolIT" containerField="transferFunction" url="{{STATIC_URL}}images/colormaps_alpha/' + colormap + '.png"/>' +
+                        '</OpacityMapVolumeStyle>';
+                        sim_x3d_html += '<Shape DEF="sim_boundary" render="true" bboxCenter="0,0,0" bboxSize="-1,-1,-1" isPickable="true">' +
+                          '<IndexedLineSet coordIndex="0 1 2 3 0 4 5 1 -1 5 6 2 -1 6 7 3 -1 7 4" solid="true" ccw="true" useGeoCache="true" lit="true" colorPerVertex="true" colorIndex="">' +
+                            '<Coordinate point="-0.5 0.5 0.5  0.5 0.5 0.5  0.5 -0.5 0.5  -0.5 -0.5 0.5  -0.5 0.5 -0.5  0.5 0.5 -0.5  0.5 -0.5 -0.5  -0.5 -0.5 -0.5"/></IndexedLineSet>' +
+                          '<Appearance>' +
+                            '<Material ambientIntensity="0.2" emissiveColor="0.8 0.0 0.0" diffuseColor="0.8,0.8,0.8" shininess="0.2" specularColor="0,0,0"/>' +
+                          '</Appearance>' +
+                        '</Shape>';
                         for (var i=0; i < simulation.image_atlases.length; i++) {
                             var image_atlas = simulation.image_atlases[i];
                             sim_x3d_html += '' +
                           '<Group id="' + image_atlas.split('.')[0] + '" render="false" class="simulation">' +
-                          '<GeoLocation geoSystem="GD" geoCoords="43.56554774552445 -86.41570382896799 0">' +
+                          '<GeoLocation geoSystem="GD" geoCoords="' + simulation.geocoords + '">' +
                           '<Transform scale="' + simulation.dimensions + '">' +
                             '<VolumeData dimensions="1 1 1">' +
                               '<ImageTextureAtlas url="{{MEDIA_URL}}simulations/' +
@@ -6128,14 +6139,17 @@ function enable_cardboard(){
                                 simulation.numberOfSlices + '" slicesOverX="' + 
                                 simulation.slicesOverX + '" slicesOverY="' +
                                 simulation.slicesOverY + '"/>' +
-                              '<OpacityMapVolumeStyle id="OpVS" lightFactor="1.5" opacityFactor="6">' +
-                               '<ImageTexture id="texture" containerField="transferFunction" url="{{STATIC_URL}}images/colormaps/cividis.png"/>' +
+                              '<OpacityMapVolumeStyle USE="OpVS">' +
                               '</OpacityMapVolumeStyle>' +
                             '</VolumeData>' +
+                            '<Shape USE="sim_boundary"/>' +
                           '</Transform>' +
                           '</GeoLocation>' +
                           '</Group>'
                         }
+                        // Clear any exisiting simulation-animations groups before adding newly selected ones
+                        $('#simulation-animations > group').each(function() {this.setAttribute('render', 'false')});
+                        $('#simulation-animations').html(''); // x3dom may throw TypeError: Cannot set properties of undefined (setting 'texture'), ignore it
                         $('#simulation-animations').html(sim_x3d_html);
                     }
                }

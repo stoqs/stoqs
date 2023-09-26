@@ -1891,6 +1891,9 @@ class STOQSQManager(object):
             logger.info(similation_url)
             x3d_dict[similation_url] = {}
 
+            x3d_dict[similation_url]["geocoords"] = (models.Resource.objects.using(self.request.META["dbAlias"])
+                .filter(resourcetype__name="x3dsimulation", name="geocoords", uristring=similation_url)
+                .values_list("value", flat=True))[0]
             x3d_dict[similation_url]["dimensions"] = (models.Resource.objects.using(self.request.META["dbAlias"])
                 .filter(resourcetype__name="x3dsimulation", name="dimensions", uristring=similation_url)
                 .values_list("value", flat=True))[0]
