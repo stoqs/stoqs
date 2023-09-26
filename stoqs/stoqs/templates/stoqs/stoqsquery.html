@@ -6114,13 +6114,17 @@ function enable_cardboard(){
                 if ( ! $.isEmptyObject(x3dsimulations) ) {
                     simulation_url = $('input:radio[name=simulation_choice]:checked').val()
                     if ( ! $.isEmptyObject(simulation_url) ) {
-                        simulation = x3dsimulations[simulation_url];
+                        var simulation = x3dsimulations[simulation_url];
+                        var colormap = $('input:radio[name=colormap_choice]:checked').val();
                         var sim_x3d_html = '';
+                        sim_x3d_html += '<OpacityMapVolumeStyle id="OpVS" DEF="OpVS" lightFactor="1.5" opacityFactor="6">' +
+                          '<ImageTexture id="VolIT" DEF="VolIT" containerField="transferFunction" url="{{STATIC_URL}}images/colormaps_alpha/' + colormap + '.png"/>' +
+                        '</OpacityMapVolumeStyle>';
                         for (var i=0; i < simulation.image_atlases.length; i++) {
                             var image_atlas = simulation.image_atlases[i];
                             sim_x3d_html += '' +
                           '<Group id="' + image_atlas.split('.')[0] + '" render="false" class="simulation">' +
-                          '<GeoLocation geoSystem="GD" geoCoords="43.56554774552445 -86.41570382896799 0">' +
+                          '<GeoLocation geoSystem="GD" geoCoords="' + simulation.geocoords + '">' +
                           '<Transform scale="' + simulation.dimensions + '">' +
                             '<VolumeData dimensions="1 1 1">' +
                               '<ImageTextureAtlas url="{{MEDIA_URL}}simulations/' +
@@ -6128,8 +6132,7 @@ function enable_cardboard(){
                                 simulation.numberOfSlices + '" slicesOverX="' + 
                                 simulation.slicesOverX + '" slicesOverY="' +
                                 simulation.slicesOverY + '"/>' +
-                              '<OpacityMapVolumeStyle id="OpVS" lightFactor="1.5" opacityFactor="6">' +
-                               '<ImageTexture id="texture" containerField="transferFunction" url="{{STATIC_URL}}images/colormaps/cividis.png"/>' +
+                              '<OpacityMapVolumeStyle USE="OpVS">' +
                               '</OpacityMapVolumeStyle>' +
                             '</VolumeData>' +
                           '</Transform>' +
