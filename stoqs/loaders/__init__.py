@@ -332,7 +332,24 @@ class LoadScript(object):
         If simulations information is specified then create 8-bit grey scale images of each slice saved
         into an image atlas organized by time of the volume.  The resulting set of images will be saved
         to the database as Reources that can be animated in the X3D scene.
-        First used in stoqs_greatlakes2023.
+        First used in stoqs_greatlakes2023, e.g. in the load script stoqs/loaders/GreatLakes/load_2023.py:
+
+                    simulations = {
+                                    # Staring 2009-01-02T03:15:00 and lasting 4.9 days
+                                    # dimensions: depth = 27 ; time = 468 ; x = 116 ; y = 80 ;
+                                    "http://stoqs.mbari.org/simulation/LakeMichigan/BurgerOilfieldSpillMed.nc3": {
+                                        "variable": "oil_concentration",
+                                        "data_range": "0 19",       # Must encompass actual range of data
+                                        "scaled_range": "0 255",    # Can reverse to make high data values black
+                                        "geocoords": "43.1 -86.1 -261",             # Latitude (south) Longitude (west) Altitude (bottom) GeoLocation
+                                        "dimensions": "34500 261 23700",            # X (easting) Y (exaggerated depth) Z (northing) ranges
+                                        "tile_dims": "4x20",                        # For montage's --tile and ImageTextureAtlas's X and Y [must = ds.dims('y')]
+                                        # To start at datetime(2023, 6, 25, 2, 30)
+                                        "time_adjustment": "456816600",             # Seconds to add for matching time of data in STOQS
+                                        "directory": "BurgerOilfieldSpillMed",      # dir in media/simulation holding ImageAtlas files for ea time step
+                                        "half_time_step_secs": "450",               # Needed to restrict animation to just one ImageTextureAtlas at a time
+                                    },
+                                  },
         '''
         if not self.simulations:
             return
@@ -340,9 +357,12 @@ class LoadScript(object):
         # Use xarray, netpbmfile, and ImageMagick  to loop through the netcdf and make grey scale 8-bit image atlases
         self._build_image_atlases()
 
-        # Add all the simulation resources to the database
         resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(
                           name='x3dsimulation', description='X3D Simulation information for Spatial 3D visualization')
+
+        # First remove all x3dsimulation ResourceTypes allowing for easy database updates from changed values in the load script
+        self.logger.debug('Deleting all ResourceTypes = %s', resourceType)
+        m.Resource.objects.using(self.dbAlias).filter(resourcetype=resourceType).delete()
 
         self.logger.info('Adding to ResourceType: %s', resourceType)
         self.logger.debug('Looking in database %s for Campaign name = %s', self.dbAlias, self.campaignName)
@@ -352,8 +372,8 @@ class LoadScript(object):
             self.logger.error(f"Could not find Campaign record in {self.dbAlias} at end of load. Perhaps no data was loaded?")
             sys.exit(-1)
 
-        for url, attributes in list(self.simulations.items()):
-            for name, value in list(attributes.items()):
+        for url, simulation in list(self.simulations.items()):
+            for name, value in list(simulation.items()):
                 self.logger.debug(f'get_or_create(): {name =}, {value =}')
                 resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                               uristring=url, name=name, value=value, resourcetype=resourceType)
