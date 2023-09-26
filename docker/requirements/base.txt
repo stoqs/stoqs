@@ -66,5 +66,5 @@ statsmodels==0.14.0
 sqlparse==0.4.4
 thredds-crawler==1.5.4
 transforms3d==0.4.1
-xarray==2023.7.0
+xarray==2023.9.0
 websocket-client==1.6.1
