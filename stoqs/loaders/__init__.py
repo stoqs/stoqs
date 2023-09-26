@@ -305,7 +305,7 @@ class LoadScript(object):
             variable = self.simulations[simulation]["variable"]
             time_adjustment = int(self.simulations[simulation]["time_adjustment"])
             tile_dims = self.simulations[simulation]["tile_dims"]
-            time_step_secs = self.simulations[simulation]["time_step_secs"]
+            half_time_step_secs = self.simulations[simulation]["half_time_step_secs"]
             os.makedirs(simulation_dir, exist_ok=True)
             for itime in range(ds.dims["time"]):
                 slices = []
@@ -354,6 +354,7 @@ class LoadScript(object):
 
         for url, attributes in list(self.simulations.items()):
             for name, value in list(attributes.items()):
+                self.logger.debug(f'get_or_create(): {name =}, {value =}')
                 resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                               uristring=url, name=name, value=value, resourcetype=resourceType)
                 m.CampaignResource.objects.using(self.dbAlias).get_or_create(
