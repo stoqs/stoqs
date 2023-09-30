@@ -1907,6 +1907,9 @@ class STOQSQManager(object):
             x3d_dict[similation_url]["variable"] = (models.Resource.objects.using(self.request.META["dbAlias"])
                 .filter(resourcetype__name="x3dsimulation", name="variable", uristring=similation_url)
                 .values_list("value", flat=True))[0]
+            x3d_dict[similation_url]["data_range"] = (models.Resource.objects.using(self.request.META["dbAlias"])
+                    .filter(resourcetype__name="x3dsimulation", name="data_range", uristring=similation_url)
+                    .values_list("value", flat=True))[0]
 
             tile_dims = (models.Resource.objects.using(self.request.META["dbAlias"])
                 .filter(resourcetype__name="x3dsimulation", name="tile_dims", uristring=similation_url)
@@ -1925,10 +1928,7 @@ class STOQSQManager(object):
                     cmin, cmax = self.getParameterMinMax(int(parameterplotid))['plot'][1:]
             logger.info(f"{cmin =}, {cmax =}")
             if cmin is not None and cmax is not None:
-                data_range = (models.Resource.objects.using(self.request.META["dbAlias"])
-                    .filter(resourcetype__name="x3dsimulation", name="data_range", uristring=similation_url)
-                    .values_list("value", flat=True))[0]
-                dmin, dmax = [float(d) for d in data_range.split()]
+                dmin, dmax = [float(d) for d in x3d_dict[similation_url]["data_range"].split()]
                 dr_cm_file = os.path.join(settings.MEDIA_ROOT, "simulations", f'{x3d_dict[similation_url]["variable"]}_{self.request.session["sessionID"]}.png')
                 cm = colormaps.Colormap()
                 logger.info("Generating data_range colormap in file %s...", dr_cm_file)

@@ -425,7 +425,7 @@
 
 
                                                 <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
-                                                    <div class="span6">
+                                                    <div class="span5">
                                                         <h5><a id="simulation-3d" class="accordion-toggle" data-toggle="collapse" href="#simulation3D" title="Show Simulation Options" style="padding:0px;color:black;">
                                                             Simulation
                                                         </a></h5>
@@ -434,7 +434,7 @@
                                                             </form>
                                                         </div>
                                                     </div>
-                                                    <div class="span6">
+                                                    <div class="span7" style="text-align:right;">
                                                         <div id="simulation3D-colormap">
                                                         </div>
                                                     </div>
@@ -6159,7 +6159,7 @@ function enable_cardboard(){
                         $('#simulation-animations').html(''); // x3dom may throw TypeError: Cannot set properties of undefined (setting 'texture'), ignore it
                         $('#simulation-animations').html(sim_x3d_html);
                         // Insert custom colormap
-                        $('#simulation3D-colormap').html('<img src="{{MEDIA_URL}}simulations/' + simulation.colormap + '" style="border:1px solid #000000"/>');
+                        $('#simulation3D-colormap').html(simulation.data_range.split(' ')[0] + '<img src="{{MEDIA_URL}}simulations/' + simulation.colormap + '" style="border:1px solid #000000"/>' + simulation.data_range.split(' ')[1]);
                     }
                }
             }
