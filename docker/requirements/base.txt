@@ -6,7 +6,7 @@ coards==1.0.5
 coverage==7.3.0
 datadiff==2.1.0
 datashader==0.15.1
-dj-database-url==2.0.0
+dj-database-url==2.1.0
 Django==4.2.3
 django-cache-url==3.4.4
 django-configurations==2.4.1
