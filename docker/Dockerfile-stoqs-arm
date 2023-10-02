@@ -1,0 +1,64 @@
+FROM osgeo/gdal:ubuntu-small-3.6.0
+
+MAINTAINER Mike McCann <mccann@mbari.org>
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Inlined FROM pcic/geospatial-python
+RUN apt-get update && \
+    apt-get -yq install \
+    libgdal-dev \
+    libyaml-dev \
+    lsb-core \
+    wget \
+    python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+# Need at least pip 22.1 for --root-user-action option below
+RUN pip install -U pip
+
+# Needed so that postgresql-client is version 15
+RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' \
+    && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc > /etc/apt/trusted.gpg.d/pgdg.asc
+
+# Additional requirements for stoqs
+RUN apt-get update && \
+    apt-get -yq install \
+    freetds-dev \
+    imagemagick \
+    git \
+    gmt \
+    locales \
+    postgresql-client \
+    time \
+    xvfb \
+    && locale-gen en_US.UTF-8
+
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
+
+# To fix multiprocessing-permission-denied for docker-compose execution
+RUN echo 'none /dev/shm tmpfs rw,nosuid,nodev,noexec 0 0' > /etc/fstab
+
+# Make sure python and python-config refer to corresponding Python 3 versions
+RUN cd /usr/bin/ &&\
+    ln -fs python3.10 python && \
+    ln -fs python3.10-config python-config
+
+WORKDIR /srv
+
+# Symlink to requirements from docker directory used to minimize context
+COPY requirements /requirements
+RUN /bin/bash -c 'pip install -r /requirements/production.txt --root-user-action=ignore'
+
+# Connection to uwsgi/nginx
+COPY docker-stoqs-uwsgi-arm.ini /etc/uwsgi/django-uwsgi.ini
+
+# For functional tests and running development/debug/ci
+COPY stoqs-start-run_server.sh /
+RUN chmod +x /stoqs-start-run_server.sh
+
+# So that repo.head.object.hexsha can be used to record the commit hash
+RUN git config --global --add safe.directory /srv
+
+CMD ["docker/stoqs-start.sh"]
+
