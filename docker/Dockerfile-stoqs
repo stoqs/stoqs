@@ -25,6 +25,7 @@ RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-
 RUN apt-get update && \
     apt-get -yq install \
     freetds-dev \
+    imagemagick \
     git \
     gmt \
     locales \
@@ -55,6 +56,9 @@ COPY docker-stoqs-uwsgi.ini /etc/uwsgi/django-uwsgi.ini
 # For functional tests and running development/debug/ci
 COPY stoqs-start-run_server.sh /
 RUN chmod +x /stoqs-start-run_server.sh
+
+# So that repo.head.object.hexsha can be used to record the commit hash
+RUN git config --global --add safe.directory /srv
 
 CMD ["docker/stoqs-start.sh"]
 

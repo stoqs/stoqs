@@ -38,6 +38,37 @@ cl = CANONLoader('stoqs_greatlakes2023', 'Great Lakes LRAUV Deployments - June-O
                                     },
                                     # TODO: Add glb model for Lake Superior
                     },
+                    simulations = {
+                                    # It's 50x faster to use a local file rather than an opendap url, the code will wget it and open locally
+                                    # Staring 2009-01-02T04:00:00 and lasting 4.8 days
+                                    # dimensions: depth = 27 ; time = 465 ; x = 160 ; y = 33 ;
+                                    "http://stoqs.mbari.org/simulation/LakeMichigan/BurgerOilfieldSpillCoarse.nc3": {
+                                        "variable": "oil_concentration",
+                                        "data_range": "0 43",       # Must encompass actual range of data
+                                        "scaled_range": "0 255",    # Can reverse to make high data values black
+                                        "geocoords": "43.1 -86.1 -261",             # Latitude (south) Longitude (west) Altitude (bottom) GeoLocation
+                                        "dimensions": "143100 261 28800",           # X (easting) Y (exaggerated depth) Z (northing) ranges
+                                        "tile_dims": "3x11",                        # For montage's --tile and ImageTextureAtlas's X and Y [must = ds.dims('y')]
+                                        # To start at datetime(2023, 6, 25, 2, 30)
+                                        "time_adjustment": "456816600",             # Seconds to add for matching time of data in STOQS
+                                        "directory": "BurgerOilfieldSpillCoarse",   # dir in media/simulation holding ImageAtlas files for ea time step
+                                        "half_time_step_secs": "450",               # Needed to restrict animation to just one ImageTextureAtlas at a time
+                                    },
+                                    # Staring 2009-01-02T03:15:00 and lasting 4.9 days
+                                    # dimensions: depth = 27 ; time = 468 ; x = 116 ; y = 80 ;
+                                    "http://stoqs.mbari.org/simulation/LakeMichigan/BurgerOilfieldSpillMed.nc3": {
+                                        "variable": "oil_concentration",
+                                        "data_range": "0 19",       # Must encompass actual range of data
+                                        "scaled_range": "0 255",    # Can reverse to make high data values black
+                                        "geocoords": "43.1 -86.5 -261",             # Latitude (south) Longitude (west) Altitude (bottom) GeoLocation
+                                        "dimensions": "34500 261 23700",            # X (easting) Y (exaggerated depth) Z (northing) ranges
+                                        "tile_dims": "4x20",                        # For montage's --tile and ImageTextureAtlas's X and Y [must = ds.dims('y')]
+                                        # To start at datetime(2023, 6, 25, 2, 30)
+                                        "time_adjustment": "456816600",             # Seconds to add for matching time of data in STOQS
+                                        "directory": "BurgerOilfieldSpillMed",      # dir in media/simulation holding ImageAtlas files for ea time step
+                                        "half_time_step_secs": "450",               # Needed to restrict animation to just one ImageTextureAtlas at a time
+                                    },
+                                  },
                     grdTerrain = os.path.join(parentDir, 'michigan_lld.grd')
                  )
 
@@ -47,6 +78,12 @@ triton_sdate = datetime(2023, 6, 23)
 triton_edate = datetime(2023, 10, 18)
 
 cl.process_command_line()
+
+# Uncomment for tesing of simulation load
+#cl.addSimulationResources()
+#cl.loadLRAUV('makai', datetime(2023, 6, 25), datetime(2023, 6, 30), critSimpleDepthTime=0.1, build_attrs=True)
+#cl.addTerrainResources()
+#breakpoint()
 
 if cl.args.test:
     cl.stride = 100
@@ -61,9 +98,8 @@ elif cl.args.stride:
     cl.loadLRAUV('makai', makai_sdate, makai_edate, critSimpleDepthTime=0.1)
     cl.loadLRAUV('triton', triton_sdate, triton_edate, critSimpleDepthTime=0.1)
 
-##cl.loadSubSamples()
-
-# Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
+# Add any X3D simulation anbd Terrain information specified in the constructor to the database - must be done after a load is executed
+cl.addSimulationResources()
 cl.addTerrainResources()
 
 print("All Done.")

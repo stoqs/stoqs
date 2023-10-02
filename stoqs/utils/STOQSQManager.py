@@ -40,12 +40,14 @@ from .geo import GPS
 from .MPQuery import MPQuery
 from .PQuery import PQuery
 from .Viz import MeasuredParameter, ParameterParameter, PPDatabaseException, PlatformAnimation
+from tools import colormaps
 from coards import to_udunits
 from datetime import datetime
 from django.contrib.gis import gdal
 import logging
 import matplotlib.pyplot as plt
 import calendar
+import glob
 import re
 import locale
 import time
@@ -115,6 +117,7 @@ class STOQSQManager(object):
             'parameterplatformdatavaluepng': self.getParameterDatavaluePNG,
             'parameterparameterx3d': self.getParameterParameterX3D,
             'measuredparameterx3d': self.getMeasuredParameterX3D,
+            'x3dsimulations': self.getX3DSimulations,
             'curtainx3d': self.getPDV_IFSs,
             'platformanimation': self.getPlatformAnimation,
             'parameterparameterpng': self.getParameterParameterPNG,
@@ -1870,6 +1873,90 @@ class STOQSQManager(object):
             speedup = float(self.kwargs.get('speedup')[0])
 
         return speedup
+
+    def getX3DSimulations(self):
+        '''Returns dictionary of X3D elements for rendering by X3DOM.
+        For each simulation identified by its uristring construct a dictionary
+        of dictionaries for each simululation.
+        '''
+        x3d_dict = {}
+
+        start_esec, end_esec = [int(n/1000) for n in self.getTime()]
+        for similation_url in (
+            models.Resource.objects.using(self.request.META["dbAlias"])
+            .filter(resourcetype__name="x3dsimulation")
+            .distinct()
+            .order_by("uristring")
+            .values_list("uristring", flat=True)
+        ):
+            logger.info(similation_url)
+            x3d_dict[similation_url] = {}
+
+            x3d_dict[similation_url]["geocoords"] = (models.Resource.objects.using(self.request.META["dbAlias"])
+                .filter(resourcetype__name="x3dsimulation", name="geocoords", uristring=similation_url)
+                .values_list("value", flat=True))[0]
+            x3d_dict[similation_url]["dimensions"] = (models.Resource.objects.using(self.request.META["dbAlias"])
+                .filter(resourcetype__name="x3dsimulation", name="dimensions", uristring=similation_url)
+                .values_list("value", flat=True))[0]
+            x3d_dict[similation_url]["directory"] = (models.Resource.objects.using(self.request.META["dbAlias"])
+                .filter(resourcetype__name="x3dsimulation", name="directory", uristring=similation_url)
+                .values_list("value", flat=True))[0]
+            x3d_dict[similation_url]["half_time_step_secs"] = float((models.Resource.objects.using(self.request.META["dbAlias"])
+                .filter(resourcetype__name="x3dsimulation", name="half_time_step_secs", uristring=similation_url)
+                .values_list("value", flat=True))[0])
+            x3d_dict[similation_url]["variable"] = (models.Resource.objects.using(self.request.META["dbAlias"])
+                .filter(resourcetype__name="x3dsimulation", name="variable", uristring=similation_url)
+                .values_list("value", flat=True))[0]
+            x3d_dict[similation_url]["data_range"] = (models.Resource.objects.using(self.request.META["dbAlias"])
+                    .filter(resourcetype__name="x3dsimulation", name="data_range", uristring=similation_url)
+                    .values_list("value", flat=True))[0]
+
+            tile_dims = (models.Resource.objects.using(self.request.META["dbAlias"])
+                .filter(resourcetype__name="x3dsimulation", name="tile_dims", uristring=similation_url)
+                .values_list("value", flat=True))[0]
+
+            x3d_dict[similation_url]["slicesOverX"], x3d_dict[similation_url]["slicesOverY"] = [int(n) for n in tile_dims.split('x')]
+            x3d_dict[similation_url]["numberOfSlices"] = x3d_dict[similation_url]["slicesOverX"] * x3d_dict[similation_url]["slicesOverY"]
+
+            # Adjust ImageTextureAtlas colormap from data_range of VolumeData to match limits chosen in the UI
+            cmin, cmax = [None, None]
+            try:
+                cmin, cmax = self.getParameterMinMax()['cmincmax'][1:]
+            except ValueError:
+                if parameterplotid := self.request.GET.get('parameterplotid'):
+                    logger.info(f"cmincmax not set. Trying to get plot limits for {parameterplotid=}")
+                    cmin, cmax = self.getParameterMinMax(int(parameterplotid))['plot'][1:]
+            logger.info(f"{cmin =}, {cmax =}")
+            if cmin is not None and cmax is not None:
+                dmin, dmax = [float(d) for d in x3d_dict[similation_url]["data_range"].split()]
+                dr_cm_file = os.path.join(settings.MEDIA_ROOT, "simulations", f'{x3d_dict[similation_url]["variable"]}_{self.request.session["sessionID"]}.png')
+                cm = colormaps.Colormap()
+                logger.info("Generating data_range colormap in file %s...", dr_cm_file)
+                selected_colormap = self.request.GET.get('cm') or 'cividis'
+                selected_num_colors = self.request.GET.get('num_colors') or 256
+                cm.data_range_colormap(selected_colormap, dmin, dmax, cmin, cmax, int(selected_num_colors), dr_cm_file)
+                x3d_dict[similation_url]["colormap"] = f'{x3d_dict[similation_url]["variable"]}_{self.request.session["sessionID"]}.png'
+            else:
+                logger.info("Not creating data_range colormap image as cmin and cmax not set.")
+
+            # Read x3dsimulation Resources and construct dictionary of sim shapes
+            similation_dir = (models.Resource.objects.using(self.request.META["dbAlias"])
+                .filter(resourcetype__name="x3dsimulation", name="directory", uristring=similation_url)
+                .values_list("value", flat=True))[0]
+            x3d_dict[similation_url]["image_atlases"] = []
+            for file in sorted(glob.glob(os.path.join(settings.MEDIA_ROOT, "simulations", similation_dir, "sim_*.png"))):
+                try:
+                    esec = int(file.split("_")[-1].split(".")[0])
+                except ValueError:
+                    # Likely bad image_atlas file name
+                    logger.warning(f"Cannot parse esecs from {file = }")
+                if start_esec < esec and esec < end_esec:
+                    x3d_dict[similation_url]["image_atlases"].append(os.path.basename(file))
+                    logger.info(file)
+                else:
+                    logger.info(f"{file} outside of time range")
+
+        return x3d_dict
 
     def getMeasuredParameterX3D(self):
         '''Returns dictionary of X3D elements for rendering by X3DOM.
