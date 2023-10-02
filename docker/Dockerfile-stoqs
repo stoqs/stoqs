@@ -57,5 +57,8 @@ COPY docker-stoqs-uwsgi.ini /etc/uwsgi/django-uwsgi.ini
 COPY stoqs-start-run_server.sh /
 RUN chmod +x /stoqs-start-run_server.sh
 
+# So that repo.head.object.hexsha can be used to record the commit hash
+RUN git config --global --add safe.directory /srv
+
 CMD ["docker/stoqs-start.sh"]
 

@@ -1,0 +1,26 @@
+FROM mapserver/mapserver:v7.4.2
+
+USER root
+
+# See https://github.com/geo-data/mapserver-docker/blob/master/build.sh
+# Install the build dependencies.
+RUN apt-get update -y && apt-get install -y libfcgi-dev fcgiwrap nginx
+
+# Set up the Nginx Mapserver configuration.
+ADD mapserver.tmpl /etc/nginx/sites-available/mapserver
+
+# Override default fcgiwrap init.d script for Mac M1/2
+ADD mapserver-arm-init.d /etc/init.d/fcgiwrap
+RUN chmod +x /etc/init.d/fcgiwrap
+
+RUN ln -s /etc/nginx/sites-available/mapserver /etc/nginx/sites-enabled/mapserver
+RUN rm /etc/nginx/sites-enabled/default
+
+# Set up the run script for starting services.
+ADD mapserver-start.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/mapserver-start.sh
+
+EXPOSE 80
+
+# Start the fcgi and web servers.
+CMD ["/usr/local/bin/mapserver-start.sh"]
