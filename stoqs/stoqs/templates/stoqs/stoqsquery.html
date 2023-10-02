@@ -425,12 +425,18 @@
 
 
                                                 <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
-                                                    <h5><a id="simulation-3d" class="accordion-toggle" data-toggle="collapse" href="#simulation3D" title="Show Simulation Options" style="padding:0px;color:black;">
-                                                        Simulation
-                                                    </a></h5>
-                                                    <div id="simulation3D" class="accordion-body" style="float:none;display:inline-block;overflow-x:auto;white-space:nowrap;" >
-                                                        <form id="simulation3D-choices" class="form-inline" style="margin:0px;">
-                                                        </form>
+                                                    <div class="span5">
+                                                        <h5><a id="simulation-3d" class="accordion-toggle" data-toggle="collapse" href="#simulation3D" title="Show Simulation Options" style="padding:0px;color:black;">
+                                                            Simulation
+                                                        </a></h5>
+                                                        <div id="simulation3D" class="accordion-body" style="float:none;display:inline-block;overflow-x:auto;white-space:nowrap;" >
+                                                            <form id="simulation3D-choices" class="form-inline" style="margin:0px;">
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                    <div class="span7" style="text-align:right;">
+                                                        <div id="simulation3D-colormap">
+                                                        </div>
                                                     </div>
                                                 </div> <!-- row-fluid -->
 
@@ -3023,7 +3029,7 @@ Elapsed time is 0.097718 seconds.
         if ($('#showgeox3dmeasurement').is(':checked')) {
             // Don't need to get everything from queryData, but do need to add the x3d responses
             if ($('input:radio[name=showdataas]:checked').val() == 'scatter') {
-                rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
+                rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax', 'x3dsimulations']);
                 $('#showlines').parent().show();
                 $('#showfaces').parent().show();
                 $('#showpoints').parent().show();
@@ -3035,7 +3041,7 @@ Elapsed time is 0.097718 seconds.
                 $('#curtain-animations')[0].setAttribute('render', false);
             }
             else if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
+                rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax', 'x3dsimulations']);
                 $('#showlines').parent().show();
                 $('#showpoints').parent().show();
                 $('#showfaces').parent().show();
@@ -3047,7 +3053,7 @@ Elapsed time is 0.097718 seconds.
         }
         else {
             // Don't need to get everything from queryData, only the response with the PNG image
-            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
+            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'x3dsimulations']);
         }
     });
 
@@ -3464,7 +3470,7 @@ Elapsed time is 0.097718 seconds.
         $("#clear-pp-button").addClass('btn-primary');
         $("#clear-pp-button").removeClass('disabled');
         if ( $('input:radio[name=parameters_x]').is(':checked') && $('input:radio[name=parameters_y]').is(':checked') ) {
-            rebuildFilters(['parameterparameterpng', 'parameterparameterx3d']);
+            rebuildFilters(['parameterparameterpng', 'parameterparameterx3d', 'x3dsimulations']);
         }
     });
 
@@ -3480,10 +3486,10 @@ Elapsed time is 0.097718 seconds.
             $('#showgeox3dmeasurementtext').text('Show: ' + $('#temporalparameterplotinfo').data()['info']);
             $('#activitytypes').hide()
             if ($('input:radio[name=showdataas]:checked').val() == 'contour') {
-                rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax']);
+                rebuildFilters(['parameterplatformdatavaluepng', 'curtainx3d', 'measuredparameterx3d', 'parameterminmax', 'x3dsimulations']);
             }
             else {
-                rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
+                rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax', 'x3dsimulations']);
             }
         }
         else {
@@ -3506,10 +3512,10 @@ Elapsed time is 0.097718 seconds.
             $('#temporalparameterplotinfo_lines').data('info', $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
                                                          $('body').data()['parameterplatforms'][$('input:radio[name=parameters_contour_plot]:checked').val()]);
             $('#temporalparameterplotinfo_lines').text('Plotting ' + $('#temporalparameterplotinfo_lines').data()['info'] + '...');
-            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
+            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'x3dsimulations']);
         }
         if ( ! $('input:radio[name=parameters_plot]:checked').val() && ! $('input:radio[name=parameters_contour_plot]:checked').val() ) {
-            rebuildFilters(['parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime', 'sampledurationsdepthtime']);
+            rebuildFilters(['parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime', 'sampledurationsdepthtime', 'x3dsimulations']);
         }
     });
 
@@ -6117,8 +6123,9 @@ function enable_cardboard(){
                         var simulation = x3dsimulations[simulation_url];
                         var colormap = $('input:radio[name=colormap_choice]:checked').val();
                         var sim_x3d_html = '';
+                        //  '<ImageTexture id="VolIT" DEF="VolIT" containerField="transferFunction" url="{{STATIC_URL}}images/colormaps_alpha/' + colormap + '.png"/>' +
                         sim_x3d_html += '<OpacityMapVolumeStyle id="OpVS" DEF="OpVS" lightFactor="1.5" opacityFactor="6">' +
-                          '<ImageTexture id="VolIT" DEF="VolIT" containerField="transferFunction" url="{{STATIC_URL}}images/colormaps_alpha/' + colormap + '.png"/>' +
+                          '<ImageTexture id="VolIT" DEF="VolIT" containerField="transferFunction" url="{{MEDIA_URL}}simulations/' + simulation.colormap +'"/>' +
                         '</OpacityMapVolumeStyle>';
                         sim_x3d_html += '<Shape DEF="sim_boundary" render="true" bboxCenter="0,0,0" bboxSize="-1,-1,-1" isPickable="true">' +
                           '<IndexedLineSet coordIndex="0 1 2 3 0 4 5 1 -1 5 6 2 -1 6 7 3 -1 7 4" solid="true" ccw="true" useGeoCache="true" lit="true" colorPerVertex="true" colorIndex="">' +
@@ -6151,6 +6158,8 @@ function enable_cardboard(){
                         $('#simulation-animations > group').each(function() {this.setAttribute('render', 'false')});
                         $('#simulation-animations').html(''); // x3dom may throw TypeError: Cannot set properties of undefined (setting 'texture'), ignore it
                         $('#simulation-animations').html(sim_x3d_html);
+                        // Insert custom colormap
+                        $('#simulation3D-colormap').html(simulation.data_range.split(' ')[0] + '<img src="{{MEDIA_URL}}simulations/' + simulation.colormap + '" style="border:1px solid #000000"/>' + simulation.data_range.split(' ')[1]);
                     }
                }
             }
@@ -6378,6 +6387,10 @@ function enable_cardboard(){
             else if (key == 'parametertime') {
                 redrawParameterTime(data);
 
+            }
+            else if (key == 'x3dsimulations') {
+                // Updates colormap and temporal selection of VolumeData
+                $('body').data()['x3dsimulations'] = data['x3dsimulations'];
             }
             else if (key == 'activityparameterhistograms') {
                 $('#parameter-value-table').html('<tbody></tbody>');
