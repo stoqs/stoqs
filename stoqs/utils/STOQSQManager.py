@@ -1892,12 +1892,6 @@ class STOQSQManager(object):
             logger.info(similation_url)
             x3d_dict[similation_url] = {}
 
-            x3d_dict[similation_url]["geocoords"] = (models.Resource.objects.using(self.request.META["dbAlias"])
-                .filter(resourcetype__name="x3dsimulation", name="geocoords", uristring=similation_url)
-                .values_list("value", flat=True))[0]
-            x3d_dict[similation_url]["dimensions"] = (models.Resource.objects.using(self.request.META["dbAlias"])
-                .filter(resourcetype__name="x3dsimulation", name="dimensions", uristring=similation_url)
-                .values_list("value", flat=True))[0]
             x3d_dict[similation_url]["directory"] = (models.Resource.objects.using(self.request.META["dbAlias"])
                 .filter(resourcetype__name="x3dsimulation", name="directory", uristring=similation_url)
                 .values_list("value", flat=True))[0]
@@ -1910,6 +1904,16 @@ class STOQSQManager(object):
             x3d_dict[similation_url]["data_range"] = (models.Resource.objects.using(self.request.META["dbAlias"])
                     .filter(resourcetype__name="x3dsimulation", name="data_range", uristring=similation_url)
                     .values_list("value", flat=True))[0]
+
+            # Apply selected vertical exageration to the simulation geocoords and dimensions, default ve is 10
+            geocoords = (models.Resource.objects.using(self.request.META["dbAlias"])
+                .filter(resourcetype__name="x3dsimulation", name="geocoords", uristring=similation_url)
+                .values_list("value", flat=True))[0]
+            dimensions = (models.Resource.objects.using(self.request.META["dbAlias"])
+                .filter(resourcetype__name="x3dsimulation", name="dimensions", uristring=similation_url)
+                .values_list("value", flat=True))[0]
+            x3d_dict[similation_url]["dimensions"] = f"{dimensions.split()[0]} {(int(self.request.GET.get('ve', 10)) * float(dimensions.split()[1])):.1f} {dimensions.split()[2]}"
+            x3d_dict[similation_url]["geocoords"] = f"{geocoords.split()[0]} {geocoords.split()[1]} {(int(self.request.GET.get('ve', 10)) * float(geocoords.split()[2])):.1f}"
 
             tile_dims = (models.Resource.objects.using(self.request.META["dbAlias"])
                 .filter(resourcetype__name="x3dsimulation", name="tile_dims", uristring=similation_url)
