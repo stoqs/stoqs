@@ -341,8 +341,8 @@ class LoadScript(object):
                                         "variable": "oil_concentration",
                                         "data_range": "0 19",       # Must encompass actual range of data
                                         "scaled_range": "0 255",    # Can reverse to make high data values black
-                                        "geocoords": "43.1 -86.1 -261",             # Latitude (south) Longitude (west) Altitude (bottom) GeoLocation
-                                        "dimensions": "34500 261 23700",            # X (easting) Y (exaggerated depth) Z (northing) ranges
+                                        "geocoords": "43.1 -86.1 -26.1",            # Latitude (south) Longitude (west) Altitude (bottom) GeoLocation
+                                        "dimensions": "34500 26.1 23700",           # X (easting) Y (depth) Z (northing) ranges
                                         "tile_dims": "4x20",                        # For montage's --tile and ImageTextureAtlas's X and Y [must = ds.dims('y')]
                                         # To start at datetime(2023, 6, 25, 2, 30)
                                         "time_adjustment": "456816600",             # Seconds to add for matching time of data in STOQS
