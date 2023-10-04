@@ -36,6 +36,17 @@ cl = CANONLoader('stoqs_greatlakes2023', 'Great Lakes LRAUV Deployments - June-O
                                       'VerticalExaggeration': '10',
                                       'speed': '0.1',
                                     },
+                                    # Need to convert .grd to legacy format for mbgrd2gtlf:
+                                    # gmt grdconvert michigan_lld.grd -Gmichigan_lld_new.grd=cd
+                                    # mbgrd2gltf michigan_lld_new.grd -e 100 -b
+                                    # mv michigan_lld_new.glb michigan_lld_100x.glb # Then copy to stoqs.mbari.org
+                                    'https://stoqs.mbari.org/x3d/michigan_lld_100x/michigan_lld_100x.glb': {
+                                      'position': '260508.70011 -4920934.73726 4257472.30926',
+                                      'orientation': '1.00000 0.00113 -0.00025 1.66609',
+                                      'centerOfRotation': '239815.39152 -4691345.97184 4297950.38875',
+                                      'VerticalExaggeration': '100',
+                                      'speed': '0.1',
+                                    },
                                     # TODO: Add glb model for Lake Superior
                     },
                     simulations = {
@@ -46,8 +57,8 @@ cl = CANONLoader('stoqs_greatlakes2023', 'Great Lakes LRAUV Deployments - June-O
                                         "variable": "oil_concentration",
                                         "data_range": "0 43",       # Must encompass actual range of data
                                         "scaled_range": "0 255",    # Can reverse to make high data values black
-                                        "geocoords": "43.1 -86.1 -261",             # Latitude (south) Longitude (west) Altitude (bottom) GeoLocation
-                                        "dimensions": "143100 261 28800",           # X (easting) Y (exaggerated depth) Z (northing) ranges
+                                        "geocoords": "43.1 -86.1 -26.1",            # Latitude (south) Longitude (west) Altitude (bottom) GeoLocation
+                                        "dimensions": "143100 26.1 28800",          # X (easting) Y (depth) Z (northing) ranges
                                         "tile_dims": "3x11",                        # For montage's --tile and ImageTextureAtlas's X and Y [must = ds.dims('y')]
                                         # To start at datetime(2023, 6, 25, 2, 30)
                                         "time_adjustment": "456816600",             # Seconds to add for matching time of data in STOQS
@@ -60,8 +71,8 @@ cl = CANONLoader('stoqs_greatlakes2023', 'Great Lakes LRAUV Deployments - June-O
                                         "variable": "oil_concentration",
                                         "data_range": "0 19",       # Must encompass actual range of data
                                         "scaled_range": "0 255",    # Can reverse to make high data values black
-                                        "geocoords": "43.1 -86.5 -261",             # Latitude (south) Longitude (west) Altitude (bottom) GeoLocation
-                                        "dimensions": "34500 261 23700",            # X (easting) Y (exaggerated depth) Z (northing) ranges
+                                        "geocoords": "43.1 -86.5 -26.1",            # Latitude (south) Longitude (west) Altitude (bottom) GeoLocation
+                                        "dimensions": "34500 26.1 23700",           # X (easting) Y (depth) Z (northing) ranges
                                         "tile_dims": "4x20",                        # For montage's --tile and ImageTextureAtlas's X and Y [must = ds.dims('y')]
                                         # To start at datetime(2023, 6, 25, 2, 30)
                                         "time_adjustment": "456816600",             # Seconds to add for matching time of data in STOQS
