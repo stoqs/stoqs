@@ -1,4 +1,4 @@
-aiohttp==3.8.4
+aiohttp==3.8.5
 beautifulsoup4==4.12.2
 channels==4.0.0
 cmocean==3.0.3
@@ -68,3 +68,4 @@ thredds-crawler==1.5.4
 transforms3d==0.4.1
 websocket-client==1.6.3
 xarray==2023.9.0
+
