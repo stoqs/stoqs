@@ -57,7 +57,7 @@ cl = CANONLoader('stoqs_greatlakes2023', 'Great Lakes LRAUV Deployments - June-O
                                         "variable": "oil_concentration",
                                         "data_range": "0 43",       # Must encompass actual range of data
                                         "scaled_range": "0 255",    # Can reverse to make high data values black
-                                        "geocoords": "43.1 -86.1 -26.1",            # Latitude (south) Longitude (west) Altitude (bottom) GeoLocation
+                                        "geocoords": "43.1 -86.1 -13.05",           # Latitude (center) Longitude (center) Altitude (midpoint) GeoLocation
                                         "dimensions": "143100 26.1 28800",          # X (easting) Y (depth) Z (northing) ranges
                                         "tile_dims": "3x11",                        # For montage's --tile and ImageTextureAtlas's X and Y [must = ds.dims('y')]
                                         # To start at datetime(2023, 6, 25, 2, 30)
@@ -71,7 +71,7 @@ cl = CANONLoader('stoqs_greatlakes2023', 'Great Lakes LRAUV Deployments - June-O
                                         "variable": "oil_concentration",
                                         "data_range": "0 19",       # Must encompass actual range of data
                                         "scaled_range": "0 255",    # Can reverse to make high data values black
-                                        "geocoords": "43.1 -86.5 -26.1",            # Latitude (south) Longitude (west) Altitude (bottom) GeoLocation
+                                        "geocoords": "43.1 -86.5 -13.05",           # Latitude (center) Longitude (center) Altitude (midpoint) GeoLocation
                                         "dimensions": "34500 26.1 23700",           # X (easting) Y (depth) Z (northing) ranges
                                         "tile_dims": "4x20",                        # For montage's --tile and ImageTextureAtlas's X and Y [must = ds.dims('y')]
                                         # To start at datetime(2023, 6, 25, 2, 30)
@@ -91,8 +91,10 @@ triton_edate = datetime(2023, 10, 18)
 cl.process_command_line()
 
 # Uncomment for testing of simulation load
-#cl.addSimulationResources()
+#cl.addSimulationResources(build_image_atlases=True)
+#cl.stride = 10
 #cl.loadLRAUV('makai', datetime(2023, 6, 25), datetime(2023, 6, 30), critSimpleDepthTime=0.1, build_attrs=True)
+#cl.addSimulationResources()
 #cl.addTerrainResources()
 #breakpoint()
 
@@ -110,7 +112,8 @@ elif cl.args.stride:
     cl.loadLRAUV('triton', triton_sdate, triton_edate, critSimpleDepthTime=0.1)
 
 # Add any X3D simulation anbd Terrain information specified in the constructor to the database - must be done after a load is executed
-cl.addSimulationResources()
+# cl.addSimulationResources(build_image_atlases=True)   # Use build_image_atlases=True the first time thie loader is run on a server
+cl.addSimulationResources()                             # Update metadata only
 cl.addTerrainResources()
 
 print("All Done.")

@@ -327,7 +327,7 @@ class LoadScript(object):
                 os.system(f"cd {simulation_dir} && rm {' '.join(slices)} slices")
                 self.logger.info(f"{itime:03d} of {ds.dims['time']}: {image_atlas_file = }") 
 
-    def addSimulationResources(self):
+    def addSimulationResources(self, build_image_atlases=False):
         '''
         If simulations information is specified then create 8-bit grey scale images of each slice saved
         into an image atlas organized by time of the volume.  The resulting set of images will be saved
@@ -341,7 +341,7 @@ class LoadScript(object):
                                         "variable": "oil_concentration",
                                         "data_range": "0 19",       # Must encompass actual range of data
                                         "scaled_range": "0 255",    # Can reverse to make high data values black
-                                        "geocoords": "43.1 -86.1 -26.1",            # Latitude (south) Longitude (west) Altitude (bottom) GeoLocation
+                                        "geocoords": "43.1 -86.1 -13.05",           # Latitude (center) Longitude (center) Altitude (midpoint) GeoLocation
                                         "dimensions": "34500 26.1 23700",           # X (easting) Y (depth) Z (northing) ranges
                                         "tile_dims": "4x20",                        # For montage's --tile and ImageTextureAtlas's X and Y [must = ds.dims('y')]
                                         # To start at datetime(2023, 6, 25, 2, 30)
@@ -354,8 +354,10 @@ class LoadScript(object):
         if not self.simulations:
             return
 
-        # Use xarray, netpbmfile, and ImageMagick  to loop through the netcdf and make grey scale 8-bit image atlases
-        self._build_image_atlases()
+        if build_image_atlases:
+            # Use xarray, netpbmfile, and ImageMagick  to loop through the netcdf and make grey scale 8-bit image atlases
+            self.logger.infog('build_image_atlases=True, this needs to be done only once on a server')
+            self._build_image_atlases()
 
         resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(
                           name='x3dsimulation', description='X3D Simulation information for Spatial 3D visualization')
