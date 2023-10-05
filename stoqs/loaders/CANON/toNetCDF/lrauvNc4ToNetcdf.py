@@ -827,13 +827,13 @@ class InterpolatorWriter(BaseWriter):
             if end_sec_diff > max_sec_diff_at_end:
                 self.logger.warning(f"end_sec_diff ({end_sec_diff}) > max_sec_diff_at_end ({max_sec_diff_at_end})")
 
-            end_lon_diff = lon_fix[i+1] - lon[segi[-1]]
-            end_lat_diff = lat_fix[i+1] - lat[segi[-1]]
+            end_lon_diff = lon_fix.iloc[i+1] - lon.iloc[segi[-1]]
+            end_lat_diff = lat_fix.iloc[i+1] - lat.iloc[segi[-1]]
             seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
             seg_minsum += seg_min
             
             # Compute approximate horizontal drift rate as a sanity check
-            u_drift = (end_lat_diff * cos(lat_fix[i+1]) * 60 * 185300
+            u_drift = (end_lat_diff * cos(lat_fix.iloc[i+1]) * 60 * 185300
                         / (lat.index[segi][-1] - lat.index[segi][0]).total_seconds())
             v_drift = (end_lat_diff * 60 * 185300 
                         / (lat.index[segi][-1] - lat.index[segi][0]).total_seconds())
@@ -848,13 +848,13 @@ class InterpolatorWriter(BaseWriter):
                                   [0, end_lat_diff] )
 
             # Sanity checks
-            if np.max(np.abs(lon[segi] + lon_nudge)) > 180 or np.max(np.abs(lat[segi] + lon_nudge)) > 90:
+            if np.max(np.abs(lon.iloc[segi] + lon_nudge)) > 180 or np.max(np.abs(lat.iloc[segi] + lon_nudge)) > 90:
                 self.logger.warning(f"Nudged coordinate is way out of reasonable range - segment {seg_count}")
                 self.logger.warning(f" max(abs(lon)) = {np.max(np.abs(lon[segi] + lon_nudge))}")
                 self.logger.warning(f" max(abs(lat)) = {np.max(np.abs(lat[segi] + lat_nudge))}")
 
-            lon_nudged = np.append(lon_nudged, lon[segi] + lon_nudge)
-            lat_nudged = np.append(lat_nudged, lat[segi] + lat_nudge)
+            lon_nudged = np.append(lon_nudged, lon.iloc[segi] + lon_nudge)
+            lat_nudged = np.append(lat_nudged, lat.iloc[segi] + lat_nudge)
             dt_nudged = np.append(dt_nudged, lon.index[segi])
             seg_count += 1
         
@@ -863,8 +863,8 @@ class InterpolatorWriter(BaseWriter):
         segi = np.where(lat.index > lat_fix.index[-1])[0][:-1]
         seg_min = 0
         if segi.any():
-            lon_nudged = np.append(lon_nudged, lon[segi])
-            lat_nudged = np.append(lat_nudged, lat[segi])
+            lon_nudged = np.append(lon_nudged, lon.iloc[segi])
+            lat_nudged = np.append(lat_nudged, lat.iloc[segi])
             dt_nudged = np.append(dt_nudged, lon.index[segi])
             seg_min = (lat.index[segi][-1] - lat.index[segi][0]).total_seconds() / 60
        
