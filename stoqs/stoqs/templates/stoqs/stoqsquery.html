@@ -1237,13 +1237,13 @@ Elapsed time is 0.097718 seconds.
                                     {% for cm in category.1 %}
                                         <tr style="white-space:nowrap;">
                                             <td style="white-space:nowrap;border-top:0px;">
-                                                <input type="radio" name="colormap_choice" value="{{cm}}" id="{{cm}}" style="float:left;clear:none;display:block;margin-right:5px;"/>
+                                                <input id="cm_forward" type="radio" name="colormap_choice" value="{{cm}}" id="{{cm}}" style="float:left;clear:none;display:block;margin-right:5px;"/>
                                                 <label for="{{cm}}">{{cm}}</label>
                                             </td>
                                             <td style="border-top:0px;"><label for="{{cm}}"><img src="{{STATIC_URL}}images/colormaps/{{cm}}.png"/></label></td>
 
                                             <td style="white-space:nowrap;border-top:0px;">
-                                                <input type="radio" name="colormap_choice" value="{{cm}}_r" id="{{cm}}_r" style="float:left;clear:none;display:block;margin-right:5px;"/>
+                                                <input id="cm_reversed" type="radio" name="colormap_choice" value="{{cm}}_r" id="{{cm}}_r" style="float:left;clear:none;display:block;margin-right:5px;"/>
                                                 <label for="{{cm}}_r">{{cm}}_r</label>
                                             </td>
                                             <td style="border-top:0px;"><label for="{{cm}}_r"><img src="{{STATIC_URL}}images/colormaps/{{cm}}_r.png"/></label></td>
@@ -2796,6 +2796,11 @@ Elapsed time is 0.097718 seconds.
 
         if ( $('#speedup-value').val() ) {
             params['speedup'] = $('#speedup-value').val();
+        }
+
+        // Always send vertical exaggeration in payload
+        if ( ! $.isEmptyObject($('body').data()['ve']) ) {
+            params['ve'] = $('body').data()['ve'];
         }
 
         //updateShowDataInfo();
@@ -5751,11 +5756,15 @@ function enable_cardboard(){
                 // Save all the terrains for selection in terrain-3d
                 $('body').data()['terrains'] = data['x3dterrains'];
                 if ( ! $.isEmptyObject(data[key]) ) {
-                    // Only a single terrain is supported for now
-                    $('#terrain3D-choices').append('<label class="checkbox" style="padding:0px;">' +
-                                            '<input type="checkbox" style="margin:3px;" name="use_viewpoint"' + 
-                                            ' value="' + terrain + '" checked />Set to terrain viewpoint on reload/terrain selection</label><br>');
                     $.each(data[key], function (terrain, item) {
+                        var i = 0;
+                        if ( i == 0 ) {
+                            // Only a single terrain is supported for now
+                            $('#terrain3D-choices').append('<label class="checkbox" style="padding:0px;">' +
+                                                    '<input type="checkbox" style="margin:3px;" name="use_viewpoint"' + 
+                                                    ' value="' + terrain + '" checked />Set to terrain viewpoint on reload/terrain selection</label><br>');
+                        }
+                        i = i + 1;
                         var tname = get_tname(terrain, item);
                         $('#terrain3D-choices').append('<input type="radio" name="terrain_view" class="terrain-view" style="margin:3px;" value="' + terrain + '"/>' +
                                             '<label class="checkbox" style="padding:0px;">' +
