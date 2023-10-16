@@ -341,7 +341,7 @@ class LoadScript(object):
 
         if build_image_atlases:
             # Use xarray, netpbmfile, and ImageMagick  to loop through the netcdf and make grey scale 8-bit image atlases
-            self.logger.infog('build_image_atlases=True, this needs to be done only once on a server')
+            self.logger.info('build_image_atlases=True, this needs to be done only once on a server')
             self._build_image_atlases()
 
         resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(
