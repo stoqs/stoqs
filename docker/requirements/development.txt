@@ -10,7 +10,7 @@ billiard==4.1.0
 binaryornot==0.4.4
 docutils==0.20.1
 Cython==3.0.3
-ephem==4.1.4
+ephem==4.1.5
 ##GDAL==3.0.3
 h5py==3.8.0
 Genshi==0.7.7
