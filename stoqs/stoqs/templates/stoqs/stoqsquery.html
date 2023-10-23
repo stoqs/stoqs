@@ -1285,7 +1285,7 @@ Elapsed time is 0.097718 seconds.
                                 </label>
                             </form>
                             <fieldset>
-                            <table id="sampledparameter-table" class="table table-condensed">
+                            <table id="sampledparameter-table" class="table table-condensed table-striped table-hover">
                                 <thead>
                                     <tr>
                                         <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic;display:none;" class="pp-header">Parameter-Parameter</th>
@@ -1377,7 +1377,7 @@ Elapsed time is 0.097718 seconds.
                         </h3>
                     </div>
                     <div id="collapseMeasuredParameter" class="accordion-body collapse in">
-                        <div class="accordion-inner">
+                        <div class="accordion-inner pre-scrollable">
                             <form class="form-inline">
                                 <label class="checkbox">
                                     <input type="checkbox" id="show-parameter-parameter-mp-checkbox" /> Show Parameter-Parameter
@@ -1393,7 +1393,7 @@ Elapsed time is 0.097718 seconds.
                                 </label>
                             </form>
                             <fieldset>
-                            <table id="measuredparameter-table" class="table table-condensed">
+                            <table id="measuredparameter-table" class="table table-condensed table-striped table-hover">
                                 <thead>
                                     <tr>
                                         <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic;display:none;" class="pp-header">Parameter-Parameter</th>
@@ -5663,19 +5663,6 @@ function enable_cardboard(){
                             '<td style="width:1%">' +
                                 '<span id="' + value[2] + '_plats" style="background-color:rgb(192, 211, 228);"></span>' + 
                             '</td>';
-                    if (value[1].length != 0) {
-                        // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
-                        // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
-                        // Change colspan to 6 when Parameter-Parameter radio buttons are shown
-                        parameterButtonText = parameterButtonText +
-                        '<tr style="display:none;" class="mp-standardname-row mp-standardname-row-enabled">' +
-                            '<td colspan="2" style="text-align:center;border-color:transparent;" class="sn-leader"></td>' +
-                            '<td style="border-color:transparent;" class="plot-data-lines"></td>' +
-                            '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color:transparent;text-align:center;">' +
-                                '<button class="btn btn-mini stoqs-toggle parameterstandardname" style="width:75%;">'+ value[1] +'</button>' + 
-                            '</td>' +
-                        '</tr>';
-                    }
                     parameterButtonText = parameterButtonText + '</tr>';
                 });
 
@@ -5756,8 +5743,8 @@ function enable_cardboard(){
                 // Save all the terrains for selection in terrain-3d
                 $('body').data()['terrains'] = data['x3dterrains'];
                 if ( ! $.isEmptyObject(data[key]) ) {
+                    var i = 0;
                     $.each(data[key], function (terrain, item) {
-                        var i = 0;
                         if ( i == 0 ) {
                             // Only a single terrain is supported for now
                             $('#terrain3D-choices').append('<label class="checkbox" style="padding:0px;">' +
