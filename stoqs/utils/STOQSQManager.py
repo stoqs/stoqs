@@ -1125,7 +1125,8 @@ class STOQSQManager(object):
             for pr in pr_qs:
                 logger.debug('pr.parameter.name, pr.resource.value = {}, {}'.format(pr.parameter.name, pr.resource.value))
                 ars = models.ActivityResource.objects.using(self.dbname).filter(
-                                resource=pr.resource, resource__name='plotTimeSeriesDepth')
+                                resource=pr.resource, resource__name='plotTimeSeriesDepth',
+                                activity__in=self.qs)
                 # Resource with same value will be one record that may be reused by different 
                 # Activities/Platforms, just blindly fill hash keyed by Activity
                 for ar in ars:

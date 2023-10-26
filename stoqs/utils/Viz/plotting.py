@@ -545,7 +545,7 @@ class MeasuredParameter(BaseParameter):
             try:
                 self.logger.debug('Gridding data with self.sdt_count = %d, and self.y_count = %d', self.sdt_count, self.y_count)
                 # See https://scipy-cookbook.readthedocs.io/items/Matplotlib_Gridding_irregularly_spaced_data.html
-                zi = griddata((cx, cy), cz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
+                zi = griddata((cx, cy), cz, (xi[None,:], yi[:,None]), method='linear', rescale=True)
             except KeyError as e:
                 self.logger.exception('Got KeyError. Could not grid the data')
                 return None, None, 'Got KeyError. Could not grid the data', self.cm_name, cmocean_lookup_str, self.standard_name
@@ -636,7 +636,7 @@ class MeasuredParameter(BaseParameter):
                     ax.plot(xs, ys, c='k', lw=1, alpha=0.5)
 
             if self.contourParameterID is not None:
-                zli = griddata((clx, cly), clz, (xi[None,:], yi[:,None]), method='cubic', rescale=True)
+                zli = griddata((clx, cly), clz, (xi[None,:], yi[:,None]), method='linear', rescale=True)
                 CS = ax.contour(xi, yi, zli, colors='white')
                 ax.clabel(CS, fontsize=9, inline=1)
 
