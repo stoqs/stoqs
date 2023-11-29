@@ -101,7 +101,7 @@ except KeyboardInterrupt:
 if Activity.objects.using(cl.dbAlias):
     # Only add Dorado missions if we have LRAUV Activities
     try:
-        cl.loadDorado(sdate, edate, build_attrs=True, plankton_proxies=True)
+        cl.loadDorado(sdate, edate, build_attrs=True, file_patterns=(r".*netcdf/dorado_.*1S.nc", )
     except KeyboardInterrupt:
         # Likely purposfully terminated return with 0 return code so that we don't drop the database
         print("KeyboardInterrupt: exiting dorado section with 0 return code")
