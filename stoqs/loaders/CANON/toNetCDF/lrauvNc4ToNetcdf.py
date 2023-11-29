@@ -1502,7 +1502,9 @@ if __name__ == '__main__':
            '"WetLabsBB2FL": [ ' \
            '{ "name":"mass_concentration_of_chlorophyll_in_sea_water", "rename":"chlorophyll" }, ' \
            '{ "name":"Output470", "rename":"bbp470" }, ' \
-           '{ "name":"Output650", "rename":"bbp650" } ' \
+           '{ "name":"Output650", "rename":"bbp650" }, ' \
+           '{ "name":"VolumeScatCoeff117deg470nm", "rename":"VolumeScatCoeff117deg470nm" }, ' \
+           '{ "name":"VolumeScatCoeff117deg650nm", "rename":"VolumeScatCoeff117deg650nm" } ' \
            '],' \
            '"PAR_Licor": [ ' \
            '{ "name":"downwelling_photosynthetic_photon_flux_in_sea_water", "rename":"PAR" } ' \
