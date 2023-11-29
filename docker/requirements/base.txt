@@ -42,7 +42,7 @@ PasteDeploy==3.0.1
 Paste==3.7.1
 PasteScript==3.3.0
 pika==1.3.2
-pyarrow==13.0.0
+pyarrow==14.0.1
 # For Mac M2 see https://stackoverflow.com/a/70333974
 pymssql==2.2.10
 pysher==1.0.8
