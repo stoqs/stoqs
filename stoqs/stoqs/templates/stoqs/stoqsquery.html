@@ -6775,7 +6775,11 @@ function enable_cardboard(){
             },
             url : summaryQuery + '?' + qstring,
             error: function(jqXHR, textStatus, errorThrown) {
-                alert('Error reading from ' + summaryQuery + '?' + qstring + ':\n\n' + jqXHR.responseText);
+                var shortened_url = summaryQuery + '?' + qstring;
+                if (shortened_url.length > 200) {
+                    shortened_url = shortened_url.substring(0,200) + '... ';
+                }
+                alert('Error reading from ' + shortened_url + ':\n\n' + jqXHR.statusText);
                 resetWaitIndicators();
             },
             success: function (data) {
