@@ -37,7 +37,6 @@ services:
     build:
         context: .
         dockerfile: Dockerfile-mapserver-arm
-    platform: linux/amd64/v2
     volumes:
       - ${STOQS_VOLS_DIR}/maps:${URL_MAPFILE_DIR}:ro
     container_name: stoqs-mapserver
@@ -45,6 +44,8 @@ services:
     ##ports:
     ##  - "80:80"
     restart: always
+    environment:
+      - MAPSERVER_CONFIG_FILE=/usr/local/etc/mapserver.conf
     env_file:
       - ./.env
 
@@ -95,7 +96,6 @@ services:
     build:
         context: .
         dockerfile: Dockerfile-nginx
-    platform: linux/amd64/v2
     volumes:
       - ${STOQS_VOLS_DIR}/html:/srv/html
       - ${STOQS_VOLS_DIR}/pg_dumps:/srv/media-files/pg_dumps
