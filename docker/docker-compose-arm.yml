@@ -10,8 +10,7 @@ services:
     image: mbari/stoqs-postgis
     build:
         context: .
-        dockerfile: Dockerfile-postgis
-    platform: linux/amd64/v8
+        dockerfile: Dockerfile-postgis-arm
     volumes:
       - ${POSTGRES_DATA}:/var/lib/postgresql/data
       - ${POSTGRES_WALDIR}:/var/lib/postgresql/waldir
@@ -54,7 +53,6 @@ services:
     build:
         context: .
         dockerfile: Dockerfile-stoqs-arm
-    platform: linux/amd64/v2
     volumes:
       - ${STOQS_VOLS_DIR}/maps:${MAPFILE_DIR}
       - ${STOQS_VOLS_DIR}/stoqs_root:/root
