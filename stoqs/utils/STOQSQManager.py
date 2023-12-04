@@ -1561,7 +1561,7 @@ class STOQSQManager(object):
         showAllParameterValuesFlag = getShow_All_Parameter_Values(self.kwargs)
         showSigmatParameterValuesFlag = getShow_Sigmat_Parameter_Values(self.kwargs)
         showStandardnameParameterValuesFlag = getShow_StandardName_Parameter_Values(self.kwargs)
-        for pa in models.Parameter.objects.using(self.dbname).all():
+        for pa in models.Parameter.objects.using(self.dbname).order_by("name").all():
 
             # Apply (negative) logic on whether to continue with creating histograms based on checkboxes checked in the queryUI
             if not showAllParameterValuesFlag:
