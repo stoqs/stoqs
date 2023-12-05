@@ -76,7 +76,6 @@ MAP
   LAYER
     NAME "{{ item.name }}"
     TYPE {{ item.type }}
-    DUMP true
     CONNECTIONTYPE POSTGIS
     CONNECTION "host={{ dbconn.HOST }} port={{ dbconn.PORT }} user={{ dbconn.USER }} password={{ dbconn.PASSWORD }} dbname={{ dbconn.NAME }}"
     DATA "{{ item.geo_query|safe }}"

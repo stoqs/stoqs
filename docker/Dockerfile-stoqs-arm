@@ -1,4 +1,4 @@
-FROM osgeo/gdal:ubuntu-small-3.6.0
+FROM --platform=linux/arm64 osgeo/gdal:ubuntu-small-3.6.0
 
 MAINTAINER Mike McCann <mccann@mbari.org>
 
@@ -15,7 +15,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Need at least pip 22.1 for --root-user-action option below
-RUN pip install -U pip
+RUN python3 -m pip install --upgrade pip
 
 # Needed so that postgresql-client is version 15
 RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' \
@@ -28,6 +28,7 @@ RUN apt-get update && \
     imagemagick \
     git \
     gmt \
+    libkrb5-dev \
     locales \
     postgresql-client \
     time \
