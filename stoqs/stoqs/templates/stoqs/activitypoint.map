@@ -45,7 +45,6 @@ MAP
     DATA "{{ item.geo_query|safe }}"
       FILTER "gid={{ item.id }}"
       DEBUG 2
-      DUMP true
       TYPE point
       STATUS off
       METADATA
