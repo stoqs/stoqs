@@ -62,7 +62,7 @@ selenium==4.16.0
 simplejson==3.19.2
 slacker==0.14.0
 Sphinx==7.2.6
-statsmodels==0.14.0
+statsmodels==0.14.1
 sqlparse==0.4.4
 thredds-crawler==1.5.4
 transforms3d==0.4.1
