@@ -1,4 +1,4 @@
-FROM mapserver/mapserver:v7.4.2
+FROM --platform=linux/arm64 camptocamp/mapserver:8.0-gdal3.6-arm64
 
 USER root
 
@@ -9,9 +9,8 @@ RUN apt-get update -y && apt-get install -y libfcgi-dev fcgiwrap nginx
 # Set up the Nginx Mapserver configuration.
 ADD mapserver.tmpl /etc/nginx/sites-available/mapserver
 
-# Override default fcgiwrap init.d script for Mac M1/2
-ADD mapserver-arm-init.d /etc/init.d/fcgiwrap
-RUN chmod +x /etc/init.d/fcgiwrap
+# Config file new in Mapserver 8: https://mapserver.org/mapfile/config.html 
+ADD mapserver.conf /usr/local/etc/
 
 RUN ln -s /etc/nginx/sites-available/mapserver /etc/nginx/sites-enabled/mapserver
 RUN rm /etc/nginx/sites-enabled/default
