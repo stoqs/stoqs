@@ -33,7 +33,6 @@ MAP
     CONNECTION "host={{ dbconn.HOST }} port={{ dbconn.PORT }} user={{ dbconn.USER }} password={{ dbconn.PASSWORD }} dbname={{ dbconn.NAME }}"
     DATA "{{ geo_query|safe }}"
       DEBUG {{ layer_debug_level }}
-      DUMP true
       TYPE line
       STATUS on
       METADATA
