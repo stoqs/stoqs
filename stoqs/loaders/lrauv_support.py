@@ -9,6 +9,7 @@ from django.db.models import Max, Min
 
 from collections import defaultdict, namedtuple
 from datetime import datetime
+from http import HTTPStatus
 from loaders import STOQS_Loader
 from stoqs.models import (Activity, ResourceType, Resource, Measurement, MeasuredParameter,
                           MeasuredParameterResource, ResourceResource, Campaign,
@@ -51,8 +52,8 @@ class MissionLoader(STOQS_Loader):
 
         self.logger.debug(f"Opening td_url = {td_url}")
         with requests.get(td_url) as resp:
-            if resp.status_code != 200:
-                self.logger.error('Cannot read %s, resp.status_code = %s', syslog_url, resp.status_code)
+            if resp.status_code != HTTPStatus.OK:
+                self.logger.error('Cannot read %s, resp.status_code = %s', td_url, resp.status_code)
                 return
             td_log_important = resp.json()['result']
 

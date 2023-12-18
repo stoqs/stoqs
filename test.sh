@@ -131,13 +131,20 @@ unit_tests_status=$?
 
 # Instructions for running functional tests, instead of running them here
 echo "===================================================================================================================="
-echo "Functional tests may be run in a separate session using a different docker-compose yml file..."
-echo "----------------------------------------------------------------------------------------------"
+echo "Functional tests may be run in a separate session using a different docker-compose yml file, e.g."
+echo "-------------------------------------------------------------------------------------------------"
 echo "cd docker"
 echo "docker-compose down"
 echo "docker-compose -f docker-compose-ci.yml up -d --build"
 echo "docker-compose -f docker-compose-ci.yml run --rm stoqs /bin/bash"
 echo "DATABASE_URL=\$DATABASE_SUPERUSER_URL stoqs/manage.py test stoqs.tests.functional_tests --settings=config.settings.ci"
+echo " -- or for Mac M1/2/3 --"
+echo "cd docker"
+echo "docker-compose -f docker-compose-arm.yml down"
+echo "docker-compose -f docker-compose-arm-ci.yml up -d --build"
+echo "docker-compose -f docker-compose-arm-ci.yml run --rm stoqs /bin/bash"
+echo "DATABASE_URL=\$DATABASE_SUPERUSER_URL stoqs/manage.py test stoqs.tests.functional_tests --settings=config.settings.ci"
+
 echo "===================================================================================================================="
 echo "Open http://localhost:7900/?autoconnect=1&resize=scale&password=secret to monitor progress of the tests"
 
