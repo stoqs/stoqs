@@ -50,7 +50,7 @@ class Columnar():
         stime = time()
         # See https://github.com/pandas-dev/pandas/issues/45660#issuecomment-1077355514
         with warnings.catch_warnings():
-            # Ignore warning for non-SQLAlchemy Connecton
+            # Ignore warning for non-SQLAlchemy Connection
             warnings.simplefilter('ignore', UserWarning)
             if set_index or extract:
                 df = pd.read_sql_query(sql, connections[self.db], index_col=self.context)
