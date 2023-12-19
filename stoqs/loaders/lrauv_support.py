@@ -54,7 +54,7 @@ class MissionLoader(STOQS_Loader):
         with requests.get(td_url) as resp:
             if resp.status_code != HTTPStatus.OK:
                 self.logger.error('Cannot read %s, resp.status_code = %s', td_url, resp.status_code)
-                return
+                return mission_starts
             td_log_important = resp.json()['result']
 
         Mission = namedtuple('Mission', 'esec text')
