@@ -587,34 +587,43 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return None, None
 
+    def _filter_stop_nums(self, filterings, stoppings, summaries):
+        filter_nums = []
+        stop_nums = []
+        for filtering, stopping, summary in zip(filterings, stoppings, summaries):
+            self.logger.debug(f"summary = {summary}")
+            ms = (re.match(sampling_start_re, filtering.text) or 
+                  re.match(no_num_sampling_start_re, filtering.text))
+            me = (re.match(sampling_end_re, stopping.text) or
+                  re.match(no_num_sampling_end_re, stopping.text))
+            filter_nums.append(ms.groupdict().get('seq_num'))
+            stop_nums.append(me.groupdict().get('seq_num'))
+
+        return filter_nums, stop_nums
+
     def _validate_summaries(self, platform_name, filterings, stoppings, summaries, criticals):
         '''Ensure that there are the same number of items in filterings, stoppings, summaries and 
         that the sample #s match.  If not then attempt to repair with appropriate warnings.
         '''
-        if len(filterings) != len(stoppings):
-            self.logger.warn(f"len(filterings) [{len(filterings)}] != len(stoppings) [{len(stoppings)}]")
-            self.logger.warn("An ESP error might have occurred, sample times may overlap - check syslog")
-
         if not (len(filterings) == len(stoppings) == len(summaries)):
-            self.logger.warn("Mismatch in the number of filterings, stoppings, summaries")
-            self.logger.warn(f"len(filterings) = {len(filterings)}, len(stoppings) = {len(stoppings)}")
-            self.logger.warn(f"len(summaries) = {len(summaries)}")
+            self.logger.warn(f"Mismatch in the number of ESP Sampling messages: {len(filterings)=}, {len(stoppings)=}, {len(summaries)=}")
 
-            filter_nums = []
-            stop_nums = []
-            for filtering, stopping, summary in zip(filterings, stoppings, summaries):
-                self.logger.debug(f"summary = {summary}")
-                ms = (re.match(sampling_start_re, filtering.text) or 
-                      re.match(no_num_sampling_start_re, filtering.text))
-                me = (re.match(sampling_end_re, stopping.text) or
-                      re.match(no_num_sampling_end_re, stopping.text))
-                filter_nums.append(ms.groupdict().get('seq_num'))
-                stop_nums.append(me.groupdict().get('seq_num'))
+            filter_nums, stop_nums = self._filter_stop_nums(filterings, stoppings, summaries)
+
+            # 0. Report case with more filterings than summaries (summary likely in the following syslog)
+            if len(summaries) < len(filterings):
+                self.logger.info(f"{len(summaries)=} < {len(filterings)=}. Summary for {filterings[-1]} likely in the following syslog.")
 
             # 1. Correct case where we have more summaries than filterings
-            if len(summaries) > len(filterings):
+            elif len(summaries) - len(filterings) == 1:
+                # 1a. Simple case where a filtering message is in the previous syslog
+                self.logger.info(f"Prepending {self.prev_filterings[-1]=} to {filterings=}")
+                filterings = [self.prev_filterings[-1]] + filterings
+
+            elif len(summaries) > len(filterings):
+                # 1b. More than a difference of 1
                 to_del = []
-                self.logger.info(f"len(summaries) > len(filterings). Checking that numbers in filter_nums match '{sampling_start_re}'")
+                self.logger.info(f"{len(summaries)=} > {len(filterings)=}. Checking that numbers in filter_nums match '{sampling_start_re}'")
                 for index, summary in enumerate(summaries):
                     lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
                     if lsr_seq_num.groupdict().get('seq_num') not in filter_nums:
@@ -657,7 +666,7 @@ class ParentSamplesLoader(STOQS_Loader):
                     del summaries[index]
 
             # 2. Report case where we have more summaries than stoppings
-            if len(summaries) > len(stoppings):
+            elif len(summaries) > len(stoppings):
                 self.logger.info(f"len(summaries) > len(stoppings). Checking that numbers in stop_nums match '{sampling_end_re}'")
                 to_del = []
                 for index, summary in enumerate(summaries):
@@ -941,9 +950,9 @@ class ParentSamplesLoader(STOQS_Loader):
         '''
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
         '''
-
-        filterings, stoppings, summaries, criticals, esp_device = self._esps_from_json(platform_name, url, db_alias)
-        filterings, stoppings, summaries = self._validate_summaries(platform_name, filterings, stoppings, summaries, criticals)
+        self.logger.info(f"Parsing ESP sample messages from /mbari/LRAUV/{'/'.join(url.split('/')[6:-1])}/syslog")
+        init_filterings, init_stoppings, init_summaries, init_criticals, esp_device = self._esps_from_json(platform_name, url, db_alias)
+        filterings, stoppings, summaries = self._validate_summaries(platform_name, init_filterings, init_stoppings, init_summaries, init_criticals)
 
         # After 14 August 2018 a 'sample #<num>' is included in the log message:
         # https://bitbucket.org/mbari/lrauv-application/pull-requests/76/add-sample-to-all-logimportant-entries/diff
@@ -970,6 +979,12 @@ class ParentSamplesLoader(STOQS_Loader):
             self.logger.debug('sampletype %s, created = %s', sipper_type, created)
             self._save_samples(db_alias, platform_name, activity_name, sipper_type, sipper_names, url,
                                log_text='CANONSampler Sampled at message')
+
+        # Save the previous values in case we need to look for missing S_FILTERING messages (see emails from Jan 2024)
+        self.prev_filterings = init_filterings
+        self.prev_stoppings = init_stoppings
+        self.prev_summaries = init_summaries
+        self.prev_criticals = init_criticals
 
 class SeabirdLoader(STOQS_Loader):
     '''

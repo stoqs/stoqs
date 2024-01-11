@@ -90,6 +90,14 @@ triton_edate = datetime(2023, 10, 18)
 
 cl.process_command_line()
 
+# Test looking in previous syslog for missing S_FILTERING message - fixes Cartridges 20, 7-4 from Lake Erie
+#cl.makai_base = ' http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2023/20230908_20230918'
+#cl.makai_files = ['20230912T120352/202309121203_202309132312_2S_scieng.nc', '20230913T231255/202309132312_202309141912_2S_scieng.nc']
+#cl.makai_files = ['20230915T204434/202309152044_202309170253_2S_scieng.nc', '20230917T025308/202309170253_202309172100_2S_scieng.nc']
+#cl.makai_parms = ['temperature']
+#cl.loadLRAUV('makai', makai_sdate, makai_edate, build_attrs=False)
+#sys.exit()
+
 # Uncomment for testing of simulation load
 #cl.addSimulationResources(build_image_atlases=True)
 #cl.stride = 10
@@ -105,8 +113,8 @@ if cl.args.test:
 elif cl.args.stride:
     cl.stride = cl.args.stride
     # Realtime sbd logs load
-    cl.loadLRAUV('makai', makai_sdate, makai_edate, critSimpleDepthTime=0.1, sbd_logs=True)
-    cl.loadLRAUV('triton', triton_sdate, triton_edate, critSimpleDepthTime=0.1, sbd_logs=True)
+    #cl.loadLRAUV('makai', makai_sdate, makai_edate, critSimpleDepthTime=0.1, sbd_logs=True)
+    #cl.loadLRAUV('triton', triton_sdate, triton_edate, critSimpleDepthTime=0.1, sbd_logs=True)
     # Post recovery missionlogs load
     cl.loadLRAUV('makai', makai_sdate, makai_edate, critSimpleDepthTime=0.1)
     cl.loadLRAUV('triton', triton_sdate, triton_edate, critSimpleDepthTime=0.1)
