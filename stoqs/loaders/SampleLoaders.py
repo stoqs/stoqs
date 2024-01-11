@@ -617,11 +617,18 @@ class ParentSamplesLoader(STOQS_Loader):
             # 1. Correct case where we have more summaries than filterings
             elif len(summaries) - len(filterings) == 1:
                 # 1a. Simple case where a filtering message is in the previous syslog
-                self.logger.info(f"Prepending {self.prev_filterings[-1]=} to {filterings=}")
-                filterings = [self.prev_filterings[-1]] + filterings
+                self.logger.info("One more summary than filtering in this syslog. There may be matching ones in previous syslogs.")
+                if self.prev_filterings:
+                    self.logger.info(f"Prepending {self.prev_filterings[-1]=} to {filterings=}")
+                    filterings = [self.prev_filterings[-1]] + filterings
+                else:
+                    self.logger.info("No prev_filterings exist. Here are the ESP messages from this syslog:")
+                    self.logger.info(f"{filterings =}")
+                    self.logger.info(f"{stoppings =}")
+                    self.logger.info(f"{summaries =}")
 
-            elif len(summaries) > len(filterings):
-                # 1b. More than a difference of 1
+            if len(summaries) > len(filterings):
+                # 1b. More than a difference of 1 or unable to append from self.prev_filterings
                 to_del = []
                 self.logger.info(f"{len(summaries)=} > {len(filterings)=}. Checking that numbers in filter_nums match '{sampling_start_re}'")
                 for index, summary in enumerate(summaries):
