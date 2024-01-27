@@ -32,7 +32,7 @@ import subprocess
 import math
 import numpy as np
 import xarray as xr
-from coards import to_udunits
+from cftime import date2num
 import seawater.eos80 as sw
 import csv
 import requests
@@ -1275,7 +1275,7 @@ class STOQS_Loader(object):
         line = []
         pklookup = []
         for dt,dd,pk in vlqs:
-            ems = 1000 * to_udunits(dt, 'seconds since 1970-01-01')
+            ems = 1000 * date2num(dt, 'seconds since 1970-01-01')
             d = float(dd)
             line.append((ems,d,))
             pklookup.append(pk)
@@ -1362,7 +1362,7 @@ class STOQS_Loader(object):
                 i += 1
                 if i % stride == 0:
                     counter += 1
-                    ems = 1000 * to_udunits(tbd['measurement__instantpoint__timevalue'], 'seconds since 1970-01-01')
+                    ems = 1000 * date2num(tbd['measurement__instantpoint__timevalue'], 'seconds since 1970-01-01')
                     if tbd['measurement__bottomdepth']:
                         line.append( (ems, tbd['measurement__bottomdepth']) )
                         pklookup.append(tbd['measurement__instantpoint__id'])
@@ -1412,14 +1412,14 @@ class STOQS_Loader(object):
             if trajectoryProfileDepths:
                 self.logger.info('Loading time varying depths in SimpleDepthTime for nomDepth=%s', nomDepth)
                 for (dt,dd,pk), depths in zip(ndlqs, trajectoryProfileDepths):
-                    ems = 1000 * to_udunits(dt, 'seconds since 1970-01-01')
+                    ems = 1000 * date2num(dt, 'seconds since 1970-01-01')
                     d = depths[i]
                     line.append((ems,d,))
                     pklookup.append(pk)
             else:
                 self.logger.debug('Loading depths in SimpleDepthTime for nomDepth=%s', nomDepth)
                 for dt,dd,pk in ndlqs:
-                    ems = 1000 * to_udunits(dt, 'seconds since 1970-01-01')
+                    ems = 1000 * date2num(dt, 'seconds since 1970-01-01')
                     d = float(dd)
                     line.append((ems,d,))
                     pklookup.append(pk)
