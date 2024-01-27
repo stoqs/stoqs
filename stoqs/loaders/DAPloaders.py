@@ -49,7 +49,7 @@ import pytz
 from pydap.client import open_url
 import pydap.model
 import math
-from coards import to_udunits, from_udunits, ParserError
+from cftime import num2date, date2num
 import logging
 import socket
 import seawater.eos80 as sw
@@ -245,14 +245,8 @@ class Base_Loader(STOQS_Loader):
                 self.logger.debug('Getting trajectory min and max times for v = %s', v)
                 self.logger.debug("self.ds[ac['time']][0] = %s", self.ds[ac['time']][0])
                 try:
-                    minDT[v] = from_udunits(self.ds[ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
-                    maxDT[v] = from_udunits(self.ds[ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'])
-                except ParserError as e:
-                    self.logger.warn("%s. Trying to fix up time units", e)
-                    # Tolerate units like 1970-01-01T00:00:00Z - which is found on the IOOS Glider DAC
-                    if self.ds[ac['time']].attributes['units'] == 'seconds since 1970-01-01T00:00:00Z':
-                        minDT[v] = from_udunits(self.ds[ac['time']].data[0][0], 'seconds since 1970-01-01 00:00:00')
-                        maxDT[v] = from_udunits(self.ds[ac['time']].data[-1][0], 'seconds since 1970-01-01 00:00:00')
+                    minDT[v] = num2date(self.ds[ac['time']].data[0][0], self.ds[ac['time']].attributes['units'], only_use_cftime_datetimes=False, only_use_python_datetimes=True)
+                    maxDT[v] = num2date(self.ds[ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'], only_use_cftime_datetimes=False, only_use_python_datetimes=True)
                 except ValueError as e:
                     self.logger.warn(f'Skipping load of {self.url}: {e}')
                     raise NoValidData(f'Could not get min and max time from {self.url}')
@@ -265,15 +259,15 @@ class Base_Loader(STOQS_Loader):
                     tindx = self.getTimeBegEndIndices(self.ds[list(self.ds[v].keys())[1]])
                     times = self.ds[list(self.ds[v].maps.keys())[0]].data[tindx[0]:tindx[-1]:self.stride]
                     times, time_units = self._convert_EPIC_times(times, tindx)
-                    minDT[v] = from_udunits(times[0], time_units)
-                    maxDT[v] = from_udunits(times[-1], time_units)
+                    minDT[v] = num2date(times[0], time_units, only_use_cftime_datetimes=False, only_use_python_datetimes=True)
+                    maxDT[v] = num2date(times[-1], time_units, only_use_cftime_datetimes=False, only_use_python_datetimes=True)
                 else:
-                    minDT[v] = from_udunits(self.ds[v][ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
-                    maxDT[v] = from_udunits(self.ds[v][ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'])
+                    minDT[v] = num2date(self.ds[v][ac['time']].data[0][0], self.ds[ac['time']].attributes['units'], only_use_cftime_datetimes=False, only_use_python_datetimes=True)
+                    maxDT[v] = num2date(self.ds[v][ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'], only_use_cftime_datetimes=False, only_use_python_datetimes=True)
             else:
                 # Perhaps a strange file like LOPC size class data along a trajectory
-                minDT[v] = from_udunits(self.ds[ac['time']].data[0][0], self.ds[ac['time']].attributes['units'])
-                maxDT[v] = from_udunits(self.ds[ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'])
+                minDT[v] = num2date(self.ds[ac['time']].data[0][0], self.ds[ac['time']].attributes['units'], only_use_cftime_datetimes=False, only_use_python_datetimes=True)
+                maxDT[v] = num2date(self.ds[ac['time']].data[-1][0], self.ds[ac['time']].attributes['units'], only_use_cftime_datetimes=False, only_use_python_datetimes=True)
 
         self.logger.debug('minDT = %s', minDT)
         self.logger.debug('maxDT = %s', maxDT)
@@ -718,18 +712,18 @@ class Base_Loader(STOQS_Loader):
             timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards doesn't like ISO format
         if self.startDatetime: 
             self.logger.debug('self.startDatetime, timeAxis.units = %s, %s', self.startDatetime, timeAxis.units)
-            s = to_udunits(self.startDatetime, timeAxisUnits)
+            s = date2num(self.startDatetime, timeAxisUnits)
             self.logger.debug("For startDatetime = %s, the udnits value is %f", self.startDatetime, s)
 
         if self.dataStartDatetime: 
             # Override s if self.dataStartDatetime is specified
             self.logger.debug('self.dataStartDatetime, timeAxis.units = %s, %s', self.dataStartDatetime, timeAxis.units)
-            s = to_udunits(self.dataStartDatetime, timeAxisUnits)
+            s = date2num(self.dataStartDatetime, timeAxisUnits)
             self.logger.debug("For dataStartDatetime = %s, the udnits value is %f", self.dataStartDatetime, s)
 
         if self.requested_endDatetime:
             # endDatetime may be None, in which case just read until the end
-            e = to_udunits(self.endDatetime, timeAxisUnits)
+            e = date2num(self.endDatetime, timeAxisUnits)
             self.logger.debug("For endDatetime = %s, the udnits value is %f", self.endDatetime, e)
         else:
             e = timeAxis[-1]
@@ -974,10 +968,10 @@ class Base_Loader(STOQS_Loader):
             time_units = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
         try:
             if times.shape[0] > 0:
-                mtimes = (from_udunits(mt, time_units) for mt in times)
+                mtimes = (num2date(mt, time_units, only_use_cftime_datetimes=False, only_use_python_datetimes=True) for mt in times)
         except IndexError:
             # Trap case where times.shape = () giving opportunity to turn a single value into a list
-            mtimes = [from_udunits(float(times.data), time_units)]
+            mtimes = [num2date(float(times.data), time_units, only_use_cftime_datetimes=False, only_use_python_datetimes=True)]
 
         try:
             if isinstance(self.ds[ac[DEPTH]], pydap.model.GridType):
@@ -1074,7 +1068,7 @@ class Base_Loader(STOQS_Loader):
         time_units = self.ds[ac[TIME]].units.lower().replace('utc', 'UTC')
         if self.ds[ac[TIME]].units == 'seconds since 1970-01-01T00:00:00Z':
             timeUnits = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
-        mtimes = (from_udunits(mt, time_units) for mt in times)
+        mtimes = (num2date(mt, time_units, only_use_cftime_datetimes=False, only_use_python_datetimes=True) for mt in times)
 
         warn_secs_diff = 2
         noload_secs_diff = 70
@@ -1340,7 +1334,7 @@ class Base_Loader(STOQS_Loader):
                 # http://dods.mbari.org/opendap/data/CCE_Archive/MS3/20151005/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20151005.nc.ascii?time[93900:1:94100]
                 self.logger.debug(f"{e} in {self.url}")
 
-            epoch_seconds.append(to_udunits(gcal_datetime, time_units))
+            epoch_seconds.append(date2num(gcal_datetime, time_units))
 
         return epoch_seconds, time_units
 
@@ -1384,7 +1378,7 @@ class Base_Loader(STOQS_Loader):
                     if self.ds[list(self.ds[firstp].maps.keys())[0]].units == 'seconds since 1970-01-01T00:00:00Z':
                         time_units = 'seconds since 1970-01-01 00:00:00'    # coards 1.0.4 and earlier doesn't like ISO format
 
-                    mtimes = [from_udunits(mt, time_units) for mt in times]
+                    mtimes = [num2date(mt, time_units, only_use_cftime_datetimes=False, only_use_python_datetimes=True) for mt in times]
 
                     # 1. - depths: first by CF/COARDS coordinate rules, then by EPIC conventions
                     nomDepths = None
@@ -1816,7 +1810,7 @@ class Base_Loader(STOQS_Loader):
             (longitude, latitude, mtime, depth) = (
                             row.pop('longitude'),
                             row.pop('latitude'),
-                            from_udunits(row.pop('time'), row.pop('timeUnits')),
+                            num2date(row.pop('time'), row.pop('timeUnits'), only_use_cftime_datetimes=False, only_use_python_datetimes=True),
                             row.pop('depth'))
 
 
