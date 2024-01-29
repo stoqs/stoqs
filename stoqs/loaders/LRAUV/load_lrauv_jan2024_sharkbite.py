@@ -40,7 +40,8 @@ cl.process_command_line()
 sdate = datetime(2024, 1, 20)
 edate = datetime(2024, 1, 31)
 
-'/mbari/LRAUV/pontus/missionlogs/2024/20240117_20240122/20240121T161500/202401211615_202401212128_100ms_scieng.nc'
+# Add to stoqs/mbari_lrauv_campaigns.py:
+#   ('stoqs_lrauv_jan2024_sharkbite', 'LRAUV/load_lrauv_jan2024_sharkbite.py'),
 
 # Load 10 Hz orientation data from the shark bite at 2041 21 Jan 2024, see:
 # Slack thread: https://mbari.slack.com/archives/C4VJ11Q83/p1706201788496489
