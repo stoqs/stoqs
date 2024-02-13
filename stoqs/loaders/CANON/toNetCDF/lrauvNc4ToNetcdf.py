@@ -121,7 +121,7 @@ class InterpolatorWriter(BaseWriter):
         else:
             return None
 
-    def write_netcdf(self, out_file, in_url, nudge_to_platform=None, nudge_interval=None, replace_with_platform=None):
+    def write_netcdf(self, out_file, in_url, resampleFreq="2S", nudge_to_platform=None, nudge_interval=None, replace_with_platform=None):
 
         # Check parent directory and create if needed
         dirName = os.path.dirname(out_file)
@@ -178,8 +178,7 @@ class InterpolatorWriter(BaseWriter):
             if not ts.empty:
                 # xarray is much smarter about matching different shapes to the same index
                 self.logger.debug("Saving to xarray Dataset: %s", key)
-                # Integerize time so that we don't have ns precision that coards.from_udunits() can't handle
-                ts = ts.resample('2S').interpolate("linear")
+                ts = ts.resample(resampleFreq).interpolate("linear")
                 self.Dataset[key] =  xr.DataArray(
                     ts.values,
                     coords=[ts.index],
@@ -239,6 +238,7 @@ class InterpolatorWriter(BaseWriter):
 
         # Commented out so the the .old file does not get written
         # self.ncFile.close()
+        self.logger.info(f"Saving with {resampleFreq = }")
         self.Dataset.to_netcdf(path=out_file, format="NETCDF4_CLASSIC")
         # End write_netcdf()
 
@@ -516,7 +516,7 @@ class InterpolatorWriter(BaseWriter):
         self.logger.info("%s", list(self.all_sub_ts.keys()))
 
         # Write data to the file
-        self.write_netcdf(out_file, url)
+        self.write_netcdf(out_file, url, resampleFreq)
         self.logger.info('Wrote ' + out_file)
 
         # End processSingleParm
@@ -1081,7 +1081,7 @@ class InterpolatorWriter(BaseWriter):
         self.logger.debug("shape_count = %s", shape_count)
         if shape_count > 0:
             # Write data to the file
-            self.write_netcdf(out_file, url)
+            self.write_netcdf(out_file, url, resampleFreq)
             self.logger.info('Wrote ' + out_file)
 
         # End processSingleParm
@@ -1180,7 +1180,7 @@ class InterpolatorWriter(BaseWriter):
         self.logger.info("%s", list(self.all_sub_ts.keys()))
 
         # Write data to the file
-        self.write_netcdf(out_file, in_file)
+        self.write_netcdf(out_file, in_file, resampleFreq)
         self.logger.info('Wrote ' + out_file)
 
         # End processNc4
@@ -1388,7 +1388,7 @@ class InterpolatorWriter(BaseWriter):
 
         self.logger.info("%s", list(self.all_sub_ts.keys()))
 
-        self.write_netcdf(out_file, in_file, nudge_to_platform, nudge_interval, replace_with_platform)
+        self.write_netcdf(out_file, in_file, resampleFreq, nudge_to_platform, nudge_interval, replace_with_platform)
         self.logger.info('Wrote ' + out_file)
         self.logger.removeHandler(fh)
 
@@ -1478,7 +1478,7 @@ class InterpolatorWriter(BaseWriter):
                 self.all_sub_ts[key] = pd.Series()
 
         # Write data to the file
-        self.write_netcdf(out_file, url)
+        self.write_netcdf(out_file, url, resampleFreq)
         self.logger.info('Wrote ' + out_file)
 
         # End processResample
