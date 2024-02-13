@@ -21,7 +21,7 @@ djangorestframework==3.14.0
 fastparquet==2024.2.0
 Flask-SQLAlchemy==3.1.1
 httplib2==0.22.0
-holoviews==1.18.1
+holoviews==1.18.3
 hvplot==0.9.2
 ipyleaflet==0.18.2
 ipython==8.21.0
