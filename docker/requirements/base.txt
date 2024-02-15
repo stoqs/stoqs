@@ -15,7 +15,7 @@ django-environ==0.11.2
 django-model-utils==4.4.0
 django-extensions==3.2.1
 django-picklefield==3.1
-GitPython==3.1.41
+GitPython==3.1.42
 euclid==1.2
 djangorestframework==3.14.0
 fastparquet==2024.2.0
