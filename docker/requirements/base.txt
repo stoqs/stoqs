@@ -50,7 +50,7 @@ psycopg2-binary==2.9.9
 psutil==5.9.7
 pupynere==1.0.15
 Pydap==3.4.1
-python-dateutil==2.8.2
+python-dateutil==2.9.0
 python3-memcached==1.51
 python-openid==2.2.5
 pytz==2024.1
