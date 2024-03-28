@@ -9,7 +9,7 @@ datashader==0.16.0
 dj-database-url==2.1.0
 Django==5.0.3
 django-cache-url==3.4.5
-django-configurations==2.5
+django-configurations==2.5.1
 django-debug-toolbar==4.2.0
 django-environ==0.11.2
 django-model-utils==4.4.0
@@ -17,7 +17,7 @@ django-extensions==3.2.1
 django-picklefield==3.1
 GitPython==3.1.42
 euclid==1.2
-djangorestframework==3.15.0
+djangorestframework==3.15.1
 fastparquet==2024.2.0
 Flask-SQLAlchemy==3.1.1
 httplib2==0.22.0
@@ -50,14 +50,14 @@ psycopg2-binary==2.9.9
 psutil==5.9.7
 pupynere==1.0.15
 Pydap==3.4.1
-python-dateutil==2.9.0
+python-dateutil==2.9.0.post0
 python3-memcached==1.51
 python-openid==2.2.5
 pytz==2024.1
 pyzmq==25.1.2
 scikit-learn==1.4.1.post1
 seawater==3.3.4
-selenium==4.18.1
+selenium==4.19.0
 simplejson==3.19.2
 slacker==0.14.0
 Sphinx==7.2.6
