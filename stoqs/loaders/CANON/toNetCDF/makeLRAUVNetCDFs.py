@@ -57,6 +57,8 @@ SCI_PARMS = {'/':           [{'name': 'concentration_of_colored_dissolved_organi
                               {'name': 'Output650', 'rename': 'bbp650'},
                               {"name": "VolumeScatCoeff117deg470nm", "rename": "volumescatcoeff117deg470nm"},
                               {"name": "VolumeScatCoeff117deg650nm", "rename": "volumescatcoeff117deg650nm"},
+                              {"name": "BackscatteringCoeff470nm", "rename": "backscatteringcoeff470nm"},
+                              {"name": "BackscatteringCoeff650nm", "rename": "backscatteringcoeff650nm"},
                               ],
              'WetLabsSeaOWL_UV_A': [{'name': 'concentration_of_chromophoric_dissolved_organic_matter_in_sea_water',
                                      'rename': 'chromophoric_dissolved_organic_matter'},
@@ -67,7 +69,10 @@ SCI_PARMS = {'/':           [{'name': 'concentration_of_colored_dissolved_organi
                                     {'name': 'VolumeScatCoeff117deg700nm',
                                      'rename': 'VolumeScatCoeff117deg700nm'},
                                     {'name': 'mass_concentration_of_petroleum_hydrocarbons_in_sea_water',
-                                     'rename': 'petroleum_hydrocarbons'}]}
+                                     'rename': 'petroleum_hydrocarbons'}]},
+             'WetLabsUBAT': [ {'name': 'average_bioluminescence', 'rename': 'average_bioluminescence'},
+                              {'name': 'flow_rate', 'rename': 'ubat_flow_rate'},
+                            ],
 
 ENG_PARMS = {'BPC1': [{'name': 'platform_battery_charge',
                        'rename': 'health_platform_battery_charge'},

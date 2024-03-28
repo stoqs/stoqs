@@ -1,55 +1,79 @@
-FROM --platform=linux/arm64 osgeo/gdal:ubuntu-small-3.6.0
+# define an alias for the specific python version used in this file.
+FROM osgeo/gdal:ubuntu-small-3.6.2 as python
 
-MAINTAINER Mike McCann <mccann@mbari.org>
+# Python build stage
+FROM python as python-build-stage
 
-ENV DEBIAN_FRONTEND=noninteractive
+ARG BUILD_ENVIRONMENT=development
 
-# Inlined FROM pcic/geospatial-python
-RUN apt-get update && \
-    apt-get -yq install \
-    libgdal-dev \
-    libyaml-dev \
-    lsb-core \
-    wget \
-    python3-pip && \
-    rm -rf /var/lib/apt/lists/*
+# Install apt packages
+RUN apt-get update && apt-get install --no-install-recommends -y \
+  # dependencies for building Python packages
+  build-essential \
+  # psycopg2 dependencies
+  libpq-dev \
+  python3-dev \
+  python3-pip \
+  graphviz-dev
 
-# Need at least pip 22.1 for --root-user-action option below
-RUN python3 -m pip install --upgrade pip
-
-# Needed so that postgresql-client is version 15
-RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' \
-    && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc > /etc/apt/trusted.gpg.d/pgdg.asc
-
-# Additional requirements for stoqs
-RUN apt-get update && \
-    apt-get -yq install \
-    freetds-dev \
-    imagemagick \
-    git \
-    gmt \
-    libkrb5-dev \
-    locales \
-    postgresql-client \
-    time \
-    xvfb \
-    && locale-gen en_US.UTF-8
-
-ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
-
-# To fix multiprocessing-permission-denied for docker-compose execution
-RUN echo 'none /dev/shm tmpfs rw,nosuid,nodev,noexec 0 0' > /etc/fstab
-
-# Make sure python and python-config refer to corresponding Python 3 versions
-RUN cd /usr/bin/ &&\
-    ln -fs python3.10 python && \
-    ln -fs python3.10-config python-config
-
-WORKDIR /srv
-
+# Requirements are installed here to ensure they will be cached.
 # Symlink to requirements from docker directory used to minimize context
 COPY requirements /requirements
-RUN /bin/bash -c 'pip install -r /requirements/production.txt --root-user-action=ignore'
+
+# Create Python Dependency and Sub-Dependency Wheels.
+RUN python3 -m pip wheel --wheel-dir /usr/src/app/wheels  \
+  -r requirements/${BUILD_ENVIRONMENT}.txt
+
+
+# Python 'run' stage
+FROM python as python-run-stage
+
+ARG BUILD_ENVIRONMENT=development
+ARG APP_HOME=/srv
+
+ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV BUILD_ENV ${BUILD_ENVIRONMENT}
+
+WORKDIR ${APP_HOME}
+
+
+# devcontainer dependencies and utils
+RUN apt-get update && apt-get install --no-install-recommends -y \
+  sudo git bash-completion nano ssh \
+  less wget zsh ssh-client postgresql-client
+
+# Create devcontainer user and add it to sudoers
+RUN groupadd --gid 1000 dev-user \
+  && useradd --uid 1000 --gid dev-user --shell /bin/bash --create-home dev-user \
+  && echo dev-user ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/dev-user \
+  && chmod 0440 /etc/sudoers.d/dev-user
+
+RUN apt-get update && ACCEPT_EULA=Y apt-get install --no-install-recommends -y \
+  # psycopg2 dependencies
+  libpq-dev \
+  # Translations dependencies
+  gettext \
+  python3-pip \
+  locales \
+  # cleaning up unused files
+  && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+  && rm -rf /var/lib/apt/lists/*
+
+# https://stackoverflow.com/a/49298553/1281657
+# make the "en_US.UTF-8" locale so postgres will be utf-8 enabled by default
+RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+ENV LANG en_US.UTF-8
+
+# All absolute dir copies ignore workdir instruction. All relative dir copies are wrt to the workdir instruction
+# copy python dependency wheels from python-build-stage
+COPY --from=python-build-stage /usr/src/app/wheels  /wheels/
+COPY --from=python-build-stage /usr/lib/libgdal* /usr/lib/
+RUN ldconfig
+
+# use wheels to install python dependencies
+RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
+  && rm -rf /wheels/
 
 # Connection to uwsgi/nginx
 COPY docker-stoqs-uwsgi-arm.ini /etc/uwsgi/django-uwsgi.ini
@@ -62,4 +86,3 @@ RUN chmod +x /stoqs-start-run_server.sh
 RUN git config --global --add safe.directory /srv
 
 CMD ["docker/stoqs-start.sh"]
-
