@@ -1081,7 +1081,7 @@ class InterpolatorWriter(BaseWriter):
         self.logger.debug("shape_count = %s", shape_count)
         if shape_count > 0:
             # Write data to the file
-            self.write_netcdf(out_file, url, resampleFreq)
+            self.write_netcdf(out_file, url)
             self.logger.info('Wrote ' + out_file)
 
         # End processSingleParm
