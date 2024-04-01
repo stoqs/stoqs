@@ -128,6 +128,8 @@ class ActivityView(object):
             ##logger.info(line.decode("utf-8"))
             fh.write(line.decode("utf-8"))
 
+        fh.close()
+
     def getColorOfItem(self, item):
         '''Return color given name of item.  Returns value saved in class dictionary otherwise create new random color, save, and return it. 
         Check to see it item (could be Activity, Parameter, Platform, ...)

@@ -420,7 +420,6 @@ class ParentSamplesLoader(STOQS_Loader):
                         prev_line_has_component = True
                     elif 'CANONSampler' in components and 'CANONSampler' in line:
                         if lm.groupdict().get('log_level') in levels:
-                            # 'CANONSampler sampling at' text can have components like '[spiral_cast:SampleAtDepth:SampleWrapper:SampleCANONSampler:D]'
                             # Collect all log_rows that match levels, as only err_code=0 has component '[CANONSampler]', let calling routine pull out relevant lines
                             log_rows.append({'unixTime': float(lm.groupdict().get('log_esec')) * 1000, 'text': lm.groupdict().get('log_message')})
 
@@ -856,20 +855,21 @@ class ParentSamplesLoader(STOQS_Loader):
         ##    to_time = datetime.strftime(to_dt, "%Y-%m-%dT%H:%M")
         # Assuming that when use_syslog use began in December 2022 the above code is no longer needed
 
-        SIPPERING = 'CANONSampler sampling at'
+        SIPPERING = 'ELMO will go to position'  # Is an 'INFO' message, use log_info messages
         if use_syslog:
-            log_important, _ = self._read_syslog(url, components=('CANONSampler',))
+            log_info, _ = self._read_syslog(url, components=('CANONSampler',), levels=('INFO',))
+            log_important, _ = self._read_syslog(url, components=('CANONSampler',), levels=('IMPORTANT',))
             log_critical, _ = self._read_syslog(url, components=('CANONSampler',), levels=('CRITICAL',))
         else:
             log_important = self._read_tethysdash(platform_name, url)
 
         Log = namedtuple('Log', 'esec text')
         try:
-            samplings_at = [Log(d['unixTime']/1000.0, d['text']) for d in log_important if SIPPERING in d['text']]
+            samplings_at = [Log(d['unixTime']/1000.0, d['text']) for d in log_info if SIPPERING in d['text']]
         except KeyError:
             self.logger.debug(f"No '{SIPPERING}' messages found {url}'s syslog")
         try:
-            sample_num_errs = [Log(d['unixTime']/1000.0, d['text']) for d in log_important if re.match(SIPPER_NUM_ERR, d['text'])]
+            sample_num_errs = [Log(d['unixTime']/1000.0, d['text']) for d in log_info if re.match(SIPPER_NUM_ERR, d['text'])]
         except KeyError:
             self.logger.debug(f"No '{SIPPERING}' messages found in {url}'s syslog")
 
