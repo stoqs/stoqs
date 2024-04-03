@@ -316,7 +316,7 @@ class CANONLoader(LoadScript):
     def loadLRAUV(self, pname, startdate=None, enddate=None, 
                   parameters=['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen', 'PAR',
                     'volumescatcoeff117deg470nm', 'volumescatcoeff117deg650nm',
-                    'backscatteringcoeff470nm', 'backscatteringcoeff650nm',
+                    'particulatebackscatteringcoeff470nm', 'particulatebackscatteringcoeff650nm',
                     'average_bioluminescence', 'ubat_flow_rate',
                     'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
                     'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
