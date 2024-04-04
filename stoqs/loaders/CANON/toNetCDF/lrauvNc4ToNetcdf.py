@@ -1224,7 +1224,7 @@ class InterpolatorWriter(BaseWriter):
         t = pd.Series(index = coord_ts['time'].index, dtype=np.float64)
 
         # resample
-        t_resample = t.resample(resampleFreq.tolower()).asfreq()[:]
+        t_resample = t.resample(resampleFreq.lower()).asfreq()[:]
 
         nudge_to_platform=None
         nudge_interval=None
@@ -1273,6 +1273,12 @@ class InterpolatorWriter(BaseWriter):
                                 attr[name] = p[name]
                             except KeyError:
                                 continue
+                        # This could be generalized, but for now simply be explicit
+                        # https://mbari.slack.com/archives/C04ETLY6T7V/p1712181310294609?thread_ts=1712073883.974969&cid=C04ETLY6T7V
+                        if key == 'particulatebackscatteringcoeff470nm':
+                            attr['long_name'] = 'Particulate backscattering coefficient at 470nm'
+                        if key == 'particulatebackscatteringcoeff650nm':
+                            attr['long_name'] = 'Particulate backscattering coefficient at 650nm'
 
                         self.all_attrib[key] = attr
 
