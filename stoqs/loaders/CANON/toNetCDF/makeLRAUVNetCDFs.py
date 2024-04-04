@@ -69,10 +69,12 @@ SCI_PARMS = {'/':           [{'name': 'concentration_of_colored_dissolved_organi
                                     {'name': 'VolumeScatCoeff117deg700nm',
                                      'rename': 'VolumeScatCoeff117deg700nm'},
                                     {'name': 'mass_concentration_of_petroleum_hydrocarbons_in_sea_water',
-                                     'rename': 'petroleum_hydrocarbons'}]},
+                                     'rename': 'petroleum_hydrocarbons'},
+                                   ],
              'WetLabsUBAT': [ {'name': 'average_bioluminescence', 'rename': 'average_bioluminescence'},
                               {'name': 'flow_rate', 'rename': 'ubat_flow_rate'},
                             ],
+             }
 
 ENG_PARMS = {'BPC1': [{'name': 'platform_battery_charge',
                        'rename': 'health_platform_battery_charge'},
