@@ -178,7 +178,7 @@ class InterpolatorWriter(BaseWriter):
             if not ts.empty:
                 # xarray is much smarter about matching different shapes to the same index
                 self.logger.debug("Saving to xarray Dataset: %s", key)
-                ts = ts.resample(resampleFreq).interpolate("linear")
+                ts = ts.resample(resampleFreq.lower()).interpolate("linear")
                 self.Dataset[key] =  xr.DataArray(
                     ts.values,
                     coords=[ts.index],
@@ -550,7 +550,7 @@ class InterpolatorWriter(BaseWriter):
 
                     # resample using the mean then interpolate on to the time dimension
                     self.logger.debug(f"calling ts.resample() for {c_rename}")
-                    ts_resample = ts.resample(resampleFreq).mean()[:]
+                    ts_resample = ts.resample(resampleFreq.lower()).mean()[:]
                     self.logger.debug(f"calling self.interpolate() for {c_rename}")
                     i = self.interpolate(ts_resample, t_resample.index)
 
@@ -916,7 +916,7 @@ class InterpolatorWriter(BaseWriter):
 
         # Scan all netCDF variables to assemble a common time axis for all varaibles
         common_times, min_time, max_time = self._common_time_index()
-        nidx = pd.date_range(min_time, max_time, freq=fillin_freq)
+        nidx = pd.date_range(min_time, max_time, freq=fillin_freq.lower())
 
         # Create pandas time series for each parameter and store attributes - root group from .nc4 file
         for key in parms:
@@ -1224,7 +1224,7 @@ class InterpolatorWriter(BaseWriter):
         t = pd.Series(index = coord_ts['time'].index, dtype=np.float64)
 
         # resample
-        t_resample = t.resample(resampleFreq).asfreq()[:]
+        t_resample = t.resample(resampleFreq.tolower()).asfreq()[:]
 
         nudge_to_platform=None
         nudge_interval=None
@@ -1277,7 +1277,7 @@ class InterpolatorWriter(BaseWriter):
                         self.all_attrib[key] = attr
 
                         # resample using the mean then interpolate on to the time dimension
-                        ts_resample = ts.resample(resampleFreq).mean()[:]
+                        ts_resample = ts.resample(resampleFreq.lower()).mean()[:]
                         i = self.interpolate(ts_resample, t_resample.index)
 
                         if key.find('pitch') != -1 or key.find('roll') != -1 or key.find('yaw') != -1 or key.find('angle') != -1 or key.find('rate') != -1:
