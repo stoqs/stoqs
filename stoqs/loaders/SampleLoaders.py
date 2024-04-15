@@ -681,10 +681,15 @@ class ParentSamplesLoader(STOQS_Loader):
                         for lc in criticals:
                             lc_seq_num = re.search(lsr_seq_num_re, lc.text, re.MULTILINE)
                             if lsr_seq_num.groupdict().get('seq_num') == lc_seq_num.groupdict().get('seq_num'):
-                                lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE).groupdict().get('cartridge_number')
-                                self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Not saving, no corresponding"
-                                                 f" {no_num_sampling_end_re} for [sample #{lsr_seq_num.groupdict().get('seq_num')}] and critical"
-                                                 f" error message: {lc.text!r}")
+                                if (cart_num_text := re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE)):
+                                    lsr_cartridge_number = cart_num_text.groupdict().get('cartridge_number')
+                                    self.logger.info(f"Disposition of {platform_name} Cartridge {lsr_cartridge_number}: Not saving, no corresponding"
+                                                     f" {no_num_sampling_end_re} for [sample #{lsr_seq_num.groupdict().get('seq_num')}] and critical"
+                                                     f" error message: {lc.text!r}")
+                                else:
+                                    # As seen in makai/missionlogs/2019/20190528_20190530/20190530T005113/syslog
+                                    self.logger.info(f"Disposition of {platform_name} [sample #{lsr_seq_num.groupdict().get('seq_num')}]:"
+                                                     f" No '{lsr_cartridge_number_re}' found in {summary.text = }")
                                 to_del.append(index)
 
                 for index in reversed(to_del):

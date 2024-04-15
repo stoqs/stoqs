@@ -7,11 +7,10 @@ Babel==2.14.0
 backports.ssl-match-hostname==3.7.0.1
 billiard==4.2.0
 binaryornot==0.4.4
-docutils==0.21
+docutils==0.21.1
 Cython==3.0.10
 ephem==4.1.5
 ##GDAL==3.0.3
-h5py==3.10.0
 Genshi==0.7.7
 geopandas==0.14.3
 MarkupSafe==2.1.5

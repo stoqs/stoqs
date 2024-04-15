@@ -1,4 +1,4 @@
-aiohttp==3.9.3
+aiohttp==3.9.4
 beautifulsoup4==4.12.3
 channels==4.1.0
 cmocean==4.0.3
@@ -54,14 +54,14 @@ python-dateutil==2.9.0.post0
 python3-memcached==1.51
 python-openid==2.2.5
 pytz==2024.1
-pyzmq==25.1.2
+pyzmq==26.0.0
 scikit-learn==1.4.1.post1
 seawater==3.3.4
 selenium==4.19.0
 simplejson==3.19.2
 slacker==0.14.0
 statsmodels==0.14.1
-sqlparse==0.4.4
+sqlparse==0.5.0
 thredds-crawler==1.5.4
 transforms3d==0.4.1
 websocket-client==1.7.0
