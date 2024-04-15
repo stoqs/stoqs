@@ -5,4 +5,4 @@ ephem==4.1.5
 geopandas==0.14.3
 requests==2.31.0
 requests-oauthlib==2.0.0
-uWSGI==2.0.24
+uWSGI==2.0.25
