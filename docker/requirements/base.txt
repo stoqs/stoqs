@@ -54,7 +54,7 @@ python-dateutil==2.9.0.post0
 python3-memcached==1.51
 python-openid==2.2.5
 pytz==2024.1
-pyzmq==26.0.0
+pyzmq==26.0.2
 scikit-learn==1.4.1.post1
 seawater==3.3.4
 selenium==4.19.0
