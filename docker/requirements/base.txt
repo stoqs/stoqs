@@ -5,7 +5,7 @@ cmocean==4.0.3
 coards==1.0.5
 coverage==7.4.4
 datadiff==2.2.0
-datashader==0.16.0
+datashader==0.16.1
 dj-database-url==2.1.0
 Django==5.0.4
 django-cache-url==3.4.5
