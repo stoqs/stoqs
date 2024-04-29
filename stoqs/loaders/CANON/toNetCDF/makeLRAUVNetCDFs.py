@@ -45,7 +45,8 @@ SCI_PARMS = {'/':           [{'name': 'concentration_of_colored_dissolved_organi
              'CTD_NeilBrown': [{'name': 'sea_water_salinity', 'rename': 'salinity'},
                                {'name': 'sea_water_temperature', 'rename': 'temperature'}],
              'CTD_Seabird': [{'name': 'sea_water_salinity', 'rename': 'salinity'},
-                             {'name': 'sea_water_temperature', 'rename': 'temperature'}],
+                             {'name': 'sea_water_temperature', 'rename': 'temperature'},
+                             {'name': 'mass_concentration_of_oxygen_in_sea_water', 'rename': 'mass_concentration_of_oxygen_in_sea_water'}],
              'ISUS': [{'name': 'mole_concentration_of_nitrate_in_sea_water',
                        'rename': 'nitrate'}],
              'PAR_Licor': [{'name': 'downwelling_photosynthetic_photon_flux_in_sea_water',
@@ -73,6 +74,7 @@ SCI_PARMS = {'/':           [{'name': 'concentration_of_colored_dissolved_organi
                                    ],
              'WetLabsUBAT': [ {'name': 'average_bioluminescence', 'rename': 'average_bioluminescence'},
                               {'name': 'flow_rate', 'rename': 'ubat_flow_rate'},
+                              {'name': 'digitized_raw_ad_counts', 'rename': 'digitized_raw_ad_counts'},
                             ],
              }
 
