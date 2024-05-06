@@ -412,7 +412,9 @@ class ParentSamplesLoader(STOQS_Loader):
                     if lm.groupdict().get('log_component') in ('ESPComponent',) and lm.groupdict().get('log_level') in levels:
                         # December 2022 while adding Sipper capture: Not sure why there is this prev_line logic...
                         if prev_line_has_component:
-                            log_rows.append({'unixTime': float(prev_esec) * 1000, 'text': prev_message})
+                            # With https://dods.mbari.org/opendap/data/lrauv/brizo/missionlogs/2024/20240426_20240503/20240427T153211/syslog 
+                            # added appending of following_lines, should be innocuous if this is the wrong logic
+                            log_rows.append({'unixTime': float(prev_esec) * 1000, 'text': prev_message  + '\n' + following_lines})
 
                         prev_esec = lm.groupdict().get('log_esec')
                         prev_message = lm.groupdict().get('log_message')
