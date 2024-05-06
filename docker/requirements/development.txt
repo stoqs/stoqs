@@ -3,7 +3,7 @@
 alabaster==0.7.16
 amqp==5.2.0
 amqplib==1.0.2
-Babel==2.14.0
+Babel==2.15.0
 backports.ssl-match-hostname==3.7.0.1
 billiard==4.2.0
 binaryornot==0.4.4
