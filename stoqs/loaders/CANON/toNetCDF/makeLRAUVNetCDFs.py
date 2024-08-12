@@ -112,7 +112,12 @@ ENG_PARMS = {'BPC1': [{'name': 'platform_battery_charge',
              'RudderServo': [{'name': 'platform_rudder_angle',
                               'rename': 'control_inputs_rudder_angle'}],
              'ThrusterServo': [{'name': 'platform_propeller_rotation_rate',
-                                'rename': 'control_inputs_propeller_rotation_rate'}]}
+                                'rename': 'control_inputs_propeller_rotation_rate'}],
+             'CurrentEstimator': [{'name': 'current_direction_navigation_frame',
+                                   'rename': 'current_direction_navigation_frame'},
+                                  {'name': 'current_speed_navigation_frame',
+                                   'rename': 'current_speed_navigation_frame'}],
+             }
 
 SCIENG_PARMS = {**SCI_PARMS, **ENG_PARMS}
 
