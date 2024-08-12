@@ -371,6 +371,7 @@ class MeasuredParameter(BaseParameter):
         self.lat_by_act_span = {}
 
         stride = int(qs_mp.count() / MP_MAX_POINTS)
+        stride = 1
         if stride < 1:
             stride = 1
         self.strideInfo = ''
@@ -558,7 +559,7 @@ class MeasuredParameter(BaseParameter):
         if self.qs_mp is not None:
             COLORED_DOT_SIZE_THRESHOLD = 5000
             if self.qs_mp.count() > COLORED_DOT_SIZE_THRESHOLD:
-                coloredDotSize = 10
+                coloredDotSize = 5
             else:
                 coloredDotSize = 20
 
