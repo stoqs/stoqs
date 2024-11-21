@@ -528,6 +528,9 @@ class ParentSamplesLoader(STOQS_Loader):
 
         Log = namedtuple('Log', 'esec text')
         for rec in log_important:
+            self.logger.debug(f"{rec['text'] = }")
+            if LOGSUMMARY in rec['text']:
+                summary_text = rec['text']
             if mcm := re.search(CONSOLIDATED_MSG, rec['text']):
                 # Truncate the fractional seconds and 'Z' from the _dt strings
                 start_esec = datetime.strptime(mcm.groupdict().get('start_dt')[:-5], "%Y-%m-%dT%H:%M:%S").timestamp()
@@ -535,7 +538,8 @@ class ParentSamplesLoader(STOQS_Loader):
                 if end_esec > start_esec:
                     esp_s_filtering.append(Log(start_esec, rec['text']))
                     esp_s_stopping.append(Log(end_esec, rec['text']))
-                    esp_log_summaries.append(Log(rec['unixTime']/1000.0, rec['text']))
+                    # Append the LOGSUMMARY message so that we have the the Sample volume data
+                    esp_log_summaries.append(Log(rec['unixTime']/1000.0, rec['text'] + summary_text))
                 else:
                     self.logger.warning(f"Not saving Sample {rec['text']} as the end is before the start")
 
@@ -1012,12 +1016,17 @@ class ParentSamplesLoader(STOQS_Loader):
                     self.logger.warn(f"SampleType is {sampletype.name}, but no ESP device name found in syslog for {platform_name} {samp}")
 
 
-    def load_lrauv_samples(self, platform_name, activity_name, url, db_alias):
+    def load_lrauv_samples(self, platform_name, activity_name, url, db_alias, use_consolidated_msg=False):
         '''
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
         '''
         self.logger.info(f"Parsing ESP sample messages from /mbari/LRAUV/{'/'.join(url.split('/')[6:-1])}/syslog")
-        init_filterings, init_stoppings, init_summaries, init_criticals, esp_device = self._esps_from_json_consolidated(platform_name, url, db_alias)
+        if use_consolidated_msg:
+            # As of 13 Aug 2024 the consolidated_msg does not accurately reflect the state of a skipped Cartridge
+            # See: https://mbari1.atlassian.net/browse/TETHYS-707?focusedCommentId=25007 When fixed we can use _esps_from_json_consolidated()
+            init_filterings, init_stoppings, init_summaries, init_criticals, esp_device = self._esps_from_json_consolidated(platform_name, url, db_alias)
+        else:
+            init_filterings, init_stoppings, init_summaries, init_criticals, esp_device = [], [], [], [], None
         if not init_filterings and not init_stoppings and not init_summaries:
             # Attempt to match filterings and stoppings from before June 2024 when consolidated messages started
             consolidated_msg = False
@@ -1026,6 +1035,7 @@ class ParentSamplesLoader(STOQS_Loader):
             filterings, stoppings, summaries = self._validate_summaries(platform_name, init_filterings, init_stoppings, init_summaries, init_criticals)
         else:
             consolidated_msg = True
+            self.logger.info(f"Consolidated ESP messages found, using Cartridge number, start, and end time listed there")
             filterings, stoppings, summaries = init_filterings, init_stoppings, init_summaries
 
         # After 14 August 2018 a 'sample #<num>' is included in the log message:
