@@ -287,7 +287,7 @@ ORDER BY divenumber''' % (self.platformName, self.diveNumber)
             logger.debug(f"{r = }")
             sdt = datetime.strptime(r['divestartdtg'].strip(), '%Y-%m-%dT%H:%M:%S')
             edt = datetime.strptime(r['diveenddtg'].strip(), '%Y-%m-%dT%H:%M:%S')
-        except TypeError:
+        except (TypeError, AttributeError):
             raise DiveInfoServletException('Cannot get start and end times for %s%d' % (self.platformName[0].upper(), self.diveNumber))
 
         return sdt, edt
