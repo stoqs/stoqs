@@ -814,7 +814,23 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return filterings, stoppings, summaries
 
-    def _match_seq_to_cartridge(self, filterings, stoppings, summaries, before_seq_num_implemented=False, consolidated_msg=False):
+    def _get_lsr_volume(self, summary) -> float:
+        lsr_volume = re.search(lsr_volume_re, summary.text, re.MULTILINE)
+        if not lsr_volume:
+            self.logger.debug(f"Could not parse lsr_volume from '{summary.text}'")
+            self.logger.debug(f"Attempting with lsr_volume_re_paused regex: {lsr_volume_re_paused}")
+            lsr_volume = re.search(lsr_volume_re_paused, summary.text, re.MULTILINE)
+
+        # Convert volumes to ml and check for error in optional 3rd line of messages from ESP
+        volume = None
+        if lsr_volume:
+            if lsr_volume.groupdict().get('volume_units') == 'ml':
+                volume = float(lsr_volume.groupdict().get('volume_num'))
+                self.logger.debug(f"Parsed from log summary report volume = {volume} ml")
+
+        return volume
+
+    def _match_seq_to_cartridge(self, filterings, stoppings, summaries, before_seq_num_implemented=False, consolidated_msg=True):
         '''Take lists from parsing TethysDash log and build Sample names list with start and end times
         '''
         # Loop through extractions from syslog to build dictionary
@@ -834,11 +850,7 @@ class ParentSamplesLoader(STOQS_Loader):
                 lsr_cartridge_number = re.search(CONSOLIDATED_MSG, summary.text)
             else:
                 lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE)
-            lsr_volume = re.search(lsr_volume_re, summary.text, re.MULTILINE)
-            if not lsr_volume:
-                self.logger.debug(f"Could not parse lsr_volume from '{summary.text}'")
-                self.logger.debug(f"Attempting with lsr_volume_re_paused regex: {lsr_volume_re_paused}")
-                lsr_volume = re.search(lsr_volume_re_paused, summary.text, re.MULTILINE)
+            volume = self._get_lsr_volume(summary)
             lsr_esp_error_msg = re.search(lsr_esp_error_msg_re, summary.text, re.MULTILINE)
 
             # Ensure that sample # (seq) numbers match
@@ -859,7 +871,7 @@ class ParentSamplesLoader(STOQS_Loader):
                 try:
                     sample_name = f"Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')}"
                     if lsr_seq_num:
-                        self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}")
+                        self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}, volume = {volume} ml")
                     else:
                         self.logger.info(f"(No 'sample #' match) sample_name = {sample_name}")
                 except AttributeError:
@@ -873,11 +885,6 @@ class ParentSamplesLoader(STOQS_Loader):
                 self.logger.warn(f"Skipping this sample because of previous warning.")
                 continue
 
-            # Convert volumes to ml and check for error in optional 3rd line of messages from ESP
-            volume = None
-            if lsr_volume:
-                if lsr_volume.groupdict().get('volume_units') == 'ml':
-                    volume = float(lsr_volume.groupdict().get('volume_num'))
             if lsr_esp_error_msg:
                 if lsr_esp_error_msg.groupdict().get('esp_error_message'):
                     # Instance of 'Slide::Error in PROCESSING -- Archive Syringe positionErr at 54ul (actually 72ul)' in:
@@ -892,7 +899,6 @@ class ParentSamplesLoader(STOQS_Loader):
                         # http://dods.mbari.org/data/lrauv/makai/missionlogs/2019/20190822_20190827/20190822T194106/syslog
                         self.logger.info(f"Error encountered: {lsr_esp_error_msg.groupdict().get('esp_error_message')}")
 
-                
             sample_names[sample_name] = SampleInfo(filtering.esec, stopping.esec, volume, summary.text)
 
         return sample_names
@@ -1016,7 +1022,7 @@ class ParentSamplesLoader(STOQS_Loader):
                     self.logger.warn(f"SampleType is {sampletype.name}, but no ESP device name found in syslog for {platform_name} {samp}")
 
 
-    def load_lrauv_samples(self, platform_name, activity_name, url, db_alias, use_consolidated_msg=False):
+    def load_lrauv_samples(self, platform_name, activity_name, url, db_alias, use_consolidated_msg=True):
         '''
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
         '''
