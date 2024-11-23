@@ -20,7 +20,7 @@ from CANON import CANONLoader
 from datetime import datetime
 import timing
 
-cl = CANONLoader('stoqs_denmark2024', 'Denmark LRAUV Deployments - June 2024',
+cl = CANONLoader('stoqs_denmark2024_fix', 'Denmark LRAUV Deployments - June 2024',
                     description='LRAUV Deployments Deployments near Denmark in 2024',
                     x3dTerrains = {
                                     'https://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
@@ -61,20 +61,34 @@ cl.process_command_line()
 
 if cl.args.test:
     cl.stride = 1
-    # http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2024/20240607_20240615/20240608T221442/202406082214_202406101940_2S_scieng.nc
-    # cl.makai_base = 'http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2024/20240607_20240615/20240608T221442/'
-    # cl.makai_files = ['202406082214_202406101940_2S_scieng.nc']
+    # Uncomment the test to use...
+
+    # Test loading brizo's ESP Cartridges 29 to 23
     # cl.brizo_base = 'http://dods.mbari.org/opendap/data/lrauv/brizo/missionlogs/2024/20240607_20240615/20240612T184249/'
     # cl.brizo_files = ['202406121843_202406130908_2S_scieng.nc']
     # cl.brizo_parms =['temperature', 'current_direction_navigation_frame', 'current_speed_navigation_frame']
-    # cl.loadLRAUV('brizo', makai_sdate, makai_edate, critSimpleDepthTime=0.1, build_attrs=False)
+    # cl.loadLRAUV('brizo', brizo_sdate, brizo_edate, critSimpleDepthTime=0.1, build_attrs=False)
+
+    # Test loading makai's ESP Cartridges 59/58
+    # https://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2024/20240607_20240615/20240607T125711/202406071257_202406080957_2S_scieng.nc.html
+    # cl.makai_base = 'http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2024/20240607_20240615/20240607T125711/'
+    # cl.makai_files = ['202406071257_202406080957_2S_scieng.nc']
+    # cl.makai_parms =['temperature', 'current_direction_navigation_frame', 'current_speed_navigation_frame']
+    # cl.loadLRAUV('makai', makai_sdate, makai_edate, critSimpleDepthTime=0.1, build_attrs=False)
+
+    # Test loading makai's ESP Cartridges 56/55
+    cl.makai_base = 'http://dods.mbari.org/opendap/data/lrauv/makai/missionlogs/2024/20240607_20240615/20240608T095744/'
+    cl.makai_files = ['202406080957_202406082214_2S_scieng.nc ']
+    cl.makai_parms =['temperature', 'current_direction_navigation_frame', 'current_speed_navigation_frame']
+    cl.loadLRAUV('makai', makai_sdate, makai_edate, critSimpleDepthTime=0.1, build_attrs=False)
+
     # Test Duplicate data and missing/overlapping Cartridges for makai
     # makai_sdate = datetime(2024, 6, 7)
     # makai_edate = datetime(2024, 6, 16)
     # cl.loadLRAUV('makai', makai_sdate, makai_edate, critSimpleDepthTime=0.1, build_attrs=True)
 
-    cl.loadLRAUV('makai', makai_sdate, makai_edate, critSimpleDepthTime=0.1)
-    cl.loadLRAUV('brizo', brizo_sdate, brizo_edate, critSimpleDepthTime=0.1)
+    # cl.loadLRAUV('makai', makai_sdate, makai_edate, critSimpleDepthTime=0.1)
+    # cl.loadLRAUV('brizo', brizo_sdate, brizo_edate, critSimpleDepthTime=0.1)
 elif cl.args.stride:
     cl.stride = cl.args.stride
     # Realtime sbd logs load
