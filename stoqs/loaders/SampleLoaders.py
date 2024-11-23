@@ -847,9 +847,16 @@ class ParentSamplesLoader(STOQS_Loader):
             lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
             lsr_lsr_num_messages = re.search(lsr_num_messages_re, summary.text, re.MULTILINE)
             if consolidated_msg:
-                lsr_cartridge_number = re.search(CONSOLIDATED_MSG, summary.text)
+                lsr_cartridge_number = re.search(CONSOLIDATED_MSG, summary.text).groupdict().get('cartridge_number')
+                # Ad hoc fixes for before https://bitbucket.org/mbari/lrauv-application/pull-requests/551 applied
+                if lsr_cartridge_number == "59" and summary.esec == 1717813640.778:
+                    # Fix makai's leaked 59 and actual use of 58 in stoqs_denmark2024
+                    lsr_cartridge_number = "58"
+                if lsr_cartridge_number == "56" and summary.esec == 1717866830.839:
+                    # Fix makai's leaked 56 and actual use of 55 in stoqs_denmark2024
+                    lsr_cartridge_number = "55"
             else:
-                lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE)
+                lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE).groupdict().get('cartridge_number')
             volume = self._get_lsr_volume(summary)
             lsr_esp_error_msg = re.search(lsr_esp_error_msg_re, summary.text, re.MULTILINE)
 
@@ -869,7 +876,7 @@ class ParentSamplesLoader(STOQS_Loader):
                     self.logger.warn(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
             else:
                 try:
-                    sample_name = f"Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')}"
+                    sample_name = f"Cartridge {lsr_cartridge_number}"
                     if lsr_seq_num:
                         self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}, volume = {volume} ml")
                     else:
@@ -1030,6 +1037,9 @@ class ParentSamplesLoader(STOQS_Loader):
         if use_consolidated_msg:
             # As of 13 Aug 2024 the consolidated_msg does not accurately reflect the state of a skipped Cartridge
             # See: https://mbari1.atlassian.net/browse/TETHYS-707?focusedCommentId=25007 When fixed we can use _esps_from_json_consolidated()
+            # This was fixed in advance of the next ESP deployments in September 2024 with PR: https://bitbucket.org/mbari/lrauv-application/pull-requests/551
+            # For the ESP deployments in June 2024 that are in stoqs_denmark2024 we can use_consolidated_msg with some ad hoc fixes to add
+            # volume data and deal with the skipped cartridges 58 and 56. (See email from Chris Preston on 19 November 2024.)
             init_filterings, init_stoppings, init_summaries, init_criticals, esp_device = self._esps_from_json_consolidated(platform_name, url, db_alias)
         else:
             init_filterings, init_stoppings, init_summaries, init_criticals, esp_device = [], [], [], [], None
