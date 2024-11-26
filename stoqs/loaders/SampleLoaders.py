@@ -34,7 +34,7 @@ from decimal import Decimal
 from pydap.model import BaseType, DatasetType
 import argparse
 import csv
-from urllib.request import urlopen, HTTPError
+from urllib.request import urlopen
 import requests
 import logging
 from glob import glob
