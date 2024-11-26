@@ -1371,6 +1371,8 @@ class InterpolatorWriter(BaseWriter):
                         value = value.mask(value > 1000, np.nan)  # Remove the 5 depth values greater than 1000 m
                     if 'triton/missionlogs/2023/20230909_20230918/20230918T035454/202309180355_202309181709' in in_file:
                         value = value.mask(value > 20, np.nan)    # Remove 477.49 m value in shallow water of Lake Erie
+                    if 'makai/missionlogs/2024/20240607_20240615/20240611T082709/202406110827_202406111026' in in_file:
+                        value = value.mask(value > 20, np.nan)    # Remove 230 m values in shallow water of North Sea in stoqs_denmark2024
 
                 i = self.interpolate(value, t_resample.index)
                 if key == 'time':

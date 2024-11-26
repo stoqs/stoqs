@@ -346,6 +346,7 @@ class CANONLoader(LoadScript):
                     'concentration_of_colored_dissolved_organic_matter_in_sea_water',
                     'bin_mean_concentration_of_colored_dissolved_organic_matter_in_sea_water',
                     'bin_median_concentration_of_colored_dissolved_organic_matter_in_sea_water',
+                    'current_direction_navigation_frame', 'current_speed_navigation_frame',
                   ],
                   stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True, 
                   dlist_str=None, err_on_missing_file=False, critSimpleDepthTime=10,

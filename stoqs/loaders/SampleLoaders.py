@@ -34,7 +34,7 @@ from decimal import Decimal
 from pydap.model import BaseType, DatasetType
 import argparse
 import csv
-from urllib.request import urlopen, HTTPError
+from urllib.request import urlopen
 import requests
 import logging
 from glob import glob
@@ -91,6 +91,8 @@ lsr_volume_re           = r'Sampled\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_un
 # E.g.: Cmd::Paused in FILTERING --  during Sample Pump (SP) move after sampling 486.135m
 lsr_volume_re_paused    = r'.*[Ss]ampl.+\s+(?P<volume_num>[-+]?\d*\.\d+)(?P<volume_units>[a-z]{2})'
 lsr_esp_error_msg_re    = r'(?P<esp_error_message>.+Error in PROCESSING.+)'
+# Consolidated message containing ESP Cartridge number, start, and end times
+CONSOLIDATED_MSG = re.compile(r'ESP Cartridge (?P<cartridge_number>\d+): S_FILTERING: start: (?P<start_dt>\S+) end: (?P<end_dt>\S+)')
 
 # Begining of syslog, E.G.: 2019-08-16T19:51:31.135Z,1565985091.135 [ESPComponent](INFO)
 iso_time = r'\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d*Z'
@@ -407,8 +409,11 @@ class ParentSamplesLoader(STOQS_Loader):
             for line in (lb.decode(errors='ignore') for lb in resp.iter_lines()):
 
                 # Ugly logic to handle multiple line messages
-                lm = re.match(beg_syslog_re, line)
+                lm = re.match(beg_syslog_re, line, re.MULTILINE)
                 if lm:
+                    # if "ESP log summary report" in  lm.groupdict().get('log_message'):
+                    #     self.logger.info(lm.groupdict().get('log_message'))
+
                     if lm.groupdict().get('log_component') in ('ESPComponent',) and lm.groupdict().get('log_level') in levels:
                         # December 2022 while adding Sipper capture: Not sure why there is this prev_line logic...
                         if prev_line_has_component:
@@ -497,6 +502,48 @@ class ParentSamplesLoader(STOQS_Loader):
                     break
 
         return esp_device
+
+    def _esps_from_json_consolidated(self, platform_name, url, db_alias, use_syslog=True):
+        '''In June 2024 consolidated  messages like this  started appearing in the syslogs:
+        /mbari/LRAUV/makai/missionlogs/2024/20240607_20240612/20240607T125711/syslog:2024-06-08T02:27:20.778Z,1717813640.778 [ESPComponent](IMPORTANT): [sample #1] ESP Cartridge 59: S_FILTERING: start: 2024-06-08T01:36:36.784Z end: 2024-06-08T02:20:35.432Z
+        Return (esp_s_filtering, esp_s_stopping, esp_log_summaries, esp_log_criticals, esp_device) as in _esps_from_json() but with much simpler parsing
+        '''
+        esp_s_filtering = []
+        esp_s_stopping = []
+        esp_log_summaries = []
+        esp_log_criticals = []
+        esp_device = None
+
+        LOGSUMMARY = 'ESP log summary report'
+
+        if use_syslog:
+            log_important, _ = self._read_syslog(url)
+            log_critical, _ = self._read_syslog(url, levels=('CRITICAL',))
+            esp_device = self._get_esp_device(url)
+        else:
+            log_important = self._read_tethysdash(platform_name, url)
+
+        if not log_important and not log_critical:
+            return esp_s_filtering, esp_s_stopping, esp_log_summaries, esp_log_criticals, esp_device
+
+        Log = namedtuple('Log', 'esec text')
+        for rec in log_important:
+            self.logger.debug(f"{rec['text'] = }")
+            if LOGSUMMARY in rec['text']:
+                summary_text = rec['text']
+            if mcm := re.search(CONSOLIDATED_MSG, rec['text']):
+                # Truncate the fractional seconds and 'Z' from the _dt strings
+                start_esec = datetime.strptime(mcm.groupdict().get('start_dt')[:-5], "%Y-%m-%dT%H:%M:%S").timestamp()
+                end_esec = datetime.strptime(mcm.groupdict().get('end_dt')[:-5], "%Y-%m-%dT%H:%M:%S").timestamp()
+                if end_esec > start_esec:
+                    esp_s_filtering.append(Log(start_esec, rec['text']))
+                    esp_s_stopping.append(Log(end_esec, rec['text']))
+                    # Append the LOGSUMMARY message so that we have the the Sample volume data
+                    esp_log_summaries.append(Log(rec['unixTime']/1000.0, rec['text'] + summary_text))
+                else:
+                    self.logger.warning(f"Not saving Sample {rec['text']} as the end is before the start")
+
+        return esp_s_filtering, esp_s_stopping, esp_log_summaries, esp_log_criticals, esp_device
         
     def _esps_from_json(self, platform_name, url, db_alias, use_syslog=True):
         '''Retrieve Sample information that's available in the syslogurl from the TethysDash REST API
@@ -594,9 +641,11 @@ class ParentSamplesLoader(STOQS_Loader):
         for filtering, stopping, summary in zip(filterings, stoppings, summaries):
             self.logger.debug(f"summary = {summary}")
             ms = (re.match(sampling_start_re, filtering.text) or 
-                  re.match(no_num_sampling_start_re, filtering.text))
+                  re.match(no_num_sampling_start_re, filtering.text) or
+                  re.match(sample_prefix, filtering.text))
             me = (re.match(sampling_end_re, stopping.text) or
-                  re.match(no_num_sampling_end_re, stopping.text))
+                  re.match(no_num_sampling_end_re, stopping.text) or
+                  re.match(sample_prefix, stopping.text))
             filter_nums.append(ms.groupdict().get('seq_num'))
             stop_nums.append(me.groupdict().get('seq_num'))
 
@@ -765,7 +814,23 @@ class ParentSamplesLoader(STOQS_Loader):
 
         return filterings, stoppings, summaries
 
-    def _match_seq_to_cartridge(self, filterings, stoppings, summaries, before_seq_num_implemented=False):
+    def _get_lsr_volume(self, summary) -> float:
+        lsr_volume = re.search(lsr_volume_re, summary.text, re.MULTILINE)
+        if not lsr_volume:
+            self.logger.debug(f"Could not parse lsr_volume from '{summary.text}'")
+            self.logger.debug(f"Attempting with lsr_volume_re_paused regex: {lsr_volume_re_paused}")
+            lsr_volume = re.search(lsr_volume_re_paused, summary.text, re.MULTILINE)
+
+        # Convert volumes to ml and check for error in optional 3rd line of messages from ESP
+        volume = None
+        if lsr_volume:
+            if lsr_volume.groupdict().get('volume_units') == 'ml':
+                volume = float(lsr_volume.groupdict().get('volume_num'))
+                self.logger.debug(f"Parsed from log summary report volume = {volume} ml")
+
+        return volume
+
+    def _match_seq_to_cartridge(self, filterings, stoppings, summaries, before_seq_num_implemented=False, consolidated_msg=True):
         '''Take lists from parsing TethysDash log and build Sample names list with start and end times
         '''
         # Loop through extractions from syslog to build dictionary
@@ -773,24 +838,34 @@ class ParentSamplesLoader(STOQS_Loader):
         for filtering, stopping, summary in zip(filterings, stoppings, summaries):
             self.logger.debug(f"summary = {summary}")
             ms = (re.match(sampling_start_re, filtering.text) or 
-                  re.match(no_num_sampling_start_re, filtering.text))
+                  re.match(no_num_sampling_start_re, filtering.text) or
+                  re.match(sample_prefix, filtering.text))
             me = (re.match(sampling_end_re, stopping.text) or
-                  re.match(no_num_sampling_end_re, stopping.text))
+                  re.match(no_num_sampling_end_re, stopping.text) or
+                  re.match(sample_prefix, stopping.text))
 
             lsr_seq_num = re.search(lsr_seq_num_re, summary.text, re.MULTILINE)
             lsr_lsr_num_messages = re.search(lsr_num_messages_re, summary.text, re.MULTILINE)
-            lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE)
-            lsr_volume = re.search(lsr_volume_re, summary.text, re.MULTILINE)
-            if not lsr_volume:
-                self.logger.debug(f"Could not parse lsr_volume from '{summary.text}'")
-                self.logger.debug(f"Attempting with lsr_volume_re_paused regex: {lsr_volume_re_paused}")
-                lsr_volume = re.search(lsr_volume_re_paused, summary.text, re.MULTILINE)
+            if consolidated_msg:
+                lsr_cartridge_number = re.search(CONSOLIDATED_MSG, summary.text).groupdict().get('cartridge_number')
+                # Ad hoc fixes for before https://bitbucket.org/mbari/lrauv-application/pull-requests/551 applied
+                if lsr_cartridge_number == "59" and summary.esec == 1717813640.778:
+                    # Fix makai's leaked 59 and actual use of 58 in stoqs_denmark2024
+                    lsr_cartridge_number = "58"
+                if lsr_cartridge_number == "56" and summary.esec == 1717866830.839:
+                    # Fix makai's leaked 56 and actual use of 55 in stoqs_denmark2024
+                    lsr_cartridge_number = "55"
+            else:
+                lsr_cartridge_number = re.search(lsr_cartridge_number_re, summary.text, re.MULTILINE).groupdict().get('cartridge_number')
+            volume = self._get_lsr_volume(summary)
             lsr_esp_error_msg = re.search(lsr_esp_error_msg_re, summary.text, re.MULTILINE)
 
             # Ensure that sample # (seq) numbers match
             try:
                 if before_seq_num_implemented:
                     self.logger.info(f"This log is before seq_num was implemented - not checking for match")
+                elif consolidated_msg:
+                    self.logger.info(f"This log uses the consolidated message - not checking for match")
                 elif not (ms.groupdict().get('seq_num') == me.groupdict().get('seq_num') == lsr_seq_num.groupdict().get('seq_num')):
                     self.logger.warn(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
             except AttributeError:
@@ -801,9 +876,9 @@ class ParentSamplesLoader(STOQS_Loader):
                     self.logger.warn(f"Sample numbers do not match for '{filtering.text}', '{stopping.text}', and '{summary.text}'")
             else:
                 try:
-                    sample_name = f"Cartridge {lsr_cartridge_number.groupdict().get('cartridge_number')}"
+                    sample_name = f"Cartridge {lsr_cartridge_number}"
                     if lsr_seq_num:
-                        self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}")
+                        self.logger.info(f"sample # = {lsr_seq_num.groupdict().get('seq_num')}, sample_name = {sample_name}, volume = {volume} ml")
                     else:
                         self.logger.info(f"(No 'sample #' match) sample_name = {sample_name}")
                 except AttributeError:
@@ -817,11 +892,6 @@ class ParentSamplesLoader(STOQS_Loader):
                 self.logger.warn(f"Skipping this sample because of previous warning.")
                 continue
 
-            # Convert volumes to ml and check for error in optional 3rd line of messages from ESP
-            volume = None
-            if lsr_volume:
-                if lsr_volume.groupdict().get('volume_units') == 'ml':
-                    volume = float(lsr_volume.groupdict().get('volume_num'))
             if lsr_esp_error_msg:
                 if lsr_esp_error_msg.groupdict().get('esp_error_message'):
                     # Instance of 'Slide::Error in PROCESSING -- Archive Syringe positionErr at 54ul (actually 72ul)' in:
@@ -836,7 +906,6 @@ class ParentSamplesLoader(STOQS_Loader):
                         # http://dods.mbari.org/data/lrauv/makai/missionlogs/2019/20190822_20190827/20190822T194106/syslog
                         self.logger.info(f"Error encountered: {lsr_esp_error_msg.groupdict().get('esp_error_message')}")
 
-                
             sample_names[sample_name] = SampleInfo(filtering.esec, stopping.esec, volume, summary.text)
 
         return sample_names
@@ -960,13 +1029,30 @@ class ParentSamplesLoader(STOQS_Loader):
                     self.logger.warn(f"SampleType is {sampletype.name}, but no ESP device name found in syslog for {platform_name} {samp}")
 
 
-    def load_lrauv_samples(self, platform_name, activity_name, url, db_alias):
+    def load_lrauv_samples(self, platform_name, activity_name, url, db_alias, use_consolidated_msg=True):
         '''
         url looks like 'http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2018/20180906_20180917/20180908T084424/201809080844_201809112341_2S_scieng.nc'
         '''
         self.logger.info(f"Parsing ESP sample messages from /mbari/LRAUV/{'/'.join(url.split('/')[6:-1])}/syslog")
-        init_filterings, init_stoppings, init_summaries, init_criticals, esp_device = self._esps_from_json(platform_name, url, db_alias)
-        filterings, stoppings, summaries = self._validate_summaries(platform_name, init_filterings, init_stoppings, init_summaries, init_criticals)
+        if use_consolidated_msg:
+            # As of 13 Aug 2024 the consolidated_msg does not accurately reflect the state of a skipped Cartridge
+            # See: https://mbari1.atlassian.net/browse/TETHYS-707?focusedCommentId=25007 When fixed we can use _esps_from_json_consolidated()
+            # This was fixed in advance of the next ESP deployments in September 2024 with PR: https://bitbucket.org/mbari/lrauv-application/pull-requests/551
+            # For the ESP deployments in June 2024 that are in stoqs_denmark2024 we can use_consolidated_msg with some ad hoc fixes to add
+            # volume data and deal with the skipped cartridges 58 and 56. (See email from Chris Preston on 19 November 2024.)
+            init_filterings, init_stoppings, init_summaries, init_criticals, esp_device = self._esps_from_json_consolidated(platform_name, url, db_alias)
+        else:
+            init_filterings, init_stoppings, init_summaries, init_criticals, esp_device = [], [], [], [], None
+        if not init_filterings and not init_stoppings and not init_summaries:
+            # Attempt to match filterings and stoppings from before June 2024 when consolidated messages started
+            consolidated_msg = False
+            self.logger.info(f"No consolidated ESP messages found, using legacy method to match filterings and stoppings")
+            init_filterings, init_stoppings, init_summaries, init_criticals, esp_device = self._esps_from_json(platform_name, url, db_alias)
+            filterings, stoppings, summaries = self._validate_summaries(platform_name, init_filterings, init_stoppings, init_summaries, init_criticals)
+        else:
+            consolidated_msg = True
+            self.logger.info(f"Consolidated ESP messages found, using Cartridge number, start, and end time listed there")
+            filterings, stoppings, summaries = init_filterings, init_stoppings, init_summaries
 
         # After 14 August 2018 a 'sample #<num>' is included in the log message:
         # https://bitbucket.org/mbari/lrauv-application/pull-requests/76/add-sample-to-all-logimportant-entries/diff
@@ -977,7 +1063,8 @@ class ParentSamplesLoader(STOQS_Loader):
         esp_names = None
         if filterings and stoppings and summaries:
             esp_names = self._match_seq_to_cartridge(filterings, stoppings, summaries, 
-                                                     before_seq_num_implemented=before_seq_num_implemented)
+                                                     before_seq_num_implemented=before_seq_num_implemented,
+                                                     consolidated_msg=consolidated_msg)
 
         samplings_at, sample_num_errs = self._sippers_from_json(platform_name, url)
         sipper_names = self._match_sippers(samplings_at, sample_num_errs)
