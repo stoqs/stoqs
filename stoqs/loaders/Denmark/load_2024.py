@@ -20,7 +20,7 @@ from CANON import CANONLoader
 from datetime import datetime
 import timing
 
-cl = CANONLoader('stoqs_denmark2024_fix', 'Denmark LRAUV Deployments - June 2024',
+cl = CANONLoader('stoqs_denmark2024', 'Denmark LRAUV Deployments - June 2024',
                     description='LRAUV Deployments Deployments near Denmark in 2024',
                     x3dTerrains = {
                                     'https://stoqs.mbari.org/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
