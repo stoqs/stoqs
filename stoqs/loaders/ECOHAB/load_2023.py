@@ -75,7 +75,13 @@ cl.wg_Tiny_endDatetime = edate
 cl.process_command_line()
 
 if cl.args.test:
-    cl.stride = 100
+    cl.stride = 1
+    # Missing LSR for ESP Cartridge 15: /mbari/LRAUV/brizo/missionlogs/2023/20230421_20230427/20230425T183900/202304251839_202304252350_2S_scieng.nc
+    ##cl.brizo_base = 'http://dods.mbari.org/thredds/dodsC/LRAUV/brizo/missionlogs/2023/20230421_20230427/20230425T183900/'
+    ##cl.brizo_files = ['202304251839_202304252350_2S_scieng.nc', ]
+    ##cl.brizo_parms = ['temperature']
+    ##cl.loadLRAUV('brizo', sdate, edate, critSimpleDepthTime=0.1, build_attrs=False)
+    ##sys.exit()
 elif cl.args.stride:
     cl.stride = cl.args.stride
 else:
@@ -95,6 +101,7 @@ cl.loadM1()
 ##cl.brizo_files = ['202304111921_202304112324_2S_scieng.nc', ]
 ##cl.brizo_parms = ['temperature']
 ##cl.loadLRAUV('brizo', sdate, edate, critSimpleDepthTime=0.1, build_attrs=False)
+
 for lrauv in ('galene', 'pontus', 'daphne', 'makai', 'brizo'):
     # Realtime
     cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True)
