@@ -1365,6 +1365,12 @@ class InterpolatorWriter(BaseWriter):
                             if key.find('latitude') != -1 and self.ac_lats.any():
                                 value = self.ac_lats
 
+                if key == 'latitude':
+                    # Ad hoc QC for special cases
+                    if 'ahi/missionlogs/2024/20241217_20241220/20241219T024607/202412190246_202412190427' in in_file:
+                        value = value.mask(value < 36, np.nan)  # Remove latitudes that are close to the equator
+                    if 'ahi/missionlogs/2024/20241217_20241220/20241219T042723/202412190427_202412190551' in in_file:
+                        value = value.mask(value < 36, np.nan)  # Remove latitudes that are close to the equator
                 if key == 'depth':
                     # Ad hoc QC for special cases
                     if 'brizo/missionlogs/2023/20230512_20230517/20230517T035153/202305170352_202305171120' in in_file:

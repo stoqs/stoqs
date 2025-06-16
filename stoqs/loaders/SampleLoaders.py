@@ -390,7 +390,7 @@ class ParentSamplesLoader(STOQS_Loader):
         return sample_act, sample_ip, point, depth, maptrack
 
     def _read_syslog(self, url, levels=('IMPORTANT',), components=('ESPComponent',)):
-        syslog_url = "{}/syslog".format('/'.join(url.replace('opendap/', '').split('/')[:-1]))
+        syslog_url = "{}/syslog".format('/'.join(url.replace('thredds/dodsC/LRAUV/', 'data/lrauv/').split('/')[:-1]))
         self.logger.info(f"Getting {levels} {components} information from {syslog_url}")
         log_rows = []
         esp_device = None
@@ -483,6 +483,7 @@ class ParentSamplesLoader(STOQS_Loader):
         Cache the results so that subsequent searches can be replaced by a get from the hash.
         '''
         dlist_url = '/'.join(url.split('/')[:10])
+        dlist_url = dlist_url.replace('thredds/dodsC/LRAUV/', 'data/lrauv/')
         if esp_device := self.esp_devices.get(dlist_url):
             self.logger.debug(f"Returning esp_device from cache: {esp_device}")
             return esp_device
@@ -594,6 +595,10 @@ class ParentSamplesLoader(STOQS_Loader):
 
         if esp_s_filtering and esp_s_stopping and esp_log_summaries:
             self.logger.info(f"Parsed {len(esp_log_summaries)} Samples (esp_log_summaries) from syslog for {url}")
+            if 'stoqs_ecohab_april2023' in db_alias and "brizo/missionlogs/2023/20230421_20230427/20230425T183900" in url:
+                self.logger.info(f"Will MacGyver a fix to add Cartridge 15 for its missing Log Summary Report - a special fix for stoqs_ecohab_april2023")
+                self.logger.info(f"Add 30 seconds to [sample #3]'s stopping (S_PROCESSING) time to fudge a LSR with times Cartridge 15")
+                esp_log_summaries.append(Log(esp_s_stopping[1].esec + 30, "[sample #3] ESP log summary report (2 messages):\n@15:47:39.71 Selecting Cartridge 15\n@16:38:51.27 Sampled  1000.0ml\n"))
         elif esp_s_filtering and esp_s_stopping:
             # LOGSUMMARY messages were added halfway through 2018, before that create a "sequence number" for the Sample
             self.logger.info(f"No '{lsr_num_messages_re}' messages found")
