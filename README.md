@@ -1,166 +1,70 @@
+# STOQS
+
 Spatial Temporal Oceanographic Query System
--------------------------------------------
 
-[![Build Status](https://travis-ci.org/stoqs/stoqs.svg)](https://travis-ci.org/stoqs/stoqs/branches)
-[![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=master)](https://requires.io/github/stoqs/stoqs/requirements/?branch=master)
-[![DOI](https://zenodo.org/badge/20654/stoqs/stoqs.svg)](https://zenodo.org/badge/latestdoi/20654/stoqs/stoqs)
- 
-STOQS is a geospatial database and web application designed to give oceanographers
-efficient integrated access to *in situ* measurement and *ex situ* sample data.
-See http://www.stoqs.org.
+[![Built with Cookiecutter Django](https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter)](https://github.com/cookiecutter/cookiecutter-django/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-#### Getting started with a STOQS development system 
+License: GPLv3
 
-First, install [Vagrant](https://www.vagrantup.com/) and and [VirtualBox](https://www.virtualbox.org/)
-&mdash; there are standard installers for Mac, Windows, and Linux. (You will also need 
-[X Windows System](doc/instructions/XWINDOWS.md) sofware on your computer.) Then create an empty folder off your 
-home directory such as `Vagrants/stoqsvm`, open a command prompt window, cd to that folder, and enter these 
-commands:
+## Settings
 
-```bash
-curl "https://raw.githubusercontent.com/stoqs/stoqs/master/Vagrantfile" -o Vagrantfile
-curl "https://raw.githubusercontent.com/stoqs/stoqs/master/provision.sh" -o provision.sh
-vagrant plugin install vagrant-vbguest
-vagrant up --provider virtualbox
-```
-The Vagrantfile and provision.sh will provision a development system with an NFS mounted
-directory from your host operating system. If your host doesn't support serving files via
-NFS (most Windows hosts don't support NFS file serving) then you'll need to edit these files 
-before executing `vagrant up`. Look for the `support NFS file serving` comments in these 
-files for the lines you need to change.
+Moved to [settings](https://cookiecutter-django.readthedocs.io/en/latest/1-getting-started/settings.html).
 
-The `vagrant up` command takes an hour or so to provision and setup a complete CentOS 7 
-STOQS Virtual Machine that also includes MB-System, InstantReality, and all the Python data science 
-tools bundled in packages such as Anaconda.  You will be prompted for your admin password
-for configuring a shared folder from the VM (unless you've disabled the NFS mount).  All connections to this VM are 
-performed from the the directory you installed it in; you must cd to it (e.g. `cd
-~/Vagrants/stoqsvm`) before logging in with the `vagrant ssh -- -X` command.  After 
-installation finishes log into your new VM and test it:
+## Basic Commands
 
-```bash
-vagrant ssh -- -X                        # Wait for [vagrant@localhost ~]$ prompt
-export STOQS_HOME=/vagrant/dev/stoqsgit  # Use STOQS_HOME=/home/vagrant/dev/stoqsgit if not using NFS mount
-cd $STOQS_HOME && source venv-stoqs/bin/activate
-export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
-./test.sh CHANGEME load noextraload
-```
+### Setting Up Your Users
 
-In another terminal window start the development server (after a `cd ~/Vagrants/stoqsvm`):
+- To create a **normal user account**, just go to Sign Up and fill out the form. Once you submit it, you'll see a "Verify Your E-mail Address" page. Go to your console to see a simulated email verification message. Copy the link into your browser. Now the user's email should be verified and ready to go.
 
-```bash
-vagrant ssh -- -X                        # Wait for [vagrant@localhost ~]$ prompt
-export STOQS_HOME=/vagrant/dev/stoqsgit  # Use STOQS_HOME=/home/vagrant/dev/stoqsgit if not using NFS mount
-cd $STOQS_HOME && source venv-stoqs/bin/activate
-export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5438/stoqs
-stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
-```
+- To create a **superuser account**, use this command:
 
-Visit your server's STOQS User Interface using your host computer's browser:
+      $ python manage.py createsuperuser
 
-    http://localhost:8008
+For convenience, you can keep your normal user logged in on Chrome and your superuser logged in on Firefox (or similar), so that you can see how the site behaves for both kinds of users.
 
-More instructions are in the doc/instructions directory &mdash; see [LOADING](doc/instructions/LOADING.md) 
-for specifics on loading your own data. For example, you may create your own database of an archived MBARI campaign:
+### Type checks
 
-    cd stoqs
-    ln -s mbari_campaigns.py campaigns.py
-    loaders/load.py --db stoqs_cce2015
+Running type checks with mypy:
 
-You are encouraged to contribute to the STOQS project! Please see [CONTRIBUTING](CONTRIBUTING.md)
-for how to share your work.  Also, see example 
-[Jupyter Notebooks](http://nbviewer.jupyter.org/github/stoqs/stoqs/blob/master/stoqs/contrib/notebooks)
-that demonstrate specific analyses and visualizations that go beyond the capabilities of the STOQS User Interface.
-Visit the [STOQS Wiki pages](https://github.com/stoqs/stoqs/wiki) for updates and links to presentations.
-The [stoqs-discuss](https://groups.google.com/forum/#!forum/stoqs-discuss) list in Google Groups is also 
-a good place to ask questions and engage in discussion with the STOQS user and developer communities.
+    $ mypy stoqs
 
-Supported by the David and Lucile Packard Foundation, STOQS undergoes continual development
-to help support the mission of the Monterey Bay Aquarium Research Institue.  If you have your
-own server you will occasionally want to get new features with:
+### Test coverage
 
-```bash
-git pull
-```
+To run the tests, check your test coverage, and generate an HTML coverage report:
 
-#### Production Deployment with Docker
+    $ coverage run -m pytest
+    $ coverage html
+    $ open htmlcov/index.html
 
-First, install [Docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/install/)
-on your system.  Then clone the repository; in the docker directory copy the `template.env` file to `.env` 
-and edit it for your specific installation, then execute `docker-compose up`:
+#### Running tests with pytest
 
-```bash
-git clone https://github.com/stoqs/stoqs.git stoqsgit
-cd stoqsgit/docker
-cp template.env .env
-chmod 600 .env      # You must then edit .env and change settings for your environment
-docker-compose up
-```
-If the directory set to the STOQS_VOLS_DIR variable in your .env file doesn't exist then the 
-execution of `docker-compose up` will create the postgresql database cluster, load a default 
-stoqs database, and execute the unit and functional tests of the stoqs application.  If you
-don't see these tests being executed (they will take several minutes) then check for error
-messages.
+    $ pytest
 
-Once you see `... [emperor] vassal /etc/uwsgi/django-uwsgi.ini is ready to accept requests`
-you can visit the site at https://localhost &mdash; it uses a self-signed certificate, so your
-browser will complain and you will need to add an exception. (The nginx service also delivers 
-the same app at http://localhost:8000 without the certificate issue.)
+### Live reloading and Sass CSS compilation
 
-The default settings in `template.env` will run a production nginx/uwsgi/stoqs server configured
-for https://localhost in a Vagrant virtual machine. To configure a server for intranet or public serving of
-your data follow the instructions provided in the comments for the settings in your `.env` file.
-After editing your `.env` file you will need to rebuild the images and restart the Docker 
-services, this time with the `-d` option to run the containers in the background:
+Moved to [Live reloading and SASS compilation](https://cookiecutter-django.readthedocs.io/en/latest/2-local-development/developing-locally.html#using-webpack-or-gulp).
 
-```bash
-docker-compose build
-docker-compose up -d
-```
+### Email Server
 
-The above commands should also be done following a `git pull` in order to deploy updated
-software on your server.
+In development, it is often nice to be able to see emails that are being sent from your application. For that reason local SMTP server [Mailpit](https://github.com/axllent/mailpit) with a web interface is available as docker container.
 
-One thing that's good to do is monitor logs and check for error messages, this can be done with:
+Container mailpit will start automatically when you will run all docker containers.
+Please check [cookiecutter-django Docker documentation](https://cookiecutter-django.readthedocs.io/en/latest/2-local-development/developing-locally-docker.html) for more details how to start all containers.
 
-```
-docker-compose logs -f
-```
+With Mailpit running, to view messages that are sent by your application, open your browser and go to `http://127.0.0.1:8025`
 
-#### Using STOQS in Docker
+### Sentry
 
-You can execute Python code in the stoqs server from your host by prefacing it with `docker-compose exec stoqs`
-(Use `docker-compose run stoqs` to launch another container for long-running processes), for 
-example to load some existing MBARI campaign data:
+Sentry is an error logging aggregator service. You can sign up for a free account at <https://sentry.io/signup/?code=cookiecutter> or download and host it yourself.
+The system is set up with reasonable defaults, including 404 logging and integration with the WSGI application.
 
-```bash
-docker-compose run stoqs stoqs/loaders/load.py --db stoqs_simz_aug2013
-```
+You must set the DSN url in production.
 
-(To load MBARI Campaigns you will need to have uncommented the `CAMPAIGNS_MODULE=stoqs/mbari_campaigns.py` 
-line in your .env file. Make sure that you do not have a symbolic link named `campaigns.py` in the stoqs 
-directory. This is needed only for a Vagrant development machine &mdash; it's best to keep the directory used
-for a Docker deployment separate from one used for Vagrant.)
+## Deployment
 
-In another window monitor its output:
+The following details how to deploy this application.
 
-```bash
-docker-compose run stoqs tail -f /srv/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
-# Or (The stoqs code is bound as a volume in the container from the GitHub cloned location)
-tail -f stoqsgit/stoqs/loaders/MolecularEcology/loadSIMZ_aug2013.out
-```
+### Docker
 
-You may also use `pg_restore` to more quickly load an existing Campaign database on your system.
-For instructions click on the Campaign name in the top bar of a Campaign on another STOQS server, 
-for example on [MBARI's Public STOQS Server](https://stoqs.mbari.org).
-
-
-
-If you use STOQS for your research please cite this publication:
-
-> McCann, M.; Schramm, R.; Cline, D.; Michisaki, R.; Harvey, J.; Ryan, J., "Using STOQS (The spatial 
-> temporal oceanographic query system) to manage, visualize, and understand AUV, glider, and mooring data," 
-> in *Autonomous Underwater Vehicles (AUV), 2014 IEEE/OES*, pp.1-10, 6-9 Oct. 2014
-> doi: 10.1109/AUV.2014.7054414
-
-![STOQS logo](stoqs/static/images/STOQS_logo_gray1_689.png)
-
+See detailed [cookiecutter-django Docker documentation](https://cookiecutter-django.readthedocs.io/en/latest/3-deployment/deployment-with-docker.html).
