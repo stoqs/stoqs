@@ -1,4 +1,4 @@
-name: Django CI
+name: CI
 
 # Enable Buildkit and let compose use it to speed up image building
 env:
@@ -6,23 +6,75 @@ env:
   COMPOSE_DOCKER_CLI_BUILD: 1
 
 on:
-  push:
-    branches: [ "master" ]
   pull_request:
-    branches: [ "master" ]
+    branches: ['master', 'main']
+    paths-ignore: ['docs/**']
+
+  push:
+    branches: ['master', 'main']
+    paths-ignore: ['docs/**']
+
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-
+  linter:
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.10]
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: '.python-version'
+      # Consider using pre-commit.ci for open source project
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+
+  # With no caching at all the entire ci process takes 3m to complete!
+  pytest:
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the stack and run tests
-      run: docker-compose -f docker/docker-compose-actions.yml up -d --build
-    - name: Tear down the Stack
-      run: docker-compose -f docker/docker-compose-actions.yml down
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and cache local backend
+        uses: docker/bake-action@v6
+        with:
+          push: false
+          load: true
+          files: docker-compose.local.yml
+          targets: django
+          set: |
+            django.cache-from=type=gha,scope=django-cached-tests
+            django.cache-to=type=gha,scope=django-cached-tests,mode=max
+            postgres.cache-from=type=gha,scope=postgres-cached-tests
+            postgres.cache-to=type=gha,scope=postgres-cached-tests,mode=max
+
+      - name: Build and cache docs
+        uses: docker/bake-action@v6
+        with:
+          push: false
+          load: true
+          files: docker-compose.docs.yml
+          set: |
+            docs.cache-from=type=gha,scope=cached-docs
+            docs.cache-to=type=gha,scope=cached-docs,mode=max
+
+      - name: Check DB Migrations
+        run: docker compose -f docker-compose.local.yml run --rm django python manage.py makemigrations --check
+
+      - name: Run DB Migrations
+        run: docker compose -f docker-compose.local.yml run --rm django python manage.py migrate
+
+      - name: Run Django Tests
+        run: docker compose -f docker-compose.local.yml run django pytest
+
+      - name: Tear down the Stack
+        run: docker compose -f docker-compose.local.yml down
