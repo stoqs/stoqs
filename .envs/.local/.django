@@ -2,3 +2,5 @@
 # ------------------------------------------------------------------------------
 USE_DOCKER=yes
 IPYTHONDIR=/app/.ipython
+GEOS_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/libgeos_c.so
+GDAL_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/libgdal.so
