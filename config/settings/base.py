@@ -8,6 +8,9 @@ import environ
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # stoqs/
+# ROOT_DIR seems to be deprecated in modern Django, but it's still
+# used in STOQS in several places
+ROOT_DIR = environ.Path(__file__) - 3  # (/a/b/myfile.py - 3 = /)
 APPS_DIR = BASE_DIR / "stoqs"
 env = environ.Env()
 
