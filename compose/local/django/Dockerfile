@@ -67,6 +67,10 @@ COPY --from=python-build-stage /usr/src/app/wheels /wheels/
 RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
   && rm -rf /wheels/
 
+COPY ./compose/local/django/stoqs-start.sh /stoqs-start.sh
+RUN sed -i 's/\r$//g' /stoqs-start.sh
+RUN chmod +x /stoqs-start.sh
+
 COPY ./compose/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
