@@ -60,7 +60,7 @@ class Colormap:
         cmap_list_r.extend(['{}_r'.format(c) for c in cmap_list])
         cmaps_with_r.append((cmap_category, cmap_list_r))
 
-    jetplus_clt = readCLT(os.path.join(str(settings.ROOT_DIR.path('static')), 
+    jetplus_clt = readCLT(os.path.join(str(settings.STATICFILES_DIRS[0]),
                                        'colormaps', 'jetplus.txt'))
 
     def _plot_color_bar(self, category, cmap, with_alpha=False, file_name=None,
