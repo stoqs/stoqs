@@ -1,5 +1,5 @@
 # define an alias for the specific python version used in this file.
-FROM docker.io/python:3.12.11-slim-bookworm AS python
+FROM docker.io/osgeo/gdal:ubuntu-small-3.6.3 AS python
 
 # Python build stage
 FROM python AS python-build-stage
@@ -11,7 +11,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   # dependencies for building Python packages
   build-essential \
   # psycopg dependencies
-  libpq-dev
+  libpq-dev \
+  python3-dev \
+  python3-pip
 
 # Requirements are installed here to ensure they will be cached.
 COPY ./requirements .
@@ -52,6 +54,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   wait-for-it \
   # Translations dependencies
   gettext \
+  python3-pip \
   # cleaning up unused files
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/*
