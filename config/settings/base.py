@@ -1,7 +1,6 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
 
-
 from pathlib import Path
 
 import environ
@@ -293,3 +292,30 @@ STATICFILES_FINDERS += ["compressor.finders.CompressorFinder"]
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+# Copied from original stoqs/config/settings/common.py
+# For a development system (Vagrant) we use insecure apache which is http and the default
+# Docker uses a proxy through nginx which provides https (set in docker-compose.yml)
+# N.B Probably don't need to distinguish between http and https anymore since we're
+# no longer using Vagrant.  With nginx proxying mapserver requests we can now use
+# https consistently.
+MAPSERVER_SCHEME = env("MAPSERVER_SCHEME", default="https")
+
+# Must be externally accessible if your STOQS server is to be externally accessible
+# The default of 'localhost:8080' is for a Vagrant install, set MAPSERVER_HOST for
+# other cases, e.g. export MAPSERVER_HOST='172.16.130.204:80'
+MAPSERVER_HOST = env("MAPSERVER_HOST", default="localhost:8080")
+
+# For template generated .map files, the URL_ version is for Docker shared volume setup
+MAPFILE_DIR = env("MAPFILE_DIR", default="/dev/shm")
+URL_MAPFILE_DIR = env("URL_MAPFILE_DIR", default="/dev/shm")
+
+# To allow running Jupyter notebooks in Vagrant's or Docker's host browser
+# See: https://fsdev.io/how-to-install-jupyter-notebook-in-a-dockerized-django-project/
+NOTEBOOK_ARGUMENTS = [
+    "--ip",
+    "0.0.0.0",
+    "--port",
+    "8888",
+    "--allow-root",
+    "--no-browser",
+]
