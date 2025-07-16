@@ -1,0 +1,12 @@
+# Translations for the STOQS project
+# Copyright (C) 2025 Mike McCann
+# Mike McCann <mccann@mbari.org>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 3.0\n"
+"Language: en-US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
