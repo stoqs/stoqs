@@ -235,7 +235,7 @@ def _buildMapFile(request, qm, options):
 
 # Cache responses from this view for 15 minutes
 @cache_page(60 * 15)
-def queryData(request, db_alias, fmt=None):
+def queryData(request, fmt=None):
     """
     Process data requests from the main query web page.  Returns both summary Activity and actual MeasuredParameter data
     as retreived from STOQSQManager.
