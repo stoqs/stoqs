@@ -64,7 +64,7 @@ pysher==1.0.8
 psycopg2-binary==2.9.9
 psutil==5.9.7
 pupynere==1.0.15
-Pydap==3.4.1
+Pydap==3.5.5
 python-dateutil==2.9.0.post0
 python3-memcached==1.51
 python-openid==2.2.5
@@ -80,5 +80,4 @@ sqlparse==0.5.0
 thredds-crawler==1.5.4
 transforms3d==0.4.1
 websocket-client==1.8.0
-xarray==2024.3.0
-
+xarray==2025.6.1
