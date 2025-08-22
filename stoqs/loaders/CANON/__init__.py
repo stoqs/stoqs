@@ -20,8 +20,7 @@ import os
 import sys
 
 # Insert Django App directory (parent of config) into python path 
-sys.path.insert(0, os.path.abspath(os.path.join(
-                os.path.dirname(__file__), "../../")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
 if 'DJANGO_SETTINGS_MODULE' not in os.environ:
     os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 # django >=1.7
@@ -31,33 +30,46 @@ try:
 except AttributeError:
     pass
 
-import DAPloaders
-import requests
+import logging
 import urllib
-import xarray as xr
-
-from SampleLoaders import SeabirdLoader, SubSamplesLoader, ParentSamplesLoader
-from lrauv_support import MissionLoader
-from LRAUV.make_load_scripts import lrauvs
-from bs4 import BeautifulSoup
-from loaders import LoadScript, FileNotFound, SIGMAT, SPICE, SPICINESS, ALTITUDE
-from stoqs.models import InstantPoint
-from django.db.models import Max
-from datetime import datetime, timedelta
 from argparse import Namespace
+from datetime import datetime
+from datetime import timedelta
+from urllib.request import HTTPError
+from urllib.request import urlopen
+
+import DAPloaders
+import matplotlib as mpl
+import requests
+import xarray as xr
+from bs4 import BeautifulSoup
+from django.db.models import Max
+from loaders import ALTITUDE
+from loaders import SIGMAT
+from loaders import SPICE
+from loaders import SPICINESS
+from loaders import FileNotFound
+from loaders import LoadScript
+from LRAUV.make_load_scripts import lrauvs
+from lrauv_support import MissionLoader
 from lxml import etree
 from nettow import NetTow
 from planktonpump import PlanktonPump
+from SampleLoaders import ParentSamplesLoader
+from SampleLoaders import SeabirdLoader
+from SampleLoaders import SubSamplesLoader
 from thredds_crawler.crawl import Crawl
-from urllib.request import urlopen, HTTPError
-import logging
-import matplotlib as mpl
+
+from stoqs.models import InstantPoint
+
 mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
-import matplotlib.pyplot as plt
-from matplotlib.colors import rgb2hex
-import numpy as np
 import re
+
+import matplotlib.pyplot as plt
+import numpy as np
 import webob
+from matplotlib.colors import rgb2hex
+
 
 def getStrideText(stride):
     '''

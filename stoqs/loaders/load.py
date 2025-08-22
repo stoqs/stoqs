@@ -11,7 +11,7 @@ MBARI 5 September 2015
 
 import os
 import sys
-app_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
+app_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 sys.path.insert(0, app_dir)
 if 'DJANGO_SETTINGS_MODULE' not in os.environ:
     os.environ['DJANGO_SETTINGS_MODULE']='config.settings.local'
