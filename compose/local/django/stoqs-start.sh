@@ -1,11 +1,33 @@
 #!/bin/bash
 
-STOQS_SRVHOME=/srv
-STOQS_SRVPROJ=/srv/stoqs
+STOQS_SRVHOME=/app
+STOQS_SRVPROJ=/app/stoqs
 
 # Allow for psql execution (used for database creation) without a password
-echo ${PGHOST}:\*:\*:postgres:${POSTGRES_PASSWORD} > /root/.pgpass &&\
-    chmod 600 /root/.pgpass
+echo ${POSTGRES_HOST}:\*:\*:${POSTGRES_USER}:${POSTGRES_PASSWORD} > /root/.pgpass
+echo ${POSTGRES_HOST}:\*:\*:stoqsadm:${STOQSADM_PASSWORD} >> /root/.pgpass
+chmod 600 /root/.pgpass
+
+# Wait for postgres to be ready
+#echo "Waiting for postgres to be ready..."
+#until psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d postgres -c '\q' 2>/dev/null; do
+#  >&2 echo "Postgres is unavailable - sleeping"
+#  sleep 1
+#done
+#>&2 echo "Postgres is up - continuing"
+
+echo "Creating stoqsadm user in the database..."
+psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 <<-EOSQL
+    DO \$\$
+    BEGIN
+        IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'stoqsadm') THEN
+            CREATE USER stoqsadm WITH PASSWORD '$STOQSADM_PASSWORD';
+        END IF;
+    END
+    \$\$;
+    ALTER USER stoqsadm CREATEDB;
+    GRANT ALL PRIVILEGES ON DATABASE "$POSTGRES_DB" TO stoqsadm;
+EOSQL
 
 export PYTHONPATH="${STOQS_SRVPROJ}:${PYTHONPATH}"
 
@@ -35,11 +57,12 @@ chmod 777 ${MAPFILE_DIR}
 
 # If default stoqs database doesn't exist then load it - also running the unit and functional tests
 echo "Checking for presence of stoqs database..."
-POSTGRES_DB=stoqs python ${STOQS_SRVHOME}/docker/database-check.py
-if [[ $? != 0 ]]; then
-    echo "Creating default stoqs database and running tests..."
-    ./test.sh changeme load noextraload
-fi
+#POSTGRES_DB=stoqs python ${STOQS_SRVHOME}/docker/database-check.py
+#if [[ $? != 0 ]]; then
+#    echo "Creating default stoqs database and running tests..."
+#    ./test.sh changeme load noextraload
+#fi
+./test.sh changeme load noextraload
 
 if [[ ! -z $CAMPAIGNS_MODULE ]]; then
     echo "Checking for presence of ${STOQS_SRVHOME}/stoqs/campaigns.py..."
