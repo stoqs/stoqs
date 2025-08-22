@@ -1,20 +1,21 @@
 #!/usr/bin/env python
 """
 Parse auvctd syslog file for gulper times and bottle numbers
-This is a utility script for pulling out Gulper information from 
+This is a utility script for pulling out Gulper information from
 the auvctd syslog files. Developed for the auv-python project.
 
 A copy of it will be used by the STOQS loader for adding dorado_Gulper
 Activities to the Campaign.  This will achieve better harmony with the
-way other Samples (Sipper, ESP) are loaded and accessible in STOQS. 
+way other Samples (Sipper, ESP) are loaded and accessible in STOQS.
 """
 
 import argparse
 import logging
 import os
 import re
-import requests
 import sys
+
+import requests
 import xarray as xr
 
 
@@ -22,8 +23,7 @@ class Gulper:
     logger = logging.getLogger(__name__)
     _handler = logging.StreamHandler()
     _formatter = logging.Formatter(
-        "%(levelname)s %(asctime)s %(filename)s "
-        "%(funcName)s():%(lineno)d %(message)s"
+        "%(levelname)s %(asctime)s %(filename)s %(funcName)s():%(lineno)d %(message)s"
     )
     _handler.setFormatter(_formatter)
     logger.addHandler(_handler)
@@ -228,9 +228,7 @@ class Gulper:
             const=1,
             nargs="?",
             help="verbosity level: "
-            + ", ".join(
-                [f"{i}: {v}" for i, v, in enumerate(("WARN", "INFO", "DEBUG"))]
-            ),
+            + ", ".join([f"{i}: {v}" for i, v in enumerate(("WARN", "INFO", "DEBUG"))]),
         )
 
         self.args = parser.parse_args()

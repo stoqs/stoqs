@@ -1,10 +1,14 @@
 # See: https://stackoverflow.com/questions/1557571/how-do-i-get-time-of-a-python-programs-execution/1557906#1557906
 # python3
 import atexit
-from time import time, strftime, localtime
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
+from time import localtime
+from time import strftime
+from time import time
 
-MINUTES = 'Minutes to execute:'
+MINUTES = "Minutes to execute:"
+
 
 def secondsToStr(elapsed=None):
     if elapsed is None:
@@ -12,19 +16,22 @@ def secondsToStr(elapsed=None):
     else:
         return str(timedelta(seconds=elapsed))
 
+
 def log(s, elapsed=None):
-    line = "="*40
+    line = "=" * 40
     print(line, flush=True)
-    print(secondsToStr(), '-', s, flush=True)
+    print(secondsToStr(), "-", s, flush=True)
     if elapsed:
         print("Elapsed time:", secondsToStr(elapsed), flush=True)
         print(f"{MINUTES} {elapsed / 60.0:.1f}", flush=True)
     print(line, flush=True)
 
+
 def endlog():
     end = datetime.now()
     elapsed = end - start
-    log("End Execution",elapsed.total_seconds())
+    log("End Execution", elapsed.total_seconds())
+
 
 start = datetime.now()
 atexit.register(endlog)
