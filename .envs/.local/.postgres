@@ -2,6 +2,7 @@
 # ------------------------------------------------------------------------------
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
-POSTGRES_DB=stoqs
+POSTGRES_DB=default
 POSTGRES_USER=vrhrfEJIFTsXwvYaQehnxcVfuGxGTAhK
 POSTGRES_PASSWORD=6oQqZcOpI0WFQLOXW4rLK6uP4ETv7ddDLYv65ryKsI37O5PMECFoHxnIppDOfqpY
+DATABASE_URL=postgis://vrhrfEJIFTsXwvYaQehnxcVfuGxGTAhK:6oQqZcOpI0WFQLOXW4rLK6uP4ETv7ddDLYv65ryKsI37O5PMECFoHxnIppDOfqpY@postgres:5432/default
