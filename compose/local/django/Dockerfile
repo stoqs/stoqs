@@ -55,9 +55,14 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   # Translations dependencies
   gettext \
   python3-pip \
+  wget \
+  postgresql-client \
   # cleaning up unused files
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/*
+
+# Install uv 
+RUN wget -qO- https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" sh
 
 # All absolute dir copies ignore workdir instruction. All relative dir copies are wrt to the workdir instruction
 # copy python dependency wheels from python-build-stage
@@ -71,6 +76,10 @@ COPY ./compose/local/django/stoqs-start.sh /stoqs-start.sh
 RUN sed -i 's/\r$//g' /stoqs-start.sh
 RUN chmod +x /stoqs-start.sh
 
+COPY ./test.sh /test.sh
+RUN sed -i 's/\r$//g' /test.sh
+RUN chmod +x /test.sh
+
 COPY ./compose/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
@@ -79,9 +88,11 @@ COPY ./compose/local/django/start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
 
-
-
 # copy application code to WORKDIR
 COPY . ${APP_HOME}
+
+# Setup .pgpass for passwordless postgres access
+RUN echo "postgres:5432:*:postgres:${POSTGRES_PASSWORD}" > /root/.pgpass && chmod 600 /root/.pgpass
+RUN echo "postgres:5432:*:stoqsadm:${POSTGRES_PASSWORD}" >> /root/.pgpass
 
 ENTRYPOINT ["/entrypoint"]
