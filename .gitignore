@@ -275,3 +275,7 @@ stoqs/media/
 .env
 .envs/*
 !.envs/.local/
+.pgpass
+
+# Large data file
+stoqs/loaders/Monterey25.grd
