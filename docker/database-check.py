@@ -17,8 +17,8 @@ def database_check():
     dbname = os.environ.get('POSTGRES_DB')
     user = os.environ.get('STOQSADM_USER')
     password = os.environ.get('STOQSADM_PASSWORD')
-    host = os.environ.get('STOQS_PGHOST')
-    port = os.environ.get('STOQS_PGHOST_PORT')
+    host = os.environ.get('POSTGRES_HOST')
+    port = os.environ.get('POSTGRES_PORT')
 
     if user and password and host and port:
         # All O.K. - variables defined in environment
@@ -26,15 +26,16 @@ def database_check():
     else:
         # Likely being run by DockerHub Autotest - set with defaults
         user = 'stoqsadm'
-        password = 'CHANGEME'
-        host = 'stoqs-postgis'
+        password = 'changeme'
+        host = 'postgres'
         port = '5432'
 
-    print("HOST: {host}:{port}, DB: {dbname}, USER: {user}".format(
+    print("database-check.py: HOST: {host}:{port}, DB: {dbname}, USER: {user} PW: {pw}".format(
         dbname=dbname,
         user=user,
         host=host,
-        port=port))
+        port=port,
+        pw=password))
 
     try:
         psycopg2.connect(
