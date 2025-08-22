@@ -11,13 +11,13 @@
 #
 # To run tests in a docker-based development system set some env variable first, e.g.:
 #   docker-compose run --rm stoqs /bin/bash
-#   export DATABASE_URL=postgis://stoqsadm:CHANGEME@stoqs-postgis:5432/stoqs
-#   export DATABASE_SUPERUSER_URL=postgis://postgres:changeme@stoqs-postgis:5432/stoqs
+#   export DATABASE_URL=postgres://stoqsadm:CHANGEME@postgres:5432/stoqs
+#   export DATABASE_SUPERUSER_URL=postgres://postgres:changeme@postgres:5432/stoqs
 #   ./test.sh CHANGEME load noextraload
 #   To run just the functional tests:
-#   DATABASE_URL=$DATABASE_SUPERUSER_URL stoqs/manage.py test stoqs.tests.functional_tests --settings=config.settings.ci
+#   DATABASE_URL=$DATABASE_SUPERUSER_URL /app/manage.py test stoqs.tests.functional_tests --settings=config.settings.ci
 #   and just one of them:
-#   DATABASE_URL=$DATABASE_SUPERUSER_URL stoqs/manage.py test stoqs.tests.functional_tests.BrowserTestCase.test_campaign_page --settings=config.settings.ci
+#   DATABASE_URL=$DATABASE_SUPERUSER_URL /app/manage.py test stoqs.tests.functional_tests.BrowserTestCase.test_campaign_page --settings=config.settings.ci
 
 if [ -z $1 ]
 then
@@ -33,21 +33,21 @@ then
     exit -1
 fi
 
-PGPORT=`echo $DATABASE_URL | cut -d':' -f4 | cut -d'/' -f1`
-
 if [ -z $DATABASE_SUPERUSER_URL ]
 then
-    DATABASE_SUPERUSER_URL=postgis://127.0.0.1:$PGPORT/stoqs
+    DATABASE_SUPERUSER_URL=${POSTGRES_USER}://127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}
+    echo $DATABASE_SUPERUSER_URL
 fi
 
 # Assume starting in project home (stoqsgit) directory
 cd stoqs
 
 # Create database roles used by STOQS applications - don't print out errors, e.g.: if role already exists
-psql -p $PGPORT -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres 2> /dev/null
-psql -p $PGPORT -c "CREATE USER everyone WITH PASSWORD 'guest';" -U postgres 2> /dev/null
+#psql -p ${POSTGRES_PORT} -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U ${POSTGRES_USER} -d postgres 2> /dev/null
+echo "Creating everyone user..."
+psql -p ${POSTGRES_PORT} -c "CREATE USER everyone WITH PASSWORD 'guest';" -U ${POSTGRES_USER} -d postgres 2> /dev/null
 
-export DJANGO_SETTINGS_MODULE=config.settings.ci
+export DJANGO_SETTINGS_MODULE=config.settings.local
 
 # If there is a third argument and it is 'extraload' execute this block, use 3rd arg of 'noextraload' to not execute
 if [ ${3:-extraload} == 'extraload' ]
@@ -59,11 +59,11 @@ then
         echo "Cannot create default database stoqs; refer to above message."
         exit -1
     fi
-    DATABASE_URL=$DATABASE_SUPERUSER_URL ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_load_test.json
+    DATABASE_URL=$DATABASE_SUPERUSER_URL /app/manage.py dumpdata --settings=config.settings.local stoqs > stoqs/fixtures/stoqs_load_test.json
     echo "Loading tests..."
     # Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL.
     # Note that DATABASE_URL is exported before this script is executed, this is so that it also works in Travis-CI.
-    DATABASE_URL=$DATABASE_SUPERUSER_URL coverage run -a --source=utils,stoqs manage.py test stoqs.tests.loading_tests --settings=config.settings.ci
+    DATABASE_URL=$DATABASE_SUPERUSER_URL coverage run -a --source=utils,stoqs /app/manage.py test stoqs.tests.loading_tests --settings=config.settings.local
     loading_tests_status=$?
 fi
 
@@ -72,29 +72,32 @@ fi
 if [ ${2:-load} == 'load' ]
 then
     echo "Loading standard data for unit and functional tests..."
-    psql -p $PGPORT -c "DROP DATABASE IF EXISTS stoqs;" -U postgres
-    psql -p $PGPORT -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
-    psql -p $PGPORT -c "CREATE EXTENSION postgis;" -d stoqs -U postgres
-    psql -p $PGPORT -c "CREATE EXTENSION postgis_topology;" -d stoqs -U postgres
+    #psql -p ${POSTGRES_PORT} -c "DROP DATABASE IF EXISTS stoqs;" -U ${POSTGRES_USER} -d postgres
+    #psql -p ${POSTGRES_PORT} -c "CREATE DATABASE stoqs owner=stoqsadm;" -U ${POSTGRES_USER} -d postgres
+    #psql -p ${POSTGRES_PORT} -c "CREATE EXTENSION postgis;" -d stoqs -U ${POSTGRES_USER} -d postgres
+    #psql -p ${POSTGRES_PORT} -c "CREATE EXTENSION postgis_topology;" -d stoqs -U ${POSTGRES_USER} -d postgres
     if [ $? != 0 ]
     then
         echo "Cannot create default database stoqs; refer to above message."
         exit -1
     fi
-    psql -p $PGPORT -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
+    #psql -p ${POSTGRES_PORT} -c "ALTER DATABASE '${POSTGRES_DB}' SET TIMEZONE='GMT';" -U ${POSTGRES_USER} -d postgres
+    psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1 <<-EOSQL
+ALTER DATABASE "${POSTGRES_DB}" SET TIMEZONE='GMT'
+EOSQL
 
-    ./manage.py makemigrations stoqs --settings=config.settings.ci --noinput
-    ./manage.py migrate --settings=config.settings.ci --noinput --database=default
+    /app/manage.py makemigrations stoqs --settings=config.settings.local --noinput
+    /app/manage.py migrate --settings=config.settings.local --noinput --database=default
     if [ $? != 0 ]
     then
         echo "Cannot migrate default database; refer to above error message."
         exit -1
     fi
-    psql -p $PGPORT -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
-    psql -p $PGPORT -c "GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
+    psql -p ${POSTGRES_PORT} -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+    psql -p ${POSTGRES_PORT} -c "GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO stoqsadm;" -U ${POSTGRES_USER} -d ${POSTGRES_DB}
 
     # Get bathymetry and load data from MBARI data servers
-    wget --no-check-certificate -O loaders/Monterey25.grd https://stoqs.mbari.org/terrain/Monterey25.grd
+    wget --no-check-certificate -q -O loaders/Monterey25.grd https://stoqs.mbari.org/terrain/Monterey25.grd
     coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" loaders/loadTestData.py
     if [ $? != 0 ]
     then
@@ -116,17 +119,17 @@ then
       --mins 33.33 33.65 33.70 33.75 --maxes 33.65 33.70 33.75 33.93 -v
 
     # Show how to add everyone select permission to a database
-    psql -p $PGPORT -c "GRANT select on all tables in schema public to everyone;" -U postgres -d stoqs 2> /dev/null
+    psql -p ${POSTGRES_PORT} -c "GRANT select on all tables in schema public to everyone;" -U ${POSTGRES_USER} -d ${POSTGRES_DB} 2> /dev/null
 
     # Create database fixture
-    ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_test_data.json
+    /app/manage.py dumpdata --settings=config.settings.local stoqs > stoqs/fixtures/stoqs_test_data.json
 fi
 
 # Run tests using the continuous integration (ci) setting
 # Need to create and drop test_ databases using shell account or sa url, hence reassign DATABASE_URL
 echo "Unit tests..."
 DATABASE_URL=$DATABASE_SUPERUSER_URL
-coverage run -a --source=utils,stoqs manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
+coverage run -a --source=utils,stoqs /app/manage.py test stoqs.tests.unit_tests --settings=config.settings.local
 unit_tests_status=$?
 
 # Instructions for running functional tests, instead of running them here
@@ -137,13 +140,13 @@ echo "cd docker"
 echo "docker-compose down"
 echo "docker-compose -f docker-compose-ci.yml up -d --build"
 echo "docker-compose -f docker-compose-ci.yml run --rm stoqs /bin/bash"
-echo "DATABASE_URL=\$DATABASE_SUPERUSER_URL stoqs/manage.py test stoqs.tests.functional_tests --settings=config.settings.ci"
+echo "DATABASE_URL=\$DATABASE_SUPERUSER_URL /app/manage.py test stoqs.tests.functional_tests --settings=config.settings.ci"
 echo " -- or for Mac M1/2/3 --"
 echo "cd docker"
 echo "docker-compose -f docker-compose-arm.yml down"
 echo "docker-compose -f docker-compose-arm-ci.yml up -d --build"
 echo "docker-compose -f docker-compose-arm-ci.yml run --rm stoqs /bin/bash"
-echo "DATABASE_URL=\$DATABASE_SUPERUSER_URL stoqs/manage.py test stoqs.tests.functional_tests --settings=config.settings.ci"
+echo "DATABASE_URL=\$DATABASE_SUPERUSER_URL /app/manage.py test stoqs.tests.functional_tests --settings=config.settings.ci"
 
 echo "===================================================================================================================="
 echo "Open http://localhost:7900/?autoconnect=1&resize=scale&password=secret to monitor progress of the tests"
