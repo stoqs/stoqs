@@ -1,0 +1,25 @@
+FROM --platform=linux/arm64 camptocamp/mapserver:8.0-gdal3.6-arm64
+
+USER root
+
+# See https://github.com/geo-data/mapserver-docker/blob/master/build.sh
+# Install the build dependencies.
+RUN apt-get update -y && apt-get install -y libfcgi-dev fcgiwrap nginx
+
+# Set up the Nginx Mapserver configuration.
+ADD ./compose/local/mapserver/mapserver.tmpl /etc/nginx/sites-available/mapserver
+
+# Config file new in Mapserver 8: https://mapserver.org/mapfile/config.html 
+ADD ./compose/local/mapserver/mapserver.conf /usr/local/etc/
+
+RUN ln -s /etc/nginx/sites-available/mapserver /etc/nginx/sites-enabled/mapserver
+RUN rm /etc/nginx/sites-enabled/default
+
+# Set up the run script for starting services.
+ADD ./compose/local/mapserver/mapserver-start.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/mapserver-start.sh
+
+EXPOSE 80
+
+# Start the fcgi and web servers.
+CMD ["/usr/local/bin/mapserver-start.sh"]

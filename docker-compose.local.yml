@@ -1,7 +1,8 @@
 volumes:
   stoqs_local_postgres_data: {}
   stoqs_local_postgres_data_backups: {}
-  
+  static-files: {}
+  media-files: {}
 
 services:
   django:
@@ -19,7 +20,7 @@ services:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
     ports:
-      - '8000:8000'
+      - '8001:8000'
     command: /start
 
   postgres:
@@ -39,3 +40,41 @@ services:
     container_name: stoqs_local_mailpit
     ports:
       - "8025:8025"
+
+  mapserver:
+    image: mbari/stoqs-mapserver
+    build:
+        context: .
+        dockerfile: ./compose/local/mapserver/Dockerfile
+    volumes:
+      - ${STOQS_VOLS_DIR}/maps:${URL_MAPFILE_DIR}:ro
+    container_name: stoqs-mapserver
+    # Expose port 80 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
+    ##ports:
+    ##  - "80:80"
+    restart: always
+    env_file:
+      - ./.envs/.local/.django
+
+  nginx:
+    image: mbari/stoqs-nginx
+    build:
+        context: .
+        dockerfile: ./compose/local/nginx/Dockerfile
+    volumes:
+      - ${STOQS_VOLS_DIR}/html:/srv/html
+      - ${STOQS_VOLS_DIR}/pg_dumps:/srv/media-files/pg_dumps
+      - static-files:/srv/static-files
+      - media-files:/srv/media-files
+    environment:
+      - NGINX_TMPL=${NGINX_TMPL}
+    container_name: stoqs-nginx
+    ports:
+      - "80:80"
+      - "8000:8000"
+      - "443:443"
+    depends_on:
+      - django
+    restart: always
+    env_file:
+      - ./.envs/.local/.django
