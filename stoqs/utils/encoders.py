@@ -1,16 +1,18 @@
-from decimal import Decimal
 import datetime
-import logging
 import json
+import logging
+from decimal import Decimal
+
 import numpy
 
 logger = logging.getLogger(__name__)
- 
+
+
 class STOQSJSONEncoder(json.JSONEncoder):
     def default(self, object_to_encode):
-        '''
+        """
         Convert Decimal object to something we can serialize
-        '''
+        """
         ##logger.info('type(object_to_encode) = %s', type(object_to_encode))
         if isinstance(object_to_encode, Decimal):
             return object_to_encode.to_eng_string()

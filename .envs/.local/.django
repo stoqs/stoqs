@@ -1,0 +1,22 @@
+# General
+# ------------------------------------------------------------------------------
+USE_DOCKER=yes
+IPYTHONDIR=/app/.ipython
+GEOS_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/libgeos_c.so
+GDAL_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/libgdal.so
+
+STOQS_PGHOST=postgres
+PGHOST=postgres
+#POSTGRES_PASSWORD=changeme
+STOQSADM_PASSWORD=changeme
+MAPSERVER_HOST=localhost
+URL_MAPFILE_DIR=/maps
+STATIC_URL=/static/
+STATIC_ROOT=/app/static-files
+MAPFILE_DIR=/maps
+MEDIA_URL=/media/
+MEDIA_ROOT=/app/media-files
+NGINX_SERVER_NAME=localhost
+UWSGI_READ_TIMEOUT=300
+DJANGO_DEBUG=True
+USER=root
