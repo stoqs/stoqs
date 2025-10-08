@@ -257,7 +257,7 @@ class Make_netCDFs():
                 crawl_debug = True
             rt_cat = Crawl(cat_url, select=[".*shore.nc4"], skip=skips, debug=crawl_debug)
 
-            for url in [s.get("url") for d in rt_cat.datasets for s in d.services if s.get("service").lower() == "opendap"]:
+            for url in [s.get("url") for d in rt_cat.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]:
                 dir_start = datetime.strptime(url.split('/')[-2], '%Y%m%dT%H%M%S')
                 if startdate <= dir_start and dir_start <= enddate:
                     self.logger.debug(f"Adding url {url}")
@@ -282,8 +282,8 @@ class Make_netCDFs():
                     catalog = '{}_{}/catalog.xml'.format(dir_start.strftime('%Y%m%d'), dir_end.strftime('%Y%m%d'))
                     self.logger.debug(f"Crawling {os.path.join(base, catalog)}")
                     log_cat = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
-                    self.logger.debug(f"Getting opendap urls from datasets {log_cat.datasets}")
-                    for url in [s.get("url") for d in log_cat.datasets for s in d.services if s.get("service").lower() == "opendap"]:
+                    self.logger.debug(f"Getting opendap or compound urls from datasets {log_cat.datasets}")
+                    for url in [s.get("url") for d in log_cat.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]:
                         self.logger.debug(f"Adding url {url}")
                         urls.append(url)
         if not urls:
