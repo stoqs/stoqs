@@ -206,6 +206,11 @@ class InterpolatorWriter(BaseWriter):
                 self.logger.debug(e)
                 continue
 
+        # Remove rows for nan coordinate values added by the ad hoc QC done in processResampleNc4File().
+        # The new opendap server on elvis2 delivers these nan values to client software,
+        # such as the STOQS loader, and they should be removed here to prevent nan values in STOQS databases.
+        self.Dataset = self.Dataset.dropna(dim="time", subset=["longitude", "latitude", "depth"])
+
         # We let xarray write its own time coordinate then add standard_name as the STOQS loader needs it
         self.Dataset["time"].attrs["standard_name"] = "time"
 
@@ -519,7 +524,7 @@ class InterpolatorWriter(BaseWriter):
         self.write_netcdf(out_file, url, resampleFreq)
         self.logger.info('Wrote ' + out_file)
 
-        # End processSingleParm
+        # End process()
 
     def createNav(self, t_resample, resampleFreq):
 
@@ -653,7 +658,7 @@ class InterpolatorWriter(BaseWriter):
         return lon_time_series, lat_time_series
 
     def outlier_mask(self, signal, name, threshold=4):
-        # This method is relly only good for single point spikes as it relies on a difference between adjacent points
+        # This method is really only good for single point spikes as it relies on a difference between adjacent points
         # See: https://ocefpaf.github.io/python4oceanographers/blog/2015/03/16/outlier_detection/
         signal = signal.copy()
         difference = np.abs(signal - np.median(signal))
@@ -707,6 +712,15 @@ class InterpolatorWriter(BaseWriter):
             if data_array.name == 'longitude':
                 md = np.ma.masked_greater(data_array, -2.0)     # Remove points in Utah
                 da = pd.Series(da[:][~md.mask], index=v_time)
+
+        if 'brizo/missionlogs/2025/20250909_20250915/20250911T073640/202509110736_202509120809' in in_file:
+            if data_array.name == 'longitude':
+                pass
+                # TODO:
+                # Remove values like [-1.3451387592589562e+246, -2.04418825191423e+177, ..., 8726548292365e-236, 4.993624235921421e-293, ...]
+                # Values to keep are like -2.126984622766031. Code below currently fails with 'ValueError: cannot reindex on an axis with duplicate labels'
+                ##md = np.ma.masked_outside(data_array, -2.0, -2.3)
+                ##da = pd.Series(da[:][~md.mask], index=v_time)
 
         if angle:
             # Some universal positions are in degrees, some are in radians - make a guess based on mean values
@@ -1084,7 +1098,7 @@ class InterpolatorWriter(BaseWriter):
             self.write_netcdf(out_file, url)
             self.logger.info('Wrote ' + out_file)
 
-        # End processSingleParm
+        # End processNc4FileDecimated()
 
     def processNc4File(self, in_file, out_file, parm, resampleFreq):
         self.reset()
@@ -1202,6 +1216,9 @@ class InterpolatorWriter(BaseWriter):
         self.logger.addHandler(fh)
 
         self.in_file = in_file
+        if "slate" in in_file:
+            self.logger.info("Not processing %s, as 'slate' in it.", in_file)
+            return
         base_name = os.path.basename(in_file)
         os.system(f"/bin/cp {in_file} /tmp/{base_name}")
         self.logger.info('Reading %s file...' % in_file)
@@ -1371,6 +1388,8 @@ class InterpolatorWriter(BaseWriter):
                         value = value.mask(value < 36, np.nan)  # Remove latitudes that are close to the equator
                     if 'ahi/missionlogs/2024/20241217_20241220/20241219T042723/202412190427_202412190551' in in_file:
                         value = value.mask(value < 36, np.nan)  # Remove latitudes that are close to the equator
+                    if 'brizo/missionlogs/2025/202509' in in_file:
+                        value = value.mask(value < 36, np.nan)  # Remove latitudes that are close to the equator
                 if key == 'depth':
                     # Ad hoc QC for special cases
                     if 'brizo/missionlogs/2023/20230512_20230517/20230517T035153/202305170352_202305171120' in in_file:
@@ -1379,6 +1398,16 @@ class InterpolatorWriter(BaseWriter):
                         value = value.mask(value > 20, np.nan)    # Remove 477.49 m value in shallow water of Lake Erie
                     if 'makai/missionlogs/2024/20240607_20240615/20240611T082709/202406110827_202406111026' in in_file:
                         value = value.mask(value > 20, np.nan)    # Remove 230 m values in shallow water of North Sea in stoqs_denmark2024
+                    if 'pontus/missionlogs/2025/202506' in in_file or 'pontus/missionlogs/2025/202507' in in_file:
+                        value = value.mask(value > 75, np.nan)    # Remove several depth values > 75 m during north Monterey Bay dock runs
+                    if 'brizo/missionlogs/2025/202508' in in_file or 'pontus/missionlogs/2025/202508' in in_file:
+                        value = value.mask(value > 150, np.nan)    # Remove several depth values > 150 m during Fall 2025 CANON
+                    if 'brizo/missionlogs/2025/202509' in in_file or 'ahi/missionlogs/2025/202509' in in_file:
+                        value = value.mask(value > 150, np.nan)    # Remove several depth values > 150 m during Fall 2025 CANON
+                    if 'aku/missionlogs/2025/20250925_20250926/20250925T175420/202509251754_202509251800' in in_file:
+                        value = value.mask(value > 50, np.nan)    # Remove several depth values > 50 m during Fall 2025 CANON
+                    if 'aku/missionlogs/2025/20250925_20250926/20250925T180126/202509251801_202509252250' in in_file:
+                        value = value.mask(value > 200, np.nan)    # Remove several depth values > 200 m during Fall 2025 CANON
 
                 i = self.interpolate(value, t_resample.index)
                 if key == 'time':
