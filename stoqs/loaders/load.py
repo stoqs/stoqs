@@ -276,7 +276,7 @@ class Loader(object):
         if self.args.db:
             for d in self.args.db:
                 if d not in list(campaigns.campaigns.keys()):
-                    self.logger.warning('%s not in %s', d, self.args.campaigns)
+                    self.logger.warning('%s not in %s for this running container', d, self.args.campaigns)
 
         # That can connect as user postgres for creating and dropping databases
         cmd = ('psql -p {} -c "\q" -U postgres').format(settings.DATABASES['default']['PORT'])
