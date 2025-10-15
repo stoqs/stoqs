@@ -493,7 +493,7 @@ class ParentSamplesLoader(STOQS_Loader):
         sorted(link_list, key=lambda elem: elem.text)
         for link in link_list:
             self.logger.debug(f"Checking for log dir: {link.text}")
-            if re.match('\d\d\d\d\d\d\d\dT\d\d\d\d\d\d', link.text):
+            if re.match('^\d\d\d\d\d\d\d\dT\d\d\d\d\d\d\/$', link.text):
                 syslog_url = os.path.join(dlist_url, link.text, 'syslog')
                 self.logger.debug(f"Looking for esp_device in {syslog_url}")
                 _, esp_device = self._read_syslog(syslog_url)
