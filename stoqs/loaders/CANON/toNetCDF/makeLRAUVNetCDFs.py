@@ -146,7 +146,7 @@ class Make_netCDFs():
 
     def process_command_line(self):
         examples = 'Examples:' + '\n\n'
-        examples += sys.argv[0] + " -i /mbari/LRAUV/daphne/missionlogs/2015/ -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/missionlogs/2015/.*.nc4$' -r '10S'"
+        examples += sys.argv[0] + " -i /mbari/LRAUV/daphne/missionlogs/2015/ -u 'http://dods.mbari.org/thredds/catalog/LRAUV/daphne/missionlogs/2015/.*.nc4$' -r '10S'"
         parser = ArgumentParser(formatter_class=RawTextHelpFormatter,
                                 description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
                                 epilog=examples)
@@ -233,12 +233,12 @@ class Make_netCDFs():
             if not self.args.inDir:
                 self.inDir = f"/mbari/LRAUV/{platform}/realtime/sbdlogs/{start.year}"
             if not self.args.inUrl:
-                self.inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{platform}/realtime/sbdlogs/{start.year}/.*shore.nc4"
+                self.inUrl = f"http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/realtime/sbdlogs/{start.year}/.*shore.nc4"
         else:
             if not self.args.inDir:
                 self.inDir = f"/mbari/LRAUV/{platform}/missionlogs/{start.year}"
             if not self.args.inUrl:
-                self.inUrl = f"http://elvis.shore.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{start.year}/.*.nc4"
+                self.inUrl = f"http://dods.mbari.org/thredds/catalog/LRAUV/{platform}/missionlogs/{start.year}/.*.nc4"
 
     def find_urls(self, base, select, startdate, enddate):
         cat_url = os.path.join(base, 'catalog.xml')
@@ -322,12 +322,13 @@ class Make_netCDFs():
                     self.logger.handlers = [sh]
                     continue
 
+            short_name = '/'.join(url.split('/')[9:])
             if start is not None and startDatetime <= start :
-                self.logger.info('startDatetime = {} out of bounds with user-defined startDatetime = {}'.format(startDatetime, start))
+                self.logger.info('{}: startDatetime = {} out of bounds with user-defined startDatetime = {}'.format(short_name, startDatetime, start))
                 continue
 
             if end is not None and endDatetime >= end :
-                self.logger.info('endDatetime = {} out of bounds with user-defined endDatetime = {}'.format(endDatetime, end))
+                self.logger.info('{}: endDatetime = {} out of bounds with user-defined endDatetime = {}'.format(short_name, endDatetime, end))
                 continue
 
             urls.append(url)
