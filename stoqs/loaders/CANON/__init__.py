@@ -1243,7 +1243,7 @@ class CANONLoader(LoadScript):
         urls = []
         catalog_url = os.path.join(base, 'catalog.xml')
         c = Crawl(catalog_url, select=[search_str])
-        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
         for url in d:
             file_dt = datetime.strptime(url.split('-')[-4], '%Y%m%dT%H%M%S')
             if startdate < file_dt and file_dt < enddate:
@@ -1436,7 +1436,7 @@ class CANONLoader(LoadScript):
                         self.logger.debug(f'{mission_dir_name}: Collecting all log files matching {search_str} in this directory')
                         catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                         c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
-                        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+                        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
                         for url in d:
                             self.logger.debug(f'{url}')
                             urls.append(url)
@@ -1446,7 +1446,7 @@ class CANONLoader(LoadScript):
                     if dir_start >= startdate and dir_end <= enddate:
                         catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                         c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
-                        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+                        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
                         for url in d:
                             self.logger.debug(f'{url}')
                             urls.append(url)
@@ -1454,7 +1454,7 @@ class CANONLoader(LoadScript):
                 # Likely a realtime log - add to urls if only url date is between startdate and enddate
                 catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                 c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
-                d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+                d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
                 for url in d:
                     try:
                         dir_start =  datetime.strptime(url.split('/')[11], '%Y%m%dT%H%M%S')
@@ -1622,7 +1622,7 @@ class CANONLoader(LoadScript):
             # Accommodate either string or Sequence in search_str
             search_str = [search_str]
         c = Crawl(catalog_url, select=search_str)
-        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
         for url in d:
             try:
                 if 'Dorado389' in url:
@@ -1698,7 +1698,7 @@ class CANONLoader(LoadScript):
         urls = []
         catalog_url = os.path.join(base, 'catalog.xml')
         c = Crawl(catalog_url, select=[search_str])
-        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
         for url in d:
             try:
                 # breakpoint()s don't work inside this loop, use debug()s to debug
