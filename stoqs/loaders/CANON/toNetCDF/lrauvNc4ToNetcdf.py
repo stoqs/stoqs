@@ -715,12 +715,12 @@ class InterpolatorWriter(BaseWriter):
 
         if 'brizo/missionlogs/2025/20250909_20250915/20250911T073640/202509110736_202509120809' in in_file:
             if data_array.name == 'longitude':
-                pass
                 # TODO:
                 # Remove values like [-1.3451387592589562e+246, -2.04418825191423e+177, ..., 8726548292365e-236, 4.993624235921421e-293, ...]
                 # Values to keep are like -2.126984622766031. Code below currently fails with 'ValueError: cannot reindex on an axis with duplicate labels'
                 ##md = np.ma.masked_outside(data_array, -2.0, -2.3)
                 ##da = pd.Series(da[:][~md.mask], index=v_time)
+                pass
 
         if angle:
             # Some universal positions are in degrees, some are in radians - make a guess based on mean values
@@ -805,9 +805,9 @@ class InterpolatorWriter(BaseWriter):
         dt_nudged = np.array([], dtype='datetime64[ns]')
         if lat_fix.any():
             segi = np.where(lat.index < lat_fix.index[0])[0]
-            if lon[:][segi].any():
-                lon_nudged = lon[segi]
-                lat_nudged = lat[segi]
+            if lon[:].iloc[segi].any():
+                lon_nudged = lon.iloc[segi]
+                lat_nudged = lat.iloc[segi]
                 dt_nudged = lon.index[segi]
                 self.logger.debug(f"Filled _nudged arrays with {len(segi)} values starting at {lat.index[0]} which were before the first GPS fix at {lat_fix.index[0]}")
         else:
@@ -864,8 +864,8 @@ class InterpolatorWriter(BaseWriter):
             # Sanity checks
             if np.max(np.abs(lon.iloc[segi] + lon_nudge)) > 180 or np.max(np.abs(lat.iloc[segi] + lon_nudge)) > 90:
                 self.logger.warning(f"Nudged coordinate is way out of reasonable range - segment {seg_count}")
-                self.logger.warning(f" max(abs(lon)) = {np.max(np.abs(lon[segi] + lon_nudge))}")
-                self.logger.warning(f" max(abs(lat)) = {np.max(np.abs(lat[segi] + lat_nudge))}")
+                self.logger.warning(f" max(abs(lon)) = {np.max(np.abs(lon.iloc[segi] + lon_nudge))}")
+                self.logger.warning(f" max(abs(lat)) = {np.max(np.abs(lat.iloc[segi] + lat_nudge))}")
 
             lon_nudged = np.append(lon_nudged, lon.iloc[segi] + lon_nudge)
             lat_nudged = np.append(lat_nudged, lat.iloc[segi] + lat_nudge)
@@ -1233,7 +1233,7 @@ class InterpolatorWriter(BaseWriter):
         for crd in coord:
             repeated_values = np.where(np.diff(np.maximum.accumulate(coord_ts[crd].index.astype('int'))) <= 0)[0]
             if len(repeated_values) > 0:
-                self.logger.warning(f"Dropping from {crd} repeated/decreasing values at indices: {repeated_values}")
+                self.logger.warning(f"Dropping from {crd} repeated/decreasing time values at indices: {repeated_values}")
                 coord_ts[crd].drop(coord_ts[crd].index[repeated_values], inplace=True)
 
         # Get time parameter and align everything to this
@@ -1388,8 +1388,8 @@ class InterpolatorWriter(BaseWriter):
                         value = value.mask(value < 36, np.nan)  # Remove latitudes that are close to the equator
                     if 'ahi/missionlogs/2024/20241217_20241220/20241219T042723/202412190427_202412190551' in in_file:
                         value = value.mask(value < 36, np.nan)  # Remove latitudes that are close to the equator
-                    if 'brizo/missionlogs/2025/202509' in in_file:
-                        value = value.mask(value < 36, np.nan)  # Remove latitudes that are close to the equator
+                    ##if 'brizo/missionlogs/2025/202509' in in_file:
+                    ##    value = value.mask(value < 36, np.nan)  # Remove latitudes that are close to the equator
                 if key == 'depth':
                     # Ad hoc QC for special cases
                     if 'brizo/missionlogs/2023/20230512_20230517/20230517T035153/202305170352_202305171120' in in_file:
@@ -1402,8 +1402,10 @@ class InterpolatorWriter(BaseWriter):
                         value = value.mask(value > 75, np.nan)    # Remove several depth values > 75 m during north Monterey Bay dock runs
                     if 'brizo/missionlogs/2025/202508' in in_file or 'pontus/missionlogs/2025/202508' in in_file:
                         value = value.mask(value > 150, np.nan)    # Remove several depth values > 150 m during Fall 2025 CANON
-                    if 'brizo/missionlogs/2025/202509' in in_file or 'ahi/missionlogs/2025/202509' in in_file:
+                    if 'brizo/missionlogs/2025/202509' in in_file:
                         value = value.mask(value > 150, np.nan)    # Remove several depth values > 150 m during Fall 2025 CANON
+                    if 'ahi/missionlogs/2025/202509' in in_file:
+                        value = value.mask(value > 210, np.nan)    # Remove several depth values > 210 m during Fall 2025 CANON
                     if 'aku/missionlogs/2025/20250925_20250926/20250925T175420/202509251754_202509251800' in in_file:
                         value = value.mask(value > 50, np.nan)    # Remove several depth values > 50 m during Fall 2025 CANON
                     if 'aku/missionlogs/2025/20250925_20250926/20250925T180126/202509251801_202509252250' in in_file:
@@ -1420,7 +1422,7 @@ class InterpolatorWriter(BaseWriter):
                         ##    print(f"{str(dt.datetime.fromtimestamp(rv))} <= {str(dt.datetime.fromtimestamp(indxv))}")
                         ##    if not counter % 10000:
                         ##        import pdb; pdb.set_trace()
-                        i[repeated_values] = i[repeated_values].index.astype(np.int64)/1E9
+                        i[repeated_values] = i.iloc[repeated_values].index.astype(np.int64)/1E9
 
                 self.all_sub_ts[key] = i
                 self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
