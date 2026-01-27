@@ -257,7 +257,10 @@ class Make_netCDFs():
                 crawl_debug = True
             rt_cat = Crawl(cat_url, select=[".*shore.nc4"], skip=skips, debug=crawl_debug)
 
-            for url in [s.get("url") for d in rt_cat.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]:
+            ## for url in [s.get("url") for d in rt_cat.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]:
+            names = [d.id for d in rt_cat.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
+            urls_to_search = [f"https://dods.mbari.org/thredds/dodsC/{name}" for name in names]
+            for url in urls_to_search:
                 dir_start = datetime.strptime(url.split('/')[-2], '%Y%m%dT%H%M%S')
                 if startdate <= dir_start and dir_start <= enddate:
                     self.logger.debug(f"Adding url {url}")
@@ -283,7 +286,10 @@ class Make_netCDFs():
                     self.logger.debug(f"Crawling {os.path.join(base, catalog)}")
                     log_cat = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
                     self.logger.debug(f"Getting opendap or compound urls from datasets {log_cat.datasets}")
-                    for url in [s.get("url") for d in log_cat.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]:
+                    ## for url in [s.get("url") for d in log_cat.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]:
+                    names = [d.id for d in log_cat.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
+                    urls_to_search = [f"https://dods.mbari.org/thredds/dodsC/{name}" for name in names]
+                    for url in urls_to_search:
                         self.logger.debug(f"Adding url {url}")
                         urls.append(url)
         if not urls:
