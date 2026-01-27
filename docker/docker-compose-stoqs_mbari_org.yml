@@ -31,6 +31,7 @@ services:
     # Expose port 80 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##ports:
     ##  - "80:80"
+    restart: always
     env_file:
       - ./.env
 
@@ -69,6 +70,7 @@ services:
       - "8888:8888"
     # Expose port 8000 if PRODUCTION=false - Note: PRODUCTION=false doesn't work (March 2019)
     ##  - "8000:8000"
+    restart: always
     env_file:
       - ./.env
 
@@ -83,6 +85,7 @@ services:
       - ${STOQS_VOLS_DIR}/pg_dumps:/srv/media-files/pg_dumps
       - static-files:/srv/static-files
       - media-files:/srv/media-files
+      - ${STOQS_VOLS_DIR}/keystore:/etc/ssl/certs
     environment:
       - NGINX_TMPL=${NGINX_TMPL}
     container_name: stoqs-nginx
@@ -92,6 +95,7 @@ services:
       - "443:443"
     depends_on:
       - stoqs
+    restart: always
     env_file:
       - ./.env
 
@@ -107,11 +111,13 @@ services:
       - ${POSTGRES_WALDIR}:/var/lib/postgresql/waldir
     ports:
       - ${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}
+    restart: always
     env_file:
       - ./.env
 
   redis:
     image: redis:${REDIS_TAG:-latest}
+    restart: always
 
   shortener:
     image: adamwojt/adamwojt:ur_l_production
@@ -138,3 +144,4 @@ services:
       - redis
     volumes:
       - static-files:/app/staticfiles
+    restart: always

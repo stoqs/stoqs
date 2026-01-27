@@ -67,10 +67,11 @@ http {
 
         # see http://nginx.org/en/docs/http/configuriNGINX_https_servers.html
         ssl_certificate /etc/ssl/certs/${NGINX_CRT_NAME}.crt;
-        ssl_certificate_key /etc/ssl/private/${NGINX_KEY_NAME}.key;
+        ssl_certificate_key /etc/ssl/certs/${NGINX_KEY_NAME}.key;
  
         ssl_prefer_server_ciphers on;
-        ssl_protocols TLSv1 TLSv1.1 TLSv1.2; # ie defaults minus SSLv3
+        ssl_protocols TLSv1.2 TLSv1.3; # ie defaults minus SSLv3
+        add_header Strict-Transport-Security “max-age=31536000;
 
         location /static {
             alias /srv/static-files;
@@ -102,6 +103,11 @@ http {
 
         location /simulation {
             alias /srv/html/simulation;
+            include /etc/nginx/mime.types;
+        }
+
+        location /auv_data {
+            alias /srv/html/auv_data;
             include /etc/nginx/mime.types;
         }
 

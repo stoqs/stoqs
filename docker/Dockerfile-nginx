@@ -9,8 +9,6 @@ RUN chmod +x nginx-start.sh
 # Add nginx config file
 ADD ${NGINX_TMPL} /
 
-# Add SSL certs to location specified in nginx.conf
-ADD *.crt /etc/ssl/certs/
-ADD *.key /etc/ssl/private/
+# SSL cert files now mounted from the host to locations specified in nginx.conf
 
 CMD ["./nginx-start.sh"]
