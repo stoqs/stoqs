@@ -104,7 +104,7 @@ cl.loadM1()
 
 for lrauv in ('galene', 'pontus', 'daphne', 'makai', 'brizo'):
     # Realtime
-    cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True)
+    ## cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1, sbd_logs=True)
     # Delayed mode
     cl.loadLRAUV(lrauv, sdate, edate, critSimpleDepthTime=0.1)
 
