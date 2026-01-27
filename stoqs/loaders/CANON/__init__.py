@@ -347,8 +347,23 @@ class CANONLoader(LoadScript):
                     'bin_mean_concentration_of_colored_dissolved_organic_matter_in_sea_water',
                     'bin_median_concentration_of_colored_dissolved_organic_matter_in_sea_water',
                     'current_direction_navigation_frame', 'current_speed_navigation_frame',
+                    'ctdseabird_sea_water_salinity', 'ctdseabird_sea_water_temperature',
+                    'ctdseabird_mass_concentration_of_oxygen_in_sea_water',
+                    'deadreckonusingmultiplevelocitysources_longitude', 'deadreckonusingmultiplevelocitysources_latitude',
+                    'nal9602_latitude_fix', 'nal9602_longitude_fix',
+                    'nudged_depth', 'nudged_latitude', 'nudged_longitude',
+                    'parlicor_downwelling_photosynthetic_photon_flux_in_sea_water', 'profile_number',
+                    'wetlabsbb2fl_mass_concentration_of_chlorophyll_in_sea_water',
+                    'wetlabsbb2fl_volumescatcoeff117deg470nm', 'wetlabsbb2fl_volumescatcoeff117deg650nm',
+                    'wetlabsbb2fl_particulatebackscatteringcoeff470nm', 'wetlabsbb2fl_particulatebackscatteringcoeff650nm',
+                    'wetlabsubat_average_bioluminescence', 'wetlabsubat_flow_rate',
+                    'wetlabsubat_nbflash_high', 'wetlabsubat_nbflash_low', 'wetlabsubat_intflash',
+                    'wetlabsubat_bg_biolume', 'wetlabsubat_proxy_adinos',
+                    'wetlabsubat_proxy_diatoms', 'wetlabsubat_proxy_hdinos',
+                    'universals_platform_roll_angle', 'universals_platform_pitch_angle', 'universals_platform_yaw_angle',
                   ],
-                  stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True, 
+                  ##stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True, 
+                  stride=None, file_patterns=('.*2S.nc$'), build_attrs=True, 
                   dlist_str=None, err_on_missing_file=False, critSimpleDepthTime=10,
                   sbd_logs=False, cell_logs=False):
 
@@ -1243,8 +1258,9 @@ class CANONLoader(LoadScript):
         urls = []
         catalog_url = os.path.join(base, 'catalog.xml')
         c = Crawl(catalog_url, select=[search_str])
-        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
-        for url in d:
+        names = [d.id for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
+        urls_to_search = [f"https://dods.mbari.org/thredds/dodsC/{name}" for name in names]
+        for url in urls_to_search:
             file_dt = datetime.strptime(url.split('-')[-4], '%Y%m%dT%H%M%S')
             if startdate < file_dt and file_dt < enddate:
                 urls.append(url)
@@ -1436,8 +1452,9 @@ class CANONLoader(LoadScript):
                         self.logger.debug(f'{mission_dir_name}: Collecting all log files matching {search_str} in this directory')
                         catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                         c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
-                        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
-                        for url in d:
+                        names = [d.id for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
+                        urls_to_search = [f"https://dods.mbari.org/thredds/dodsC/{name}" for name in names]
+                        for url in urls_to_search:
                             self.logger.debug(f'{url}')
                             urls.append(url)
                 else:
@@ -1446,16 +1463,18 @@ class CANONLoader(LoadScript):
                     if dir_start >= startdate and dir_end <= enddate:
                         catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                         c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
-                        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
-                        for url in d:
+                        names = [d.id for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
+                        urls_to_search = [f"https://dods.mbari.org/thredds/dodsC/{name}" for name in names]
+                        for url in urls_to_search:
                             self.logger.debug(f'{url}')
                             urls.append(url)
             else:
                 # Likely a realtime log - add to urls if only url date is between startdate and enddate
                 catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                 c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
-                d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
-                for url in d:
+                names = [d.id for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
+                urls_to_search = [f"https://dods.mbari.org/thredds/dodsC/{name}" for name in names]
+                for url in urls_to_search:
                     try:
                         dir_start =  datetime.strptime(url.split('/')[11], '%Y%m%dT%H%M%S')
                     except ValueError as e:
@@ -1622,8 +1641,9 @@ class CANONLoader(LoadScript):
             # Accommodate either string or Sequence in search_str
             search_str = [search_str]
         c = Crawl(catalog_url, select=search_str)
-        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
-        for url in d:
+        names = [d.id for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
+        urls_to_search = [f"https://dods.mbari.org/thredds/dodsC/{name}" for name in names]
+        for url in urls_to_search:
             try:
                 if 'Dorado389' in url:
                     # http://dods.mbari.org/thredds/dodsC/auv/dorado/2022/netcdf/Dorado389_2022_243_00_243_00_decim.nc
@@ -1698,8 +1718,9 @@ class CANONLoader(LoadScript):
         urls = []
         catalog_url = os.path.join(base, 'catalog.xml')
         c = Crawl(catalog_url, select=[search_str])
-        d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
-        for url in d:
+        names = [d.id for d in c.datasets for s in d.services if s.get("service").lower() == "opendap" or s.get("service").lower() == "compound"]
+        urls_to_search = [f"https://dods.mbari.org/thredds/dodsC/{name}" for name in names]
+        for url in urls_to_search:
             try:
                 # breakpoint()s don't work inside this loop, use debug()s to debug
                 self.logger.debug(f'url = {url}')
