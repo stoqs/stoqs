@@ -50,7 +50,7 @@ if cl.args.test:
 
 #cl.loadDorado(startdate, enddate, build_attrs=True, plankton_proxies=True)
 #cl.loadDorado(startdate, enddate, build_attrs=True)
-cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", ), plankton_proxies=True)
+#cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*_decim.nc$", ), plankton_proxies=True)
 #cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*netcdf/dorado_.*1S.nc", ), plankton_proxies=True)
 cl.loadDorado(startdate, enddate, build_attrs=True, file_patterns=(r".*netcdf/dorado_.*1S.nc", ), title_match="Monterey Bay Diamond")
 # Legacy .nc files will not have proper title & comment metadata and this will load non-Diamond missions 
