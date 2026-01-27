@@ -97,6 +97,7 @@ services:
       - ${STOQS_VOLS_DIR}/pg_dumps:/srv/media-files/pg_dumps
       - static-files:/srv/static-files
       - media-files:/srv/media-files
+      - ${STOQS_VOLS_DIR}/keystore:/etc/ssl/certs
     environment:
       - NGINX_TMPL=${NGINX_TMPL}
     container_name: stoqs-nginx
