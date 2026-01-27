@@ -445,7 +445,7 @@ class STOQSQManager(object):
 
             comment = ''
             comment_q = models.ParameterResource.objects.using(self.dbname).filter(
-                                parameter__id=id, resource__name='comment').values(
+                                parameter__id=id, resource__name__contains='comment').values(
                                 'resource__value', 'parameter__name')
             if not comment_q:
                 pass
