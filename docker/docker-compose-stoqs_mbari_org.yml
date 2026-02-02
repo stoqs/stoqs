@@ -1,5 +1,3 @@
-version: '3.4'
-
 # docker-compose-stoqs_mbari_org.yml file to be used for stoqs.mbari.org public STOQS server
 # Notable differences from docker-compose.yml used for internal STOQS servers:
 # 1. The stoqs campaign databases are remotely accessed from an internal postgres
@@ -11,8 +9,8 @@ version: '3.4'
 # 4. The postgres container here is for storing shortened 'Share this view' URLs
 #    by the shortener service, it's location for backup is specified in the .env file
 # 5. The shortener service code is cloned from https://github.com/MBARIMike/ur_l into
-#    /opt/ur_l and started with `docker-compose build ur_l` and `docker-compose up -d`
-#    from that directory
+#    /opt/ur_l and built with `docker-compose build --no-cache ur_l`. This image 
+#    (mbarimike/mbarimike:ur_l_production) needs to be available in `docker images`.
 
 volumes:
     static-files:
@@ -85,7 +83,7 @@ services:
       - ${STOQS_VOLS_DIR}/pg_dumps:/srv/media-files/pg_dumps
       - static-files:/srv/static-files
       - media-files:/srv/media-files
-      - ${STOQS_VOLS_DIR}/keystore:/etc/ssl/certs
+      - /etc/ssl/acme-certs:/etc/ssl/certs
     environment:
       - NGINX_TMPL=${NGINX_TMPL}
     container_name: stoqs-nginx
@@ -120,7 +118,7 @@ services:
     restart: always
 
   shortener:
-    image: adamwojt/adamwojt:ur_l_production
+    image: mbarimike/mbarimike:ur_l_production
     container_name: stoqs-shortener
     environment:
       - COV_FAIL_THRESHOLD=90
