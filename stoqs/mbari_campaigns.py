@@ -12,6 +12,7 @@ from collections import OrderedDict
 # for each campaign starting at the stoqs/loaders directory.  The full 
 # path of 'stoqs/loaders/' is prepended to the value and then executed.
 campaigns = OrderedDict([
+    ('stoqs_rovctd',        'ROVCTD/loadAllDives.sh'),
     ('stoqs_rovctd_mb',     'ROVCTD/loadMB_Dives.sh'),
     ('stoqs_rovctd_mw93',   'ROVCTD/loadTransectDives_mw93.sh'),
     ('stoqs_rovctd_mw97',   'ROVCTD/loadTransectDives_mw97.sh'),
