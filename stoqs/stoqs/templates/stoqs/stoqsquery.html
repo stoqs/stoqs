@@ -4241,6 +4241,7 @@ function enable_cardboard(){
             //$('#mp-x3d-geoviewpoint1').attr('zFar', '30000');
             // put this viewpoint in the center of the horizontal extent and 100 units above sea level 
             $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 100');
+            $('#mp-x3d-geoviewpoint1').attr('centerofrotation', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' ' + $('body').data()['extent'][3]);
             $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
             $('#left-column').parent().parent().css( { 'padding-left': '0px' } );
             $('#collapseSpatial > div').css( { 'padding-top': '0px' } );
@@ -5180,7 +5181,7 @@ function enable_cardboard(){
                             acts_by_mode['realtime'].push(activity);
                         }
                     }
-                    else if ( ! $.isEmptyObject(activity.match(/scieng.nc/)) ) {
+                    else if ( ! $.isEmptyObject(activity.match(/scieng.nc/)) || ! $.isEmptyObject(activity.match(/1S.nc/))) {
                         if ( $.type(acts_by_mode['delayed']) == "undefined" ) {
                                 acts_by_mode['delayed'] = [];
                         }
@@ -5232,7 +5233,7 @@ function enable_cardboard(){
                         if ( ! $.isEmptyObject(activity.match(/shore_i.nc/)) ) {
                             mode = 'realtime';
                         }
-                        if ( ! $.isEmptyObject(activity.match(/scieng.nc/)) ) {
+                        if ( ! $.isEmptyObject(activity.match(/scieng.nc/))  || ! $.isEmptyObject(activity.match(/1S.nc/))) {
                             mode = 'delayed';
                         }
                         if (attributes.opendap_url) {
@@ -7177,6 +7178,7 @@ function enable_cardboard(){
 
     function setViewpoint() {
         $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 10000');
+        $('#mp-x3d-geoviewpoint1').attr('centerofrotation', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' -' + $('body').data()['extent'][3] * $('body').data()['ve']);
         $('#mp-x3d-geoviewpoint1').attr('orientation', '1 0 0 -1.57');
         // Setting the centerOfRotation does not appear to work
         //var cor_string = $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' ' + $('body').data()['extent'][3] * -10;

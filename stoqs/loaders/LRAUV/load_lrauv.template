@@ -80,7 +80,7 @@ if cl.args.startdate:
     sdate = datetime.strptime(cl.args.startdate, '%Y%m%d')
 
 if cl.args.test:
-    cl.stride = 10000
+    cl.stride = 1
 elif cl.args.stride:
     cl.stride = cl.args.stride
 

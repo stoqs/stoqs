@@ -363,7 +363,8 @@ class CANONLoader(LoadScript):
                     'universals_platform_roll_angle', 'universals_platform_pitch_angle', 'universals_platform_yaw_angle',
                   ],
                   ##stride=None, file_patterns=('.*2S_scieng.nc$'), build_attrs=True, 
-                  stride=None, file_patterns=('.*2S.nc$'), build_attrs=True, 
+                  ##stride=None, file_patterns=('.*2S.nc$'), build_attrs=True, 
+                  stride=None, file_patterns=('.*1S.nc$'), build_attrs=True, 
                   dlist_str=None, err_on_missing_file=False, critSimpleDepthTime=10,
                   sbd_logs=False, cell_logs=False):
 
