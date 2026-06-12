@@ -60,8 +60,8 @@ http {
         server_name ${NGINX_SERVER_NAME};
 
         # see http://nginx.org/en/docs/http/configuriNGINX_https_servers.html
-        ssl_certificate /etc/ssl/certs/${NGINX_CRT_NAME}.crt;
-        ssl_certificate_key /etc/ssl/certs/${NGINX_KEY_NAME}.key;
+        ssl_certificate /etc/nginx/ssl/${NGINX_CRT_NAME}/full.pem;
+        ssl_certificate_key /etc/nginx/ssl/${NGINX_KEY_NAME}/key.pem;
  
         ssl_prefer_server_ciphers on;
         ssl_protocols TLSv1 TLSv1.1 TLSv1.2; # ie defaults minus SSLv3
