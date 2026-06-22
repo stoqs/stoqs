@@ -17,7 +17,7 @@ django-extensions==3.2.1
 django-picklefield==3.2
 GitPython==3.1.43
 euclid==1.2
-djangorestframework==3.15.1
+djangorestframework==3.15.2
 fastparquet==2024.2.0
 Flask-SQLAlchemy==3.1.1
 httplib2==0.22.0
